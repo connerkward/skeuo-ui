@@ -1,0 +1,622 @@
+{
+  "pipboy": {
+    "buttons": {
+      "prev": {
+        "src": "/sprites/pipboy/prev.png",
+        "w": 115,
+        "h": 77
+      },
+      "play": {
+        "src": "/sprites/pipboy/play.png",
+        "w": 122,
+        "h": 84
+      },
+      "pause": {
+        "src": "/sprites/pipboy/pause.png",
+        "w": 100,
+        "h": 77
+      },
+      "stop": {
+        "src": "/sprites/pipboy/stop.png",
+        "w": 100,
+        "h": 77
+      },
+      "next": {
+        "src": "/sprites/pipboy/next.png",
+        "w": 115,
+        "h": 77
+      },
+      "eject": {
+        "src": "/sprites/pipboy/eject.png",
+        "w": 76,
+        "h": 72
+      },
+      "shuffle": {
+        "src": "/sprites/pipboy/shuffle.png",
+        "w": 215,
+        "h": 74
+      },
+      "repeat": {
+        "src": "/sprites/pipboy/repeat.png",
+        "w": 93,
+        "h": 74
+      },
+      "eq-on": {
+        "src": "/sprites/pipboy/eq-on.png",
+        "w": 69,
+        "h": 46
+      },
+      "eq-auto": {
+        "src": "/sprites/pipboy/eq-auto.png",
+        "w": 92,
+        "h": 46
+      },
+      "presets": {
+        "src": "/sprites/pipboy/presets.png",
+        "w": 107,
+        "h": 46
+      },
+      "pl-add": {
+        "src": "/sprites/pipboy/pl-add.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-rem": {
+        "src": "/sprites/pipboy/pl-rem.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-sel": {
+        "src": "/sprites/pipboy/pl-sel.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-misc": {
+        "src": "/sprites/pipboy/pl-misc.png",
+        "w": 85,
+        "h": 52
+      },
+      "pl-play": {
+        "src": "/sprites/pipboy/pl-play.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-pause": {
+        "src": "/sprites/pipboy/pl-pause.png",
+        "w": 70,
+        "h": 54
+      },
+      "pl-stop": {
+        "src": "/sprites/pipboy/pl-stop.png",
+        "w": 69,
+        "h": 54
+      },
+      "pl-next": {
+        "src": "/sprites/pipboy/pl-next.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-list": {
+        "src": "/sprites/pipboy/pl-list.png",
+        "w": 107,
+        "h": 62
+      }
+    },
+    "panels": {
+      "main": {
+        "src": "/sprites/pipboy/panel-main.png",
+        "w": 1536,
+        "h": 389,
+        "tile": "/sprites/pipboy/tile-main.png"
+      },
+      "eq": {
+        "src": "/sprites/pipboy/panel-eq.png",
+        "w": 1536,
+        "h": 286,
+        "tile": "/sprites/pipboy/tile-eq.png"
+      },
+      "playlist": {
+        "src": "/sprites/pipboy/panel-playlist.png",
+        "w": 1536,
+        "h": 338,
+        "tile": "/sprites/pipboy/tile-playlist.png"
+      }
+    }
+  },
+  "winamp": {
+    "buttons": {
+      "prev": {
+        "src": "/sprites/winamp/prev.png",
+        "w": 115,
+        "h": 77
+      },
+      "play": {
+        "src": "/sprites/winamp/play.png",
+        "w": 122,
+        "h": 84
+      },
+      "pause": {
+        "src": "/sprites/winamp/pause.png",
+        "w": 100,
+        "h": 77
+      },
+      "stop": {
+        "src": "/sprites/winamp/stop.png",
+        "w": 100,
+        "h": 77
+      },
+      "next": {
+        "src": "/sprites/winamp/next.png",
+        "w": 115,
+        "h": 77
+      },
+      "eject": {
+        "src": "/sprites/winamp/eject.png",
+        "w": 76,
+        "h": 72
+      },
+      "shuffle": {
+        "src": "/sprites/winamp/shuffle.png",
+        "w": 215,
+        "h": 74
+      },
+      "repeat": {
+        "src": "/sprites/winamp/repeat.png",
+        "w": 93,
+        "h": 74
+      },
+      "eq-on": {
+        "src": "/sprites/winamp/eq-on.png",
+        "w": 69,
+        "h": 46
+      },
+      "eq-auto": {
+        "src": "/sprites/winamp/eq-auto.png",
+        "w": 92,
+        "h": 46
+      },
+      "presets": {
+        "src": "/sprites/winamp/presets.png",
+        "w": 107,
+        "h": 46
+      },
+      "pl-add": {
+        "src": "/sprites/winamp/pl-add.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-rem": {
+        "src": "/sprites/winamp/pl-rem.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-sel": {
+        "src": "/sprites/winamp/pl-sel.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-misc": {
+        "src": "/sprites/winamp/pl-misc.png",
+        "w": 85,
+        "h": 52
+      },
+      "pl-play": {
+        "src": "/sprites/winamp/pl-play.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-pause": {
+        "src": "/sprites/winamp/pl-pause.png",
+        "w": 70,
+        "h": 54
+      },
+      "pl-stop": {
+        "src": "/sprites/winamp/pl-stop.png",
+        "w": 69,
+        "h": 54
+      },
+      "pl-next": {
+        "src": "/sprites/winamp/pl-next.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-list": {
+        "src": "/sprites/winamp/pl-list.png",
+        "w": 107,
+        "h": 62
+      }
+    },
+    "panels": {
+      "main": {
+        "src": "/sprites/winamp/panel-main.png",
+        "w": 1536,
+        "h": 389,
+        "tile": "/sprites/winamp/tile-main.png"
+      },
+      "eq": {
+        "src": "/sprites/winamp/panel-eq.png",
+        "w": 1536,
+        "h": 286,
+        "tile": "/sprites/winamp/tile-eq.png"
+      },
+      "playlist": {
+        "src": "/sprites/winamp/panel-playlist.png",
+        "w": 1536,
+        "h": 338,
+        "tile": "/sprites/winamp/tile-playlist.png"
+      }
+    }
+  },
+  "ipod": {
+    "buttons": {
+      "prev": {
+        "src": "/sprites/ipod/prev.png",
+        "w": 115,
+        "h": 77
+      },
+      "play": {
+        "src": "/sprites/ipod/play.png",
+        "w": 122,
+        "h": 84
+      },
+      "pause": {
+        "src": "/sprites/ipod/pause.png",
+        "w": 100,
+        "h": 77
+      },
+      "stop": {
+        "src": "/sprites/ipod/stop.png",
+        "w": 100,
+        "h": 77
+      },
+      "next": {
+        "src": "/sprites/ipod/next.png",
+        "w": 115,
+        "h": 77
+      },
+      "eject": {
+        "src": "/sprites/ipod/eject.png",
+        "w": 76,
+        "h": 72
+      },
+      "shuffle": {
+        "src": "/sprites/ipod/shuffle.png",
+        "w": 215,
+        "h": 74
+      },
+      "repeat": {
+        "src": "/sprites/ipod/repeat.png",
+        "w": 93,
+        "h": 74
+      },
+      "eq-on": {
+        "src": "/sprites/ipod/eq-on.png",
+        "w": 69,
+        "h": 46
+      },
+      "eq-auto": {
+        "src": "/sprites/ipod/eq-auto.png",
+        "w": 92,
+        "h": 46
+      },
+      "presets": {
+        "src": "/sprites/ipod/presets.png",
+        "w": 107,
+        "h": 46
+      },
+      "pl-add": {
+        "src": "/sprites/ipod/pl-add.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-rem": {
+        "src": "/sprites/ipod/pl-rem.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-sel": {
+        "src": "/sprites/ipod/pl-sel.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-misc": {
+        "src": "/sprites/ipod/pl-misc.png",
+        "w": 85,
+        "h": 52
+      },
+      "pl-play": {
+        "src": "/sprites/ipod/pl-play.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-pause": {
+        "src": "/sprites/ipod/pl-pause.png",
+        "w": 70,
+        "h": 54
+      },
+      "pl-stop": {
+        "src": "/sprites/ipod/pl-stop.png",
+        "w": 69,
+        "h": 54
+      },
+      "pl-next": {
+        "src": "/sprites/ipod/pl-next.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-list": {
+        "src": "/sprites/ipod/pl-list.png",
+        "w": 107,
+        "h": 62
+      }
+    },
+    "panels": {
+      "main": {
+        "src": "/sprites/ipod/panel-main.png",
+        "w": 1536,
+        "h": 389,
+        "tile": "/sprites/ipod/tile-main.png"
+      },
+      "eq": {
+        "src": "/sprites/ipod/panel-eq.png",
+        "w": 1536,
+        "h": 286,
+        "tile": "/sprites/ipod/tile-eq.png"
+      },
+      "playlist": {
+        "src": "/sprites/ipod/panel-playlist.png",
+        "w": 1536,
+        "h": 338,
+        "tile": "/sprites/ipod/tile-playlist.png"
+      }
+    }
+  },
+  "nautical": {
+    "buttons": {
+      "prev": {
+        "src": "/sprites/nautical/prev.png",
+        "w": 115,
+        "h": 77
+      },
+      "play": {
+        "src": "/sprites/nautical/play.png",
+        "w": 122,
+        "h": 84
+      },
+      "pause": {
+        "src": "/sprites/nautical/pause.png",
+        "w": 100,
+        "h": 77
+      },
+      "stop": {
+        "src": "/sprites/nautical/stop.png",
+        "w": 100,
+        "h": 77
+      },
+      "next": {
+        "src": "/sprites/nautical/next.png",
+        "w": 115,
+        "h": 77
+      },
+      "eject": {
+        "src": "/sprites/nautical/eject.png",
+        "w": 76,
+        "h": 72
+      },
+      "shuffle": {
+        "src": "/sprites/nautical/shuffle.png",
+        "w": 215,
+        "h": 74
+      },
+      "repeat": {
+        "src": "/sprites/nautical/repeat.png",
+        "w": 93,
+        "h": 74
+      },
+      "eq-on": {
+        "src": "/sprites/nautical/eq-on.png",
+        "w": 69,
+        "h": 46
+      },
+      "eq-auto": {
+        "src": "/sprites/nautical/eq-auto.png",
+        "w": 92,
+        "h": 46
+      },
+      "presets": {
+        "src": "/sprites/nautical/presets.png",
+        "w": 107,
+        "h": 46
+      },
+      "pl-add": {
+        "src": "/sprites/nautical/pl-add.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-rem": {
+        "src": "/sprites/nautical/pl-rem.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-sel": {
+        "src": "/sprites/nautical/pl-sel.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-misc": {
+        "src": "/sprites/nautical/pl-misc.png",
+        "w": 85,
+        "h": 52
+      },
+      "pl-play": {
+        "src": "/sprites/nautical/pl-play.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-pause": {
+        "src": "/sprites/nautical/pl-pause.png",
+        "w": 70,
+        "h": 54
+      },
+      "pl-stop": {
+        "src": "/sprites/nautical/pl-stop.png",
+        "w": 69,
+        "h": 54
+      },
+      "pl-next": {
+        "src": "/sprites/nautical/pl-next.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-list": {
+        "src": "/sprites/nautical/pl-list.png",
+        "w": 107,
+        "h": 62
+      }
+    },
+    "panels": {
+      "main": {
+        "src": "/sprites/nautical/panel-main.png",
+        "w": 1536,
+        "h": 389,
+        "tile": "/sprites/nautical/tile-main.png"
+      },
+      "eq": {
+        "src": "/sprites/nautical/panel-eq.png",
+        "w": 1536,
+        "h": 286,
+        "tile": "/sprites/nautical/tile-eq.png"
+      },
+      "playlist": {
+        "src": "/sprites/nautical/panel-playlist.png",
+        "w": 1536,
+        "h": 338,
+        "tile": "/sprites/nautical/tile-playlist.png"
+      }
+    }
+  },
+  "cyberpunk": {
+    "buttons": {
+      "prev": {
+        "src": "/sprites/cyberpunk/prev.png",
+        "w": 115,
+        "h": 77
+      },
+      "play": {
+        "src": "/sprites/cyberpunk/play.png",
+        "w": 122,
+        "h": 84
+      },
+      "pause": {
+        "src": "/sprites/cyberpunk/pause.png",
+        "w": 100,
+        "h": 77
+      },
+      "stop": {
+        "src": "/sprites/cyberpunk/stop.png",
+        "w": 100,
+        "h": 77
+      },
+      "next": {
+        "src": "/sprites/cyberpunk/next.png",
+        "w": 115,
+        "h": 77
+      },
+      "eject": {
+        "src": "/sprites/cyberpunk/eject.png",
+        "w": 76,
+        "h": 72
+      },
+      "shuffle": {
+        "src": "/sprites/cyberpunk/shuffle.png",
+        "w": 215,
+        "h": 74
+      },
+      "repeat": {
+        "src": "/sprites/cyberpunk/repeat.png",
+        "w": 93,
+        "h": 74
+      },
+      "eq-on": {
+        "src": "/sprites/cyberpunk/eq-on.png",
+        "w": 69,
+        "h": 46
+      },
+      "eq-auto": {
+        "src": "/sprites/cyberpunk/eq-auto.png",
+        "w": 92,
+        "h": 46
+      },
+      "presets": {
+        "src": "/sprites/cyberpunk/presets.png",
+        "w": 107,
+        "h": 46
+      },
+      "pl-add": {
+        "src": "/sprites/cyberpunk/pl-add.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-rem": {
+        "src": "/sprites/cyberpunk/pl-rem.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-sel": {
+        "src": "/sprites/cyberpunk/pl-sel.png",
+        "w": 69,
+        "h": 52
+      },
+      "pl-misc": {
+        "src": "/sprites/cyberpunk/pl-misc.png",
+        "w": 85,
+        "h": 52
+      },
+      "pl-play": {
+        "src": "/sprites/cyberpunk/pl-play.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-pause": {
+        "src": "/sprites/cyberpunk/pl-pause.png",
+        "w": 70,
+        "h": 54
+      },
+      "pl-stop": {
+        "src": "/sprites/cyberpunk/pl-stop.png",
+        "w": 69,
+        "h": 54
+      },
+      "pl-next": {
+        "src": "/sprites/cyberpunk/pl-next.png",
+        "w": 77,
+        "h": 54
+      },
+      "pl-list": {
+        "src": "/sprites/cyberpunk/pl-list.png",
+        "w": 107,
+        "h": 62
+      }
+    },
+    "panels": {
+      "main": {
+        "src": "/sprites/cyberpunk/panel-main.png",
+        "w": 1536,
+        "h": 389,
+        "tile": "/sprites/cyberpunk/tile-main.png"
+      },
+      "eq": {
+        "src": "/sprites/cyberpunk/panel-eq.png",
+        "w": 1536,
+        "h": 286,
+        "tile": "/sprites/cyberpunk/tile-eq.png"
+      },
+      "playlist": {
+        "src": "/sprites/cyberpunk/panel-playlist.png",
+        "w": 1536,
+        "h": 338,
+        "tile": "/sprites/cyberpunk/tile-playlist.png"
+      }
+    }
+  }
+}
