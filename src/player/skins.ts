@@ -44,12 +44,6 @@ export const skinList: SkinAssets[] = [
   { id: "aqua",     name: "Mac OS X Aqua",   blurb: "Glossy white glass, pinstripes, candy lozenges", has: ["frame"], baked: false },
   { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: false },
   { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: false },
-
-  // shaped ✦ — irregular non-rectangular silhouettes (background cut out),
-  // EMPTY screens + CV-detected screen regions → wild + live + fully functional
-  { id: "winamp-shaped",  name: "Winamp ✦ shaped",      blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "winamp",  templateUrl: "/skins/winamp-shaped/template.json" },
-  { id: "fantasy-shaped", name: "Baldur's Gate ✦ shaped", blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "fantasy", templateUrl: "/skins/fantasy-shaped/template.json" },
-  { id: "fallout-shaped", name: "Fallout ✦ shaped",      blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "fallout", templateUrl: "/skins/fallout-shaped/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
