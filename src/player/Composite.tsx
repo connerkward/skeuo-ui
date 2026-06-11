@@ -53,9 +53,15 @@ export function Composite({ template, skinId, showWireframe }: Props) {
   const baked = skinBaked(skinId);
   const hasFrame = skinHas(skinId, "frame");
 
+  // "art mode": skins whose layout was vision-EXTRACTED (own templateUrl) have
+  // imprecise control boxes, so we suppress the small live decorations (thumbs,
+  // knob needles, segment highlights, labels) that would float off the baked
+  // art, and keep only the forgiving live SCREEN content (clock/marquee/playlist).
+  const art = !!url;
+
   return (
     <div
-      className={`player ${showWireframe ? "is-wireframe" : ""} ${hasFrame ? "has-frame" : ""}`}
+      className={`player ${showWireframe ? "is-wireframe" : ""} ${hasFrame ? "has-frame" : ""} ${art ? "art" : ""}`}
       data-skin={styleId}
       style={{ aspectRatio: `${canvas.w} / ${canvas.h}`, transform: `translate(${pos.x}px, ${pos.y}px)` }}
     >

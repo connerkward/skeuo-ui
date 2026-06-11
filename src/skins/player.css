@@ -44,6 +44,21 @@
 /* optional per-skin scrim to guarantee text contrast over baked screens */
 .screen-scrim { background: var(--screen-scrim, transparent); border-radius: var(--lcd-radius, 4px); }
 
+/* ART MODE (vision-extracted layouts): the baked art already shows every
+   control, and the extracted boxes are imprecise — so hide the small live
+   decorations that would float off, keeping controls as invisible hit-areas
+   and rendering only the live screen content. */
+.player.art .knob-ind, .player.art .knob-label,
+.player.art .sk-slider-v .thumb, .player.art .sk-slider-v .fill, .player.art .sk-slider-v .rail,
+.player.art .sk-slider-h .thumb, .player.art .sk-slider-h .fill, .player.art .sk-slider-h .rail,
+.player.art .eq-slot .eq-label,
+.player.art .xy-puck, .player.art .xy-grid { display: none; }
+.player.art .knob-body { background: transparent; box-shadow: none; }
+.player.art .toggle.sprited[data-on="true"] { filter: none; }
+.player.art .toggle.sprited[data-on="true"]::after { display: none; }
+.player.art .segmented.baked .seg[data-active="true"] { box-shadow: none; filter: none; }
+.player.art .segmented.baked .seg[data-active="true"]::after { display: none; }
+
 .title-text {
   font-size: 2.1cqw; letter-spacing: 1.4px; text-transform: uppercase;
   font-weight: 700; color: var(--title-ink, currentColor);

@@ -49,6 +49,7 @@ export const skinList: SkinAssets[] = [
   // shaped ✦ — irregular non-rectangular silhouettes (background cut out)
   { id: "winamp-shaped",  name: "Winamp ✦ shaped",      blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "winamp",  templateUrl: "/skins/winamp-shaped/template.json" },
   { id: "fantasy-shaped", name: "Baldur's Gate ✦ shaped", blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "fantasy", templateUrl: "/skins/fantasy-shaped/template.json" },
+  { id: "fallout-shaped", name: "Fallout ✦ shaped",      blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "fallout", templateUrl: "/skins/fallout-shaped/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
