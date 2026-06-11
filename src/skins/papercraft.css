@@ -76,8 +76,6 @@
 
   --xy-bg: linear-gradient(180deg, #fbf6ec, #f0e7d4);
   --xy-puck: #e2604b; --xy-line: rgba(120,86,46,.25);
-  /* baked playlist screen came out dark — lighten to paper for dark ink */
-  --screen-scrim: rgba(250,244,233,.9);
 
   --list-bg: #fbf6ec;
   --list-ink: #433423;

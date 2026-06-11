@@ -82,8 +82,6 @@
 
   --xy-bg: linear-gradient(180deg, #0a1512, #061c18);
   --xy-puck: var(--teal); --xy-line: rgba(95,231,207,.2);
-  /* baked playlist screen came out bright — darken it for teal text */
-  --screen-scrim: rgba(6,18,16,.74);
 
   --list-bg: #07120f;
   --list-ink: var(--teal);

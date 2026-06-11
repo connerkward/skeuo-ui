@@ -109,11 +109,13 @@ SKINS = {
     ),
 }
 
+# Nano Banana Pro (Gemini 3 Pro Image) — crisp 2K, best layout adherence.
+# No transparent-bg param, so we generate opaque (the device fills the frame).
+ENDPOINT = "fal-ai/gemini-3-pro-image-preview/edit"
 def submit(control_url, prompt):
-    return post("https://queue.fal.run/fal-ai/gpt-image-1.5/edit", {
+    return post(f"https://queue.fal.run/{ENDPOINT}", {
         "prompt": prompt, "image_urls": [control_url],
-        "image_size": "1024x1536", "quality": "high", "input_fidelity": "high",
-        "background": "transparent", "output_format": "png",
+        "resolution": "2K", "aspect_ratio": "2:3", "output_format": "png",
     })
 
 def run(skin, job):
