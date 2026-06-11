@@ -84,6 +84,14 @@ python3 generation/freeform_all.py     # one freeform layout PER style, end to e
 
 This runs the whole loop six times — each style gets its **own** gpt-image-2 design with a distinct layout (two-dial Hi-Fi, left-button-column Fallout, symmetric Fantasy, …), its own extracted template, and its own Nano Banana reskin. They appear in the app as the `✦ freeform` skins, each rendering live + interactive on a unique layout (a skin's `style` field reuses the base palette CSS while its `templateUrl` carries its own extracted geometry). The compositor fetches a skin's template at runtime when present, falling back to the canonical one.
 
+### Not a rectangle — wild silhouettes
+
+```bash
+python3 generation/wild.py winamp winamp-shaped   # let the model design the SHAPE
+```
+
+`wild.py` lets gpt-image-2 freely design a **wildly non-rectangular** player (a chrome-creature Winamp with horns and legs, a carved-stone fantasy shield with a gryphon head), on a plain white background. It then cuts the background out with **BiRefNet** (`fal-ai/birefnet/v2`) to a true alpha silhouette and extracts a template so it stays interactive. The compositor renders the frame as a transparent layer with a shape-following drop shadow, so the player on screen is the real irregular outline — not a card. The `✦ shaped` skins demonstrate this.
+
 ## Layout
 
 ```

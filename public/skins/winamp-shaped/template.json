@@ -1,0 +1,258 @@
+{
+  "id": "freeform",
+  "name": "Freeform-extracted",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "volume_knob",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.04,
+        "y": 0.08,
+        "w": 0.12,
+        "h": 0.12
+      },
+      "label": "Volume Knob",
+      "bind": "volume"
+    },
+    {
+      "id": "display_eq",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.28,
+        "y": 0.17,
+        "w": 0.45,
+        "h": 0.18
+      },
+      "label": "Equalizer Display",
+      "dynamicType": "marquee"
+    },
+    {
+      "id": "progress_slider",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.33,
+        "y": 0.34,
+        "w": 0.35,
+        "h": 0.04
+      },
+      "label": "Progress Slider",
+      "bind": "seek"
+    },
+    {
+      "id": "back_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.32,
+        "y": 0.42,
+        "w": 0.05,
+        "h": 0.08
+      },
+      "label": "Back",
+      "bind": "prev"
+    },
+    {
+      "id": "play_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.39,
+        "y": 0.42,
+        "w": 0.05,
+        "h": 0.08
+      },
+      "label": "Play",
+      "bind": "play"
+    },
+    {
+      "id": "pause_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.46,
+        "y": 0.42,
+        "w": 0.05,
+        "h": 0.08
+      },
+      "label": "Pause",
+      "bind": "pause"
+    },
+    {
+      "id": "stop_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.53,
+        "y": 0.42,
+        "w": 0.05,
+        "h": 0.08
+      },
+      "label": "Stop",
+      "bind": "stop"
+    },
+    {
+      "id": "next_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6,
+        "y": 0.42,
+        "w": 0.05,
+        "h": 0.08
+      },
+      "label": "Next",
+      "bind": "next"
+    },
+    {
+      "id": "playlist_display",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.13,
+        "y": 0.52,
+        "w": 0.25,
+        "h": 0.34
+      },
+      "label": "Playlist Display",
+      "dynamicType": "playlist"
+    },
+    {
+      "id": "scroll_slider",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.39,
+        "y": 0.53,
+        "w": 0.03,
+        "h": 0.32
+      },
+      "label": "Scroll Slider",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 0
+    },
+    {
+      "id": "eq_slider1",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.68,
+        "y": 0.54,
+        "w": 0.06,
+        "h": 0.26
+      },
+      "label": "EQ Slider 1",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 1
+    },
+    {
+      "id": "eq_slider2",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.75,
+        "y": 0.54,
+        "w": 0.06,
+        "h": 0.26
+      },
+      "label": "EQ Slider 2",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 2
+    },
+    {
+      "id": "eq_slider3",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.82,
+        "y": 0.54,
+        "w": 0.06,
+        "h": 0.26
+      },
+      "label": "EQ Slider 3",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 3
+    },
+    {
+      "id": "eq_slider4",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.89,
+        "y": 0.54,
+        "w": 0.06,
+        "h": 0.26
+      },
+      "label": "EQ Slider 4",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 4
+    },
+    {
+      "id": "balance_knob1",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.88,
+        "y": 0.4,
+        "w": 0.04,
+        "h": 0.06
+      },
+      "label": "Balance Knob 1",
+      "bind": "balance"
+    },
+    {
+      "id": "balance_knob2",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.95,
+        "y": 0.4,
+        "w": 0.04,
+        "h": 0.06
+      },
+      "label": "Balance Knob 2",
+      "bind": "balance"
+    },
+    {
+      "id": "volume_slider",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.25,
+        "y": 0.92,
+        "w": 0.43,
+        "h": 0.04
+      },
+      "label": "Volume Slider",
+      "bind": "seek"
+    }
+  ]
+}

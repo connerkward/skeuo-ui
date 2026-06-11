@@ -45,6 +45,10 @@ export const skinList: SkinAssets[] = [
   { id: "ff-aqua",       name: "Aqua ✦ freeform",       blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "aqua",       templateUrl: "/skins/ff-aqua/template.json" },
   { id: "ff-hifi",       name: "70s Hi-Fi ✦ freeform",  blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "hifi",       templateUrl: "/skins/ff-hifi/template.json" },
   { id: "ff-papercraft", name: "Papercraft ✦ freeform", blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "papercraft", templateUrl: "/skins/ff-papercraft/template.json" },
+
+  // shaped ✦ — irregular non-rectangular silhouettes (background cut out)
+  { id: "winamp-shaped",  name: "Winamp ✦ shaped",      blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "winamp",  templateUrl: "/skins/winamp-shaped/template.json" },
+  { id: "fantasy-shaped", name: "Baldur's Gate ✦ shaped", blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "fantasy", templateUrl: "/skins/fantasy-shaped/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
