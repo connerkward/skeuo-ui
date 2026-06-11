@@ -70,8 +70,10 @@ export function useAudio(s: AudioState) {
   // play/pause: ramp the output gain; resume the suspended context on first play
   useEffect(() => {
     if (s.playing) {
-      const ctx = ensure();
-      if (ctx.state === "suspended") ctx.resume();
+      try {
+        const ctx = ensure();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      } catch { /* audio unavailable / no user gesture yet */ }
     }
     const n = nodes.current, ctx = ctxRef.current;
     if (!n || !ctx) return;
