@@ -88,3 +88,5 @@
 }
 [data-skin="papercraft"] .eq-curve-line { stroke: #e2604b; stroke-width: 2; }
 [data-skin="papercraft"] .vis-canvas { image-rendering: auto; }
+
+[data-skin="papercraft"] { --sw-slot:#c79a64;--sw-bat:linear-gradient(180deg,#fbf6ec,#e2cda3);--sw-bat-on:#e2604b;--sw-glow:rgba(226,96,75,.45);--sw-label-on:#e2604b; }

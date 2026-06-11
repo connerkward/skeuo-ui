@@ -41,11 +41,16 @@ def render():
                         outline=(120, 122, 126), width=10)
 
     PANEL = (176, 178, 182)
+    FACEPLATE = bool(os.environ.get("FACEPLATE"))  # omit controls → bare faceplate
+    CONTROL_KINDS = ("button", "toggle", "knob", "segmented", "slider-h", "slider-v", "xy")
     for reg in tpl["regions"]:
         x0, y0, x1, y1 = px(reg["rect"])
         kind, content = reg["kind"], reg["content"]
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
         w, h = x1 - x0, y1 - y0
+
+        if FACEPLATE and (kind in CONTROL_KINDS or kind == "display"):
+            continue  # controls AND screens are live CSS layers, not baked in
 
         if kind == "flourish":
             # decorative inset — slightly proud panel with a thin frame + motif,

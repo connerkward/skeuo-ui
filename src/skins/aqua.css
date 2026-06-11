@@ -86,3 +86,5 @@
 [data-skin="aqua"] .eq-curve-line { stroke: #2f7fe0; }
 [data-skin="aqua"] .pl-list { background: #fff; }
 [data-skin="aqua"] .title-text { font-weight: 600; }
+
+[data-skin="aqua"] { --sw-slot:linear-gradient(180deg,#aab2bb,#cfd6dd);--sw-bat:linear-gradient(180deg,#ffffff,#cfd6dd);--sw-bat-on:linear-gradient(180deg,#a9d2ff,#2f7fe0);--sw-glow:rgba(47,127,224,.6);--sw-label-on:#2f7fe0; }

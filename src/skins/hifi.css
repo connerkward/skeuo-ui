@@ -94,3 +94,5 @@
 }
 [data-skin="hifi"] .eq-curve-line { stroke: var(--teal); }
 [data-skin="hifi"] .title-text { letter-spacing: 2px; }
+
+[data-skin="hifi"] { --sw-slot:linear-gradient(180deg,#0a1512,#061c18);--sw-bat:linear-gradient(180deg,#eceef0,#a4a8ac);--sw-bat-on:radial-gradient(60% 60% at 50% 35%,#ffd27a,#ffb347);--sw-glow:rgba(255,179,71,.85);--sw-label-on:#5fe7cf; }

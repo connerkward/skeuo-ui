@@ -195,29 +195,23 @@ function renderControl(
     }
   }
 
+  // Controls are ALWAYS the live CSS layer (real, animated) — never baked into
+  // the frame sprite. The AI frame provides only bezel + faceplate + screens.
+  void sprite; void sprited; void baked; void spr;
   if (r.kind === "button") {
     return (
-      <button className={`tbtn ${spr}`} style={sprite} onClick={btnHandler(r, ps)} title={r.label ?? r.id}>
-        {!sprited && glyph(r)}
-      </button>
+      <button className="tbtn" onClick={btnHandler(r, ps)} title={r.label ?? r.id}>{glyph(r)}</button>
     );
   }
   if (r.kind === "toggle") {
     const [on, toggle] = toggleBinding(r, ps);
-    return (
-      <button className={`toggle ${spr}`} style={sprite} data-on={on} onClick={toggle} title={r.label ?? r.id}>
-        {!sprited && (r.label ?? r.id)}
-      </button>
-    );
+    return <FlipSwitch label={r.label ?? r.id} on={on} toggle={toggle} />;
   }
-  if (r.kind === "segmented") return <Segmented r={r} ps={ps} baked={baked} />;
-  if (r.kind === "knob") return <Knob r={r} ps={ps} baked={baked} />;
-  if (r.kind === "xy") return <XYPad ps={ps} baked={baked} />;
-
-  const sSprite = baked ? {} : sprite;
-  const sSprited = baked || sprited;
-  if (r.kind === "slider-h") return <SliderH r={r} ps={ps} sprite={sSprite} sprited={sSprited} />;
-  if (r.kind === "slider-v") return <SliderV r={r} ps={ps} sprite={sSprite} sprited={sSprited} />;
+  if (r.kind === "segmented") return <Segmented r={r} ps={ps} baked={false} />;
+  if (r.kind === "knob") return <Knob r={r} ps={ps} baked={false} />;
+  if (r.kind === "xy") return <XYPad ps={ps} baked={false} />;
+  if (r.kind === "slider-h") return <SliderH r={r} ps={ps} sprite={{}} sprited={false} />;
+  if (r.kind === "slider-v") return <SliderV r={r} ps={ps} sprite={{}} sprited={false} />;
   return null;
 }
 
@@ -253,6 +247,16 @@ function toggleBinding(r: Region, ps: PlayerState): [boolean, () => void] {
     case "mute":    return [ps.muted, ps.toggleMute];
     default:        return [false, () => {}];
   }
+}
+
+/* ---------- flip switch (real, animated toggle) ---------- */
+function FlipSwitch({ label, on, toggle }: { label: string; on: boolean; toggle: () => void }) {
+  return (
+    <button className="flipsw" data-on={on} onClick={toggle} title={`${label}: ${on ? "ON" : "OFF"}`}>
+      <span className="fsw-track"><span className="fsw-bat" /></span>
+      <span className="fsw-label">{label}</span>
+    </button>
+  );
 }
 
 /* ---------- segmented selector ---------- */

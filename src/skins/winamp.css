@@ -86,3 +86,5 @@
 }
 [data-skin="winamp"] .eq-curve-line { stroke: #18e35a; }
 [data-skin="winamp"] .pl-title, [data-skin="winamp"] .pl-titlebar { color: #8fa0b0; }
+
+[data-skin="winamp"] { --sw-slot:linear-gradient(180deg,#0c0e10,#20262b);--sw-bat:linear-gradient(180deg,#cfd6dd,#7c858e);--sw-bat-on:linear-gradient(180deg,#6dff8f,#1bbd4a);--sw-glow:rgba(45,255,110,.85);--sw-label-on:#18e35a; }

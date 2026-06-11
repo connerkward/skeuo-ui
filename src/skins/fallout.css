@@ -96,3 +96,5 @@
 }
 @keyframes crt-flicker { 0%,100%{opacity:1} 47%{opacity:.97} 48%{opacity:.88} 49%{opacity:.99} 92%{opacity:.95} }
 @keyframes crt-scan { from { background-position: 0 -10%; } to { background-position: 0 120%; } }
+
+[data-skin="fallout"] { --sw-slot:radial-gradient(120% 130% at 50% 30%,rgba(43,220,126,.08),#04140b);--sw-bat:linear-gradient(180deg,#8fa89a,#33453b);--sw-bat-on:linear-gradient(180deg,#5dffa6,#1fc873);--sw-glow:rgba(43,220,126,.9);--sw-label-on:#2bdc7e; }
