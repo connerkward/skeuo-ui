@@ -46,7 +46,33 @@
 
 /* touch: let drag controls capture the gesture instead of scrolling the page */
 .sk-slider-h, .sk-slider-v, .knob, .xy, .draggable,
-.tbtn, .toggle, .btn, .seg { touch-action: none; -webkit-tap-highlight-color: transparent; }
+.tbtn, .toggle, .btn, .seg, .flipsw { touch-action: none; -webkit-tap-highlight-color: transparent; }
+
+/* ============================================================
+   SPRITE CONTROLS — AI-rendered parts with real states
+   ============================================================ */
+/* flip switch: two stacked state images of the SAME switch; toggling swaps art */
+.sp-sw-stack { position: relative; flex: 1; width: 100%; min-height: 0; }
+.sp-sw-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; pointer-events: none;
+  transition: opacity .09s steps(2, jump-end);
+}
+.flipsw.sp-sw .sp-sw-img.on { opacity: 0; }
+.flipsw.sp-sw[data-on="true"] .sp-sw-img.on { opacity: 1; }
+.flipsw.sp-sw[data-on="true"] .sp-sw-img.off { opacity: 0; }
+.flipsw.sp-sw:active .sp-sw-stack { transform: scale(.96); }
+
+/* sprite knob: the art itself rotates */
+.sp-knob { cursor: ns-resize; }
+.sp-knob-img {
+  height: 78%; aspect-ratio: 1; object-fit: contain; pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.45));
+}
+
+/* sprite button: AI face + glyph on top; press depresses the art */
+.tbtn.sp-btn { text-shadow: 0 1px 1px rgba(0,0,0,.7); }
+.tbtn.sp-btn:active { transform: translateY(1px) scale(.97); filter: brightness(.82); box-shadow: none; }
 
 .title-text {
   font-size: 2.1cqw; letter-spacing: 1.4px; text-transform: uppercase;

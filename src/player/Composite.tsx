@@ -3,7 +3,7 @@ import type { Region, Template } from "../template/schema";
 import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
-import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive } from "./skins";
+import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, spriteUrl } from "./skins";
 
 interface Props {
   template: Template;
@@ -120,14 +120,10 @@ function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
     return <div className="region screen-bg" style={{ ...style, ...bg }} />;
   }
 
-  const spriteStyle: React.CSSProperties =
-    !baked && r.layer === "components" && skinHas(skinId, "components") ? atlas(skinId, "components", r) : {};
-  const sprited = Object.keys(spriteStyle).length > 0;
-
   const titleDown = r.dynamicType === "title" && r.id === "titlebar" ? onTitleDown : undefined;
   return (
     <div className={`region ${titleDown ? "draggable" : ""}`} style={style} onPointerDown={titleDown}>
-      {renderControl(r, ps, sprited || baked, spriteStyle, baked)}
+      {renderControl(r, ps, skinId)}
     </div>
   );
 }
@@ -142,11 +138,7 @@ function atlas(skinId: string, layer: "components" | "screen", r: Region): React
   };
 }
 
-function renderControl(
-  r: Region, ps: PlayerState, sprited: boolean, sprite: React.CSSProperties, baked = false
-): React.ReactNode {
-  const spr = sprited ? "sprited" : "";
-
+function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactNode {
   if (r.content === "dynamic") {
     switch (r.dynamicType) {
       case "title":
@@ -195,23 +187,29 @@ function renderControl(
     }
   }
 
-  // Controls are ALWAYS the live CSS layer (real, animated) — never baked into
-  // the frame sprite. The AI frame provides only bezel + faceplate + screens.
-  void sprite; void sprited; void baked; void spr;
+  // Controls are ALWAYS a live layer — never baked into the faceplate. When the
+  // skin ships AI control SPRITES (with states), components render those;
+  // otherwise the CSS-skeuomorphic fallback. Either way they're real & animated.
+  const sp = skinSprites(skinId);
   if (r.kind === "button") {
+    const face: React.CSSProperties = sp
+      ? { backgroundImage: `url(${spriteUrl(skinId, "button")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none" }
+      : {};
     return (
-      <button className="tbtn" onClick={btnHandler(r, ps)} title={r.label ?? r.id}>{glyph(r)}</button>
+      <button className={`tbtn ${sp ? "sp-btn" : ""}`} style={face} onClick={btnHandler(r, ps)} title={r.label ?? r.id}>
+        {glyph(r)}
+      </button>
     );
   }
   if (r.kind === "toggle") {
     const [on, toggle] = toggleBinding(r, ps);
-    return <FlipSwitch label={r.label ?? r.id} on={on} toggle={toggle} />;
+    return <FlipSwitch skinId={skinId} label={r.label ?? r.id} on={on} toggle={toggle} />;
   }
   if (r.kind === "segmented") return <Segmented r={r} ps={ps} baked={false} />;
-  if (r.kind === "knob") return <Knob r={r} ps={ps} baked={false} />;
+  if (r.kind === "knob") return <Knob r={r} ps={ps} skinId={skinId} />;
   if (r.kind === "xy") return <XYPad ps={ps} baked={false} />;
-  if (r.kind === "slider-h") return <SliderH r={r} ps={ps} sprite={{}} sprited={false} />;
-  if (r.kind === "slider-v") return <SliderV r={r} ps={ps} sprite={{}} sprited={false} />;
+  if (r.kind === "slider-h") return <SliderH r={r} ps={ps} skinId={skinId} />;
+  if (r.kind === "slider-v") return <SliderV r={r} ps={ps} skinId={skinId} />;
   return null;
 }
 
@@ -250,7 +248,20 @@ function toggleBinding(r: Region, ps: PlayerState): [boolean, () => void] {
 }
 
 /* ---------- flip switch (real, animated toggle) ---------- */
-function FlipSwitch({ label, on, toggle }: { label: string; on: boolean; toggle: () => void }) {
+function FlipSwitch({ skinId, label, on, toggle }: { skinId: string; label: string; on: boolean; toggle: () => void }) {
+  if (skinSprites(skinId)) {
+    // SPRITE switch: the same AI-rendered switch in two states; toggling swaps
+    // the art (with a snap transition), not a CSS imitation.
+    return (
+      <button className="flipsw sp-sw" data-on={on} onClick={toggle} title={`${label}: ${on ? "ON" : "OFF"}`}>
+        <span className="sp-sw-stack">
+          <img src={spriteUrl(skinId, "switch-off")} alt="" draggable={false} className="sp-sw-img off" />
+          <img src={spriteUrl(skinId, "switch-on")} alt="" draggable={false} className="sp-sw-img on" />
+        </span>
+        <span className="fsw-label">{label}</span>
+      </button>
+    );
+  }
   return (
     <button className="flipsw" data-on={on} onClick={toggle} title={`${label}: ${on ? "ON" : "OFF"}`}>
       <span className="fsw-track"><span className="fsw-bat" /></span>
@@ -279,7 +290,7 @@ function Segmented({ r, ps, baked }: { r: Region; ps: PlayerState; baked: boolea
 }
 
 /* ---------- rotary knob ---------- */
-function Knob({ r, ps, baked }: { r: Region; ps: PlayerState; baked: boolean }) {
+function Knob({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string }) {
   const value = r.bind === "volume" ? ps.volume : r.bind === "balance" ? ps.balance : 0.5;
   const setV = r.bind === "volume" ? ps.setVolume : ps.setBalance;
   const drag = useRef<{ y: number; v: number } | null>(null);
@@ -294,8 +305,20 @@ function Knob({ r, ps, baked }: { r: Region; ps: PlayerState; baked: boolean }) 
     return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, [setV]);
   const angle = -135 + value * 270;
+  if (skinSprites(skinId)) {
+    // SPRITE knob: the AI-rendered knob art itself rotates (pointer baked
+    // pointing up in the sprite).
+    return (
+      <div className="knob sp-knob" title={`${r.label}: ${(value * 100) | 0}%`}
+        onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
+        <img className="sp-knob-img" src={spriteUrl(skinId, "knob")} alt="" draggable={false}
+          style={{ transform: `rotate(${angle}deg)` }} />
+        <span className="knob-label">{r.label}</span>
+      </div>
+    );
+  }
   return (
-    <div className={`knob ${baked ? "baked" : ""}`} title={`${r.label}: ${(value * 100) | 0}%`}
+    <div className="knob" title={`${r.label}: ${(value * 100) | 0}%`}
       onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
       <div className="knob-body">
         <div className="knob-ind" style={{ transform: `translateX(-50%) rotate(${angle}deg)` }} />
@@ -332,7 +355,10 @@ function XYPad({ ps, baked }: { ps: PlayerState; baked: boolean }) {
 }
 
 /* ---------- sliders ---------- */
-function SliderH({ r, ps, sprite, sprited }: { r: Region; ps: PlayerState; sprite: React.CSSProperties; sprited: boolean }) {
+function SliderH({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string }) {
+  const thumbSprite: React.CSSProperties = skinSprites(skinId)
+    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+    : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
   const value =
@@ -352,15 +378,18 @@ function SliderH({ r, ps, sprite, sprited }: { r: Region; ps: PlayerState; sprit
     return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, []);
   return (
-    <div ref={ref} className={`sk-slider-h ${sprited ? "sprited" : ""}`} style={sprite}
+    <div ref={ref} className="sk-slider-h"
       onPointerDown={(e) => { drag.current = true; set(e.clientX); }} title={r.label}>
-      {!sprited && <><div className="rail" /><div className="fill" style={{ width: `${value * 100}%` }} /></>}
-      <div className="thumb" style={{ left: `${value * 100}%` }} />
+      <div className="rail" /><div className="fill" style={{ width: `${value * 100}%` }} />
+      <div className="thumb" style={{ left: `${value * 100}%`, ...thumbSprite }} />
     </div>
   );
 }
 
-function SliderV({ r, ps, sprite, sprited }: { r: Region; ps: PlayerState; sprite: React.CSSProperties; sprited: boolean }) {
+function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string }) {
+  const thumbSprite: React.CSSProperties = skinSprites(skinId)
+    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+    : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
   const idx = r.index ?? 0;
@@ -379,10 +408,10 @@ function SliderV({ r, ps, sprite, sprited }: { r: Region; ps: PlayerState; sprit
   }, [disabled]);
   return (
     <div className="eq-slot">
-      <div ref={ref} className={`sk-slider-v ${sprited ? "sprited" : ""}`} data-disabled={disabled} style={sprite}
+      <div ref={ref} className="sk-slider-v" data-disabled={disabled}
         onPointerDown={(e) => { drag.current = true; set(e.clientY); }} title={r.label}>
-        {!sprited && <><div className="rail" /><div className="fill" style={{ height: `${value * 100}%` }} /></>}
-        <div className="thumb" style={{ bottom: `${value * 100}%` }} />
+        <div className="rail" /><div className="fill" style={{ height: `${value * 100}%` }} />
+        <div className="thumb" style={{ bottom: `${value * 100}%`, ...thumbSprite }} />
       </div>
       <span className="eq-label">{r.label}</span>
     </div>

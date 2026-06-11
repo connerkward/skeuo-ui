@@ -1,14 +1,11 @@
 import type { Layer } from "../template/schema";
 
-// Per-skin asset registry. When a layer image exists (generated art under
-// /skins/<id>/), the compositor draws it; otherwise it falls back to the
-// CSS-skeuomorphic baseline so the UI is always aligned and presentable.
-//
-//   frame      = the chrome/bezel background (the "frame" layer)
-//   components = baked button/slider faces, transparent elsewhere
-//   screen     = styled-but-empty recessed screens (live content renders over)
-//
-// `has` lists which generated layers are present for the skin.
+// Per-skin asset registry. Layered architecture:
+//   frame              = AI faceplate (bezel + blank panel, no controls/screens)
+//   sprites/           = AI control sprites WITH STATES (switch-off/on, knob,
+//                        button, thumb) — composited live by React
+//   screens + content  = CSS recessed screens with live React content
+// CSS approximations are the fallback when a layer is missing.
 export interface SkinAssets {
   id: string;
   name: string;
@@ -20,12 +17,12 @@ export interface SkinAssets {
   // skins whose layout was EXTRACTED from a freeform design carry their own
   // template (fetched at runtime) instead of the canonical one
   templateUrl?: string;
-  // CSS palette to use (the [data-skin] value); defaults to id. Lets a
-  // freeform skin (own assets) reuse an existing style's look.
+  // CSS palette to use (the [data-skin] value); defaults to id.
   style?: string;
-  // wild-shaped skins with EMPTY baked screens + CV-detected screen regions:
-  // render live content INTO the detected screens (controls stay baked).
+  // wild-shaped skins with CV-detected screen regions
   live?: boolean;
+  // AI control sprites with states exist under /skins/<id>/sprites/
+  sprites?: boolean;
 }
 
 export function skinLive(id: string): boolean {
@@ -37,13 +34,26 @@ export function skinStyle(id: string): string {
   return s?.style ?? id;
 }
 
+// sprites resolve through `style`, so a wild body (own frame/template) mounts
+// its base style's control sprites
+export function skinSprites(id: string): boolean {
+  const sid = skinStyle(id);
+  return !!skinList.find((x) => x.id === sid)?.sprites;
+}
+
 export const skinList: SkinAssets[] = [
-  { id: "winamp",   name: "Winamp Classic",  blurb: "Brushed gunmetal, chrome screws, green LCD", has: ["frame"], baked: false },
-  { id: "fallout",  name: "Fallout Pip-Boy", blurb: "Riveted RobCo handheld, green-phosphor CRT", has: ["frame"], baked: false },
-  { id: "fantasy",  name: "Baldur's Gate",   blurb: "Carved stone, gold filigree, gem runes", has: ["frame"], baked: false },
-  { id: "aqua",     name: "Mac OS X Aqua",   blurb: "Glossy white glass, pinstripes, candy lozenges", has: ["frame"], baked: false },
-  { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: false },
-  { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: false },
+  { id: "winamp",   name: "Winamp Classic",  blurb: "Brushed gunmetal, chrome screws, green LCD", has: ["frame"], baked: false, sprites: true },
+  { id: "fallout",  name: "Fallout Pip-Boy", blurb: "Riveted RobCo handheld, green-phosphor CRT", has: ["frame"], baked: false, sprites: true },
+  { id: "fantasy",  name: "Baldur's Gate",   blurb: "Carved stone, gold filigree, gem runes", has: ["frame"], baked: false, sprites: true },
+  { id: "aqua",     name: "Mac OS X Aqua",   blurb: "Glossy white glass, pinstripes, candy lozenges", has: ["frame"], baked: false, sprites: true },
+  { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: false, sprites: true },
+  { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: false, sprites: true },
+
+  // wild ✦ — gpt-image-2 Y2K bodies (cut-out silhouettes, empty wells) with the
+  // base style's sprite controls mounted into the wells + live screens
+  { id: "y2k-pod",    name: "Y2K Pod ✦",     blurb: "Chrome pod body, sprite controls mounted", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/y2k-pod/template.json" },
+  { id: "y2k-wasp",   name: "Rust Wasp ✦",   blurb: "RobCo insectoid body, sprite controls mounted", has: ["frame"], live: true, style: "fallout", templateUrl: "/skins/y2k-wasp/template.json" },
+  { id: "y2k-splash", name: "Aqua Splash ✦", blurb: "Liquid gel body, sprite controls mounted", has: ["frame"], live: true, style: "aqua",    templateUrl: "/skins/y2k-splash/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
@@ -54,11 +64,11 @@ export function skinBaked(id: string): boolean {
   return !!skinList.find((x) => x.id === id)?.baked;
 }
 
-// bump when frames are regenerated so browsers re-fetch (frame.png URLs are
-// otherwise stable and get served from disk cache)
-const ASSET_VERSION = "nb4";
+// bump when frames/sprites are regenerated so browsers re-fetch
+const ASSET_VERSION = "nb6";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
+export const spriteUrl = (id: string, name: string) => `${base(skinStyle(id))}/sprites/${name}.png?v=${ASSET_VERSION}`;
 
 export function skinHas(id: string, layer: Layer): boolean {
   const s = skinList.find((x) => x.id === id);

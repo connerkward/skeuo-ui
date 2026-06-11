@@ -1,0 +1,135 @@
+{
+  "id": "y2k-wasp",
+  "name": "wild-y2k",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "playlist",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "dynamicType": "playlist",
+      "rect": {
+        "x": 0.06640625,
+        "y": 0.12565104166666666,
+        "w": 0.8916015625,
+        "h": 0.85546875
+      }
+    },
+    {
+      "id": "prev",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "prev",
+      "label": "prev",
+      "rect": {
+        "x": 0.2275390625,
+        "y": 0.3736979166666667,
+        "w": 0.0693359375,
+        "h": 0.044921875
+      }
+    },
+    {
+      "id": "play",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "play",
+      "label": "play",
+      "rect": {
+        "x": 0.3173828125,
+        "y": 0.3756510416666667,
+        "w": 0.0693359375,
+        "h": 0.043619791666666664
+      }
+    },
+    {
+      "id": "pause",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "pause",
+      "label": "pause",
+      "rect": {
+        "x": 0.4052734375,
+        "y": 0.3743489583333333,
+        "w": 0.0693359375,
+        "h": 0.044921875
+      }
+    },
+    {
+      "id": "stop",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "stop",
+      "label": "stop",
+      "rect": {
+        "x": 0.5830078125,
+        "y": 0.3743489583333333,
+        "w": 0.0673828125,
+        "h": 0.045572916666666664
+      }
+    },
+    {
+      "id": "sw0",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "shuffle",
+      "label": "SHUF",
+      "rect": {
+        "x": 0.3056640625,
+        "y": 0.1640625,
+        "w": 0.068359375,
+        "h": 0.021484375
+      }
+    },
+    {
+      "id": "knob0",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "volume",
+      "label": "VOL",
+      "rect": {
+        "x": 0.4365234375,
+        "y": 0.7845052083333334,
+        "w": 0.046875,
+        "h": 0.032552083333333336
+      }
+    },
+    {
+      "id": "knob1",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "balance",
+      "label": "BAL",
+      "rect": {
+        "x": 0.494140625,
+        "y": 0.3743489583333333,
+        "w": 0.0771484375,
+        "h": 0.044921875
+      }
+    },
+    {
+      "id": "seek",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "bind": "seek",
+      "label": "Seek",
+      "rect": {
+        "x": 0.38671875,
+        "y": 0.162109375,
+        "w": 0.11328125,
+        "h": 0.024739583333333332
+      }
+    }
+  ]
+}
