@@ -38,12 +38,12 @@
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.099,
-        "y": 0.224,
-        "w": 0.112,
-        "h": 0.157
+        "x": 0.049,
+        "y": 0.317,
+        "w": 0.103,
+        "h": 0.183
       },
-      "label": "Volume Knob",
+      "label": "Volume",
       "bind": "volume"
     },
     {
@@ -52,108 +52,164 @@
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.855,
-        "y": 0.208,
-        "w": 0.112,
-        "h": 0.157
+        "x": 0.848,
+        "y": 0.304,
+        "w": 0.095,
+        "h": 0.168
       },
-      "label": "Balance Knob",
+      "label": "Balance",
       "bind": "balance"
     },
     {
-      "id": "previous_button",
+      "id": "button_previous",
       "kind": "button",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.292,
-        "y": 0.293,
-        "w": 0.048,
-        "h": 0.057
+        "x": 0.27,
+        "y": 0.341,
+        "w": 0.07,
+        "h": 0.065
       },
-      "label": "Previous Button",
+      "label": "Previous",
       "bind": "prev"
     },
     {
-      "id": "play_button",
+      "id": "button_play",
       "kind": "button",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.351,
-        "y": 0.293,
-        "w": 0.048,
-        "h": 0.057
+        "x": 0.353,
+        "y": 0.341,
+        "w": 0.07,
+        "h": 0.065
       },
-      "label": "Play Button",
+      "label": "Play",
       "bind": "play"
     },
     {
-      "id": "stop_button",
+      "id": "button_stop",
       "kind": "button",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.411,
-        "y": 0.293,
-        "w": 0.048,
-        "h": 0.057
+        "x": 0.436,
+        "y": 0.341,
+        "w": 0.07,
+        "h": 0.065
       },
-      "label": "Stop Button",
+      "label": "Stop",
       "bind": "stop"
     },
     {
-      "id": "pause_button",
+      "id": "button_pause",
       "kind": "button",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.47,
-        "y": 0.293,
-        "w": 0.048,
-        "h": 0.057
+        "x": 0.519,
+        "y": 0.341,
+        "w": 0.07,
+        "h": 0.065
       },
-      "label": "Pause Button",
+      "label": "Pause",
       "bind": "pause"
     },
     {
-      "id": "next_button",
+      "id": "button_next",
       "kind": "button",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.53,
-        "y": 0.293,
-        "w": 0.048,
-        "h": 0.057
+        "x": 0.602,
+        "y": 0.341,
+        "w": 0.07,
+        "h": 0.065
       },
-      "label": "Next Button",
+      "label": "Next",
       "bind": "next"
     },
     {
-      "id": "slider",
+      "id": "power_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.034,
+        "y": 0.51,
+        "w": 0.046,
+        "h": 0.061
+      },
+      "label": "Power",
+      "bind": "mute"
+    },
+    {
+      "id": "slider_track",
       "kind": "slider-h",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.276,
-        "y": 0.351,
-        "w": 0.444,
-        "h": 0.058
+        "x": 0.138,
+        "y": 0.454,
+        "w": 0.717,
+        "h": 0.059
       },
-      "label": "Slider",
+      "label": "Track Slider",
       "bind": "seek"
     },
     {
-      "id": "eq_slider_60",
+      "id": "toggle_repeat",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.073,
+        "y": 0.55,
+        "w": 0.067,
+        "h": 0.035
+      },
+      "label": "Repeat",
+      "bind": "shuffle"
+    },
+    {
+      "id": "toggle_shuffle",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.073,
+        "y": 0.615,
+        "w": 0.067,
+        "h": 0.035
+      },
+      "label": "Shuffle",
+      "bind": "shuffle"
+    },
+    {
+      "id": "toggle_intro",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.073,
+        "y": 0.68,
+        "w": 0.067,
+        "h": 0.035
+      },
+      "label": "Intro",
+      "bind": "eqOn"
+    },
+    {
+      "id": "eq_slider_1",
       "kind": "slider-v",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.746,
-        "y": 0.418,
-        "w": 0.03,
-        "h": 0.191
+        "x": 0.686,
+        "y": 0.524,
+        "w": 0.035,
+        "h": 0.12
       },
       "label": "EQ Slider 60Hz",
       "bind": "eqBand",
@@ -161,15 +217,15 @@
       "index": 0
     },
     {
-      "id": "eq_slider_250",
+      "id": "eq_slider_2",
       "kind": "slider-v",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.789,
-        "y": 0.418,
-        "w": 0.03,
-        "h": 0.191
+        "x": 0.72,
+        "y": 0.524,
+        "w": 0.035,
+        "h": 0.12
       },
       "label": "EQ Slider 250Hz",
       "bind": "eqBand",
@@ -177,15 +233,15 @@
       "index": 1
     },
     {
-      "id": "eq_slider_1k",
+      "id": "eq_slider_3",
       "kind": "slider-v",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.832,
-        "y": 0.418,
-        "w": 0.03,
-        "h": 0.191
+        "x": 0.754,
+        "y": 0.524,
+        "w": 0.035,
+        "h": 0.12
       },
       "label": "EQ Slider 1kHz",
       "bind": "eqBand",
@@ -193,15 +249,15 @@
       "index": 2
     },
     {
-      "id": "eq_slider_4k",
+      "id": "eq_slider_4",
       "kind": "slider-v",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.875,
-        "y": 0.418,
-        "w": 0.03,
-        "h": 0.191
+        "x": 0.788,
+        "y": 0.524,
+        "w": 0.035,
+        "h": 0.12
       },
       "label": "EQ Slider 4kHz",
       "bind": "eqBand",
@@ -209,60 +265,20 @@
       "index": 3
     },
     {
-      "id": "eq_slider_16k",
+      "id": "eq_slider_5",
       "kind": "slider-v",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.918,
-        "y": 0.418,
-        "w": 0.03,
-        "h": 0.191
+        "x": 0.822,
+        "y": 0.524,
+        "w": 0.035,
+        "h": 0.12
       },
       "label": "EQ Slider 16kHz",
       "bind": "eqBand",
       "group": "eq-bands",
       "index": 4
-    },
-    {
-      "id": "repeat_toggle",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.069,
-        "y": 0.39,
-        "w": 0.06,
-        "h": 0.057
-      },
-      "label": "Repeat Toggle"
-    },
-    {
-      "id": "shuffle_toggle",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.069,
-        "y": 0.474,
-        "w": 0.06,
-        "h": 0.057
-      },
-      "label": "Shuffle Toggle",
-      "bind": "shuffle"
-    },
-    {
-      "id": "intro_toggle",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.069,
-        "y": 0.558,
-        "w": 0.06,
-        "h": 0.057
-      },
-      "label": "Intro Toggle"
     }
   ]
 }

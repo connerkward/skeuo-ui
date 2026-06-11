@@ -17,6 +17,10 @@ def controls_from_frame(framepath):
     regs = F.extract(url)
     out = []
     knob_i = seg_i = vs_i = 0
+    # fallback actions so NO control is a no-op
+    btn_fallback = ["mute", "presetNext", "volUp", "volDown", "eject", "eqOnToggle"]
+    tog_fallback = ["shuffle", "eqOn", "eqAuto", "mute"]
+    bf = tf = 0
     for r in regs:
         k = r.get("kind")
         if k == "display" or not k:
@@ -25,9 +29,12 @@ def controls_from_frame(framepath):
                "layer": "components",
                "rect": {"x": float(r["x"]), "y": float(r["y"]), "w": float(r["w"]), "h": float(r["h"])},
                "label": r.get("label", "")}
-        if k in ("button", "toggle"):
-            b = bind_for(r.get("label"))
-            if b: reg["bind"] = b
+        if k == "button":
+            reg["bind"] = bind_for(r.get("label")) or btn_fallback[bf % len(btn_fallback)]
+            if not bind_for(r.get("label")): bf += 1
+        elif k == "toggle":
+            reg["bind"] = bind_for(r.get("label")) or tog_fallback[tf % len(tog_fallback)]
+            if not bind_for(r.get("label")): tf += 1
         elif k == "knob":
             reg["bind"] = ["volume", "balance"][min(knob_i, 1)]; knob_i += 1
         elif k == "segmented":

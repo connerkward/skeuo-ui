@@ -25,7 +25,7 @@ export function Composite({ template, skinId, showWireframe }: Props) {
   useEffect(() => {
     if (!url) { setLoaded(null); return; }
     let live = true;
-    fetch(url).then((r) => r.json()).then((t) => { if (live) setLoaded(t); });
+    fetch(url, { cache: "reload" }).then((r) => r.json()).then((t) => { if (live) setLoaded(t); });
     return () => { live = false; };
   }, [url]);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -154,7 +154,7 @@ function renderControl(
       case "time":
         return <div className="dyn lcd-time" data-paused={!ps.playing}>{fmtTime(ps.elapsed)}</div>;
       case "visualizer":
-        return <Visualizer playing={ps.playing} />;
+        return <Visualizer playing={ps.playing} analyser={ps.analyser} />;
       case "marquee":
         return (
           <div className="dyn marquee">
@@ -167,8 +167,8 @@ function renderControl(
         );
       case "meta":
         if (r.id === "pl-summary") {
-          const total = ps.content.tracks.reduce((s, t) => s + t.seconds, 0);
-          return <div className="dyn pl-summary">{ps.content.tracks.length} tracks · {fmtTime(total)}</div>;
+          const total = ps.tracks.reduce((s, t) => s + t.seconds, 0);
+          return <div className="dyn pl-summary">{ps.tracks.length} tracks · {fmtTime(total)}</div>;
         }
         return (
           <div className="dyn display-meta">
@@ -182,7 +182,7 @@ function renderControl(
       case "playlist":
         return (
           <ol className="dyn pl-list">
-            {ps.content.tracks.map((t, i) => (
+            {ps.tracks.map((t, i) => (
               <li key={i} className={`pl-row ${i === ps.trackIdx ? "current" : ""}`}
                 onClick={() => ps.select(i)} onDoubleClick={() => { ps.select(i); ps.play(); }}>
                 <span className="pl-num">{i + 1}.</span>
@@ -233,6 +233,15 @@ function btnHandler(r: Region, ps: PlayerState): () => void {
     case "prev": return ps.prev;  case "play": return ps.play;
     case "pause": return ps.pause; case "stop": return ps.stop;
     case "next": return ps.next;  case "eject": return ps.eject;
+    case "mute": return ps.toggleMute;
+    case "volUp": return () => ps.setVolume(Math.min(1, ps.volume + 0.12));
+    case "volDown": return () => ps.setVolume(Math.max(0, ps.volume - 0.12));
+    case "presetNext": case "presets": return () => ps.setEqPreset((ps.eqPreset + 1) % 4);
+    case "eqOnToggle": return () => ps.setEqOn((v) => !v);
+    case "pl-add": return ps.addTrack;
+    case "pl-rem": return ps.removeTrack;
+    case "pl-sel": return () => ps.select(0);
+    case "pl-misc": return ps.sortList;
     default: return () => {};
   }
 }
@@ -241,6 +250,7 @@ function toggleBinding(r: Region, ps: PlayerState): [boolean, () => void] {
     case "shuffle": return [ps.shuffle, ps.toggleShuffle];
     case "eqOn":    return [ps.eqOn, () => ps.setEqOn((v) => !v)];
     case "eqAuto":  return [ps.eqAuto, () => ps.setEqAuto((v) => !v)];
+    case "mute":    return [ps.muted, ps.toggleMute];
     default:        return [false, () => {}];
   }
 }

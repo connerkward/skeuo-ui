@@ -45,15 +45,8 @@ export const skinList: SkinAssets[] = [
   { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: true },
   { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: true },
 
-  // freeform ✦ — each layout reverse-engineered from its OWN gpt-image-2 design
-  { id: "ff-winamp",     name: "Winamp ✦ freeform",     blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "winamp",     templateUrl: "/skins/ff-winamp/template.json" },
-  { id: "ff-fallout",    name: "Fallout ✦ freeform",    blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "fallout",    templateUrl: "/skins/ff-fallout/template.json" },
-  { id: "ff-fantasy",    name: "Baldur's Gate ✦ freeform", blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "fantasy",    templateUrl: "/skins/ff-fantasy/template.json" },
-  { id: "ff-aqua",       name: "Aqua ✦ freeform",       blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "aqua",       templateUrl: "/skins/ff-aqua/template.json" },
-  { id: "ff-hifi",       name: "70s Hi-Fi ✦ freeform",  blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "hifi",       templateUrl: "/skins/ff-hifi/template.json" },
-  { id: "ff-papercraft", name: "Papercraft ✦ freeform", blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "papercraft", templateUrl: "/skins/ff-papercraft/template.json" },
-
-  // shaped ✦ — irregular non-rectangular silhouettes (background cut out)
+  // shaped ✦ — irregular non-rectangular silhouettes (background cut out),
+  // EMPTY screens + CV-detected screen regions → wild + live + fully functional
   { id: "winamp-shaped",  name: "Winamp ✦ shaped",      blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "winamp",  templateUrl: "/skins/winamp-shaped/template.json" },
   { id: "fantasy-shaped", name: "Baldur's Gate ✦ shaped", blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "fantasy", templateUrl: "/skins/fantasy-shaped/template.json" },
   { id: "fallout-shaped", name: "Fallout ✦ shaped",      blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "fallout", templateUrl: "/skins/fallout-shaped/template.json" },
