@@ -60,6 +60,7 @@ export const skinList: SkinAssets[] = [
   { id: "bondi",   name: "Bondi G3 ✦",      blurb: "Translucent Y2K plastic, circuit shadows", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/bondi/template.json" },
   { id: "toilet",  name: "Porcelain ✦",     blurb: "Gleaming ceramic, chrome flush lever", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/toilet/template.json" },
   { id: "biomech", name: "Hive Mind ✦",     blurb: "Giger bone & sinew, bioluminescent veins", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/biomech/template.json" },
+  { id: "fiend",   name: "Chrome Fiend ✦",  blurb: "Free-designed chrome predator, blade fins", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/fiend/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
