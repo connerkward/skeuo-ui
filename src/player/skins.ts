@@ -32,8 +32,11 @@ export function skinBaked(id: string): boolean {
   return !!skinList.find((x) => x.id === id)?.baked;
 }
 
+// bump when frames are regenerated so browsers re-fetch (frame.png URLs are
+// otherwise stable and get served from disk cache)
+const ASSET_VERSION = "nb2k";
 const base = (id: string) => `/skins/${id}`;
-export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png`;
+export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 
 export function skinHas(id: string, layer: Layer): boolean {
   const s = skinList.find((x) => x.id === id);
