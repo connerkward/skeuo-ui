@@ -1,0 +1,39 @@
+/* ============================================================
+   FREEFORM ✦ EXTRACTED — layout reverse-engineered from a
+   gpt-image-2 freeform design, reskinned (Winamp-style frame).
+   Green-LCD / chrome palette to match the reskinned frame.
+   ============================================================ */
+[data-skin="freeform"] {
+  --ui-font: Tahoma, system-ui, sans-serif;
+  --lcd-font: "VT323", "Courier New", monospace;
+  --list-font: "VT323", "Courier New", monospace;
+  --ink: #c8cdd2;
+
+  --lcd-ink: #18e35a;
+  --lcd-ink-dim: #2aa257;
+  --lcd-glow: 0 0 5px rgba(24,227,90,.65);
+  --lcd-glow-filter: drop-shadow(0 0 2px rgba(24,227,90,.7));
+  --lcd-bg: #04100a; --lcd-radius: 3px;
+  --lcd-inset: inset 0 2px 7px rgba(0,0,0,.9); --lcd-border: 1px solid #000;
+
+  --vis-lo: #138a3a; --vis-hi: #c7ff3b; --vis-peak: #d7e6c0;
+
+  --btn-ink: #e9eef3; --btn-radius: 4px;
+  --btn-bg: linear-gradient(180deg, #525a63, #2b3036);
+  --btn-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 1px 1px rgba(0,0,0,.5);
+  --toggle-on-spark: #2dff6e;
+  --knob-ind: #eaf0f5; --knob-ind-glow: rgba(255,255,255,.6);
+  --xy-puck: #18e35a; --xy-line: rgba(24,227,90,.18);
+
+  --rail-bg: linear-gradient(90deg, #0c0e10, #20262b); --rail-w: 4px;
+  --fill-bg: linear-gradient(90deg, #138a3a, #2dd968);
+  --thumb-bg: linear-gradient(180deg, #6b7480, #3a4148);
+  --thumb-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 2px 3px rgba(0,0,0,.6);
+  --thumb-w: 18px; --thumb-h: 12px;
+
+  --list-ink: #18e35a;
+  --list-sel-bg: #143a78; --list-sel-ink: #d7ff66;
+  --list-hover: rgba(24,227,90,.10);
+  --title-ink: #8fa0b0;
+}
+[data-skin="freeform"] .eq-curve-line { stroke: #18e35a; }

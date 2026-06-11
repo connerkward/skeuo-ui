@@ -3,7 +3,7 @@ import type { Region, Template } from "../template/schema";
 import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
-import { layerUrl, skinHas, skinBaked } from "./skins";
+import { layerUrl, skinHas, skinBaked, skinTemplateUrl } from "./skins";
 
 interface Props {
   template: Template;
@@ -18,12 +18,18 @@ interface Props {
 // only (no runtime element).
 export function Composite({ template, skinId, showWireframe }: Props) {
   const ps = usePlayer(skinId);
-  const { canvas } = template;
-  const baked = skinBaked(skinId);
-  const hasFrame = skinHas(skinId, "frame");
+
+  // skins with an extracted layout fetch their own template at runtime
+  const [loaded, setLoaded] = useState<Template | null>(null);
+  const url = skinTemplateUrl(skinId);
+  useEffect(() => {
+    if (!url) { setLoaded(null); return; }
+    let live = true;
+    fetch(url).then((r) => r.json()).then((t) => { if (live) setLoaded(t); });
+    return () => { live = false; };
+  }, [url]);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const drag = useRef<{ ox: number; oy: number; px: number; py: number } | null>(null);
-
   useEffect(() => {
     const m = (e: MouseEvent) => {
       if (!drag.current) return;
@@ -38,6 +44,14 @@ export function Composite({ template, skinId, showWireframe }: Props) {
     drag.current = { ox: pos.x, oy: pos.y, px: e.clientX, py: e.clientY };
   };
 
+  // all hooks above this line — safe to early-return now
+  const active = url ? loaded : template;
+  if (!active) return <div className="player" data-skin={skinId} style={{ aspectRatio: "1024 / 1536" }} />;
+  const tpl = active;
+  const { canvas } = tpl;
+  const baked = skinBaked(skinId);
+  const hasFrame = skinHas(skinId, "frame");
+
   return (
     <div
       className={`player ${showWireframe ? "is-wireframe" : ""} ${hasFrame ? "has-frame" : ""}`}
@@ -50,7 +64,7 @@ export function Composite({ template, skinId, showWireframe }: Props) {
         <img className="layer screen-layer" src={layerUrl(skinId, "screen")} alt="" />
       )}
 
-      {template.regions.map((r) => (
+      {tpl.regions.map((r) => (
         <RegionView key={r.id} region={r} ps={ps} skinId={skinId}
           wire={!!showWireframe} baked={baked} onTitleDown={startDrag} />
       ))}

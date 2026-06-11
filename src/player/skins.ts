@@ -17,6 +17,9 @@ export interface SkinAssets {
   // the generated frame image bakes in the controls + screens, so React
   // renders only transparent interactive overlays + live screen content
   baked?: boolean;
+  // skins whose layout was EXTRACTED from a freeform design carry their own
+  // template (fetched at runtime) instead of the canonical one
+  templateUrl?: string;
 }
 
 export const skinList: SkinAssets[] = [
@@ -26,7 +29,12 @@ export const skinList: SkinAssets[] = [
   { id: "aqua",     name: "Mac OS X Aqua",   blurb: "Glossy white glass, pinstripes, candy lozenges", has: ["frame"], baked: true },
   { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: true },
   { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: true },
+  { id: "freeform",   name: "Freeform ✦ extracted", blurb: "Layout reverse-engineered from a gpt-image-2 design", has: ["frame"], baked: true, templateUrl: "/skins/freeform/template.json" },
 ];
+
+export function skinTemplateUrl(id: string): string | undefined {
+  return skinList.find((x) => x.id === id)?.templateUrl;
+}
 
 export function skinBaked(id: string): boolean {
   return !!skinList.find((x) => x.id === id)?.baked;
