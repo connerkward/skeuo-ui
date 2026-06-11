@@ -1,0 +1,221 @@
+/* ============================================================
+   Shared structure for the compositor.
+   Everything is absolutely positioned by the template at
+   normalized coords, so generated art and live widgets align.
+   Skin files ([data-skin="..."]) paint surfaces, bevels, colors.
+   ============================================================ */
+
+.player {
+  position: relative;
+  width: var(--w, 480px);
+  user-select: none;
+  font-family: var(--ui-font, system-ui, sans-serif);
+  color: var(--ink, #cfcfcf);
+  border-radius: var(--frame-radius, 4px);
+  background: var(--frame-bg, var(--panel-bg, #222));
+  background-size: 100% 100% !important;
+  box-shadow: var(--frame-shadow, 0 24px 60px rgba(0,0,0,.7));
+  border: var(--frame-border, none);
+  overflow: hidden;
+}
+
+.layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.region { position: absolute; }
+
+/* ---------- recessed screens (CSS fallback) ---------- */
+.screen-bg {
+  background: var(--lcd-bg, #04100a);
+  border-radius: var(--lcd-radius, 3px);
+  box-shadow: var(--lcd-inset, inset 0 2px 8px rgba(0,0,0,.9));
+  border: var(--lcd-border, 1px solid rgba(0,0,0,.6));
+}
+
+/* ---------- dynamic content fills its region ---------- */
+.dyn { width: 100%; height: 100%; }
+
+.title-text {
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  font-weight: 700; color: var(--title-ink, currentColor);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center;
+  text-shadow: var(--title-glow, none);
+}
+
+.lcd-time {
+  font-family: var(--lcd-font, "Courier New", monospace);
+  font-weight: 700; letter-spacing: 2px;
+  color: var(--lcd-ink);
+  text-shadow: var(--lcd-glow, 0 0 6px currentColor);
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(18px, 5.5cqw, 30px);
+  container-type: inline-size;
+}
+.lcd-time[data-paused="true"] { animation: lcd-blink 1s steps(1) infinite; }
+@keyframes lcd-blink { 50% { opacity: .35; } }
+
+.vis-canvas { width: 100%; height: 100%; display: block; }
+
+.marquee {
+  overflow: hidden; white-space: nowrap;
+  font-family: var(--lcd-font, monospace); font-size: 12px;
+  color: var(--lcd-ink); text-shadow: var(--lcd-glow, none);
+  display: flex; align-items: center;
+}
+.marquee-text { display: inline-block; padding-left: 100%; animation: marquee 16s linear infinite; }
+@keyframes marquee { to { transform: translateX(-100%); } }
+
+.display-meta {
+  display: flex; gap: 9px; align-items: center;
+  font-size: 9px; font-family: var(--lcd-font, monospace);
+  color: var(--lcd-ink-dim, var(--lcd-ink));
+}
+.display-meta b { font-size: 11px; }
+.display-meta .stereo { opacity: .3; letter-spacing: 1px; }
+.display-meta .stereo.on { opacity: 1; text-shadow: var(--lcd-glow, none); }
+.pl-summary {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-family: var(--lcd-font, monospace);
+  color: var(--lcd-ink-dim, var(--ink)); opacity: .75;
+}
+
+/* ---------- EQ curve ---------- */
+.eq-curve-svg { width: 100%; height: 100%; }
+.eq-curve-line { fill: none; stroke: var(--lcd-ink); stroke-width: 1.4; vector-effect: non-scaling-stroke; filter: var(--lcd-glow-filter, none); }
+.eq-curve-svg.off .eq-curve-line { opacity: .25; }
+.eq-curve-mid { stroke: var(--lcd-ink); stroke-width: .5; opacity: .25; vector-effect: non-scaling-stroke; }
+
+/* ---------- playlist ---------- */
+.pl-list {
+  list-style: none; margin: 0; padding: 4px 6px;
+  width: 100%; height: 100%; overflow-y: auto;
+  font-family: var(--list-font, var(--lcd-font, monospace));
+  font-size: 11px; line-height: 1.45;
+}
+.pl-row { display: flex; gap: 7px; padding: 1px 4px; cursor: pointer; color: var(--list-ink, var(--lcd-ink)); white-space: nowrap; border-radius: 1px; }
+.pl-row:hover { background: var(--list-hover, rgba(255,255,255,.06)); }
+.pl-row.current { background: var(--list-sel-bg, rgba(0,90,200,.7)); color: var(--list-sel-ink, #fff); }
+.pl-num { flex: 0 0 auto; opacity: .7; min-width: 16px; text-align: right; }
+.pl-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.pl-dur { flex: 0 0 auto; opacity: .85; }
+.pl-list::-webkit-scrollbar { width: 8px; }
+.pl-list::-webkit-scrollbar-track { background: var(--scroll-track, rgba(0,0,0,.3)); }
+.pl-list::-webkit-scrollbar-thumb { background: var(--scroll-thumb, #555); border-radius: 2px; }
+
+/* ============================================================
+   Interactive controls (CSS-skeuomorphic fallback).
+   `.sprited` = a baked sprite supplies the face; we only add
+   the hit target + press feedback.
+   ============================================================ */
+.region > button, .region > .sk-slider-h, .region > .sk-slider-v, .eq-slot { width: 100%; height: 100%; }
+
+.tbtn, .toggle, .btn {
+  width: 100%; height: 100%;
+  border: 0; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; letter-spacing: .4px; line-height: 1;
+  color: var(--btn-ink);
+  background: var(--btn-bg);
+  border-radius: var(--btn-radius, 3px);
+  box-shadow: var(--btn-shadow);
+  transition: filter .07s, transform .06s, box-shadow .07s;
+}
+.tbtn { font-size: 12px; }
+.toggle, .btn { font-size: 9px; }
+.tbtn:hover, .toggle:hover, .btn:hover { filter: brightness(1.1); }
+.tbtn:active, .toggle:active, .btn:active {
+  transform: translateY(1px);
+  box-shadow: var(--btn-shadow-active, inset 0 2px 5px rgba(0,0,0,.6));
+  filter: brightness(.9);
+}
+
+.toggle[data-on="true"] {
+  color: var(--toggle-on-ink, #fff);
+  background: var(--toggle-on-bg, var(--btn-bg));
+  box-shadow: var(--toggle-on-shadow, var(--btn-shadow)), var(--toggle-on-glow, none);
+}
+
+/* sprited faces: transparent element, the baked art supplies the look;
+   we keep only the hit target + press feedback (+ lit glow for toggles) */
+.tbtn.sprited, .toggle.sprited, .btn.sprited,
+.sk-slider-h.sprited, .sk-slider-v.sprited {
+  background: transparent;
+  box-shadow: none; color: transparent; text-shadow: none;
+  border-radius: var(--btn-radius, 4px);
+}
+/* the baked face lives in the frame image, so simulate a press with a
+   momentary dark inset over the region */
+.tbtn.sprited:active, .btn.sprited:active,
+.toggle.sprited:active {
+  transform: none;
+  background: rgba(0,0,0,.26);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.3);
+}
+.toggle.sprited[data-on="true"] {
+  background: transparent;
+  filter: brightness(1.12) drop-shadow(0 0 6px var(--toggle-on-spark, rgba(120,255,160,.85)));
+}
+/* a small lit pip in the corner so an on-state reads even over a busy face */
+.toggle.sprited[data-on="true"]::after {
+  content: ""; position: absolute; top: 14%; right: 12%;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--toggle-on-spark, #6dff8f);
+  box-shadow: 0 0 6px var(--toggle-on-spark, #6dff8f);
+}
+.toggle.sprited { position: relative; }
+
+/* ---------- horizontal slider ---------- */
+.sk-slider-h { position: relative; cursor: pointer; }
+.sk-slider-h .rail {
+  position: absolute; left: 0; right: 0; top: 50%; height: var(--rail-w, 5px);
+  transform: translateY(-50%); background: var(--rail-bg);
+  border-radius: 3px; box-shadow: var(--rail-shadow, inset 0 0 2px rgba(0,0,0,.8));
+}
+.sk-slider-h .fill {
+  position: absolute; left: 0; top: 50%; height: var(--rail-w, 5px);
+  transform: translateY(-50%); background: var(--fill-bg, transparent);
+  border-radius: 3px; pointer-events: none;
+}
+.sk-slider-h .thumb {
+  position: absolute; top: 50%; width: var(--thumb-h, 11px); height: var(--thumb-w, 18px);
+  transform: translate(-50%, -50%); background: var(--thumb-bg);
+  border-radius: var(--thumb-radius, 2px); box-shadow: var(--thumb-shadow); pointer-events: none;
+}
+
+/* ---------- vertical slider (inside an eq-slot with a label) ---------- */
+.eq-slot { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.eq-slot .eq-label { font-size: 7px; opacity: .6; font-family: var(--lcd-font, monospace); }
+.sk-slider-v { position: relative; width: 100%; flex: 1; min-height: 0; cursor: pointer; }
+.sk-slider-v[data-disabled="true"] { opacity: .4; cursor: default; }
+.sk-slider-v .rail {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: var(--rail-w, 5px);
+  transform: translateX(-50%); background: var(--rail-bg);
+  border-radius: 3px; box-shadow: var(--rail-shadow, inset 0 0 2px rgba(0,0,0,.8));
+}
+.sk-slider-v .fill {
+  position: absolute; left: 50%; bottom: 0; width: var(--rail-w, 5px);
+  transform: translateX(-50%); background: var(--fill-bg, transparent);
+  border-radius: 3px; pointer-events: none;
+}
+.sk-slider-v .thumb {
+  position: absolute; left: 50%; width: var(--thumb-w, 18px); height: var(--thumb-h, 11px);
+  transform: translate(-50%, 50%); background: var(--thumb-bg);
+  border-radius: var(--thumb-radius, 2px); box-shadow: var(--thumb-shadow); pointer-events: none;
+}
+
+/* ============================================================
+   Wireframe overlay (the designer mockup view)
+   ============================================================ */
+.is-wireframe { background: #11151c !important; }
+.wire {
+  border: 1.5px solid currentColor; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font: 600 8px/1 ui-monospace, monospace; text-align: center;
+  overflow: hidden; padding: 1px;
+}
+.wire span { opacity: .9; }
+.wire[data-content="dynamic"] { border-style: dashed; }
+.wire-button   { color: #3b82f6; background: rgba(59,130,246,.14); }
+.wire-toggle   { color: #22c55e; background: rgba(34,197,94,.14); }
+.wire-slider-h { color: #f59e0b; background: rgba(245,158,11,.14); }
+.wire-slider-v { color: #a855f7; background: rgba(168,85,247,.14); }
+.wire-display  { color: #0ea5e9; background: rgba(14,165,233,.10); }

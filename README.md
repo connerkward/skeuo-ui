@@ -1,52 +1,42 @@
 # skeuo-ui
 
-Prompt-driven skeuomorphic UI: take one canonical Winamp-layout reference, restyle it via diffusion (gpt-image-2 or Flux+ControlNet-Canny), extract per-component sprites, and composite a real React UI over the result. Real buttons, real switches, real sliders — not screenshot overlays.
+Prompt-driven skeuomorphic UI. **One layout template → many AI-styled skins**, composited into a real, working React media player where the chrome is generated art and the live content (clock, spectrum, marquee, playlist) is dynamic.
 
-Five style packs ship: **Pip-Boy 3000**, **Winamp Organic 9x**, **Chrome iPod**, **Nautical Brass**, **Cyberpunk Holo**.
+Three skins ship: **Winamp Classic**, **Fallout Pip-Boy**, **Warcraft III**.
 
-![skeuo-ui screenshot](docs/cover.png)
+![skeuo-ui](docs/cover.png)
 
-## Pipeline
+## The idea
+
+The hard part of "AI-skinned UI" is **consistency** — making generated art line up with real, interactive widgets, and keeping the right things baked vs. the right things live. This repo solves that with a single source of truth:
 
 ```
-                      [ canonical-zero.png ]
-                      (gpt-image-2/edit: empty UI template,
-                       all sliders at 0, all switches off,
-                       all buttons unpressed, displays empty)
+                    src/template/  (ONE template: every region's
+                     rect + kind + content-type + layer)
                               │
-              ┌───────────────┴───────────────┐
-              ▼                               ▼
-   [ styled-idle ×5 ]                 [ canny edge map ]
-   (gpt-image-2/edit: apply style     (PIL+OpenCV: Canny on
-    while preserving layout)           canonical-zero)
-              │                               │
-              │            ┌──────────────────┘
-              │            ▼
-              │   [ ControlNet styled ×5 ]
-              │   (fal-ai/flux-control-lora-canny
-              │    text-to-image, strength=0.85,
-              │    semantic prompts)
-              │            │
-              └────────────┤
-                           ▼
-                  [ frame-only ×5 ]
-                  (gpt-image-2/edit on styled-idle:
-                   "remove all components, keep
-                    only chrome frame + screws
-                    + title plates")
-                           │
-                           ▼
-              [ Python extract_sprites.py ]
-              per-style outputs:
-                • panel-{main,eq,playlist}.png  (chrome bg)
-                • tile-{main,eq,playlist}.png   (tileable patch)
-                • {component-id}.png            (37 sprites)
-                           │
-                           ▼
-                   [ React app ]
-              (absolute positioning at
-               normalized hotspot coords)
+            ┌─────────────────┴──────────────────┐
+            ▼                                     ▼
+  generation/render_control.py            src/player/Composite.tsx
+  renders a neutral skeuomorphic          reads the SAME template and
+  BLUEPRINT (control.png) showing         lays widgets at identical coords
+  exactly where each control sits                 │
+            │                              • frame.png   → styled background
+            ▼                              • sprite regions → interactive
+  generation/generate.py                     overlays (press feedback)
+  fal gpt-image-1.5/edit restyles         • dynamic regions → live React
+  the blueprint per skin, in place,         (clock, spectrum, marquee,
+  keeping screens empty + channels           playlist) over blank screens
+  knob-free  →  public/skins/<id>/frame.png
 ```
+
+Because the blueprint handed to the model and the runtime compositor both read the **same normalized coordinates**, generated art and live widgets align *by construction* — no per-skin hand-tuning. Toggle the **Wireframe** checkbox in the app to see the template the model is styling from (color-coded by kind; dashed = dynamic, solid = baked sprite).
+
+### Sprite vs. dynamic — the split that makes it work
+
+Every region in the template declares `content: "sprite" | "dynamic"`:
+
+- **sprite** — baked into `frame.png` (buttons, slider channels, bezel, screen wells). React renders only a transparent hit-target with press feedback.
+- **dynamic** — the art leaves this area as empty dark glass; React renders live content into it (elapsed time, spectrum analyzer, scrolling marquee, EQ curve, playlist). Never baked.
 
 ## Running
 
@@ -55,68 +45,51 @@ npm install
 npm run dev    # http://localhost:5173/
 ```
 
-Public sprite atlases are committed under `public/sprites/{styleId}/` so the app runs offline. To regenerate from new source images:
+Generated `frame.png` layers are committed under `public/skins/<id>/`, so the app runs offline. The player is fully interactive: transport, shuffle/repeat, EQ sliders, volume/balance, click/double-click playlist rows.
+
+## Regenerating / adding a skin
 
 ```bash
-python3 scripts/extract_sprites.py
+python3 generation/render_control.py     # blueprint from the template
+python3 generation/generate.py           # styles all skins in parallel via fal
 ```
 
-## Generating new style packs
+`generate.py` reads `FAL_KEY` from `~/dev/central/.env`, uploads the blueprint once, submits one `fal-ai/gpt-image-1.5/edit` job per skin in parallel, and downloads each result to `public/skins/<id>/frame.png` (~60s/skin, ~$0.19 each at `quality: high`).
 
-1. Drop new source images into `assets/refs/`:
-   - `{styleId}-idle.png` — full UI in target style (all components visible, displays empty)
-   - `{styleId}-frame.png` — same chrome but with all components removed (clean interior)
-2. Add the style to `src/styles/packs.ts`.
-3. Add an entry to `STYLES` in `scripts/extract_sprites.py`.
-4. Re-run extraction.
+To add a skin: add a prompt to `SKINS` in `generation/generate.py` and an entry to `skinList` in `src/player/skins.ts`. To change the *layout* (move/resize widgets), edit `src/template/winamp-layout.ts` — every skin updates from the one template.
 
-### Recommended generation recipe
+### Why gpt-image-1.5/edit
 
-After three rounds of A/B testing (see `docs/findings.md`):
-
-**Best: Flux + ControlNet-Canny (text-to-image)** — `fal-ai/flux-control-lora-canny`
-
-```json
-{
-  "control_lora_image_url": "<canny edge map of canonical-zero>",
-  "prompt": "Photorealistic 3D rendered media player UI panel, [STYLE]. The interface consists of RAISED PRESSABLE PHYSICAL BUTTONS [details]. RECESSED VERTICAL SLIDER CHANNELS with [details]. INSET DARK LCD SCREENS [details]. Panel material: [STYLE MATERIAL]. The buttons are clearly distinct from the panel — they protrude, catch light differently, have their own bevels.",
-  "control_lora_strength": 0.85,
-  "guidance_scale": 3.5,
-  "num_inference_steps": 35,
-  "image_size": {"width": 1536, "height": 1024}
-}
-```
-
-Key trick: **explicit semantic vocabulary** ("RAISED PRESSABLE PHYSICAL BUTTONS", "RECESSED SLIDER CHANNELS", "INSET LCD SCREENS") tells Flux that the Canny edges represent interactive UI, not decoration. Without this, Flux interprets button-rectangles as engraved details on the panel — pretty but unusable.
-
-**Alternative: gpt-image-2/edit** — slightly worse layout fidelity (esp. on iPod, where it shrinks the device) but easier to prompt. Use when you don't have a Canny pipeline.
-
-## Findings
-
-See `docs/findings.md` for the A/B comparison data: drift overlays, per-style scoring, cost estimates, and why ControlNet round 3 beat both gpt-image-2 and the looser ControlNet configs from earlier rounds.
-
-## Tech
-
-- Vite + React + TypeScript
-- Python 3 + Pillow for asset extraction
-- fal.ai (`openai/gpt-image-2/edit`, `fal-ai/flux-control-lora-canny`) for generation
+It is the one fal model that takes a structural reference image *and* preserves layout at `input_fidelity: high`, so the styled output keeps every control on its blueprint box. The prompt restyles in place, keeps screens **empty** (so live content shows), and leaves slider channels **knob-free** (the knob is a live React element).
 
 ## Layout
 
 ```
 src/
-  App.tsx                   # style selector + Frame
-  components/
-    Frame.tsx               # three panels, no responsive logic
-    Components.tsx          # Button / Switch / SliderV / SliderH
-  styles/
-    packs.ts                # style list + hotspot map + panel y-ranges
-    base.css                # styling primitives
-  types.ts
-public/sprites/{styleId}/   # per-style extracted assets
-assets/refs/                # AI source images (canonical, idle, frame)
-scripts/
-  extract_sprites.py        # crop sprites from refs
-  measure_drift.py          # diagnostic overlay for layout drift
-docs/findings.md            # gpt-image-2 vs ControlNet comparison
+  App.tsx                     # skin selector + wireframe toggle + Composite
+  template/
+    schema.ts                 # Template / Region types (rect, kind, content, layer)
+    winamp-layout.ts          # the canonical layout, authored once in px → normalized
+  player/
+    Composite.tsx             # reads template, positions sprites + live widgets
+    usePlayer.ts              # all live player state (the dynamic half)
+    Visualizer.tsx            # canvas spectrum analyzer (colors from skin CSS vars)
+    data.ts                   # per-skin playlist content + EQ bands
+    skins.ts                  # skin registry (which layers exist, baked flag)
+  skins/
+    player.css                # shared structure (positioning, sliders, wireframe)
+    winamp.css / fallout.css / warcraft.css   # per-skin CSS (vars + effects)
+generation/
+  render_control.py           # template → neutral blueprint (control.png)
+  generate.py                 # blueprint → styled frame.png per skin via fal
+  template.json               # exported template (single source of truth for tooling)
+public/skins/{id}/frame.png   # generated styled layers
 ```
+
+Every skin also has a pure-CSS fallback (used when no `frame.png` is present), so the UI is always aligned and presentable even before generation.
+
+## Tech
+
+- Vite + React + TypeScript
+- Python 3 + Pillow (blueprint render)
+- fal.ai `fal-ai/gpt-image-1.5/edit` (layout-preserving restyle)

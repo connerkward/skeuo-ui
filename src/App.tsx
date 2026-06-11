@@ -1,34 +1,47 @@
 import { useState } from "react";
-import { packs } from "./styles/packs";
-import { Frame } from "./components/Frame";
-import "./styles/base.css";
+import { Composite } from "./player/Composite";
+import { playerTemplate } from "./template/winamp-layout";
+import { skinList } from "./player/skins";
+import "./skins/app.css";
+import "./skins/player.css";
+import "./skins/winamp.css";
+import "./skins/fallout.css";
+import "./skins/warcraft.css";
+
+// expose the single-source-of-truth template for tooling (wireframe/mask export)
+(window as unknown as { __template: unknown }).__template = playerTemplate;
 
 export default function App() {
-  const [styleId, setStyleId] = useState(packs[0].id);
-  const [size, setSize] = useState({ w: 760, h: 540 });
+  const [skinId, setSkinId] = useState(skinList[0].id);
+  const [wire, setWire] = useState(false);
 
   return (
     <div className="page">
       <aside className="sidebar">
         <h1>Skin</h1>
-        {packs.map((p) => (
+        {skinList.map((s) => (
           <button
-            key={p.id}
-            className={`style-btn ${p.id === styleId ? "active" : ""}`}
-            onClick={() => setStyleId(p.id)}
+            key={s.id}
+            className={`style-btn ${s.id === skinId ? "active" : ""}`}
+            onClick={() => setSkinId(s.id)}
           >
-            <span className="name">{p.name}</span>
-            <span className="blurb">{p.blurb}</span>
+            <span className="name">{s.name}</span>
+            <span className="blurb">{s.blurb}</span>
           </button>
         ))}
+        <label className="wire-toggle-row">
+          <input type="checkbox" checked={wire} onChange={(e) => setWire(e.target.checked)} />
+          <span>Wireframe (template)</span>
+        </label>
         <div className="hint">
-          <kbd>↘</kbd> drag corner to resize.
-          <br />Chrome 9-slices, components reflow & hide at narrow widths.
-          <div className="size-readout">window: {size.w}×{size.h}px</div>
+          One template → many skins. Buttons / sliders are baked sprites;
+          the clock, spectrum, marquee &amp; playlist are live.
         </div>
       </aside>
       <main className="stage">
-        <Frame styleId={styleId} onSize={setSize} />
+        <div className="stage-inner">
+          <Composite template={playerTemplate} skinId={skinId} showWireframe={wire} />
+        </div>
       </main>
     </div>
   );

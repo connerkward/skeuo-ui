@@ -1,0 +1,85 @@
+/* ============================================================
+   WINAMP CLASSIC  —  Winamp 2.x gunmetal + green LCD
+   ============================================================ */
+[data-skin="winamp"] {
+  --ui-font: "Lucida Grande", Tahoma, system-ui, sans-serif;
+  --lcd-font: "Courier New", ui-monospace, monospace;
+  --ink: #c8cdd2;
+
+  --frame-radius: 2px;
+  --frame-shadow: 0 22px 55px rgba(0,0,0,.75), 0 0 0 1px #0a0c0e;
+
+  /* gunmetal panels with a faint vertical sheen */
+  --panel-bg:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18) 60%, rgba(0,0,0,.32)),
+    linear-gradient(180deg, #3a4047, #262b30 55%, #1b1f23);
+  --panel-pad: 9px;
+  --seam: 1px solid #0c0e10;
+  --seam-line: rgba(0,0,0,.6);
+
+  /* embossed metallic title bar */
+  --title-bg:
+    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #4a525b, #2c3239);
+  --title-ink: #e7ecf1;
+  --grip-img: repeating-linear-gradient(0deg, rgba(255,255,255,.30) 0 1px, rgba(0,0,0,.45) 1px 2px);
+
+  --tb-btn-bg: linear-gradient(180deg, #cfd6dd, #828b94);
+  --tb-close-bg: linear-gradient(180deg, #e6b9b0, #b56a5e);
+
+  /* the iconic black-green LCD */
+  --lcd-bg: radial-gradient(120% 140% at 50% 0%, #06120a, #020604 70%);
+  --lcd-border: 1px solid #000;
+  --lcd-inset: inset 0 2px 7px rgba(0,0,0,.95), inset 0 0 0 1px rgba(40,90,60,.25);
+  --lcd-radius: 2px;
+  --lcd-ink: #18e35a;
+  --lcd-ink-dim: #2aa257;
+  --lcd-glow: 0 0 5px rgba(24,227,90,.65);
+  --lcd-glow-filter: drop-shadow(0 0 2px rgba(24,227,90,.7));
+
+  /* visualizer */
+  --vis-lo: #138a3a;
+  --vis-hi: #c7ff3b;
+  --vis-peak: #d7e6c0;
+
+  /* raised metallic buttons */
+  --btn-ink: #e9eef3;
+  --btn-radius: 2px;
+  --btn-bg: linear-gradient(180deg, #525a63, #2b3036);
+  --btn-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    inset 0 0 0 1px rgba(0,0,0,.4),
+    0 1px 1px rgba(0,0,0,.5);
+  --btn-shadow-active:
+    inset 0 2px 5px rgba(0,0,0,.7),
+    inset 0 0 0 1px rgba(0,0,0,.5);
+
+  /* green LED toggles */
+  --toggle-ink: #9aa3ac;
+  --toggle-on-ink: #052;
+  --toggle-on-bg: linear-gradient(180deg, #6dff8f, #1bbd4a);
+  --toggle-on-shadow: inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 2px rgba(0,40,10,.6);
+  --toggle-on-glow: 0 0 8px rgba(40,255,110,.7);
+
+  /* sliders */
+  --rail-w: 4px;
+  --rail-bg: linear-gradient(90deg, #0c0e10, #20262b);
+  --rail-shadow: inset 0 0 3px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.06);
+  --fill-bg: linear-gradient(90deg, #138a3a, #2dd968);
+  --thumb-w: 18px; --thumb-h: 12px; --thumb-radius: 2px;
+  --thumb-bg: linear-gradient(180deg, #6b7480, #3a4148);
+  --thumb-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,0,0,.6), 0 2px 3px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.5);
+
+  /* playlist */
+  --list-bg: #04100a;
+  --list-ink: #18e35a;
+  --list-font: "Courier New", monospace;
+  --list-hover: rgba(24,227,90,.10);
+  --list-sel-bg: #143a78;
+  --list-sel-ink: #d7ff66;
+  --scroll-track: #0a0c0e;
+  --scroll-thumb: linear-gradient(180deg, #525a63, #2b3036);
+}
+[data-skin="winamp"] .eq-curve-line { stroke: #18e35a; }
+[data-skin="winamp"] .pl-title, [data-skin="winamp"] .pl-titlebar { color: #8fa0b0; }

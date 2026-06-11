@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# verification screenshots / browser automation scratch
+.playwright-mcp/
+shots/
