@@ -31,16 +31,16 @@ export function Composite({ template, skinId, showWireframe }: Props) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const drag = useRef<{ ox: number; oy: number; px: number; py: number } | null>(null);
   useEffect(() => {
-    const m = (e: MouseEvent) => {
+    const m = (e: PointerEvent) => {
       if (!drag.current) return;
       setPos({ x: drag.current.ox + e.clientX - drag.current.px, y: drag.current.oy + e.clientY - drag.current.py });
     };
     const u = () => (drag.current = null);
-    window.addEventListener("mousemove", m);
-    window.addEventListener("mouseup", u);
-    return () => { window.removeEventListener("mousemove", m); window.removeEventListener("mouseup", u); };
+    window.addEventListener("pointermove", m);
+    window.addEventListener("pointerup", u);
+    return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, []);
-  const startDrag = (e: React.MouseEvent) => {
+  const startDrag = (e: React.PointerEvent) => {
     drag.current = { ox: pos.x, oy: pos.y, px: e.clientX, py: e.clientY };
   };
 
@@ -96,7 +96,7 @@ function pct(r: Region["rect"]): React.CSSProperties {
 
 function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
   region: Region; ps: PlayerState; skinId: string; wire: boolean;
-  baked: boolean; onTitleDown: (e: React.MouseEvent) => void;
+  baked: boolean; onTitleDown: (e: React.PointerEvent) => void;
 }) {
   const style = pct(r.rect);
 
@@ -126,7 +126,7 @@ function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
 
   const titleDown = r.dynamicType === "title" && r.id === "titlebar" ? onTitleDown : undefined;
   return (
-    <div className={`region ${titleDown ? "draggable" : ""}`} style={style} onMouseDown={titleDown}>
+    <div className={`region ${titleDown ? "draggable" : ""}`} style={style} onPointerDown={titleDown}>
       {renderControl(r, ps, sprited || baked, spriteStyle, baked)}
     </div>
   );
@@ -280,19 +280,19 @@ function Knob({ r, ps, baked }: { r: Region; ps: PlayerState; baked: boolean }) 
   const setV = r.bind === "volume" ? ps.setVolume : ps.setBalance;
   const drag = useRef<{ y: number; v: number } | null>(null);
   useEffect(() => {
-    const m = (e: MouseEvent) => {
+    const m = (e: PointerEvent) => {
       if (!drag.current) return;
       const dv = (drag.current.y - e.clientY) / 140;       // drag up = increase
       setV(Math.max(0, Math.min(1, drag.current.v + dv)));
     };
     const u = () => (drag.current = null);
-    window.addEventListener("mousemove", m); window.addEventListener("mouseup", u);
-    return () => { window.removeEventListener("mousemove", m); window.removeEventListener("mouseup", u); };
+    window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
+    return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, [setV]);
   const angle = -135 + value * 270;
   return (
     <div className={`knob ${baked ? "baked" : ""}`} title={`${r.label}: ${(value * 100) | 0}%`}
-      onMouseDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
+      onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
       <div className="knob-body">
         <div className="knob-ind" style={{ transform: `translateX(-50%) rotate(${angle}deg)` }} />
       </div>
@@ -313,14 +313,14 @@ function XYPad({ ps, baked }: { ps: PlayerState; baked: boolean }) {
     });
   };
   useEffect(() => {
-    const m = (e: MouseEvent) => drag.current && set(e.clientX, e.clientY);
+    const m = (e: PointerEvent) => drag.current && set(e.clientX, e.clientY);
     const u = () => (drag.current = false);
-    window.addEventListener("mousemove", m); window.addEventListener("mouseup", u);
-    return () => { window.removeEventListener("mousemove", m); window.removeEventListener("mouseup", u); };
+    window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
+    return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, []);
   return (
     <div ref={ref} className={`xy ${baked ? "baked" : ""}`} title="Stereo field"
-      onMouseDown={(e) => { drag.current = true; set(e.clientX, e.clientY); }}>
+      onPointerDown={(e) => { drag.current = true; set(e.clientX, e.clientY); }}>
       <div className="xy-grid" />
       <div className="xy-puck" style={{ left: `${ps.tone.x * 100}%`, top: `${(1 - ps.tone.y) * 100}%` }} />
     </div>
@@ -342,14 +342,14 @@ function SliderH({ r, ps, sprite, sprited }: { r: Region; ps: PlayerState; sprit
     else if (r.bind === "seek") ps.seekTo(v);
   };
   useEffect(() => {
-    const m = (e: MouseEvent) => drag.current && set(e.clientX);
+    const m = (e: PointerEvent) => drag.current && set(e.clientX);
     const u = () => (drag.current = false);
-    window.addEventListener("mousemove", m); window.addEventListener("mouseup", u);
-    return () => { window.removeEventListener("mousemove", m); window.removeEventListener("mouseup", u); };
+    window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
+    return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, []);
   return (
     <div ref={ref} className={`sk-slider-h ${sprited ? "sprited" : ""}`} style={sprite}
-      onMouseDown={(e) => { drag.current = true; set(e.clientX); }} title={r.label}>
+      onPointerDown={(e) => { drag.current = true; set(e.clientX); }} title={r.label}>
       {!sprited && <><div className="rail" /><div className="fill" style={{ width: `${value * 100}%` }} /></>}
       <div className="thumb" style={{ left: `${value * 100}%` }} />
     </div>
@@ -368,15 +368,15 @@ function SliderV({ r, ps, sprite, sprited }: { r: Region; ps: PlayerState; sprit
     ps.setEqBand(idx, Math.max(0, Math.min(1, 1 - (clientY - rc.top) / rc.height)));
   };
   useEffect(() => {
-    const m = (e: MouseEvent) => drag.current && set(e.clientY);
+    const m = (e: PointerEvent) => drag.current && set(e.clientY);
     const u = () => (drag.current = false);
-    window.addEventListener("mousemove", m); window.addEventListener("mouseup", u);
-    return () => { window.removeEventListener("mousemove", m); window.removeEventListener("mouseup", u); };
+    window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
+    return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, [disabled]);
   return (
     <div className="eq-slot">
       <div ref={ref} className={`sk-slider-v ${sprited ? "sprited" : ""}`} data-disabled={disabled} style={sprite}
-        onMouseDown={(e) => { drag.current = true; set(e.clientY); }} title={r.label}>
+        onPointerDown={(e) => { drag.current = true; set(e.clientY); }} title={r.label}>
         {!sprited && <><div className="rail" /><div className="fill" style={{ height: `${value * 100}%` }} /></>}
         <div className="thumb" style={{ bottom: `${value * 100}%` }} />
       </div>
