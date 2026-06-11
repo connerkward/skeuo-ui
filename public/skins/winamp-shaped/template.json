@@ -5,5 +5,32 @@
     "w": 1024,
     "h": 1536
   },
-  "regions": []
+  "regions": [
+    {
+      "id": "playlist",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "dynamicType": "playlist",
+      "rect": {
+        "x": 0.2333984375,
+        "y": 0.548828125,
+        "w": 0.4677734375,
+        "h": 0.28125
+      }
+    },
+    {
+      "id": "visualizer",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "dynamicType": "visualizer",
+      "rect": {
+        "x": 0.244140625,
+        "y": 0.14973958333333334,
+        "w": 0.572265625,
+        "h": 0.09635416666666667
+      }
+    }
+  ]
 }

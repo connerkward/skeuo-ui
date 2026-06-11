@@ -23,6 +23,13 @@ export interface SkinAssets {
   // CSS palette to use (the [data-skin] value); defaults to id. Lets a
   // freeform skin (own assets) reuse an existing style's look.
   style?: string;
+  // wild-shaped skins with EMPTY baked screens + CV-detected screen regions:
+  // render live content INTO the detected screens (controls stay baked).
+  live?: boolean;
+}
+
+export function skinLive(id: string): boolean {
+  return !!skinList.find((x) => x.id === id)?.live;
 }
 
 export function skinStyle(id: string): string {
@@ -47,9 +54,9 @@ export const skinList: SkinAssets[] = [
   { id: "ff-papercraft", name: "Papercraft ✦ freeform", blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "papercraft", templateUrl: "/skins/ff-papercraft/template.json" },
 
   // shaped ✦ — irregular non-rectangular silhouettes (background cut out)
-  { id: "winamp-shaped",  name: "Winamp ✦ shaped",      blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "winamp",  templateUrl: "/skins/winamp-shaped/template.json" },
-  { id: "fantasy-shaped", name: "Baldur's Gate ✦ shaped", blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "fantasy", templateUrl: "/skins/fantasy-shaped/template.json" },
-  { id: "fallout-shaped", name: "Fallout ✦ shaped",      blurb: "Irregular cut-out silhouette, not a rectangle", has: ["frame"], baked: true, style: "fallout", templateUrl: "/skins/fallout-shaped/template.json" },
+  { id: "winamp-shaped",  name: "Winamp ✦ shaped",      blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "winamp",  templateUrl: "/skins/winamp-shaped/template.json" },
+  { id: "fantasy-shaped", name: "Baldur's Gate ✦ shaped", blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "fantasy", templateUrl: "/skins/fantasy-shaped/template.json" },
+  { id: "fallout-shaped", name: "Fallout ✦ shaped",      blurb: "Wild silhouette, live screens", has: ["frame"], baked: true, live: true, style: "fallout", templateUrl: "/skins/fallout-shaped/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
@@ -62,7 +69,7 @@ export function skinBaked(id: string): boolean {
 
 // bump when frames are regenerated so browsers re-fetch (frame.png URLs are
 // otherwise stable and get served from disk cache)
-const ASSET_VERSION = "nb2k";
+const ASSET_VERSION = "nb3";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 

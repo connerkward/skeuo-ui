@@ -3,7 +3,7 @@ import type { Region, Template } from "../template/schema";
 import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
-import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle } from "./skins";
+import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive } from "./skins";
 
 interface Props {
   template: Template;
@@ -58,6 +58,9 @@ export function Composite({ template, skinId, showWireframe }: Props) {
   // knob needles, segment highlights, labels) that would float off the baked
   // art, and keep only the forgiving live SCREEN content (clock/marquee/playlist).
   const art = !!url;
+  // wild skins: EMPTY baked screens + CV-detected screen regions → render live
+  // content into the detected screens (controls stay baked, not overlaid).
+  const liveArt = art && skinLive(skinId);
 
   return (
     <div
@@ -75,9 +78,9 @@ export function Composite({ template, skinId, showWireframe }: Props) {
           content already baked in), and their control positions aren't known
           precisely — so render them as the pure aligned artwork rather than
           overlay misplaced live widgets. Canonical skins overlay live content. */}
-      {(!art || showWireframe) && tpl.regions.map((r) => (
+      {(!art || liveArt || showWireframe) && tpl.regions.map((r) => (
         <RegionView key={r.id} region={r} ps={ps} skinId={skinId}
-          wire={!!showWireframe} baked={baked} onTitleDown={startDrag} />
+          wire={!!showWireframe} baked={baked} liveArt={liveArt} onTitleDown={startDrag} />
       ))}
     </div>
   );
@@ -91,11 +94,14 @@ function pct(r: Region["rect"]): React.CSSProperties {
   };
 }
 
-function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
+function RegionView({ region: r, ps, skinId, wire, baked, liveArt, onTitleDown }: {
   region: Region; ps: PlayerState; skinId: string; wire: boolean;
-  baked: boolean; onTitleDown: (e: React.MouseEvent) => void;
+  baked: boolean; liveArt: boolean; onTitleDown: (e: React.MouseEvent) => void;
 }) {
   const style = pct(r.rect);
+
+  // wild live skins: render ONLY live screen content; controls stay baked
+  if (liveArt && !wire && r.kind !== "display") return null;
 
   if (wire) {
     return (

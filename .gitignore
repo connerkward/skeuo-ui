@@ -33,3 +33,4 @@ generation/control.png
 
 __pycache__/
 *.pyc
+public/skins/*/_screens_overlay.png

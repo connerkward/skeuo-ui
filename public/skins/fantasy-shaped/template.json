@@ -1,216 +1,36 @@
 {
-  "id": "freeform",
-  "name": "Freeform-extracted",
+  "id": "fantasy-shaped",
+  "name": "screen-detected",
   "canvas": {
     "w": 1024,
     "h": 1536
   },
   "regions": [
     {
-      "id": "left_knob",
-      "kind": "knob",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.05,
-        "y": 0.28,
-        "w": 0.1,
-        "h": 0.1
-      },
-      "label": "Left Knob",
-      "bind": "volume"
-    },
-    {
-      "id": "right_knob",
-      "kind": "knob",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.85,
-        "y": 0.28,
-        "w": 0.1,
-        "h": 0.1
-      },
-      "label": "Right Knob",
-      "bind": "balance"
-    },
-    {
-      "id": "lcd_display",
+      "id": "playlist",
       "kind": "display",
       "content": "dynamic",
       "layer": "screen",
+      "dynamicType": "playlist",
       "rect": {
-        "x": 0.32,
-        "y": 0.2,
-        "w": 0.36,
-        "h": 0.15
-      },
-      "label": "LCD Display",
-      "dynamicType": "marquee"
+        "x": 0.208984375,
+        "y": 0.6015625,
+        "w": 0.58984375,
+        "h": 0.162109375
+      }
     },
     {
-      "id": "progress_slider",
-      "kind": "slider-h",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.32,
-        "y": 0.38,
-        "w": 0.36,
-        "h": 0.05
-      },
-      "label": "Progress Slider",
-      "bind": "seek"
-    },
-    {
-      "id": "play_button",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.42,
-        "y": 0.46,
-        "w": 0.05,
-        "h": 0.05
-      },
-      "label": "Play Button",
-      "bind": "play"
-    },
-    {
-      "id": "pause_button",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.52,
-        "y": 0.46,
-        "w": 0.05,
-        "h": 0.05
-      },
-      "label": "Pause Button",
-      "bind": "pause"
-    },
-    {
-      "id": "previous_button",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.32,
-        "y": 0.46,
-        "w": 0.05,
-        "h": 0.05
-      },
-      "label": "Previous Button",
-      "bind": "prev"
-    },
-    {
-      "id": "next_button",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.62,
-        "y": 0.46,
-        "w": 0.05,
-        "h": 0.05
-      },
-      "label": "Next Button",
-      "bind": "next"
-    },
-    {
-      "id": "vertical_slider_1",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.1,
-        "y": 0.56,
-        "w": 0.05,
-        "h": 0.25
-      },
-      "label": "Vertical Slider 1",
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 0
-    },
-    {
-      "id": "vertical_slider_2",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.2,
-        "y": 0.56,
-        "w": 0.05,
-        "h": 0.25
-      },
-      "label": "Vertical Slider 2",
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 1
-    },
-    {
-      "id": "vertical_slider_3",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.3,
-        "y": 0.56,
-        "w": 0.05,
-        "h": 0.25
-      },
-      "label": "Vertical Slider 3",
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 2
-    },
-    {
-      "id": "vertical_slider_4",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.4,
-        "y": 0.56,
-        "w": 0.05,
-        "h": 0.25
-      },
-      "label": "Vertical Slider 4",
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 3
-    },
-    {
-      "id": "vertical_slider_5",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.5,
-        "y": 0.56,
-        "w": 0.05,
-        "h": 0.25
-      },
-      "label": "Vertical Slider 5",
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 4
-    },
-    {
-      "id": "playlist_display",
+      "id": "visualizer",
       "kind": "display",
       "content": "dynamic",
       "layer": "screen",
+      "dynamicType": "visualizer",
       "rect": {
-        "x": 0.65,
-        "y": 0.56,
-        "w": 0.26,
-        "h": 0.32
-      },
-      "label": "Playlist Display",
-      "dynamicType": "playlist"
+        "x": 0.2177734375,
+        "y": 0.181640625,
+        "w": 0.5419921875,
+        "h": 0.12890625
+      }
     }
   ]
 }
