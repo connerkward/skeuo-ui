@@ -71,7 +71,11 @@ export function Composite({ template, skinId, showWireframe }: Props) {
         <img className="layer screen-layer" src={layerUrl(skinId, "screen")} alt="" />
       )}
 
-      {tpl.regions.map((r) => (
+      {/* Extracted/wild skins are coherent AI-designed images (controls + screen
+          content already baked in), and their control positions aren't known
+          precisely — so render them as the pure aligned artwork rather than
+          overlay misplaced live widgets. Canonical skins overlay live content. */}
+      {(!art || showWireframe) && tpl.regions.map((r) => (
         <RegionView key={r.id} region={r} ps={ps} skinId={skinId}
           wire={!!showWireframe} baked={baked} onTitleDown={startDrag} />
       ))}
