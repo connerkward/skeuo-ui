@@ -1,6 +1,6 @@
 {
   "id": "winamp-shaped",
-  "name": "screen-detected",
+  "name": "wild-live",
   "canvas": {
     "w": 1024,
     "h": 1536
@@ -31,6 +31,315 @@
         "w": 0.572265625,
         "h": 0.09635416666666667
       }
+    },
+    {
+      "id": "prev_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.289,
+        "y": 0.28,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "previous",
+      "bind": "prev"
+    },
+    {
+      "id": "play_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.367,
+        "y": 0.28,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "play",
+      "bind": "play"
+    },
+    {
+      "id": "stop_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.445,
+        "y": 0.28,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "stop",
+      "bind": "stop"
+    },
+    {
+      "id": "pause_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.523,
+        "y": 0.28,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "pause",
+      "bind": "pause"
+    },
+    {
+      "id": "next_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.601,
+        "y": 0.28,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "next",
+      "bind": "next"
+    },
+    {
+      "id": "left_knob",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.039,
+        "y": 0.153,
+        "w": 0.18,
+        "h": 0.19
+      },
+      "label": "left knob",
+      "bind": "volume"
+    },
+    {
+      "id": "right_knob",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.778,
+        "y": 0.175,
+        "w": 0.18,
+        "h": 0.19
+      },
+      "label": "right knob",
+      "bind": "balance"
+    },
+    {
+      "id": "slider_1",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.273,
+        "y": 0.386,
+        "w": 0.025,
+        "h": 0.216
+      },
+      "label": "slider 1",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 0
+    },
+    {
+      "id": "slider_2",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.337,
+        "y": 0.386,
+        "w": 0.025,
+        "h": 0.216
+      },
+      "label": "slider 2",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 1
+    },
+    {
+      "id": "slider_3",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.4,
+        "y": 0.386,
+        "w": 0.025,
+        "h": 0.216
+      },
+      "label": "slider 3",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 2
+    },
+    {
+      "id": "slider_4",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.463,
+        "y": 0.386,
+        "w": 0.025,
+        "h": 0.216
+      },
+      "label": "slider 4",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 3
+    },
+    {
+      "id": "slider_5",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.527,
+        "y": 0.386,
+        "w": 0.025,
+        "h": 0.216
+      },
+      "label": "slider 5",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 4
+    },
+    {
+      "id": "eq_toggle_1",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.561,
+        "y": 0.386,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "EQ toggle 1"
+    },
+    {
+      "id": "eq_toggle_2",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.561,
+        "y": 0.45,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "EQ toggle 2"
+    },
+    {
+      "id": "eq_toggle_3",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.561,
+        "y": 0.514,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "EQ toggle 3"
+    },
+    {
+      "id": "horizontal_slider",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.233,
+        "y": 0.624,
+        "w": 0.544,
+        "h": 0.04
+      },
+      "label": "horizontal slider",
+      "bind": "seek"
+    },
+    {
+      "id": "green_button_1",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.135,
+        "y": 0.45,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "green button 1"
+    },
+    {
+      "id": "green_button_2",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.135,
+        "y": 0.514,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "green button 2"
+    },
+    {
+      "id": "green_button_3",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.135,
+        "y": 0.578,
+        "w": 0.054,
+        "h": 0.054
+      },
+      "label": "green button 3"
+    },
+    {
+      "id": "vertical_button_1",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.873,
+        "y": 0.474,
+        "w": 0.056,
+        "h": 0.05
+      },
+      "label": "vertical button 1"
+    },
+    {
+      "id": "vertical_button_2",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.873,
+        "y": 0.534,
+        "w": 0.056,
+        "h": 0.05
+      },
+      "label": "vertical button 2"
+    },
+    {
+      "id": "vertical_button_3",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.873,
+        "y": 0.594,
+        "w": 0.056,
+        "h": 0.05
+      },
+      "label": "vertical button 3"
     }
   ]
 }

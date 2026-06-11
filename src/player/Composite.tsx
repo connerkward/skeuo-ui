@@ -80,7 +80,7 @@ export function Composite({ template, skinId, showWireframe }: Props) {
           overlay misplaced live widgets. Canonical skins overlay live content. */}
       {(!art || liveArt || showWireframe) && tpl.regions.map((r) => (
         <RegionView key={r.id} region={r} ps={ps} skinId={skinId}
-          wire={!!showWireframe} baked={baked} liveArt={liveArt} onTitleDown={startDrag} />
+          wire={!!showWireframe} baked={baked} onTitleDown={startDrag} />
       ))}
     </div>
   );
@@ -94,14 +94,11 @@ function pct(r: Region["rect"]): React.CSSProperties {
   };
 }
 
-function RegionView({ region: r, ps, skinId, wire, baked, liveArt, onTitleDown }: {
+function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
   region: Region; ps: PlayerState; skinId: string; wire: boolean;
-  baked: boolean; liveArt: boolean; onTitleDown: (e: React.MouseEvent) => void;
+  baked: boolean; onTitleDown: (e: React.MouseEvent) => void;
 }) {
   const style = pct(r.rect);
-
-  // wild live skins: render ONLY live screen content; controls stay baked
-  if (liveArt && !wire && r.kind !== "display") return null;
 
   if (wire) {
     return (
