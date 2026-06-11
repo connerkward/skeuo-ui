@@ -36,6 +36,11 @@
   --lcd-ink-dim: #2aa257;
   --lcd-glow: 0 0 5px rgba(24,227,90,.65);
   --lcd-glow-filter: drop-shadow(0 0 2px rgba(24,227,90,.7));
+  /* baked playlist screen came out bright — darken it for green text */
+  --screen-scrim: rgba(4,15,9,.72);
+  --knob-ind: #eaf0f5; --knob-ind-glow: rgba(255,255,255,.6);
+  --xy-puck: #18e35a; --xy-line: rgba(24,227,90,.18);
+  --toggle-on-spark: #2dff6e;
 
   /* visualizer */
   --vis-lo: #138a3a;

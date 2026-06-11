@@ -20,9 +20,12 @@ export interface SkinAssets {
 }
 
 export const skinList: SkinAssets[] = [
-  { id: "winamp",   name: "Winamp Classic",  blurb: "Gunmetal & green LCD — whips the llama's ass", has: ["frame"], baked: true },
-  { id: "fallout",  name: "Fallout Pip-Boy", blurb: "RobCo green-phosphor CRT terminal", has: ["frame"], baked: true },
-  { id: "warcraft", name: "Warcraft III",    blurb: "Carved stone, bronze & gold filigree", has: ["frame"], baked: true },
+  { id: "winamp",   name: "Winamp Classic",  blurb: "Brushed gunmetal, chrome screws, green LCD", has: ["frame"], baked: true },
+  { id: "fallout",  name: "Fallout Pip-Boy", blurb: "Riveted RobCo handheld, green-phosphor CRT", has: ["frame"], baked: true },
+  { id: "fantasy",  name: "Baldur's Gate",   blurb: "Carved stone, gold filigree, gem runes", has: ["frame"], baked: true },
+  { id: "aqua",     name: "Mac OS X Aqua",   blurb: "Glossy white glass, pinstripes, candy lozenges", has: ["frame"], baked: true },
+  { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: true },
+  { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: true },
 ];
 
 export function skinBaked(id: string): boolean {

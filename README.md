@@ -2,7 +2,9 @@
 
 Prompt-driven skeuomorphic UI. **One layout template → many AI-styled skins**, composited into a real, working React media player where the chrome is generated art and the live content (clock, spectrum, marquee, playlist) is dynamic.
 
-Three skins ship: **Winamp Classic**, **Fallout Pip-Boy**, **Warcraft III**.
+Six skins ship — deliberately spread across material families to prove variance, not recolors: **Winamp Classic** (gunmetal/chrome), **Fallout Pip-Boy** (riveted olive CRT), **Baldur's Gate** (carved stone + gold filigree), **Mac OS X Aqua** (glossy light glass), **70s Hi-Fi** (walnut + aluminium), **Papercraft** (cut-paper).
+
+Controls span buttons, toggles, **rotary knobs**, horizontal/vertical sliders, **segmented selectors**, an **XY pad**, a click/double-click playlist, and a drag-to-move title bar. The template also carves out **non-interactive flourish regions** (corners, side rails, header crest, nameplate) that the model fills with skin-specific ornament — and a transparent-background generation pass lets each skin keep its own silhouette.
 
 ![skeuo-ui](docs/cover.png)
 
@@ -33,10 +35,11 @@ Because the blueprint handed to the model and the runtime compositor both read t
 
 ### Sprite vs. dynamic — the split that makes it work
 
-Every region in the template declares `content: "sprite" | "dynamic"`:
+Every region in the template declares `content: "sprite" | "dynamic" | "decoration"`:
 
-- **sprite** — baked into `frame.png` (buttons, slider channels, bezel, screen wells). React renders only a transparent hit-target with press feedback.
-- **dynamic** — the art leaves this area as empty dark glass; React renders live content into it (elapsed time, spectrum analyzer, scrolling marquee, EQ curve, playlist). Never baked.
+- **sprite** — baked into `frame.png` (buttons, knobs, slider channels, segmented bars, bezel, screen wells). React renders only a transparent hit-target + the moving/active part (thumb, knob indicator, segment highlight).
+- **dynamic** — the art leaves this area as empty glass; React renders live content into it (elapsed time, spectrum analyzer, scrolling marquee, EQ curve, playlist). Never baked. A per-skin `--screen-scrim` guarantees text contrast when a baked screen lands lighter/darker than the skin's text.
+- **decoration** — baked-only ornament (corners, rails, crest, nameplate); no runtime element at all.
 
 ## Running
 
@@ -54,7 +57,7 @@ python3 generation/render_control.py     # blueprint from the template
 python3 generation/generate.py           # styles all skins in parallel via fal
 ```
 
-`generate.py` reads `FAL_KEY` from `~/dev/central/.env`, uploads the blueprint once, submits one `fal-ai/gpt-image-1.5/edit` job per skin in parallel, and downloads each result to `public/skins/<id>/frame.png` (~60s/skin, ~$0.19 each at `quality: high`).
+`generate.py` reads `FAL_KEY` from `~/dev/central/.env`, uploads the blueprint once, submits one `fal-ai/gpt-image-1.5/edit` job per skin in parallel (transparent background, so each skin keeps its own silhouette), and downloads each result to `public/skins/<id>/frame.png` (~60-70s/skin, ~$0.19 each at `quality: high`). `ONLY=winamp,hifi python3 generation/generate.py` regenerates a subset.
 
 To add a skin: add a prompt to `SKINS` in `generation/generate.py` and an entry to `skinList` in `src/player/skins.ts`. To change the *layout* (move/resize widgets), edit `src/template/winamp-layout.ts` — every skin updates from the one template.
 
@@ -77,8 +80,8 @@ src/
     data.ts                   # per-skin playlist content + EQ bands
     skins.ts                  # skin registry (which layers exist, baked flag)
   skins/
-    player.css                # shared structure (positioning, sliders, wireframe)
-    winamp.css / fallout.css / warcraft.css   # per-skin CSS (vars + effects)
+    player.css                # shared structure (positioning, controls, wireframe)
+    winamp/fallout/fantasy/aqua/hifi/papercraft.css  # per-skin CSS (vars + effects)
 generation/
   render_control.py           # template → neutral blueprint (control.png)
   generate.py                 # blueprint → styled frame.png per skin via fal

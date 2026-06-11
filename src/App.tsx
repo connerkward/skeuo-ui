@@ -6,7 +6,10 @@ import "./skins/app.css";
 import "./skins/player.css";
 import "./skins/winamp.css";
 import "./skins/fallout.css";
-import "./skins/warcraft.css";
+import "./skins/fantasy.css";
+import "./skins/aqua.css";
+import "./skins/hifi.css";
+import "./skins/papercraft.css";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;

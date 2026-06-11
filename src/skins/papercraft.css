@@ -1,0 +1,92 @@
+/* ============================================================
+   PAPERCRAFT  —  folded kraft cardboard & cut-paper layers,
+   marker labels, matte and hand-made. Soft paper shadows, no
+   gloss, no glow. Deliberately tactile + low-tech.
+   ============================================================ */
+[data-skin="papercraft"] {
+  --kraft:   #d8b483;
+  --kraft-d: #b88f56;
+  --card:    #e8d6b8;
+  --ink-brn: #4a3a28;
+  --accent:  #e2604b;   /* red marker */
+  --accent2: #3f8f7a;   /* teal marker */
+
+  --ui-font: "Marker Felt", "Comic Sans MS", "Segoe Print", "Bradley Hand", cursive;
+  --lcd-font:"Marker Felt", "Comic Sans MS", "Segoe Print", cursive;
+  --ink: var(--ink-brn);
+
+  --frame-radius: 7px;
+  --frame-border: 2px solid #8a6a3e;
+  /* corrugated kraft board */
+  --frame-shadow:
+    0 18px 40px rgba(0,0,0,.45),
+    inset 0 0 0 3px #c79a64, inset 0 0 0 5px #8a6a3e;
+  --frame-bg:
+    repeating-linear-gradient(90deg, rgba(120,86,46,.10) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, #ddb988, #c89a60);
+  --panel-bg: var(--frame-bg);
+  --seam: 2px dashed #9a7748;
+  --seam-line: rgba(74,58,40,.4);
+
+  --title-bg: transparent;
+  --title-ink: var(--ink-brn);
+  --title-glow: none;
+
+  --tb-btn-bg: #e2604b;
+  --tb-close-bg: #e2604b;
+
+  /* white paper "screens" with marker text */
+  --lcd-bg: linear-gradient(180deg, #fbf6ec, #f0e7d4);
+  --lcd-border: 2px solid #c2a877;
+  --lcd-inset: inset 0 2px 5px rgba(120,86,46,.25), 0 1px 0 rgba(255,255,255,.5);
+  --lcd-radius: 4px;
+  --lcd-ink: #433423;
+  --lcd-ink-dim: #7a6447;
+  --lcd-glow: none;
+
+  --vis-lo: #e2604b; --vis-hi: #3f8f7a; --vis-peak: #4a3a28;
+
+  /* cut-paper button tabs with offset drop shadow */
+  --btn-ink: #43341f;
+  --btn-radius: 5px;
+  --btn-bg: linear-gradient(180deg, #f3e6cd, #e2cda3);
+  --btn-shadow: 1.5px 2px 0 rgba(120,86,46,.55), inset 0 0 0 1.5px #b9925a;
+  --btn-shadow-active: 0 0 0 rgba(0,0,0,0), inset 0 1px 3px rgba(120,86,46,.4), inset 0 0 0 1.5px #b9925a;
+
+  --toggle-ink: #6a563a;
+  --toggle-on-ink: #fff;
+  --toggle-on-bg: #e2604b;
+  --toggle-on-shadow: 1.5px 2px 0 rgba(120,86,46,.5), inset 0 0 0 1.5px #b34433;
+  --toggle-on-glow: none;
+  --toggle-on-spark: #e2604b;
+  --seg-active-overlay: #e2604b;
+
+  /* paper-disc knobs */
+  --knob-bg: radial-gradient(58% 58% at 50% 38%, #f3e6cd, #d8b483 75%, #b9925a);
+  --knob-shadow: 1.5px 2px 0 rgba(120,86,46,.5), inset 0 0 0 1.5px #b9925a;
+  --knob-ind: #e2604b; --knob-ind-glow: rgba(0,0,0,0);
+
+  --rail-w: 6px;
+  --rail-bg: #c79a64;
+  --rail-shadow: inset 0 1px 2px rgba(120,86,46,.5);
+  --fill-bg: #e2604b;
+  --thumb-w: 18px; --thumb-h: 14px; --thumb-radius: 3px;
+  --thumb-bg: linear-gradient(180deg, #fbf6ec, #e2cda3);
+  --thumb-shadow: 1.5px 2px 0 rgba(120,86,46,.5), inset 0 0 0 1.5px #b9925a;
+
+  --xy-bg: linear-gradient(180deg, #fbf6ec, #f0e7d4);
+  --xy-puck: #e2604b; --xy-line: rgba(120,86,46,.25);
+  /* baked playlist screen came out dark — lighten to paper for dark ink */
+  --screen-scrim: rgba(250,244,233,.9);
+
+  --list-bg: #fbf6ec;
+  --list-ink: #433423;
+  --list-font: "Marker Felt", "Comic Sans MS", "Segoe Print", cursive;
+  --list-hover: rgba(226,96,75,.12);
+  --list-sel-bg: #e2604b;
+  --list-sel-ink: #fff;
+  --scroll-track: #e6d3af;
+  --scroll-thumb: #b9925a;
+}
+[data-skin="papercraft"] .eq-curve-line { stroke: #e2604b; stroke-width: 2; }
+[data-skin="papercraft"] .vis-canvas { image-rendering: auto; }

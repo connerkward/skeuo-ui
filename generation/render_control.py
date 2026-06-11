@@ -38,33 +38,55 @@ def render():
     d.rounded_rectangle([6, 6, OUT_W - 6, OUT_H - 6], radius=26,
                         outline=(120, 122, 126), width=10)
 
+    PANEL = (176, 178, 182)
     for reg in tpl["regions"]:
         x0, y0, x1, y1 = px(reg["rect"])
         kind, content = reg["kind"], reg["content"]
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-        h = y1 - y0
+        w, h = x1 - x0, y1 - y0
 
-        if kind == "display":
-            # recessed dark screen — kept EMPTY (live content renders at runtime)
-            rrect(d, [x0, y0, x1, y1], 8, fill=(20, 22, 24),
-                  outline=(70, 72, 76), width=3)
+        if kind == "flourish":
+            # decorative inset — slightly proud panel with a thin frame + motif,
+            # signalling the model to ORNAMENT here (not place a control)
+            rrect(d, [x0, y0, x1, y1], 6, fill=(168, 170, 174),
+                  outline=(140, 142, 146), width=2)
+            r = min(w, h) * 0.18
+            d.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)],
+                      outline=(150, 152, 156), width=2)
+        elif kind == "display":
+            rrect(d, [x0, y0, x1, y1], 8, fill=(20, 22, 24), outline=(70, 72, 76), width=3)
         elif kind in ("button", "toggle"):
-            # raised rounded control with top highlight + bottom shadow
             rad = int(min(h * 0.32, 14))
-            rrect(d, [x0, y0, x1, y1], rad, fill=(206, 208, 212),
-                  outline=(108, 110, 114), width=3)
-            rrect(d, [x0 + 3, y0 + 3, x1 - 3, y0 + (y1 - y0) * 0.45], rad,
-                  fill=(226, 228, 232))
-            lab = reg.get("label", "")
-            d.text((cx, cy), lab[:8], fill=(60, 62, 66),
+            rrect(d, [x0, y0, x1, y1], rad, fill=(206, 208, 212), outline=(108, 110, 114), width=3)
+            rrect(d, [x0 + 3, y0 + 3, x1 - 3, y0 + h * 0.45], rad, fill=(226, 228, 232))
+            d.text((cx, cy), reg.get("label", "")[:8], fill=(60, 62, 66),
                    font=font(max(10, int(h * 0.34))), anchor="mm")
+        elif kind == "segmented":
+            rad = int(min(h * 0.3, 12))
+            rrect(d, [x0, y0, x1, y1], rad, fill=(200, 202, 206), outline=(108, 110, 114), width=3)
+            opts = reg.get("options", []) or [""]
+            n = len(opts)
+            for i, o in enumerate(opts):
+                sx = x0 + w * i / n
+                if i: d.line([(sx, y0 + 3), (sx, y1 - 3)], fill=(120, 122, 126), width=2)
+                d.text((sx + w / n / 2, cy), str(o)[:5], fill=(70, 72, 76),
+                       font=font(max(9, int(h * 0.34))), anchor="mm")
+        elif kind == "knob":
+            # raised circular knob body (no indicator — that's a live element)
+            cr = min(w, h) * 0.40
+            d.ellipse([cx - cr, cy - cr, cx + cr, cy + cr], fill=(120, 124, 130),
+                      outline=(80, 82, 86), width=3)
+            d.ellipse([cx - cr * 0.55, cy - cr * 0.55, cx + cr * 0.55, cy + cr * 0.55],
+                      fill=(150, 154, 160))
+        elif kind == "xy":
+            # recessed square pad with crosshair
+            rrect(d, [x0, y0, x1, y1], 6, fill=(26, 28, 30), outline=(78, 80, 84), width=3)
+            d.line([(x0 + 4, cy), (x1 - 4, cy)], fill=(60, 62, 66), width=1)
+            d.line([(cx, y0 + 4), (cx, y1 - 4)], fill=(60, 62, 66), width=1)
         elif kind == "slider-h":
-            # recessed channel ONLY — the knob is a live React element at runtime
-            rrect(d, [x0, cy - 5, x1, cy + 5], 5, fill=(40, 42, 46),
-                  outline=(86, 88, 92), width=2)
+            rrect(d, [x0, cy - 5, x1, cy + 5], 5, fill=(40, 42, 46), outline=(86, 88, 92), width=2)
         elif kind == "slider-v":
-            rrect(d, [cx - 5, y0, cx + 5, y1], 5, fill=(40, 42, 46),
-                  outline=(86, 88, 92), width=2)
+            rrect(d, [cx - 5, y0, cx + 5, y1], 5, fill=(40, 42, 46), outline=(86, 88, 92), width=2)
 
     out = os.path.join(HERE, "control.png")
     img.save(out)

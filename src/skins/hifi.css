@@ -1,0 +1,98 @@
+/* ============================================================
+   70s HI-FI RECEIVER  —  walnut veneer + brushed-aluminium
+   faceplate, warm fluorescent teal tuner glass, knurled silver
+   knobs, amber pilot lamps.
+   ============================================================ */
+[data-skin="hifi"] {
+  --alu:    #c4c7ca;
+  --alu-hi: #e9ebed;
+  --walnut: #4a3220;
+  --teal:   #5fe7cf;
+  --amberL: #ffb347;
+
+  --ui-font: "Helvetica Neue", Arial, system-ui, sans-serif;
+  --lcd-font:"Eurostile", "Helvetica Neue", Arial, sans-serif;
+  --ink: #2b2d2f;
+
+  --frame-radius: 6px;
+  --frame-border: 3px solid #1c130b;
+  /* walnut surround framing a brushed-aluminium faceplate */
+  --frame-shadow:
+    0 24px 56px rgba(0,0,0,.7),
+    inset 0 0 0 6px #5a3c24, inset 0 0 0 8px #2c1d11, inset 0 0 0 10px #6b4a2e;
+  --frame-bg:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.10) 0 1px, rgba(0,0,0,.05) 1px 2px),
+    linear-gradient(180deg, #d4d7da, #b6babe 50%, #a4a8ac);
+  --panel-bg: var(--frame-bg);
+  --seam: 1px solid rgba(0,0,0,.3);
+  --seam-line: rgba(0,0,0,.25);
+
+  --title-bg: transparent;
+  --title-ink: #34373a;
+  --title-glow: 0 1px 0 rgba(255,255,255,.6);
+
+  --tb-btn-bg: linear-gradient(180deg, #e9ebed, #9aa0a6);
+  --tb-close-bg: radial-gradient(60% 60% at 40% 30%, #ffd27a, #d98a14);
+
+  /* warm fluorescent tuner glass */
+  --lcd-bg: linear-gradient(180deg, #0a1512, #061c18);
+  --lcd-border: 2px solid #5a5f63;
+  --lcd-inset: inset 0 2px 8px rgba(0,0,0,.85), inset 0 0 0 1px rgba(95,231,207,.18), inset 0 0 26px rgba(95,231,207,.08);
+  --lcd-radius: 3px;
+  --lcd-ink: var(--teal);
+  --lcd-ink-dim: #46b49e;
+  --lcd-glow: 0 0 6px rgba(95,231,207,.6);
+  --lcd-glow-filter: drop-shadow(0 0 3px rgba(95,231,207,.6));
+
+  --vis-lo: #15806a; --vis-hi: #aef7e7; --vis-peak: #ffffff;
+
+  /* rectangular brushed-aluminium push buttons */
+  --btn-ink: #26282a;
+  --btn-radius: 3px;
+  --btn-bg:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 1px, rgba(0,0,0,.05) 1px 2px),
+    linear-gradient(180deg, #e6e8ea, #b0b4b8 52%, #989da1);
+  --btn-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(0,0,0,.35),
+    inset 0 0 0 1px rgba(90,95,99,.6), 0 1px 2px rgba(0,0,0,.4);
+  --btn-shadow-active: inset 0 2px 5px rgba(0,0,0,.45), inset 0 0 0 1px rgba(90,95,99,.6);
+
+  --toggle-ink: #3a3d40;
+  --toggle-on-ink: #2a1a06;
+  --toggle-on-bg: radial-gradient(60% 60% at 50% 35%, #ffd27a, #ffb347 70%, #d98a14);
+  --toggle-on-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+  --toggle-on-glow: 0 0 12px rgba(255,179,71,.85);
+  --toggle-on-spark: #ffb347;
+  --seg-active-overlay: radial-gradient(70% 90% at 50% 40%, rgba(255,210,122,.85), rgba(255,179,71,.7));
+
+  /* knurled silver knobs with black pointer */
+  --knob-bg:
+    repeating-conic-gradient(from 0deg, #d6d9dc 0 6deg, #aeb2b6 6deg 12deg),
+    radial-gradient(58% 58% at 50% 35%, #eceef0, #9da2a6);
+  --knob-shadow: inset 0 1px 0 rgba(255,255,255,.8), inset 0 0 0 2px rgba(90,95,99,.6), 0 2px 5px rgba(0,0,0,.5);
+  --knob-ind: #161718; --knob-ind-glow: rgba(0,0,0,.4);
+
+  --rail-w: 5px;
+  --rail-bg: linear-gradient(90deg, #5a5f63, #8a9094);
+  --rail-shadow: inset 0 1px 2px rgba(0,0,0,.6);
+  --fill-bg: linear-gradient(90deg, #15806a, #5fe7cf);
+  --thumb-w: 20px; --thumb-h: 14px; --thumb-radius: 2px;
+  --thumb-bg: linear-gradient(180deg, #eceef0, #a4a8ac);
+  --thumb-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 0 0 1px rgba(90,95,99,.6), 0 2px 3px rgba(0,0,0,.45);
+
+  --xy-bg: linear-gradient(180deg, #0a1512, #061c18);
+  --xy-puck: var(--teal); --xy-line: rgba(95,231,207,.2);
+  /* baked playlist screen came out bright — darken it for teal text */
+  --screen-scrim: rgba(6,18,16,.74);
+
+  --list-bg: #07120f;
+  --list-ink: var(--teal);
+  --list-font: "Eurostile", "Helvetica Neue", monospace;
+  --list-hover: rgba(95,231,207,.10);
+  --list-sel-bg: rgba(95,231,207,.22);
+  --list-sel-ink: #d6fff5;
+  --scroll-track: #0a1512;
+  --scroll-thumb: linear-gradient(180deg, #8a9094, #5a5f63);
+}
+[data-skin="hifi"] .eq-curve-line { stroke: var(--teal); }
+[data-skin="hifi"] .title-text { letter-spacing: 2px; }

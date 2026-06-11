@@ -1,20 +1,21 @@
 import type { Template, Region, Kind, Content, Layer, DynamicType } from "./schema";
 import { EQ_BANDS } from "../player/data";
+import { PRESET_NAMES } from "../player/usePlayer";
 
 /* ============================================================
-   The canonical "media player" layout, authored ONCE in pixel
-   space on a 480×700 canvas, then normalized. Every skin reuses
-   this exact geometry; only the styling (the generated layers)
-   changes. This is what makes alignment consistent across skins.
+   The canonical media-player layout, authored ONCE in pixel space
+   on a 480×700 canvas, then normalized. Content is inset from the
+   edges to leave gutters for ornamental "flourish" regions (corners,
+   side rails, header crest, nameplate) that the image model fills
+   with skin-specific detail. Every skin reuses this exact geometry;
+   only the styling (the generated layers) changes.
 
-   Layers, back to front:
-     frame      — bezel/chrome background
-     screen     — recessed dark screens (backdrops for dynamic text)
-     components — button / slider / toggle faces
+   Layers, back to front:  frame · screen · components
    ============================================================ */
 
 const W = 480;
 const H = 700;
+const L = 30, Rg = 450;            // content gutters (left / right edge)
 
 const R: Region[] = [];
 function add(
@@ -24,58 +25,71 @@ function add(
 ) {
   R.push({ kind, content, layer, rect: { x: x / W, y: y / H, w: w / W, h: h / H }, ...extra });
 }
-function dyn(t: DynamicType, x: number, y: number, w: number, h: number, extra: Partial<Region> & { id: string }) {
-  add("display", "dynamic", "screen", x, y, w, h, { dynamicType: t, ...extra });
-}
-// purely visual recessed screen (no live content of its own)
-function screen(x: number, y: number, w: number, h: number, id: string) {
+const dyn = (t: DynamicType, x: number, y: number, w: number, h: number, e: Partial<Region> & { id: string }) =>
+  add("display", "dynamic", "screen", x, y, w, h, { dynamicType: t, ...e });
+const screen = (x: number, y: number, w: number, h: number, id: string) =>
   add("display", "sprite", "screen", x, y, w, h, { id });
-}
+const flourish = (x: number, y: number, w: number, h: number, id: string, hint: string) =>
+  add("flourish", "decoration", "frame", x, y, w, h, { id, flourish: hint, label: hint });
+
+/* ---------- FLOURISHES (non-interactive ornament) ---------- */
+flourish(6, 6, 36, 36, "corner-tl", "CORNER");
+flourish(438, 6, 36, 36, "corner-tr", "CORNER");
+flourish(6, 658, 36, 36, "corner-bl", "CORNER");
+flourish(438, 658, 36, 36, "corner-br", "CORNER");
+flourish(6, 210, 18, 440, "rail-left", "RAIL");
+flourish(456, 210, 18, 440, "rail-right", "RAIL");
+flourish(150, 2, 180, 30, "header-crest", "CREST");
+flourish(180, 672, 120, 22, "maker-plate", "NAMEPLATE");
 
 /* ---------- TITLE BAR ---------- */
-dyn("title", 10, 7, 360, 13, { id: "titlebar", label: "station" });
+dyn("title", 48, 9, 384, 14, { id: "titlebar", label: "station" });
 
-/* ---------- MAIN display screens ---------- */
-screen(12, 36, 120, 92, "lcd-left");
-screen(140, 36, 328, 46, "lcd-right");
+/* ---------- MAIN: display ---------- */
+screen(34, 40, 116, 92, "lcd-left");
+screen(158, 40, 180, 64, "lcd-right");
+dyn("time",       40, 48, 104, 30, { id: "time", label: "0:00" });
+dyn("visualizer", 40, 84, 104, 42, { id: "visualizer" });
+dyn("marquee",   164, 46, 168, 16, { id: "marquee", label: "track title" });
+dyn("meta",      164, 68, 168, 14, { id: "meta", label: "192kbps" });
 
-dyn("time",       20, 44, 104, 30, { id: "time", label: "0:00" });
-dyn("visualizer", 20, 80, 104, 42, { id: "visualizer" });
-dyn("marquee",   148, 42, 312, 16, { id: "marquee", label: "track title" });
-dyn("meta",      148, 64, 312, 14, { id: "meta", label: "192kbps 44kHz stereo" });
+/* knobs + xy pad */
+add("knob", "sprite", "components", 348, 40, 48, 48, { id: "vol", bind: "volume", label: "VOL" });
+add("knob", "sprite", "components", 400, 40, 48, 48, { id: "bal", bind: "balance", label: "BAL" });
+add("xy",   "sprite", "components", 348, 94, 100, 38, { id: "field", label: "FIELD" });
 
-/* vol / bal sit on the panel surface (not in a screen) */
-add("slider-h", "sprite", "components", 148, 96, 150, 14, { id: "vol", bind: "volume", label: "VOL" });
-add("slider-h", "sprite", "components", 312, 96, 150, 14, { id: "bal", bind: "balance", label: "BAL" });
+/* seek */
+add("slider-h", "sprite", "components", 34, 150, 416, 16, { id: "seek", bind: "seek", label: "Seek" });
 
-/* ---------- MAIN: seek ---------- */
-add("slider-h", "sprite", "components", 12, 150, 456, 16, { id: "seek", bind: "seek", label: "Seek" });
-
-/* ---------- MAIN: transport ---------- */
+/* transport */
 const ty = 184, th = 30;
-add("button", "sprite", "components",  12, ty, 36, th, { id: "prev",  bind: "prev",  label: "Prev" });
-add("button", "sprite", "components",  52, ty, 36, th, { id: "play",  bind: "play",  label: "Play" });
-add("button", "sprite", "components",  92, ty, 36, th, { id: "pause", bind: "pause", label: "Pause" });
-add("button", "sprite", "components", 132, ty, 32, th, { id: "stop",  bind: "stop",  label: "Stop" });
-add("button", "sprite", "components", 168, ty, 36, th, { id: "next",  bind: "next",  label: "Next" });
-add("button", "sprite", "components", 208, ty, 30, th, { id: "eject", bind: "eject", label: "Eject" });
-add("toggle", "sprite", "components", 300, ty, 80, th, { id: "shuffle", bind: "shuffle", label: "SHUFFLE" });
-add("toggle", "sprite", "components", 384, ty, 84, th, { id: "repeat",  bind: "repeat",  label: "REPEAT" });
+add("button", "sprite", "components",  34, ty, 36, th, { id: "prev",  bind: "prev",  label: "Prev" });
+add("button", "sprite", "components",  74, ty, 36, th, { id: "play",  bind: "play",  label: "Play" });
+add("button", "sprite", "components", 114, ty, 36, th, { id: "pause", bind: "pause", label: "Pause" });
+add("button", "sprite", "components", 154, ty, 32, th, { id: "stop",  bind: "stop",  label: "Stop" });
+add("button", "sprite", "components", 190, ty, 36, th, { id: "next",  bind: "next",  label: "Next" });
+add("button", "sprite", "components", 230, ty, 30, th, { id: "eject", bind: "eject", label: "Eject" });
+add("toggle", "sprite", "components", 300, ty, 64, th, { id: "shuffle", bind: "shuffle", label: "SHUFFLE" });
+add("segmented", "sprite", "components", 372, ty, 78, th, {
+  id: "repeat", bind: "repeatMode", options: ["OFF", "1", "ALL"], label: "Repeat",
+});
 
 /* ---------- EQ: head ---------- */
-add("toggle", "sprite", "components",  12, 244, 36, 24, { id: "eq-on",   bind: "eqOn",   label: "ON" });
-add("toggle", "sprite", "components",  52, 244, 46, 24, { id: "eq-auto", bind: "eqAuto", label: "AUTO" });
-screen(106, 242, 290, 30, "eq-screen");
-dyn("eq-curve", 108, 244, 286, 26, { id: "eq-curve" });
-add("button", "sprite", "components", 402, 244, 66, 24, { id: "presets", bind: "presets", label: "PRESETS" });
+add("toggle", "sprite", "components", 34, 244, 34, 24, { id: "eq-on",   bind: "eqOn",   label: "ON" });
+add("toggle", "sprite", "components", 72, 244, 44, 24, { id: "eq-auto", bind: "eqAuto", label: "AUTO" });
+screen(120, 242, 178, 30, "eq-screen");
+dyn("eq-curve", 122, 244, 174, 26, { id: "eq-curve" });
+add("segmented", "sprite", "components", 304, 244, 146, 26, {
+  id: "eq-preset", bind: "eqPreset", options: PRESET_NAMES, label: "Preset",
+});
 
 /* ---------- EQ: sliders (preamp + 10 bands) ---------- */
-const bandY = 284, bandH = 120;
+const bandY = 286, bandH = 118;
 const bands = ["PRE", ...EQ_BANDS];
-const slotW = 456 / bands.length;
+const slotW = (Rg - L) / bands.length;
 const sW = 22;
 bands.forEach((name, i) => {
-  const cx = 12 + slotW * (i + 0.5);
+  const cx = L + slotW * (i + 0.5);
   add("slider-v", "sprite", "components", cx - sW / 2, bandY, sW, bandH, {
     id: i === 0 ? "preamp" : `eq-${name}`,
     bind: "eqBand", group: "eq-bands", index: i, label: name,
@@ -83,20 +97,20 @@ bands.forEach((name, i) => {
 });
 
 /* ---------- PLAYLIST ---------- */
-dyn("title",    12, 432, 456, 14, { id: "pl-title", label: "PLAYLIST EDITOR" });
-screen(12, 452, 456, 188, "pl-screen");
-dyn("playlist", 18, 458, 444, 176, { id: "playlist" });
+dyn("title",    34, 432, 416, 14, { id: "pl-title", label: "PLAYLIST EDITOR" });
+screen(34, 452, 416, 184, "pl-screen");
+dyn("playlist", 40, 458, 404, 172, { id: "playlist" });
 
-const fy = 656, fh = 30;
-add("button", "sprite", "components",  12, fy, 36, fh, { id: "pl-add",  label: "ADD" });
-add("button", "sprite", "components",  52, fy, 36, fh, { id: "pl-rem",  label: "REM" });
-add("button", "sprite", "components",  92, fy, 36, fh, { id: "pl-sel",  label: "SEL" });
-add("button", "sprite", "components", 132, fy, 44, fh, { id: "pl-misc", label: "MISC" });
-dyn("meta", 184, fy, 132, fh, { id: "pl-summary", label: "8 tracks" });
-add("button", "sprite", "components", 320, fy, 36, fh, { id: "pl-prev",  bind: "prev",  label: "Prev" });
-add("button", "sprite", "components", 360, fy, 36, fh, { id: "pl-play",  bind: "play",  label: "Play" });
-add("button", "sprite", "components", 400, fy, 36, fh, { id: "pl-pause", bind: "pause", label: "Pause" });
-add("button", "sprite", "components", 440, fy, 36, fh, { id: "pl-next",  bind: "next",  label: "Next" });
+const fy = 652, fh = 30;
+add("button", "sprite", "components",  34, fy, 34, fh, { id: "pl-add",  label: "ADD" });
+add("button", "sprite", "components",  70, fy, 34, fh, { id: "pl-rem",  label: "REM" });
+add("button", "sprite", "components", 106, fy, 34, fh, { id: "pl-sel",  label: "SEL" });
+add("button", "sprite", "components", 142, fy, 44, fh, { id: "pl-misc", label: "MISC" });
+dyn("meta", 196, fy, 116, fh, { id: "pl-summary", label: "8 tracks" });
+add("button", "sprite", "components", 318, fy, 30, fh, { id: "pl-prev",  bind: "prev",  label: "Prev" });
+add("button", "sprite", "components", 350, fy, 30, fh, { id: "pl-play",  bind: "play",  label: "Play" });
+add("button", "sprite", "components", 382, fy, 30, fh, { id: "pl-pause", bind: "pause", label: "Pause" });
+add("button", "sprite", "components", 414, fy, 30, fh, { id: "pl-next",  bind: "next",  label: "Next" });
 
 export const playerTemplate: Template = {
   id: "player-3panel",
