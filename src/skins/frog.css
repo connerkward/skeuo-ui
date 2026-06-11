@@ -1,0 +1,15 @@
+[data-skin="frog"] {
+  --ui-font: "Marker Felt", "Comic Sans MS", system-ui, sans-serif;
+  --lcd-font: "VT323", monospace; --ink: #e7ffe9;
+  --lcd-bg: #06200c; --lcd-ink: #6dff6d; --lcd-ink-dim: #3fb84f;
+  --lcd-glow: 0 0 6px rgba(109,255,109,.7); --lcd-radius: 8px;
+  --lcd-inset: inset 0 2px 8px rgba(0,0,0,.8); --lcd-border: 2px solid #1d5a26;
+  --vis-lo: #1d8a2e; --vis-hi: #b6ff4d; --vis-peak: #fff;
+  --btn-ink: #0c3a14; --btn-radius: 12px;
+  --btn-bg: linear-gradient(180deg,#b6f06d,#5fc23f); --btn-shadow: inset 0 2px 0 rgba(255,255,255,.6), 0 2px 3px rgba(0,0,0,.4);
+  --toggle-on-spark: #ff9d2e; --knob-ind: #ff9d2e; --knob-ind-glow: rgba(255,157,46,.8);
+  --rail-bg: #1d5a26; --fill-bg: #6dff6d; --thumb-bg: linear-gradient(180deg,#d6ff9d,#5fc23f);
+  --thumb-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 3px rgba(0,0,0,.4); --thumb-w: 18px; --thumb-h: 12px;
+  --list-ink: #b6ff8d; --list-sel-bg: rgba(255,157,46,.85); --list-sel-ink: #0c3a14;
+  --title-ink: #d6ffb0;
+}

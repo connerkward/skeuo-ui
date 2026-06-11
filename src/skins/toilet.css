@@ -1,0 +1,15 @@
+[data-skin="toilet"] {
+  --ui-font: "Helvetica Neue", Arial, sans-serif;
+  --lcd-font: "Share Tech Mono", monospace; --ink: #3a3e42;
+  --lcd-bg: #101418; --lcd-ink: #8de4ff; --lcd-ink-dim: #5aa8c0;
+  --lcd-glow: 0 0 6px rgba(141,228,255,.6); --lcd-radius: 12px;
+  --lcd-inset: inset 0 2px 8px rgba(0,0,0,.8); --lcd-border: 2px solid #9aa2a8;
+  --vis-lo: #2e8fb8; --vis-hi: #b0f0ff; --vis-peak: #fff;
+  --btn-ink: #2e3338; --btn-radius: 12px;
+  --btn-bg: linear-gradient(180deg,#ffffff,#cdd4d9); --btn-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(120,128,135,.6), 0 1px 2px rgba(0,0,0,.3);
+  --toggle-on-spark: #19c0f0; --knob-ind: #2e8fb8; --knob-ind-glow: rgba(25,192,240,.7);
+  --rail-bg: #aab2b8; --fill-bg: #19c0f0; --thumb-bg: linear-gradient(180deg,#ffffff,#cdd4d9);
+  --thumb-shadow: inset 0 1px 0 #fff, 0 2px 3px rgba(0,0,0,.35); --thumb-w: 18px; --thumb-h: 12px;
+  --list-ink: #cdeefb; --list-sel-bg: #19c0f0; --list-sel-ink: #08303e;
+  --title-ink: #5a6268;
+}

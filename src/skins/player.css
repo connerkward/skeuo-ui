@@ -59,23 +59,37 @@
   .flipsw.sp-sw .fsw-label { display: none; }
 }
 .sp-sw-img {
-  position: absolute; inset: 0; width: 100%; height: 100%;
+  /* the art may BLEED beyond its well box (transparent PNG) — scaled up and
+     un-clipped so levers/tongues/eyes overhang the body like real hardware */
+  position: absolute; left: -18%; top: -18%; width: 136%; height: 136%;
   object-fit: contain; pointer-events: none;
   transition: opacity .09s steps(2, jump-end);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 }
 .flipsw.sp-sw .sp-sw-img.on { opacity: 0; }
 .flipsw.sp-sw[data-on="true"] .sp-sw-img.on { opacity: 1; }
 .flipsw.sp-sw[data-on="true"] .sp-sw-img.off { opacity: 0; }
 .flipsw.sp-sw:active .sp-sw-stack { transform: scale(.96); }
 
-/* sprite knob: the art itself rotates, centered EXACTLY in the well so the
-   pivot is the well center (label is tooltip-only on sprite knobs) */
+/* sprite knob: STATIC cap art (lighting never rotates) + a live pointer that
+   orbits the exact center. Both absolutely centered in the well. */
 .sp-knob { cursor: ns-resize; position: relative; }
 .sp-knob .knob-label { display: none; }
 .sp-knob-img {
   position: absolute; inset: 0; margin: auto;
   width: 92%; height: 92%; object-fit: contain; pointer-events: none;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,.45));
+}
+.sp-knob-ptr {
+  position: absolute; inset: 0; margin: auto;
+  width: 92%; height: 92%; pointer-events: none;
+}
+.sp-knob-ptr::after {
+  content: ""; position: absolute; left: 50%; top: 9%;
+  width: 6.5%; height: 30%; margin-left: -3.25%;
+  border-radius: 99px;
+  background: var(--knob-ind, #fff);
+  box-shadow: 0 0 4px var(--knob-ind-glow, rgba(0,0,0,.5)), inset 0 0 1px rgba(0,0,0,.4);
 }
 
 /* sprite button: AI face + glyph on top; press depresses the art */

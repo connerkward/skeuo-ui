@@ -310,13 +310,13 @@ function Knob({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string })
   }, [setV]);
   const angle = -135 + value * 270;
   if (skinSprites(skinId)) {
-    // SPRITE knob: the AI-rendered knob art itself rotates (pointer baked
-    // pointing up in the sprite).
+    // SPRITE knob: the cap art is STATIC (so its lighting never rotates); a
+    // live pointer element orbits the exact center instead.
     return (
       <div className="knob sp-knob" title={`${r.label}: ${(value * 100) | 0}%`}
         onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
-        <img className="sp-knob-img" src={spriteUrl(skinId, "knob")} alt="" draggable={false}
-          style={{ transform: `rotate(${angle}deg)` }} />
+        <img className="sp-knob-img" src={spriteUrl(skinId, "knob")} alt="" draggable={false} />
+        <div className="sp-knob-ptr" style={{ transform: `rotate(${angle}deg)` }} />
         <span className="knob-label">{r.label}</span>
       </div>
     );

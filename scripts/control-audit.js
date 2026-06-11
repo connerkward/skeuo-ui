@@ -76,7 +76,10 @@ async () => {
     ok(name);
   }
 
-  // ---- horizontal sliders: full travel ----
+  // ---- horizontal sliders: full travel (pause first: the seek thumb is
+  // driven by the clock, which otherwise races the measurement) ----
+  document.querySelector('.region button[title="pause"], .region button[title="Pause"]')?.click();
+  await wait(150);
   const hss = [...document.querySelectorAll('.region .sk-slider-h')];
   for (let i = 0; i < hss.length; i++) {
     const s = hss[i]; const name = `slider-h[${i}]`;

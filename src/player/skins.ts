@@ -53,6 +53,13 @@ export const skinList: SkinAssets[] = [
   // base style's sprite controls mounted into the wells + live screens
   { id: "y2k-pod",    name: "Y2K Pod ✦",     blurb: "Chrome pod body, sprite controls mounted", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/y2k-pod/template.json" },
   { id: "y2k-wasp",   name: "Rust Wasp ✦",   blurb: "RobCo insectoid body, sprite controls mounted", has: ["frame"], live: true, style: "fallout", templateUrl: "/skins/y2k-wasp/template.json" },
+
+  // absurd ✦ — memetic styles with their own sprites + palettes
+  { id: "frog",    name: "Froggo ✦",        blurb: "Glossy rubber meme-frog, orange-dot hardware", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/frog/template.json" },
+  { id: "burger",  name: "Burger Deluxe ✦", blurb: "Sesame bun body, fry-switch, ketchup pointer", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/burger/template.json" },
+  { id: "bondi",   name: "Bondi G3 ✦",      blurb: "Translucent Y2K plastic, circuit shadows", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/bondi/template.json" },
+  { id: "toilet",  name: "Porcelain ✦",     blurb: "Gleaming ceramic, chrome flush lever", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/toilet/template.json" },
+  { id: "biomech", name: "Hive Mind ✦",     blurb: "Giger bone & sinew, bioluminescent veins", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/biomech/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
@@ -64,7 +71,7 @@ export function skinBaked(id: string): boolean {
 }
 
 // bump when frames/sprites are regenerated so browsers re-fetch
-const ASSET_VERSION = "nb9";
+const ASSET_VERSION = "nb11";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 export const spriteUrl = (id: string, name: string) => `${base(skinStyle(id))}/sprites/${name}.png?v=${ASSET_VERSION}`;

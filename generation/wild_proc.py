@@ -37,6 +37,32 @@ VARIANTS = {
                 "the edges, amber-green accents, a small stencilled roundel on the lower hull."),
         "horns": False, "antenna": True,
     },
+    "frog": {
+        "style": "frog", "dest": "frog", "app": "ears", "seed": 11,
+        "mat": ("a glossy lime-green rubber cartoon frog-creature toy: smooth candy-shine lobes, darker "
+                "green accents, orange dot details, friendly and absurd."),
+    },
+    "burger": {
+        "style": "burger", "dest": "burger", "app": "none", "seed": 31, "rx": 470, "ry": 620,
+        "mat": ("a juicy CHEESEBURGER device: toasted sesame-seed bun body, melted cheese dripping between "
+                "layers, lettuce frill and tomato edge — appetizing cartoon food-photography style."),
+    },
+    "bondi": {
+        "style": "bondi", "dest": "bondi", "app": "handle", "seed": 17,
+        "mat": ("translucent Bondi-blue Y2K plastic (iMac G3 style): see-through gel revealing faint "
+                "internal circuit-board silhouettes, silver trim, white specular highlights."),
+    },
+    "toilet": {
+        "style": "toilet", "dest": "toilet", "app": "tank", "seed": 41, "rx": 410, "ry": 580,
+        "mat": ("gleaming white porcelain bathroom ceramic with polished chrome flush hardware — yes, a "
+                "toilet-shaped music player, played completely straight."),
+    },
+    "biomech": {
+        "style": "biomech", "dest": "biomech", "app": "tendrils", "seed": 13,
+        "mat": ("an H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping "
+                "the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence in the "
+                "recesses."),
+    },
 }
 
 # ---------- the shared internal layout (exact, reused for the template) ----------
@@ -84,14 +110,33 @@ def draw_blueprint(variant, seed):
     img = Image.new("RGBA", (W, H), (255, 255, 255, 255))
     d = ImageDraw.Draw(img)
     # body: big wobbly blob covering the layout area
-    d.polygon(blob_path(W/2, H/2 + 30, 430, 660, 0.16, seed=seed), fill=BODY_FILL, outline=(120, 122, 126))
-    # appendages
-    if variant["horns"]:
+    rx = variant.get("rx", 430); ry = variant.get("ry", 660)
+    d.polygon(blob_path(W/2, H/2 + 30, rx, ry, 0.16, seed=seed), fill=BODY_FILL, outline=(120, 122, 126))
+    app = variant.get("app", "horns" if variant.get("horns") else ("antenna" if variant.get("antenna") else "none"))
+    if app == "ears":
+        d.ellipse([60, 60, 340, 340], fill=BODY_FILL)                      # ear pods
+        d.ellipse([684, 60, 964, 340], fill=BODY_FILL)
+        d.ellipse([240, 1380, 440, 1510], fill=BODY_FILL)                  # feet
+        d.ellipse([584, 1380, 784, 1510], fill=BODY_FILL)
+    elif app == "handle":
+        d.rounded_rectangle([322, 30, 702, 250], radius=110, fill=BODY_FILL)   # carry handle arch
+        d.rounded_rectangle([402, 90, 622, 190], radius=50, fill=(255, 255, 255))  # handle cutout
+    elif app == "tank":
+        d.rounded_rectangle([222, 30, 802, 240], radius=30, fill=BODY_FILL)    # cistern tank
+        d.rounded_rectangle([262, 6, 462, 70], radius=18, fill=BODY_FILL)      # flush button block
+        d.ellipse([282, 1340, 742, 1530], fill=BODY_FILL)                      # base
+    elif app == "tendrils":
+        for (x0, y0, x1, y1, x2, y2) in [
+            (90, 300, -6, 80, 230, 420), (934, 300, 1030, 80, 794, 420),
+            (70, 900, -6, 1120, 200, 1010), (954, 900, 1030, 1120, 824, 1010),
+            (330, 1330, 240, 1530, 470, 1380), (694, 1330, 784, 1530, 554, 1380)]:
+            d.polygon([(x0, y0), (x1, y1), (x2, y2)], fill=BODY_FILL)          # tendril spikes
+    if app == "horns" and variant.get("horns", True):
         d.polygon([(230, 480), (60, 60), (430, 280)], fill=BODY_FILL)     # left horn
         d.polygon([(794, 480), (964, 60), (594, 280)], fill=BODY_FILL)    # right horn
         d.polygon([(330, 1300), (260, 1520), (440, 1340)], fill=BODY_FILL)  # feet
         d.polygon([(694, 1300), (764, 1520), (584, 1340)], fill=BODY_FILL)
-    if variant["antenna"]:
+    if app == "antenna":
         d.rectangle([740, 80, 790, 420], fill=BODY_FILL)                  # antenna stalk
         d.ellipse([700, 20, 830, 140], fill=BODY_FILL)                    # antenna bulb
         d.ellipse([70, 560, 260, 940], fill=BODY_FILL)                    # side pod
@@ -119,7 +164,7 @@ PROMPT = (
 
 def gen(key):
     v = VARIANTS[key]
-    seed = {"pod": 7, "wasp": 23}[key]
+    seed = v.get("seed", {"pod": 7, "wasp": 23}.get(key, 5))
     bp = draw_blueprint(v, seed)
     bp_path = os.path.join(G.HERE, f"wildproc-{key}.png")
     bp.save(bp_path)
@@ -146,10 +191,10 @@ def gen(key):
         if time.time() - t0 > 300: raise SystemExit("cutout timeout")
         time.sleep(3)
     cut = G.get(job["response_url"])["image"]["url"]
-    dest = os.path.join(ROOT, "public", "skins", f"y2k-{key}")
+    dest = os.path.join(ROOT, "public", "skins", v.get("dest", f"y2k-{key}"))
     os.makedirs(dest, exist_ok=True)
     urllib.request.urlretrieve(cut, os.path.join(dest, "frame.png"))
-    json.dump({"id": f"y2k-{key}", "name": "wild-proc", "canvas": {"w": W, "h": H},
+    json.dump({"id": v.get("dest", f"y2k-{key}"), "name": "wild-proc", "canvas": {"w": W, "h": H},
                "regions": layout()}, open(os.path.join(dest, "template.json"), "w"), indent=2)
     print(f"[{key}] saved", flush=True)
 

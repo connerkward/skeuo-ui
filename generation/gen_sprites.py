@@ -32,16 +32,26 @@ MAT = {
     "aqua":       "Mac OS X Aqua: glossy translucent candy-blue gel and white glass over brushed aluminium, bright top highlight.",
     "hifi":       "1970s hi-fi receiver: knurled brushed-aluminium, silver, black pointer markings, warm amber pilot-lamp accents.",
     "papercraft": "Hand-made papercraft: folded kraft cardboard and cut paper, matte, visible creases, red/teal marker accents.",
+    "frog":   "Glossy lime-green rubber cartoon toy: smooth rounded candy-shine shapes, darker green accents, orange dot details.",
+    "burger": "Cartoon fast-food cheeseburger: toasted sesame bun, melted cheese yellow, ketchup red, lettuce green accents.",
+    "bondi":  "Late-90s translucent Bondi-blue plastic (iMac G3 style): see-through gel with white highlights over silver.",
+    "toilet": "Gleaming white porcelain bathroom ceramic, glossy, with polished chrome metal accents.",
+    "biomech": "H.R. Giger biomechanical body-horror: fused bone, sinew and chitin, ribbed organic tubes, wet sheen, sickly green-amber glow in crevices.",
 }
 
 # per-style switch DESIGNS — distinct hardware, not one archetype recolored
 SWITCH_DESC = {
-    "winamp":     "a small rectangular chrome toggle switch on a brushed plate with a tiny green LED window below the lever",
-    "fallout":    "a big industrial KNIFE-SWITCH: bakelite handle on a riveted scuffed metal plate with an amber indicator lamp",
-    "fantasy":    "an ornate gold lever with a faceted gem tip, mounted on a small carved stone plaque with gold trim",
-    "aqua":       "a glossy aqua-gel ROCKER switch: translucent candy-blue pill in a white glass frame, glows when on",
-    "hifi":       "a rectangular silver paddle switch on a brushed-aluminium plate with engraved ON/OFF dots and a small amber lamp",
-    "papercraft": "a cut-paper TAB sliding in a cardboard slot, red marker dot indicator, visible fold creases",
+    "winamp":     "a chrome LIGHTNING-BOLT shaped lever in a dark slot plate; a green lightning glow charges up when on",
+    "fallout":    "a hazard-striped VAULT lever (yellow/black chevrons) with a radiation trefoil badge that ignites amber when on",
+    "fantasy":    "a tiny bronze DRAGON-HEAD lever — the dragon's neck is the handle; its gem eyes and a small mouth-flame ignite when on",
+    "aqua":       "a glass channel holding a fat WATER DROPLET of blue gel: droplet rests at the bottom when off, floats to the top glowing when on",
+    "hifi":       "an ivory PIANO-KEY flip paddle on aluminium; a warm vacuum-tube glow window lights when on",
+    "papercraft": "an ORIGAMI CRANE pop-up tab: folded flat into the slot when off, popped-up paper crane with a red dot when on",
+    "frog":       "a curled pink FROG-TONGUE lever on a green rubber pad; an orange fly dot lights when on (tongue extended upward)",
+    "burger":     "a crinkle-cut PICKLE SLICE lever standing in a ketchup-red slot; a mustard drizzle glows when on",
+    "bondi":      "a translucent hockey-puck SLIDER (like an iMac mouse) in a clear track: low when off, high and glowing white when on",
+    "toilet":     "a golden TOILET-PAPER-ROLL lever on porcelain: paper strip hangs when off, rolled tight with chrome shine when on",
+    "biomech":    "a living EYEBALL set in a chitin sphincter socket: pale closed eyelid when off, wide-open eye with glowing sickly-green iris when on",
 }
 
 ASSETS = {
@@ -53,10 +63,9 @@ ASSETS = {
     ),
     "knob": (
         "A single round rotary knob CAP only, perfectly circular, viewed dead-on from the front. NO base "
-        "plate, NO panel, NO tick marks, NO mounting ring, NO shadow — JUST the circular knob itself. "
-        "Radially symmetric design and shading, lit evenly from directly above (so it can rotate "
-        "naturally), with ONE clear high-contrast pointer line from the center to the edge pointing "
-        "STRAIGHT UP. {mat}"
+        "plate, NO panel, NO tick marks, NO mounting ring, NO shadow, NO pointer, NO marking of any kind "
+        "— JUST the blank circular knob cap, perfectly radially symmetric (the indicator is added "
+        "separately). {mat}"
     ),
     "button": (
         "A single blank rectangular pressable BUTTON face with beveled edges, slightly rounded corners, no "
