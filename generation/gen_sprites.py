@@ -34,11 +34,22 @@ MAT = {
     "papercraft": "Hand-made papercraft: folded kraft cardboard and cut paper, matte, visible creases, red/teal marker accents.",
 }
 
+# per-style switch DESIGNS — distinct hardware, not one archetype recolored
+SWITCH_DESC = {
+    "winamp":     "a small rectangular chrome toggle switch on a brushed plate with a tiny green LED window below the lever",
+    "fallout":    "a big industrial KNIFE-SWITCH: bakelite handle on a riveted scuffed metal plate with an amber indicator lamp",
+    "fantasy":    "an ornate gold lever with a faceted gem tip, mounted on a small carved stone plaque with gold trim",
+    "aqua":       "a glossy aqua-gel ROCKER switch: translucent candy-blue pill in a white glass frame, glows when on",
+    "hifi":       "a rectangular silver paddle switch on a brushed-aluminium plate with engraved ON/OFF dots and a small amber lamp",
+    "papercraft": "a cut-paper TAB sliding in a cardboard slot, red marker dot indicator, visible fold creases",
+}
+
 ASSETS = {
     "switch": (
-        "TWO STATES of the SAME chunky retro flip switch (toggle lever in a recessed slot plate), side by "
-        "side with a clear gap: LEFT copy lever flipped DOWN = OFF (indicator unlit), RIGHT copy IDENTICAL "
-        "switch lever flipped UP = ON (indicator lit). Identical size, identical position height. {mat}"
+        "TWO STATES of the SAME switch side by side with a clear gap: LEFT copy in the OFF position "
+        "(lever/handle DOWN, indicator unlit), RIGHT copy is the IDENTICAL switch in the ON position "
+        "(lever/handle UP, indicator lit). Identical plate size, identical vertical position. The switch: "
+        "{sw}. {mat}"
     ),
     "knob": (
         "A single round rotary knob CAP only, perfectly circular, viewed dead-on from the front. NO base "
@@ -90,12 +101,34 @@ def do_skin(skin):
     mat = MAT[skin]
     def one(asset):
         if ONLY_ASSETS and asset not in ONLY_ASSETS: return
-        im = gen(skin, asset, BASE + ASSETS[asset].format(mat=mat))
+        im = gen(skin, asset, BASE + ASSETS[asset].format(mat=mat, sw=SWITCH_DESC.get(skin, "a flip switch")))
         if im is None: return
         if asset == "switch":
+            # split the pair, then ALIGN the two states on the plate (anchor =
+            # alpha centroid of the bottom 40%, identical between states) and
+            # paste onto one shared canvas size → the plate is pixel-fixed when
+            # toggling; only the lever moves.
+            import numpy as np
             mid = im.width // 2
-            trim(im.crop((0, 0, mid, im.height))).save(os.path.join(out, "switch-off.png"))
-            trim(im.crop((mid, 0, im.width, im.height))).save(os.path.join(out, "switch-on.png"))
+            halves = [im.crop((0, 0, mid, im.height)), im.crop((mid, 0, im.width, im.height))]
+            anchors, bboxes = [], []
+            for h in halves:
+                a = np.asarray(h)[..., 3].astype(np.float32); a[a < 60] = 0
+                ys, xs = np.nonzero(a)
+                y0b = ys.min() + int((ys.max() - ys.min()) * 0.6)
+                sel = ys >= y0b; w = a[ys[sel], xs[sel]]
+                anchors.append((float((xs[sel] * w).sum() / w.sum()), float((ys[sel] * w).sum() / w.sum())))
+                bboxes.append((xs.min(), ys.min(), xs.max(), ys.max()))
+            bw = max(b[2] - b[0] for b in bboxes) + 24
+            bh = max(b[3] - b[1] for b in bboxes) + 24
+            # common anchor target: same relative spot in both outputs
+            ax = bw // 2
+            ay = int(bh * 0.78)
+            names = ["switch-off.png", "switch-on.png"]
+            for h, (cx, cy), name in zip(halves, anchors, names):
+                cv = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))
+                cv.paste(h, (int(ax - cx), int(ay - cy)), h)
+                cv.save(os.path.join(out, name))
         elif asset == "knob":
             # enforce a circular sprite: center square crop + circle alpha mask,
             # so NOTHING square/panel-like can rotate with the cap

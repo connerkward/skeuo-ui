@@ -69,14 +69,14 @@ add("button", "sprite", "components", 114, ty, 36, th, { id: "pause", bind: "pau
 add("button", "sprite", "components", 154, ty, 32, th, { id: "stop",  bind: "stop",  label: "Stop" });
 add("button", "sprite", "components", 190, ty, 36, th, { id: "next",  bind: "next",  label: "Next" });
 add("button", "sprite", "components", 230, ty, 30, th, { id: "eject", bind: "eject", label: "Eject" });
-add("toggle", "sprite", "components", 304, ty - 8, 56, 46, { id: "shuffle", bind: "shuffle", label: "SHUFFLE" });
+add("toggle", "sprite", "components", 312, ty - 10, 40, 50, { id: "shuffle", bind: "shuffle", label: "SHUFFLE" });
 add("segmented", "sprite", "components", 372, ty, 78, th, {
   id: "repeat", bind: "repeatMode", options: ["OFF", "1", "ALL"], label: "Repeat",
 });
 
 /* ---------- EQ: head ---------- */
-add("toggle", "sprite", "components", 34, 234, 36, 44, { id: "eq-on",   bind: "eqOn",   label: "ON" });
-add("toggle", "sprite", "components", 76, 234, 36, 44, { id: "eq-auto", bind: "eqAuto", label: "AUTO" });
+add("toggle", "sprite", "components", 34, 230, 40, 50, { id: "eq-on",   bind: "eqOn",   label: "ON" });
+add("toggle", "sprite", "components", 80, 230, 40, 50, { id: "eq-auto", bind: "eqAuto", label: "AUTO" });
 screen(120, 242, 178, 30, "eq-screen");
 dyn("eq-curve", 122, 244, 174, 26, { id: "eq-curve" });
 add("segmented", "sprite", "components", 304, 244, 146, 26, {
