@@ -41,7 +41,11 @@ ASSETS = {
         "switch lever flipped UP = ON (indicator lit). Identical size, identical position height. {mat}"
     ),
     "knob": (
-        "A single round rotary volume KNOB with a clear pointer/indicator line pointing STRAIGHT UP. {mat}"
+        "A single round rotary knob CAP only, perfectly circular, viewed dead-on from the front. NO base "
+        "plate, NO panel, NO tick marks, NO mounting ring, NO shadow — JUST the circular knob itself. "
+        "Radially symmetric design and shading, lit evenly from directly above (so it can rotate "
+        "naturally), with ONE clear high-contrast pointer line from the center to the edge pointing "
+        "STRAIGHT UP. {mat}"
     ),
     "button": (
         "A single blank rectangular pressable BUTTON face with beveled edges, slightly rounded corners, no "
@@ -78,17 +82,33 @@ def trim(im, pad=6):
     x1 = min(im.width, x1 + pad); y1 = min(im.height, y1 + pad)
     return im.crop((x0, y0, x1, y1))
 
+ONLY_ASSETS = [a for a in os.environ.get("ASSETS", "").split(",") if a]
+
 def do_skin(skin):
     out = os.path.join(ROOT, "public", "skins", skin, "sprites")
     os.makedirs(out, exist_ok=True)
     mat = MAT[skin]
     def one(asset):
+        if ONLY_ASSETS and asset not in ONLY_ASSETS: return
         im = gen(skin, asset, BASE + ASSETS[asset].format(mat=mat))
         if im is None: return
         if asset == "switch":
             mid = im.width // 2
             trim(im.crop((0, 0, mid, im.height))).save(os.path.join(out, "switch-off.png"))
             trim(im.crop((mid, 0, im.width, im.height))).save(os.path.join(out, "switch-on.png"))
+        elif asset == "knob":
+            # enforce a circular sprite: center square crop + circle alpha mask,
+            # so NOTHING square/panel-like can rotate with the cap
+            im = trim(im, pad=0)
+            side = min(im.size)
+            cx, cy = im.width // 2, im.height // 2
+            im = im.crop((cx - side // 2, cy - side // 2, cx + side // 2, cy + side // 2))
+            from PIL import ImageDraw as _ID
+            mask = Image.new("L", im.size, 0)
+            _ID.Draw(mask).ellipse([0, 0, im.width - 1, im.height - 1], fill=255)
+            a = im.getchannel("A").point(lambda v: v)  # copy
+            im.putalpha(Image.composite(a, Image.new("L", im.size, 0), mask))
+            im.save(os.path.join(out, "knob.png"))
         else:
             trim(im).save(os.path.join(out, f"{asset}.png"))
         print(f"[{skin}] {asset} ok", flush=True)

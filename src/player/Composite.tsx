@@ -192,12 +192,16 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
   // otherwise the CSS-skeuomorphic fallback. Either way they're real & animated.
   const sp = skinSprites(skinId);
   if (r.kind === "button") {
+    // 9-slice the sprite (border-image) so the bezel stays crisp at any size
+    // and the FACE fills the button instead of stretching into mostly-bezel.
     const face: React.CSSProperties = sp
-      ? { backgroundImage: `url(${spriteUrl(skinId, "button")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none" }
+      ? { borderImage: `url(${spriteUrl(skinId, "button")}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
       : {};
+    const g = glyph(r);
+    if (g.length > 2) face.fontSize = "1.7cqw";   // text labels fit the face
     return (
       <button className={`tbtn ${sp ? "sp-btn" : ""}`} style={face} onClick={btnHandler(r, ps)} title={r.label ?? r.id}>
-        {glyph(r)}
+        {g}
       </button>
     );
   }
