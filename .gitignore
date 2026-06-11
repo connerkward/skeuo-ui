@@ -30,3 +30,6 @@ shots/
 # freeform demo outputs (regenerable; keep template.json)
 generation/freeform/*.png
 generation/control.png
+
+__pycache__/
+*.pyc

@@ -10,7 +10,6 @@ import "./skins/fantasy.css";
 import "./skins/aqua.css";
 import "./skins/hifi.css";
 import "./skins/papercraft.css";
-import "./skins/freeform.css";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;

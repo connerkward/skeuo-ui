@@ -3,7 +3,7 @@ import type { Region, Template } from "../template/schema";
 import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
-import { layerUrl, skinHas, skinBaked, skinTemplateUrl } from "./skins";
+import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle } from "./skins";
 
 interface Props {
   template: Template;
@@ -45,8 +45,9 @@ export function Composite({ template, skinId, showWireframe }: Props) {
   };
 
   // all hooks above this line — safe to early-return now
+  const styleId = skinStyle(skinId);
   const active = url ? loaded : template;
-  if (!active) return <div className="player" data-skin={skinId} style={{ aspectRatio: "1024 / 1536" }} />;
+  if (!active) return <div className="player" data-skin={styleId} style={{ aspectRatio: "1024 / 1536" }} />;
   const tpl = active;
   const { canvas } = tpl;
   const baked = skinBaked(skinId);
@@ -55,7 +56,7 @@ export function Composite({ template, skinId, showWireframe }: Props) {
   return (
     <div
       className={`player ${showWireframe ? "is-wireframe" : ""} ${hasFrame ? "has-frame" : ""}`}
-      data-skin={skinId}
+      data-skin={styleId}
       style={{ aspectRatio: `${canvas.w} / ${canvas.h}`, transform: `translate(${pos.x}px, ${pos.y}px)` }}
     >
       {/* generated chrome as a transparent layer (lets each skin's silhouette differ) */}

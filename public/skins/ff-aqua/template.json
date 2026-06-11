@@ -1,0 +1,406 @@
+{
+  "id": "freeform",
+  "name": "Freeform-extracted",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "display_screen",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.044,
+        "y": 0.088,
+        "w": 0.912,
+        "h": 0.191
+      },
+      "label": "Display Screen",
+      "dynamicType": "marquee"
+    },
+    {
+      "id": "rewind_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.129,
+        "y": 0.316,
+        "w": 0.075,
+        "h": 0.089
+      },
+      "label": "Rewind"
+    },
+    {
+      "id": "play_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.222,
+        "y": 0.316,
+        "w": 0.075,
+        "h": 0.089
+      },
+      "label": "Play",
+      "bind": "play"
+    },
+    {
+      "id": "pause_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.315,
+        "y": 0.316,
+        "w": 0.075,
+        "h": 0.089
+      },
+      "label": "Pause",
+      "bind": "pause"
+    },
+    {
+      "id": "stop_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.407,
+        "y": 0.316,
+        "w": 0.075,
+        "h": 0.089
+      },
+      "label": "Stop",
+      "bind": "stop"
+    },
+    {
+      "id": "forward_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.5,
+        "y": 0.316,
+        "w": 0.075,
+        "h": 0.089
+      },
+      "label": "Forward",
+      "bind": "next"
+    },
+    {
+      "id": "volume_knob",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.685,
+        "y": 0.316,
+        "w": 0.089,
+        "h": 0.184
+      },
+      "label": "Volume Knob",
+      "bind": "volume"
+    },
+    {
+      "id": "balance_knob",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.787,
+        "y": 0.316,
+        "w": 0.089,
+        "h": 0.184
+      },
+      "label": "Balance Knob",
+      "bind": "balance"
+    },
+    {
+      "id": "treble_knob",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.888,
+        "y": 0.316,
+        "w": 0.089,
+        "h": 0.184
+      },
+      "label": "Treble Knob",
+      "bind": "balance"
+    },
+    {
+      "id": "progress_slider",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.129,
+        "y": 0.507,
+        "w": 0.837,
+        "h": 0.057
+      },
+      "label": "Progress Slider",
+      "bind": "seek"
+    },
+    {
+      "id": "repeat_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.04,
+        "y": 0.636,
+        "w": 0.089,
+        "h": 0.12
+      },
+      "label": "Repeat"
+    },
+    {
+      "id": "shuffle_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.145,
+        "y": 0.636,
+        "w": 0.089,
+        "h": 0.12
+      },
+      "label": "Shuffle",
+      "bind": "shuffle"
+    },
+    {
+      "id": "eq_slider_60hz",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.287,
+        "y": 0.604,
+        "w": 0.024,
+        "h": 0.252
+      },
+      "label": "Equalizer 60 Hz",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 0
+    },
+    {
+      "id": "eq_slider_250hz",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.333,
+        "y": 0.604,
+        "w": 0.024,
+        "h": 0.252
+      },
+      "label": "Equalizer 250 Hz",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 1
+    },
+    {
+      "id": "eq_slider_1khz",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.379,
+        "y": 0.604,
+        "w": 0.024,
+        "h": 0.252
+      },
+      "label": "Equalizer 1 kHz",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 2
+    },
+    {
+      "id": "eq_slider_4khz",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.425,
+        "y": 0.604,
+        "w": 0.024,
+        "h": 0.252
+      },
+      "label": "Equalizer 4 kHz",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 3
+    },
+    {
+      "id": "eq_slider_16khz",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.47,
+        "y": 0.604,
+        "w": 0.024,
+        "h": 0.252
+      },
+      "label": "Equalizer 16 kHz",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 4
+    },
+    {
+      "id": "presets_segmented",
+      "kind": "segmented",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.556,
+        "y": 0.636,
+        "w": 0.089,
+        "h": 0.12
+      },
+      "label": "Presets",
+      "bind": "repeatMode",
+      "options": [
+        "OFF",
+        "1",
+        "ALL"
+      ]
+    },
+    {
+      "id": "mode_stereo_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.685,
+        "y": 0.636,
+        "w": 0.089,
+        "h": 0.075
+      },
+      "label": "Mode Stereo"
+    },
+    {
+      "id": "mode_mono_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.685,
+        "y": 0.72,
+        "w": 0.089,
+        "h": 0.075
+      },
+      "label": "Mode Mono"
+    },
+    {
+      "id": "mode_surround_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.685,
+        "y": 0.805,
+        "w": 0.089,
+        "h": 0.075
+      },
+      "label": "Mode Surround"
+    },
+    {
+      "id": "loudness_toggle",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.583,
+        "y": 0.739,
+        "w": 0.046,
+        "h": 0.046
+      },
+      "label": "Loudness"
+    },
+    {
+      "id": "playlist_display",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.04,
+        "y": 0.876,
+        "w": 0.922,
+        "h": 0.204
+      },
+      "label": "Playlist Display",
+      "dynamicType": "playlist"
+    },
+    {
+      "id": "add_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.04,
+        "y": 0.959,
+        "w": 0.089,
+        "h": 0.089
+      },
+      "label": "Add"
+    },
+    {
+      "id": "remove_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.145,
+        "y": 0.959,
+        "w": 0.089,
+        "h": 0.089
+      },
+      "label": "Remove"
+    },
+    {
+      "id": "clear_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.25,
+        "y": 0.959,
+        "w": 0.089,
+        "h": 0.089
+      },
+      "label": "Clear"
+    },
+    {
+      "id": "save_list_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.648,
+        "y": 0.959,
+        "w": 0.089,
+        "h": 0.089
+      },
+      "label": "Save List"
+    },
+    {
+      "id": "load_list_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.753,
+        "y": 0.959,
+        "w": 0.089,
+        "h": 0.089
+      },
+      "label": "Load List"
+    }
+  ]
+}

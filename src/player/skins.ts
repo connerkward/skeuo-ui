@@ -20,6 +20,14 @@ export interface SkinAssets {
   // skins whose layout was EXTRACTED from a freeform design carry their own
   // template (fetched at runtime) instead of the canonical one
   templateUrl?: string;
+  // CSS palette to use (the [data-skin] value); defaults to id. Lets a
+  // freeform skin (own assets) reuse an existing style's look.
+  style?: string;
+}
+
+export function skinStyle(id: string): string {
+  const s = skinList.find((x) => x.id === id);
+  return s?.style ?? id;
 }
 
 export const skinList: SkinAssets[] = [
@@ -29,7 +37,14 @@ export const skinList: SkinAssets[] = [
   { id: "aqua",     name: "Mac OS X Aqua",   blurb: "Glossy white glass, pinstripes, candy lozenges", has: ["frame"], baked: true },
   { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: true },
   { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: true },
-  { id: "freeform",   name: "Freeform ✦ extracted", blurb: "Layout reverse-engineered from a gpt-image-2 design", has: ["frame"], baked: true, templateUrl: "/skins/freeform/template.json" },
+
+  // freeform ✦ — each layout reverse-engineered from its OWN gpt-image-2 design
+  { id: "ff-winamp",     name: "Winamp ✦ freeform",     blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "winamp",     templateUrl: "/skins/ff-winamp/template.json" },
+  { id: "ff-fallout",    name: "Fallout ✦ freeform",    blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "fallout",    templateUrl: "/skins/ff-fallout/template.json" },
+  { id: "ff-fantasy",    name: "Baldur's Gate ✦ freeform", blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "fantasy",    templateUrl: "/skins/ff-fantasy/template.json" },
+  { id: "ff-aqua",       name: "Aqua ✦ freeform",       blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "aqua",       templateUrl: "/skins/ff-aqua/template.json" },
+  { id: "ff-hifi",       name: "70s Hi-Fi ✦ freeform",  blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "hifi",       templateUrl: "/skins/ff-hifi/template.json" },
+  { id: "ff-papercraft", name: "Papercraft ✦ freeform", blurb: "Unique layout from a gpt-image-2 design", has: ["frame"], baked: true, style: "papercraft", templateUrl: "/skins/ff-papercraft/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {

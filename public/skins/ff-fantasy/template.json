@@ -1,0 +1,387 @@
+{
+  "id": "freeform",
+  "name": "Freeform-extracted",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "volume_knob_1",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.08,
+        "y": 0.08,
+        "w": 0.1,
+        "h": 0.1
+      },
+      "label": "volume_knob_left",
+      "bind": "volume"
+    },
+    {
+      "id": "volume_knob_2",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.82,
+        "y": 0.08,
+        "w": 0.1,
+        "h": 0.1
+      },
+      "label": "volume_knob_right",
+      "bind": "balance"
+    },
+    {
+      "id": "display_screen",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.21,
+        "y": 0.15,
+        "w": 0.58,
+        "h": 0.4
+      },
+      "label": "main_display",
+      "dynamicType": "playlist"
+    },
+    {
+      "id": "repeat_toggle",
+      "kind": "segmented",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.18,
+        "y": 0.35,
+        "w": 0.06,
+        "h": 0.04
+      },
+      "label": "repeat_toggle",
+      "bind": "repeatMode",
+      "options": [
+        "OFF",
+        "1",
+        "ALL"
+      ]
+    },
+    {
+      "id": "shuffle_toggle",
+      "kind": "segmented",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.18,
+        "y": 0.42,
+        "w": 0.06,
+        "h": 0.04
+      },
+      "label": "shuffle_toggle",
+      "bind": "eqPreset",
+      "options": [
+        "FLAT",
+        "ROCK",
+        "POP",
+        "JAZZ"
+      ]
+    },
+    {
+      "id": "volume_slider",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.73,
+        "y": 0.32,
+        "w": 0.15,
+        "h": 0.05
+      },
+      "label": "volume_slider",
+      "bind": "seek"
+    },
+    {
+      "id": "balance_slider",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.73,
+        "y": 0.42,
+        "w": 0.15,
+        "h": 0.05
+      },
+      "label": "balance_slider",
+      "bind": "seek"
+    },
+    {
+      "id": "rewind_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.35,
+        "y": 0.6,
+        "w": 0.06,
+        "h": 0.06
+      },
+      "label": "rewind"
+    },
+    {
+      "id": "play_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.47,
+        "y": 0.6,
+        "w": 0.06,
+        "h": 0.06
+      },
+      "label": "play",
+      "bind": "play"
+    },
+    {
+      "id": "forward_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.59,
+        "y": 0.6,
+        "w": 0.06,
+        "h": 0.06
+      },
+      "label": "forward",
+      "bind": "next"
+    },
+    {
+      "id": "equalizer_slider_31",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.07,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_31",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 0
+    },
+    {
+      "id": "equalizer_slider_62",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.14,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_62",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 1
+    },
+    {
+      "id": "equalizer_slider_125",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.21,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_125",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 2
+    },
+    {
+      "id": "equalizer_slider_250",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.28,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_250",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 3
+    },
+    {
+      "id": "equalizer_slider_500",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.36,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_500",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 4
+    },
+    {
+      "id": "equalizer_slider_1k",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.43,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_1k",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 5
+    },
+    {
+      "id": "equalizer_slider_2k",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.5,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_2k",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 6
+    },
+    {
+      "id": "equalizer_slider_4k",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.58,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_4k",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 7
+    },
+    {
+      "id": "equalizer_slider_8k",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.65,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_8k",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 8
+    },
+    {
+      "id": "equalizer_slider_16k",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.72,
+        "y": 0.67,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "equalizer_16k",
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 9
+    },
+    {
+      "id": "playlist_display",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.1,
+        "y": 0.83,
+        "w": 0.8,
+        "h": 0.1
+      },
+      "label": "playlist_area",
+      "dynamicType": "marquee"
+    },
+    {
+      "id": "library_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.3,
+        "y": 0.95,
+        "w": 0.1,
+        "h": 0.04
+      },
+      "label": "library"
+    },
+    {
+      "id": "playlists_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.45,
+        "y": 0.95,
+        "w": 0.15,
+        "h": 0.04
+      },
+      "label": "playlists"
+    },
+    {
+      "id": "now_playing_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.65,
+        "y": 0.95,
+        "w": 0.15,
+        "h": 0.04
+      },
+      "label": "now_playing",
+      "bind": "play"
+    },
+    {
+      "id": "search_button",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.85,
+        "y": 0.95,
+        "w": 0.05,
+        "h": 0.04
+      },
+      "label": "search"
+    }
+  ]
+}

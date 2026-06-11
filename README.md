@@ -74,7 +74,15 @@ python3 generation/freeform.py          # gpt-image-2 designs a player; OpenAI v
 python3 generation/freeform_reskin.py   # blueprint from the extracted template → reskin via Nano Banana
 ```
 
-`freeform.py` writes `generation/freeform/`: `donor.png` (the freeform design), `template.json` (extracted, schema-compatible), and `overlay.png` (boxes drawn on the donor for verification). The extracted template becomes the new source of truth, so the reskinned output is internally aligned regardless of extraction precision — the donor just seeds the layout. `freeform_reskin.py` then renders a blueprint from it and restyles into any skin (proven: the same freeform layout → Fantasy and → Winamp). Vision grounding is approximate (OpenAI `gpt-4o`); a stronger grounding model (Gemini) would tighten the boxes.
+`freeform.py` writes `generation/freeform/`: `donor.png` (the freeform design), `template.json` (extracted, schema-compatible), and `overlay.png` (boxes drawn on the donor for verification). The extracted template becomes the new source of truth, so the reskinned output is internally aligned regardless of extraction precision — the donor just seeds the layout. Vision grounding is approximate (OpenAI `gpt-4o`); a stronger grounding model (Gemini) would tighten the boxes.
+
+### Per-style freeform skins
+
+```bash
+python3 generation/freeform_all.py     # one freeform layout PER style, end to end
+```
+
+This runs the whole loop six times — each style gets its **own** gpt-image-2 design with a distinct layout (two-dial Hi-Fi, left-button-column Fallout, symmetric Fantasy, …), its own extracted template, and its own Nano Banana reskin. They appear in the app as the `✦ freeform` skins, each rendering live + interactive on a unique layout (a skin's `style` field reuses the base palette CSS while its `templateUrl` carries its own extracted geometry). The compositor fetches a skin's template at runtime when present, falling back to the canonical one.
 
 ## Layout
 
