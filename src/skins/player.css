@@ -68,10 +68,13 @@
 .flipsw.sp-sw[data-on="true"] .sp-sw-img.off { opacity: 0; }
 .flipsw.sp-sw:active .sp-sw-stack { transform: scale(.96); }
 
-/* sprite knob: the art itself rotates */
-.sp-knob { cursor: ns-resize; }
+/* sprite knob: the art itself rotates, centered EXACTLY in the well so the
+   pivot is the well center (label is tooltip-only on sprite knobs) */
+.sp-knob { cursor: ns-resize; position: relative; }
+.sp-knob .knob-label { display: none; }
 .sp-knob-img {
-  height: 78%; aspect-ratio: 1; object-fit: contain; pointer-events: none;
+  position: absolute; inset: 0; margin: auto;
+  width: 92%; height: 92%; object-fit: contain; pointer-events: none;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,.45));
 }
 
@@ -255,7 +258,7 @@
 }
 .sk-slider-h .thumb {
   position: absolute; top: 50%; width: var(--thumb-h, 11px); height: var(--thumb-w, 18px);
-  transform: translate(-50%, -50%); background: var(--thumb-bg);
+  transform: translateY(-50%); background: var(--thumb-bg);
   border-radius: var(--thumb-radius, 2px); box-shadow: var(--thumb-shadow); pointer-events: none;
 }
 
@@ -276,7 +279,7 @@
 }
 .sk-slider-v .thumb {
   position: absolute; left: 50%; width: var(--thumb-w, 18px); height: var(--thumb-h, 11px);
-  transform: translate(-50%, 50%); background: var(--thumb-bg);
+  transform: translateX(-50%); background: var(--thumb-bg);
   border-radius: var(--thumb-radius, 2px); box-shadow: var(--thumb-shadow); pointer-events: none;
 }
 

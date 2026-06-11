@@ -385,7 +385,7 @@ function SliderH({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
     <div ref={ref} className="sk-slider-h"
       onPointerDown={(e) => { drag.current = true; set(e.clientX); }} title={r.label}>
       <div className="rail" /><div className="fill" style={{ width: `${value * 100}%` }} />
-      <div className="thumb" style={{ left: `${value * 100}%`, ...thumbSprite }} />
+      <div className="thumb" style={{ left: `calc(${value} * (100% - var(--thumb-h, 11px)))`, ...thumbSprite }} />
     </div>
   );
 }
@@ -415,7 +415,7 @@ function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
       <div ref={ref} className="sk-slider-v" data-disabled={disabled}
         onPointerDown={(e) => { drag.current = true; set(e.clientY); }} title={r.label}>
         <div className="rail" /><div className="fill" style={{ height: `${value * 100}%` }} />
-        <div className="thumb" style={{ bottom: `${value * 100}%`, ...thumbSprite }} />
+        <div className="thumb" style={{ bottom: `calc(${value} * (100% - var(--thumb-h, 11px)))`, ...thumbSprite }} />
       </div>
       <span className="eq-label">{r.label}</span>
     </div>
