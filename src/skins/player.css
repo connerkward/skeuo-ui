@@ -276,11 +276,20 @@
 }
 .seg:hover { filter: brightness(1.12); }
 .segmented.baked { background: transparent; box-shadow: none; }
-.segmented.baked .seg { color: transparent; border-right: 0; }
+.segmented.baked .seg { color: transparent; border-right: 0; border-radius: var(--btn-radius, 4px); }
+/* indicate the active segment with a soft skin-tinted glow + ring over the
+   baked label, not a flat colored block */
 .segmented.baked .seg[data-active="true"] {
-  background: var(--seg-active-overlay, rgba(255,255,255,.16));
-  box-shadow: inset 0 0 0 1px var(--toggle-on-spark, rgba(255,255,255,.6)),
-              0 0 8px var(--toggle-on-spark, rgba(255,255,255,.4)) inset;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--toggle-on-spark, rgba(255,255,255,.7)),
+              inset 0 0 10px -2px var(--toggle-on-spark, rgba(255,255,255,.5));
+  filter: brightness(1.12) saturate(1.15);
+}
+.segmented.baked .seg[data-active="true"]::after {
+  content: ""; position: absolute; left: 50%; bottom: 9%; transform: translateX(-50%);
+  width: 42%; height: 2px; border-radius: 2px;
+  background: var(--toggle-on-spark, #fff);
+  box-shadow: 0 0 6px var(--toggle-on-spark, #fff);
 }
 
 /* xy pad */

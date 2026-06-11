@@ -8,8 +8,8 @@
   --p-dim: #18a85c;
   --p-bg: #04140b;
 
-  --ui-font: "Consolas", "DejaVu Sans Mono", ui-monospace, monospace;
-  --lcd-font: "Consolas", ui-monospace, monospace;
+  --ui-font: "Share Tech Mono", "Consolas", monospace;
+  --lcd-font: "VT323", "Consolas", monospace;
   --ink: var(--p);
 
   --frame-radius: 14px;
@@ -68,7 +68,7 @@
   --thumb-shadow: 0 0 8px rgba(43,220,126,.8), inset 0 0 0 1px rgba(4,20,11,.6);
 
   --list-ink: var(--p);
-  --list-font: "Consolas", ui-monospace, monospace;
+  --list-font: "VT323", "Consolas", monospace;
   --list-hover: rgba(43,220,126,.12);
   --list-sel-bg: rgba(43,220,126,.85);
   --list-sel-ink: #04140b;

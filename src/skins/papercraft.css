@@ -11,8 +11,8 @@
   --accent:  #e2604b;   /* red marker */
   --accent2: #3f8f7a;   /* teal marker */
 
-  --ui-font: "Marker Felt", "Comic Sans MS", "Segoe Print", "Bradley Hand", cursive;
-  --lcd-font:"Marker Felt", "Comic Sans MS", "Segoe Print", cursive;
+  --ui-font: "Gochi Hand", "Marker Felt", "Comic Sans MS", cursive;
+  --lcd-font:"Gochi Hand", "Marker Felt", cursive;
   --ink: var(--ink-brn);
 
   --frame-radius: 7px;
@@ -79,7 +79,7 @@
 
   --list-bg: #fbf6ec;
   --list-ink: #433423;
-  --list-font: "Marker Felt", "Comic Sans MS", "Segoe Print", cursive;
+  --list-font: "Gochi Hand", "Marker Felt", cursive;
   --list-hover: rgba(226,96,75,.12);
   --list-sel-bg: #e2604b;
   --list-sel-ink: #fff;

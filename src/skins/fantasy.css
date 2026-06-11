@@ -14,7 +14,7 @@
   --cream:   #e8e0c8;
 
   --ui-font: "Cinzel", "Friz Quadrata", "Trajan Pro", "Lora", Georgia, serif;
-  --lcd-font:"Cinzel", "Lora", Georgia, serif;
+  --lcd-font:"Cinzel", Georgia, serif;
   --ink: var(--cream);
 
   --frame-radius: 10px;
@@ -85,7 +85,7 @@
   --xy-puck: var(--amber); --xy-line: rgba(232,200,121,.22);
 
   --list-ink: var(--cream);
-  --list-font: "Lora", Georgia, serif;
+  --list-font: Georgia, "Times New Roman", serif;
   --list-hover: rgba(232,200,121,.10);
   --list-sel-bg: linear-gradient(180deg, rgba(232,200,121,.42), rgba(168,124,46,.4));
   --list-sel-ink: #fff3d6;

@@ -11,7 +11,7 @@
   --amberL: #ffb347;
 
   --ui-font: "Helvetica Neue", Arial, system-ui, sans-serif;
-  --lcd-font:"Eurostile", "Helvetica Neue", Arial, sans-serif;
+  --lcd-font:"Orbitron", "Share Tech Mono", sans-serif;
   --ink: #2b2d2f;
 
   --frame-radius: 6px;
@@ -85,7 +85,7 @@
 
   --list-bg: #07120f;
   --list-ink: var(--teal);
-  --list-font: "Eurostile", "Helvetica Neue", monospace;
+  --list-font: "Share Tech Mono", monospace;
   --list-hover: rgba(95,231,207,.10);
   --list-sel-bg: rgba(95,231,207,.22);
   --list-sel-ink: #d6fff5;

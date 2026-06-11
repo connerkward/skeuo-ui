@@ -2,8 +2,8 @@
    WINAMP CLASSIC  —  Winamp 2.x gunmetal + green LCD
    ============================================================ */
 [data-skin="winamp"] {
-  --ui-font: "Lucida Grande", Tahoma, system-ui, sans-serif;
-  --lcd-font: "Courier New", ui-monospace, monospace;
+  --ui-font: Tahoma, system-ui, sans-serif;
+  --lcd-font: "VT323", "Courier New", monospace;
   --ink: #c8cdd2;
 
   --frame-radius: 2px;
@@ -77,7 +77,7 @@
   /* playlist */
   --list-bg: #04100a;
   --list-ink: #18e35a;
-  --list-font: "Courier New", monospace;
+  --list-font: "VT323", "Courier New", monospace;
   --list-hover: rgba(24,227,90,.10);
   --list-sel-bg: #143a78;
   --list-sel-ink: #d7ff66;
