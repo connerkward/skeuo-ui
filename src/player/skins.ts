@@ -53,7 +53,6 @@ export const skinList: SkinAssets[] = [
   // base style's sprite controls mounted into the wells + live screens
   { id: "y2k-pod",    name: "Y2K Pod ✦",     blurb: "Chrome pod body, sprite controls mounted", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/y2k-pod/template.json" },
   { id: "y2k-wasp",   name: "Rust Wasp ✦",   blurb: "RobCo insectoid body, sprite controls mounted", has: ["frame"], live: true, style: "fallout", templateUrl: "/skins/y2k-wasp/template.json" },
-  { id: "y2k-splash", name: "Aqua Splash ✦", blurb: "Liquid gel body, sprite controls mounted", has: ["frame"], live: true, style: "aqua",    templateUrl: "/skins/y2k-splash/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {

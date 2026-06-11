@@ -18,28 +18,45 @@ from scipy import ndimage
 
 TRANSPORT = ["prev", "play", "pause", "stop", "next", "eject"]
 
+def _comps(mask, W, H, min_area):
+    lbl, n = ndimage.label(mask)
+    out = []
+    for i in range(1, n + 1):
+        ys, xs = np.where(lbl == i)
+        a = xs.size
+        if a < min_area:
+            continue
+        x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+        bw, bh = x1 - x0 + 1, y1 - y0 + 1
+        out.append({"x": int(x0), "y": int(y0), "w": int(bw), "h": int(bh),
+                    "area": int(a), "fill": a / (bw * bh)})
+    out.sort(key=lambda c: -c["area"])
+    return out
+
+def _overlaps(a, b):
+    return not (a["x"] + a["w"] < b["x"] or b["x"] + b["w"] < a["x"] or
+                a["y"] + a["h"] < b["y"] or b["y"] + b["h"] < a["y"])
+
 def detect(path):
     im = Image.open(path).convert("RGBA")
     W, H = im.size
     arr = np.asarray(im).astype(np.float32)
     alpha = arr[..., 3] > 40
     gray = arr[..., :3].mean(2)
-    dark = (gray < 105) & alpha
-    dark = ndimage.binary_opening(dark, iterations=2)
-    lbl, n = ndimage.label(dark)
-    comps = []
-    for i in range(1, n + 1):
-        ys, xs = np.where(lbl == i)
-        a = xs.size
-        if a < 0.0006 * W * H:           # specks / rivets
-            continue
-        x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
-        bw, bh = x1 - x0 + 1, y1 - y0 + 1
-        comps.append({"x": int(x0), "y": int(y0), "w": int(bw), "h": int(bh),
-                      "area": int(a), "fill": a / (bw * bh)})
-    comps.sort(key=lambda c: -c["area"])
-    screens = [c for c in comps if c["area"] > 0.02 * W * H][:2]
-    wells = [c for c in comps if c not in screens and c["fill"] > 0.45]
+
+    # PASS 1 — SCREENS: near-black glass. A much darker threshold drops body
+    # shadows entirely, so screens can't merge with anything.
+    glass = ndimage.binary_opening((gray < 55) & alpha, iterations=3)
+    screens = [c for c in _comps(glass, W, H, 0.02 * W * H)
+               if c["fill"] > 0.5 and not (c["w"] > 0.7 * W and c["h"] > 0.7 * H)][:2]
+
+    # PASS 2 — WELLS: dark recesses; drop the body blob and anything on a screen.
+    dark = ndimage.binary_opening((gray < 95) & alpha, iterations=3)
+    comps = [c for c in _comps(dark, W, H, 0.0006 * W * H)
+             if not (c["w"] > 0.55 * W and c["h"] > 0.55 * H)]
+    wells = [c for c in comps
+             if c["fill"] > 0.45 and c["area"] <= 0.02 * W * H
+             and not any(_overlaps(c, s) for s in screens)]
     return W, H, screens, wells
 
 def classify(wells):
