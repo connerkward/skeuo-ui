@@ -26,3 +26,7 @@ dist-ssr
 # verification screenshots / browser automation scratch
 .playwright-mcp/
 shots/
+
+# freeform demo outputs (regenerable; keep template.json)
+generation/freeform/*.png
+generation/control.png

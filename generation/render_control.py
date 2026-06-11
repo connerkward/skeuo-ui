@@ -11,7 +11,9 @@ import json, os
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(__file__)
-TPL = json.load(open(os.path.join(HERE, "template.json")))
+TPL_PATH = os.environ.get("TEMPLATE_JSON", os.path.join(HERE, "template.json"))
+OUT_PATH = os.environ.get("CONTROL_OUT", os.path.join(HERE, "control.png"))
+TPL = json.load(open(TPL_PATH))
 
 OUT_W, OUT_H = 1024, 1536  # model output size
 
@@ -88,9 +90,8 @@ def render():
         elif kind == "slider-v":
             rrect(d, [cx - 5, y0, cx + 5, y1], 5, fill=(40, 42, 46), outline=(86, 88, 92), width=2)
 
-    out = os.path.join(HERE, "control.png")
-    img.save(out)
-    print("wrote", out, img.size)
+    img.save(OUT_PATH)
+    print("wrote", OUT_PATH, img.size)
 
 if __name__ == "__main__":
     render()

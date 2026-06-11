@@ -1,0 +1,283 @@
+{
+  "id": "freeform",
+  "name": "Freeform-extracted",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "display_screen",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.07,
+        "y": 0.1,
+        "w": 0.86,
+        "h": 0.3
+      },
+      "label": "Display Screen"
+    },
+    {
+      "id": "button_previous",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.13,
+        "y": 0.45,
+        "w": 0.08,
+        "h": 0.08
+      },
+      "label": "Previous Button"
+    },
+    {
+      "id": "button_play",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.24,
+        "y": 0.45,
+        "w": 0.08,
+        "h": 0.08
+      },
+      "label": "Play Button"
+    },
+    {
+      "id": "button_pause",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.35,
+        "y": 0.45,
+        "w": 0.08,
+        "h": 0.08
+      },
+      "label": "Pause Button"
+    },
+    {
+      "id": "button_stop",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.46,
+        "y": 0.45,
+        "w": 0.08,
+        "h": 0.08
+      },
+      "label": "Stop Button"
+    },
+    {
+      "id": "button_next",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.57,
+        "y": 0.45,
+        "w": 0.08,
+        "h": 0.08
+      },
+      "label": "Next Button"
+    },
+    {
+      "id": "knob_left",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.76,
+        "y": 0.44,
+        "w": 0.12,
+        "h": 0.12
+      },
+      "label": "Left Knob"
+    },
+    {
+      "id": "slider_v_1",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.12,
+        "y": 0.58,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "Vertical Slider 1"
+    },
+    {
+      "id": "slider_v_2",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.21,
+        "y": 0.58,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "Vertical Slider 2"
+    },
+    {
+      "id": "slider_v_3",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.3,
+        "y": 0.58,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "Vertical Slider 3"
+    },
+    {
+      "id": "slider_v_4",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.39,
+        "y": 0.58,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "Vertical Slider 4"
+    },
+    {
+      "id": "slider_v_5",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.48,
+        "y": 0.58,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "Vertical Slider 5"
+    },
+    {
+      "id": "slider_v_6",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.57,
+        "y": 0.58,
+        "w": 0.03,
+        "h": 0.15
+      },
+      "label": "Vertical Slider 6"
+    },
+    {
+      "id": "knob_right",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.76,
+        "y": 0.58,
+        "w": 0.12,
+        "h": 0.12
+      },
+      "label": "Right Knob"
+    },
+    {
+      "id": "slider_h",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.1,
+        "y": 0.75,
+        "w": 0.8,
+        "h": 0.05
+      },
+      "label": "Horizontal Slider"
+    },
+    {
+      "id": "button_function_1",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.12,
+        "y": 0.82,
+        "w": 0.1,
+        "h": 0.07
+      },
+      "label": "Function Button 1"
+    },
+    {
+      "id": "button_function_2",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.24,
+        "y": 0.82,
+        "w": 0.1,
+        "h": 0.07
+      },
+      "label": "Function Button 2"
+    },
+    {
+      "id": "button_function_3",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.36,
+        "y": 0.82,
+        "w": 0.1,
+        "h": 0.07
+      },
+      "label": "Function Button 3"
+    },
+    {
+      "id": "button_repeat",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6,
+        "y": 0.82,
+        "w": 0.1,
+        "h": 0.07
+      },
+      "label": "Repeat Button"
+    },
+    {
+      "id": "button_shuffle",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.72,
+        "y": 0.82,
+        "w": 0.1,
+        "h": 0.07
+      },
+      "label": "Shuffle Button"
+    },
+    {
+      "id": "display_playlist",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.07,
+        "y": 0.9,
+        "w": 0.86,
+        "h": 0.1
+      },
+      "label": "Playlist Display"
+    }
+  ]
+}

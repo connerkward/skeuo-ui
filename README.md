@@ -61,9 +61,20 @@ python3 generation/generate.py           # styles all skins in parallel via fal
 
 To add a skin: add a prompt to `SKINS` in `generation/generate.py` and an entry to `skinList` in `src/player/skins.ts`. To change the *layout* (move/resize widgets), edit `src/template/winamp-layout.ts` — every skin updates from the one template.
 
-### Why gpt-image-1.5/edit
+### Why Nano Banana Pro (Gemini 3 Pro Image)
 
-It is the one fal model that takes a structural reference image *and* preserves layout at `input_fidelity: high`, so the styled output keeps every control on its blueprint box. The prompt restyles in place, keeps screens **empty** (so live content shows), and leaves slider channels **knob-free** (the knob is a live React element).
+After A/B'ing on the same blueprint, `fal-ai/gemini-3-pro-image-preview/edit` beat gpt-image-1.5/2 and Seedream 4.5: it restyles at native 2K (gpt-image is capped at 1536 and reconstructs through a low-res latent, which smears UI edges), holds the layout tightest, and keeps the EQ channels distinct. It has no transparent-background param, so skins are generated opaque (the device fills the frame). The prompt restyles in place, keeps screens **empty** (so live content shows), and leaves slider channels **knob-free** (the knob is a live React element).
+
+## Reverse direction: freeform → template → reskin
+
+You can also go the other way — generate a player **freeform** and extract a template from it:
+
+```bash
+python3 generation/freeform.py          # gpt-image-2 designs a player; OpenAI vision extracts boxes
+python3 generation/freeform_reskin.py   # blueprint from the extracted template → reskin via Nano Banana
+```
+
+`freeform.py` writes `generation/freeform/`: `donor.png` (the freeform design), `template.json` (extracted, schema-compatible), and `overlay.png` (boxes drawn on the donor for verification). The extracted template becomes the new source of truth, so the reskinned output is internally aligned regardless of extraction precision — the donor just seeds the layout. `freeform_reskin.py` then renders a blueprint from it and restyles into any skin (proven: the same freeform layout → Fantasy and → Winamp). Vision grounding is approximate (OpenAI `gpt-4o`); a stronger grounding model (Gemini) would tighten the boxes.
 
 ## Layout
 
