@@ -18,6 +18,36 @@ export interface SkinContent {
 export const EQ_BANDS = ["60", "170", "310", "600", "1K", "3K", "6K", "12K", "14K", "16K"];
 
 export const skinContent: Record<string, SkinContent> = {
+  wmp: {
+    station: "WMP9  ·  Now Playing · TradeSend Trance",
+    bitrate: "160",
+    khz: "44",
+    tracks: [
+      { artist: "009 Sound System", title: "Dreamscape", seconds: 339 },
+      { artist: "009 Sound System", title: "With a Spirit", seconds: 312 },
+      { artist: "TradeSend", title: "Trance — Sound System Drea", seconds: 519 },
+      { artist: "Darude", title: "Sandstorm", seconds: 225 },
+      { artist: "Robert Miles", title: "Children (Dream Version)", seconds: 297 },
+      { artist: "ATB", title: "9 PM (Till I Come)", seconds: 212 },
+      { artist: "Alice Deejay", title: "Better Off Alone", seconds: 214 },
+      { artist: "Zombie Nation", title: "Kernkraft 400", seconds: 318 },
+    ],
+  },
+  halo: {
+    station: "UNSC TACCOM  ·  In Amber Clad relay",
+    bitrate: "192",
+    khz: "44",
+    tracks: [
+      { artist: "Martin O'Donnell", title: "Halo Theme (MJOLNIR Mix)", seconds: 261 },
+      { artist: "Breaking Benjamin", title: "Blow Me Away", seconds: 209 },
+      { artist: "Martin O'Donnell", title: "Peril", seconds: 229 },
+      { artist: "Martin O'Donnell", title: "Heretic, Hero", seconds: 219 },
+      { artist: "Incubus", title: "Follow (1st Movement of the Odyssey)", seconds: 437 },
+      { artist: "Martin O'Donnell", title: "In Amber Clad", seconds: 144 },
+      { artist: "Martin O'Donnell", title: "Unforgotten", seconds: 175 },
+      { artist: "Hoobastank", title: "Connected", seconds: 235 },
+    ],
+  },
   winamp: {
     station: "WINAMP  ·  llama-whipping superhighway",
     bitrate: "192",

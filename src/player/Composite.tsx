@@ -204,7 +204,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
     const bindId = r.bind ?? r.id;
     const molded = sp && skinMolded(skinId) && ["prev", "play", "pause", "stop", "next"].includes(bindId);
     const face: React.CSSProperties = molded
-      ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`)})`, backgroundPosition: "center", backgroundSize: "contain", backgroundRepeat: "no-repeat" }
+      ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`)})`, backgroundPosition: "center", backgroundSize: "118% 118%", backgroundRepeat: "no-repeat" }
       : sp
         ? round
           ? { backgroundImage: `url(${spriteUrl(skinId, "knob")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", border: 0 }

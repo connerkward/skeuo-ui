@@ -56,6 +56,12 @@ MATERIAL = {
                 "armor plates, serrated edges, deep crimson bioluminescence pulsing in the seams."),
     "fungal":  ("pale sickly fungal mass: cordyceps stalks, layered gill ridges, swollen spore "
                 "sacs, fibrous mycelium webbing, faint amber glow seeping between growths."),
+    "wmp":     ("Windows Media Player 9 / XP Luna capsule hardware: glossy silver-white plastic "
+                "shells, translucent aqua-blue gel inlays, polished chrome trim rings, soft blue "
+                "gradients, subtle green LED accents."),
+    "halo":    ("Halo 2 UNSC military hardware: olive-drab armored metal plating with scuffed "
+                "edges, hex bolts, vents, layered angular armor ridges, amber-orange holographic "
+                "tick marks and warning chevrons glowing from recesses."),
 }
 
 STYLE_PROMPT = (
@@ -146,6 +152,54 @@ def layout_radial():
             bind="eqBand", group="eq-bands", index=i, label="")
     py = ey + eh + 28
     add("playlist", "display", W*0.19, py, W*0.62, H*0.945 - py, content="dynamic", layer="screen", dynamicType="playlist")
+    return regs
+
+def layout_capsule():
+    """WMP9-capsule grammar: dial pod on the LEFT with buttons fully RINGING
+    it (no linear row anywhere), a chrome pill marquee sweeping right, a seek
+    ring around the whole pod, playlist + EQ in the lower body."""
+    import math
+    regs = []
+    def add(id, kind, x, y, w, h, **kw):
+        regs.append({"id": id, "kind": kind,
+                     "content": kw.pop("content", "sprite"),
+                     "layer": kw.pop("layer", "components"),
+                     "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
+    cx, cy, r = W*0.30, H*0.235, W*0.205
+    d = 56.0
+    rg = r - d - 12
+    rc = rg + 6 + d/2
+    add("visualizer", "display", cx-rg, cy-rg, 2*rg, 2*rg,
+        content="dynamic", layer="screen", dynamicType="visualizer", shape="ellipse")
+    # buttons FULLY around the dial; the gap at 0 deg is where the pill attaches
+    ring = [(40, "next"), (88, "stop"), (136, "pause"), (184, "play"), (232, "prev")]
+    for ang, b in ring:
+        a = math.radians(ang)
+        add(b, "button", cx + rc*math.cos(a) - d/2, cy + rc*math.sin(a) - d/2, d, d,
+            bind=b, label=b, shape="ellipse")
+    for ang, (kid, bind, lab) in zip([280, 322], [("sw0", "shuffle", "SHUF"), ("sw1", "eqOn", "EQ")]):
+        a = math.radians(ang)
+        add(kid, "toggle", cx + rc*math.cos(a) - d*0.42, cy + rc*math.sin(a) - d*0.55,
+            d*0.84, d*1.1, bind=bind, label=lab)
+    rOut = rc + d/2 + 16                 # seek ring OUTSIDE the button ring
+    side = 2*(rOut + 12)
+    add("seek", "slider-arc", cx-side/2, cy-side/2, side, side,
+        bind="seek", label="Seek", arc={"start": 60, "end": 300})
+    # chrome pill marquee sweeping right from the pod
+    px0 = cx + rOut + 26
+    add("marquee", "display", px0, cy-36, W*0.95 - px0, 72, content="dynamic", layer="screen", dynamicType="marquee")
+    # knobs tucked under the pill
+    kd = 76.0
+    add("knob0", "knob", px0 + 30, cy + 64, kd, kd, bind="volume", label="VOL")
+    add("knob1", "knob", px0 + 30 + kd + 28, cy + 64, kd, kd, bind="balance", label="BAL")
+    # EQ row
+    ey, eh = H*0.475, 124
+    ex0, span = W*0.20, W*0.60
+    sw_ = span/6
+    for i in range(6):
+        add(f"eq{i}", "slider-v", ex0 + i*sw_ + sw_*0.30, ey, sw_*0.40, eh,
+            bind="eqBand", group="eq-bands", index=i, label="")
+    add("playlist", "display", W*0.185, H*0.575, W*0.63, H*0.355, content="dynamic", layer="screen", dynamicType="playlist")
     return regs
 
 def covers(mask, regs):
@@ -427,10 +481,10 @@ def usable(regs):
             d["marquee"]["w"] >= 0.18)
 
 def main(out_id, style, brief, sil_path=None, variant="classic"):
-    if variant == "radial":
+    if variant in ("radial", "capsule"):
         # LAYOUT FIRST: the arc-native template exists before any body does;
         # the image model grows the creature AROUND the drawn controls
-        regs = layout_radial()
+        regs = layout_radial() if variant == "radial" else layout_capsule()
         wells = draw_wells_only(regs)
         rmask = region_mask(regs)
         for attempt in range(3):

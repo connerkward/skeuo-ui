@@ -10,6 +10,8 @@ import "./skins/burger.css";
 import "./skins/bondi.css";
 import "./skins/toilet.css";
 import "./skins/biomech.css";
+import "./skins/wmp.css";
+import "./skins/halo.css";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;

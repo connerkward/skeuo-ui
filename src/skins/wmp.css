@@ -1,0 +1,16 @@
+[data-skin="wmp"] {
+  --ui-font: "Tahoma", "Segoe UI", sans-serif;
+  --lcd-font: "Share Tech Mono", monospace; --ink: #1c3a6e;
+  --lcd-bg: linear-gradient(180deg,#0a1428,#101e3c); --lcd-ink: #dfeaff; --lcd-ink-dim: #7e96c8;
+  --lcd-glow: 0 0 6px rgba(120,170,255,.35); --lcd-radius: 14px;
+  --lcd-inset: inset 0 2px 6px rgba(0,0,20,.6); --lcd-border: 1px solid #6f87b8;
+  --vis-lo: #2f6fd0; --vis-hi: #9cc4ff; --vis-peak: #ffffff;
+  --btn-ink: #1c3a6e; --sp-btn-ink: #123058; --btn-radius: 50%;
+  --btn-bg: radial-gradient(80% 80% at 50% 28%, #ffffff, #b9cce6 75%); --btn-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(90,120,160,.55), 0 2px 3px rgba(0,0,30,.3);
+  --toggle-on-spark: #57b7ff; --knob-ind: #2f6fd0; --knob-ind-glow: rgba(87,183,255,.7);
+  --rail-bg: #b8c6da; --fill-bg: #58c04e; --thumb-bg: linear-gradient(180deg,#fff,#cfe0f4);
+  --thumb-arc: #58c04e;
+  --thumb-shadow: inset 0 1px 0 #fff, 0 2px 3px rgba(0,0,0,.3); --thumb-w: 16px; --thumb-h: 12px;
+  --list-ink: #d7e6ff; --list-sel-bg: #316ac5; --list-sel-ink: #fff;
+  --title-ink: #eaf2ff;
+}

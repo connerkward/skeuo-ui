@@ -37,6 +37,8 @@ MAT = {
     "bondi":  "Late-90s translucent Bondi-blue plastic (iMac G3 style): see-through gel with white highlights over silver.",
     "toilet": "Gleaming white porcelain bathroom ceramic, glossy, with polished chrome metal accents.",
     "biomech": "H.R. Giger biomechanical body-horror: fused bone, sinew and chitin, ribbed organic tubes, wet sheen, sickly green-amber glow in crevices.",
+    "wmp":  "Windows Media Player 9 / XP Luna era: glossy silver-white plastic capsule shells, translucent aqua-blue gel, chrome rims, soft blue-white gradients.",
+    "halo": "Halo 2 UNSC military hardware: olive-drab armored metal plating, scuffed edges, hex bolts, amber-orange holographic accents and warning chevrons.",
 }
 
 # per-style switch DESIGNS — distinct hardware, not one archetype recolored
@@ -52,6 +54,8 @@ SWITCH_DESC = {
     "bondi":      "a translucent hockey-puck SLIDER (like an iMac mouse) in a clear track: low when off, high and glowing white when on",
     "toilet":     "a golden TOILET-PAPER-ROLL lever on porcelain: paper strip hangs when off, rolled tight with chrome shine when on",
     "biomech":    "a living EYEBALL set in a chitin sphincter socket: pale closed eyelid when off, wide-open eye with glowing sickly-green iris when on",
+    "wmp":  "a glossy aqua-gel ROCKER set in a chrome pill slot (XP Luna style): dull gel low when off, bright glowing blue gel popped up when on",
+    "halo": "a military MISSILE-COVER toggle: olive flip-guard closed over the switch when off, guard flipped open with the amber-lit toggle up when on",
 }
 
 ASSETS = {

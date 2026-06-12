@@ -70,6 +70,10 @@ export const skinList: SkinAssets[] = [
   { id: "biomech2", name: "Brood Queen ✦",    blurb: "New sculpt on the Giger theme", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/biomech2/template.json" },
   { id: "fiend2",   name: "Chrome Demon ✦",   blurb: "New sculpt on the chrome-predator theme", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/fiend2/template.json" },
 
+  // era homages ✦ — layout-first capsule/radial with their own sprite sets
+  { id: "wmp",  name: "Media Capsule ✦", blurb: "WMP9 XP capsule: ringed dial pod, gel hardware", has: ["frame"], live: true, sprites: true, molded: true, templateUrl: "/skins/wmp/template.json" },
+  { id: "halo", name: "Spartan Ring ✦",  blurb: "UNSC armored ring, amber HUD, missile-cover switches", has: ["frame"], live: true, sprites: true, molded: true, templateUrl: "/skins/halo/template.json" },
+
   // radial ✦ — layout-FIRST: the arc template is drawn before the body, and
   // the image model grows the creature around it (circular seek ring)
   { id: "maw",    name: "Angler Maw ✦",   blurb: "Fanged jaw grown around the dial, seek ring", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/maw/template.json" },
@@ -90,7 +94,7 @@ export function skinBaked(id: string): boolean {
 }
 
 // bump when frames/sprites are regenerated so browsers re-fetch
-const ASSET_VERSION = "nb17";
+const ASSET_VERSION = "nb18";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 export const spriteUrl = (id: string, name: string) => `${base(skinStyle(id))}/sprites/${name}.png?v=${ASSET_VERSION}`;
