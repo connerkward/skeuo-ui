@@ -122,8 +122,11 @@ function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
 
   const titleDown = r.dynamicType === "title" && r.id === "titlebar" ? onTitleDown : undefined;
   const dyn = r.content === "dynamic" ? "region-dyn" : "";
+  // round dial screens (orbit layout) clip their live content to the circle
+  const clip: React.CSSProperties =
+    r.kind === "display" && r.shape === "ellipse" ? { borderRadius: "50%", overflow: "hidden" } : {};
   return (
-    <div className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={style} onPointerDown={titleDown}>
+    <div className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={{ ...style, ...clip }} onPointerDown={titleDown}>
       {renderControl(r, ps, skinId)}
     </div>
   );

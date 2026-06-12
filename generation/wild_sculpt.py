@@ -144,9 +144,15 @@ def layout_in_mask(mask, variant="classic"):
                      "layer": kw.pop("layer", "components"),
                      "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
     def band(f0, f1, max_h=None):
-        """Largest inscribed rectangle within the fractional window [f0,f1]."""
-        yA, yB = int(top + Hc*f0), int(top + Hc*f1)
+        """Largest inscribed rectangle within the fractional window [f0,f1].
+        Degenerate windows return a sentinel rect that fails usable()."""
+        yA = max(int(top + Hc*f0), 0)
+        yB = min(int(top + Hc*f1), core.shape[0])
+        if yB - yA < 6:
+            return 0, yA, 40, yA + 8
         x, y, w, h = max_rect(core[yA:yB])
+        if w < 40 or h < 8:
+            return 0, yA, 40, yA + 8
         y += yA
         if max_h and h > max_h:          # center a capped-height strip in it
             y += (h - max_h) // 2; h = max_h
@@ -183,7 +189,47 @@ def layout_in_mask(mask, variant="classic"):
             add(f"eq{i}", "slider-v", sx + i*sw_ + sw_*0.28, y0, sw_*0.44, bH,
                 bind="eqBand", group="eq-bands", index=i, label="")
 
-    if variant == "hero":
+    if variant == "orbit":
+        # the reference-skin move: a round dial screen with controls ORBITING
+        # it. Largest inscribed circle in the upper torso = the dial.
+        # distance transform of the WHOLE core, padded so the canvas edge
+        # counts as outside (a slice would let the dial poke past the body)
+        dt = ndimage.distance_transform_edt(np.pad(core, 1))[1:-1, 1:-1]
+        win = dt[top:top + int(Hc*0.55)]
+        # TOPMOST circle big enough for the dial — the global max sits mid-
+        # torso and starves the marquee/EQ/playlist below it
+        target = min(W*0.21, float(win.max())) * 0.96
+        cys, cxs = np.nonzero(win >= target)
+        row = cys.min()
+        cx = float(np.median(cxs[cys == row]))
+        cy = float(top + row)
+        r = float(dt[top + row, int(cx)])
+        r = min(r, W*0.22, (top + Hc*0.52) - cy)   # keep the lower half free
+        d = max(34, min(r*0.30, 72))          # orbiting button diameter
+        rg = r - d - 12                        # dial glass radius
+        rc = rg + 8 + d/2                      # orbit radius for button centers
+        add("visualizer", "display", cx-rg, cy-rg, 2*rg, 2*rg,
+            content="dynamic", layer="screen", dynamicType="visualizer", shape="ellipse")
+        import math
+        for ang, b in zip([150, 120, 90, 60, 30], ["prev", "play", "pause", "stop", "next"]):
+            a = math.radians(ang)
+            bx = cx + rc*math.cos(a) - d/2
+            by = cy + rc*math.sin(a) - d/2     # y-down: bottom semicircle
+            add(b, "button", bx, by, d, d, bind=b, label=b, shape="ellipse")
+        kd = min(d*1.15, max(30.0, (r - rc)*1.9))
+        for ang, (kid, bind, lab) in zip([205, 335], [("knob0", "volume", "VOL"), ("knob1", "balance", "BAL")]):
+            a = math.radians(ang)
+            add(kid, "knob", cx + rc*math.cos(a) - kd/2, cy + rc*math.sin(a) - kd/2,
+                kd, kd, bind=bind, label=lab)
+        fdb = (cy + r - top)/Hc                # fraction where the dial ends
+        x0, y0, x1, y1 = band(fdb + 0.005, fdb + 0.075, max_h=38)
+        add("marquee", "display", x0+8, y0, (x1-x0)-16, y1-y0, content="dynamic", layer="screen", dynamicType="marquee")
+        knobs_eq(fdb + 0.075, fdb + 0.205, knobs=False, sw_edges=True)
+        x0, y0, x1, y1 = band(fdb + 0.205, fdb + 0.26, max_h=30)
+        add("seek", "slider-h", x0+10, y0, (x1-x0)-20, y1-y0, bind="seek", label="Seek")
+        x0, y0, x1, y1 = band(fdb + 0.26, 0.99)
+        add("playlist", "display", x0+8, y0, (x1-x0)-16, y1-y0, content="dynamic", layer="screen", dynamicType="playlist")
+    elif variant == "hero":
         # [sw] [prev][stop] ((PLAY)) [pause][next] [sw] — one center-stage button
         screens_and_seek(band(0.02, 0.22), (0.22, 0.28), (0.60, 0.66), (0.66, 0.99))
         x0, y0, x1, y1 = band(0.28, 0.46)
@@ -243,16 +289,22 @@ def draw_blueprint(mask, regs):
         if r["kind"] == "knob" or (r["kind"] == "button" and r.get("shape") == "ellipse"):
             d.ellipse([x0, y0, x1, y1], fill=WELL, outline=EDGE, width=4)
         elif r["kind"] == "display":
-            d.rounded_rectangle([x0, y0, x1, y1], radius=12, fill=(12, 13, 15), outline=EDGE, width=5)
+            if r.get("shape") == "ellipse":
+                d.ellipse([x0, y0, x1, y1], fill=(12, 13, 15), outline=EDGE, width=6)
+            else:
+                d.rounded_rectangle([x0, y0, x1, y1], radius=12, fill=(12, 13, 15), outline=EDGE, width=5)
         else:
             d.rounded_rectangle([x0, y0, x1, y1], radius=8, fill=WELL, outline=EDGE, width=4)
     return img
 
 def usable(regs):
     """Hard gate: the layout must have real screens, or the silhouette is rejected."""
+    if any(r["rect"]["w"] <= 0 or r["rect"]["h"] <= 0 for r in regs):
+        return False
     d = {r["id"]: r["rect"] for r in regs if r["kind"] == "display"}
     return (d["playlist"]["w"] >= 0.30 and d["playlist"]["h"] >= 0.12 and
-            d["visualizer"]["w"] >= 0.24 and d["visualizer"]["h"] >= 0.06)
+            d["visualizer"]["w"] >= 0.24 and d["visualizer"]["h"] >= 0.06 and
+            d["marquee"]["w"] >= 0.18)
 
 def main(out_id, style, brief, sil_path=None, variant="classic"):
     for attempt in range(3):
