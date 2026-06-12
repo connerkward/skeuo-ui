@@ -399,3 +399,23 @@
   background: var(--xy-puck, var(--lcd-ink));
   box-shadow: 0 0 9px var(--xy-puck, var(--lcd-ink)), inset 0 0 0 1px rgba(0,0,0,.35);
 }
+
+/* ============================================================
+   REGION-RELATIVE TEXT — each dynamic screen is its own container,
+   so text scales to ITS region (not the whole player). This is what
+   keeps playlists/marquees fitting on wild & freeform layouts whose
+   screens have arbitrary proportions.
+   ============================================================ */
+.region-dyn { container-type: inline-size; }
+.region-dyn .lcd-time   { font-size: 24cqw; }
+.region-dyn .marquee    { font-size: 6.4cqw; }
+.region-dyn .display-meta { font-size: 5.4cqw; gap: 4.5cqw; }
+.region-dyn .display-meta b { font-size: 1.15em; }
+.region-dyn .pl-summary { font-size: 8cqw; }
+.region-dyn .title-text { font-size: 2.8cqw; }
+.region-dyn .pl-list {
+  font-size: 2.9cqw; line-height: 1.5;
+  padding: 1.5cqw 2.5cqw;
+}
+.region-dyn .pl-row { gap: 1.6cqw; padding: 0.3cqw 1cqw; }
+.region-dyn .pl-num { min-width: 4.2cqw; }

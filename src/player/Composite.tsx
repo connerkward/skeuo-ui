@@ -121,8 +121,9 @@ function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
   }
 
   const titleDown = r.dynamicType === "title" && r.id === "titlebar" ? onTitleDown : undefined;
+  const dyn = r.content === "dynamic" ? "region-dyn" : "";
   return (
-    <div className={`region ${titleDown ? "draggable" : ""}`} style={style} onPointerDown={titleDown}>
+    <div className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={style} onPointerDown={titleDown}>
       {renderControl(r, ps, skinId)}
     </div>
   );
