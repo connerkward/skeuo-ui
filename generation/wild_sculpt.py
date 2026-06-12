@@ -48,15 +48,23 @@ MATERIAL = {
                 "glowing through, frosted white trim, soft backlight."),
     "toilet":  ("gleaming white glazed porcelain with soft studio reflections, polished chrome "
                 "hardware, faint blue ceramic shadowing."),
+    # divergent body-horror materials — same theme family as biomech, different flesh
+    "flesh":   ("wet anatomical body horror: exposed crimson muscle fiber and sinew, glistening "
+                "vein networks, stretched translucent skin membranes, pale bone plates and teeth "
+                "as hardware accents."),
+    "chitin":  ("glossy black insect carapace with an iridescent oil-slick sheen, segmented "
+                "armor plates, serrated edges, deep crimson bioluminescence pulsing in the seams."),
+    "fungal":  ("pale sickly fungal mass: cordyceps stalks, layered gill ridges, swollen spore "
+                "sacs, fibrous mycelium webbing, faint amber glow seeping between growths."),
 }
 
 STYLE_PROMPT = (
     "Restyle this blueprint into a photoreal, wildly-shaped skeuomorphic MP3-player device. CRITICAL: "
     "keep the EXACT silhouette, and keep EVERY dark recessed well and screen EXACTLY where it is, same "
     "size and shape — every recessed well stays a DEEP DARK EMPTY socket: a near-black matte cavity "
-    "with a crisp raised rim, NOTHING mounted inside, NOT glowing, NOT filled with material; and empty "
-    "switched-off dark glass screens kept as CLEAN FLAT RECTANGLES (no text, no graphics, never "
-    "overgrown). Make the body rich and detailed BETWEEN the wells. Everything outside the silhouette stays pure white. Front-on "
+    "with a crisp raised rim, NOTHING mounted inside, NOT glowing, NOT filled with material; and every "
+    "screen — INCLUDING the thin marquee strip — stays switched-off NEAR-BLACK glass, a CLEAN FLAT "
+    "RECTANGLE never tinted or overgrown by the body material (no text, no graphics). Make the body rich and detailed BETWEEN the wells. Everything outside the silhouette stays pure white. Front-on "
     "orthographic, even light, high detail. MATERIAL: "
 )
 

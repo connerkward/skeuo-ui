@@ -1,7 +1,7 @@
 [data-skin="bondi"] {
   --ui-font: "Lucida Grande", "Helvetica Neue", sans-serif;
   --lcd-font: "Share Tech Mono", monospace; --ink: #173a4a;
-  --lcd-bg: linear-gradient(180deg,#dff3fa,#b8dcEC); --lcd-ink: #0c3346; --lcd-ink-dim: #3d6a80;
+  --lcd-bg: linear-gradient(180deg,#dff3fa,#b8dcEC); --lcd-ink: #cfeffe; --lcd-ink-dim: #74aac6;
   --lcd-glow: none; --lcd-radius: 9px;
   --lcd-inset: inset 0 2px 5px rgba(20,60,90,.35); --lcd-border: 1px solid #7aaec4;
   --vis-lo: #0e7fa8; --vis-hi: #6de0ff; --vis-peak: #fff;
@@ -10,6 +10,6 @@
   --toggle-on-spark: #19b6f0; --knob-ind: #0c699a; --knob-ind-glow: rgba(25,182,240,.7);
   --rail-bg: #9ec9da; --fill-bg: #19b6f0; --thumb-bg: linear-gradient(180deg,#ffffff,#aee0f4);
   --thumb-shadow: inset 0 1px 0 #fff, 0 2px 3px rgba(0,0,0,.3); --thumb-w: 17px; --thumb-h: 12px;
-  --list-ink: #0c3346; --list-sel-bg: #19b6f0; --list-sel-ink: #fff;
-  --title-ink: #18506a;
+  --list-ink: #b9e9ff; --list-sel-bg: #19b6f0; --list-sel-ink: #fff;
+  --title-ink: #d8f3ff;
 }

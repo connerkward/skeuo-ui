@@ -44,16 +44,15 @@ export function skinSprites(id: string): boolean {
 }
 
 export const skinList: SkinAssets[] = [
-  // sprite/palette donor for chrome-bodied skins (not listed)
-  { id: "winamp",  name: "Winamp Classic",  blurb: "", has: ["frame"], sprites: true, hidden: true },
+  // sprite/palette donors (not listed)
+  { id: "winamp",  name: "Winamp Classic", blurb: "", has: ["frame"], sprites: true, hidden: true },
+  { id: "toilet",  name: "Porcelain",      blurb: "", has: ["frame"], sprites: true, hidden: true },
 
   // absurd ✦ — memetic styles with their own sprites + palettes
   { id: "frog",    name: "Froggo ✦",        blurb: "Glossy rubber meme-frog, orange-dot hardware", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/frog/template.json" },
   { id: "burger",  name: "Burger Deluxe ✦", blurb: "Sesame bun body, fry-switch, ketchup pointer", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/burger/template.json" },
   { id: "bondi",   name: "Bondi G3 ✦",      blurb: "Translucent Y2K plastic, circuit shadows", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/bondi/template.json" },
-  { id: "toilet",  name: "Porcelain ✦",     blurb: "Gleaming ceramic, chrome flush lever", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/toilet/template.json" },
   { id: "biomech", name: "Hive Mind ✦",     blurb: "Giger bone & sinew, bioluminescent veins", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/biomech/template.json" },
-  { id: "fiend",   name: "Chrome Fiend ✦",  blurb: "Free-designed chrome predator, blade fins", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/fiend/template.json" },
 
   // iterations ✦ — new wild_sculpt bodies on the same themes (sprites/palette
   // resolve through `style` to the theme's donor skin)
@@ -63,6 +62,11 @@ export const skinList: SkinAssets[] = [
   { id: "toilet2",  name: "Porcelain Throne ✦", blurb: "New sculpt on the ceramic theme", has: ["frame"], live: true, style: "toilet",  templateUrl: "/skins/toilet2/template.json" },
   { id: "biomech2", name: "Brood Queen ✦",    blurb: "New sculpt on the Giger theme", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/biomech2/template.json" },
   { id: "fiend2",   name: "Chrome Demon ✦",   blurb: "New sculpt on the chrome-predator theme", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/fiend2/template.json" },
+
+  // body horror ✦ — divergent takes on the biomech theme family
+  { id: "flesh",  name: "Flayed One ✦",   blurb: "Wet muscle & sinew, bone-plate hardware", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/flesh/template.json" },
+  { id: "scarab", name: "Scarab ✦",       blurb: "Black iridescent carapace, crimson seams", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/scarab/template.json" },
+  { id: "spore",  name: "Spore Mother ✦", blurb: "Cordyceps growths, gill ridges, amber glow", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/spore/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
@@ -74,7 +78,7 @@ export function skinBaked(id: string): boolean {
 }
 
 // bump when frames/sprites are regenerated so browsers re-fetch
-const ASSET_VERSION = "nb13";
+const ASSET_VERSION = "nb14";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 export const spriteUrl = (id: string, name: string) => `${base(skinStyle(id))}/sprites/${name}.png?v=${ASSET_VERSION}`;
