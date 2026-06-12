@@ -25,6 +25,8 @@ export interface SkinAssets {
   sprites?: boolean;
   // sprite/palette donor only — not shown in the skin list
   hidden?: boolean;
+  // sprites/btn-{prev,play,pause,stop,next}.png exist — molded transport faces
+  molded?: boolean;
 }
 
 export function skinLive(id: string): boolean {
@@ -43,16 +45,21 @@ export function skinSprites(id: string): boolean {
   return !!skinList.find((x) => x.id === sid)?.sprites;
 }
 
+export function skinMolded(id: string): boolean {
+  const sid = skinStyle(id);
+  return !!skinList.find((x) => x.id === sid)?.molded;
+}
+
 export const skinList: SkinAssets[] = [
   // sprite/palette donors (not listed)
-  { id: "winamp",  name: "Winamp Classic", blurb: "", has: ["frame"], sprites: true, hidden: true },
-  { id: "toilet",  name: "Porcelain",      blurb: "", has: ["frame"], sprites: true, hidden: true },
+  { id: "winamp",  name: "Winamp Classic", blurb: "", has: ["frame"], sprites: true, molded: true, hidden: true },
+  { id: "toilet",  name: "Porcelain",      blurb: "", has: ["frame"], sprites: true, molded: true, hidden: true },
 
   // absurd ✦ — memetic styles with their own sprites + palettes
-  { id: "frog",    name: "Froggo ✦",        blurb: "Glossy rubber meme-frog, orange-dot hardware", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/frog/template.json" },
-  { id: "burger",  name: "Burger Deluxe ✦", blurb: "Sesame bun body, fry-switch, ketchup pointer", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/burger/template.json" },
-  { id: "bondi",   name: "Bondi G3 ✦",      blurb: "Translucent Y2K plastic, circuit shadows", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/bondi/template.json" },
-  { id: "biomech", name: "Hive Mind ✦",     blurb: "Giger bone & sinew, bioluminescent veins", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/biomech/template.json" },
+  { id: "frog",    name: "Froggo ✦",        blurb: "Glossy rubber meme-frog, orange-dot hardware", has: ["frame"], live: true, sprites: true, molded: true, templateUrl: "/skins/frog/template.json" },
+  { id: "burger",  name: "Burger Deluxe ✦", blurb: "Sesame bun body, fry-switch, ketchup pointer", has: ["frame"], live: true, sprites: true, molded: true, templateUrl: "/skins/burger/template.json" },
+  { id: "bondi",   name: "Bondi G3 ✦",      blurb: "Translucent Y2K plastic, circuit shadows", has: ["frame"], live: true, sprites: true, molded: true, templateUrl: "/skins/bondi/template.json" },
+  { id: "biomech", name: "Hive Mind ✦",     blurb: "Giger bone & sinew, bioluminescent veins", has: ["frame"], live: true, sprites: true, molded: true, templateUrl: "/skins/biomech/template.json" },
 
   // iterations ✦ — new wild_sculpt bodies on the same themes (sprites/palette
   // resolve through `style` to the theme's donor skin)
@@ -62,6 +69,11 @@ export const skinList: SkinAssets[] = [
   { id: "toilet2",  name: "Porcelain Throne ✦", blurb: "New sculpt on the ceramic theme", has: ["frame"], live: true, style: "toilet",  templateUrl: "/skins/toilet2/template.json" },
   { id: "biomech2", name: "Brood Queen ✦",    blurb: "New sculpt on the Giger theme", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/biomech2/template.json" },
   { id: "fiend2",   name: "Chrome Demon ✦",   blurb: "New sculpt on the chrome-predator theme", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/fiend2/template.json" },
+
+  // radial ✦ — layout-FIRST: the arc template is drawn before the body, and
+  // the image model grows the creature around it (circular seek ring)
+  { id: "maw",    name: "Angler Maw ✦",   blurb: "Fanged jaw grown around the dial, seek ring", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/maw/template.json" },
+  { id: "vortex", name: "Chrome Vortex ✦", blurb: "Octopus dome around the dial, seek ring", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/vortex/template.json" },
 
   // body horror ✦ — divergent takes on the biomech theme family
   { id: "flesh",  name: "Flayed One ✦",   blurb: "Wet muscle & sinew, bone-plate hardware", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/flesh/template.json" },
@@ -78,7 +90,7 @@ export function skinBaked(id: string): boolean {
 }
 
 // bump when frames/sprites are regenerated so browsers re-fetch
-const ASSET_VERSION = "nb16";
+const ASSET_VERSION = "nb17";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 export const spriteUrl = (id: string, name: string) => `${base(skinStyle(id))}/sprites/${name}.png?v=${ASSET_VERSION}`;

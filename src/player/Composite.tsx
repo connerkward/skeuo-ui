@@ -3,7 +3,7 @@ import type { Region, Template } from "../template/schema";
 import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
-import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, spriteUrl } from "./skins";
+import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, skinMolded, spriteUrl } from "./skins";
 
 interface Props {
   template: Template;
@@ -196,19 +196,24 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
   // otherwise the CSS-skeuomorphic fallback. Either way they're real & animated.
   const sp = skinSprites(skinId);
   if (r.kind === "button") {
-    // round wells take the knob cap sprite as a circular face; rectangular
-    // wells 9-slice the button sprite (border-image) so the bezel stays crisp
-    // at any size and the FACE fills the button instead of stretching.
+    // MOLDED transport faces (sprites/btn-*.png): the icon is part of the
+    // hardware art, in the skin's own material — a play button that READS
+    // as a play button. Fallbacks: round wells take the knob cap + SVG icon;
+    // rectangular wells 9-slice the generic button sprite + SVG icon.
     const round = r.shape === "ellipse";
-    const face: React.CSSProperties = sp
-      ? round
-        ? { backgroundImage: `url(${spriteUrl(skinId, "knob")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", border: 0 }
-        : { borderImage: `url(${spriteUrl(skinId, "button")}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
-      : {};
-    const g = glyph(r);
+    const bindId = r.bind ?? r.id;
+    const molded = sp && skinMolded(skinId) && ["prev", "play", "pause", "stop", "next"].includes(bindId);
+    const face: React.CSSProperties = molded
+      ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`)})`, backgroundPosition: "center", backgroundSize: "contain", backgroundRepeat: "no-repeat" }
+      : sp
+        ? round
+          ? { backgroundImage: `url(${spriteUrl(skinId, "knob")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", border: 0 }
+          : { borderImage: `url(${spriteUrl(skinId, "button")}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
+        : {};
+    const g = molded ? null : glyph(r);
     if (typeof g === "string" && g.length > 2) face.fontSize = "1.7cqw";   // text labels fit the face
     return (
-      <button className={`tbtn ${round ? "round" : ""} ${sp ? "sp-btn" : ""}`} style={face} onClick={btnHandler(r, ps)} title={r.label ?? r.id}>
+      <button className={`tbtn ${molded ? "molded" : ""} ${round ? "round" : ""} ${sp ? "sp-btn" : ""}`} style={face} onClick={btnHandler(r, ps)} title={r.label ?? r.id}>
         {g}
       </button>
     );
@@ -221,6 +226,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
   if (r.kind === "knob") return <Knob r={r} ps={ps} skinId={skinId} />;
   if (r.kind === "xy") return <XYPad ps={ps} baked={false} />;
   if (r.kind === "slider-h") return <SliderH r={r} ps={ps} skinId={skinId} />;
+  if (r.kind === "slider-arc") return <SliderArc r={r} ps={ps} />;
   if (r.kind === "slider-v") return <SliderV r={r} ps={ps} skinId={skinId} />;
   return null;
 }
@@ -379,6 +385,45 @@ function XYPad({ ps, baked }: { ps: PlayerState; baked: boolean }) {
       onPointerDown={(e) => { drag.current = true; set(e.clientX, e.clientY); }}>
       <div className="xy-grid" />
       <div className="xy-puck" style={{ left: `${ps.tone.x * 100}%`, top: `${(1 - ps.tone.y) * 100}%` }} />
+    </div>
+  );
+}
+
+/* ---------- circular seek: the thumb rides an arc around the dial ---------- */
+function SliderArc({ r, ps }: { r: Region; ps: PlayerState }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef(false);
+  const a0 = r.arc?.start ?? 200, a1 = r.arc?.end ?? 340;
+  const value = ps.track.seconds ? ps.elapsed / ps.track.seconds : 0;
+  const set = (cx: number, cy: number) => {
+    const rc = ref.current?.getBoundingClientRect(); if (!rc) return;
+    // angle of the pointer around the ring center, y-down screen convention
+    let a = (Math.atan2(cy - (rc.top + rc.height / 2), cx - (rc.left + rc.width / 2)) * 180) / Math.PI;
+    if (a < 0) a += 360;
+    if (a < a0 - 14 || a > a1 + 14) return;       // ignore grabs off the track
+    ps.seekTo(Math.max(0, Math.min(1, (a - a0) / (a1 - a0))));
+  };
+  useEffect(() => {
+    const m = (e: PointerEvent) => drag.current && set(e.clientX, e.clientY);
+    const u = () => (drag.current = false);
+    window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
+    return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // geometry in a 100×100 viewBox; the ring radius leaves room for the thumb
+  const R = 44;
+  const pol = (a: number) => [50 + R * Math.cos((a * Math.PI) / 180), 50 + R * Math.sin((a * Math.PI) / 180)];
+  const [sx, sy] = pol(a0); const [ex, ey] = pol(a1);
+  const av = a0 + (a1 - a0) * value; const [tx, ty] = pol(av);
+  const large = a1 - a0 > 180 ? 1 : 0;
+  return (
+    <div ref={ref} className="sk-slider-arc" title={`${r.label ?? "Seek"}: ${Math.round(value * 100)}%`}
+      onPointerDown={(e) => { drag.current = true; set(e.clientX, e.clientY); }}>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+        <path className="arc-rail" d={`M ${sx} ${sy} A ${R} ${R} 0 ${large} 1 ${ex} ${ey}`} />
+        <path className="arc-fill" d={`M ${sx} ${sy} A ${R} ${R} 0 ${a1 - a0 > 180 && value > 0.5 ? 1 : 0} 1 ${tx} ${ty}`} />
+        <circle className="arc-thumb" cx={tx} cy={ty} r="4.6" />
+      </svg>
     </div>
   );
 }

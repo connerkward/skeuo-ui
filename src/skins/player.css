@@ -193,7 +193,23 @@
 .sp-btn .ticon { fill: var(--sp-btn-ink, var(--btn-ink)); }
 /* round button: circular knob-cap face; icon engraved on the cap */
 .tbtn.round { border-radius: 50%; aspect-ratio: 1; }
-.tbtn.round .ticon { width: 40%; height: 40%; }
+.tbtn.round .ticon { width: 54%; height: 54%; }
+/* molded sprite transport faces carry their own icon art */
+.tbtn.molded { background-size: 100% 100%; background-color: transparent; box-shadow: none; border: 0; }
+
+/* circular seek ring */
+.sk-slider-arc { width: 100%; height: 100%; touch-action: none; cursor: pointer; }
+.sk-slider-arc svg { width: 100%; height: 100%; overflow: visible; }
+.sk-slider-arc .arc-rail {
+  fill: none; stroke: var(--rail-bg, #222); stroke-width: 3.4; stroke-linecap: round;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.55));
+}
+.sk-slider-arc .arc-fill { fill: none; stroke: var(--fill-bg, #4caf50); stroke-width: 3.4; stroke-linecap: round; }
+.sk-slider-arc .arc-thumb {
+  fill: var(--thumb-arc, var(--knob-ind, #fff));
+  stroke: rgba(0,0,0,.55); stroke-width: 1;
+  filter: drop-shadow(0 0 4px var(--knob-ind-glow, rgba(0,0,0,.5)));
+}
 .toggle, .btn { font-size: 1.95cqw; }
 .tbtn:hover, .toggle:hover, .btn:hover { filter: brightness(1.1); }
 .tbtn:active, .toggle:active, .btn:active {

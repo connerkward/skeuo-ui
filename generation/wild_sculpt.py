@@ -95,6 +95,115 @@ def gen_silhouette(brief, out_id, sil_path=None):
     print(f"silhouette ok ({mask.mean()*100:.0f}% of canvas)", flush=True)
     return mask
 
+ENVELOPE_PROMPT = (
+    "Keep every dark control socket, round well, ring groove and dark screen EXACTLY where it is, "
+    "pixel-identical, unchanged. Around and BEHIND them, paint ONE flat solid dark-gray SILHOUETTE "
+    "shape on the pure white background: the outline of {brief}. The silhouette must fully CONTAIN "
+    "every socket and screen with generous margin on all sides, and its wild parts — horns, fins, "
+    "tendrils, legs, jaws — grow outward from that mass. Completely flat dark-gray fill, no interior "
+    "detail, no shading, no outline strokes. Everything else stays pure white."
+)
+
+def layout_radial():
+    """Layout-FIRST radial template (no mask yet — the body is generated
+    around it): round dial, buttons orbiting the lower rim, knobs as eyes,
+    and the SEEK as a RING riding the dial's upper arc."""
+    import math
+    regs = []
+    def add(id, kind, x, y, w, h, **kw):
+        regs.append({"id": id, "kind": kind,
+                     "content": kw.pop("content", "sprite"),
+                     "layer": kw.pop("layer", "components"),
+                     "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
+    cx, cy, r = W/2, H*0.287, W*0.21
+    d = 64.0
+    rg = r - d - 12                      # dial glass radius
+    rc = rg + 8 + d/2                    # orbit/ring radius
+    add("visualizer", "display", cx-rg, cy-rg, 2*rg, 2*rg,
+        content="dynamic", layer="screen", dynamicType="visualizer", shape="ellipse")
+    for ang, b in zip([150, 120, 90, 60, 30], ["prev", "play", "pause", "stop", "next"]):
+        a = math.radians(ang)
+        add(b, "button", cx + rc*math.cos(a) - d/2, cy + rc*math.sin(a) - d/2, d, d,
+            bind=b, label=b, shape="ellipse")
+    kd = 72.0
+    for ang, (kid, bind, lab) in zip([205, 335], [("knob0", "volume", "VOL"), ("knob1", "balance", "BAL")]):
+        a = math.radians(ang)
+        add(kid, "knob", cx + rc*math.cos(a) - kd/2, cy + rc*math.sin(a) - kd/2, kd, kd, bind=bind, label=lab)
+    side = 2*(rc + 14)                   # seek ring: upper arc of the same radius
+    add("seek", "slider-arc", cx-side/2, cy-side/2, side, side,
+        bind="seek", label="Seek", arc={"start": 212, "end": 328})
+    my = cy + r + 16
+    add("marquee", "display", W*0.18, my, W*0.64, 38, content="dynamic", layer="screen", dynamicType="marquee")
+    ey, eh = my + 56, 130
+    ex0, span = W*0.17, W*0.66
+    sww = 42.0
+    add("sw0", "toggle", ex0, ey+8, sww, eh-16, bind="shuffle", label="SHUF")
+    add("sw1", "toggle", ex0+span-sww, ey+8, sww, eh-16, bind="eqOn", label="EQ")
+    sx, exx = ex0 + sww + span*0.05, ex0 + span - sww - span*0.05
+    sw_ = (exx-sx)/6
+    for i in range(6):
+        add(f"eq{i}", "slider-v", sx + i*sw_ + sw_*0.28, ey, sw_*0.44, eh,
+            bind="eqBand", group="eq-bands", index=i, label="")
+    py = ey + eh + 28
+    add("playlist", "display", W*0.19, py, W*0.62, H*0.945 - py, content="dynamic", layer="screen", dynamicType="playlist")
+    return regs
+
+def covers(mask, regs):
+    """Every control/screen must sit fully inside the enveloping body."""
+    import math
+    core = ndimage.binary_erosion(mask, iterations=6)
+    for r in regs:
+        rc = r["rect"]
+        if r["kind"] == "slider-arc":    # ring: sample points along the arc
+            ccx, ccy = (rc["x"]+rc["w"]/2)*W, (rc["y"]+rc["h"]/2)*H
+            rr = rc["w"]*W/2 * 0.88
+            a0, a1 = r["arc"]["start"], r["arc"]["end"]
+            for t in range(21):
+                a = math.radians(a0 + (a1-a0)*t/20)
+                x, y = int(ccx + rr*math.cos(a)), int(ccy + rr*math.sin(a))
+                if not core[max(0, min(H-1, y)), max(0, min(W-1, x))]: return False
+            continue
+        x0, y0 = int(rc["x"]*W), int(rc["y"]*H)
+        x1, y1 = int((rc["x"]+rc["w"])*W), int((rc["y"]+rc["h"])*H)
+        if not core[max(0, y0):min(H, y1), max(0, x0):min(W, x1)].all(): return False
+    return True
+
+def region_mask(regs):
+    """Boolean mask of every drawn region (the layout is part of the body
+    BY CONSTRUCTION — teeth/jaws painted over a screen must not cut holes)."""
+    img = Image.new("L", (W, H), 0)
+    d = ImageDraw.Draw(img)
+    for r in regs:
+        rc = r["rect"]; x0, y0 = rc["x"]*W, rc["y"]*H; x1, y1 = x0+rc["w"]*W, y0+rc["h"]*H
+        if r["kind"] == "slider-arc":
+            i = 0.06*(x1-x0)
+            d.arc([x0+i, y0+i, x1-i, y1-i], r["arc"]["start"], r["arc"]["end"], fill=255, width=26)
+        else:
+            d.rectangle([x0, y0, x1, y1], fill=255)
+    return ndimage.binary_dilation(np.asarray(img) > 0, iterations=10)
+
+def gen_envelope(wells_img, brief, out_id):
+    tmp = os.path.join(G.HERE, f"_wells-{out_id}.png"); wells_img.save(tmp)
+    cu = G.upload(tmp)
+    job = G.submit(cu, ENVELOPE_PROMPT.format(brief=brief))
+    t0 = time.time()
+    while True:
+        s = G.get(job["status_url"]).get("status")
+        if s == "COMPLETED": break
+        if s in ("FAILED", "ERROR"): return None
+        if time.time() - t0 > 420: return None
+        time.sleep(3)
+    url = G.get(job["response_url"])["images"][0]["url"]
+    out = os.path.join(G.HERE, f"_env-{out_id}.png"); urllib.request.urlretrieve(url, out)
+    im = Image.open(out).convert("L").resize((W, H))
+    mask = ndimage.binary_fill_holes(np.asarray(im) < 200)
+    lbl, n = ndimage.label(mask)
+    if n > 1:
+        sizes = ndimage.sum(mask, lbl, range(1, n + 1))
+        mask = lbl == (1 + int(np.argmax(sizes)))
+    print(f"[{out_id}] envelope ok ({mask.mean()*100:.0f}% of canvas)", flush=True)
+    return mask
+
 def max_rect(B):
     """Largest axis-aligned rectangle of True cells in 2D bool array B.
     Returns (x, y, w, h) in B's coordinates. Histogram-stack, O(rows*cols)."""
@@ -278,15 +387,14 @@ def layout_in_mask(mask, variant="classic"):
         knobs_eq(0.42, 0.58)
     return regs
 
-def draw_blueprint(mask, regs):
-    img = Image.new("RGB", (W, H), (255, 255, 255))
-    body = np.asarray(img).copy()
-    body[mask] = BODY
-    img = Image.fromarray(body)
-    d = ImageDraw.Draw(img)
+def _draw_regions(d, regs):
     for r in regs:
         rc = r["rect"]; x0, y0 = rc["x"]*W, rc["y"]*H; x1, y1 = x0+rc["w"]*W, y0+rc["h"]*H
-        if r["kind"] == "knob" or (r["kind"] == "button" and r.get("shape") == "ellipse"):
+        if r["kind"] == "slider-arc":
+            i = 0.06*(x1-x0)             # ring radius matches the live control (0.88 of half-box)
+            a = r["arc"]
+            d.arc([x0+i, y0+i, x1-i, y1-i], a["start"], a["end"], fill=WELL, width=18)
+        elif r["kind"] == "knob" or (r["kind"] == "button" and r.get("shape") == "ellipse"):
             d.ellipse([x0, y0, x1, y1], fill=WELL, outline=EDGE, width=4)
         elif r["kind"] == "display":
             if r.get("shape") == "ellipse":
@@ -295,6 +403,18 @@ def draw_blueprint(mask, regs):
                 d.rounded_rectangle([x0, y0, x1, y1], radius=12, fill=(12, 13, 15), outline=EDGE, width=5)
         else:
             d.rounded_rectangle([x0, y0, x1, y1], radius=8, fill=WELL, outline=EDGE, width=4)
+
+def draw_blueprint(mask, regs):
+    img = Image.new("RGB", (W, H), (255, 255, 255))
+    body = np.asarray(img).copy()
+    body[mask] = BODY
+    img = Image.fromarray(body)
+    _draw_regions(ImageDraw.Draw(img), regs)
+    return img
+
+def draw_wells_only(regs):
+    img = Image.new("RGB", (W, H), (255, 255, 255))
+    _draw_regions(ImageDraw.Draw(img), regs)
     return img
 
 def usable(regs):
@@ -307,14 +427,30 @@ def usable(regs):
             d["marquee"]["w"] >= 0.18)
 
 def main(out_id, style, brief, sil_path=None, variant="classic"):
-    for attempt in range(3):
-        mask = gen_silhouette(brief, out_id, sil_path); sil_path = None
-        regs = layout_in_mask(mask, variant)
-        if usable(regs):
-            break
-        print(f"[{out_id}] silhouette unusable (screens too small) — retry {attempt+1}", flush=True)
+    if variant == "radial":
+        # LAYOUT FIRST: the arc-native template exists before any body does;
+        # the image model grows the creature AROUND the drawn controls
+        regs = layout_radial()
+        wells = draw_wells_only(regs)
+        rmask = region_mask(regs)
+        for attempt in range(3):
+            mask = gen_envelope(wells, brief, out_id)
+            if mask is not None:
+                mask = ndimage.binary_fill_holes(mask | rmask)
+            if mask is not None and covers(mask, regs):
+                break
+            print(f"[{out_id}] envelope does not contain the layout — retry {attempt+1}", flush=True)
+        else:
+            raise SystemExit("no enveloping body in 3 attempts")
     else:
-        raise SystemExit("no usable silhouette in 3 attempts")
+        for attempt in range(3):
+            mask = gen_silhouette(brief, out_id, sil_path); sil_path = None
+            regs = layout_in_mask(mask, variant)
+            if usable(regs):
+                break
+            print(f"[{out_id}] silhouette unusable (screens too small) — retry {attempt+1}", flush=True)
+        else:
+            raise SystemExit("no usable silhouette in 3 attempts")
     bp = draw_blueprint(mask, regs)
     bp_path = os.path.join(G.HERE, f"_sculpt-{out_id}.png"); bp.save(bp_path)
     cu = G.upload(bp_path)

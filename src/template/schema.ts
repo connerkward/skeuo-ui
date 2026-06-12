@@ -22,6 +22,7 @@ export type Kind =
   | "slider-h"    // horizontal slider
   | "slider-v"    // vertical slider
   | "knob"        // rotary knob (drag to turn)
+  | "slider-arc"  // thumb rides a circular arc (ring seek around a dial)
   | "segmented"   // pick one of N segments
   | "xy"          // 2D pad (drag a puck)
   | "display"     // recessed screen hosting dynamic content
@@ -56,6 +57,7 @@ export interface Region {
   options?: string[];     // segmented: the segment labels
   flourish?: string;      // decoration: a hint label (CORNER, RAIL, CREST…)
   shape?: "ellipse";      // round well: circular button face / elliptical glass
+  arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
 }
 
 export interface Template {
