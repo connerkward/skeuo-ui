@@ -24,14 +24,19 @@ W, H = 1024, 1536
 WELL = (20, 22, 24)
 EDGE = (74, 78, 82)
 BODY = (174, 176, 180)
+# transport button size hierarchy (× base diameter) — PLAY dominates, stop is
+# smallest. Breaks the uniform-small-grid look the user flagged.
+BSIZE = {"play": 1.5, "pause": 1.0, "prev": 0.9, "next": 0.9, "stop": 0.82}
 
 SIL_PROMPT = (
     "A single flat solid DARK-GRAY SILHOUETTE shape on a pure white background: the outline of {brief}. "
     "Completely flat fill, no interior detail, no shading, no outline strokes — just the filled "
-    "silhouette, centered, filling most of the canvas. COMPOSITION RULE: the shape is dominated by ONE "
-    "large solid rounded TORSO mass (at least two thirds of the shape's area, wide in the middle AND "
-    "lower half); all the wild parts — horns, fins, tendrils, legs, spikes — grow outward from the "
-    "torso's edge and stay relatively small. Bold, readable, wildly non-rectangular outline."
+    "silhouette, centered, filling most of the canvas. The PROPORTION and posture must follow the brief — "
+    "it may be tall and narrow, squat and wide, asymmetric, leaning, angular/geometric or organic; do NOT "
+    "default to a generic centered rounded blob, make the OVERALL shape distinctive. COMPOSITION RULE "
+    "(for fit only): somewhere in the shape there is ONE large CONTIGUOUS mass — at least half the area, "
+    "tall enough and wide enough to seat stacked screens — and the wild parts (horns, fins, tendrils, "
+    "legs, spikes, blades, claws) grow outward from it. Bold, readable, wildly non-rectangular outline."
 )
 
 MATERIAL = {
@@ -78,6 +83,9 @@ def gen_silhouette(brief, out_id, sil_path=None):
     if sil_path:                                     # reuse a known silhouette
         tmp = sil_path
     else:
+        # Silhouette is a pure text-to-image ask — feeding a (rectangular) UI
+        # reference here would flatten the wild shape, so references belong to
+        # the PAINT pass (gen_styled), not here.
         job = G.post("https://queue.fal.run/openai/gpt-image-2", {
             "prompt": SIL_PROMPT.format(brief=brief),
             "image_size": {"width": W, "height": H}, "quality": "medium", "output_format": "png"})
@@ -127,9 +135,11 @@ def layout_radial():
     rc = rg + 8 + d/2                    # orbit/ring radius
     add("visualizer", "display", cx-rg, cy-rg, 2*rg, 2*rg,
         content="dynamic", layer="screen", dynamicType="visualizer", shape="ellipse")
+    # asymmetric hierarchy: PLAY dominates, stop is smallest — the center stays
+    # on the ring (placed by center − bd/2) so varying size keeps it aligned
     for ang, b in zip([150, 120, 90, 60, 30], ["prev", "play", "pause", "stop", "next"]):
-        a = math.radians(ang)
-        add(b, "button", cx + rc*math.cos(a) - d/2, cy + rc*math.sin(a) - d/2, d, d,
+        a = math.radians(ang); bd = d * BSIZE[b]
+        add(b, "button", cx + rc*math.cos(a) - bd/2, cy + rc*math.sin(a) - bd/2, bd, bd,
             bind=b, label=b, shape="ellipse")
     kd = 72.0
     for ang, (kid, bind, lab) in zip([205, 335], [("knob0", "volume", "VOL"), ("knob1", "balance", "BAL")]):
@@ -174,8 +184,8 @@ def layout_capsule():
     # buttons FULLY around the dial; the gap at 0 deg is where the pill attaches
     ring = [(40, "next"), (88, "stop"), (136, "pause"), (184, "play"), (232, "prev")]
     for ang, b in ring:
-        a = math.radians(ang)
-        add(b, "button", cx + rc*math.cos(a) - d/2, cy + rc*math.sin(a) - d/2, d, d,
+        a = math.radians(ang); bd = d * BSIZE[b]
+        add(b, "button", cx + rc*math.cos(a) - bd/2, cy + rc*math.sin(a) - bd/2, bd, bd,
             bind=b, label=b, shape="ellipse")
     for ang, (kid, bind, lab) in zip([280, 322], [("sw0", "shuffle", "SHUF"), ("sw1", "eqOn", "EQ")]):
         a = math.radians(ang)
@@ -200,6 +210,35 @@ def layout_capsule():
         add(f"eq{i}", "slider-v", ex0 + i*sw_ + sw_*0.30, ey, sw_*0.40, eh,
             bind="eqBand", group="eq-bands", index=i, label="")
     add("playlist", "display", W*0.185, H*0.575, W*0.63, H*0.355, content="dynamic", layer="screen", dynamicType="playlist")
+    return regs
+
+def layout_minimal():
+    """STRIPPED-DOWN grammar — the user asked for a 'minimized type' that does
+    not use every control. A now-playing PUCK: round dial (radial spectrum +
+    clock), one horizontal seek, three buttons (a dominant PLAY flanked by small
+    prev/next), one VOLUME knob, a marquee. No EQ, no playlist, no toggles, no
+    balance — deliberately sparse."""
+    regs = []
+    def add(id, kind, x, y, w, h, **kw):
+        regs.append({"id": id, "kind": kind,
+                     "content": kw.pop("content", "sprite"),
+                     "layer": kw.pop("layer", "components"),
+                     "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
+    cx, cy, rg = W/2, H*0.255, W*0.185
+    add("visualizer", "display", cx-rg, cy-rg, 2*rg, 2*rg,
+        content="dynamic", layer="screen", dynamicType="visualizer", shape="ellipse")
+    sy = cy + rg + 30                              # horizontal seek under the dial
+    add("seek", "slider-h", W*0.23, sy, W*0.54, 28, bind="seek", label="Seek")
+    by = sy + 96                                    # transport row, PLAY dominant
+    play_d, small_d, gap = 132.0, 78.0, 44.0
+    add("play", "button", cx-play_d/2, by-play_d/2, play_d, play_d, bind="play", label="play", shape="ellipse")
+    add("prev", "button", cx-play_d/2-gap-small_d, by-small_d/2, small_d, small_d, bind="prev", label="prev", shape="ellipse")
+    add("next", "button", cx+play_d/2+gap, by-small_d/2, small_d, small_d, bind="next", label="next", shape="ellipse")
+    ky = by + play_d/2 + 40                         # one volume knob
+    kd = 96.0
+    add("knob0", "knob", cx-kd/2, ky, kd, kd, bind="volume", label="VOL")
+    my = ky + kd + 32                               # marquee at the foot
+    add("marquee", "display", W*0.19, my, W*0.62, 50, content="dynamic", layer="screen", dynamicType="marquee")
     return regs
 
 def covers(mask, regs):
@@ -375,10 +414,10 @@ def layout_in_mask(mask, variant="classic"):
             content="dynamic", layer="screen", dynamicType="visualizer", shape="ellipse")
         import math
         for ang, b in zip([150, 120, 90, 60, 30], ["prev", "play", "pause", "stop", "next"]):
-            a = math.radians(ang)
-            bx = cx + rc*math.cos(a) - d/2
-            by = cy + rc*math.sin(a) - d/2     # y-down: bottom semicircle
-            add(b, "button", bx, by, d, d, bind=b, label=b, shape="ellipse")
+            a = math.radians(ang); bd = d * BSIZE[b]
+            bx = cx + rc*math.cos(a) - bd/2
+            by = cy + rc*math.sin(a) - bd/2     # y-down: bottom semicircle
+            add(b, "button", bx, by, bd, bd, bind=b, label=b, shape="ellipse")
         kd = min(d*1.15, max(30.0, (r - rc)*1.9))
         for ang, (kid, bind, lab) in zip([205, 335], [("knob0", "volume", "VOL"), ("knob1", "balance", "BAL")]):
             a = math.radians(ang)
@@ -476,15 +515,18 @@ def usable(regs):
     if any(r["rect"]["w"] <= 0 or r["rect"]["h"] <= 0 for r in regs):
         return False
     d = {r["id"]: r["rect"] for r in regs if r["kind"] == "display"}
-    return (d["playlist"]["w"] >= 0.30 and d["playlist"]["h"] >= 0.12 and
-            d["visualizer"]["w"] >= 0.24 and d["visualizer"]["h"] >= 0.06 and
-            d["marquee"]["w"] >= 0.18)
+    # thresholds kept low enough that tall/narrow and squat/wide bodies still
+    # pass (shape diversity) while screens stay readable
+    return (d["playlist"]["w"] >= 0.25 and d["playlist"]["h"] >= 0.11 and
+            d["visualizer"]["w"] >= 0.20 and d["visualizer"]["h"] >= 0.055 and
+            d["marquee"]["w"] >= 0.15)
 
-def main(out_id, style, brief, sil_path=None, variant="classic"):
-    if variant in ("radial", "capsule"):
+def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
+    if variant in ("radial", "capsule", "minimal"):
         # LAYOUT FIRST: the arc-native template exists before any body does;
         # the image model grows the creature AROUND the drawn controls
-        regs = layout_radial() if variant == "radial" else layout_capsule()
+        regs = (layout_radial() if variant == "radial" else
+                layout_capsule() if variant == "capsule" else layout_minimal())
         wells = draw_wells_only(regs)
         rmask = region_mask(regs)
         for attempt in range(3):
@@ -508,7 +550,15 @@ def main(out_id, style, brief, sil_path=None, variant="classic"):
     bp = draw_blueprint(mask, regs)
     bp_path = os.path.join(G.HERE, f"_sculpt-{out_id}.png"); bp.save(bp_path)
     cu = G.upload(bp_path)
-    job = G.submit(cu, STYLE_PROMPT + MATERIAL.get(style, MATERIAL["winamp"]))
+    # reference-style images steer the paint pass (material/color/detail) while
+    # the blueprint stays the layout authority — uploaded as extra image_urls
+    ref_urls = [G.upload(p) for p in (refs or []) if os.path.exists(p)]
+    prompt = STYLE_PROMPT + MATERIAL.get(style, MATERIAL["winamp"])
+    if ref_urls:
+        prompt += (" Borrow the palette, materials and surface-detail vocabulary "
+                   "of the REFERENCE image(s) provided, but DO NOT copy their layout "
+                   "or shape — the silhouette and wells come only from the blueprint.")
+    job = G.submit(cu, prompt, ref_urls)
     t0 = time.time()
     while True:
         s = G.get(job["status_url"]).get("status")
@@ -530,5 +580,8 @@ def main(out_id, style, brief, sil_path=None, variant="classic"):
     print(f"[{out_id}] saved (alignment by construction)", flush=True)
 
 if __name__ == "__main__":
+    # argv: <id> <style> "<brief>" [sil_path|-] [variant] [ref1,ref2,...]
     sil = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != "-" else None
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sil, sys.argv[5] if len(sys.argv) > 5 else "classic")
+    variant = sys.argv[5] if len(sys.argv) > 5 else "classic"
+    refs = sys.argv[6].split(",") if len(sys.argv) > 6 and sys.argv[6] != "-" else None
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sil, variant, refs)

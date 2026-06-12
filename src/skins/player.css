@@ -198,18 +198,41 @@
    face SEATS into the painted rim instead of floating small in the cavity */
 .tbtn.molded { background-color: transparent; box-shadow: none; border: 0; overflow: visible; }
 
-/* circular seek ring */
+/* circular seek ring — stroke width matches the painted groove (~8% of the
+   box, drawn at width=26 over a ~300px region) so the live arc fills the
+   recessed channel instead of a thin line floating inside it */
 .sk-slider-arc { width: 100%; height: 100%; touch-action: none; cursor: pointer; }
 .sk-slider-arc svg { width: 100%; height: 100%; overflow: visible; }
 .sk-slider-arc .arc-rail {
-  fill: none; stroke: var(--rail-bg, #222); stroke-width: 3.4; stroke-linecap: round;
+  fill: none; stroke: var(--rail-bg, #222); stroke-width: 7; stroke-linecap: round;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.55));
 }
-.sk-slider-arc .arc-fill { fill: none; stroke: var(--fill-bg, #4caf50); stroke-width: 3.4; stroke-linecap: round; }
+.sk-slider-arc .arc-fill { fill: none; stroke: var(--fill-bg, #4caf50); stroke-width: 7; stroke-linecap: round; }
 .sk-slider-arc .arc-thumb {
   fill: var(--thumb-arc, var(--knob-ind, #fff));
-  stroke: rgba(0,0,0,.55); stroke-width: 1;
-  filter: drop-shadow(0 0 4px var(--knob-ind-glow, rgba(0,0,0,.5)));
+  stroke: rgba(0,0,0,.55); stroke-width: 1.2; r: 5.4;
+  filter: drop-shadow(0 0 5px var(--knob-ind-glow, var(--fill-bg, rgba(255,255,255,.5))));
+}
+
+/* round dial: radial spectrum fills the disc, clock + track in the center hole */
+.dial-vis { position: relative; width: 100%; height: 100%; }
+.dial-vis .vis-canvas { position: absolute; inset: 0; }
+.dial-readout {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.4cqw;
+  pointer-events: none; text-align: center; padding: 0 8%;
+}
+.dial-readout .dial-time {
+  font-family: var(--lcd-font, "DSEG7", monospace);
+  font-size: 13cqw; line-height: 1; letter-spacing: 0.02em;
+  color: var(--lcd-ink, #8ff0a8); text-shadow: 0 0 6px var(--lcd-glow, rgba(120,255,160,.45));
+}
+.dial-readout .dial-time[data-paused="true"] { opacity: 0.6; }
+.dial-readout .dial-track {
+  font-size: 4.2cqw; line-height: 1.1; margin-top: 0.6cqw; max-width: 100%;
+  color: var(--lcd-ink-dim, var(--lcd-ink, #6fcf86));
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.85;
 }
 .toggle, .btn { font-size: 1.95cqw; }
 .tbtn:hover, .toggle:hover, .btn:hover { filter: brightness(1.1); }

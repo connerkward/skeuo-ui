@@ -42,47 +42,46 @@ def gen_sheet(style):
     data = urllib.request.urlopen(url, timeout=120).read()
     return Image.open(io.BytesIO(data)).convert("RGBA")
 
+def _square(crop):
+    side = max(crop.width, crop.height) + 12
+    sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    sq.alpha_composite(crop, ((side - crop.width) // 2, (side - crop.height) // 2))
+    return sq.resize((512, 512), Image.LANCZOS)
+
 def split_buttons(im):
-    """Alpha connected components, x-sorted — robust to uneven spacing."""
-    a = np.asarray(im)[..., 3] > 24
-    lbl, n = ndimage.label(ndimage.binary_closing(a, iterations=3))
-    comps = []
-    for i in range(1, n + 1):
-        ys, xs = np.nonzero(lbl == i)
-        if xs.size < 2000: continue
-        comps.append((xs.min(), xs.max(), ys.min(), ys.max(), xs.size))
-    comps.sort(key=lambda c: -c[4])
-    comps = sorted(comps[:5], key=lambda c: c[0])
-    if len(comps) != 5:
-        # organic styles bridge neighbours into one blob — fall back to five
-        # equal columns over the sheet's alpha bbox, trimming each by alpha
-        bb = im.getchannel("A").getbbox()
-        if not bb: return None
-        bx0, by0, bx1, by1 = bb
-        cw = (bx1 - bx0) / 5
-        out = []
-        for i in range(5):
-            cell = im.crop((int(bx0 + i*cw), by0, int(bx0 + (i+1)*cw), by1))
-            ca = np.asarray(cell)[..., 3] > 24
-            cl, cn = ndimage.label(ca)
-            if cn == 0: return None
-            keep = 1 + int(np.argmax(ndimage.sum(ca, cl, range(1, cn + 1))))
-            arr = np.asarray(cell).copy(); arr[cl != keep, 3] = 0   # drop neighbour slivers
-            cell = Image.fromarray(arr)
-            cb = cell.getchannel("A").getbbox()
-            crop = cell.crop(cb)
-            side = max(crop.width, crop.height) + 12
-            sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-            sq.alpha_composite(crop, ((side - crop.width) // 2, (side - crop.height) // 2))
-            out.append(sq.resize((512, 512), Image.LANCZOS))
-        return out
+    """Split a row of five buttons by the COLUMN-ALPHA PROFILE: find a valley
+    (gap between buttons) near each ideal 1/5..4/5 boundary and cut there.
+    Robust to organic styles whose buttons BRIDGE — the gap is a local minimum,
+    not necessarily zero — and to uneven spacing, where blind equal-fifths would
+    slice a button in half. Always yields five faces (or None if sheet is empty)."""
+    bb = im.getchannel("A").getbbox()
+    if not bb: return None
+    bx0, by0, bx1, by1 = bb
+    sub = im.crop((bx0, by0, bx1, by1))
+    a = np.asarray(sub)[..., 3] > 24
+    n = a.shape[1]
+    if n < 50: return None
+    col = a.sum(0).astype(float)
+    k = max(3, n // 120)
+    col = np.convolve(col, np.ones(k) / k, mode="same")   # smooth out texture noise
+    splits = []
+    for i in range(1, 5):                                  # valley near each boundary
+        c = int(n * i / 5); w = max(4, int(n * 0.08))
+        lo, hi = max(1, c - w), min(n - 1, c + w)
+        splits.append(lo + int(np.argmin(col[lo:hi])))
+    bounds = [0] + splits + [n]
     out = []
-    for x0, x1, y0, y1, _ in comps:
-        crop = im.crop((x0, y0, x1 + 1, y1 + 1))
-        side = max(crop.width, crop.height) + 12
-        sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-        sq.alpha_composite(crop, ((side - crop.width) // 2, (side - crop.height) // 2))
-        out.append(sq.resize((512, 512), Image.LANCZOS))
+    for i in range(5):
+        seg = sub.crop((bounds[i], 0, bounds[i + 1], a.shape[0]))
+        sa = np.asarray(seg)[..., 3] > 24
+        cl, cn = ndimage.label(sa)
+        if cn:                                             # keep this button, drop neighbour slivers
+            keep = 1 + int(np.argmax(ndimage.sum(sa, cl, range(1, cn + 1))))
+            arr = np.asarray(seg).copy(); arr[cl != keep, 3] = 0
+            seg = Image.fromarray(arr)
+        cb = seg.getchannel("A").getbbox()
+        if not cb: return None
+        out.append(_square(seg.crop(cb)))
     return out
 
 def do_style(style):

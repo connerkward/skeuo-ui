@@ -79,6 +79,13 @@ export const skinList: SkinAssets[] = [
   { id: "maw",    name: "Angler Maw ✦",   blurb: "Fanged jaw grown around the dial, seek ring", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/maw/template.json" },
   { id: "vortex", name: "Chrome Vortex ✦", blurb: "Octopus dome around the dial, seek ring", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/vortex/template.json" },
 
+  // minimal ✦ — stripped-down "now-playing puck": dial, seek, big play, one knob
+  { id: "pebble", name: "Pebble ✦",       blurb: "Minimal frog puck — play / seek / volume only", has: ["frame"], live: true, style: "frog", templateUrl: "/skins/pebble/template.json" },
+
+  // shape-diverse ✦ — relaxed silhouette prompt: deliberately NON-blob bodies
+  { id: "obelisk", name: "Bone Totem ✦",  blurb: "Tall vertebral totem, hero-sized play", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/obelisk/template.json" },
+  { id: "slab",   name: "War Slab ✦",     blurb: "Low wide chassis, chrome reference-steered", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/slab/template.json" },
+
   // body horror ✦ — divergent takes on the biomech theme family
   { id: "flesh",  name: "Flayed One ✦",   blurb: "Wet muscle & sinew, bone-plate hardware", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/flesh/template.json" },
   { id: "scarab", name: "Scarab ✦",       blurb: "Black iridescent carapace, crimson seams", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/scarab/template.json" },
@@ -94,7 +101,7 @@ export function skinBaked(id: string): boolean {
 }
 
 // bump when frames/sprites are regenerated so browsers re-fetch
-const ASSET_VERSION = "nb18";
+const ASSET_VERSION = "nb19";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 export const spriteUrl = (id: string, name: string) => `${base(skinStyle(id))}/sprites/${name}.png?v=${ASSET_VERSION}`;

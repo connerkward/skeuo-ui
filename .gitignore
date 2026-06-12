@@ -38,3 +38,5 @@ public/skins/*/_screens_overlay.png
 # generation intermediates (regenerable)
 generation/_sil-*.png
 generation/_sculpt-*.png
+generation/_env-*.png
+generation/_wells-*.png

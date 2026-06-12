@@ -149,8 +149,23 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
         return <div className="dyn title-text">{r.id === "pl-title" ? "PLAYLIST EDITOR" : ps.content.station}</div>;
       case "time":
         return <div className="dyn lcd-time" data-paused={!ps.playing}>{fmtTime(ps.elapsed)}</div>;
-      case "visualizer":
+      case "visualizer": {
+        // round dial screens (orbit/radial layouts) get a radial spectrum that
+        // fills the disc, with the clock + track read out in the center hole —
+        // so the dial is a live centerpiece, not a black void ringed by buttons.
+        if (r.shape === "ellipse") {
+          return (
+            <div className="dial-vis">
+              <Visualizer playing={ps.playing} analyser={ps.analyser} variant="radial" />
+              <div className="dial-readout">
+                <span className="dial-time" data-paused={!ps.playing}>{fmtTime(ps.elapsed)}</span>
+                <span className="dial-track">{ps.track.title}</span>
+              </div>
+            </div>
+          );
+        }
         return <Visualizer playing={ps.playing} analyser={ps.analyser} />;
+      }
       case "marquee":
         return (
           <div className="dyn marquee">

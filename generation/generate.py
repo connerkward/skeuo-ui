@@ -112,9 +112,13 @@ SKINS = {
 # Nano Banana Pro (Gemini 3 Pro Image) — crisp 2K, best layout adherence.
 # No transparent-bg param, so we generate opaque (the device fills the frame).
 ENDPOINT = "fal-ai/gemini-3-pro-image-preview/edit"
-def submit(control_url, prompt):
+def submit(control_url, prompt, ref_urls=None):
+    # The blueprint is the FIRST image (layout authority); any reference-style
+    # images follow so the model borrows their material/color/detail vocabulary
+    # while keeping the blueprint's exact wells and silhouette.
+    urls = [control_url] + list(ref_urls or [])
     return post(f"https://queue.fal.run/{ENDPOINT}", {
-        "prompt": prompt, "image_urls": [control_url],
+        "prompt": prompt, "image_urls": urls,
         "resolution": "2K", "aspect_ratio": "2:3", "output_format": "png",
     })
 

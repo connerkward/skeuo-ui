@@ -18,6 +18,40 @@ export interface SkinContent {
 export const EQ_BANDS = ["60", "170", "310", "600", "1K", "3K", "6K", "12K", "14K", "16K"];
 
 export const skinContent: Record<string, SkinContent> = {
+  pebble: {
+    station: "LILYPAD FM  ·  minimal mode",
+    bitrate: "128",
+    khz: "44",
+    tracks: [
+      { artist: "Ribbit", title: "Pond Loop", seconds: 184 },
+      { artist: "Lo-Fi Toad", title: "Lily Drift", seconds: 211 },
+      { artist: "Marsh", title: "Reeds at Dusk", seconds: 167 },
+    ],
+  },
+  obelisk: {
+    station: "OSSUARY 7  ·  vertebral relay",
+    bitrate: "192",
+    khz: "48",
+    tracks: [
+      { artist: "Lustmord", title: "Spine of the Tower", seconds: 402 },
+      { artist: "Sunn O)))", title: "Marrow Drone", seconds: 511 },
+      { artist: "Author & Punisher", title: "Fused Vertebrae", seconds: 286 },
+      { artist: "Godflesh", title: "Bone Cabling", seconds: 254 },
+      { artist: "Perturbator", title: "Horned Skull", seconds: 298 },
+    ],
+  },
+  slab: {
+    station: "WAR SLAB  ·  treaded chassis net",
+    bitrate: "256",
+    khz: "44",
+    tracks: [
+      { artist: "Front Line Assembly", title: "Tread Column", seconds: 312 },
+      { artist: "KMFDM", title: "Vent Stack", seconds: 247 },
+      { artist: "Ministry", title: "Antenna Array", seconds: 289 },
+      { artist: "Gesaffelstein", title: "Squat Broad", seconds: 233 },
+      { artist: "Justice", title: "Genesis (Chassis Mix)", seconds: 226 },
+    ],
+  },
   wmp: {
     station: "WMP9  ·  Now Playing · TradeSend Trance",
     bitrate: "160",
