@@ -156,8 +156,8 @@ def draw_blueprint(variant, seed):
 PROMPT = (
     "Restyle this blueprint into a photoreal, wildly-shaped Y2K skeuomorphic MP3-player device. "
     "CRITICAL: keep the EXACT silhouette and keep EVERY dark recessed well and screen EXACTLY where it "
-    "is, same size and shape — empty recessed sockets (controls mount separately) and empty switched-off "
-    "dark glass screens (no text, no graphics). Make the BODY rich and detailed between the wells: "
+    "is, same size and shape — empty recessed sockets (controls mount separately) and empty switched-off, "
+    "dark glass screens kept as CLEAN FLAT RECTANGLES, never overgrown (no text, no graphics). Make the BODY rich and detailed between the wells: "
     "sculpted curves, panel seams, vents, lights. Everything outside the silhouette stays pure flat "
     "white. Front-on orthographic, even light, high detail. MATERIAL: "
 )

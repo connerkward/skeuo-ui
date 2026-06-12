@@ -13,10 +13,3 @@
   --list-ink: #b9ff77; --list-sel-bg: rgba(157,255,77,.8); --list-sel-ink: #0c1206;
   --title-ink: #8aa05a;
 }
-/* the bone cavity is irregular — the playlist rect overlaps bone; a translucent
-   membrane keeps text legible (reads as a chitin window) */
-[data-skin="biomech"] .region-dyn:has(.pl-list) {
-  background: rgba(8, 14, 4, .62);
-  border-radius: 10px;
-  box-shadow: inset 0 0 18px rgba(0,0,0,.6);
-}

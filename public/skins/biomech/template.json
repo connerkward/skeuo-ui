@@ -7,43 +7,43 @@
   },
   "regions": [
     {
-      "id": "visualizer",
-      "kind": "display",
-      "content": "dynamic",
-      "layer": "screen",
-      "rect": {
-        "x": 0.255859375,
-        "y": 0.16276041666666666,
-        "w": 0.48828125,
-        "h": 0.11067708333333333
-      },
-      "dynamicType": "visualizer"
-    },
-    {
       "id": "playlist",
       "kind": "display",
       "content": "dynamic",
       "layer": "screen",
+      "dynamicType": "playlist",
       "rect": {
-        "x": 0.2265625,
-        "y": 0.5859375,
-        "w": 0.546875,
-        "h": 0.1953125
-      },
-      "dynamicType": "playlist"
+        "x": 0.2274,
+        "y": 0.56705,
+        "w": 0.5451999999999999,
+        "h": 0.22089999999999999
+      }
     },
     {
       "id": "marquee",
       "kind": "display",
       "content": "dynamic",
       "layer": "screen",
+      "dynamicType": "marquee",
       "rect": {
-        "x": 0.255859375,
-        "y": 0.2890625,
-        "w": 0.48828125,
-        "h": 0.026041666666666668
-      },
-      "dynamicType": "marquee"
+        "x": 0.27440000000000003,
+        "y": 0.3009,
+        "w": 0.45119999999999993,
+        "h": 0.028199999999999996
+      }
+    },
+    {
+      "id": "visualizer",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "dynamicType": "visualizer",
+      "rect": {
+        "x": 0.2556,
+        "y": 0.14905,
+        "w": 0.4888,
+        "h": 0.1269
+      }
     },
     {
       "id": "prev",
