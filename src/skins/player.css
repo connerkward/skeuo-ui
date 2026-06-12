@@ -191,6 +191,9 @@
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .45)) drop-shadow(0 -1px 0 rgba(255, 255, 255, .12));
 }
 .sp-btn .ticon { fill: var(--sp-btn-ink, var(--btn-ink)); }
+/* round button: circular knob-cap face; icon engraved on the cap */
+.tbtn.round { border-radius: 50%; aspect-ratio: 1; }
+.tbtn.round .ticon { width: 40%; height: 40%; }
 .toggle, .btn { font-size: 1.95cqw; }
 .tbtn:hover, .toggle:hover, .btn:hover { filter: brightness(1.1); }
 .tbtn:active, .toggle:active, .btn:active {

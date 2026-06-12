@@ -55,6 +55,7 @@ export interface Region {
   index?: number;         // position within a group
   options?: string[];     // segmented: the segment labels
   flourish?: string;      // decoration: a hint label (CORNER, RAIL, CREST…)
+  shape?: "ellipse";      // round well: circular button face / elliptical glass
 }
 
 export interface Template {

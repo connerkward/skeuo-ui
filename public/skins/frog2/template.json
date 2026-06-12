@@ -7,139 +7,15 @@
   },
   "regions": [
     {
-      "id": "visualizer",
-      "kind": "display",
-      "content": "dynamic",
-      "layer": "screen",
-      "rect": {
-        "x": 0.26171875,
-        "y": 0.16796875,
-        "w": 0.4765625,
-        "h": 0.14453125
-      },
-      "dynamicType": "visualizer"
-    },
-    {
-      "id": "marquee",
-      "kind": "display",
-      "content": "dynamic",
-      "layer": "screen",
-      "rect": {
-        "x": 0.1396484375,
-        "y": 0.322265625,
-        "w": 0.71875,
-        "h": 0.026041666666666668
-      },
-      "dynamicType": "marquee"
-    },
-    {
-      "id": "prev",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.0810546875,
-        "y": 0.37109375,
-        "w": 0.10206269054878049,
-        "h": 0.053385416666666664
-      },
-      "bind": "prev",
-      "label": "prev"
-    },
-    {
-      "id": "play",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.19536490091463415,
-        "y": 0.37109375,
-        "w": 0.10206269054878049,
-        "h": 0.053385416666666664
-      },
-      "bind": "play",
-      "label": "play"
-    },
-    {
-      "id": "pause",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.3096751143292683,
-        "y": 0.37109375,
-        "w": 0.10206269054878049,
-        "h": 0.053385416666666664
-      },
-      "bind": "pause",
-      "label": "pause"
-    },
-    {
-      "id": "stop",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.4239853277439025,
-        "y": 0.37109375,
-        "w": 0.10206269054878049,
-        "h": 0.053385416666666664
-      },
-      "bind": "stop",
-      "label": "stop"
-    },
-    {
-      "id": "next",
-      "kind": "button",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.5382955411585366,
-        "y": 0.37109375,
-        "w": 0.10206269054878049,
-        "h": 0.053385416666666664
-      },
-      "bind": "next",
-      "label": "next"
-    },
-    {
-      "id": "sw0",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.688327696265244,
-        "y": 0.3671875,
-        "w": 0.09389767530487805,
-        "h": 0.061197916666666664
-      },
-      "bind": "shuffle",
-      "label": "SHUF"
-    },
-    {
-      "id": "sw1",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.7954935213414636,
-        "y": 0.3671875,
-        "w": 0.09389767530487805,
-        "h": 0.061197916666666664
-      },
-      "bind": "eqOn",
-      "label": "EQ"
-    },
-    {
       "id": "knob0",
       "kind": "knob",
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.0361328125,
-        "y": 0.4348958333333333,
-        "w": 0.146484375,
-        "h": 0.09765625
+        "x": 0.259765625,
+        "y": 0.22049479166666666,
+        "w": 0.07875,
+        "h": 0.0525
       },
       "bind": "volume",
       "label": "VOL"
@@ -150,109 +26,39 @@
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.81640625,
-        "y": 0.4348958333333333,
-        "w": 0.146484375,
-        "h": 0.09765625
+        "x": 0.661484375,
+        "y": 0.22049479166666666,
+        "w": 0.07875,
+        "h": 0.0525
       },
       "bind": "balance",
       "label": "BAL"
     },
     {
-      "id": "eq0",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
+      "id": "visualizer",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
       "rect": {
-        "x": 0.25000572916666663,
-        "y": 0.4348958333333333,
-        "w": 0.04036126302083333,
-        "h": 0.09765625
+        "x": 0.358046875,
+        "y": 0.16796875,
+        "w": 0.28390625,
+        "h": 0.15755208333333334
       },
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 0,
-      "label": ""
+      "dynamicType": "visualizer"
     },
     {
-      "id": "eq1",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
+      "id": "marquee",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
       "rect": {
-        "x": 0.3417358723958333,
-        "y": 0.4348958333333333,
-        "w": 0.04036126302083333,
-        "h": 0.09765625
+        "x": 0.1181640625,
+        "y": 0.33203125,
+        "w": 0.7626953125,
+        "h": 0.026041666666666668
       },
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 1,
-      "label": ""
-    },
-    {
-      "id": "eq2",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.4334660156249999,
-        "y": 0.4348958333333333,
-        "w": 0.04036126302083333,
-        "h": 0.09765625
-      },
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 2,
-      "label": ""
-    },
-    {
-      "id": "eq3",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.5251961588541666,
-        "y": 0.4348958333333333,
-        "w": 0.04036126302083333,
-        "h": 0.09765625
-      },
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 3,
-      "label": ""
-    },
-    {
-      "id": "eq4",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.6169263020833333,
-        "y": 0.4348958333333333,
-        "w": 0.04036126302083333,
-        "h": 0.09765625
-      },
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 4,
-      "label": ""
-    },
-    {
-      "id": "eq5",
-      "kind": "slider-v",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.7086564453124999,
-        "y": 0.4348958333333333,
-        "w": 0.04036126302083333,
-        "h": 0.09765625
-      },
-      "bind": "eqBand",
-      "group": "eq-bands",
-      "index": 5,
-      "label": ""
+      "dynamicType": "marquee"
     },
     {
       "id": "seek",
@@ -260,9 +66,9 @@
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.033203125,
-        "y": 0.544921875,
-        "w": 0.93359375,
+        "x": 0.0380859375,
+        "y": 0.5579427083333334,
+        "w": 0.923828125,
         "h": 0.022135416666666668
       },
       "bind": "seek",
@@ -275,11 +81,210 @@
       "layer": "screen",
       "rect": {
         "x": 0.197265625,
-        "y": 0.576171875,
+        "y": 0.5891927083333334,
         "w": 0.603515625,
-        "h": 0.22395833333333334
+        "h": 0.2109375
       },
       "dynamicType": "playlist"
+    },
+    {
+      "id": "prev",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.11923828125,
+        "y": 0.4102604166666666,
+        "w": 0.1101953125,
+        "h": 0.07346354166666667
+      },
+      "bind": "prev",
+      "label": "prev",
+      "shape": "ellipse"
+    },
+    {
+      "id": "play",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.281826171875,
+        "y": 0.37986783854166667,
+        "w": 0.1101953125,
+        "h": 0.07346354166666667
+      },
+      "bind": "play",
+      "label": "play",
+      "shape": "ellipse"
+    },
+    {
+      "id": "pause",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.44441406249999993,
+        "y": 0.36973697916666665,
+        "w": 0.1101953125,
+        "h": 0.07346354166666667
+      },
+      "bind": "pause",
+      "label": "pause",
+      "shape": "ellipse"
+    },
+    {
+      "id": "stop",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6070019531249999,
+        "y": 0.37986783854166667,
+        "w": 0.1101953125,
+        "h": 0.07346354166666667
+      },
+      "bind": "stop",
+      "label": "stop",
+      "shape": "ellipse"
+    },
+    {
+      "id": "next",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.76958984375,
+        "y": 0.4102604166666666,
+        "w": 0.1101953125,
+        "h": 0.07346354166666667
+      },
+      "bind": "next",
+      "label": "next",
+      "shape": "ellipse"
+    },
+    {
+      "id": "sw0",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.039640625,
+        "y": 0.48845052083333335,
+        "w": 0.06499023437500001,
+        "h": 0.06932291666666666
+      },
+      "bind": "shuffle",
+      "label": "SHUF"
+    },
+    {
+      "id": "sw1",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.895369140625,
+        "y": 0.48845052083333335,
+        "w": 0.06499023437500001,
+        "h": 0.06932291666666666
+      },
+      "bind": "eqOn",
+      "label": "EQ"
+    },
+    {
+      "id": "eq0",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.19541666666666668,
+        "y": 0.4837239583333333,
+        "w": 0.04927083333333333,
+        "h": 0.07877604166666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 0,
+      "label": ""
+    },
+    {
+      "id": "eq1",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.30739583333333337,
+        "y": 0.4837239583333333,
+        "w": 0.04927083333333333,
+        "h": 0.07877604166666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 1,
+      "label": ""
+    },
+    {
+      "id": "eq2",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.41937500000000005,
+        "y": 0.4837239583333333,
+        "w": 0.04927083333333333,
+        "h": 0.07877604166666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 2,
+      "label": ""
+    },
+    {
+      "id": "eq3",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.5313541666666667,
+        "y": 0.4837239583333333,
+        "w": 0.04927083333333333,
+        "h": 0.07877604166666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 3,
+      "label": ""
+    },
+    {
+      "id": "eq4",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6433333333333334,
+        "y": 0.4837239583333333,
+        "w": 0.04927083333333333,
+        "h": 0.07877604166666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 4,
+      "label": ""
+    },
+    {
+      "id": "eq5",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.7553125,
+        "y": 0.4837239583333333,
+        "w": 0.04927083333333333,
+        "h": 0.07877604166666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 5,
+      "label": ""
     }
   ]
 }
