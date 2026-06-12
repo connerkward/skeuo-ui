@@ -34,3 +34,7 @@ generation/control.png
 __pycache__/
 *.pyc
 public/skins/*/_screens_overlay.png
+
+# generation intermediates (regenerable)
+generation/_sil-*.png
+generation/_sculpt-*.png
