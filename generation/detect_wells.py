@@ -81,9 +81,18 @@ def build(dirpath):
     if len(scr) == 2 and scr[1]["y"] > scr[0]["y"]:
         scr = [scr[0], scr[1]]  # keep largest=playlist regardless of order
     for c, role in zip(scr, roles):
-        regions.append({"id": role, "kind": "display", "content": "dynamic", "layer": "screen",
-                        "dynamicType": role,
-                        "rect": {"x": c["x"]/W, "y": c["y"]/H, "w": c["w"]/W, "h": c["h"]/H}})
+        # elliptical glass (bbox fill ~0.785) → text must live in the INSCRIBED
+        # rect (axes/√2) or rows near the curve spill onto the bezel
+        rx, ry, rw, rh = c["x"]/W, c["y"]/H, c["w"]/W, c["h"]/H
+        reg = {"id": role, "kind": "display", "content": "dynamic", "layer": "screen",
+               "dynamicType": role}
+        if c["fill"] < 0.88:
+            reg["shape"] = "ellipse"
+            ins = 0.72  # ~1/√2 with margin
+            reg["rect"] = {"x": rx + rw*(1-ins)/2, "y": ry + rh*(1-ins)/2, "w": rw*ins, "h": rh*ins}
+        else:
+            reg["rect"] = {"x": rx, "y": ry, "w": rw, "h": rh}
+        regions.append(reg)
     R = lambda c: {"x": c["x"]/W, "y": c["y"]/H, "w": c["w"]/W, "h": c["h"]/H}
     # buttons → row clustering: biggest y-cluster is the transport row
     btns = [c for c in wells if c["kind"] == "button"]
