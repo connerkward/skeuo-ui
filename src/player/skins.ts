@@ -23,6 +23,8 @@ export interface SkinAssets {
   live?: boolean;
   // AI control sprites with states exist under /skins/<id>/sprites/
   sprites?: boolean;
+  // sprite/palette donor only — not shown in the skin list
+  hidden?: boolean;
 }
 
 export function skinLive(id: string): boolean {
@@ -42,17 +44,8 @@ export function skinSprites(id: string): boolean {
 }
 
 export const skinList: SkinAssets[] = [
-  { id: "winamp",   name: "Winamp Classic",  blurb: "Brushed gunmetal, chrome screws, green LCD", has: ["frame"], baked: false, sprites: true },
-  { id: "fallout",  name: "Fallout Pip-Boy", blurb: "Riveted RobCo handheld, green-phosphor CRT", has: ["frame"], baked: false, sprites: true },
-  { id: "fantasy",  name: "Baldur's Gate",   blurb: "Carved stone, gold filigree, gem runes", has: ["frame"], baked: false, sprites: true },
-  { id: "aqua",     name: "Mac OS X Aqua",   blurb: "Glossy white glass, pinstripes, candy lozenges", has: ["frame"], baked: false, sprites: true },
-  { id: "hifi",     name: "70s Hi-Fi",       blurb: "Walnut & brushed aluminium, VU meters, knobs", has: ["frame"], baked: false, sprites: true },
-  { id: "papercraft", name: "Papercraft",    blurb: "Folded cardboard & cut-paper, hand-made", has: ["frame"], baked: false, sprites: true },
-
-  // wild ✦ — gpt-image-2 Y2K bodies (cut-out silhouettes, empty wells) with the
-  // base style's sprite controls mounted into the wells + live screens
-  { id: "y2k-pod",    name: "Y2K Pod ✦",     blurb: "Chrome pod body, sprite controls mounted", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/y2k-pod/template.json" },
-  { id: "y2k-wasp",   name: "Rust Wasp ✦",   blurb: "RobCo insectoid body, sprite controls mounted", has: ["frame"], live: true, style: "fallout", templateUrl: "/skins/y2k-wasp/template.json" },
+  // sprite/palette donor for chrome-bodied skins (not listed)
+  { id: "winamp",  name: "Winamp Classic",  blurb: "", has: ["frame"], sprites: true, hidden: true },
 
   // absurd ✦ — memetic styles with their own sprites + palettes
   { id: "frog",    name: "Froggo ✦",        blurb: "Glossy rubber meme-frog, orange-dot hardware", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/frog/template.json" },
@@ -61,6 +54,15 @@ export const skinList: SkinAssets[] = [
   { id: "toilet",  name: "Porcelain ✦",     blurb: "Gleaming ceramic, chrome flush lever", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/toilet/template.json" },
   { id: "biomech", name: "Hive Mind ✦",     blurb: "Giger bone & sinew, bioluminescent veins", has: ["frame"], live: true, sprites: true, templateUrl: "/skins/biomech/template.json" },
   { id: "fiend",   name: "Chrome Fiend ✦",  blurb: "Free-designed chrome predator, blade fins", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/fiend/template.json" },
+
+  // iterations ✦ — new wild_sculpt bodies on the same themes (sprites/palette
+  // resolve through `style` to the theme's donor skin)
+  { id: "frog2",    name: "Froggo II ✦",      blurb: "New sculpt on the frog theme", has: ["frame"], live: true, style: "frog",    templateUrl: "/skins/frog2/template.json" },
+  { id: "burger2",  name: "Double Stack ✦",   blurb: "New sculpt on the burger theme", has: ["frame"], live: true, style: "burger",  templateUrl: "/skins/burger2/template.json" },
+  { id: "bondi2",   name: "Bondi Grape ✦",    blurb: "New sculpt on the translucent-plastic theme", has: ["frame"], live: true, style: "bondi",   templateUrl: "/skins/bondi2/template.json" },
+  { id: "toilet2",  name: "Porcelain Throne ✦", blurb: "New sculpt on the ceramic theme", has: ["frame"], live: true, style: "toilet",  templateUrl: "/skins/toilet2/template.json" },
+  { id: "biomech2", name: "Brood Queen ✦",    blurb: "New sculpt on the Giger theme", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/biomech2/template.json" },
+  { id: "fiend2",   name: "Chrome Demon ✦",   blurb: "New sculpt on the chrome-predator theme", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/fiend2/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {

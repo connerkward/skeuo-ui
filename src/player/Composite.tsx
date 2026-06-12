@@ -199,7 +199,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
       ? { borderImage: `url(${spriteUrl(skinId, "button")}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
       : {};
     const g = glyph(r);
-    if (g.length > 2) face.fontSize = "1.7cqw";   // text labels fit the face
+    if (typeof g === "string" && g.length > 2) face.fontSize = "1.7cqw";   // text labels fit the face
     return (
       <button className={`tbtn ${sp ? "sp-btn" : ""}`} style={face} onClick={btnHandler(r, ps)} title={r.label ?? r.id}>
         {g}
@@ -218,12 +218,29 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
   return null;
 }
 
+// Transport icons are drawn SVG, not font glyphs — Unicode transport chars
+// (⏮ ▶ ❚❚) carry font-dependent metrics that never align across a row and
+// read as text, not hardware. One 24×24 geometric family, inked by the
+// skin's --btn-ink, identical optical weight and centering by construction.
+const ICON: Record<string, React.ReactNode> = {
+  prev:  <><rect x="4" y="4" width="3.2" height="16" rx="1" /><path d="M20 4.6v14.8a.8.8 0 0 1-1.25.66L8.1 12.66a.8.8 0 0 1 0-1.32L18.75 3.94A.8.8 0 0 1 20 4.6Z" /></>,
+  play:  <path d="M6.5 4.3v15.4a.9.9 0 0 0 1.37.77l12.2-7.7a.9.9 0 0 0 0-1.54L7.87 3.53a.9.9 0 0 0-1.37.77Z" />,
+  pause: <><rect x="5.5" y="4" width="4.6" height="16" rx="1.2" /><rect x="13.9" y="4" width="4.6" height="16" rx="1.2" /></>,
+  stop:  <rect x="5" y="5" width="14" height="14" rx="1.6" />,
+  next:  <><rect x="16.8" y="4" width="3.2" height="16" rx="1" /><path d="M4 4.6v14.8a.8.8 0 0 0 1.25.66l10.65-7.4a.8.8 0 0 0 0-1.32L5.25 3.94A.8.8 0 0 0 4 4.6Z" /></>,
+  eject: <><path d="M12 4.5 4.8 13h14.4L12 4.5Z" /><rect x="5" y="16" width="14" height="3.4" rx="1.2" /></>,
+};
+ICON["pl-prev"] = ICON.prev; ICON["pl-play"] = ICON.play;
+ICON["pl-pause"] = ICON.pause; ICON["pl-next"] = ICON.next;
+
 const GLYPH: Record<string, string> = {
-  prev: "⏮", play: "▶", pause: "❚❚", stop: "■", next: "⏭", eject: "⏏",
-  "pl-prev": "⏮", "pl-play": "▶", "pl-pause": "❚❚", "pl-next": "⏭",
   "pl-add": "ADD", "pl-rem": "REM", "pl-sel": "SEL", "pl-misc": "MISC",
 };
-const glyph = (r: Region) => GLYPH[r.id] ?? r.label ?? "";
+const glyph = (r: Region): React.ReactNode => {
+  const ic = ICON[r.id];
+  if (ic) return <svg className="ticon" viewBox="0 0 24 24" aria-hidden="true">{ic}</svg>;
+  return GLYPH[r.id] ?? r.label ?? "";
+};
 
 function btnHandler(r: Region, ps: PlayerState): () => void {
   switch (r.bind ?? r.id) {

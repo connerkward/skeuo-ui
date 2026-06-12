@@ -1,0 +1,285 @@
+{
+  "id": "burger2",
+  "name": "wild-sculpt",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "visualizer",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.220703125,
+        "y": 0.14192708333333334,
+        "w": 0.5576171875,
+        "h": 0.15690104166666666
+      },
+      "dynamicType": "visualizer"
+    },
+    {
+      "id": "marquee",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.16015625,
+        "y": 0.3131510416666667,
+        "w": 0.6865234375,
+        "h": 0.026041666666666668
+      },
+      "dynamicType": "marquee"
+    },
+    {
+      "id": "prev",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.169921875,
+        "y": 0.373046875,
+        "w": 0.08074504573170732,
+        "h": 0.053385416666666664
+      },
+      "bind": "prev",
+      "label": "prev"
+    },
+    {
+      "id": "play",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.2603563262195122,
+        "y": 0.373046875,
+        "w": 0.08074504573170732,
+        "h": 0.053385416666666664
+      },
+      "bind": "play",
+      "label": "play"
+    },
+    {
+      "id": "pause",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.3507907774390244,
+        "y": 0.373046875,
+        "w": 0.08074504573170732,
+        "h": 0.053385416666666664
+      },
+      "bind": "pause",
+      "label": "pause"
+    },
+    {
+      "id": "stop",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.44122522865853664,
+        "y": 0.373046875,
+        "w": 0.08074504573170732,
+        "h": 0.053385416666666664
+      },
+      "bind": "stop",
+      "label": "stop"
+    },
+    {
+      "id": "next",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.5316596798780489,
+        "y": 0.373046875,
+        "w": 0.08074504573170732,
+        "h": 0.053385416666666664
+      },
+      "bind": "next",
+      "label": "next"
+    },
+    {
+      "id": "sw0",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6503548971036586,
+        "y": 0.369140625,
+        "w": 0.07428544207317074,
+        "h": 0.061197916666666664
+      },
+      "bind": "shuffle",
+      "label": "SHUF"
+    },
+    {
+      "id": "sw1",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.7351371951219513,
+        "y": 0.369140625,
+        "w": 0.07428544207317074,
+        "h": 0.061197916666666664
+      },
+      "bind": "eqOn",
+      "label": "EQ"
+    },
+    {
+      "id": "knob0",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.154296875,
+        "y": 0.46315104166666665,
+        "w": 0.1125,
+        "h": 0.075
+      },
+      "bind": "volume",
+      "label": "VOL"
+    },
+    {
+      "id": "knob1",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.744921875,
+        "y": 0.46315104166666665,
+        "w": 0.1125,
+        "h": 0.075
+      },
+      "bind": "balance",
+      "label": "BAL"
+    },
+    {
+      "id": "eq0",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.317796875,
+        "y": 0.4518229166666667,
+        "w": 0.030421874999999998,
+        "h": 0.09765625
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 0,
+      "label": ""
+    },
+    {
+      "id": "eq1",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.3869375,
+        "y": 0.4518229166666667,
+        "w": 0.030421874999999998,
+        "h": 0.09765625
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 1,
+      "label": ""
+    },
+    {
+      "id": "eq2",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.45607812499999995,
+        "y": 0.4518229166666667,
+        "w": 0.030421874999999998,
+        "h": 0.09765625
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 2,
+      "label": ""
+    },
+    {
+      "id": "eq3",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.52521875,
+        "y": 0.4518229166666667,
+        "w": 0.030421874999999998,
+        "h": 0.09765625
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 3,
+      "label": ""
+    },
+    {
+      "id": "eq4",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.5943593749999999,
+        "y": 0.4518229166666667,
+        "w": 0.030421874999999998,
+        "h": 0.09765625
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 4,
+      "label": ""
+    },
+    {
+      "id": "eq5",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6634999999999999,
+        "y": 0.4518229166666667,
+        "w": 0.030421874999999998,
+        "h": 0.09765625
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 5,
+      "label": ""
+    },
+    {
+      "id": "seek",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.1044921875,
+        "y": 0.5748697916666666,
+        "w": 0.7939453125,
+        "h": 0.022135416666666668
+      },
+      "bind": "seek",
+      "label": "Seek"
+    },
+    {
+      "id": "playlist",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.1787109375,
+        "y": 0.609375,
+        "w": 0.658203125,
+        "h": 0.2513020833333333
+      },
+      "dynamicType": "playlist"
+    }
+  ]
+}

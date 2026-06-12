@@ -182,6 +182,15 @@
   transition: filter .07s, transform .06s, box-shadow .07s;
 }
 .tbtn { font-size: 2.7cqw; }
+/* drawn transport icons: identical metrics across the row; engraved relief.
+   Sprite faces have their own brightness, so they take --sp-btn-ink (the
+   CSS-fallback --btn-ink is tuned for the CSS button background). */
+.ticon {
+  width: 56%; height: 56%; max-width: 28px; max-height: 28px;
+  fill: var(--btn-ink);
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .45)) drop-shadow(0 -1px 0 rgba(255, 255, 255, .12));
+}
+.sp-btn .ticon { fill: var(--sp-btn-ink, var(--btn-ink)); }
 .toggle, .btn { font-size: 1.95cqw; }
 .tbtn:hover, .toggle:hover, .btn:hover { filter: brightness(1.1); }
 .tbtn:active, .toggle:active, .btn:active {

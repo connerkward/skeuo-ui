@@ -40,14 +40,23 @@ MATERIAL = {
                 "glowing from the recesses."),
     "winamp":  ("polished chrome and brushed gunmetal over dark charcoal plastic, thin green LED accent "
                 "lines tracing the curves, tiny screws."),
+    "frog":    ("glossy moulded rubber toy-frog skin in vivid green with subtle mottling, bulging "
+                "highlights, bright orange plastic hardware accents."),
+    "burger":  ("photoreal fast-food materials: toasted sesame-seed bun, drippy melted cheddar, ruffled "
+                "lettuce, glossy ketchup beads, kraft-paper accents."),
+    "bondi":   ("translucent grape-purple Y2K plastic with visible internals and circuit shadows "
+                "glowing through, frosted white trim, soft backlight."),
+    "toilet":  ("gleaming white glazed porcelain with soft studio reflections, polished chrome "
+                "hardware, faint blue ceramic shadowing."),
 }
 
 STYLE_PROMPT = (
     "Restyle this blueprint into a photoreal, wildly-shaped skeuomorphic MP3-player device. CRITICAL: "
     "keep the EXACT silhouette, and keep EVERY dark recessed well and screen EXACTLY where it is, same "
-    "size and shape — empty sockets (controls mount separately) and empty switched-off dark glass "
-    "screens kept as CLEAN FLAT RECTANGLES (no text, no graphics, never overgrown). Make the body rich "
-    "and detailed BETWEEN the wells. Everything outside the silhouette stays pure white. Front-on "
+    "size and shape — every recessed well stays a DEEP DARK EMPTY socket: a near-black matte cavity "
+    "with a crisp raised rim, NOTHING mounted inside, NOT glowing, NOT filled with material; and empty "
+    "switched-off dark glass screens kept as CLEAN FLAT RECTANGLES (no text, no graphics, never "
+    "overgrown). Make the body rich and detailed BETWEEN the wells. Everything outside the silhouette stays pure white. Front-on "
     "orthographic, even light, high detail. MATERIAL: "
 )
 

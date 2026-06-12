@@ -5,7 +5,7 @@
   --lcd-glow: 0 0 7px rgba(157,255,77,.75), 0 0 14px rgba(157,255,77,.3); --lcd-radius: 7px;
   --lcd-inset: inset 0 3px 10px rgba(0,0,0,.9); --lcd-border: 2px solid #4a4632;
   --vis-lo: #3f7a14; --vis-hi: #d6ff5e; --vis-peak: #f4ffd6;
-  --btn-ink: #d6e0b9; --btn-radius: 9px;
+  --btn-ink: #d6e0b9; --sp-btn-ink: #2a2418; --btn-radius: 9px;
   --btn-bg: radial-gradient(80% 80% at 50% 25%, #8a8468, #3f3b2a 80%); --btn-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -2px 4px rgba(0,0,0,.7), 0 2px 3px rgba(0,0,0,.6);
   --toggle-on-spark: #9dff4d; --knob-ind: #9dff4d; --knob-ind-glow: rgba(157,255,77,.85);
   --rail-bg: #241f14; --fill-bg: linear-gradient(90deg,#3f7a14,#9dff4d); --thumb-bg: radial-gradient(70% 70% at 50% 30%, #b9ae8a, #5a5440);

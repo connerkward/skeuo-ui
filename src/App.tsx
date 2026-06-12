@@ -5,11 +5,6 @@ import { skinList } from "./player/skins";
 import "./skins/app.css";
 import "./skins/player.css";
 import "./skins/winamp.css";
-import "./skins/fallout.css";
-import "./skins/fantasy.css";
-import "./skins/aqua.css";
-import "./skins/hifi.css";
-import "./skins/papercraft.css";
 import "./skins/frog.css";
 import "./skins/burger.css";
 import "./skins/bondi.css";
@@ -20,14 +15,15 @@ import "./skins/biomech.css";
 (window as unknown as { __template: unknown }).__template = playerTemplate;
 
 export default function App() {
-  const [skinId, setSkinId] = useState(skinList[0].id);
+  const visible = skinList.filter((s) => !s.hidden);
+  const [skinId, setSkinId] = useState(visible[0].id);
   const [wire, setWire] = useState(false);
 
   return (
     <div className="page">
       <aside className="sidebar">
         <h1>Skin</h1>
-        {skinList.map((s) => (
+        {visible.map((s) => (
           <button
             key={s.id}
             className={`style-btn ${s.id === skinId ? "active" : ""}`}
