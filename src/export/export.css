@@ -1,0 +1,143 @@
+/* ============================================================
+   skeuo-ui export pages — WIP contact-sheet aesthetic.
+   Plain dark backdrop, hairline rules, small MONO technical text.
+   Reads like a dev sharing progress, not a marketing post.
+
+   Everything tunable lives in CSS vars on .root, set from URL
+   params in main.tsx:  --ts text-scale · --mg outer-margin
+   --gap grid-gap · --pad cell-pad · --cols columns · --dev device-fit
+   ============================================================ */
+
+:root {
+  --ig-w: 1080px; --ig-h: 1920px;
+  --ts: 1;          /* text scale          */
+  --mg: 48px;       /* outer margin        */
+  --gap: 18px;      /* grid gap            */
+  --pad: 16px;      /* cell inner pad      */
+  --dev: 1;         /* device fit fraction */
+  --ink: #c9ccd2;
+  --dim: #6b7079;
+  --faint: #44474d;
+  --line: rgba(255,255,255,.09);
+  --card: rgba(255,255,255,.022);
+  --mono: "Share Tech Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+html, body, #root { margin: 0; padding: 0; background: #000; overflow: hidden; }
+
+.root {
+  position: relative;
+  width: var(--ig-w); height: var(--ig-h); overflow: hidden;
+  background: #0a0b0d;
+  color: var(--ink);
+  font-family: var(--mono);
+  /* faint dotted technical grid so the void isn't dead flat */
+  background-image: radial-gradient(rgba(255,255,255,.035) 1px, transparent 1.4px);
+  background-size: 46px 46px;
+  display: flex; flex-direction: column;
+  padding: var(--mg);
+}
+
+/* ---------- shared header / footer (technical caption strip) ---------- */
+.hdr {
+  display: flex; align-items: baseline; gap: calc(14px * var(--ts));
+  padding-bottom: calc(12px * var(--ts));
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.hdr .mark {
+  font-weight: 400; letter-spacing: 2px; color: #eef0f4;
+  font-size: calc(22px * var(--ts));
+}
+.hdr .mark b { color: var(--dim); font-weight: 400; }
+.hdr .meta { color: var(--dim); font-size: calc(14px * var(--ts)); letter-spacing: 1px; }
+.hdr .spacer { flex: 1; }
+.hdr .tag { color: var(--faint); font-size: calc(13px * var(--ts)); letter-spacing: 2px; text-transform: uppercase; }
+
+.ftr {
+  flex: 0 0 auto; padding-top: calc(12px * var(--ts));
+  border-top: 1px solid var(--line);
+  display: flex; gap: 16px; color: var(--faint);
+  font-size: calc(13px * var(--ts)); letter-spacing: 1px;
+}
+.ftr .spacer { flex: 1; }
+
+/* ============================================================
+   HERO — one skin, animated controls. Simple, centered.
+   ============================================================ */
+.hero-stage { /* body = .root */ }
+.hero-dev {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(24px * var(--ts)) 0;
+}
+.hero-dev .player { filter: drop-shadow(0 30px 56px rgba(0,0,0,.6)); }
+.hero-cap {
+  flex: 0 0 auto; display: flex; flex-direction: column; gap: calc(6px * var(--ts));
+}
+.hero-cap .name { color: #eef0f4; font-size: calc(26px * var(--ts)); letter-spacing: 1px; }
+.hero-cap .blurb { color: var(--dim); font-size: calc(16px * var(--ts)); }
+.hero-cap .spec { color: var(--faint); font-size: calc(14px * var(--ts)); letter-spacing: 1px; }
+
+/* ============================================================
+   GRID — tight contact sheet of the best skins.
+   ============================================================ */
+.grid-body {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), 1fr);
+  gap: var(--gap);
+  padding: var(--gap) 0;
+  align-content: stretch;
+}
+.tile {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: var(--pad);
+  display: flex; flex-direction: column; min-height: 0;
+  overflow: hidden;
+}
+.tile .well {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.tile .well .player { filter: drop-shadow(0 14px 26px rgba(0,0,0,.55)); }
+.tile .cap {
+  flex: 0 0 auto; display: flex; align-items: baseline; gap: 8px;
+  padding-top: calc(8px * var(--ts));
+}
+.tile .cap .n { color: #e6e8ec; font-size: calc(15px * var(--ts)); letter-spacing: .5px; }
+.tile .cap .id { color: var(--faint); font-size: calc(12px * var(--ts)); }
+.tile .cap .sp { margin-left: auto; color: var(--faint); font-size: calc(11px * var(--ts)); letter-spacing: 1px; text-transform: uppercase; }
+
+/* ============================================================
+   SPRITES — hardware contact sheet (switches/knobs/buttons).
+   ============================================================ */
+.sprite-body {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  gap: var(--gap); padding: var(--gap) 0; justify-content: space-between;
+}
+.sk-row {
+  display: grid; grid-template-columns: calc(150px * var(--ts)) 1fr;
+  align-items: center; gap: calc(16px * var(--ts));
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: var(--pad) calc(var(--pad) + 4px);
+}
+.sk-row .sk-name { display: flex; flex-direction: column; gap: 3px; }
+.sk-row .sk-name b { color: #e6e8ec; font-size: calc(17px * var(--ts)); font-weight: 400; letter-spacing: .5px; }
+.sk-row .sk-name span { color: var(--faint); font-size: calc(12px * var(--ts)); }
+.sk-parts { display: flex; align-items: center; gap: calc(14px * var(--ts)); }
+.part { display: flex; flex-direction: column; align-items: center; gap: calc(6px * var(--ts)); }
+.part .cell {
+  width: calc(84px * var(--ts)); height: calc(84px * var(--ts));
+  border-radius: 8px; background: #0d0f12;
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 6px rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.part.wide .cell { width: calc(128px * var(--ts)); }
+.part .cell img { width: 100%; height: 100%; object-fit: contain; }
+.part .cell.switch img { padding: 9%; }
+.part label { color: var(--dim); font-size: calc(11px * var(--ts)); letter-spacing: 1px; text-transform: uppercase; }
