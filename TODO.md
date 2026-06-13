@@ -17,13 +17,21 @@
 ## Blocked on the user
 - [ ] **Enable live generation in prod**: `wrangler pages secret put FAL_KEY` (CF) — currently deployed WITHOUT the key, so `/api/generate` returns "server missing FAL_KEY". Decide the cost model first: eat fal cost (~$0.30/gen, $6/20-gen global cap is built in) vs require a user-supplied key vs paywall.
 - [ ] **Spotify app registration**: create at developer.spotify.com → set `VITE_SPOTIFY_CLIENT_ID`; redirect URIs must be exactly `http://127.0.0.1:5173/` (Spotify rejects `localhost`) and `https://skeuo-ui.pages.dev/`. Then full OAuth + active-device control + "play here" (Premium) need a live test.
-- [ ] **Name decision** (A Knobgoblin / B Beastbox / C Organa / D Frankenamp).
+- [ ] **Name + domain decision** — see Naming section below. Leaning `.fm` TLD (reads as a radio station, carries "player"). Top live candidates, all confirmed FREE on `.fm` (~$85/yr): **guise.fm** (skins = a guise you put on), **ruckus.fm** / **coup.fm** (rebellion/noise), **fib.fm** (the liar→shapeshifter angle). Highest *squat/resale* value = the 3-letter words **imp.fm / vex.fm / fib.fm**, or **racket.fm** for music-buyer resale. Cheap holds: `fib.fun` (~$15), `guise.lol` (~$8). No domain bought yet — still on free `skeuo-ui.pages.dev`.
 
 ## Generation feature — production hardening (from the build agent)
 - [ ] Loose alpha mask: `/api/generate` uses the constant region mask, so the silhouette doesn't trace horns/jaws like the Python pipeline (which thresholds the envelope PNG). Add a server-side envelope-threshold pass to tighten it.
 - [ ] Frames returned as ~7.6 MB data: URLs — bind an R2 bucket (uncomment `SKINS` in wrangler.toml) and store + re-compress instead.
 - [ ] Rate limit is in-memory (per-edge, not durable) — move to KV or Durable Objects for a real cap.
 - [ ] Synchronous request (~75s) — a "pending" poll branch exists in the contract but no queue is wired; add one before real traffic.
+
+## Naming (2026-06-13 exploration)
+Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader-Zim / lil' 😈 energy — NOT gross-out like Rat Fink). Naming mechanism that clicked: a word implying **deception/lying** doubles as the **shapeshifter/skins** concept, and **`.fm`** quietly carries "music player" — so the wordmark only needs to be cool + ownable, the mascot carries the devil, the product carries the skins.
+- **By concept fit (skinnable player):** `guise.fm` ⭐ (a *guise* = a skin/assumed form), `vizard.fm`, `visage.fm`, `veneer.fm`, `hide.fm` (skin/pelt + conceal).
+- **By rebellion energy:** `ruckus.fm`, `coup.fm`, `rumpus.fm`, `thrash.fm`, `mayhem.fm`, `sabotage.fm`, `uprising.fm`, `renegade.fm`, `putsch.fm`, `bedlam.fm` — all free `.fm`.
+- **By squat/resale value:** 3-letter dictionary words win — `imp.fm` ⭐ (also on-theme: little devil), `vex.fm`, `fib.fm`; `racket.fm` for music-buyer resale.
+- **Dead/taken:** Knobgoblin (NSFW collision), Beastbox (52TOYS), Boom-compounds (corny), morphonic/echomimic (coined → no resale), molt/morph/mimic/riot/rebel/anarchy/maverick/mosh/blitz (.fm taken).
+- **Cost note:** `.fm` is ~$85/yr (premium ccTLD, normal price). Cheap holds: `fib.fun` ~$15, `guise.lol` ~$8. Recommendation: don't buy speculatively; rename repo/Pages to the pick (free), buy `.fm` at launch.
 
 ## Earlier follow-ups (still open)
 - [ ] Isolate the reference-steering effect (no-ref control or off-prompt reference) — winamp material prompt already implies chrome, so War Slab doesn't independently prove the ref moved the output.
