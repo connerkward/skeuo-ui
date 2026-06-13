@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ExportStage } from "./ExportStage";
 import { GridSheet } from "./GridSheet";
 import { SpriteSheet } from "./SpriteSheet";
+import { FanSheet, CenterSheet, ScatterSheet } from "./Layouts";
 import { readCfg, cssVars } from "./cfg";
 // the export pages reuse the live player + every skin's CSS
 import "../skins/app.css";
@@ -25,6 +26,9 @@ const cfg = readCfg();
 const body =
   mode === "sprites" ? <SpriteSheet cfg={cfg} /> :
   mode === "grid" ? <GridSheet cfg={cfg} /> :
+  mode === "fan" ? <FanSheet cfg={cfg} /> :
+  mode === "center" ? <CenterSheet cfg={cfg} center={q.get("center") ?? undefined} /> :
+  mode === "scatter" ? <ScatterSheet cfg={cfg} /> :
   <ExportStage skin={skin} cfg={cfg} />;
 
 createRoot(document.getElementById("root")!).render(

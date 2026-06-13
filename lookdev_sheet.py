@@ -6,7 +6,7 @@ captioned with its filename / dims / available formats."""
 import os, glob
 from PIL import Image, ImageDraw, ImageFont
 
-OUT = os.path.expanduser("~/Desktop/2026-06-13-skeuo-ig")
+OUT = os.path.expanduser("~/Desktop/skeuo-skins")
 W, H = 2360, 1560
 BG = (10, 11, 13)
 INK = (210, 213, 219)

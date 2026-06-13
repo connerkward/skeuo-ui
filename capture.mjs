@@ -18,7 +18,7 @@ const CHROME = "/Users/conner/Library/Caches/ms-playwright/chromium-1223/chrome-
 const BASE = "http://localhost:5210/export.html";
 const W = 1080, H = 1920;
 
-const [, , CMD, OUT = "/tmp/skeuo-ig", ARG3 = "", PARAMS = "", SECS = "8"] = process.argv;
+const [, , CMD, OUT = "/tmp/skeuo-ig", ARG3 = "", PARAMS = "", SECS = "8", OUTNAME = ""] = process.argv;
 mkdirSync(OUT, { recursive: true });
 const tmp = join(OUT, "_tmp"); mkdirSync(tmp, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -82,12 +82,13 @@ if (CMD === "hero") {
     const webm = await record(url, Number(SECS) + PREROLL);
     transcode(webm, join(OUT, `hero-${skin}-1080x1920`), Number(SECS));
   }
-} else if (CMD === "grid") {
+} else if (["grid", "sprites", "fan", "center", "scatter"].includes(CMD)) {
+  // any non-hero mode → one hi-res still (live spectra animate in the still).
+  // OUTNAME lets variations of the same mode coexist (e.g. center-pebble).
   const extra = ARG3 && ARG3 !== "-" ? `skins=${ARG3}` : "";
-  await still(`${BASE}?${qp(["mode=grid", extra].filter(Boolean).join("&"))}`, join(OUT, `grid-1080x1920@2x.png`), 3000);
-} else if (CMD === "sprites") {
-  const extra = ARG3 && ARG3 !== "-" ? `skins=${ARG3}` : "";
-  await still(`${BASE}?${qp(["mode=sprites", extra].filter(Boolean).join("&"))}`, join(OUT, `sprites-1080x1920@2x.png`), 1500);
+  const name = OUTNAME || CMD;
+  await still(`${BASE}?${qp([`mode=${CMD}`, extra].filter(Boolean).join("&"))}`,
+    join(OUT, `${name}-1080x1920@2x.png`), CMD === "sprites" ? 1500 : 3200);
 }
 
 await browser.close();
