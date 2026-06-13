@@ -49,3 +49,97 @@ body {
 .stage .player {
   --w: min(470px, calc((100dvh - 64px) * 0.686));
 }
+
+/* ====================================================================== */
+/* MOBILE SHELL (<=820px): compact top bar + swipeable skin carriage.      */
+/* The player is aspect-ratio 1024/1536 (≈0.667). It MUST fit the phone    */
+/* viewport height without scroll, so --w is capped by BOTH the available  */
+/* width and the remaining height × the aspect ratio. svh = small viewport */
+/* height (mobile browser chrome shown) so it never gets cut by the URL bar.*/
+/* ====================================================================== */
+.m-shell {
+  position: fixed; inset: 0;
+  display: grid; grid-template-rows: auto 1fr auto;
+  background: radial-gradient(circle at 28% 18%, #1c1c1f, #060607 72%);
+  /* heights of the top bar + dots strip, used to compute the player fit */
+  --m-topbar-h: 52px;
+  --m-dots-h: 44px;
+  touch-action: pan-y; /* let the page own vertical; we own horizontal */
+}
+
+.m-topbar {
+  height: var(--m-topbar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #1c1c1c;
+  background: rgba(0,0,0,.55);
+}
+.m-title {
+  margin: 0; font-size: 13px; letter-spacing: 3px; color: #9a9aa0;
+  text-transform: uppercase; font-weight: 700;
+}
+.m-menu {
+  background: #1a1a1d; color: #cfcfd4; border: 1px solid #34343a;
+  border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12px;
+  font-weight: 650; cursor: pointer; letter-spacing: .3px;
+  transition: background .15s, border-color .15s;
+}
+.m-menu:active { background: #26262b; border-color: #56565e; }
+
+/* the carriage clips the off-screen pages; it is the swipe surface */
+.m-stage { position: relative; overflow: hidden; min-height: 0; }
+.m-track { display: flex; height: 100%; will-change: transform; }
+.m-page {
+  flex: 0 0 100%; min-width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 0;
+}
+.m-placeholder { width: 1px; height: 1px; }
+
+/* size the player to fit: width-bound (94vw) OR height-bound (the carriage's
+   own height × aspect 0.667), whichever is smaller — guarantees no crop. */
+.m-page .player {
+  --w: min(94vw, calc((100svh - var(--m-topbar-h) - var(--m-dots-h) - 16px) * 0.667));
+  transform: none !important; /* mobile: no desktop drag-offset translate */
+}
+
+/* "Generate your own" page */
+.m-create { padding: 24px; }
+.m-create-card {
+  width: min(86vw, 360px); aspect-ratio: 1024 / 1536; max-height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; cursor: pointer; font: inherit; color: #d7d7dd;
+  background: linear-gradient(160deg, #16161a, #0c0c0e);
+  border: 2px dashed #3a3a42; border-radius: 22px;
+  transition: border-color .15s, transform .12s, background .15s;
+}
+.m-create-card:active { transform: scale(.985); border-color: #6a6a76; background: linear-gradient(160deg, #1b1b20, #101013); }
+.m-create-plus {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 38px; font-weight: 300;
+  color: #0c0c0e; background: linear-gradient(160deg, #cfcfd6, #8a8a94);
+  box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.m-create-label { font-size: 17px; font-weight: 700; letter-spacing: .4px; }
+.m-create-sub { font-size: 12px; color: #8a8a92; }
+
+/* dots / position indicator */
+.m-dots {
+  height: var(--m-dots-h);
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px; padding: 0 16px; flex-wrap: wrap; overflow: hidden;
+  border-top: 1px solid #1c1c1c; background: rgba(0,0,0,.45);
+}
+.m-dot {
+  width: 7px; height: 7px; padding: 0; border-radius: 50%;
+  background: #3a3a42; border: 0; cursor: pointer;
+  transition: background .2s, transform .2s, width .2s;
+}
+.m-dot.on { background: #cfcfd6; transform: scale(1.05); }
+.m-dot-create { border-radius: 2px; background: #4a4a52; }
+.m-dot-create.on { background: #cfcfd6; }
+
+/* keep the desktop layout untouched above the breakpoint */
+@media (max-width: 820px) {
+  .page { display: none; }
+}

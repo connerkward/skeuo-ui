@@ -4,6 +4,8 @@ AI-generated skeuomorphic music-player skins with **genuinely working hardware**
 
 ![Four skins playing — Pebble (minimal), Media Capsule (WMP9), Angler Maw (radial), Bone Totem (tall)](docs/skins.gif)
 
+**Live demo:** https://skeuo-ui.pages.dev — mobile: swipe left/right to switch skins. Desktop: a sidebar of skins plus **Create skin** (generate a new body from a prompt), **Edit template** (drag/resize the control layout), and **Connect Spotify** (drive real playback through any skin).
+
 ## The layered architecture
 
 Three independent layers, composited live by React:

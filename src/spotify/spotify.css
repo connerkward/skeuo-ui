@@ -1,0 +1,49 @@
+/* Spotify connect-&-control panel (sidebar). Matches the dark sidebar chrome. */
+.sp-panel {
+  margin-top: 14px; padding: 12px;
+  border: 1px solid #242427; border-radius: 8px;
+  background: linear-gradient(#101012, #0b0b0d);
+  display: flex; flex-direction: column; gap: 9px;
+}
+.sp-head { display: flex; align-items: center; gap: 8px; }
+.sp-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9aa0a6; font-weight: 650; }
+.sp-dot { width: 9px; height: 9px; border-radius: 50%; background: #555; box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+.sp-dot[data-status="connected"] { background: #1db954; box-shadow: 0 0 7px #1db95488; }
+.sp-dot[data-status="connecting"] { background: #d6b14a; animation: sp-pulse 1s ease-in-out infinite; }
+.sp-dot[data-status="error"] { background: #e0533d; }
+.sp-dot[data-status="disconnected"] { background: #4a4a50; }
+@keyframes sp-pulse { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
+
+.sp-mode { display: flex; gap: 4px; background: #060607; padding: 3px; border-radius: 7px; border: 1px solid #1c1c20; }
+.sp-mode-btn {
+  flex: 1; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+  padding: 6px 8px; border-radius: 5px; border: 0; color: #9a9aa0; background: transparent;
+  transition: background .15s, color .15s;
+}
+.sp-mode-btn[data-active="true"] { background: #232327; color: #fff; }
+.sp-mode-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.sp-connect, .sp-disconnect {
+  font: inherit; font-size: 12px; font-weight: 650; cursor: pointer;
+  padding: 9px 12px; border-radius: 20px; border: 0; color: #04130a;
+  background: #1db954; transition: filter .15s, transform .08s;
+}
+.sp-connect:hover { filter: brightness(1.08); }
+.sp-connect:active { transform: translateY(1px); }
+.sp-connect:disabled { background: #2a3a30; color: #6c7a72; cursor: not-allowed; }
+.sp-disconnect { background: #2a2a2e; color: #cfcfd4; border-radius: 6px; padding: 7px 10px; font-weight: 550; }
+.sp-disconnect:hover { background: #34343a; }
+
+.sp-status { font-size: 11px; color: #8a8a90; line-height: 1.4; }
+.sp-toggle, .sp-field { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #b6b6bc; cursor: pointer; }
+.sp-toggle input { accent-color: #1db954; }
+.sp-field { flex-direction: column; align-items: stretch; gap: 4px; }
+.sp-field > span { color: #8a8a90; }
+.sp-field select {
+  font: inherit; font-size: 11px; color: #ddd; background: #161618;
+  border: 1px solid #2a2a2e; border-radius: 5px; padding: 5px 6px;
+}
+.sp-note { font-size: 10.5px; line-height: 1.45; margin: 2px 0 0; }
+.sp-note code { background: #1a1a1d; padding: 1px 4px; border-radius: 3px; color: #c9c9cf; font-size: 10px; }
+.sp-warn { color: #c9a24a; }
+.sp-err { color: #e0846f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

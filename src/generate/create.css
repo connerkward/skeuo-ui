@@ -31,3 +31,12 @@
 .cp-stage { font-size: 12px; color: #6aa7ff; }
 .cp-error { font-size: 12px; color: #f4a0a0; background: #2a1414; border: 1px solid #5a2a2a; padding: 8px; border-radius: 6px; }
 .cp-note { font-size: 11px; color: #6a6a70; line-height: 1.5; margin: 4px 0 0; }
+
+/* mobile: the create drawer goes full-width with a close affordance */
+.m-create-drawer { width: 100%; left: 0; }
+.create-close {
+  position: absolute; top: 8px; left: 10px; z-index: 1;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: #1a1a1e; color: #ccc; border: 1px solid #333;
+  font-size: 20px; line-height: 1; cursor: pointer;
+}

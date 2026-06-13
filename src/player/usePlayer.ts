@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { skinContent, type Track } from "./data";
 import { useAudio } from "./useAudio";
+import type { SpotifyDrive } from "../spotify/useSpotify";
 
 // EQ preset shapes (PRE + 10 bands), selected by the segmented control.
 export const EQ_PRESETS: Record<string, number[]> = {
@@ -12,7 +13,15 @@ export const EQ_PRESETS: Record<string, number[]> = {
 export const PRESET_NAMES = Object.keys(EQ_PRESETS);
 
 // All live player state. Every control maps to a real action here.
-export function usePlayer(skinId: string) {
+//
+// `drive` (optional) is the Spotify override: when present, the skin controls
+// REAL Spotify playback and the screens reflect the polled current track /
+// progress / volume / playlist. When absent, the local WebAudio demo runs
+// exactly as before. The integration is a thin layer at the end of this hook —
+// the WebAudio graph is muted in Spotify mode (real audio comes from Spotify),
+// and the displayed values + transport actions are swapped for the drive's.
+export function usePlayer(skinId: string, drive?: SpotifyDrive | null) {
+  const spotify = !!drive;
   const content = skinContent[skinId] ?? skinContent.winamp;
   const [tracks, setTracks] = useState<Track[]>(content.tracks);
   const [trackIdx, setTrackIdx] = useState(1);
@@ -32,7 +41,9 @@ export function usePlayer(skinId: string) {
   // reset the (mutable) playlist when the skin's content changes
   useEffect(() => { setTracks(content.tracks); setTrackIdx((i) => Math.min(i, content.tracks.length - 1)); }, [content]);
 
-  const analyser = useAudio({ playing, volume, balance, eqBands, eqOn, muted, trackIdx, tone });
+  // In Spotify mode the demo oscillators stay silent (audio plays via Spotify);
+  // the visualizer still animates off the analyser node, just with no signal.
+  const analyser = useAudio({ playing: playing && !spotify, volume, balance, eqBands, eqOn, muted: muted || spotify, trackIdx, tone });
 
   const safeIdx = Math.min(trackIdx, tracks.length - 1);
   const track = tracks[safeIdx] ?? tracks[0];
@@ -41,7 +52,7 @@ export function usePlayer(skinId: string) {
   const trackRef = useRef(track); trackRef.current = track;
 
   useEffect(() => {
-    if (!playing) return;
+    if (spotify || !playing) return;     // Spotify mode: elapsed comes from polling
     const t = setInterval(() => {
       setElapsed((e) => {
         if (e + 1 >= (trackRef.current?.seconds ?? 1)) {
@@ -52,7 +63,7 @@ export function usePlayer(skinId: string) {
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [playing, repeatMode]);
+  }, [playing, repeatMode, spotify]);
 
   const select = (i: number) => { setTrackIdx(i); setElapsed(0); };
   const next = () => select(shuffle ? Math.floor(Math.random() * len) : (safeIdx + 1) % len);
@@ -75,7 +86,7 @@ export function usePlayer(skinId: string) {
     return copy;
   });
 
-  return {
+  const local = {
     content, tracks, track, trackIdx: safeIdx, analyser,
     playing, elapsed, volume, balance, shuffle, repeatMode,
     eqOn, eqAuto, eqPreset, eqBands, tone, muted,
@@ -94,6 +105,44 @@ export function usePlayer(skinId: string) {
     seekTo: (v: number) => setElapsed(Math.round(v * (track?.seconds ?? 0))),
     select, next, prev, addTrack, removeTrack, sortList,
   };
+
+  // SPOTIFY MODE: same shape, but displayed values + transport come from the
+  // real-playback `drive`. EQ/tone/balance stay local cosmetic state (Spotify
+  // has no per-stream EQ API), so those keep their local behavior; everything
+  // the screens read (track/progress/volume/playlist) and every transport
+  // action map to Spotify. trackIdx falls back to the local highlight when the
+  // current track isn't found in the chosen playlist.
+  if (drive) {
+    const spTracks = drive.tracks.length ? drive.tracks : [drive.track];
+    const spIdx = drive.trackIdx >= 0 ? drive.trackIdx : 0;
+    return {
+      ...local,
+      tracks: spTracks,
+      track: drive.track,
+      trackIdx: spIdx,
+      playing: drive.playing,
+      elapsed: drive.elapsedSec,
+      volume: drive.volume,
+      shuffle: drive.shuffle,
+      repeatMode: drive.repeatMode,
+      setVolume: drive.setVolume,
+      toggleShuffle: drive.toggleShuffle,
+      setRepeatMode: (i: number) => { for (let k = 0; k < ((i - drive.repeatMode + 3) % 3); k++) drive.cycleRepeat(); },
+      play: drive.play,
+      pause: () => (drive.playing ? drive.pause() : drive.play()),
+      stop: drive.pause,
+      eject: () => drive.selectTrack(0),
+      seekTo: (v: number) => drive.seekTo(v),
+      select: (i: number) => drive.selectTrack(i),
+      next: drive.next,
+      prev: drive.prev,
+      // playlist mutation has no Spotify analogue from this surface — no-op in
+      // Spotify mode so the ADD/REM/SEL/MISC faces don't desync the real list
+      addTrack: () => {}, removeTrack: () => {}, sortList: () => {},
+    };
+  }
+
+  return local;
 }
 
 export type PlayerState = ReturnType<typeof usePlayer>;

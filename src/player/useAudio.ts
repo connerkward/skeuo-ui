@@ -113,7 +113,12 @@ export function useAudio(s: AudioState) {
     });
   }, [s.trackIdx]);
 
-  useEffect(() => () => { ctxRef.current?.close(); }, []);
+  useEffect(() => () => {
+    // guard: closing an already-closed context throws (noisy on rapid
+    // mount/unmount, e.g. mobile swipe swapping composites)
+    const c = ctxRef.current;
+    if (c && c.state !== "closed") c.close().catch(() => {});
+  }, []);
 
   return analyserRef;
 }

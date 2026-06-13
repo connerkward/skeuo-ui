@@ -4,6 +4,7 @@ import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
 import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, skinMolded, spriteUrl } from "./skins";
+import type { SpotifyDrive } from "../spotify/useSpotify";
 
 // A skin created at runtime (POST /api/generate): its frame is an inline URL
 // and its template lives in memory, so it bypasses the on-disk registry lookups.
@@ -21,6 +22,8 @@ interface Props {
   runtime?: RuntimeSkinView;
   // live-editor preview: replace the active template's regions without refetch
   templateOverride?: Template;
+  // when present, the skin drives REAL Spotify playback (see useSpotify)
+  spotifyDrive?: SpotifyDrive | null;
 }
 
 // The runtime compositor. Reads the template and positions every region at its
@@ -28,8 +31,8 @@ interface Props {
 // live widgets always line up. Sprite regions show baked art (or a CSS
 // fallback); dynamic regions render live React; decoration regions are baked-
 // only (no runtime element).
-export function Composite({ template, skinId, showWireframe, runtime, templateOverride }: Props) {
-  const ps = usePlayer(skinId);
+export function Composite({ template, skinId, showWireframe, runtime, templateOverride, spotifyDrive }: Props) {
+  const ps = usePlayer(skinId, spotifyDrive);
 
   // skins with an extracted layout fetch their own template at runtime.
   // Runtime-generated skins carry their template inline (no fetch).
