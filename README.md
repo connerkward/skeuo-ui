@@ -2,6 +2,8 @@
 
 AI-generated skeuomorphic music-player skins with **genuinely working hardware** — flip switches whose levers flip, knobs whose caps turn, faders with real caps — driven by a layered generate→detect→composite pipeline and a WebAudio engine.
 
+![Four skins playing — Pebble (minimal), Media Capsule (WMP9), Angler Maw (radial), Bone Totem (tall)](docs/skins.gif)
+
 ## The layered architecture
 
 Three independent layers, composited live by React:
