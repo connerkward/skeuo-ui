@@ -5,10 +5,22 @@ import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
 import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, skinMolded, spriteUrl } from "./skins";
 
+// A skin created at runtime (POST /api/generate): its frame is an inline URL
+// and its template lives in memory, so it bypasses the on-disk registry lookups.
+export interface RuntimeSkinView {
+  frameUrl: string;
+  template: Template;
+  style: string;        // donor style id for sprites/palette ([data-skin])
+}
+
 interface Props {
   template: Template;
   skinId: string;
   showWireframe?: boolean;
+  // runtime-generated skin (Create panel): inline frame + in-memory template
+  runtime?: RuntimeSkinView;
+  // live-editor preview: replace the active template's regions without refetch
+  templateOverride?: Template;
 }
 
 // The runtime compositor. Reads the template and positions every region at its
@@ -16,12 +28,13 @@ interface Props {
 // live widgets always line up. Sprite regions show baked art (or a CSS
 // fallback); dynamic regions render live React; decoration regions are baked-
 // only (no runtime element).
-export function Composite({ template, skinId, showWireframe }: Props) {
+export function Composite({ template, skinId, showWireframe, runtime, templateOverride }: Props) {
   const ps = usePlayer(skinId);
 
-  // skins with an extracted layout fetch their own template at runtime
+  // skins with an extracted layout fetch their own template at runtime.
+  // Runtime-generated skins carry their template inline (no fetch).
   const [loaded, setLoaded] = useState<Template | null>(null);
-  const url = skinTemplateUrl(skinId);
+  const url = runtime ? undefined : skinTemplateUrl(skinId);
   useEffect(() => {
     if (!url) { setLoaded(null); return; }
     let live = true;
@@ -45,22 +58,24 @@ export function Composite({ template, skinId, showWireframe }: Props) {
   };
 
   // all hooks above this line — safe to early-return now
-  const styleId = skinStyle(skinId);
-  const active = url ? loaded : template;
+  // runtime skins resolve frame/template/style inline; everything else from the registry
+  const styleId = runtime ? runtime.style : skinStyle(skinId);
+  const resolved = runtime ? runtime.template : url ? loaded : template;
+  // the editor's live override wins (same skin, edited regions)
+  const active = templateOverride ?? resolved;
   if (!active) return <div className="player" data-skin={styleId} style={{ aspectRatio: "1024 / 1536" }} />;
   const tpl = active;
   const { canvas } = tpl;
-  const baked = skinBaked(skinId);
-  const hasFrame = skinHas(skinId, "frame");
+  const baked = runtime ? false : skinBaked(skinId);
+  const hasFrame = runtime ? true : skinHas(skinId, "frame");
+  const frameSrc = runtime ? runtime.frameUrl : layerUrl(skinId, "frame");
 
-  // "art mode": skins whose layout was vision-EXTRACTED (own templateUrl) have
-  // imprecise control boxes, so we suppress the small live decorations (thumbs,
-  // knob needles, segment highlights, labels) that would float off the baked
-  // art, and keep only the forgiving live SCREEN content (clock/marquee/playlist).
-  const art = !!url;
-  // wild skins: EMPTY baked screens + CV-detected screen regions → render live
-  // content into the detected screens (controls stay baked, not overlaid).
-  const liveArt = art && skinLive(skinId);
+  // "art mode": skins whose layout was vision-EXTRACTED (own templateUrl) or
+  // generated at runtime have coherent baked art, so we suppress the small live
+  // decorations and keep only the forgiving live SCREEN content.
+  const art = !!url || !!runtime;
+  // wild + runtime skins: EMPTY baked screens → render live content into them.
+  const liveArt = art && (runtime ? true : skinLive(skinId));
 
   return (
     <div
@@ -69,8 +84,8 @@ export function Composite({ template, skinId, showWireframe }: Props) {
       style={{ aspectRatio: `${canvas.w} / ${canvas.h}`, transform: `translate(${pos.x}px, ${pos.y}px)` }}
     >
       {/* generated chrome as a transparent layer (lets each skin's silhouette differ) */}
-      {hasFrame && !showWireframe && <img className="layer frame-layer" src={layerUrl(skinId, "frame")} alt="" />}
-      {skinHas(skinId, "screen") && !showWireframe && (
+      {hasFrame && !showWireframe && <img className="layer frame-layer" src={frameSrc} alt="" />}
+      {!runtime && skinHas(skinId, "screen") && !showWireframe && (
         <img className="layer screen-layer" src={layerUrl(skinId, "screen")} alt="" />
       )}
 

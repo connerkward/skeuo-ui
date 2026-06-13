@@ -1,0 +1,33 @@
+.feature-btn {
+  background: #15223a; color: #cfe2ff; border: 1px solid #2c4a78;
+  padding: 10px 12px; border-radius: 6px; cursor: pointer; font: inherit;
+  text-align: left; margin-top: 4px;
+}
+.feature-btn:hover { background: #1c2e4f; border-color: #3f63a0; }
+
+.create-drawer {
+  position: fixed; top: 0; right: 0; height: 100%; width: 340px; z-index: 40;
+  background: #0c0c0e; border-left: 1px solid #222; overflow-y: auto;
+  box-shadow: -12px 0 40px rgba(0,0,0,.5);
+  animation: cp-slide .22s ease;
+}
+@keyframes cp-slide { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.create-panel { padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; color: #ddd; font: 13px system-ui, sans-serif; }
+.create-panel h2 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #8aa; margin: 0; }
+.cp-field { display: flex; flex-direction: column; gap: 4px; }
+.cp-field > span { font-size: 11px; color: #9a9aa0; }
+.cp-field textarea, .cp-field select, .cp-field input[type="file"] {
+  background: #1a1a1e; color: #eee; border: 1px solid #333; border-radius: 6px; padding: 7px 9px; font: inherit;
+}
+.cp-field textarea { resize: vertical; }
+.cp-hint { color: #777; font-size: 11px; }
+.cp-ref-thumb { max-width: 100%; max-height: 90px; border-radius: 6px; border: 1px solid #333; margin-top: 4px; }
+.cp-submit {
+  background: linear-gradient(#2a5cc0, #1f4699); color: #fff; border: 1px solid #3f63a0;
+  padding: 11px; border-radius: 7px; cursor: pointer; font: inherit; font-weight: 600; margin-top: 4px;
+}
+.cp-submit:disabled { opacity: .5; cursor: default; }
+.cp-stage { font-size: 12px; color: #6aa7ff; }
+.cp-error { font-size: 12px; color: #f4a0a0; background: #2a1414; border: 1px solid #5a2a2a; padding: 8px; border-radius: 6px; }
+.cp-note { font-size: 11px; color: #6a6a70; line-height: 1.5; margin: 4px 0 0; }

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { devApiPlugin } from './server/devApiPlugin'
 
 // Bind all interfaces: reachable via mDNS on home wifi (http://lappy-heavy.local:5173)
 // AND via the tailnet (http://lappy-heavy.tilapia-micro.ts.net:5173). No router port
@@ -8,7 +9,8 @@ const allowedHosts = ['.local', '.ts.net', 'lappy-heavy']
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  // devApiPlugin serves POST /api/generate locally (mirrors the CF Pages Function)
+  plugins: [react(), devApiPlugin()],
   server: {
     host: true, // 0.0.0.0
     port: 5173,

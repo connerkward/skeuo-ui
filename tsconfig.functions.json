@@ -1,0 +1,16 @@
+{
+  "comment": "Standalone type-check for the Cloudflare Pages Function. Not part of the app build (tsc -b); run with: npx tsc -p tsconfig.functions.json. Uses Cloudflare Worker ambient types.",
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023", "WebWorker"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["@cloudflare/workers-types"],
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["functions/**/*.ts", "src/generate/**/*.ts"]
+}

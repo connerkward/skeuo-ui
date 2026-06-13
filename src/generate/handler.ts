@@ -1,0 +1,67 @@
+// Runtime-agnostic request handler for POST /api/generate. Validates the body,
+// enforces the rate limit, runs the pipeline, returns a GenerateResponse object.
+// Both the CF Pages Function and the Node dev server wrap this with their own
+// (req → body, ip) extraction and (response → HTTP) serialization.
+import type { GenerateRequest, GenerateResponse } from "./api";
+import type { RuntimeDeps } from "./pipeline";
+import { generateSkin, DONOR_STYLES, type DonorStyle } from "./pipeline";
+import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
+import { checkAndReserve, release } from "./ratelimit";
+
+function slug(s: string): string {
+  return (s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 24) || "skin");
+}
+
+export interface HandlerInput {
+  body: Partial<GenerateRequest>;
+  ip: string;
+  deps: RuntimeDeps;
+}
+
+export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<GenerateResponse> {
+  const prompt = (body.prompt ?? "").trim();
+  const style = body.style as DonorStyle;
+  const variant = body.variant as LayoutVariant;
+  if (!prompt) return { status: "error", error: "prompt is required" };
+  if (!DONOR_STYLES.includes(style)) return { status: "error", error: `style must be one of ${DONOR_STYLES.join(", ")}` };
+  if (!LAYOUT_VARIANTS.includes(variant)) return { status: "error", error: `variant must be one of ${LAYOUT_VARIANTS.join(", ")}` };
+
+  const rl = checkAndReserve(ip);
+  if (!rl.ok) return { status: "error", error: rl.reason ?? "rate limited" };
+
+  // optional reference image (data: URL) → upload to fal so it can ride the paint pass
+  const refUrls: string[] = [];
+  try {
+    if (body.refImage?.startsWith("data:")) {
+      const png = dataUrlToBytes(body.refImage);
+      // reuse the pipeline's upload via a tiny inline call is awkward; upload here
+      const init = (await (await fetch("https://rest.alpha.fal.ai/storage/upload/initiate", {
+        method: "POST",
+        headers: { Authorization: `Key ${deps.falKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ file_name: "ref.png", content_type: "image/png" }),
+      })).json()) as { upload_url: string; file_url: string };
+      await fetch(init.upload_url, { method: "PUT", headers: { "Content-Type": "image/png" }, body: png as unknown as ArrayBuffer });
+      refUrls.push(init.file_url);
+    }
+  } catch { /* ref upload is best-effort; ignore and paint without it */ }
+
+  const id = `${slug(prompt)}-${variant}-${Date.now().toString(36).slice(-4)}`;
+  try {
+    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls });
+    return {
+      status: "done", id: r.id, style: r.style, variant: r.variant,
+      template: r.template, frameUrl: r.frameUrl, timingMs: r.timingMs,
+    };
+  } catch (e) {
+    release(ip);   // our failure — don't bill the user's quota
+    return { status: "error", error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+function dataUrlToBytes(dataUrl: string): Uint8Array {
+  const b64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+  const bin = atob(b64);   // present in browsers, Workers and modern Node
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}

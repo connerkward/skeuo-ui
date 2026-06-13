@@ -1,0 +1,80 @@
+.tpl-editor {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(8, 8, 10, 0.97);
+  display: flex; flex-direction: column;
+  color: #ddd; font: 13px system-ui, sans-serif;
+}
+.te-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid #222; background: #0d0d0f;
+}
+.te-toolbar strong { letter-spacing: 1px; margin-right: 8px; }
+.te-toolbar button {
+  background: #1a1a1e; color: #ddd; border: 1px solid #333;
+  padding: 6px 10px; border-radius: 6px; cursor: pointer; font: inherit;
+}
+.te-toolbar button:hover { background: #26262c; border-color: #555; }
+.te-count { color: #888; margin-left: auto; }
+.te-close { background: #3a1f1f !important; border-color: #6a2f2f !important; }
+
+.te-body { flex: 1; display: grid; grid-template-columns: 1fr 320px; min-height: 0; }
+.te-canvas { display: flex; align-items: center; justify-content: center; padding: 24px; overflow: auto; }
+.te-stage {
+  position: relative; height: min(82vh, 1000px);
+  background: #141416; border: 1px solid #2a2a2e; border-radius: 8px; overflow: hidden;
+  user-select: none; touch-action: none;
+}
+.te-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.85; }
+.te-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size: 10% 10%;
+}
+
+.te-region {
+  position: absolute; box-sizing: border-box;
+  border: 1.5px solid rgba(106, 167, 255, .8);
+  background: rgba(106, 167, 255, .12);
+  cursor: move; touch-action: none;
+}
+.te-region.sel { border-color: #ffcf6a; background: rgba(255, 207, 106, .16); z-index: 2; }
+.te-region.k-display { border-color: rgba(120,255,180,.7); background: rgba(120,255,180,.08); }
+.te-region.k-knob, .te-region.k-button { border-radius: 4px; }
+.te-tag {
+  position: absolute; top: -16px; left: 0; font-size: 9px;
+  color: #cfe2ff; background: rgba(0,0,0,.7); padding: 0 3px; border-radius: 3px;
+  white-space: nowrap; pointer-events: none;
+}
+.te-region.sel .te-tag { color: #ffcf6a; }
+
+.te-handle { position: absolute; width: 9px; height: 9px; background: #ffcf6a; border: 1px solid #222; border-radius: 2px; }
+.te-region:not(.sel) .te-handle { opacity: 0; }
+.h-n { top: -5px; left: calc(50% - 4px); cursor: ns-resize; }
+.h-s { bottom: -5px; left: calc(50% - 4px); cursor: ns-resize; }
+.h-e { right: -5px; top: calc(50% - 4px); cursor: ew-resize; }
+.h-w { left: -5px; top: calc(50% - 4px); cursor: ew-resize; }
+.h-ne { top: -5px; right: -5px; cursor: nesw-resize; }
+.h-nw { top: -5px; left: -5px; cursor: nwse-resize; }
+.h-se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+.h-sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+
+.te-side { border-left: 1px solid #222; display: flex; flex-direction: column; min-height: 0; background: #0c0c0e; }
+.te-list { overflow-y: auto; max-height: 40%; padding: 8px; border-bottom: 1px solid #222; }
+.te-item {
+  display: flex; justify-content: space-between; width: 100%;
+  background: #131316; color: #ccc; border: 1px solid #232327;
+  padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; cursor: pointer; font: inherit;
+}
+.te-item.sel { border-color: #ffcf6a; color: #fff; }
+.te-item-kind { color: #888; font-size: 11px; }
+
+.te-inspector { padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.te-inspector label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #9a9aa0; }
+.te-inspector input, .te-inspector select {
+  background: #1a1a1e; color: #eee; border: 1px solid #333; border-radius: 5px; padding: 5px 7px; font: inherit;
+}
+.te-coords { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+.te-px { font-size: 11px; color: #6aa7ff; font-family: ui-monospace, monospace; }
+.te-del { background: #3a1f1f; color: #f4b4b4; border: 1px solid #6a2f2f; border-radius: 6px; padding: 7px; cursor: pointer; font: inherit; margin-top: 4px; }
+.te-del:hover { background: #4a2525; }

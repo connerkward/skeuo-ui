@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# secrets — Cloudflare local dev vars / wrangler state (NEVER commit FAL_KEY)
+.dev.vars
+.wrangler/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

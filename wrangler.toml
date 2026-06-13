@@ -1,0 +1,21 @@
+# Cloudflare Pages config for the /api/generate Function.
+#
+# Deploy:   npx wrangler pages deploy dist --project-name skeuo-ui
+# Local CF: npx wrangler pages dev dist            (reads .dev.vars for FAL_KEY)
+#
+# FAL_KEY is a SECRET — set it in the Pages dashboard (Settings → Environment
+# variables, encrypted) or via:  npx wrangler pages secret put FAL_KEY
+# Never commit it. The functions/ dir is auto-discovered by Pages.
+name = "skeuo-ui"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# Optional: persist generated frames to R2 instead of returning data: URLs.
+# Create the bucket (`npx wrangler r2 bucket create skeuo-skins`) then uncomment:
+# [[r2_buckets]]
+# binding = "SKINS"
+# bucket_name = "skeuo-skins"
+
+# [vars]
+# ASSETS_BASE_URL = "https://your-public-r2-or-cdn-base"

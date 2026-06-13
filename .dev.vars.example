@@ -1,0 +1,4 @@
+# Copy to .dev.vars (gitignored) for local `wrangler pages dev` OR `npm run dev`.
+# The Vite dev plugin reads FAL_KEY server-side only; it is never exposed to the
+# client. On this machine the plugin also falls back to ~/dev/central/.env.
+FAL_KEY=your-fal-key-here
