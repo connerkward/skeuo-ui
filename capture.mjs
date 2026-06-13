@@ -11,7 +11,7 @@
 import pw from "/Users/conner/.npm/_npx/9833c18b2d85bc59/node_modules/playwright/index.js";
 const { chromium } = pw;
 import { execFileSync } from "node:child_process";
-import { mkdirSync, renameSync, readdirSync, rmSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 const CHROME = "/Users/conner/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing";
@@ -46,12 +46,13 @@ async function record(url, secs) {
     recordVideo: { dir: tmp, size: { width: W, height: H } },
   });
   const p = await ctx.newPage();
+  const video = p.video();            // exact handle for THIS page's recording
   await p.goto(url, { waitUntil: "networkidle" });
   await p.waitForSelector(".player .frame-layer", { timeout: 15000 }).catch(() => {});
   await sleep(secs * 1000);
-  await p.close(); await ctx.close();
-  const webm = readdirSync(tmp).filter((f) => f.endsWith(".webm")).map((f) => join(tmp, f))
-    .sort((a, b) => b.localeCompare(a))[0];
+  await p.close();                    // finalizes the webm
+  const webm = await video.path();    // no guessing — the precise file
+  await ctx.close();
   return webm;
 }
 
@@ -79,8 +80,7 @@ if (CMD === "hero") {
     const url = `${BASE}?${qp(`mode=hero&skin=${skin}`)}`;
     await still(url, join(OUT, `hero-${skin}-1080x1920@2x.png`));
     const webm = await record(url, Number(SECS) + PREROLL);
-    renameSync(webm, join(tmp, `${skin}.webm`));
-    transcode(join(tmp, `${skin}.webm`), join(OUT, `hero-${skin}-1080x1920`), Number(SECS));
+    transcode(webm, join(OUT, `hero-${skin}-1080x1920`), Number(SECS));
   }
 } else if (CMD === "grid") {
   const extra = ARG3 && ARG3 !== "-" ? `skins=${ARG3}` : "";
