@@ -1,0 +1,123 @@
+/* Widget mode — transparent shaped floating player.
+   The window itself is transparent (Tauri macOSPrivateApi + transparent:true);
+   only the skin's frame PNG paints, so the app reads as a non-rectangular
+   desktop toy. We override the site's dark page background to nothing. */
+
+html.widget, html.widget body, html.widget #root {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.widget-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* grabbing empty/frame space drags the OS window (handled in JS) */
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* the player fills the window; window aspect (2:3) matches every frame so the
+   shaped art lines up edge-to-edge with no letterboxing */
+.widget-stage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.widget-stage .player {
+  /* Definite height (the flex parent has the window's height) drives the size;
+     width follows from the 2:3 aspect. The frame <img> is absolutely positioned
+     so it contributes no intrinsic size — height:auto would collapse to ~0.
+     The window's min size is also 2:3, so the skin fills it edge-to-edge. */
+  height: 100%;
+  width: auto;
+  aspect-ratio: 1024 / 1536;
+}
+
+/* Crisp drop shadow that follows the skin's SILHOUETTE (the frame alpha), not a
+   rectangular OS window shadow (which is off, since the window is transparent).
+   Tight blur + a close contact shadow = a sharp floating-toy look, replacing the
+   site's big soft 0 20px 42px diffuse shadow. */
+.widget-stage .frame-layer {
+  filter:
+    drop-shadow(0 4px 5px rgba(0, 0, 0, 0.42))
+    drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.55));
+}
+
+/* slim auto-hiding control strip pinned to the top edge */
+.widget-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font: 500 11px/1 "Share Tech Mono", ui-monospace, monospace;
+  color: #e8e8ee;
+  background: linear-gradient(180deg, rgba(8,8,10,.78), rgba(8,8,10,0));
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .18s ease, transform .18s ease;
+  pointer-events: none;
+}
+.widget-root:hover .widget-bar { opacity: 1; transform: none; pointer-events: auto; }
+
+.wb-skin {
+  flex: 1;
+  text-transform: lowercase;
+  letter-spacing: .04em;
+  opacity: .85;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wb-sp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(20,20,24,.72);
+  color: #e8e8ee;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, opacity .15s;
+}
+.wb-sp:hover:not(:disabled) { background: rgba(34,34,40,.82); border-color: rgba(255,255,255,.3); }
+.wb-sp:disabled { cursor: default; opacity: .85; }
+.wb-sp[data-status="connected"] { color: #1db954; border-color: rgba(29,185,84,.5); }
+
+.wb-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #6a6a72;
+}
+.wb-dot[data-status="connected"] { background: #1db954; box-shadow: 0 0 6px rgba(29,185,84,.7); }
+.wb-dot[data-status="connecting"] { background: #d8a83a; animation: wb-pulse 1s ease-in-out infinite; }
+.wb-dot[data-status="error"] { background: #d8483a; }
+@keyframes wb-pulse { 50% { opacity: .35; } }
+
+.wb-close {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(20,20,24,.72);
+  color: #e8e8ee;
+  font-size: 15px; line-height: 1;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.wb-close:hover { background: rgba(216,72,58,.85); border-color: rgba(216,72,58,.9); }

@@ -1,5 +1,36 @@
 # skeuo-ui — TODO
 
+## Done (2026-06-13) — Tauri desktop widget + web→desktop handoff
+- [x] **Tauri macOS app** (`src-tauri/`) reusing the same React bundle — `isWidget()`
+      mounts `WidgetApp` (one transparent skin) instead of the website.
+- [x] **Transparent, non-rectangular floating window** (`macOSPrivateApi` + `transparent`,
+      no decorations/shadow); the skin's frame alpha is the shape. Crisp silhouette
+      drop-shadow. Skin fits the window at 2:3, screenshot-verified.
+- [x] **Manual window drag** (`setPosition` on pointer-move; controls opt out) — native
+      startDragging/drag-region both no-op'd, so we move the window ourselves. Drag works
+      from the skin body AND the fade-in top bar. (User-confirmed.)
+- [x] **Menu-bar tray**: switch skin, toggle always-on-top, show/hide, quit. Always-on-top
+      now OFF by default. Window is resizable.
+- [x] **Remember position + size across reopens** (`tauri-plugin-window-state`; explicit
+      save on tray-Quit + restore on launch).
+- [x] **Per-pixel click-through** on transparent areas (`clickthrough.ts`): alpha hit-map +
+      `setIgnoreCursorEvents` toggled by cursor pos, with a `cursorPosition` poll to
+      re-capture. Fail-safe (map-load failure → stays interactive). NEEDS real-mouse
+      confirmation — the dev harness can't synthesize pointer-move to test it.
+- [x] **web→desktop handoff**: site "Open in desktop player" → `skeuo://skin/<id>`; the
+      built `.app` registers the scheme and switches skin live (verified `skeuo://skin/maw`).
+      "Download for Mac" → GitHub Releases.
+- [x] **Spotify on desktop**: reuses `src/spotify/*`; `platform.ts` swaps the OAuth redirect
+      to `skeuo://callback` and opens `/authorize` in the system browser.
+
+## Blocked on the user (desktop)
+- [ ] **Sign + notarize** for distribution: no "Developer ID Application" cert is in this
+      machine's keychain and no `APPLE_ID/APPLE_PASSWORD/APPLE_TEAM_ID` in env. Current
+      `.dmg` is ad-hoc-signed (Gatekeeper right-click→Open). Install your cert + set those
+      env vars, then `scripts/build-desktop.sh`.
+- [ ] **Spotify redirect URI**: add `skeuo://callback` in the dashboard alongside the web
+      origins (and set `VITE_SPOTIFY_CLIENT_ID`) to live-test desktop Spotify.
+
 ## Done (2026-06-12)
 - [x] Round dial screens filled — radial spectrum + center clock/track (was a black void).
 - [x] Seek arc aligned to the painted groove (stroke 3.4→7) + biomech rail brightened.

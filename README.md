@@ -86,6 +86,44 @@ the go. Skins are themed families of wild_sculpt bodies (frog, burger, bondi,
 biomech body-horror, WMP9 + Halo 2 era homages, minimal puck, shape-diverse
 totem/slab) — donor styles supply each family's sprites + palette.
 
+## Desktop widget (macOS, Tauri)
+
+The same React bundle is **also a transparent, non-rectangular desktop music
+widget** — a floating "desktop toy" whose shape is the skin's own silhouette
+(the frame PNG's alpha over a transparent window), driving the user's real
+Spotify (active-device control via the Web API). Pick a skin on the website,
+hit **Open in desktop player**, and it launches already wearing that skin.
+
+```bash
+npm run tauri:dev               # run the widget locally (hot-reloads the webview)
+npm run tauri:build             # unsigned/ad-hoc .app + .dmg (local use)
+scripts/build-desktop.sh        # signed + notarized .dmg for distribution
+```
+
+How it works:
+
+- **One bundle, two modes.** `src/platform.ts#isWidget()` is true under Tauri (or
+  `?widget=1`); `src/main.tsx` then mounts `src/widget/WidgetApp.tsx` (a single
+  `<Composite>` on a transparent background) instead of the website. The skin CSS
+  is shared via `src/skins/all.ts` so the player renders identically in both.
+- **Transparent shaped window.** `tauri.conf.json` sets `transparent` +
+  `macOSPrivateApi`, `decorations:false`, `shadow:false`, `alwaysOnTop`; the
+  widget fills it at the frame's 2:3 aspect, so only the skin paints. Grabbing a
+  non-control area drags the OS window (`startDragging`, called synchronously).
+- **Menu-bar tray** (`src-tauri/src/lib.rs`): switch skin, toggle always-on-top,
+  show/hide, quit. Closing the window hides it to the tray.
+- **web → desktop handoff.** The site navigates to `skeuo://skin/<id>`; the
+  Tauri deep-link plugin (`src/desktop/deeplink.ts`) catches it and switches the
+  skin (single-instance forwards it to a running widget). The macOS scheme is
+  registered from the bundled app's Info.plist — deep links work from the built
+  `.app`, not `tauri dev`.
+- **Spotify on desktop.** Reuses `src/spotify/*` unchanged; only the OAuth edges
+  differ (`src/platform.ts`): the widget opens `/authorize` in the system browser
+  and catches the return via `skeuo://callback` (same PKCE, no secret). The
+  browser-only Web Playback SDK ("play here") is disabled — desktop controls the
+  active device. Register `skeuo://callback` as a redirect URI in the Spotify
+  dashboard alongside the web origins.
+
 ## Regenerating
 
 ```bash
@@ -120,6 +158,13 @@ src/
     Visualizer.tsx            canvas spectrum (linear + radial dial mode)
     skins.ts                  registry: frame/sprites/template/molded per skin
   skins/*.css                 per-skin palettes + shared structure (player.css)
+  skins/all.ts                barrel: every skin's CSS (shared by site + widget)
+  platform.ts                 web-vs-Tauri branch (isWidget, redirectUri, openExternal)
+  widget/WidgetApp.tsx        desktop widget: one transparent skin + tray-driven skin
+  desktop/deeplink.ts         skeuo:// routing (skin handoff + OAuth callback) + drag
+  desktop/DesktopHandoff.tsx  website "Open in desktop player" / "Download for Mac"
+  spotify/                    PKCE auth + Web API + Playback SDK + useSpotify drive
+src-tauri/                    Tauri shell: tauri.conf.json, src/lib.rs (tray+deeplink)
 generation/
   wild_sculpt.py              silhouette → deterministic layout → paint → alpha
   gen_buttons.py              molded 5-button transport sheets (profile split)

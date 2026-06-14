@@ -11,6 +11,8 @@
 // silently (using the refresh_token, also via the token endpoint with PKCE — no
 // secret) when it's within a minute of expiring.
 
+import { redirectUri as platformRedirectUri, openAuthorizeUrl, isTauri } from "../platform";
+
 const AUTHORIZE = "https://accounts.spotify.com/authorize";
 const TOKEN = "https://accounts.spotify.com/api/token";
 
@@ -34,11 +36,11 @@ const LS = {
 export const CLIENT_ID: string = import.meta.env.VITE_SPOTIFY_CLIENT_ID ?? "";
 
 // Spotify requires an EXACT redirect-URI match and (since 2024) rejects
-// `localhost` — it wants `127.0.0.1` in dev. We use the current origin + "/",
-// so register exactly that origin in the dashboard. (origin has no trailing
-// slash; we append one to match the dashboard convention.)
+// `localhost` — it wants `127.0.0.1` in dev. Web uses the current origin + "/";
+// the desktop widget uses the custom scheme `skeuo://callback`. Both must be
+// registered in the dashboard. See src/platform.ts.
 export function redirectUri(): string {
-  return window.location.origin + "/";
+  return platformRedirectUri();
 }
 
 // ---- PKCE helpers ---------------------------------------------------------
@@ -88,18 +90,23 @@ export async function beginLogin(): Promise<void> {
     code_challenge: challenge,
     scope: SCOPES,
   });
-  window.location.assign(`${AUTHORIZE}?${params.toString()}`);
+  // Web: navigate the page to /authorize. Tauri: open the system browser, since
+  // Spotify won't authorize inside an embedded webview (the callback returns via
+  // the skeuo:// deep link). openAuthorizeUrl branches on platform.
+  await openAuthorizeUrl(`${AUTHORIZE}?${params.toString()}`);
 }
 
 // ---- step 2: handle the redirect back (?code=...) -------------------------
-// Returns true if a code was present and exchanged; strips the query string.
-export async function handleRedirectCallback(): Promise<boolean> {
-  const url = new URL(window.location.href);
+// Returns true if a code was present and exchanged. `href` lets the desktop
+// deep-link handler pass the skeuo://callback?code=... URL explicitly; on the
+// web it defaults to the address bar (and we strip the query after exchange).
+export async function handleRedirectCallback(href?: string): Promise<boolean> {
+  const url = new URL(href ?? window.location.href);
   const code = url.searchParams.get("code");
   const err = url.searchParams.get("error");
   if (err) {
-    // user denied or config error — clean the URL and surface nothing here
-    window.history.replaceState({}, "", redirectUri());
+    // user denied or config error — clean the URL (web only) and surface it
+    if (!isTauri()) window.history.replaceState({}, "", redirectUri());
     throw new Error(`Spotify auth error: ${err}`);
   }
   if (!code) return false;
@@ -123,7 +130,9 @@ export async function handleRedirectCallback(): Promise<boolean> {
   storeTokens(data);
   localStorage.removeItem(LS.verifier);
   // remove ?code=... from the address bar so a refresh doesn't re-exchange
-  window.history.replaceState({}, "", redirectUri());
+  // (web only — in Tauri the code arrived via the deep link, not the URL bar,
+  // and redirectUri() is the skeuo:// scheme which can't be a history entry)
+  if (!isTauri()) window.history.replaceState({}, "", redirectUri());
   return true;
 }
 

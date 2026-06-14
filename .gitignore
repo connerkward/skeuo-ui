@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Tauri (Rust build artifacts + generated schemas; keep src-tauri sources)
+src-tauri/target/
+src-tauri/gen/
+_mkicon.mjs
+
 # secrets — Cloudflare local dev vars / wrangler state (NEVER commit FAL_KEY)
 .dev.vars
 .wrangler/

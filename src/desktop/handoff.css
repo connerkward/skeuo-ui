@@ -1,0 +1,37 @@
+/* Desktop handoff panel — sidebar styling, matches the Spotify panel idiom. */
+.dh-panel {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #242427;
+  border-radius: 8px;
+  background: rgba(0,0,0,.35);
+}
+.dh-head { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.dh-dot { width: 8px; height: 8px; border-radius: 2px; background: #6a8ad8; box-shadow: 0 0 6px rgba(106,138,216,.6); }
+.dh-title { font: 600 12px/1 ui-sans-serif, system-ui; letter-spacing: .03em; color: #d6d6dc; }
+.dh-note { margin: 0 0 9px; font: 400 11px/1.45 ui-sans-serif, system-ui; color: #9a9aa2; }
+.dh-note b { color: #cfcfd6; }
+.dh-row { display: flex; flex-direction: column; gap: 6px; }
+.dh-open {
+  padding: 8px 10px;
+  border: 1px solid #3a3a42;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #232327, #18181b);
+  color: #eaeaef;
+  font: 600 12px/1 ui-sans-serif, system-ui;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+}
+.dh-open:hover { background: linear-gradient(180deg, #2b2b30, #1d1d21); border-color: #55555e; }
+.dh-open:active { transform: translateY(1px); }
+.dh-dl {
+  text-align: center;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #242427;
+  color: #9a9aa2;
+  font: 500 11px/1 ui-sans-serif, system-ui;
+  text-decoration: none;
+  transition: color .15s, border-color .15s;
+}
+.dh-dl:hover { color: #cfcfd6; border-color: #45454a; }

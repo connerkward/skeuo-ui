@@ -11,6 +11,17 @@ const allowedHosts = ['.local', '.ts.net', 'lappy-heavy']
 export default defineConfig({
   // devApiPlugin serves POST /api/generate locally (mirrors the CF Pages Function)
   plugins: [react(), devApiPlugin()],
+  // Pre-bundle the Tauri packages so the widget's lazy import()s resolve in dev
+  // (a cold, un-optimized dep makes the WKWebView throw "Importing a module
+  // script failed" on first dynamic import). Harmless for the web build.
+  optimizeDeps: {
+    include: [
+      '@tauri-apps/api/event',
+      '@tauri-apps/api/window',
+      '@tauri-apps/plugin-deep-link',
+      '@tauri-apps/plugin-opener',
+    ],
+  },
   server: {
     host: true, // 0.0.0.0
     port: 5173,

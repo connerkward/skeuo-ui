@@ -1,0 +1,36 @@
+[package]
+name = "skeuo"
+version = "0.1.0"
+description = "Skeuo — a transparent, skinnable desktop music widget"
+authors = ["Conner Ward"]
+edition = "2021"
+rust-version = "1.77.2"
+
+# The app logic lives in a lib so both the desktop binary and (future) mobile
+# entry points share it. main.rs is a thin shim that calls skeuo_lib::run().
+[lib]
+name = "skeuo_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api", "tray-icon", "image-png"] }
+tauri-plugin-deep-link = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-window-state = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# single-instance forwards a second launch (e.g. clicking a skeuo:// link) to
+# the already-running app; the "deep-link" feature wires that to the deep-link
+# plugin so the URL reaches us instead of opening a second window.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

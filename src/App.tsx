@@ -3,16 +3,7 @@ import { Composite } from "./player/Composite";
 import { playerTemplate } from "./template/winamp-layout";
 import { skinList, skinTemplateUrl } from "./player/skins";
 import type { Template } from "./template/schema";
-import "./skins/app.css";
-import "./skins/player.css";
-import "./skins/winamp.css";
-import "./skins/frog.css";
-import "./skins/burger.css";
-import "./skins/bondi.css";
-import "./skins/toilet.css";
-import "./skins/biomech.css";
-import "./skins/wmp.css";
-import "./skins/halo.css";
+import "./skins/all"; // app.css + player.css + every skin palette (shared with the widget)
 // ── feature: template editor + generate-from-prompt ──────────────────────────
 import { CreatePanel, type RuntimeSkin } from "./generate/CreatePanel";
 import { TemplateEditor } from "./editor/TemplateEditor";
@@ -23,6 +14,8 @@ import { SpotifyConnect } from "./spotify/SpotifyConnect";
 import "./spotify/spotify.css";
 // ── feature: mobile swipe shell ──────────────────────────────────────────────
 import { MobileChrome } from "./mobile/MobileChrome";
+// ── feature: desktop widget handoff (skeuo:// → Tauri app) ───────────────────
+import { DesktopHandoff } from "./desktop/DesktopHandoff";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;
@@ -149,6 +142,10 @@ export default function App() {
           <span>Wireframe (template)</span>
         </label>
         <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />
+        <DesktopHandoff
+          skinId={skinId}
+          skinName={[...visible, ...runtimeSkins].find((s) => s.id === skinId)?.name ?? skinId}
+        />
         <div className="hint">
           One template → many skins. Buttons / sliders are baked sprites;
           the clock, spectrum, marquee &amp; playlist are live.
