@@ -19,7 +19,7 @@ const CHROME = "/Users/conner/Library/Caches/ms-playwright/chromium-1223/chrome-
 const BASE = "http://localhost:5210/export.html";
 const W = 1080, H = 1920;
 const FPS = 30;            // deterministic output framerate
-const WARMUP_MS = 900;     // advance virtual time before frame 0 (skip unpainted opening, get animations mid-flight)
+const WARMUP_MS = Number(process.env.CAP_WARMUP) || 900;  // virtual time before frame 0; lower it (CAP_WARMUP) to catch a one-shot intro like fan-in's fly-in
 
 const [, , CMD, OUT = "/tmp/skeuo-ig", ARG3 = "", PARAMS = "", SECS = "8", OUTNAME = ""] = process.argv;
 mkdirSync(OUT, { recursive: true });

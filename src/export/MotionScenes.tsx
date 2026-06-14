@@ -110,7 +110,7 @@ function Cascade() {
 function Fan({ mode, anchor }: { mode: "static" | "out" | "in"; anchor: "center" | "bottom" }) {
   const skins = ["frog", "bondi", "maw", "halo", "wmp", "burger", "biomech"];
   const n = skins.length;
-  const baseY = anchor === "bottom" ? 540 : 0;
+  const baseY = anchor === "bottom" ? 300 : 0;
   return (
     <div className={`mg-fan mode-${mode} anchor-${anchor}`} style={{ ["--baseY" as string]: `${baseY}px` }}>
       {skins.map((id, i) => {
