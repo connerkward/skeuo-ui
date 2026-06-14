@@ -2,9 +2,9 @@ import { Device } from "./Device";
 import { skinList } from "../player/skins";
 import type { Cfg } from "./cfg";
 
-// the user's favorites, color-ordered so the green family (frog / pebble / halo)
-// is never adjacent to another green. bondi=blue · burger=warm · biomech=bronze.
-const FAV = ["frog", "bondi", "pebble", "burger", "halo", "biomech"];
+// the user's favorites, color-ordered so similar colors never sit adjacent.
+// greens: frog/pebble/halo/obelisk · blues: bondi/wmp · reds: maw/burger · bronze: biomech.
+const FAV = ["frog", "bondi", "pebble", "maw", "halo", "wmp", "obelisk", "burger", "biomech"];
 
 const nameOf = (id: string) => (skinList.find((s) => s.id === id)?.name ?? id).replace(/\s*✦\s*$/, "");
 const pick = (cfg: Cfg) => (cfg.skins && cfg.skins.length ? cfg.skins : FAV);

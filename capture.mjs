@@ -20,7 +20,9 @@ const W = 1080, H = 1920;
 
 const [, , CMD, OUT = "/tmp/skeuo-ig", ARG3 = "", PARAMS = "", SECS = "8", OUTNAME = ""] = process.argv;
 mkdirSync(OUT, { recursive: true });
-const tmp = join(OUT, "_tmp"); mkdirSync(tmp, { recursive: true });
+// per-process tmp so parallel capture.mjs runs (same OUT) don't share pal.png
+// or rmSync each other's scratch dir mid-flight
+const tmp = join(OUT, `_tmp-${process.pid}`); mkdirSync(tmp, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const qp = (extra) => [PARAMS, extra].filter(Boolean).join("&");
 
@@ -41,6 +43,10 @@ async function still(url, outPath, settleMs = 2600) {
 }
 
 async function record(url, secs) {
+  // recordVideo.size MUST match the viewport, else Playwright places the page in
+  // a corner and pads the rest GREY (and the 2× pixel load drops frames → choppy).
+  // 1080×1920 @ DSF1 = full-frame, smooth, real-time; sharpness comes from the
+  // encode (unsharp + low crf) in transcode(), not from oversizing the recorder.
   const ctx = await browser.newContext({
     viewport: { width: W, height: H }, deviceScaleFactor: 1,
     recordVideo: { dir: tmp, size: { width: W, height: H } },
@@ -63,14 +69,16 @@ const PREROLL = 2.0;
 function transcode(webm, base, secs) {
   const mp4 = `${base}.mp4`, gif = `${base}.gif`, pal = join(tmp, "pal.png");
   const ss = ["-ss", String(PREROLL), "-t", String(secs)];
-  execFileSync("ffmpeg", ["-y", ...ss, "-i", webm, "-vf", "scale=1080:1920:flags=lanczos",
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-preset", "slow",
+  // 1080×1920 native; a light unsharp recovers the VP8 softness without grey
+  const SHARP = "unsharp=5:5:0.9:5:5:0.0";
+  execFileSync("ffmpeg", ["-y", ...ss, "-i", webm, "-vf", SHARP,
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "15", "-preset", "slow",
     "-movflags", "+faststart", "-an", mp4], { stdio: "ignore" });
   console.log("mp4    ✓", mp4);
   execFileSync("ffmpeg", ["-y", ...ss, "-i", webm,
-    "-vf", "fps=12,scale=720:1280:flags=lanczos,palettegen=stats_mode=diff", pal], { stdio: "ignore" });
+    "-vf", `fps=15,${SHARP},scale=900:1600:flags=lanczos,palettegen=stats_mode=diff`, pal], { stdio: "ignore" });
   execFileSync("ffmpeg", ["-y", ...ss, "-i", webm, "-i", pal,
-    "-lavfi", "fps=12,scale=720:1280:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3", gif],
+    "-lavfi", `fps=15,${SHARP},scale=900:1600:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3`, gif],
     { stdio: "ignore" });
   console.log("gif    ✓", gif);
 }
