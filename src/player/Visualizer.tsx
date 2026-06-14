@@ -17,7 +17,6 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
   const ref = useRef<HTMLCanvasElement>(null);
   const heights = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
   const peaks = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
-  const phase = useRef<number[]>(Array.from({ length: nBars }, (_, i) => i * 0.7));
   const raf = useRef(0);
 
   useEffect(() => {
@@ -57,15 +56,36 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
       ctx.clearRect(0, 0, W, H);
 
       const live = sample(nBars);
+      // MOCK spectrum (no live audio): make it read like a real song rather than
+      // independent per-bar noise — a beat-synced bass punch + a spectral envelope
+      // (energy concentrated in the lows, tapering to highs) + smooth per-bar
+      // shimmer. Deterministic motion (no per-frame random) so bars move together
+      // like music, not TV static.
+      const now = performance.now() / 1000;
+      const beatPhase = (now * (112 / 60)) % 1;          // ~112 BPM
+      const kick = Math.pow(1 - beatPhase, 2.6);         // sharp attack, decays across the beat
       const target = (i: number, n: number): number => {
         if (live) return Math.min(1, live[i] * 1.1);
         if (playing) {
-          phase.current[i] += 0.18 + Math.random() * 0.12;
-          const wob = 0.5 + 0.5 * Math.sin(phase.current[i]);
-          // for radial, mirror the profile so the ring is symmetric, not lopsided
-          const t = radial ? Math.abs(1 - 2 * (i / n)) : 1 - i / n;
-          const profile = 0.35 + 0.65 * Math.pow(t, 0.6);
-          return Math.min(1, profile * (0.45 + 0.7 * wob * Math.random()));
+          // Each bar swells/fades on its own via two offset LFOs (adjacent bars
+          // differ → reads as real frequency content), plus a beat-synced punch.
+          // Big dynamic range (valleys near zero, peaks near full) so it looks
+          // like a song's spectrum dancing, not a uniform ring.
+          const a = 0.5 + 0.5 * Math.sin(now * 2.4 + i * 0.85);
+          const b = 0.5 + 0.5 * Math.sin(now * 4.1 + i * 2.3);
+          // gamma > 1 deepens the valleys → clear peaks & troughs, not a flat ring
+          const swell = Math.pow(a * 0.55 + b * 0.45, 1.9);
+          // persistent per-bar loudness (some bands louder than others) so the
+          // spectrum keeps a real shape even under the peak-hold smoothing
+          const band = 0.35 + 0.65 * Math.abs(Math.sin(i * 1.7 + 0.6));
+          if (radial) {
+            // dancing bars all around the ring + a whole-ring pulse on the beat
+            return Math.min(1, (0.06 + 0.95 * swell) * band + kick * 0.28);
+          }
+          // linear: bass-heavy spectral slope; lows punch hardest on the beat
+          const t = 1 - i / n;                              // 1 = bass
+          const env = 0.2 + 0.8 * Math.pow(t, 0.85);
+          return Math.min(1, (0.1 + 0.9 * swell) * env + kick * (0.35 + 0.55 * t));
         }
         return radial ? 0.12 + 0.06 * Math.sin(i * 0.6) : 0.05 + 0.03 * Math.sin(i);
       };

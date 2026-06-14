@@ -246,6 +246,24 @@ export function useSpotify() {
     });
   }, [refresh]);
 
+  // Spotify transport targets the user's ACTIVE device. If none is active
+  // (Spotify open but idle, just launched, or only running elsewhere) the API
+  // 404s and the button appears to "do nothing". This runs the action, and on a
+  // no-device error finds an available device, transfers playback to it, and
+  // retries — so the widget's play/skip work even when nothing's playing yet.
+  const withDevice = useCallback(async (run: (deviceId?: string) => Promise<unknown>) => {
+    try {
+      await run();
+    } catch (e) {
+      if (!(e instanceof NoActiveDeviceError)) throw e;
+      const devices = await api.getDevices();
+      const dev = devices.find((d) => d.is_active && d.id) ?? devices.find((d) => d.id);
+      if (!dev?.id) throw new Error("No Spotify device found — open Spotify on your phone or computer, then press play.");
+      await api.transferPlayback(dev.id, false);
+      await run(dev.id);
+    }
+  }, []);
+
   // ---- build the drive object consumed by usePlayer -----------------------
   const item = playback?.item ?? null;
   const playlistTracks = playlistTracksRaw.map(toTrack);
@@ -272,10 +290,10 @@ export function useSpotify() {
     shuffle: !!playback?.shuffle_state,
     repeatMode: playback ? REPEAT_TO_NUM[playback.repeat_state] : 0,
     deviceName,
-    play: () => act(() => api.play()),
+    play: () => act(() => withDevice((id) => api.play(id ? { deviceId: id } : undefined))),
     pause: () => act(() => api.pause()),
-    next: () => act(() => api.next()),
-    prev: () => act(() => api.previous()),
+    next: () => act(() => withDevice((id) => api.next(id))),
+    prev: () => act(() => withDevice((id) => api.previous(id))),
     seekTo: (frac) => {
       const dur = item?.duration_ms ?? 0;
       act(() => api.seek(frac * dur));
@@ -289,9 +307,11 @@ export function useSpotify() {
     selectTrack: (i) => {
       const t = playlistTracksRaw[i];
       if (!t) return;
-      // play from the chosen playlist context at this offset when possible
-      if (chosenPlaylistId) act(() => api.play({ contextUri: `spotify:playlist:${chosenPlaylistId}`, offset: i }));
-      else act(() => api.play({ uris: [t.uri] }));
+      // play from the chosen playlist context at this offset when possible,
+      // transferring to a device first if none is active
+      act(() => withDevice((id) => chosenPlaylistId
+        ? api.play({ deviceId: id, contextUri: `spotify:playlist:${chosenPlaylistId}`, offset: i })
+        : api.play({ deviceId: id, uris: [t.uri] })));
     },
   } : null;
 
