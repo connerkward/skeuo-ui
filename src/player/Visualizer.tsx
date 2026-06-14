@@ -8,12 +8,13 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
   playing: boolean;
   analyser?: React.RefObject<AnalyserNode | null> | null;
   bars?: number;
-  // "radial" fills a circular dial — bars fan out around a ring so the whole
-  // disc is alive instead of a thin row of bars stranded in black void.
-  variant?: "linear" | "radial";
+  // "radial" fills a circular dial; "teeth" draws a red grinning equalizer —
+  // spectrum bars as teeth standing on a smile curve (Man Ray's mouth).
+  variant?: "linear" | "radial" | "teeth";
 }) {
   const radial = variant === "radial";
-  const nBars = radial ? 48 : bars;
+  const teeth = variant === "teeth";
+  const nBars = radial ? 48 : teeth ? 13 : bars;
   const ref = useRef<HTMLCanvasElement>(null);
   const heights = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
   const peaks = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
@@ -120,6 +121,49 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
           ctx.lineTo(cx + co * (rp + 2), cy + si * (rp + 2));
           ctx.stroke();
         }
+      } else if (teeth) {
+        // red grinning equalizer: spectrum bars are teeth standing on a smile
+        // curve (corners up, center down), red root → bright tip, framed by a lip.
+        const n = nBars;
+        const padX = W * 0.05;
+        const usable = W - padX * 2;
+        const slot = usable / n;
+        const bw = slot * 0.64;
+        const centerY = H * 0.9, cornerY = H * 0.5;     // smile baseline endpoints
+        const baseAt = (cx: number) => {
+          const u = (cx - W / 2) / (usable / 2);        // -1..1
+          return centerY - (centerY - cornerY) * u * u; // smile: corners up
+        };
+        for (let i = 0; i < n; i++) {
+          const tg = target(i, n);
+          const h = heights.current[i];
+          heights.current[i] = tg > h ? tg : h + (tg - h) * 0.25;
+          const v = heights.current[i];
+          const cx = padX + slot * (i + 0.5);
+          const base = baseAt(cx);
+          const toothH = (H * 0.6) * (0.22 + 0.78 * v); // min stub so teeth always show
+          const top = Math.max(2, base - toothH);
+          const r = bw / 2;
+          const grad = ctx.createLinearGradient(0, base, 0, top);
+          grad.addColorStop(0, "#7d0f0f"); grad.addColorStop(1, "#ff5a4c");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(cx - r, base);
+          ctx.lineTo(cx - r, top + r);
+          ctx.arc(cx, top + r, r, Math.PI, 0);
+          ctx.lineTo(cx + r, base);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // red lip arc framing the grin
+        ctx.strokeStyle = "#c91f1f"; ctx.lineCap = "round";
+        ctx.lineWidth = Math.max(3, H * 0.05);
+        ctx.beginPath();
+        for (let x = padX; x <= W - padX; x += 3) {
+          const y = baseAt(x) + H * 0.045;
+          if (x === padX) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
       } else {
         const gap = Math.max(1, W * 0.012);
         const bw = (W - gap * (nBars - 1)) / nBars;
@@ -144,7 +188,7 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
     };
     raf.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf.current);
-  }, [playing, nBars, radial, analyser]);
+  }, [playing, nBars, radial, teeth, analyser]);
 
   return <canvas ref={ref} className="vis-canvas" />;
 }

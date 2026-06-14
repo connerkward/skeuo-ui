@@ -182,6 +182,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
             </div>
           );
         }
+        if (r.vis === "teeth") return <Visualizer playing={ps.playing} analyser={ps.analyser} variant="teeth" />;
         return <Visualizer playing={ps.playing} analyser={ps.analyser} />;
       }
       case "marquee":

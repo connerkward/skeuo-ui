@@ -59,6 +59,7 @@ export interface Region {
   flourish?: string;      // decoration: a hint label (CORNER, RAIL, CREST…)
   shape?: "ellipse";      // round well: circular button face / elliptical glass
   arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
+  vis?: "linear" | "radial" | "teeth";   // visualizer render style (e.g. teeth grin)
 }
 
 export interface Template {

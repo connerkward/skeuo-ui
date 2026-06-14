@@ -43,10 +43,11 @@ MATERIAL = {
     "biomech": ("H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping "
                 "the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence "
                 "glowing from the recesses."),
-    "manray":  ("a chubby cartoon BABY creature: smooth glossy CERULEAN-BLUE skin, two oversized round "
-                "BRIGHT-RED goggle eyes, a simple RED diaper-and-cape costume across the lower body, soft "
-                "round baby proportions, clean friendly cel-shaded cartoon look, a thin red glow from the "
-                "control recesses. Match the palette and character of the reference image."),
+    "manray":  ("a chubby cartoon BABY creature: smooth glossy CERULEAN-BLUE skin; two oversized round "
+                "goggle eyes high on the head, each a thick BRIGHT-RED rim around a solid BLACK center; a "
+                "RED belt/diaper across the lower body with a shiny GOLD KEYHOLE emblem at its center; soft "
+                "round baby proportions, clean friendly cel-shaded cartoon look. Match the palette and "
+                "character of the reference image."),
     "winamp":  ("polished chrome and brushed gunmetal over dark charcoal plastic, thin green LED accent "
                 "lines tracing the curves, tiny screws."),
     "frog":    ("glossy moulded rubber toy-frog skin in vivid green with subtle mottling, bulging "
@@ -270,24 +271,21 @@ def layout_manray():
                      "layer": kw.pop("layer", "components"),
                      "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
     cx = W/2
-    # leave the UPPER head (top ~18%) free for the character's big eyes — the
-    # visualizer sits on the chest below the face, not over the eyes
-    vw, vh = W*0.54, H*0.120
-    add("visualizer", "display", cx-vw/2, H*0.255, vw, vh,
-        content="dynamic", layer="screen", dynamicType="visualizer")
-    # marquee strip under the visualizer
-    add("marquee", "display", cx-W*0.30, H*0.395, W*0.60, 46,
+    # upper head (top ~20%) stays free for the big eyes. The VISUALIZER is the
+    # character's red TEETH-GRIN mouth — a wide screen just below the eyes.
+    vw, vh = W*0.56, H*0.130
+    add("visualizer", "display", cx-vw/2, H*0.25, vw, vh,
+        content="dynamic", layer="screen", dynamicType="visualizer", vis="teeth")
+    # marquee strip under the mouth
+    add("marquee", "display", cx-W*0.30, H*0.41, W*0.60, 46,
         content="dynamic", layer="screen", dynamicType="marquee")
-    # NOVEL 'bolt' scrub — a rect well; React draws a zigzag path
-    sw, sh = W*0.62, H*0.085
-    add("seek", "slider-path", cx-sw/2, H*0.46, sw, sh, bind="seek", label="Seek")
-    # transport: SHUFFLE toggle · PLAY (dominant) · NEXT
-    by = H*0.62
-    play_d = W*0.205
+    # transport only — SHUFFLE toggle · PLAY/PAUSE (dominant) · NEXT (no scrub)
+    by = H*0.575
+    play_d = W*0.215
     add("play", "button", cx-play_d/2, by, play_d, play_d, bind="play", label="play", shape="ellipse")
-    nd = W*0.115
+    nd = W*0.12
     add("next", "button", cx+play_d/2+W*0.055, by+(play_d-nd)/2, nd, nd, bind="next", label="next", shape="ellipse")
-    tw, th = W*0.17, H*0.072
+    tw, th = W*0.17, H*0.075
     add("shuffle", "toggle", cx-play_d/2-W*0.055-tw, by+(play_d-th)/2, tw, th, bind="shuffle", label="SHUF")
     return regs
 
