@@ -1,0 +1,18 @@
+[data-skin="manray"] {
+  --ui-font: "Tahoma", "Segoe UI", sans-serif;
+  --lcd-font: "Share Tech Mono", monospace; --ink: #7a1010;
+  --lcd-bg: linear-gradient(180deg,#1a0606,#2a0a0a); --lcd-ink: #ffd9d2; --lcd-ink-dim: #c8857e;
+  --lcd-glow: 0 0 6px rgba(255,90,76,.4); --lcd-radius: 12px;
+  --lcd-inset: inset 0 2px 6px rgba(20,0,0,.6); --lcd-border: 1px solid #b8862f;
+  /* teeth visualizer hardcodes its reds; these cover any linear fallback */
+  --vis-lo: #7d0f0f; --vis-hi: #ff5a4c; --vis-peak: #ffd9d2;
+  --btn-ink: #5a3a06; --sp-btn-ink: #4a2f04; --btn-radius: 50%;
+  --btn-bg: radial-gradient(80% 80% at 50% 28%, #ffe9a8, #d9a23a 75%);
+  --btn-shadow: inset 0 1px 0 #fff3cf, inset 0 0 0 1px rgba(120,80,20,.55), 0 2px 3px rgba(40,20,0,.35);
+  --toggle-on-spark: #ff5a4c; --knob-ind: #d9a23a; --knob-ind-glow: rgba(255,200,90,.7);
+  --rail-bg: #c2a25a; --fill-bg: #ff5a4c; --thumb-bg: linear-gradient(180deg,#ffe9a8,#d9a23a);
+  --thumb-arc: #ff5a4c;
+  --thumb-shadow: inset 0 1px 0 #fff3cf, 0 2px 3px rgba(0,0,0,.3); --thumb-w: 16px; --thumb-h: 12px;
+  --list-ink: #ffd9d2; --list-sel-bg: #c91f1f; --list-sel-ink: #fff;
+  --title-ink: #ffe9a8;
+}

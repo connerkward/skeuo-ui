@@ -39,6 +39,7 @@ MAT = {
     "biomech": "H.R. Giger biomechanical body-horror: fused bone, sinew and chitin, ribbed organic tubes, wet sheen, sickly green-amber glow in crevices.",
     "wmp":  "Windows Media Player 9 / XP Luna era: glossy silver-white plastic capsule shells, translucent aqua-blue gel, chrome rims, soft blue-white gradients.",
     "halo": "Halo 2 UNSC military hardware: olive-drab armored metal plating, scuffed edges, hex bolts, amber-orange holographic accents and warning chevrons.",
+    "manray": "shiny polished GOLD metal: bright reflective gold/brass with warm specular highlights, soft rounded bevels, a cute chunky toy-like finish.",
 }
 
 # per-style switch DESIGNS — distinct hardware, not one archetype recolored

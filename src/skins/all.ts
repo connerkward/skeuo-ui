@@ -12,3 +12,4 @@ import "./toilet.css";
 import "./biomech.css";
 import "./wmp.css";
 import "./halo.css";
+import "./manray.css";

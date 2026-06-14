@@ -43,11 +43,16 @@ MATERIAL = {
     "biomech": ("H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping "
                 "the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence "
                 "glowing from the recesses."),
-    "manray":  ("a chubby cartoon BABY creature: smooth glossy CERULEAN-BLUE skin; two oversized round "
-                "goggle eyes high on the head, each a thick BRIGHT-RED rim around a solid BLACK center; a "
-                "RED belt/diaper across the lower body with a shiny GOLD KEYHOLE emblem at its center; soft "
-                "round baby proportions, clean friendly cel-shaded cartoon look. Match the palette and "
-                "character of the reference image."),
+    "manray":  ("an ADORABLE super-cute chubby cartoon BABY creature: smooth glossy CERULEAN-BLUE skin; "
+                "two SMALL round SOLID BRIGHT-RED eyes placed HIGH near the TOP of the head, close together "
+                "(all red, no black, no white) — keep the eyes small and well ABOVE the middle of the face; "
+                "BELOW the eyes, in the CENTER of the face, a wide WIDE-OPEN dark grinning MOUTH cavity "
+                "(an empty dark recessed oval slot — leave it dark and empty, the toothy grin is added "
+                "separately) clearly SEPARATE from the eyes with blue skin between them; a wide shiny GOLD "
+                "BELT band wrapping the lower tummy with a little keyhole motif, the round control buttons "
+                "set into that gold belt; very soft round cute baby proportions, big head, tiny stubby "
+                "limbs, clean friendly cel-shaded look. Match the palette and character of the reference "
+                "image."),
     "winamp":  ("polished chrome and brushed gunmetal over dark charcoal plastic, thin green LED accent "
                 "lines tracing the curves, tiny screws."),
     "frog":    ("glossy moulded rubber toy-frog skin in vivid green with subtle mottling, bulging "
@@ -271,22 +276,23 @@ def layout_manray():
                      "layer": kw.pop("layer", "components"),
                      "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
     cx = W/2
-    # upper head (top ~20%) stays free for the big eyes. The VISUALIZER is the
-    # character's red TEETH-GRIN mouth — a wide screen just below the eyes.
-    vw, vh = W*0.56, H*0.130
-    add("visualizer", "display", cx-vw/2, H*0.25, vw, vh,
+    # upper head stays free for the big red eyes. The VISUALIZER is the red
+    # TEETH-GRIN MOUTH — a wide, short mouth shape on the face (vis=teeth draws it
+    # as a mouth lens, not a square screen).
+    vw, vh = W*0.50, H*0.090
+    add("visualizer", "display", cx-vw/2, H*0.235, vw, vh,
         content="dynamic", layer="screen", dynamicType="visualizer", vis="teeth")
-    # marquee strip under the mouth
-    add("marquee", "display", cx-W*0.30, H*0.41, W*0.60, 46,
+    # marquee strip on the chest
+    add("marquee", "display", cx-W*0.29, H*0.37, W*0.58, 44,
         content="dynamic", layer="screen", dynamicType="marquee")
-    # transport only — SHUFFLE toggle · PLAY/PAUSE (dominant) · NEXT (no scrub)
-    by = H*0.575
-    play_d = W*0.215
+    # transport set INTO the wide gold belt on the lower tummy: SHUFFLE · PLAY · NEXT
+    by = H*0.60
+    play_d = W*0.18
     add("play", "button", cx-play_d/2, by, play_d, play_d, bind="play", label="play", shape="ellipse")
-    nd = W*0.12
-    add("next", "button", cx+play_d/2+W*0.055, by+(play_d-nd)/2, nd, nd, bind="next", label="next", shape="ellipse")
-    tw, th = W*0.17, H*0.075
-    add("shuffle", "toggle", cx-play_d/2-W*0.055-tw, by+(play_d-th)/2, tw, th, bind="shuffle", label="SHUF")
+    nd = W*0.115
+    add("next", "button", cx+play_d/2+W*0.05, by+(play_d-nd)/2, nd, nd, bind="next", label="next", shape="ellipse")
+    tw, th = W*0.135, H*0.07
+    add("shuffle", "toggle", cx-play_d/2-W*0.05-tw, by+(play_d-th)/2, tw, th, bind="shuffle", label="SHUF")
     return regs
 
 def covers(mask, regs):
@@ -540,7 +546,11 @@ def _draw_regions(d, regs):
         elif r["kind"] == "knob" or (r["kind"] == "button" and r.get("shape") == "ellipse"):
             d.ellipse([x0, y0, x1, y1], fill=WELL, outline=EDGE, width=4)
         elif r["kind"] == "display":
-            if r.get("shape") == "ellipse":
+            if r.get("vis") == "teeth":
+                # the teeth-grin visualizer is a MOUTH, not a screen — a wide dark
+                # lens so the painted recess reads as an open grinning mouth
+                d.ellipse([x0, y0, x1, y1], fill=(20, 6, 6), outline=(120, 20, 20), width=6)
+            elif r.get("shape") == "ellipse":
                 d.ellipse([x0, y0, x1, y1], fill=(12, 13, 15), outline=EDGE, width=6)
             else:
                 d.rounded_rectangle([x0, y0, x1, y1], radius=12, fill=(12, 13, 15), outline=EDGE, width=5)
