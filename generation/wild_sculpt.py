@@ -43,10 +43,10 @@ MATERIAL = {
     "biomech": ("H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping "
                 "the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence "
                 "glowing from the recesses."),
-    "manray":  ("the SpongeBob supervillain MAN RAY: smooth matte CERULEAN-BLUE latex skin over the head "
-                "and body, two large round RED goggle-eyes on the head, a bold RED super-suit and cape "
-                "across the torso with a stylized chest emblem, glossy cartoon-villain highlights, a thin "
-                "red glow seeping from the control recesses. Blue skin, red costume — NOT purple."),
+    "manray":  ("a chubby cartoon BABY creature: smooth glossy CERULEAN-BLUE skin, two oversized round "
+                "BRIGHT-RED goggle eyes, a simple RED diaper-and-cape costume across the lower body, soft "
+                "round baby proportions, clean friendly cel-shaded cartoon look, a thin red glow from the "
+                "control recesses. Match the palette and character of the reference image."),
     "winamp":  ("polished chrome and brushed gunmetal over dark charcoal plastic, thin green LED accent "
                 "lines tracing the curves, tiny screws."),
     "frog":    ("glossy moulded rubber toy-frog skin in vivid green with subtle mottling, bulging "
