@@ -72,19 +72,22 @@ async function captureFrames(url, secs, waitSel) {
   return { dir, n: N };
 }
 
-// frames → sharp 1080×1920 H.264 (supersampled from @2x) + 15fps gif
+// frames → H.264 + 15fps gif. CAP_MAXRES=1 keeps the native 2× resolution
+// (2160×3840 — the max-quality Instagram source) instead of downscaling to 1080.
 function encodeFrames(dir, base) {
+  const MAXRES = process.env.CAP_MAXRES === "1";
   const mp4 = `${base}.mp4`, gif = `${base}.gif`, pal = join(tmp, "pal.png");
   const SRC = ["-framerate", String(FPS), "-i", join(dir, "f%05d.jpg")];
-  const SHARP = "scale=1080:1920:flags=lanczos,unsharp=5:5:0.7:5:5:0.0";
+  const SHARP = MAXRES ? "unsharp=5:5:0.4:5:5:0.0" : "scale=1080:1920:flags=lanczos,unsharp=5:5:0.7:5:5:0.0";
+  const GIFVF = "fps=15,scale=1080:1920:flags=lanczos";   // gif stays light regardless
   execFileSync("ffmpeg", ["-y", ...SRC, "-vf", SHARP,
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16", "-preset", "slow",
     "-movflags", "+faststart", "-an", mp4], { stdio: "ignore" });
   console.log("mp4    ✓", mp4);
   execFileSync("ffmpeg", ["-y", ...SRC, "-vf",
-    `fps=15,${SHARP},palettegen=stats_mode=diff`, pal], { stdio: "ignore" });
+    `${GIFVF},palettegen=stats_mode=diff`, pal], { stdio: "ignore" });
   execFileSync("ffmpeg", ["-y", ...SRC, "-i", pal,
-    "-lavfi", `fps=15,${SHARP}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3`, gif], { stdio: "ignore" });
+    "-lavfi", `${GIFVF}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3`, gif], { stdio: "ignore" });
   console.log("gif    ✓", gif);
   rmSync(dir, { recursive: true, force: true });
 }

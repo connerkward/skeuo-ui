@@ -37,6 +37,9 @@ let hit: Uint8Array | null = null; // COLS*ROWS opaque bitmap for the active ski
 let ignoring = false;
 let poll = 0;
 let dragging = false; // don't flip to pass-through mid window-drag
+let pressed = false;  // any pointer button down → freeze the ignore state so a
+                      // control drag (knob/slider) can stray over a transparent
+                      // pixel without the window flipping to click-through
 
 export function setClickThroughDragging(v: boolean): void { dragging = v; }
 
@@ -124,16 +127,26 @@ function startPoll(): void {
 }
 
 function onMove(e: PointerEvent): void {
-  if (ignoring || dragging) return; // poll owns the ignoring state; never flip mid-drag
+  // poll owns the ignoring state; never flip while ignoring, dragging the window,
+  // or holding a control (so knob/slider drags can't be cut off mid-gesture)
+  if (ignoring || dragging || pressed) return;
   void setIgnore(!opaqueAt(e.clientX, e.clientY));
 }
 
 // Set up the listeners. Call updateClickThroughSkin() to (re)build the alpha map.
 export function initClickThrough(): () => void {
   if (!isTauri()) return () => {};
+  const onDown = () => { pressed = true; };
+  const onUp = () => { pressed = false; };
   window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerdown", onDown);
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
   return () => {
     window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerdown", onDown);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
     stopPoll();
     void setIgnore(false);
   };

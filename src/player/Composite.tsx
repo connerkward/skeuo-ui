@@ -234,7 +234,13 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
     // as a play button. Fallbacks: round wells take the knob cap + SVG icon;
     // rectangular wells 9-slice the generic button sprite + SVG icon.
     const round = r.shape === "ellipse";
-    const bindId = r.bind ?? r.id;
+    const rawBind = r.bind ?? r.id;
+    // The main PLAY button is a real play/pause TOGGLE: while playing it shows
+    // the pause face (skins ship btn-pause.png) and pauses; otherwise it plays.
+    // So a single transport button works without a separate pause button.
+    const isPlayPause = rawBind === "play";
+    const bindId = isPlayPause && ps.playing ? "pause" : rawBind;
+    const onClick = isPlayPause ? (ps.playing ? ps.pause : ps.play) : btnHandler(r, ps);
     const molded = sp && skinMolded(skinId) && ["prev", "play", "pause", "stop", "next"].includes(bindId);
     const face: React.CSSProperties = molded
       ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`)})`, backgroundPosition: "center", backgroundSize: "118% 118%", backgroundRepeat: "no-repeat" }
@@ -243,10 +249,10 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
           ? { backgroundImage: `url(${spriteUrl(skinId, "knob")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", border: 0 }
           : { borderImage: `url(${spriteUrl(skinId, "button")}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
         : {};
-    const g = molded ? null : glyph(r);
+    const g = molded ? null : glyph(r, bindId);
     if (typeof g === "string" && g.length > 2) face.fontSize = "1.7cqw";   // text labels fit the face
     return (
-      <button className={`tbtn ${molded ? "molded" : ""} ${round ? "round" : ""} ${sp ? "sp-btn" : ""}`} style={face} onClick={btnHandler(r, ps)} title={r.label ?? r.id}>
+      <button className={`tbtn ${molded ? "molded" : ""} ${round ? "round" : ""} ${sp ? "sp-btn" : ""}`} style={face} onClick={onClick} title={r.label ?? r.id}>
         {g}
       </button>
     );
@@ -282,8 +288,10 @@ ICON["pl-pause"] = ICON.pause; ICON["pl-next"] = ICON.next;
 const GLYPH: Record<string, string> = {
   "pl-add": "ADD", "pl-rem": "REM", "pl-sel": "SEL", "pl-misc": "MISC",
 };
-const glyph = (r: Region): React.ReactNode => {
-  const ic = ICON[r.id];
+// iconId lets the play button render the pause icon while playing (it differs
+// from r.id only for the play/pause toggle); the text-glyph fallback uses r.id.
+const glyph = (r: Region, iconId: string = r.id): React.ReactNode => {
+  const ic = ICON[iconId];
   if (ic) return <svg className="ticon" viewBox="0 0 24 24" aria-hidden="true">{ic}</svg>;
   return GLYPH[r.id] ?? r.label ?? "";
 };

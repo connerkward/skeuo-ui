@@ -221,19 +221,26 @@ html, body, #root { margin: 0; padding: 0; background: #000; overflow: hidden; }
 @keyframes mg-spin-rev { from { transform: rotate(0); } to { transform: rotate(-360deg); } }
 @keyframes mg-breathe { 0%,100% { transform: scale(.97); } 50% { transform: scale(1.04); } }
 
-/* FAN — live devices fanned like a hand of cards */
+/* FAN — live devices fanned like a hand of cards. --baseY shifts the whole fan
+   down so the bottoms converge low (anchor=bottom). */
 .mg-fan { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 .fan-card {
-  position: absolute; transform-origin: 50% 50%;
-  transform: translate(var(--dx), var(--dy)) rotate(var(--ang));   /* held fan position */
+  position: absolute; transform-origin: 50% 100%;
+  transform: translate(var(--dx), calc(var(--dy) + var(--baseY, 0px))) rotate(var(--ang));  /* held */
 }
-/* animated variant: deal OUT from a collapsed stack and gather back, eased loop */
-.mg-fan.anim .fan-card {
-  animation: fan-deal 4.6s cubic-bezier(.22,.85,.27,1) infinite alternate;
-}
+/* OUT: deal from a collapsed stack and gather back, eased loop */
+.mg-fan.mode-out .fan-card { animation: fan-deal 4.6s cubic-bezier(.22,.85,.27,1) infinite alternate; }
 @keyframes fan-deal {
-  0%   { transform: translate(0, 70px) rotate(0deg) scale(.82); }
-  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--ang)) scale(1); }
+  0%   { transform: translate(0, calc(70px + var(--baseY, 0px))) rotate(0deg) scale(.82); }
+  100% { transform: translate(var(--dx), calc(var(--dy) + var(--baseY, 0px))) rotate(var(--ang)) scale(1); }
+}
+/* IN: cards fly in from off-screen (scattered, spun) and assemble the fan, then
+   disperse back out on the eased loop */
+.mg-fan.mode-in .fan-card { animation: fan-in 4.8s cubic-bezier(.2,.8,.25,1) infinite alternate; }
+@keyframes fan-in {
+  0%   { transform: translate(calc(var(--dx) * 2.7), calc(1300px + var(--baseY, 0px))) rotate(calc(var(--ang) * 3.2)) scale(.55); opacity: 0; }
+  22%  { opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + var(--baseY, 0px))) rotate(var(--ang)) scale(1); opacity: 1; }
 }
 
 /* CASCADE — springy staggered drop-in, then float loop */

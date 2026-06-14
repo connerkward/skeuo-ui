@@ -298,7 +298,7 @@ export function useSpotify() {
       const dur = item?.duration_ms ?? 0;
       act(() => api.seek(frac * dur));
     },
-    setVolume: (v) => act(() => api.setVolume(v * 100)),
+    setVolume: (v) => act(() => withDevice((id) => api.setVolume(v * 100, id))),
     toggleShuffle: () => act(() => api.setShuffle(!playback?.shuffle_state)),
     cycleRepeat: () => {
       const cur = playback ? REPEAT_TO_NUM[playback.repeat_state] : 0;
