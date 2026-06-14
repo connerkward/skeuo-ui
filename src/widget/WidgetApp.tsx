@@ -39,9 +39,15 @@ export default function WidgetApp() {
     return () => dispose();
   }, []);
 
-  // per-pixel click-through: clicks on transparent areas pass to the app behind
-  useEffect(() => initClickThrough(), []);
-  // (re)build the alpha hit-map whenever the skin changes
+  // Per-pixel click-through (clicks on transparent areas pass to the app behind).
+  // The alpha hit-map is now built from fetched PNG bytes via createImageBitmap
+  // (the earlier `new Image()`→canvas path got tainted under Tauri's asset
+  // protocol and read all-transparent, sticking the whole window click-through).
+  // Fail-safe: a degenerate/blank map → the widget stays fully interactive.
+  useEffect(() => {
+    const dispose = initClickThrough();
+    return () => dispose();
+  }, []);
   useEffect(() => { updateClickThroughSkin(skinId); }, [skinId]);
 
   // the widget is always Spotify-driven; if not linked it falls back to the

@@ -35,18 +35,36 @@ let dragging = false; // don't flip to pass-through mid window-drag
 export function setClickThroughDragging(v: boolean): void { dragging = v; }
 
 async function buildHitMap(frameUrl: string): Promise<void> {
-  const img = new Image();
-  img.src = frameUrl;
-  try { await img.decode(); } catch { return; }
+  hit = null; // until (re)built, opaqueAt returns true → fully interactive
+  // Fetch the PNG bytes and decode via createImageBitmap. A plain `new Image()`
+  // drawn to a canvas gets TAINTED under Tauri's asset protocol, so getImageData
+  // returns blank (all-transparent) → every point reads as pass-through and the
+  // window gets stuck click-through. A same-origin fetched blob is never tainted.
+  let bmp: ImageBitmap;
+  try {
+    const res = await fetch(frameUrl);
+    if (!res.ok) return;
+    bmp = await createImageBitmap(await res.blob());
+  } catch { return; }
   const c = document.createElement("canvas");
   c.width = COLS; c.height = ROWS;
   const ctx = c.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return;
-  ctx.drawImage(img, 0, 0, COLS, ROWS);
+  if (!ctx) { bmp.close?.(); return; }
+  ctx.drawImage(bmp, 0, 0, COLS, ROWS);
+  bmp.close?.();
   let data: Uint8ClampedArray;
   try { data = ctx.getImageData(0, 0, COLS, ROWS).data; } catch { return; }
   const bits = new Uint8Array(COLS * ROWS);
-  for (let i = 0; i < COLS * ROWS; i++) bits[i] = data[i * 4 + 3] > ALPHA_MIN ? 1 : 0;
+  let opaque = 0;
+  for (let i = 0; i < COLS * ROWS; i++) {
+    const on = data[i * 4 + 3] > ALPHA_MIN ? 1 : 0;
+    bits[i] = on; opaque += on;
+  }
+  // FAIL-SAFE: a degenerate map (blank/all-transparent, or solid) is useless and
+  // would either stick the window click-through or do nothing — leave hit null so
+  // the widget stays fully interactive instead of getting stuck.
+  const frac = opaque / (COLS * ROWS);
+  if (frac < 0.05 || frac > 0.985) return;
   hit = bits;
 }
 
