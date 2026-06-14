@@ -13,10 +13,14 @@
       now OFF by default. Window is resizable.
 - [x] **Remember position + size across reopens** (`tauri-plugin-window-state`; explicit
       save on tray-Quit + restore on launch).
-- [x] **Per-pixel click-through** on transparent areas (`clickthrough.ts`): alpha hit-map +
-      `setIgnoreCursorEvents` toggled by cursor pos, with a `cursorPosition` poll to
-      re-capture. Fail-safe (map-load failure → stays interactive). NEEDS real-mouse
-      confirmation — the dev harness can't synthesize pointer-move to test it.
+- [x] **Per-pixel click-through** on transparent areas (`clickthrough.ts`): alpha hit-map
+      (fetched PNG → `createImageBitmap`, avoids the asset-protocol canvas taint) +
+      `setIgnoreCursorEvents` toggled by the cursor pos, with a standalone `cursorPos()`
+      poll to re-capture. **Root-cause bug (fixed 2026-06-13):** the poll called
+      `win.cursorPosition()`, but `cursorPosition` is a STANDALONE export of
+      `@tauri-apps/api/window`, not a `Window` method → threw every tick, `.catch`
+      swallowed it, window stuck click-through. Top ~38px (the fade-in bar) is always
+      interactive so the bar stays clickable. User-confirmed working.
 - [x] **web→desktop handoff**: site "Open in desktop player" → `skeuo://skin/<id>`; the
       built `.app` registers the scheme and switches skin live (verified `skeuo://skin/maw`).
       "Download for Mac" → GitHub Releases.
