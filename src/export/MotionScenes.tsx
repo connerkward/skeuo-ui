@@ -72,7 +72,7 @@ function Parade({ skins }: { skins: string[] }) {
 /* ORBIT — a ring of live skins revolving around a featured center, each
    counter-rotating to stay upright. */
 function Orbit({ center, skins }: { center: string; skins: string[] }) {
-  const ring = skins.filter((s) => s !== center).slice(0, 6);
+  const ring = skins.filter((s) => s !== center).slice(0, 8);
   const n = ring.length;
   return (
     <div className="mg-orbit">
