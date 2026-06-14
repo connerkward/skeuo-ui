@@ -164,62 +164,59 @@ html, body, #root { margin: 0; padding: 0; background: #000; overflow: hidden; }
 .edge-item .player { filter: drop-shadow(0 20px 34px rgba(0,0,0,.6)); opacity: .98; }
 
 /* ============================================================
-   MOTION GRAPHICS — multi-colored product-commercial scenes.
-   Static body images on GPU transforms → smooth at 60fps.
+   MOTION GRAPHICS — multi-colored product-commercial scenes of
+   the LIVE devices (working controls + spectrum). GPU transforms.
    ============================================================ */
 .mg-stage {
   position: absolute; inset: 0; overflow: hidden;
   background: radial-gradient(75% 55% at 50% 38%, #1a1d24 0%, #0c0e12 55%, #050608 100%);
 }
-.mg-skin {
-  width: 100%; height: auto; display: block;
-  filter: drop-shadow(0 24px 34px rgba(0,0,0,.55));
-  will-change: transform;
-}
+.mg-stage .device { will-change: transform; }
+.mg-stage .device .player { filter: drop-shadow(0 22px 34px rgba(0,0,0,.6)); }
 
-/* STREAMS — vertical columns, alternating directions, varied speed */
+/* STREAMS — vertical columns of live devices, alternating dirs, varied speed */
 .mg-streams {
-  position: absolute; inset: -6% 0; display: grid;
-  grid-template-columns: repeat(var(--cols, 5), 1fr);
-  gap: 2.2vw; padding: 0 2vw;
+  position: absolute; inset: 0; display: grid;
+  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  gap: 26px; padding: 0 28px; align-items: start;
 }
-.mg-col-track { display: flex; flex-direction: column; gap: 5vh; will-change: transform; }
+.mg-col { display: flex; justify-content: center; overflow: visible; }
+.mg-col-track { display: flex; flex-direction: column; align-items: center; gap: 90px; will-change: transform; }
 .mg-col-track.up { animation: mg-scroll-up linear infinite; }
 .mg-col-track.down { animation: mg-scroll-down linear infinite; }
-.mg-col-track .mg-skin { width: 92%; margin: 0 auto; }
 @keyframes mg-scroll-up   { from { transform: translateY(0); }    to { transform: translateY(-50%); } }
 @keyframes mg-scroll-down { from { transform: translateY(-50%); } to { transform: translateY(0); } }
 
-/* SWARM — crossing diagonal lanes */
+/* SWARM — crossing diagonal lanes of live devices */
 .mg-swarm, .mg-diag { position: absolute; inset: 0; }
-.mg-diag .mg-skin { position: absolute; width: 26%; top: 50%; left: 50%; }
-.mg-fly { animation: mg-fly-ne 14s linear infinite; }
+.mg-fly { position: absolute; top: 50%; left: 50%; margin: -260px 0 0 -150px; animation: mg-fly-ne 15s linear infinite; }
 .mg-diag.se .mg-fly { animation-name: mg-fly-se; }
 @keyframes mg-fly-ne {
-  from { transform: translate(-820px, 1180px) rotate(-8deg) scale(.7); opacity: 0; }
-  12% { opacity: 1; } 88% { opacity: 1; }
-  to { transform: translate(820px, -1180px) rotate(8deg) scale(1.05); opacity: 0; }
+  from { transform: translate(-780px, 1120px) rotate(-8deg) scale(.72); opacity: 0; }
+  14% { opacity: 1; } 86% { opacity: 1; }
+  to { transform: translate(780px, -1120px) rotate(8deg) scale(1.04); opacity: 0; }
 }
 @keyframes mg-fly-se {
-  from { transform: translate(820px, 1180px) rotate(8deg) scale(.7); opacity: 0; }
-  12% { opacity: 1; } 88% { opacity: 1; }
-  to { transform: translate(-820px, -1180px) rotate(-8deg) scale(1.05); opacity: 0; }
+  from { transform: translate(780px, 1120px) rotate(8deg) scale(.72); opacity: 0; }
+  14% { opacity: 1; } 86% { opacity: 1; }
+  to { transform: translate(-780px, -1120px) rotate(-8deg) scale(1.04); opacity: 0; }
 }
 
-/* PARADE — horizontal conveyor with a gentle bob */
+/* PARADE — horizontal conveyor of live devices, gentle bob */
 .mg-parade { position: absolute; inset: 0; display: flex; align-items: center; }
-.mg-parade-track { display: flex; align-items: center; gap: 3vw; animation: mg-march 30s linear infinite; will-change: transform; }
-.mg-parade-item { flex: 0 0 auto; width: 30vw; animation: mg-bob 3.6s ease-in-out infinite; }
+.mg-parade-track { display: flex; align-items: center; gap: 70px; padding: 0 40px; animation: mg-march 34s linear infinite; will-change: transform; }
+.mg-parade-item { flex: 0 0 auto; animation: mg-bob 3.6s ease-in-out infinite; }
 @keyframes mg-march { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@keyframes mg-bob { 0%,100% { transform: translateY(-2.4vh) rotate(-2deg); } 50% { transform: translateY(2.4vh) rotate(2deg); } }
+@keyframes mg-bob { 0%,100% { transform: translateY(-26px) rotate(-2deg); } 50% { transform: translateY(26px) rotate(2deg); } }
 
-/* ORBIT — ring revolving around a featured center */
+/* ORBIT — ring of live devices revolving around a featured center */
 .mg-orbit { position: absolute; inset: 0; display: grid; place-items: center; }
-.mg-ring { position: absolute; width: 0; height: 0; animation: mg-spin 26s linear infinite; }
-.mg-orbiter { position: absolute; width: 300px; margin: -150px; }
-.mg-orbiter-in { animation: mg-spin-rev 26s linear infinite; }
-.mg-center { width: 460px; animation: mg-breathe 5s ease-in-out infinite; z-index: 5; }
-.mg-center .mg-skin { filter: drop-shadow(0 40px 60px rgba(0,0,0,.7)); }
+.mg-ring { position: absolute; width: 0; height: 0; animation: mg-spin 28s linear infinite; }
+.mg-orbiter { position: absolute; left: 0; top: 0; }
+.mg-orbiter-in { animation: mg-spin-rev 28s linear infinite; transform-origin: center; }
+.mg-orbiter .device { margin: -170px 0 0 -115px; }   /* center the 230px device on the ring point */
+.mg-center { animation: mg-breathe 5s ease-in-out infinite; z-index: 5; }
+.mg-center .device .player { filter: drop-shadow(0 40px 60px rgba(0,0,0,.72)); }
 @keyframes mg-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 @keyframes mg-spin-rev { from { transform: rotate(0); } to { transform: rotate(-360deg); } }
 @keyframes mg-breathe { 0%,100% { transform: scale(.97); } 50% { transform: scale(1.04); } }
@@ -227,8 +224,8 @@ html, body, #root { margin: 0; padding: 0; background: #000; overflow: hidden; }
 /* CASCADE — springy staggered drop-in, then float loop */
 .mg-cascade { position: absolute; inset: 0; }
 .mg-drop {
-  position: absolute; width: 22%;
+  position: absolute;
   animation: mg-drop-in 1.1s cubic-bezier(.2,1.5,.4,1) both, mg-float 4.5s ease-in-out infinite;
 }
-@keyframes mg-drop-in { from { transform: translateY(-160vh) rotate(-20deg); } to { transform: translateY(0) rotate(0); } }
-@keyframes mg-float { 0%,100% { transform: translateY(-1.5vh) rotate(-2deg); } 50% { transform: translateY(1.5vh) rotate(2deg); } }
+@keyframes mg-drop-in { from { transform: translateY(-170vh) rotate(-18deg); } to { transform: translateY(0) rotate(0); } }
+@keyframes mg-float { 0%,100% { transform: translateY(-16px) rotate(-2deg); } 50% { transform: translateY(16px) rotate(2deg); } }

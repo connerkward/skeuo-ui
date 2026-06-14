@@ -28,7 +28,13 @@ const qp = (extra) => [PARAMS, extra].filter(Boolean).join("&");
 
 const browser = await chromium.launch({
   executablePath: CHROME,
-  args: ["--autoplay-policy=no-user-gesture-required", "--force-color-profile=srgb"],
+  args: [
+    "--autoplay-policy=no-user-gesture-required", "--force-color-profile=srgb",
+    // GPU-accelerate canvas/CSS-filter rendering so live composites don't drop
+    // frames during recording (a source of stutter in headless software raster)
+    "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=metal",
+    "--enable-features=Metal", "--disable-frame-rate-limit",
+  ],
 });
 
 async function still(url, outPath, settleMs = 2600) {
@@ -94,8 +100,8 @@ if (CMD === "hero") {
   // motion-graphics scene → smooth real-time mp4 + gif (no caption chrome)
   const scene = ARG3 || "streams";
   const url = `${BASE}?${qp(`mode=mg&scene=${scene}`)}`;
-  const webm = await record(url, Number(SECS) + 1.2, ".mg-skin");
-  transcode(webm, join(OUT, `${OUTNAME || `mg-${scene}`}-1080x1920`), Number(SECS), 1.2);
+  const webm = await record(url, Number(SECS) + 0.6, ".mg-skin");   // 0.6 preroll: keeps cascade's drop-in
+  transcode(webm, join(OUT, `${OUTNAME || `mg-${scene}`}-1080x1920`), Number(SECS), 0.6);
 } else if (["grid", "sprites", "fan", "center", "scatter"].includes(CMD)) {
   // any non-hero mode → one hi-res still (live spectra animate in the still).
   // OUTNAME lets variations of the same mode coexist (e.g. center-pebble).

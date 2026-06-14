@@ -3,17 +3,21 @@ import { Composite } from "../player/Composite";
 import { playerTemplate } from "../template/winamp-layout";
 import { useAspect } from "./cfg";
 
-// A single live skin sized to an explicit pixel height (width derives from the
-// real template aspect). Used by the artistic layouts (fan / center / scatter)
-// where each device is placed/rotated independently.
-export function Device({ skin, h }: { skin: string; h: number }) {
+// A single LIVE skin (real working controls + spectrum + screens). Size it by
+// pixel WIDTH (`w`, preferred — height follows the template aspect) or by pixel
+// HEIGHT (`h`, derives width from aspect). Used by the motion-graphics scenes so
+// the devices that stream past are the animated product, not static body art.
+export function Device({ skin, w, h, className, style }: {
+  skin: string; w?: number; h?: number; className?: string; style?: React.CSSProperties;
+}) {
   const aspect = useAspect(skin);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    ref.current?.style.setProperty("--w", `${Math.round(h * aspect)}px`);
-  }, [aspect, h]);
+    const px = w != null ? w : h != null ? Math.round(h * aspect) : 360;
+    ref.current?.style.setProperty("--w", `${px}px`);
+  }, [aspect, w, h]);
   return (
-    <div ref={ref} className="device">
+    <div ref={ref} className={`device ${className ?? ""}`} style={style}>
       <Composite template={playerTemplate} skinId={skin} />
     </div>
   );

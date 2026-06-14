@@ -1,41 +1,34 @@
+import { Device } from "./Device";
 import type { Cfg } from "./cfg";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MOTION-GRAPHICS SCENES — a multi-colored "product commercial" reel.
-// Each scene animates the skins as lightweight static body images on GPU
-// transforms (translate/rotate/scale) so capture is buttery-smooth at 60fps —
-// unlike the live composites, which can't sustain framerate with 20+ on screen.
-// Pick a scene with ?mode=mg&scene=streams|swarm|parade|orbit|cascade.
+// MOTION-GRAPHICS SCENES — a multi-colored "product commercial" reel of the
+// LIVE skins: real working buttons, screens, and the EQ spectrum moving as if to
+// music. Devices stream/orbit/parade on GPU transforms. Counts are kept moderate
+// so the live composites sustain framerate.
+//   ?mode=mg&scene=streams|swarm|parade|orbit|cascade
 // ─────────────────────────────────────────────────────────────────────────────
 
-// a vibrant, color-diverse pool (each has a transparent frame.png body)
 const POOL = [
   "frog", "bondi", "burger", "maw", "halo", "biomech", "wmp", "scarab",
-  "pebble", "obelisk", "vortex", "flesh", "spore", "slab", "toilet",
-  "tomato", "mexico",
+  "pebble", "obelisk", "vortex", "flesh", "tomato", "mexico", "slab",
 ];
-const FRAME = (id: string) => `/skins/${id}/frame.png?v=nb19`;
-const Skin = ({ id, className, style }: { id: string; className?: string; style?: React.CSSProperties }) => (
-  <img className={`mg-skin ${className ?? ""}`} src={FRAME(id)} alt="" draggable={false} style={style} />
-);
-
-// rotate the pool so each column/lane starts on a different color
 const slice = (start: number, n: number) =>
   Array.from({ length: n }, (_, i) => POOL[(start + i) % POOL.length]);
 
-/* STREAMS — vertical columns scrolling in alternating directions, varied speed.
-   Seamless: each column renders its set twice and translates 0 → -50%. */
+/* STREAMS — vertical columns of live devices scrolling in alternating
+   directions, varied speed. Seamless: each column renders its set twice. */
 function Streams({ cols }: { cols: number }) {
-  const dur = [26, 20, 30, 23, 28, 18, 24];
+  const dur = [24, 19, 28, 22, 26];
+  const w = Math.round((1080 - 80) / cols - 26);   // fit width, no horizontal clip
   return (
     <div className="mg-streams" style={{ ["--cols" as string]: cols }}>
       {Array.from({ length: cols }, (_, c) => {
-        const items = slice(c * 3, 6);
-        const up = c % 2 === 0;
+        const items = slice(c * 3, 2);
         return (
           <div className="mg-col" key={c}>
-            <div className={`mg-col-track ${up ? "up" : "down"}`} style={{ animationDuration: `${dur[c % dur.length]}s` }}>
-              {[...items, ...items].map((id, i) => <Skin id={id} key={i} />)}
+            <div className={`mg-col-track ${c % 2 === 0 ? "up" : "down"}`} style={{ animationDuration: `${dur[c % dur.length]}s` }}>
+              {[...items, ...items].map((id, i) => <Device key={i} skin={id} w={w} />)}
             </div>
           </div>
         );
@@ -44,29 +37,30 @@ function Streams({ cols }: { cols: number }) {
   );
 }
 
-/* SWARM — two crossing diagonal streams (↗ and ↘), eased, continuous. */
+/* SWARM — live devices flying on two crossing diagonals, eased, continuous. */
 function Swarm() {
-  const N = 7;
-  const lane = (dirClass: string, start: number) => (
-    <div className={`mg-diag ${dirClass}`}>
+  const N = 4;
+  const lane = (dir: string, start: number) => (
+    <div className={`mg-diag ${dir}`}>
       {slice(start, N).map((id, i) => (
-        <Skin id={id} key={i} className="mg-fly"
-          style={{ animationDelay: `${-(i * (14 / N)).toFixed(2)}s` }} />
+        <div className="mg-fly" key={i} style={{ animationDelay: `${-(i * (14 / N)).toFixed(2)}s` }}>
+          <Device skin={id} w={300} />
+        </div>
       ))}
     </div>
   );
-  return <div className="mg-swarm">{lane("ne", 0)}{lane("se", 5)}</div>;
+  return <div className="mg-swarm">{lane("ne", 0)}{lane("se", 6)}</div>;
 }
 
-/* PARADE — a horizontal conveyor of devices sliding across, gentle bob. */
+/* PARADE — a horizontal conveyor of live devices, gentle bob. */
 function Parade() {
-  const items = slice(0, 9);
+  const items = slice(0, 4);
   return (
     <div className="mg-parade">
       <div className="mg-parade-track">
         {[...items, ...items].map((id, i) => (
-          <div className="mg-parade-item" key={i} style={{ animationDelay: `${-(i * 0.4).toFixed(2)}s` }}>
-            <Skin id={id} />
+          <div className="mg-parade-item" key={i} style={{ animationDelay: `${-(i * 0.5).toFixed(2)}s` }}>
+            <Device skin={id} w={360} />
           </div>
         ))}
       </div>
@@ -74,36 +68,35 @@ function Parade() {
   );
 }
 
-/* ORBIT — a ring of skins revolving around a featured center, each counter-
-   rotating to stay upright. Premium hero turntable. */
+/* ORBIT — a ring of live skins revolving around a featured center, each
+   counter-rotating to stay upright. */
 function Orbit({ center }: { center: string }) {
-  const ring = slice(1, 8).filter((s) => s !== center);
+  const ring = slice(1, 7).filter((s) => s !== center).slice(0, 6);
   const n = ring.length;
   return (
     <div className="mg-orbit">
       <div className="mg-ring">
         {ring.map((id, i) => (
-          <div className="mg-orbiter" key={id} style={{ transform: `rotate(${(i / n) * 360}deg) translateY(-560px)` }}>
-            <div className="mg-orbiter-in"><Skin id={id} /></div>
+          <div className="mg-orbiter" key={id} style={{ transform: `rotate(${(i / n) * 360}deg) translateY(-580px)` }}>
+            <div className="mg-orbiter-in"><Device skin={id} w={230} /></div>
           </div>
         ))}
       </div>
-      <div className="mg-center"><Skin id={center} /></div>
+      <div className="mg-center"><Device skin={center} w={430} /></div>
     </div>
   );
 }
 
-/* CASCADE — skins fall in staggered with a springy ease, float-loop in a loose
-   grid. Bouncy, playful. */
+/* CASCADE — live devices fall in staggered with a springy ease, then float. */
 function Cascade() {
-  const items = slice(2, 12);
+  const items = slice(2, 8);
   return (
     <div className="mg-cascade">
       {items.map((id, i) => (
         <div className="mg-drop" key={i}
-          style={{ left: `${8 + (i % 4) * 24}%`, top: `${10 + Math.floor(i / 4) * 30}%`,
-            animationDelay: `${(i * 0.22).toFixed(2)}s` }}>
-          <Skin id={id} />
+          style={{ left: `${10 + (i % 3) * 30}%`, top: `${14 + Math.floor(i / 3) * 40}%`,
+            animationDelay: `${(i * 0.2).toFixed(2)}s` }}>
+          <Device skin={id} w={250} />
         </div>
       ))}
     </div>
@@ -116,6 +109,6 @@ export function MotionScenes({ scene, cfg, center }: { scene: string; cfg: Cfg; 
     scene === "parade" ? <Parade /> :
     scene === "orbit" ? <Orbit center={center ?? "maw"} /> :
     scene === "cascade" ? <Cascade /> :
-    <Streams cols={cfg.cols || 5} />;
+    <Streams cols={cfg.cols || 3} />;
   return <div className={`mg-stage scene-${scene}`}>{body}</div>;
 }
