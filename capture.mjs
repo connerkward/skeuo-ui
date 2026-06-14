@@ -42,7 +42,7 @@ async function still(url, outPath, settleMs = 2600) {
   console.log("still  ✓", outPath);
 }
 
-async function record(url, secs) {
+async function record(url, secs, waitSel = ".player .frame-layer") {
   // recordVideo.size MUST match the viewport, else Playwright places the page in
   // a corner and pads the rest GREY (and the 2× pixel load drops frames → choppy).
   // 1080×1920 @ DSF1 = full-frame, smooth, real-time; sharpness comes from the
@@ -54,7 +54,7 @@ async function record(url, secs) {
   const p = await ctx.newPage();
   const video = p.video();            // exact handle for THIS page's recording
   await p.goto(url, { waitUntil: "networkidle" });
-  await p.waitForSelector(".player .frame-layer", { timeout: 15000 }).catch(() => {});
+  await p.waitForSelector(waitSel, { timeout: 15000 }).catch(() => {});
   await sleep(secs * 1000);
   await p.close();                    // finalizes the webm
   const webm = await video.path();    // no guessing — the precise file
@@ -66,9 +66,9 @@ async function record(url, secs) {
 // + fonts load); we record PREROLL extra and seek past it so the clip opens on a
 // fully-rendered, already-animating frame.
 const PREROLL = 2.0;
-function transcode(webm, base, secs) {
+function transcode(webm, base, secs, preroll = PREROLL) {
   const mp4 = `${base}.mp4`, gif = `${base}.gif`, pal = join(tmp, "pal.png");
-  const ss = ["-ss", String(PREROLL), "-t", String(secs)];
+  const ss = ["-ss", String(preroll), "-t", String(secs)];
   // 1080×1920 native; a light unsharp recovers the VP8 softness without grey
   const SHARP = "unsharp=5:5:0.9:5:5:0.0";
   execFileSync("ffmpeg", ["-y", ...ss, "-i", webm, "-vf", SHARP,
@@ -90,6 +90,12 @@ if (CMD === "hero") {
     const webm = await record(url, Number(SECS) + PREROLL);
     transcode(webm, join(OUT, `hero-${skin}-1080x1920`), Number(SECS));
   }
+} else if (CMD === "mg") {
+  // motion-graphics scene → smooth real-time mp4 + gif (no caption chrome)
+  const scene = ARG3 || "streams";
+  const url = `${BASE}?${qp(`mode=mg&scene=${scene}`)}`;
+  const webm = await record(url, Number(SECS) + 1.2, ".mg-skin");
+  transcode(webm, join(OUT, `${OUTNAME || `mg-${scene}`}-1080x1920`), Number(SECS), 1.2);
 } else if (["grid", "sprites", "fan", "center", "scatter"].includes(CMD)) {
   // any non-hero mode → one hi-res still (live spectra animate in the still).
   // OUTNAME lets variations of the same mode coexist (e.g. center-pebble).

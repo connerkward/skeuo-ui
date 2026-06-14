@@ -67,6 +67,17 @@ MATERIAL = {
     "halo":    ("Halo 2 UNSC military hardware: olive-drab armored metal plating with scuffed "
                 "edges, hex bolts, vents, layered angular armor ridges, amber-orange holographic "
                 "tick marks and warning chevrons glowing from recesses."),
+    # cute tomato — plump glossy ripe-tomato body, leafy stem crown, fresh & friendly
+    "tomato":  ("a cute plump ripe TOMATO: glossy waxy tomato-red skin with dewy soft-box "
+                "highlights and subtle deeper-red mottling, a fresh green leafy calyx stem crown on "
+                "top, friendly rounded chubby form, bright spring-green glossy plastic hardware "
+                "accents, clean and adorable."),
+    # Mexico soccer (NO humans) — El Tri tricolor + football paneling, gold crest accents
+    "mexico":  ("Mexico national football (soccer) theme, ABSOLUTELY NO people or figures: bold "
+                "green-white-red tricolor panels, classic black-and-white soccer-ball pentagon "
+                "paneling, stitched leather and athletic jersey-mesh fabric textures, a golden "
+                "embroidered eagle crest emblem, polished gold trophy-metal hardware accents, "
+                "stadium-floodlit sheen."),
 }
 
 STYLE_PROMPT = (

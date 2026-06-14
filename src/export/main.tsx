@@ -4,6 +4,7 @@ import { ExportStage } from "./ExportStage";
 import { GridSheet } from "./GridSheet";
 import { SpriteSheet } from "./SpriteSheet";
 import { FanSheet, CenterSheet, ScatterSheet } from "./Layouts";
+import { MotionScenes } from "./MotionScenes";
 import { readCfg, cssVars } from "./cfg";
 // the export pages reuse the live player + every skin's CSS
 import "../skins/app.css";
@@ -29,6 +30,7 @@ const body =
   mode === "fan" ? <FanSheet cfg={cfg} /> :
   mode === "center" ? <CenterSheet cfg={cfg} center={q.get("center") ?? undefined} /> :
   mode === "scatter" ? <ScatterSheet cfg={cfg} /> :
+  mode === "mg" ? <MotionScenes scene={q.get("scene") ?? "streams"} cfg={cfg} center={q.get("center") ?? undefined} /> :
   <ExportStage skin={skin} cfg={cfg} />;
 
 createRoot(document.getElementById("root")!).render(

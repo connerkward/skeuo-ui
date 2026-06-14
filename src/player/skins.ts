@@ -90,6 +90,10 @@ export const skinList: SkinAssets[] = [
   { id: "flesh",  name: "Flayed One ✦",   blurb: "Wet muscle & sinew, bone-plate hardware", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/flesh/template.json" },
   { id: "scarab", name: "Scarab ✦",       blurb: "Black iridescent carapace, crimson seams", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/scarab/template.json" },
   { id: "spore",  name: "Spore Mother ✦", blurb: "Cordyceps growths, gill ridges, amber glow", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/spore/template.json" },
+
+  // themed ✦ — generated-from-prompt bodies (radial), sprites via a donor style
+  { id: "tomato", name: "Tomato ✦",       blurb: "Cute ripe-tomato pod, leafy stem crown", has: ["frame"], live: true, style: "frog",   templateUrl: "/skins/tomato/template.json" },
+  { id: "mexico", name: "El Tri ✦",       blurb: "Mexico football: tricolor, eagle crest, no humans", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/mexico/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
