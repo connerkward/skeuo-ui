@@ -103,12 +103,35 @@ function Cascade() {
   );
 }
 
+/* FAN — live devices fanned like a hand of cards (center frontmost). When
+   `animated`, the cards deal OUT from a collapsed stack and gather back in on an
+   eased loop; otherwise the fan is held static while every device keeps animating
+   its own UI (EQ spectrum, marquee). */
+function Fan({ animated }: { animated: boolean }) {
+  const skins = ["frog", "bondi", "maw", "halo", "wmp", "burger", "biomech"];
+  const n = skins.length;
+  return (
+    <div className={`mg-fan ${animated ? "anim" : ""}`}>
+      {skins.map((id, i) => {
+        const k = i - (n - 1) / 2;
+        const dx = Math.round(k * 210), dy = -Math.round(Math.abs(k) * 58), ang = k * 9;
+        const z = 100 - Math.round(Math.abs(k) * 10);
+        const vars = { ["--dx" as string]: `${dx}px`, ["--dy" as string]: `${dy}px`, ["--ang" as string]: `${ang}deg`,
+          zIndex: z, animationDelay: `${(Math.abs(k) * 0.12).toFixed(2)}s` } as React.CSSProperties;
+        return <div className="fan-card" key={id} style={vars}><Device skin={id} w={360} /></div>;
+      })}
+    </div>
+  );
+}
+
 export function MotionScenes({ scene, cfg, center }: { scene: string; cfg: Cfg; center?: string }) {
   const body =
     scene === "swarm" ? <Swarm /> :
     scene === "parade" ? <Parade /> :
     scene === "orbit" ? <Orbit center={center ?? "maw"} /> :
     scene === "cascade" ? <Cascade /> :
+    scene === "fan" ? <Fan animated={false} /> :
+    scene === "fanout" ? <Fan animated={true} /> :
     <Streams cols={cfg.cols || 3} />;
   return <div className={`mg-stage scene-${scene}`}>{body}</div>;
 }
