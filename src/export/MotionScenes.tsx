@@ -13,18 +13,19 @@ const POOL = [
   "frog", "bondi", "burger", "maw", "halo", "biomech", "wmp", "scarab",
   "pebble", "obelisk", "vortex", "flesh", "tomato", "mexico", "slab",
 ];
-const slice = (start: number, n: number) =>
-  Array.from({ length: n }, (_, i) => POOL[(start + i) % POOL.length]);
+const slice = (arr: string[], start: number, n: number) =>
+  Array.from({ length: n }, (_, i) => arr[(start + i) % arr.length]);
 
 /* STREAMS — vertical columns of live devices scrolling in alternating
    directions, varied speed. Seamless: each column renders its set twice. */
-function Streams({ cols }: { cols: number }) {
+function Streams({ cols, skins }: { cols: number; skins: string[] }) {
   const dur = [24, 19, 28, 22, 26];
   const w = Math.round((1080 - 80) / cols - 26);   // fit width, no horizontal clip
+  const per = Math.max(2, Math.ceil(skins.length / cols));
   return (
     <div className="mg-streams" style={{ ["--cols" as string]: cols }}>
       {Array.from({ length: cols }, (_, c) => {
-        const items = slice(c * 3, 2);
+        const items = slice(skins, c * per, per);
         return (
           <div className="mg-col" key={c}>
             <div className={`mg-col-track ${c % 2 === 0 ? "up" : "down"}`} style={{ animationDuration: `${dur[c % dur.length]}s` }}>
@@ -42,7 +43,7 @@ function Swarm() {
   const N = 4;
   const lane = (dir: string, start: number) => (
     <div className={`mg-diag ${dir}`}>
-      {slice(start, N).map((id, i) => (
+      {slice(POOL, start, N).map((id, i) => (
         <div className="mg-fly" key={i} style={{ animationDelay: `${-(i * (14 / N)).toFixed(2)}s` }}>
           <Device skin={id} w={300} />
         </div>
@@ -53,8 +54,8 @@ function Swarm() {
 }
 
 /* PARADE — a horizontal conveyor of live devices, gentle bob. */
-function Parade() {
-  const items = slice(0, 4);
+function Parade({ skins }: { skins: string[] }) {
+  const items = skins.length <= 6 ? skins : slice(skins, 0, 5);
   return (
     <div className="mg-parade">
       <div className="mg-parade-track">
@@ -70,8 +71,8 @@ function Parade() {
 
 /* ORBIT — a ring of live skins revolving around a featured center, each
    counter-rotating to stay upright. */
-function Orbit({ center }: { center: string }) {
-  const ring = slice(1, 7).filter((s) => s !== center).slice(0, 6);
+function Orbit({ center, skins }: { center: string; skins: string[] }) {
+  const ring = skins.filter((s) => s !== center).slice(0, 6);
   const n = ring.length;
   return (
     <div className="mg-orbit">
@@ -89,7 +90,7 @@ function Orbit({ center }: { center: string }) {
 
 /* CASCADE — live devices fall in staggered with a springy ease, then float. */
 function Cascade() {
-  const items = slice(2, 8);
+  const items = slice(POOL, 2, 8);
   return (
     <div className="mg-cascade">
       {items.map((id, i) => (
@@ -126,15 +127,16 @@ function Fan({ mode, anchor }: { mode: "static" | "out" | "in"; anchor: "center"
 }
 
 export function MotionScenes({ scene, cfg, center }: { scene: string; cfg: Cfg; center?: string }) {
+  const P = cfg.skins && cfg.skins.length ? cfg.skins : POOL;
   const body =
     scene === "swarm" ? <Swarm /> :
-    scene === "parade" ? <Parade /> :
-    scene === "orbit" ? <Orbit center={center ?? "maw"} /> :
+    scene === "parade" ? <Parade skins={P} /> :
+    scene === "orbit" ? <Orbit center={center ?? "maw"} skins={P} /> :
     scene === "cascade" ? <Cascade /> :
     scene === "fan" ? <Fan mode="static" anchor="center" /> :
     scene === "fanout" ? <Fan mode="out" anchor="center" /> :
     scene === "fanbottom" ? <Fan mode="static" anchor="bottom" /> :
     scene === "fanin" ? <Fan mode="in" anchor="bottom" /> :
-    <Streams cols={cfg.cols || 3} />;
+    <Streams cols={cfg.cols || 3} skins={P} />;
   return <div className={`mg-stage scene-${scene}`}>{body}</div>;
 }

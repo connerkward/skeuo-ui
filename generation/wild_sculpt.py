@@ -127,10 +127,12 @@ def gen_silhouette(brief, out_id, sil_path=None):
 ENVELOPE_PROMPT = (
     "Keep every dark control socket, round well, ring groove and dark screen EXACTLY where it is, "
     "pixel-identical, unchanged. Around and BEHIND them, paint ONE flat solid dark-gray SILHOUETTE "
-    "shape on the pure white background: the outline of {brief}. The silhouette must fully CONTAIN "
-    "every socket and screen with generous margin on all sides, and its wild parts — horns, fins, "
-    "tendrils, legs, jaws — grow outward from that mass. Completely flat dark-gray fill, no interior "
-    "detail, no shading, no outline strokes. Everything else stays pure white."
+    "shape on the pure white background: the outline of {brief}. If a REFERENCE image is provided, "
+    "the silhouette MUST closely follow that reference character's distinctive OUTLINE — its head "
+    "shape, body proportions, ears/horns, arms, legs, tail and pose — NOT a generic rounded blob. "
+    "The silhouette must still fully CONTAIN every socket and screen with margin; grow/inflate the "
+    "reference's body where needed so the controls fit inside it. Completely flat dark-gray fill, no "
+    "interior detail, no shading, no outline strokes. Everything else stays pure white."
 )
 
 def layout_radial():
@@ -268,18 +270,19 @@ def layout_manray():
                      "layer": kw.pop("layer", "components"),
                      "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
     cx = W/2
-    # wide visualizer set into the flat manta-ray head
-    vw, vh = W*0.56, H*0.130
-    add("visualizer", "display", cx-vw/2, H*0.135, vw, vh,
+    # leave the UPPER head (top ~18%) free for the character's big eyes — the
+    # visualizer sits on the chest below the face, not over the eyes
+    vw, vh = W*0.54, H*0.120
+    add("visualizer", "display", cx-vw/2, H*0.255, vw, vh,
         content="dynamic", layer="screen", dynamicType="visualizer")
-    # marquee strip under the head
-    add("marquee", "display", cx-W*0.30, H*0.305, W*0.60, 46,
+    # marquee strip under the visualizer
+    add("marquee", "display", cx-W*0.30, H*0.395, W*0.60, 46,
         content="dynamic", layer="screen", dynamicType="marquee")
-    # NOVEL 'bolt' scrub spanning the chest — a rect well; React draws a zigzag path
-    sw, sh = W*0.62, H*0.090
-    add("seek", "slider-path", cx-sw/2, H*0.385, sw, sh, bind="seek", label="Seek")
+    # NOVEL 'bolt' scrub — a rect well; React draws a zigzag path
+    sw, sh = W*0.62, H*0.085
+    add("seek", "slider-path", cx-sw/2, H*0.46, sw, sh, bind="seek", label="Seek")
     # transport: SHUFFLE toggle · PLAY (dominant) · NEXT
-    by = H*0.58
+    by = H*0.62
     play_d = W*0.205
     add("play", "button", cx-play_d/2, by, play_d, play_d, bind="play", label="play", shape="ellipse")
     nd = W*0.115
@@ -322,10 +325,12 @@ def region_mask(regs):
             d.rectangle([x0, y0, x1, y1], fill=255)
     return ndimage.binary_dilation(np.asarray(img) > 0, iterations=10)
 
-def gen_envelope(wells_img, brief, out_id):
+def gen_envelope(wells_img, brief, out_id, ref_urls=None):
     tmp = os.path.join(G.HERE, f"_wells-{out_id}.png"); wells_img.save(tmp)
     cu = G.upload(tmp)
-    job = G.submit(cu, ENVELOPE_PROMPT.format(brief=brief))
+    # ref_urls (the reference character) steer the SHAPE of the grown silhouette so
+    # it follows the reference's outline instead of a generic blob
+    job = G.submit(cu, ENVELOPE_PROMPT.format(brief=brief), ref_urls or [])
     t0 = time.time()
     while True:
         s = G.get(job["status_url"]).get("status")
@@ -569,6 +574,9 @@ def usable(regs):
             d["marquee"]["w"] >= 0.15)
 
 def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
+    # upload refs up front — they steer BOTH the grown silhouette shape (envelope)
+    # and the paint palette/material, so the body follows the reference character
+    ref_urls = [G.upload(p) for p in (refs or []) if os.path.exists(p)]
     if variant in ("radial", "capsule", "minimal", "manray"):
         # LAYOUT FIRST: the arc-native template exists before any body does;
         # the image model grows the creature AROUND the drawn controls
@@ -578,7 +586,7 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
         wells = draw_wells_only(regs)
         rmask = region_mask(regs)
         for attempt in range(3):
-            mask = gen_envelope(wells, brief, out_id)
+            mask = gen_envelope(wells, brief, out_id, ref_urls)
             if mask is not None:
                 mask = ndimage.binary_fill_holes(mask | rmask)
             if mask is not None and covers(mask, regs):
@@ -598,9 +606,8 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
     bp = draw_blueprint(mask, regs)
     bp_path = os.path.join(G.HERE, f"_sculpt-{out_id}.png"); bp.save(bp_path)
     cu = G.upload(bp_path)
-    # reference-style images steer the paint pass (material/color/detail) while
-    # the blueprint stays the layout authority — uploaded as extra image_urls
-    ref_urls = [G.upload(p) for p in (refs or []) if os.path.exists(p)]
+    # ref_urls (computed above) also steer the paint pass (material/color/detail)
+    # while the blueprint stays the layout authority — passed as extra image_urls
     prompt = STYLE_PROMPT + MATERIAL.get(style, MATERIAL["winamp"])
     if ref_urls:
         prompt += (" Borrow the palette, materials and surface-detail vocabulary "
