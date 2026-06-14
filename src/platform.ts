@@ -25,11 +25,22 @@ export function initialSkinParam(): string | null {
 }
 
 // OAuth redirect target. The website registers its own origin with Spotify; the
-// desktop app registers the custom scheme and catches the callback via the
-// deep-link plugin. Spotify requires an EXACT match for whichever we send.
+// desktop app uses a LOOPBACK redirect (Spotify rejects custom schemes like
+// skeuo://) — a one-shot 127.0.0.1 listener in Rust captures the code. Spotify
+// requires an EXACT match for whichever we send, so this must match the
+// dashboard exactly. Keep the port in sync with oauth_loopback() in lib.rs.
+export const DESKTOP_REDIRECT = "http://127.0.0.1:14565/callback";
 export function redirectUri(): string {
-  if (isTauri()) return "skeuo://callback";
+  if (isTauri()) return DESKTOP_REDIRECT;
   return window.location.origin + "/";
+}
+
+// Desktop only: start the loopback listener and resolve with the full callback
+// URL (http://127.0.0.1:14565/callback?code=...) once the system browser
+// redirects to it. Bind BEFORE opening the browser so the redirect isn't missed.
+export async function awaitDesktopCallback(): Promise<string> {
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<string>("oauth_loopback");
 }
 
 // Open an external URL. On the web we just navigate the page to Spotify's

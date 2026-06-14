@@ -119,10 +119,13 @@ How it works:
   `.app`, not `tauri dev`.
 - **Spotify on desktop.** Reuses `src/spotify/*` unchanged; only the OAuth edges
   differ (`src/platform.ts`): the widget opens `/authorize` in the system browser
-  and catches the return via `skeuo://callback` (same PKCE, no secret). The
-  browser-only Web Playback SDK ("play here") is disabled — desktop controls the
-  active device. Register `skeuo://callback` as a redirect URI in the Spotify
-  dashboard alongside the web origins.
+  and catches the return on a one-shot **`127.0.0.1:14565` loopback** listener
+  (`oauth_loopback` in `src-tauri/src/lib.rs`) — Spotify rejects custom-scheme
+  (`skeuo://`) redirects, so loopback is the native-app path (same PKCE, no
+  secret). The browser-only Web Playback SDK ("play here") is disabled — desktop
+  controls the active device. Register `http://127.0.0.1:14565/callback` as a
+  redirect URI in the dashboard alongside the web origins. (`skeuo://` is still
+  used for the skin handoff — just not for OAuth.)
 
 ## Regenerating
 

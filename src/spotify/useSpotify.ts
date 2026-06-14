@@ -18,6 +18,7 @@ import * as api from "./api";
 import { NoActiveDeviceError, type PlaybackState, type SimplifiedPlaylist, type SpotifyTrack } from "./api";
 import { initWebPlaybackSDK, type SdkHandle } from "./sdk";
 import type { Track } from "../player/data";
+import { isTauri, awaitDesktopCallback } from "../platform";
 
 // The interface usePlayer reads when Spotify-connected. All transport methods
 // are fire-and-forget against the Web API; reflected state comes from polling.
@@ -208,6 +209,22 @@ export function useSpotify() {
   // ---- public actions -----------------------------------------------------
   const login = useCallback(() => {
     setStatus("connecting");
+    if (isTauri()) {
+      // Desktop: Spotify rejects custom-scheme redirects, so we open the system
+      // browser and catch the code on a 127.0.0.1 loopback. Bind the listener
+      // BEFORE opening the browser so the redirect can't beat us to it.
+      void (async () => {
+        try {
+          const cb = awaitDesktopCallback();
+          await beginLogin();
+          const url = await cb;
+          await handleRedirectCallback(url);
+          const t = await getAccessToken();
+          setStatus(t ? "connected" : "disconnected");
+        } catch (e) { setError((e as Error).message); setStatus("error"); }
+      })();
+      return;
+    }
     void beginLogin().catch((e) => { setError((e as Error).message); setStatus("error"); });
   }, []);
 

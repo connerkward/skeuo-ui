@@ -39,6 +39,42 @@ const SKINS: &[(&str, &str)] = &[
 // sync (the OS has no reliable getter we depend on).
 struct AlwaysOnTop(AtomicBool);
 
+// One-shot loopback listener for the desktop OAuth redirect. Spotify rejects
+// custom-scheme redirect URIs (skeuo://), so the desktop flow registers
+// http://127.0.0.1:14565/callback; we bind it, capture the ?code=... that the
+// system browser redirects to, reply with a small "you can close this" page,
+// and hand the full callback URL back to JS for the PKCE token exchange.
+#[tauri::command]
+async fn oauth_loopback() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+        let listener = TcpListener::bind("127.0.0.1:14565").map_err(|e| e.to_string())?;
+        let (mut stream, _) = listener.accept().map_err(|e| e.to_string())?;
+        let mut buf = [0u8; 4096];
+        let n = stream.read(&mut buf).map_err(|e| e.to_string())?;
+        let req = String::from_utf8_lossy(&buf[..n]);
+        // first request line: "GET /callback?code=... HTTP/1.1"
+        let path = req
+            .lines()
+            .next()
+            .and_then(|l| l.split_whitespace().nth(1))
+            .unwrap_or("/")
+            .to_string();
+        let body = "<!doctype html><meta charset=utf-8><body style=\"font:16px -apple-system,system-ui,sans-serif;padding:48px;color:#222\">Skeuo is connected to Spotify. You can close this tab and return to the widget.</body>";
+        let resp = format!(
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            body.len(),
+            body
+        );
+        let _ = stream.write_all(resp.as_bytes());
+        let _ = stream.flush();
+        Ok(format!("http://127.0.0.1:14565{path}"))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -60,6 +96,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         // remembers the widget's position + size across reopens
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .invoke_handler(tauri::generate_handler![oauth_loopback])
         .manage(AlwaysOnTop(AtomicBool::new(false)))
         .setup(|app| {
             // make sure skeuo:// resolves to us on dev / first run (on macOS the

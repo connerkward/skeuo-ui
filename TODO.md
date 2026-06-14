@@ -28,8 +28,14 @@
       machine's keychain and no `APPLE_ID/APPLE_PASSWORD/APPLE_TEAM_ID` in env. Current
       `.dmg` is ad-hoc-signed (Gatekeeper right-click→Open). Install your cert + set those
       env vars, then `scripts/build-desktop.sh`.
-- [ ] **Spotify redirect URI**: add `skeuo://callback` in the dashboard alongside the web
-      origins (and set `VITE_SPOTIFY_CLIENT_ID`) to live-test desktop Spotify.
+- [x] **Spotify app configured** (2026-06-13): reused the existing `testapp` (dev-app limit
+      hit). Client ID `98e0d056151a4f84b42fefef4b9441e8` in `.env.local`. Redirect URIs:
+      `http://127.0.0.1:5173/`, `https://skeuo-ui.pages.dev/`, `http://127.0.0.1:14565/callback`.
+      APIs: Web API + Web Playback SDK. **Spotify rejects custom schemes** (`skeuo://callback`),
+      so desktop OAuth uses a 127.0.0.1:14565 **loopback** listener (`oauth_loopback` in lib.rs)
+      instead. Set `VITE_SPOTIFY_CLIENT_ID` in the Cloudflare Pages env for prod web.
+- [ ] **Live-test the Spotify flow** end-to-end (web: restart dev; desktop: Connect Spotify in
+      the rebuilt app → browser → loopback → active-device control).
 
 ## Done (2026-06-12)
 - [x] Round dial screens filled — radial spectrum + center clock/track (was a black void).
