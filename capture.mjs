@@ -1,13 +1,14 @@
 // Headless capture harness for the skeuo-ui IG-story export pages.
-// Chromium launches with autoplay allowed so the WebAudio spectrum runs live.
 //
-//   node capture.mjs hero    <outDir> <skin1,skin2,...> [paramStr] [secs]
-//   node capture.mjs grid    <outDir> [skins|-]         [paramStr]
-//   node capture.mjs sprites <outDir> [skins|-]         [paramStr]
+//   node capture.mjs hero    <outDir> <skin1,skin2,...> [paramStr] [secs] [name]
+//   node capture.mjs mg      <outDir> <scene>           [paramStr] [secs] [name]
+//   node capture.mjs grid|sprites|fan|center|scatter <outDir> [skins|-] [paramStr]
 //
-// paramStr = extra URL query, e.g. "ts=1.1&mg=56&cols=2&gap=20".
-// hero → 1080×1920 @2x still + full-fps mp4 + 12fps gif.
-// grid/sprites → 1080×1920 @2x still (live spectra animate in the still).
+// VIDEO is captured by DETERMINISTIC FRAME-STEPPING, not real-time recording:
+// CDP virtual time freezes the page clock and advances it exactly 1/fps per
+// frame, screenshotting each step. Every frame is fully rendered regardless of
+// how heavy the scene is, so there are ZERO dropped frames → no stutter, ever —
+// and screenshots are @2x (sharp) with no grey. JPEG keeps it ~105ms/frame.
 import pw from "/Users/conner/.npm/_npx/9833c18b2d85bc59/node_modules/playwright/index.js";
 const { chromium } = pw;
 import { execFileSync } from "node:child_process";
@@ -17,11 +18,11 @@ import { join } from "node:path";
 const CHROME = "/Users/conner/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing";
 const BASE = "http://localhost:5210/export.html";
 const W = 1080, H = 1920;
+const FPS = 30;            // deterministic output framerate
+const WARMUP_MS = 900;     // advance virtual time before frame 0 (skip unpainted opening, get animations mid-flight)
 
 const [, , CMD, OUT = "/tmp/skeuo-ig", ARG3 = "", PARAMS = "", SECS = "8", OUTNAME = ""] = process.argv;
 mkdirSync(OUT, { recursive: true });
-// per-process tmp so parallel capture.mjs runs (same OUT) don't share pal.png
-// or rmSync each other's scratch dir mid-flight
 const tmp = join(OUT, `_tmp-${process.pid}`); mkdirSync(tmp, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const qp = (extra) => [PARAMS, extra].filter(Boolean).join("&");
@@ -30,13 +31,12 @@ const browser = await chromium.launch({
   executablePath: CHROME,
   args: [
     "--autoplay-policy=no-user-gesture-required", "--force-color-profile=srgb",
-    // GPU-accelerate canvas/CSS-filter rendering so live composites don't drop
-    // frames during recording (a source of stutter in headless software raster)
     "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=metal",
     "--enable-features=Metal", "--disable-frame-rate-limit",
   ],
 });
 
+// ── high-res still (@2x poster) ──────────────────────────────────────────────
 async function still(url, outPath, settleMs = 2600) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
   const p = await ctx.newPage();
@@ -48,63 +48,61 @@ async function still(url, outPath, settleMs = 2600) {
   console.log("still  ✓", outPath);
 }
 
-async function record(url, secs, waitSel = ".player .frame-layer") {
-  // recordVideo.size MUST match the viewport, else Playwright places the page in
-  // a corner and pads the rest GREY (and the 2× pixel load drops frames → choppy).
-  // 1080×1920 @ DSF1 = full-frame, smooth, real-time; sharpness comes from the
-  // encode (unsharp + low crf) in transcode(), not from oversizing the recorder.
-  const ctx = await browser.newContext({
-    viewport: { width: W, height: H }, deviceScaleFactor: 1,
-    recordVideo: { dir: tmp, size: { width: W, height: H } },
+// ── deterministic frame-stepped capture (the smooth pipeline) ────────────────
+async function captureFrames(url, secs, waitSel) {
+  const dir = join(tmp, `fr-${Date.now()}`); mkdirSync(dir, { recursive: true });
+  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
+  const page = await ctx.newPage();
+  await page.goto(url, { waitUntil: "networkidle" });
+  await page.waitForSelector(waitSel, { timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => document.fonts.ready).catch(() => {});
+  const cdp = await ctx.newCDPSession(page);
+  const step = (budget) => new Promise(async (res) => {
+    cdp.once("Emulation.virtualTimeBudgetExpired", res);
+    await cdp.send("Emulation.setVirtualTimePolicy", { policy: "advance", budget });
   });
-  const p = await ctx.newPage();
-  const video = p.video();            // exact handle for THIS page's recording
-  await p.goto(url, { waitUntil: "networkidle" });
-  await p.waitForSelector(waitSel, { timeout: 15000 }).catch(() => {});
-  await sleep(secs * 1000);
-  await p.close();                    // finalizes the webm
-  const webm = await video.path();    // no guessing — the precise file
+  await cdp.send("Emulation.setVirtualTimePolicy", { policy: "pause" });
+  await step(WARMUP_MS);
+  const N = Math.round(secs * FPS), frameMs = 1000 / FPS;
+  for (let i = 0; i < N; i++) {
+    await step(frameMs);
+    await page.screenshot({ path: join(dir, `f${String(i).padStart(5, "0")}.jpg`), type: "jpeg", quality: 92, animations: "allow" });
+  }
   await ctx.close();
-  return webm;
+  return { dir, n: N };
 }
 
-// PREROLL = seconds trimmed from the head (the blank period before React paints
-// + fonts load); we record PREROLL extra and seek past it so the clip opens on a
-// fully-rendered, already-animating frame.
-const PREROLL = 2.0;
-function transcode(webm, base, secs, preroll = PREROLL) {
+// frames → sharp 1080×1920 H.264 (supersampled from @2x) + 15fps gif
+function encodeFrames(dir, base) {
   const mp4 = `${base}.mp4`, gif = `${base}.gif`, pal = join(tmp, "pal.png");
-  const ss = ["-ss", String(preroll), "-t", String(secs)];
-  // 1080×1920 native; a light unsharp recovers the VP8 softness without grey
-  const SHARP = "unsharp=5:5:0.9:5:5:0.0";
-  execFileSync("ffmpeg", ["-y", ...ss, "-i", webm, "-vf", SHARP,
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "15", "-preset", "slow",
+  const SRC = ["-framerate", String(FPS), "-i", join(dir, "f%05d.jpg")];
+  const SHARP = "scale=1080:1920:flags=lanczos,unsharp=5:5:0.7:5:5:0.0";
+  execFileSync("ffmpeg", ["-y", ...SRC, "-vf", SHARP,
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "16", "-preset", "slow",
     "-movflags", "+faststart", "-an", mp4], { stdio: "ignore" });
   console.log("mp4    ✓", mp4);
-  execFileSync("ffmpeg", ["-y", ...ss, "-i", webm,
-    "-vf", `fps=15,${SHARP},scale=900:1600:flags=lanczos,palettegen=stats_mode=diff`, pal], { stdio: "ignore" });
-  execFileSync("ffmpeg", ["-y", ...ss, "-i", webm, "-i", pal,
-    "-lavfi", `fps=15,${SHARP},scale=900:1600:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3`, gif],
-    { stdio: "ignore" });
+  execFileSync("ffmpeg", ["-y", ...SRC, "-vf",
+    `fps=15,${SHARP},palettegen=stats_mode=diff`, pal], { stdio: "ignore" });
+  execFileSync("ffmpeg", ["-y", ...SRC, "-i", pal,
+    "-lavfi", `fps=15,${SHARP}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3`, gif], { stdio: "ignore" });
   console.log("gif    ✓", gif);
+  rmSync(dir, { recursive: true, force: true });
 }
 
+// ── dispatch ─────────────────────────────────────────────────────────────────
 if (CMD === "hero") {
   for (const skin of ARG3.split(",").filter(Boolean)) {
     const url = `${BASE}?${qp(`mode=hero&skin=${skin}`)}`;
     await still(url, join(OUT, `hero-${skin}-1080x1920@2x.png`));
-    const webm = await record(url, Number(SECS) + PREROLL);
-    transcode(webm, join(OUT, `hero-${skin}-1080x1920`), Number(SECS));
+    const { dir } = await captureFrames(url, Number(SECS), ".player .frame-layer");
+    encodeFrames(dir, join(OUT, `hero-${skin}-1080x1920`));
   }
 } else if (CMD === "mg") {
-  // motion-graphics scene → smooth real-time mp4 + gif (no caption chrome)
   const scene = ARG3 || "streams";
   const url = `${BASE}?${qp(`mode=mg&scene=${scene}`)}`;
-  const webm = await record(url, Number(SECS) + 1.3, ".mg-skin");   // 1.3 preroll skips the unpainted opening
-  transcode(webm, join(OUT, `${OUTNAME || `mg-${scene}`}-1080x1920`), Number(SECS), 1.3);
+  const { dir } = await captureFrames(url, Number(SECS), ".device");
+  encodeFrames(dir, join(OUT, `${OUTNAME || `mg-${scene}`}-1080x1920`));
 } else if (["grid", "sprites", "fan", "center", "scatter"].includes(CMD)) {
-  // any non-hero mode → one hi-res still (live spectra animate in the still).
-  // OUTNAME lets variations of the same mode coexist (e.g. center-pebble).
   const extra = ARG3 && ARG3 !== "-" ? `skins=${ARG3}` : "";
   const name = OUTNAME || CMD;
   await still(`${BASE}?${qp([`mode=${CMD}`, extra].filter(Boolean).join("&"))}`,
