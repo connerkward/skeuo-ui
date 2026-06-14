@@ -266,6 +266,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
   if (r.kind === "xy") return <XYPad ps={ps} baked={false} />;
   if (r.kind === "slider-h") return <SliderH r={r} ps={ps} skinId={skinId} />;
   if (r.kind === "slider-arc") return <SliderArc r={r} ps={ps} />;
+  if (r.kind === "slider-path") return <SliderPath r={r} ps={ps} />;
   if (r.kind === "slider-v") return <SliderV r={r} ps={ps} skinId={skinId} />;
   return null;
 }
@@ -465,6 +466,43 @@ function SliderArc({ r, ps }: { r: Region; ps: PlayerState }) {
         <path className="arc-fill" d={`M ${sx} ${sy} A ${R} ${R} 0 ${a1 - a0 > 180 && value > 0.5 ? 1 : 0} 1 ${tx} ${ty}`} />
         <circle className="arc-thumb" cx={tx} cy={ty} r="4.6" />
       </svg>
+    </div>
+  );
+}
+
+/* ---------- bolt seek: the thumb rides a zigzag lightning path ---------- */
+function SliderPath({ r, ps }: { r: Region; ps: PlayerState }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef(false);
+  const value = ps.track.seconds ? ps.elapsed / ps.track.seconds : 0;
+  const set = (clientX: number) => {
+    const rc = ref.current?.getBoundingClientRect(); if (!rc) return;
+    ps.seekTo(Math.max(0, Math.min(1, (clientX - rc.left) / rc.width)));
+  };
+  useEffect(() => {
+    const m = (e: PointerEvent) => drag.current && set(e.clientX);
+    const u = () => (drag.current = false);
+    window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
+    return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
+  }, []);
+  // a zigzag lightning bolt across a 100×40 viewBox: N segments alternating hi/lo
+  const N = 7, HI = 8, LO = 32;
+  const pts = Array.from({ length: N + 1 }, (_, i) => [(i / N) * 100, i % 2 === 0 ? LO : HI] as const);
+  const d = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1]}`).join(" ");
+  // thumb rides the bolt at `value`: x = value across width, y interpolated on the segment
+  const seg = Math.min(N - 1, Math.floor(value * N));
+  const t = value * N - seg;
+  const tx = value * 100;
+  const ty = pts[seg][1] + (pts[seg + 1][1] - pts[seg][1]) * t;
+  const fillD = pts.slice(0, seg + 1).map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1]}`).join(" ") + ` L${tx.toFixed(1)} ${ty.toFixed(1)}`;
+  return (
+    <div ref={ref} className="sk-slider-path" title={`${r.label ?? "Seek"}: ${Math.round(value * 100)}%`}
+      onPointerDown={(e) => { drag.current = true; set(e.clientX); }}>
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+        <path className="bolt-rail" d={d} />
+        <path className="bolt-fill" d={fillD} />
+      </svg>
+      <span className="bolt-thumb" style={{ left: `${tx}%`, top: `${(ty / 40) * 100}%` }} />
     </div>
   );
 }

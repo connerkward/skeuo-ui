@@ -1,0 +1,94 @@
+{
+  "id": "manray",
+  "name": "wild-sculpt",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "visualizer",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.21999999999999997,
+        "y": 0.135,
+        "w": 0.56,
+        "h": 0.13
+      },
+      "dynamicType": "visualizer"
+    },
+    {
+      "id": "marquee",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.2,
+        "y": 0.305,
+        "w": 0.6,
+        "h": 0.029947916666666668
+      },
+      "dynamicType": "marquee"
+    },
+    {
+      "id": "seek",
+      "kind": "slider-path",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.19,
+        "y": 0.385,
+        "w": 0.62,
+        "h": 0.09000000000000001
+      },
+      "bind": "seek",
+      "label": "Seek"
+    },
+    {
+      "id": "play",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.3975,
+        "y": 0.58,
+        "w": 0.205,
+        "h": 0.13666666666666666
+      },
+      "bind": "play",
+      "label": "play",
+      "shape": "ellipse"
+    },
+    {
+      "id": "next",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6575000000000001,
+        "y": 0.61,
+        "w": 0.115,
+        "h": 0.07666666666666667
+      },
+      "bind": "next",
+      "label": "next",
+      "shape": "ellipse"
+    },
+    {
+      "id": "shuffle",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.17250000000000001,
+        "y": 0.6123333333333333,
+        "w": 0.17,
+        "h": 0.072
+      },
+      "bind": "shuffle",
+      "label": "SHUF"
+    }
+  ]
+}

@@ -23,6 +23,7 @@ export type Kind =
   | "slider-v"    // vertical slider
   | "knob"        // rotary knob (drag to turn)
   | "slider-arc"  // thumb rides a circular arc (ring seek around a dial)
+  | "slider-path" // thumb rides a custom path (e.g. a zigzag/bolt seek)
   | "segmented"   // pick one of N segments
   | "xy"          // 2D pad (drag a puck)
   | "display"     // recessed screen hosting dynamic content

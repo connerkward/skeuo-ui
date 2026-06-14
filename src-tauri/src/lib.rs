@@ -21,6 +21,7 @@ use tauri::{
 // (skin id, display name) for the tray "Skins" submenu. Ids must match the
 // registry in src/player/skins.ts.
 const SKINS: &[(&str, &str)] = &[
+    ("manray", "Man Ray"),
     ("pebble", "Pebble"),
     ("maw", "Angler Maw"),
     ("obelisk", "Bone Totem"),

@@ -43,6 +43,10 @@ MATERIAL = {
     "biomech": ("H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping "
                 "the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence "
                 "glowing from the recesses."),
+    "manray":  ("the SpongeBob supervillain MAN RAY: smooth matte lavender-purple latex skin over the "
+                "head and arms, a dark navy-and-black rubberized bodysuit on the torso with a bold "
+                "stylized chest emblem, glossy comic-villain highlights, cyan energy glow seeping from "
+                "the control recesses."),
     "winamp":  ("polished chrome and brushed gunmetal over dark charcoal plastic, thin green LED accent "
                 "lines tracing the curves, tiny screws."),
     "frog":    ("glossy moulded rubber toy-frog skin in vivid green with subtle mottling, bulging "
@@ -250,6 +254,38 @@ def layout_minimal():
     add("knob0", "knob", cx-kd/2, ky, kd, kd, bind="volume", label="VOL")
     my = ky + kd + 32                               # marquee at the foot
     add("marquee", "display", W*0.19, my, W*0.62, 50, content="dynamic", layer="screen", dynamicType="marquee")
+    return regs
+
+def layout_manray():
+    """Man Ray (SpongeBob villain): a wide manta-ray HEAD over a torso chassis.
+    A wide rectangular VISUALIZER in the flat head, a novel zigzag 'bolt' SCRUB
+    across the chest (rect well; the lightning path is drawn live by the React
+    renderer), and a sparse transport — SHUFFLE toggle · dominant PLAY · NEXT."""
+    regs = []
+    def add(id, kind, x, y, w, h, **kw):
+        regs.append({"id": id, "kind": kind,
+                     "content": kw.pop("content", "sprite"),
+                     "layer": kw.pop("layer", "components"),
+                     "rect": {"x": x/W, "y": y/H, "w": w/W, "h": h/H}, **kw})
+    cx = W/2
+    # wide visualizer set into the flat manta-ray head
+    vw, vh = W*0.56, H*0.130
+    add("visualizer", "display", cx-vw/2, H*0.135, vw, vh,
+        content="dynamic", layer="screen", dynamicType="visualizer")
+    # marquee strip under the head
+    add("marquee", "display", cx-W*0.30, H*0.305, W*0.60, 46,
+        content="dynamic", layer="screen", dynamicType="marquee")
+    # NOVEL 'bolt' scrub spanning the chest — a rect well; React draws a zigzag path
+    sw, sh = W*0.62, H*0.090
+    add("seek", "slider-path", cx-sw/2, H*0.385, sw, sh, bind="seek", label="Seek")
+    # transport: SHUFFLE toggle · PLAY (dominant) · NEXT
+    by = H*0.58
+    play_d = W*0.205
+    add("play", "button", cx-play_d/2, by, play_d, play_d, bind="play", label="play", shape="ellipse")
+    nd = W*0.115
+    add("next", "button", cx+play_d/2+W*0.055, by+(play_d-nd)/2, nd, nd, bind="next", label="next", shape="ellipse")
+    tw, th = W*0.17, H*0.072
+    add("shuffle", "toggle", cx-play_d/2-W*0.055-tw, by+(play_d-th)/2, tw, th, bind="shuffle", label="SHUF")
     return regs
 
 def covers(mask, regs):
@@ -533,11 +569,12 @@ def usable(regs):
             d["marquee"]["w"] >= 0.15)
 
 def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
-    if variant in ("radial", "capsule", "minimal"):
+    if variant in ("radial", "capsule", "minimal", "manray"):
         # LAYOUT FIRST: the arc-native template exists before any body does;
         # the image model grows the creature AROUND the drawn controls
         regs = (layout_radial() if variant == "radial" else
-                layout_capsule() if variant == "capsule" else layout_minimal())
+                layout_capsule() if variant == "capsule" else
+                layout_minimal() if variant == "minimal" else layout_manray())
         wells = draw_wells_only(regs)
         rmask = region_mask(regs)
         for attempt in range(3):
