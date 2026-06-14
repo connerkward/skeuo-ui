@@ -39,6 +39,9 @@ export default function App() {
   const sp = useSpotify();
   const [mode, setMode] = useState<"local" | "spotify">("local");
   const spotifyDrive = mode === "spotify" ? sp.drive : null;
+  // auto-engage Spotify mode once linked, so the player isn't still showing the
+  // local demo while the panel says "connected" (the user can switch back)
+  useEffect(() => { if (sp.status === "connected") setMode("spotify"); }, [sp.status]);
 
   // responsive: below ~820px mount the swipe shell instead of the sidebar
   const [mobile, setMobile] = useState(() =>

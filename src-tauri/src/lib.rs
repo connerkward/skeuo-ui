@@ -111,6 +111,12 @@ pub fn run() {
                 use tauri_plugin_window_state::{StateFlags, WindowExt};
                 if let Some(w) = app.get_webview_window("main") {
                     let _ = w.restore_state(StateFlags::all());
+                    // Show on the CURRENT Space whenever revealed. Without this,
+                    // macOS keeps a window on the Space it was created on, so after
+                    // hiding (× / close) the tray "show" appears to do nothing — the
+                    // widget is actually alive on another desktop. A floating toy
+                    // wants to be reachable from any Space anyway.
+                    let _ = w.set_visible_on_all_workspaces(true);
                 }
             }
             build_tray(app)?;
@@ -139,15 +145,16 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
 
     let aot = CheckMenuItem::with_id(app, "toggle-aot", "Always on top", true, false, None::<&str>)?;
     let show = MenuItem::with_id(app, "show", "Show widget", true, None::<&str>)?;
-    let connect = MenuItem::with_id(app, "connect", "Connect Spotify", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Skeuo", true, None::<&str>)?;
 
+    // Note: no "Connect Spotify" tray item — connecting is handled by the widget's
+    // top bar, which shows the live linked/connecting/error state. A static tray
+    // item would contradict it ("Connect Spotify" while the bar says linked).
     let menu = MenuBuilder::new(app)
         .item(&skins_menu)
         .separator()
         .item(&aot)
         .item(&show)
-        .item(&connect)
         .separator()
         .item(&quit)
         .build()?;
@@ -181,12 +188,10 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
                 }
                 "show" => {
                     if let Some(w) = app.get_webview_window("main") {
+                        let _ = w.unminimize();
                         let _ = w.show();
                         let _ = w.set_focus();
                     }
-                }
-                "connect" => {
-                    let _ = app.emit("tray-connect", ());
                 }
                 "quit" => {
                     // persist position/size before exiting so it reopens in place
@@ -210,6 +215,7 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
                     if w.is_visible().unwrap_or(false) {
                         let _ = w.hide();
                     } else {
+                        let _ = w.unminimize();
                         let _ = w.show();
                         let _ = w.set_focus();
                     }
