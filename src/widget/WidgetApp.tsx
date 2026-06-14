@@ -39,16 +39,21 @@ export default function WidgetApp() {
     return () => dispose();
   }, []);
 
-  // Per-pixel click-through (clicks on transparent areas pass to the app behind).
-  // The alpha hit-map is now built from fetched PNG bytes via createImageBitmap
-  // (the earlier `new Image()`→canvas path got tainted under Tauri's asset
-  // protocol and read all-transparent, sticking the whole window click-through).
-  // Fail-safe: a degenerate/blank map → the widget stays fully interactive.
+  // Per-pixel click-through is DISABLED. It toggles the window's
+  // ignore-cursor-events by hit-testing the cursor against the skin's alpha, but
+  // in the packaged Tauri webview `opaqueAt` mis-reads the body as transparent
+  // after the first pointer move, so the window gets stuck click-through ("clicks
+  // register only on the first click"). The coord/runtime mismatch isn't
+  // debuggable from here (no post-load console, no synthetic pointermove), so
+  // rather than ship a widget you can't click, it's off. The implementation
+  // lives in ./clickthrough.ts; revisit with a Rust-side hit-test + on-screen
+  // readout. Flip to true to experiment.
+  const CLICK_THROUGH = false;
   useEffect(() => {
-    const dispose = initClickThrough();
-    return () => dispose();
-  }, []);
-  useEffect(() => { updateClickThroughSkin(skinId); }, [skinId]);
+    if (!CLICK_THROUGH) return;
+    updateClickThroughSkin(skinId);
+    return initClickThrough();
+  }, [skinId]);
 
   // the widget is always Spotify-driven; if not linked it falls back to the
   // local demo engine inside usePlayer (drive === null), so it's never blank.
