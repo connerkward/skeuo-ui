@@ -31,6 +31,12 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
       if (!an || !playing) return null;
       if (!freq || freq.length !== an.frequencyBinCount) freq = new Uint8Array(an.frequencyBinCount);
       an.getByteFrequencyData(freq);
+      // The analyser can exist but read pure SILENCE — a suspended/not-yet-resumed
+      // AudioContext (common in headless capture and before a user gesture), or a
+      // muted graph. With all-zero bins the bars would collapse to nothing, so fall
+      // back to the lively animated walk instead of drawing a dead-flat spectrum.
+      let total = 0; for (let j = 0; j < freq.length; j++) total += freq[j];
+      if (total === 0) return null;
       return Array.from({ length: n }, (_, i) => {
         const lo2 = Math.floor((i / n) * freq!.length);
         const hi2 = Math.max(lo2 + 1, Math.floor(((i + 1) / n) * freq!.length));

@@ -100,8 +100,8 @@ if (CMD === "hero") {
   // motion-graphics scene → smooth real-time mp4 + gif (no caption chrome)
   const scene = ARG3 || "streams";
   const url = `${BASE}?${qp(`mode=mg&scene=${scene}`)}`;
-  const webm = await record(url, Number(SECS) + 0.6, ".mg-skin");   // 0.6 preroll: keeps cascade's drop-in
-  transcode(webm, join(OUT, `${OUTNAME || `mg-${scene}`}-1080x1920`), Number(SECS), 0.6);
+  const webm = await record(url, Number(SECS) + 1.3, ".mg-skin");   // 1.3 preroll skips the unpainted opening
+  transcode(webm, join(OUT, `${OUTNAME || `mg-${scene}`}-1080x1920`), Number(SECS), 1.3);
 } else if (["grid", "sprites", "fan", "center", "scatter"].includes(CMD)) {
   // any non-hero mode → one hi-res still (live spectra animate in the still).
   // OUTNAME lets variations of the same mode coexist (e.g. center-pebble).
