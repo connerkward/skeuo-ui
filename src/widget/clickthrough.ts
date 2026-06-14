@@ -12,7 +12,6 @@
 import { isTauri } from "../platform";
 
 interface WinLike {
-  cursorPosition: () => Promise<{ x: number; y: number }>;
   outerPosition: () => Promise<{ x: number; y: number }>;
   setIgnoreCursorEvents: (ignore: boolean) => Promise<void>;
 }
@@ -23,8 +22,15 @@ const ALPHA_MIN = 24; // treat near-transparent as pass-through (also drops the 
 const FRAME_ASPECT = 1024 / 1536;
 
 let win: WinLike | null = null;
+// cursorPosition is a STANDALONE export of @tauri-apps/api/window, NOT a method
+// on the Window object — win.cursorPosition() threw every tick and the .catch
+// swallowed it, so the recovery poll never ran and the window stuck click-through.
+let cursorPos: (() => Promise<{ x: number; y: number }>) | null = null;
 if (isTauri()) {
-  void import("@tauri-apps/api/window").then((m) => { win = m.getCurrentWindow() as unknown as WinLike; });
+  void import("@tauri-apps/api/window").then((m) => {
+    win = m.getCurrentWindow() as unknown as WinLike;
+    cursorPos = m.cursorPosition as unknown as () => Promise<{ x: number; y: number }>;
+  });
 }
 
 let hit: Uint8Array | null = null; // COLS*ROWS opaque bitmap for the active skin
@@ -68,9 +74,17 @@ async function buildHitMap(frameUrl: string): Promise<void> {
   hit = bits;
 }
 
+// The fade-in top bar (skin name · Connect Spotify · close) floats over the
+// skin's transparent top corners, so the alpha test alone would make it
+// click-through — you couldn't even hover to reveal it. Treat the top strip as
+// always-interactive so the bar is hoverable + clickable. The bar's height is
+// fixed (doesn't scale with the window), so this is a constant px zone.
+const BAR_ZONE = 38;
+
 // Is the CSS point (relative to the content top-left) over an opaque skin pixel?
 // The skin fills the window height and is centered (width = height·2/3).
 function opaqueAt(cssX: number, cssY: number): boolean {
+  if (cssY < BAR_ZONE) return true; // top bar strip stays interactive
   if (!hit) return true; // until the map loads, stay interactive
   const iw = window.innerWidth, ih = window.innerHeight;
   const frameW = ih * FRAME_ASPECT;
@@ -95,7 +109,7 @@ function startPoll(): void {
   if (poll || !win) return;
   poll = window.setInterval(() => {
     if (!win) return;
-    void Promise.all([win.cursorPosition(), win.outerPosition()]).then(([cur, out]) => {
+    void Promise.all([cursorPos!(), win.outerPosition()]).then(([cur, out]) => {
       const dpr = window.devicePixelRatio || 1;
       // cursorPosition + outerPosition are both global physical px → relative CSS px
       const x = (cur.x - out.x) / dpr;
@@ -103,7 +117,7 @@ function startPoll(): void {
       const inWindow = x >= 0 && x < window.innerWidth && y >= 0 && y < window.innerHeight;
       // re-capture (and stop polling) once the cursor is back on the skin OR has
       // left the window entirely — only keep polling while over a transparent
-      // pixel INSIDE the window, so we're not running 50Hz IPC all the time.
+      // pixel INSIDE the window, so we're not running 25Hz IPC all the time.
       if (!inWindow || opaqueAt(x, y)) void setIgnore(false);
     }).catch(() => {});
   }, 40);

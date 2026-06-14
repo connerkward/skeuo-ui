@@ -39,18 +39,9 @@ export default function WidgetApp() {
     return () => dispose();
   }, []);
 
-  // Per-pixel click-through is DISABLED. It toggles the window's
-  // ignore-cursor-events by hit-testing the cursor against the skin's alpha, but
-  // in the packaged Tauri webview `opaqueAt` mis-reads the body as transparent
-  // after the first pointer move, so the window gets stuck click-through ("clicks
-  // register only on the first click"). The coord/runtime mismatch isn't
-  // debuggable from here (no post-load console, no synthetic pointermove), so
-  // rather than ship a widget you can't click, it's off. The implementation
-  // lives in ./clickthrough.ts; revisit with a Rust-side hit-test + on-screen
-  // readout. Flip to true to experiment.
-  const CLICK_THROUGH = false;
+  // Per-pixel click-through: clicks on the skin's transparent areas pass to the
+  // app behind; clicks on the skin (and the top bar) hit the widget.
   useEffect(() => {
-    if (!CLICK_THROUGH) return;
     updateClickThroughSkin(skinId);
     return initClickThrough();
   }, [skinId]);
