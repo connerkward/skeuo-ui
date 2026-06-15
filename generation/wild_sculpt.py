@@ -40,6 +40,12 @@ SIL_PROMPT = (
 )
 
 MATERIAL = {
+    "mochi":   ("an ADORABLE super-cute chubby MOCHI creature: soft matte PASTEL-PINK squishy "
+                "marshmallow/mochi skin with a gentle powdered-sugar dusting, tiny rosy blush cheeks, "
+                "two big round sparkly black kawaii eyes with a white glint, a tiny content smile, very "
+                "round soft squishy proportions, little stub arms; matte dusted surface, NO gloss, NO "
+                "metal; the recessed wells read as little pressed dimples in the dough. Pastel "
+                "strawberry-milk palette, clean kawaii cel-shaded look, irresistibly cute."),
     "biomech": ("H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping "
                 "the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence "
                 "glowing from the recesses."),
