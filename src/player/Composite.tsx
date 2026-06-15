@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import type { Region, Template } from "../template/schema";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Pt, Region, Template } from "../template/schema";
 import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
@@ -440,11 +440,19 @@ function SliderArc({ r, ps }: { r: Region; ps: PlayerState }) {
   const value = ps.track.seconds ? ps.elapsed / ps.track.seconds : 0;
   const set = (cx: number, cy: number) => {
     const rc = ref.current?.getBoundingClientRect(); if (!rc) return;
-    // angle of the pointer around the ring center, y-down screen convention
+    // angle of the pointer around the ring center, y-down screen convention.
+    // UNWRAP into the arc's own continuous range [a0-40, a0+320) so the value is
+    // monotonic across the whole arc and never jumps at the 0deg seam — that seam
+    // crossing was the "seek breaks past 50%" bug on top/side arcs.
     let a = (Math.atan2(cy - (rc.top + rc.height / 2), cx - (rc.left + rc.width / 2)) * 180) / Math.PI;
-    if (a < 0) a += 360;
-    if (a < a0 - 14 || a > a1 + 14) return;       // ignore grabs off the track
-    ps.seekTo(Math.max(0, Math.min(1, (a - a0) / (a1 - a0))));
+    const lo = a0 - 40;
+    while (a < lo) a += 360;
+    while (a >= lo + 360) a -= 360;
+    const v = (a - a0) / (a1 - a0);
+    // don't FREEZE when the drag drifts off the ring (the other failure mode) —
+    // ignore only the far dead-zone, otherwise clamp to the nearest end.
+    if (v < -0.3 || v > 1.3) return;
+    ps.seekTo(Math.max(0, Math.min(1, v)));
   };
   useEffect(() => {
     const m = (e: PointerEvent) => drag.current && set(e.clientX, e.clientY);
@@ -471,39 +479,81 @@ function SliderArc({ r, ps }: { r: Region; ps: PlayerState }) {
   );
 }
 
-/* ---------- bolt seek: the thumb rides a zigzag lightning path ---------- */
+/* catmull-rom spline through normalized control points, sampled to a dense
+   polyline with cumulative arc-length — the single source of truth shared by the
+   seek thumb (value -> point) and the hit-test (pointer -> value). Because value
+   is ARC-LENGTH along the curve, scrubbing is monotonic and never wraps, so it
+   cannot "break" at the halfway point the way an angle-based arc seek did. */
+type Spline = { pts: Pt[]; cum: number[]; len: number };
+function buildSpline(path: Pt[]): Spline {
+  const ctrl = path.length >= 2 ? path : [{ x: 0.04, y: 0.5 }, { x: 0.96, y: 0.5 }];
+  const out: Pt[] = [];
+  const SEG = 24;
+  for (let i = 0; i < ctrl.length - 1; i++) {
+    const p0 = ctrl[i - 1] ?? ctrl[i], p1 = ctrl[i], p2 = ctrl[i + 1], p3 = ctrl[i + 2] ?? ctrl[i + 1];
+    for (let s = 0; s < SEG; s++) {
+      const t = s / SEG, t2 = t * t, t3 = t2 * t;
+      out.push({
+        x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+        y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3),
+      });
+    }
+  }
+  out.push(ctrl[ctrl.length - 1]);
+  const cum = [0];
+  for (let i = 1; i < out.length; i++) cum.push(cum[i - 1] + Math.hypot(out[i].x - out[i - 1].x, out[i].y - out[i - 1].y));
+  return { pts: out, cum, len: cum[cum.length - 1] || 1 };
+}
+function splineAt(sp: Spline, v: number): Pt {
+  const target = Math.max(0, Math.min(1, v)) * sp.len;
+  let i = 1; while (i < sp.cum.length && sp.cum[i] < target) i++;
+  const a = sp.pts[i - 1], b = sp.pts[i] ?? a;
+  const seg = (sp.cum[i] ?? sp.len) - sp.cum[i - 1] || 1;
+  const t = (target - sp.cum[i - 1]) / seg;
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+}
+function splineProject(sp: Spline, px: number, py: number): number {
+  let best = 0, bd = Infinity;
+  for (let i = 0; i < sp.pts.length; i++) {
+    const d = (sp.pts[i].x - px) ** 2 + (sp.pts[i].y - py) ** 2;
+    if (d < bd) { bd = d; best = i; }
+  }
+  return sp.cum[best] / sp.len;
+}
+
+/* freeform seek: the thumb rides an arbitrary spline (r.path, normalized in the
+   region rect). Falls back to a flat line when no path is authored. Value is
+   arc-length along the curve — monotonic, so it can't break past 50%. */
 function SliderPath({ r, ps }: { r: Region; ps: PlayerState }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
   const value = ps.track.seconds ? ps.elapsed / ps.track.seconds : 0;
-  const set = (clientX: number) => {
+  const sp = useMemo(() => buildSpline(r.path ?? []), [r.path]);
+  const set = (clientX: number, clientY: number) => {
     const rc = ref.current?.getBoundingClientRect(); if (!rc) return;
-    ps.seekTo(Math.max(0, Math.min(1, (clientX - rc.left) / rc.width)));
+    const px = (clientX - rc.left) / rc.width, py = (clientY - rc.top) / rc.height;
+    ps.seekTo(Math.max(0, Math.min(1, splineProject(sp, px, py))));
   };
   useEffect(() => {
-    const m = (e: PointerEvent) => drag.current && set(e.clientX);
+    const m = (e: PointerEvent) => drag.current && set(e.clientX, e.clientY);
     const u = () => (drag.current = false);
     window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
     return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
-  }, []);
-  // a zigzag lightning bolt across a 100×40 viewBox: N segments alternating hi/lo
-  const N = 7, HI = 8, LO = 32;
-  const pts = Array.from({ length: N + 1 }, (_, i) => [(i / N) * 100, i % 2 === 0 ? LO : HI] as const);
-  const d = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1]}`).join(" ");
-  // thumb rides the bolt at `value`: x = value across width, y interpolated on the segment
-  const seg = Math.min(N - 1, Math.floor(value * N));
-  const t = value * N - seg;
-  const tx = value * 100;
-  const ty = pts[seg][1] + (pts[seg + 1][1] - pts[seg][1]) * t;
-  const fillD = pts.slice(0, seg + 1).map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1]}`).join(" ") + ` L${tx.toFixed(1)} ${ty.toFixed(1)}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp]);
+  const railD = sp.pts.map((p, i) => `${i ? "L" : "M"}${(p.x * 100).toFixed(2)} ${(p.y * 100).toFixed(2)}`).join(" ");
+  const tip = Math.max(0, Math.min(1, value)) * sp.len;
+  const fillD = sp.pts.filter((_, i) => sp.cum[i] <= tip)
+    .map((p, i) => `${i ? "L" : "M"}${(p.x * 100).toFixed(2)} ${(p.y * 100).toFixed(2)}`).join(" ") || "M0 50";
+  const th = splineAt(sp, value);
   return (
     <div ref={ref} className="sk-slider-path" title={`${r.label ?? "Seek"}: ${Math.round(value * 100)}%`}
-      onPointerDown={(e) => { drag.current = true; set(e.clientX); }}>
-      <svg viewBox="0 0 100 40" preserveAspectRatio="none">
-        <path className="bolt-rail" d={d} />
+      onPointerDown={(e) => { drag.current = true; set(e.clientX, e.clientY); }}>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path className="bolt-rail" d={railD} />
         <path className="bolt-fill" d={fillD} />
       </svg>
-      <span className="bolt-thumb" style={{ left: `${tx}%`, top: `${(ty / 40) * 100}%` }} />
+      <span className="bolt-thumb" style={{ left: `${th.x * 100}%`, top: `${th.y * 100}%` }} />
     </div>
   );
 }

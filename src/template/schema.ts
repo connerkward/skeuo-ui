@@ -44,6 +44,15 @@ export type DynamicType =
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
+// A freeform point, normalized 0..1 inside the region's own rect (0,0 = top-left
+// of the rect, 1,1 = bottom-right). Used to author non-rectangular controls:
+//   - slider-path seek: the thumb rides the spline through these points; value is
+//     mapped by ARC-LENGTH (monotonic), so scrubbing never wraps/breaks.
+//   - visualizer: an OPEN path = a ribbon the bars stand on; a CLOSED path
+//     (first≈last) = a blob the spectrum fills. Lets each skin's EQ be a unique
+//     shape instead of the same rectangle.
+export type Pt = { x: number; y: number };
+
 export interface Region {
   id: string;
   kind: Kind;
@@ -59,7 +68,8 @@ export interface Region {
   flourish?: string;      // decoration: a hint label (CORNER, RAIL, CREST…)
   shape?: "ellipse";      // round well: circular button face / elliptical glass
   arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
-  vis?: "linear" | "radial" | "teeth";   // visualizer render style (e.g. teeth grin)
+  path?: Pt[];                            // slider-path spline / freeform visualizer shape (normalized in rect)
+  vis?: "linear" | "radial" | "teeth" | "ribbon" | "blob";  // visualizer render style
 }
 
 export interface Template {

@@ -350,6 +350,28 @@ def spotify_only(regs):
             out.append(r)
     return out
 
+def seek_to_spline(r, seed=0):
+    """Convert a LINEAR seek bar into a freeform slider-path SPLINE — a gentle wave
+    whose phase/amplitude vary per skin so seeks aren't all the same straight line.
+    The runtime maps value by ARC-LENGTH along the (x-monotonic) curve, so it's
+    unambiguous end-to-end. RING seeks stay slider-arc: a pointer inside a ring is
+    equidistant to many points, so nearest-point projection can't parameterize it —
+    angle is the right param there (handled by SliderArc)."""
+    import math
+    if r.get("bind") != "seek" or r["kind"] != "slider-h":
+        return r
+    ph = (seed % 9) / 9.0 * math.tau
+    amp = 0.16 + 0.12 * ((seed // 5) % 3) / 2.0      # 0.16..0.28, varied per skin
+    n = 8
+    path = [{"x": round(i/n, 4), "y": round(0.5 - amp*math.sin(math.pi*i/n*1.5 + ph), 4)} for i in range(n+1)]
+    r = dict(r); r["kind"] = "slider-path"; r["path"] = path
+    return r
+
+def finalize_regs(regs, seed=0):
+    """Every layout passes through here: drop dead controls, then make seek a
+    freeform spline. Single chokepoint so new layouts inherit both rules."""
+    return [seek_to_spline(r, seed) for r in spotify_only(regs)]
+
 def covers(mask, regs):
     """Every control/screen must sit fully inside the enveloping body."""
     import math
@@ -598,6 +620,11 @@ def _draw_regions(d, regs):
             i = 0.06*(x1-x0)             # ring radius matches the live control (0.88 of half-box)
             a = r["arc"]
             d.arc([x0+i, y0+i, x1-i, y1-i], a["start"], a["end"], fill=WELL, width=18)
+        elif r["kind"] == "slider-path" and r.get("path"):
+            # draw the seek SPLINE as a thick dark groove so the painted recess
+            # follows the same curve the live thumb rides
+            pl = [(x0 + p["x"]*(x1-x0), y0 + p["y"]*(y1-y0)) for p in r["path"]]
+            d.line(pl, fill=WELL, width=16, joint="curve")
         elif r["kind"] == "knob" or (r["kind"] == "button" and r.get("shape") == "ellipse"):
             d.ellipse([x0, y0, x1, y1], fill=WELL, outline=EDGE, width=4)
         elif r["kind"] == "display":
@@ -643,9 +670,10 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
     if variant in ("radial", "capsule", "minimal", "manray"):
         # LAYOUT FIRST: the arc-native template exists before any body does;
         # the image model grows the creature AROUND the drawn controls
-        regs = spotify_only(layout_radial() if variant == "radial" else
+        regs = finalize_regs(layout_radial() if variant == "radial" else
                 layout_capsule() if variant == "capsule" else
-                layout_minimal() if variant == "minimal" else layout_manray())
+                layout_minimal() if variant == "minimal" else layout_manray(),
+                seed=sum(map(ord, out_id)))
         wells = draw_wells_only(regs)
         rmask = region_mask(regs)
         for attempt in range(3):
@@ -660,7 +688,7 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
     else:
         for attempt in range(3):
             mask = gen_silhouette(brief, out_id, sil_path); sil_path = None
-            regs = spotify_only(layout_in_mask(mask, variant))
+            regs = finalize_regs(layout_in_mask(mask, variant), seed=sum(map(ord, out_id)))
             if usable(regs):
                 break
             print(f"[{out_id}] silhouette unusable (screens too small) — retry {attempt+1}", flush=True)
