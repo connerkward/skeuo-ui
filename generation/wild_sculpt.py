@@ -367,10 +367,35 @@ def seek_to_spline(r, seed=0):
     r = dict(r); r["kind"] = "slider-path"; r["path"] = path
     return r
 
+def vis_freeform(r, seed=0):
+    """Give a rectangular visualizer a FREEFORM ribbon shape: an open spline the
+    bars stand on, varied per skin so the equalizer isn't the same rectangle every
+    time. Skips the radial dial (shape=ellipse) and the teeth mouth, which already
+    have their own shapes."""
+    import math, random
+    if r.get("dynamicType") != "visualizer" or r.get("shape") == "ellipse" or r.get("vis") == "teeth":
+        return r
+    rnd = random.Random(seed)
+    n, style = 5, seed % 3
+    pts = []
+    for i in range(n):
+        x = i / (n - 1)
+        if style == 0:      # arch (smile)
+            y = 0.82 - 0.30 * math.sin(math.pi * x)
+        elif style == 1:    # wave
+            y = 0.6 - 0.24 * math.sin(math.pi * x * 2 + seed)
+        else:               # diagonal rise with a kink
+            y = 0.85 - 0.45 * x + 0.10 * math.sin(math.pi * x * 3)
+        y += rnd.uniform(-0.05, 0.05)
+        pts.append({"x": round(x, 4), "y": round(min(0.9, max(0.12, y)), 4)})
+    r = dict(r); r["vis"] = "ribbon"; r["path"] = pts
+    return r
+
 def finalize_regs(regs, seed=0):
-    """Every layout passes through here: drop dead controls, then make seek a
-    freeform spline. Single chokepoint so new layouts inherit both rules."""
-    return [seek_to_spline(r, seed) for r in spotify_only(regs)]
+    """Every layout passes through here: drop dead controls, make seek a freeform
+    spline, give the visualizer a freeform ribbon. Single chokepoint so new
+    layouts inherit all three rules."""
+    return [vis_freeform(seek_to_spline(r, seed), seed) for r in spotify_only(regs)]
 
 def covers(mask, regs):
     """Every control/screen must sit fully inside the enveloping body."""

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Pt, Region, Template } from "../template/schema";
+import type { Region, Template } from "../template/schema";
 import { fmtTime } from "./data";
 import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
+import { buildSpline, splineAt, splineProject } from "./spline";
 import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, skinMolded, spriteUrl } from "./skins";
 import type { SpotifyDrive } from "../spotify/useSpotify";
 
@@ -183,6 +184,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
           );
         }
         if (r.vis === "teeth") return <Visualizer playing={ps.playing} analyser={ps.analyser} variant="teeth" />;
+        if (r.vis === "ribbon") return <Visualizer playing={ps.playing} analyser={ps.analyser} variant="ribbon" path={r.path} />;
         return <Visualizer playing={ps.playing} analyser={ps.analyser} />;
       }
       case "marquee":
@@ -477,48 +479,6 @@ function SliderArc({ r, ps }: { r: Region; ps: PlayerState }) {
       </svg>
     </div>
   );
-}
-
-/* catmull-rom spline through normalized control points, sampled to a dense
-   polyline with cumulative arc-length — the single source of truth shared by the
-   seek thumb (value -> point) and the hit-test (pointer -> value). Because value
-   is ARC-LENGTH along the curve, scrubbing is monotonic and never wraps, so it
-   cannot "break" at the halfway point the way an angle-based arc seek did. */
-type Spline = { pts: Pt[]; cum: number[]; len: number };
-function buildSpline(path: Pt[]): Spline {
-  const ctrl = path.length >= 2 ? path : [{ x: 0.04, y: 0.5 }, { x: 0.96, y: 0.5 }];
-  const out: Pt[] = [];
-  const SEG = 24;
-  for (let i = 0; i < ctrl.length - 1; i++) {
-    const p0 = ctrl[i - 1] ?? ctrl[i], p1 = ctrl[i], p2 = ctrl[i + 1], p3 = ctrl[i + 2] ?? ctrl[i + 1];
-    for (let s = 0; s < SEG; s++) {
-      const t = s / SEG, t2 = t * t, t3 = t2 * t;
-      out.push({
-        x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
-        y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3),
-      });
-    }
-  }
-  out.push(ctrl[ctrl.length - 1]);
-  const cum = [0];
-  for (let i = 1; i < out.length; i++) cum.push(cum[i - 1] + Math.hypot(out[i].x - out[i - 1].x, out[i].y - out[i - 1].y));
-  return { pts: out, cum, len: cum[cum.length - 1] || 1 };
-}
-function splineAt(sp: Spline, v: number): Pt {
-  const target = Math.max(0, Math.min(1, v)) * sp.len;
-  let i = 1; while (i < sp.cum.length && sp.cum[i] < target) i++;
-  const a = sp.pts[i - 1], b = sp.pts[i] ?? a;
-  const seg = (sp.cum[i] ?? sp.len) - sp.cum[i - 1] || 1;
-  const t = (target - sp.cum[i - 1]) / seg;
-  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
-}
-function splineProject(sp: Spline, px: number, py: number): number {
-  let best = 0, bd = Infinity;
-  for (let i = 0; i < sp.pts.length; i++) {
-    const d = (sp.pts[i].x - px) ** 2 + (sp.pts[i].y - py) ** 2;
-    if (d < bd) { bd = d; best = i; }
-  }
-  return sp.cum[best] / sp.len;
 }
 
 /* freeform seek: the thumb rides an arbitrary spline (r.path, normalized in the

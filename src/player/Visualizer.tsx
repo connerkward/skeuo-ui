@@ -1,20 +1,25 @@
 import { useEffect, useRef } from "react";
+import type { Pt } from "../template/schema";
+import { buildSpline, splineAt, splineTangent } from "./spline";
 
 // Spectrum analyzer. When a live AnalyserNode is supplied (audio engine running)
 // it draws the REAL FFT — so volume/EQ/balance visibly reshape the bars. Falls
 // back to an animated random-walk when there's no audio yet. Colors come from
 // CSS vars (--vis-lo / --vis-hi / --vis-peak) so each skin paints its own bars.
-export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }: {
+export function Visualizer({ playing, analyser, bars = 19, variant = "linear", path }: {
   playing: boolean;
   analyser?: React.RefObject<AnalyserNode | null> | null;
   bars?: number;
-  // "radial" fills a circular dial; "teeth" draws a red grinning equalizer —
-  // spectrum bars as teeth standing on a smile curve (Man Ray's mouth).
-  variant?: "linear" | "radial" | "teeth";
+  // "radial" fills a circular dial; "teeth" draws a red grinning equalizer;
+  // "ribbon" stands reactive bars perpendicular to an arbitrary freeform spline
+  // (the `path`) so each skin's EQ is its own shape, not the same rectangle.
+  variant?: "linear" | "radial" | "teeth" | "ribbon" | "blob";
+  path?: Pt[];
 }) {
   const radial = variant === "radial";
   const teeth = variant === "teeth";
-  const nBars = radial ? 48 : teeth ? 13 : bars;
+  const ribbon = variant === "ribbon";
+  const nBars = radial ? 48 : teeth ? 13 : ribbon ? 28 : bars;
   const ref = useRef<HTMLCanvasElement>(null);
   const heights = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
   const peaks = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
@@ -25,6 +30,8 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
     if (!cv) return;
     const ctx = cv.getContext("2d")!;
     let freq: Uint8Array<ArrayBuffer> | null = null;
+    // freeform ribbon baseline (normalized in the canvas), built once per path
+    const sp = ribbon ? buildSpline(path ?? []) : null;
 
     const sample = (n: number): number[] | null => {
       const an = analyser?.current;
@@ -164,6 +171,38 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
           if (x === padX) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.stroke();
+      } else if (ribbon && sp) {
+        // FREEFORM ribbon: bars stand PERPENDICULAR to an arbitrary spline, so the
+        // equalizer takes the shape authored in the template (a curve that follows
+        // the body) instead of a rectangle. Height reacts to the spectrum.
+        const n = nBars;
+        const barLen = Math.min(W, H) * 0.5;
+        ctx.lineCap = "round";
+        // soft baseline glow along the curve
+        ctx.strokeStyle = lo; ctx.globalAlpha = 0.5; ctx.lineWidth = Math.max(2, H * 0.03);
+        ctx.beginPath();
+        sp.pts.forEach((p, i) => (i ? ctx.lineTo(p.x * W, p.y * H) : ctx.moveTo(p.x * W, p.y * H)));
+        ctx.stroke(); ctx.globalAlpha = 1;
+        for (let i = 0; i < n; i++) {
+          const tg = target(i, n);
+          const h = heights.current[i];
+          heights.current[i] = tg > h ? tg : h + (tg - h) * 0.25;
+          const v = heights.current[i];
+          const t = n === 1 ? 0.5 : i / (n - 1);
+          const b = splineAt(sp, t), tan = splineTangent(sp, t);
+          const nx = tan.y, ny = -tan.x;                 // unit normal, rises UP off the curve
+          const bx = b.x * W, by = b.y * H;
+          const len = barLen * (0.12 + 0.88 * v);
+          const grad = ctx.createLinearGradient(bx, by, bx + nx * len, by + ny * len);
+          grad.addColorStop(0, lo); grad.addColorStop(1, hi);
+          ctx.strokeStyle = grad; ctx.lineWidth = Math.max(2, (W / n) * 0.5);
+          ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + nx * len, by + ny * len); ctx.stroke();
+          // peak dot at the tip
+          peaks.current[i] = Math.max(v, peaks.current[i] - (playing ? 0.012 : 0.02));
+          const pl = barLen * (0.12 + 0.88 * peaks.current[i]);
+          ctx.fillStyle = peakC;
+          ctx.beginPath(); ctx.arc(bx + nx * pl, by + ny * pl, Math.max(1.5, (W / n) * 0.2), 0, Math.PI * 2); ctx.fill();
+        }
       } else {
         const gap = Math.max(1, W * 0.012);
         const bw = (W - gap * (nBars - 1)) / nBars;
@@ -188,7 +227,8 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear" }:
     };
     raf.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf.current);
-  }, [playing, nBars, radial, teeth, analyser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, nBars, radial, teeth, ribbon, analyser, JSON.stringify(path)]);
 
   return <canvas ref={ref} className="vis-canvas" />;
 }
