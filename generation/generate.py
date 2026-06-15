@@ -109,19 +109,26 @@ SKINS = {
     ),
 }
 
-# GPT Image 2 (OpenAI's newest) — strongest prompt adherence + reference
-# following; Gemini kept ignoring the brief and the reference character. Opaque
-# output (the device fills the frame); the caller applies its own mask as alpha.
-ENDPOINT = "openai/gpt-image-2/edit"
+# Paint model, env-selectable. Default GPT Image 2 (OpenAI's newest) — strongest
+# prompt + reference adherence (Gemini kept ignoring the brief / reference). Set
+# FAL_IMG_MODEL=gemini to force Gemini nano-banana-pro for a run. Opaque output
+# (the device fills the frame); the caller applies its own mask as alpha.
+GEMINI_ENDPOINT = "fal-ai/gemini-3-pro-image-preview/edit"
+GPT2_ENDPOINT = "openai/gpt-image-2/edit"
+ENDPOINT = {"gemini": GEMINI_ENDPOINT, "gpt2": GPT2_ENDPOINT}.get(
+    os.environ.get("FAL_IMG_MODEL", "").lower(), GPT2_ENDPOINT)
 def submit(control_url, prompt, ref_urls=None):
     # The blueprint is the FIRST image (layout authority); any reference-style
     # images follow so the model borrows their shape/material/color/detail
     # vocabulary while keeping the blueprint's exact wells and silhouette.
     urls = [control_url] + list(ref_urls or [])
-    return post(f"https://queue.fal.run/{ENDPOINT}", {
-        "prompt": prompt, "image_urls": urls,
-        "image_size": {"width": 1024, "height": 1536}, "quality": "high", "output_format": "png",
-    })
+    if ENDPOINT == GEMINI_ENDPOINT:
+        body = {"prompt": prompt, "image_urls": urls,
+                "resolution": "2K", "aspect_ratio": "2:3", "output_format": "png"}
+    else:
+        body = {"prompt": prompt, "image_urls": urls,
+                "image_size": {"width": 1024, "height": 1536}, "quality": "high", "output_format": "png"}
+    return post(f"https://queue.fal.run/{ENDPOINT}", body)
 
 def run(skin, job):
     su, ru = job["status_url"], job["response_url"]

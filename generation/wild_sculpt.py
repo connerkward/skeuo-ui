@@ -40,6 +40,35 @@ SIL_PROMPT = (
 )
 
 MATERIAL = {
+    "fallout":  ("a Fallout PIP-BOY / RobCo industrial device: chunky scuffed OLIVE-DRAB painted metal "
+                 "with worn chipped paint, exposed rivets and hex bolts, vacuum-tube knobs, a cracked "
+                 "monochrome AMBER-GREEN CRT glow in the screens, vault-tec stencils and radiation "
+                 "trefoils, retro-futuristic 1950s ruggedized hardware, grimy patina."),
+    "stonehead":("a colossal Mesoamerican OLMEC STONE HEAD: massive carved weathered basalt, deep-set "
+                 "heavy-lidded eyes, broad flat nose and full lips, a snug helmet-like headdress, rough "
+                 "pitted volcanic-rock surface with moss and erosion, monumental ancient stonework; "
+                 "the recessed wells are chiselled stone sockets."),
+    "cupcake":  ("an ADORABLE PRINCESS CUPCAKE: a fluted pastel pink cupcake wrapper base, swirled "
+                 "creamy strawberry FROSTING on top, glossy sprinkles and a candy heart, a dainty little "
+                 "GOLD tiara crown with pink gems, pearl dragee accents; soft kawaii bakery shine, "
+                 "sweet and regal."),
+    "chacmool": ("a Mesoamerican CHACMOOL stone statue (Chichen Itza): carved weathered gray BASALT/"
+                 "limestone, a reclining figure propped on its elbows with knees up and head turned to "
+                 "the side wearing a banded headdress, hands resting on the belly holding a flat offering "
+                 "dish; rough pitted ancient stone surface, museum monument; match the pose, proportions "
+                 "and stone material of the REFERENCE statue closely."),
+    "egypt":   ("an ancient EGYPTIAN pharaoh artifact: polished GOLD sarcophagus and Tutankhamun "
+                "death-mask metal, a striped NEMES headdress in deep LAPIS-BLUE and gold, a rearing "
+                "cobra (uraeus) and vulture crest, turquoise and carnelian gem inlays, carved hieroglyph "
+                "engravings and scarab motifs in the gold, kohl-lined eyes; rich museum-piece gilding."),
+    "worldcup":("a WORLD CUP SOCCER trophy-meets-football object: gleaming GOLD FIFA-style trophy metal "
+                "body, classic white-and-black PENTAGON/hexagon football panels inset, bright green "
+                "grass-pitch accents with white touchline stripes, a little confetti-and-flags festive "
+                "flair, polished championship shine."),
+    "poophero":("the cute cartoon POOP-EMOJI as a SUPERHERO: a glossy soft-serve swirl of rich CHOCOLATE-"
+                "BROWN body with a smooth peak on top, two big friendly googly cartoon eyes and a happy "
+                "smile baked into the body, a bright RED superhero CAPE flowing behind and a bold "
+                "lightning-bolt chest emblem, comic-book superhero shine; playful, heroic, adorable."),
     "mochi":   ("an ADORABLE super-cute chubby MOCHI creature: soft matte PASTEL-PINK squishy "
                 "marshmallow/mochi skin with a gentle powdered-sugar dusting, tiny rosy blush cheeks, "
                 "two big round sparkly black kawaii eyes with a white glint, a tiny content smile, very "

@@ -99,6 +99,15 @@ export const skinList: SkinAssets[] = [
   // themed ✦ — generated-from-prompt bodies (radial), sprites via a donor style
   { id: "tomato", name: "Tomato ✦",       blurb: "Cute ripe-tomato pod, leafy stem crown", has: ["frame"], live: true, style: "frog",   templateUrl: "/skins/tomato/template.json" },
   { id: "mexico", name: "El Tri ✦",       blurb: "Mexico football: tricolor, eagle crest, no humans", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/mexico/template.json" },
+
+  // requested ✦ — themed bodies; sprites/palette via a donor style
+  { id: "egypt",    name: "Pharaoh ✦",      blurb: "Gold sarcophagus: lapis nemes, Eye of Horus, scarabs", has: ["frame"], live: true, style: "manray", templateUrl: "/skins/egypt/template.json" },
+  { id: "worldcup", name: "World Cup ✦",    blurb: "Gold trophy + football, green-pitch screen", has: ["frame"], live: true, style: "halo",   templateUrl: "/skins/worldcup/template.json" },
+  { id: "poophero", name: "Poop Hero ✦",    blurb: "Poop-emoji superhero: googly swirl, red cape, bolt", has: ["frame"], live: true, style: "burger", templateUrl: "/skins/poophero/template.json" },
+  { id: "fallout",  name: "Pip-Boy ✦",      blurb: "Fallout industrial: olive metal, amber CRT glow", has: ["frame"], live: true, style: "halo",   templateUrl: "/skins/fallout/template.json" },
+  { id: "stonehead",name: "Olmec Head ✦",   blurb: "Colossal basalt stone head, chiselled sockets", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/stonehead/template.json" },
+  { id: "cupcake",  name: "Princess Cake ✦", blurb: "Cupcake: swirl frosting, sprinkles, gold tiara", has: ["frame"], live: true, style: "manray", templateUrl: "/skins/cupcake/template.json" },
+  { id: "chacmool", name: "Chacmool ✦",     blurb: "Reclining Mesoamerican basalt statue (ref-matched)", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/chacmool/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
@@ -110,7 +119,7 @@ export function skinBaked(id: string): boolean {
 }
 
 // bump when frames/sprites are regenerated so browsers re-fetch
-const ASSET_VERSION = "nb20";
+const ASSET_VERSION = "nb21";
 const base = (id: string) => `/skins/${id}`;
 export const layerUrl = (id: string, layer: Layer) => `${base(id)}/${layer}.png?v=${ASSET_VERSION}`;
 export const spriteUrl = (id: string, name: string) => `${base(skinStyle(id))}/sprites/${name}.png?v=${ASSET_VERSION}`;
