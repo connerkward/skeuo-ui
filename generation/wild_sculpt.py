@@ -330,6 +330,26 @@ def layout_manray():
     add("shuffle", "toggle", cx-play_d/2-W*0.05-tw, by+(play_d-th)/2, tw, th, bind="shuffle", label="SHUF")
     return regs
 
+# Controls the Spotify Web API can actually drive on the active device. We ONLY
+# emit these — generating EQ bands, balance, stop, presets, etc. produces dead
+# hardware (nothing to bind to) AND those thin/extra wells are the worst paint-
+# drift offenders in the alignment audit. play/pause are one toggle face at runtime.
+SPOTIFY_BINDS = {"play", "pause", "next", "prev", "seek", "volume", "shuffle"}
+DEAD_DISPLAYS = {"eq-curve"}   # EQ visualisers have no Spotify data behind them
+
+def spotify_only(regs):
+    """Keep displays/decoration + only the controls Spotify can use. Applied to
+    EVERY layout so no skin can ship a control that does nothing."""
+    out = []
+    for r in regs:
+        if r["kind"] in ("display", "flourish"):
+            if r.get("dynamicType") in DEAD_DISPLAYS:
+                continue
+            out.append(r)
+        elif r.get("bind") in SPOTIFY_BINDS:
+            out.append(r)
+    return out
+
 def covers(mask, regs):
     """Every control/screen must sit fully inside the enveloping body."""
     import math
@@ -623,7 +643,7 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
     if variant in ("radial", "capsule", "minimal", "manray"):
         # LAYOUT FIRST: the arc-native template exists before any body does;
         # the image model grows the creature AROUND the drawn controls
-        regs = (layout_radial() if variant == "radial" else
+        regs = spotify_only(layout_radial() if variant == "radial" else
                 layout_capsule() if variant == "capsule" else
                 layout_minimal() if variant == "minimal" else layout_manray())
         wells = draw_wells_only(regs)
@@ -640,7 +660,7 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
     else:
         for attempt in range(3):
             mask = gen_silhouette(brief, out_id, sil_path); sil_path = None
-            regs = layout_in_mask(mask, variant)
+            regs = spotify_only(layout_in_mask(mask, variant))
             if usable(regs):
                 break
             print(f"[{out_id}] silhouette unusable (screens too small) — retry {attempt+1}", flush=True)
