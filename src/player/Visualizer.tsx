@@ -6,7 +6,9 @@ import { buildSpline, splineAt, splineTangent } from "./spline";
 // it draws the REAL FFT — so volume/EQ/balance visibly reshape the bars. Falls
 // back to an animated random-walk when there's no audio yet. Colors come from
 // CSS vars (--vis-lo / --vis-hi / --vis-peak) so each skin paints its own bars.
-export function Visualizer({ playing, analyser, bars = 19, variant = "linear", path }: {
+export type DialStyle = "bars" | "rings" | "radar" | "bloom" | "wave";
+
+export function Visualizer({ playing, analyser, bars = 19, variant = "linear", path, dialStyle = "bars" }: {
   playing: boolean;
   analyser?: React.RefObject<AnalyserNode | null> | null;
   bars?: number;
@@ -15,11 +17,17 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear", p
   // (the `path`) so each skin's EQ is its own shape, not the same rectangle.
   variant?: "linear" | "radial" | "teeth" | "ribbon" | "blob";
   path?: Pt[];
+  // when variant==="radial", which dial treatment: classic bars, concentric
+  // pulsing rings, a rotating radar sweep, blooming petals, or a closed
+  // oscilloscope waveform. Spread per-skin so round dials aren't all identical.
+  dialStyle?: DialStyle;
 }) {
   const radial = variant === "radial";
   const teeth = variant === "teeth";
   const ribbon = variant === "ribbon";
-  const nBars = radial ? 48 : teeth ? 13 : ribbon ? 28 : bars;
+  const nBars = radial
+    ? (dialStyle === "bloom" ? 18 : dialStyle === "wave" ? 96 : dialStyle === "radar" ? 64 : dialStyle === "rings" ? 40 : 48)
+    : teeth ? 13 : ribbon ? 28 : bars;
   const ref = useRef<HTMLCanvasElement>(null);
   const heights = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
   const peaks = useRef<number[]>(Array.from({ length: nBars }, () => 0.12));
@@ -29,6 +37,12 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear", p
     const cv = ref.current;
     if (!cv) return;
     const ctx = cv.getContext("2d")!;
+    // nBars changes with the dial style; grow the smoothing buffers so a switch
+    // to a higher-bar style never indexes past their length (undefined → NaN).
+    if (heights.current.length !== nBars) {
+      heights.current = Array.from({ length: nBars }, () => 0.12);
+      peaks.current = Array.from({ length: nBars }, () => 0.12);
+    }
     let freq: Uint8Array<ArrayBuffer> | null = null;
     // freeform ribbon baseline (normalized in the canvas), built once per path
     const sp = ribbon ? buildSpline(path ?? []) : null;
@@ -104,29 +118,121 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear", p
         const rMax = Math.min(W, H) * 0.49;
         const seg = (Math.PI * 2) / nBars;
         ctx.lineCap = "round";
+        // smooth every band once; each dial style reads the same `vals`
+        const vals: number[] = new Array(nBars);
         for (let i = 0; i < nBars; i++) {
           const tg = target(i, nBars);
           const h = heights.current[i];
           heights.current[i] = tg > h ? tg : h + (tg - h) * 0.25;
-          const v = heights.current[i];
-          peaks.current[i] = Math.max(v, peaks.current[i] - (playing ? 0.012 : 0.02));
-          const ang = -Math.PI / 2 + i * seg;        // start at 12 o'clock
-          const co = Math.cos(ang), si = Math.sin(ang);
-          const r1 = rIn, r2 = rIn + (rMax - rIn) * v;
-          const grad = ctx.createLinearGradient(cx + co * r1, cy + si * r1, cx + co * r2, cy + si * r2);
-          grad.addColorStop(0, lo); grad.addColorStop(1, hi);
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = Math.max(2, seg * rIn * 0.62);
+          vals[i] = heights.current[i];
+          peaks.current[i] = Math.max(vals[i], peaks.current[i] - (playing ? 0.012 : 0.02));
+        }
+        const mix = (t: number) => (t < 0.5 ? lo : hi); // cheap 2-stop ramp by radius
+
+        if (dialStyle === "rings") {
+          // concentric sonar: a stack of rings, each pulsing with one frequency
+          // band; a beat-synced ripple expands outward through them.
+          const nR = 6;
+          for (let k = 0; k < nR; k++) {
+            const a = Math.floor((k / nR) * nBars), b = Math.floor(((k + 1) / nR) * nBars);
+            let e = 0; for (let j = a; j < b; j++) e += vals[j]; e /= Math.max(1, b - a);
+            const r = rIn + (rMax - rIn) * ((k + 0.5) / nR);
+            ctx.strokeStyle = mix((k + 0.5) / nR);
+            ctx.globalAlpha = 0.25 + 0.7 * e;
+            ctx.lineWidth = Math.max(1.5, ((rMax - rIn) / nR) * (0.3 + 0.7 * e));
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+          }
+          // expanding beat ripple
+          ctx.globalAlpha = 0.5 * (1 - beatPhase);
+          ctx.strokeStyle = peakC; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(cx, cy, rIn + (rMax - rIn) * beatPhase, 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = 1;
+        } else if (dialStyle === "radar") {
+          // rotating sweep: a bright arm trails brightness across spectrum spokes
+          // sitting on faint range rings (an oscilloscope/radar scope).
+          ctx.globalAlpha = 0.18; ctx.strokeStyle = lo; ctx.lineWidth = 1;
+          for (let g = 1; g <= 3; g++) {
+            ctx.beginPath(); ctx.arc(cx, cy, rIn + (rMax - rIn) * (g / 3), 0, Math.PI * 2); ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          const sweep = (now * 1.1) % (Math.PI * 2);
+          for (let i = 0; i < nBars; i++) {
+            const ang = -Math.PI / 2 + i * seg;
+            let d = sweep - (ang + Math.PI / 2); d = ((d % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+            const trail = d < Math.PI ? Math.max(0, 1 - d / (Math.PI * 0.85)) : 0; // fades behind the arm
+            const co = Math.cos(ang), si = Math.sin(ang);
+            const r2 = rIn + (rMax - rIn) * vals[i];
+            ctx.strokeStyle = mix(vals[i]);
+            ctx.globalAlpha = 0.1 + 0.9 * trail;
+            ctx.lineWidth = Math.max(2, seg * rIn * 0.62);
+            ctx.beginPath(); ctx.moveTo(cx + co * rIn, cy + si * rIn); ctx.lineTo(cx + co * r2, cy + si * r2); ctx.stroke();
+          }
+          // the sweep arm
+          ctx.globalAlpha = 0.9; ctx.strokeStyle = peakC; ctx.lineWidth = 2.5;
+          const sa = sweep - Math.PI / 2;
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sa) * rMax, cy + Math.sin(sa) * rMax); ctx.stroke();
+          ctx.globalAlpha = 1;
+        } else if (dialStyle === "bloom") {
+          // petals: each band is a filled teardrop that breathes — the dial reads
+          // as a blooming flower rather than a bar ring.
+          for (let i = 0; i < nBars; i++) {
+            const ang = -Math.PI / 2 + i * seg;
+            const co = Math.cos(ang), si = Math.sin(ang);
+            const tip = rIn * 0.55 + (rMax - rIn * 0.55) * (0.2 + 0.8 * vals[i]);
+            const half = seg * 0.42;                       // petal half-width (angular)
+            const sx = cx + Math.cos(ang - half) * rIn * 0.5, sy = cy + Math.sin(ang - half) * rIn * 0.5;
+            const ex = cx + Math.cos(ang + half) * rIn * 0.5, ey = cy + Math.sin(ang + half) * rIn * 0.5;
+            const tx = cx + co * tip, ty = cy + si * tip;
+            const grad = ctx.createLinearGradient(cx, cy, tx, ty);
+            grad.addColorStop(0, lo); grad.addColorStop(1, hi);
+            ctx.fillStyle = grad; ctx.globalAlpha = 0.85;
+            ctx.beginPath(); ctx.moveTo(sx, sy);
+            ctx.quadraticCurveTo(cx + co * tip * 0.6 - si * tip * 0.18, cy + si * tip * 0.6 + co * tip * 0.18, tx, ty);
+            ctx.quadraticCurveTo(cx + co * tip * 0.6 + si * tip * 0.18, cy + si * tip * 0.6 - co * tip * 0.18, ex, ey);
+            ctx.closePath(); ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        } else if (dialStyle === "wave") {
+          // closed oscilloscope loop: radius around the circle is modulated by the
+          // spectrum, drawn as one glowing continuous ring.
+          const rMid = (rIn + rMax) / 2, amp = (rMax - rIn) / 2;
+          ctx.lineJoin = "round";
+          ctx.shadowColor = hi; ctx.shadowBlur = 8;
+          ctx.strokeStyle = hi; ctx.lineWidth = 2.5;
           ctx.beginPath();
-          ctx.moveTo(cx + co * r1, cy + si * r1);
-          ctx.lineTo(cx + co * r2, cy + si * r2);
-          ctx.stroke();
-          const rp = rIn + (rMax - rIn) * peaks.current[i];
-          ctx.strokeStyle = peakC; ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(cx + co * rp, cy + si * rp);
-          ctx.lineTo(cx + co * (rp + 2), cy + si * (rp + 2));
-          ctx.stroke();
+          for (let i = 0; i <= nBars; i++) {
+            const idx = i % nBars; const ang = -Math.PI / 2 + idx * seg;
+            const rr = rMid + amp * (vals[idx] * 2 - 1);
+            const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          }
+          ctx.closePath(); ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 0.25; ctx.strokeStyle = lo; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(cx, cy, rMid, 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = 1;
+        } else {
+          // classic radial bars (default)
+          for (let i = 0; i < nBars; i++) {
+            const v = vals[i];
+            const ang = -Math.PI / 2 + i * seg;        // start at 12 o'clock
+            const co = Math.cos(ang), si = Math.sin(ang);
+            const r1 = rIn, r2 = rIn + (rMax - rIn) * v;
+            const grad = ctx.createLinearGradient(cx + co * r1, cy + si * r1, cx + co * r2, cy + si * r2);
+            grad.addColorStop(0, lo); grad.addColorStop(1, hi);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = Math.max(2, seg * rIn * 0.62);
+            ctx.beginPath();
+            ctx.moveTo(cx + co * r1, cy + si * r1);
+            ctx.lineTo(cx + co * r2, cy + si * r2);
+            ctx.stroke();
+            const rp = rIn + (rMax - rIn) * peaks.current[i];
+            ctx.strokeStyle = peakC; ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx + co * rp, cy + si * rp);
+            ctx.lineTo(cx + co * (rp + 2), cy + si * (rp + 2));
+            ctx.stroke();
+          }
         }
       } else if (teeth) {
         // red grinning equalizer: spectrum bars are teeth standing on a smile
@@ -228,7 +334,7 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear", p
     raf.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, nBars, radial, teeth, ribbon, analyser, JSON.stringify(path)]);
+  }, [playing, nBars, radial, teeth, ribbon, dialStyle, analyser, JSON.stringify(path)]);
 
   return <canvas ref={ref} className="vis-canvas" />;
 }

@@ -70,6 +70,7 @@ export interface Region {
   arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
   path?: Pt[];                            // slider-path spline / freeform visualizer shape (normalized in rect)
   vis?: "linear" | "radial" | "teeth" | "ribbon" | "blob";  // visualizer render style
+  dialStyle?: "bars" | "rings" | "radar" | "bloom" | "wave"; // round-dial sub-style (else hashed per skin)
 }
 
 export interface Template {
