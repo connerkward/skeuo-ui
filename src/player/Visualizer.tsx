@@ -73,6 +73,10 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear", p
       const peakC = cs.getPropertyValue("--vis-peak").trim() || "#fff";
       const dpr = window.devicePixelRatio || 1;
       const W = cv.clientWidth, H = cv.clientHeight;
+      // Skip degenerate frames: before the canvas is laid out W/H are 0, and
+      // several branches divide by them (e.g. teeth's u = (x-W/2)/(usable/2)),
+      // yielding ±Infinity → a non-finite createLinearGradient that throws.
+      if (W < 2 || H < 2) { raf.current = requestAnimationFrame(draw); return; }
       if (cv.width !== W * dpr || cv.height !== H * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);

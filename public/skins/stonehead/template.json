@@ -18,8 +18,7 @@
         "h": 0.18104166666666666
       },
       "dynamicType": "visualizer",
-      "shape": "ellipse",
-      "dialStyle": "rings"
+      "shape": "ellipse"
     },
     {
       "id": "prev",
@@ -67,6 +66,21 @@
       "shape": "ellipse"
     },
     {
+      "id": "stop",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.561796875,
+        "y": 0.3708627527952903,
+        "w": 0.05125,
+        "h": 0.034166666666666665
+      },
+      "bind": "stop",
+      "label": "stop",
+      "shape": "ellipse"
+    },
+    {
       "id": "next",
       "kind": "button",
       "content": "sprite",
@@ -94,6 +108,20 @@
       },
       "bind": "volume",
       "label": "VOL"
+    },
+    {
+      "id": "knob1",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6233060021396892,
+        "y": 0.21430105886584974,
+        "w": 0.0703125,
+        "h": 0.046875
+      },
+      "bind": "balance",
+      "label": "BAL"
     },
     {
       "id": "seek",
@@ -139,6 +167,116 @@
       },
       "bind": "shuffle",
       "label": "SHUF"
+    },
+    {
+      "id": "sw1",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.7889843750000001,
+        "y": 0.4790833333333333,
+        "w": 0.041015625,
+        "h": 0.07421875
+      },
+      "bind": "eqOn",
+      "label": "EQ"
+    },
+    {
+      "id": "eq0",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.2679075,
+        "y": 0.473875,
+        "w": 0.03754437500000001,
+        "h": 0.08463541666666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 0,
+      "label": ""
+    },
+    {
+      "id": "eq1",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.35323562500000005,
+        "y": 0.473875,
+        "w": 0.03754437500000001,
+        "h": 0.08463541666666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 1,
+      "label": ""
+    },
+    {
+      "id": "eq2",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.43856375000000003,
+        "y": 0.473875,
+        "w": 0.03754437500000001,
+        "h": 0.08463541666666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 2,
+      "label": ""
+    },
+    {
+      "id": "eq3",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.523891875,
+        "y": 0.473875,
+        "w": 0.03754437500000001,
+        "h": 0.08463541666666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 3,
+      "label": ""
+    },
+    {
+      "id": "eq4",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6092200000000001,
+        "y": 0.473875,
+        "w": 0.03754437500000001,
+        "h": 0.08463541666666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 4,
+      "label": ""
+    },
+    {
+      "id": "eq5",
+      "kind": "slider-v",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6945481250000002,
+        "y": 0.473875,
+        "w": 0.03754437500000001,
+        "h": 0.08463541666666667
+      },
+      "bind": "eqBand",
+      "group": "eq-bands",
+      "index": 5,
+      "label": ""
     },
     {
       "id": "playlist",

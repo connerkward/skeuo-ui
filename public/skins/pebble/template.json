@@ -18,12 +18,11 @@
         "h": 0.24666666666666667
       },
       "dynamicType": "visualizer",
-      "shape": "ellipse",
-      "dialStyle": "bloom"
+      "shape": "ellipse"
     },
     {
       "id": "seek",
-      "kind": "slider-path",
+      "kind": "slider-h",
       "content": "sprite",
       "layer": "components",
       "rect": {
@@ -33,45 +32,7 @@
         "h": 0.018229166666666668
       },
       "bind": "seek",
-      "label": "Seek",
-      "path": [
-        {
-          "x": 0.0,
-          "y": 0.6386
-        },
-        {
-          "x": 0.125,
-          "y": 0.6597
-        },
-        {
-          "x": 0.25,
-          "y": 0.6269
-        },
-        {
-          "x": 0.375,
-          "y": 0.5514
-        },
-        {
-          "x": 0.5,
-          "y": 0.4586
-        },
-        {
-          "x": 0.625,
-          "y": 0.3797
-        },
-        {
-          "x": 0.75,
-          "y": 0.3414
-        },
-        {
-          "x": 0.875,
-          "y": 0.3565
-        },
-        {
-          "x": 1.0,
-          "y": 0.42
-        }
-      ]
+      "label": "Seek"
     },
     {
       "id": "play",
