@@ -259,10 +259,10 @@
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.787,
-        "y": 0.323,
-        "w": 0.057,
-        "h": 0.072
+        "x": 0.776,
+        "y": 0.318,
+        "w": 0.072,
+        "h": 0.079
       },
       "bind": "shuffle",
       "label": "SHUF"
@@ -273,10 +273,10 @@
       "content": "sprite",
       "layer": "components",
       "rect": {
-        "x": 0.787,
-        "y": 0.402,
-        "w": 0.057,
-        "h": 0.072
+        "x": 0.776,
+        "y": 0.4,
+        "w": 0.072,
+        "h": 0.079
       },
       "bind": "eqOn",
       "label": "EQ"
