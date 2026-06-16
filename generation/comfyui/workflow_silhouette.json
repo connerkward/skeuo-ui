@@ -1,0 +1,23 @@
+{
+  "_comment": "skeuo wild_sculpt STAGE 1 — gpt-image-2 designs a flat dark-gray silhouette on white. Verbatim SIL_PROMPT from wild_sculpt.py. quality=low to keep the auth/credit probe cheap; bump to medium/high for real bodies. 1024x1536 = the pipeline's W,H.",
+  "prompt": {
+    "1": {
+      "class_type": "OpenAIGPTImage1",
+      "_meta": {"title": "gpt-image-2 silhouette"},
+      "inputs": {
+        "prompt": "A single flat solid DARK-GRAY SILHOUETTE shape on a pure white background: the outline of a Fallout PIP-BOY rugged handheld device with a stubby antenna nub. Completely flat fill, no interior detail, no shading, no outline strokes — just the filled silhouette, centered, filling most of the canvas. The PROPORTION and posture must follow the brief — it may be tall and narrow, squat and wide, asymmetric, leaning, angular/geometric or organic; do NOT default to a generic centered rounded blob, make the OVERALL shape distinctive. COMPOSITION RULE (for fit only): somewhere in the shape there is ONE large CONTIGUOUS mass — at least half the area, tall enough and wide enough to seat stacked screens — and the wild parts (horns, fins, tendrils, legs, spikes, blades, claws) grow outward from it. Bold, readable, wildly non-rectangular outline.",
+        "model": "gpt-image-2",
+        "quality": "low",
+        "background": "opaque",
+        "size": "1024x1536",
+        "n": 1,
+        "seed": 7
+      }
+    },
+    "2": {
+      "class_type": "SaveImage",
+      "_meta": {"title": "save silhouette"},
+      "inputs": {"images": ["1", 0], "filename_prefix": "skeuo_silhouette"}
+    }
+  }
+}

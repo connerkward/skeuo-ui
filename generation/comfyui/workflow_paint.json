@@ -1,0 +1,39 @@
+{
+  "_comment": "skeuo wild_sculpt STAGE 3 — Nano Banana paints the material over a REAL blueprint (the deterministic interior-draw output) while preserving every well/screen. STYLE_PROMPT + MATERIAL['fallout'] verbatim from wild_sculpt.py. Blueprint (skeuo_blueprint_fallout.png) + reference frame (skeuo_ref_pipboy.png) are batched as the edit images, same as the fal pipeline rides a ref alongside the control. Output is directly comparable to generation/_sculpt-fallout-out.png (the fal baseline).",
+  "prompt": {
+    "10": {
+      "class_type": "LoadImage",
+      "_meta": {"title": "blueprint (wells + screens)"},
+      "inputs": {"image": "skeuo_blueprint_fallout.png"}
+    },
+    "11": {
+      "class_type": "LoadImage",
+      "_meta": {"title": "reference style (pip-boy)"},
+      "inputs": {"image": "skeuo_ref_pipboy.png"}
+    },
+    "12": {
+      "class_type": "ImageBatch",
+      "_meta": {"title": "batch: blueprint + ref"},
+      "inputs": {"image1": ["10", 0], "image2": ["11", 0]}
+    },
+    "13": {
+      "class_type": "GeminiNanoBanana2",
+      "_meta": {"title": "Nano Banana paint"},
+      "inputs": {
+        "prompt": "Restyle this blueprint into a photoreal, wildly-shaped skeuomorphic MP3-player device. CRITICAL: keep the EXACT silhouette, and keep EVERY dark recessed well and screen EXACTLY where it is, same size and shape — every recessed well stays a DEEP DARK EMPTY socket: a near-black matte cavity with a crisp raised rim, NOTHING mounted inside, NOT glowing, NOT filled with material; and every screen — INCLUDING the thin marquee strip — stays switched-off NEAR-BLACK glass, a CLEAN FLAT RECTANGLE never tinted or overgrown by the body material (no text, no graphics). Make the body rich and detailed BETWEEN the wells. Everything outside the silhouette stays pure white. Front-on orthographic, even light, high detail. MATERIAL: a Fallout PIP-BOY / RobCo industrial device: chunky scuffed OLIVE-DRAB painted metal with worn chipped paint, exposed rivets and hex bolts, vacuum-tube knobs, a cracked monochrome AMBER-GREEN CRT glow in the screens, vault-tec stencils and radiation trefoils, retro-futuristic 1950s ruggedized hardware, grimy patina.",
+        "model": "Nano Banana 2 (Gemini 3.1 Flash Image)",
+        "seed": 7,
+        "aspect_ratio": "2:3",
+        "resolution": "1K",
+        "response_modalities": "IMAGE",
+        "thinking_level": "HIGH",
+        "images": ["12", 0]
+      }
+    },
+    "14": {
+      "class_type": "SaveImage",
+      "_meta": {"title": "save painted body"},
+      "inputs": {"images": ["13", 0], "filename_prefix": "skeuo_painted_fallout"}
+    }
+  }
+}
