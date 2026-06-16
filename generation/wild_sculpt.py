@@ -391,11 +391,32 @@ def vis_freeform(r, seed=0):
     r = dict(r); r["vis"] = "ribbon"; r["path"] = pts
     return r
 
-def finalize_regs(regs, seed=0):
+# theme/material -> round-dial sub-style, so the visualizer reads as part of the
+# skin instead of a generic ring. Organic/horror writhes (wave); cute/food blooms
+# (petals); water/ceramic/stone ripples (rings); gold/radiant rays out (bars);
+# tech/military/scoreboard scopes (radar).
+THEME_DIAL = {
+    "biomech": "wave", "flesh": "wave", "chitin": "wave", "fungal": "wave", "spore": "wave",
+    "frog": "bloom", "tomato": "bloom", "mochi": "bloom", "cupcake": "bloom",
+    "poophero": "bloom", "burger": "bloom",
+    "toilet": "rings", "bondi": "rings", "stonehead": "rings", "chacmool": "rings",
+    "egypt": "bars",
+    "fallout": "radar", "halo": "radar", "worldcup": "radar", "mexico": "radar",
+    "winamp": "radar", "wmp": "radar",
+}
+
+def dial_for_theme(r, theme):
+    """Stamp a themed dial sub-style onto the round (ellipse) visualizer."""
+    if r.get("dynamicType") == "visualizer" and r.get("shape") == "ellipse":
+        r = dict(r); r["dialStyle"] = THEME_DIAL.get(theme, "bars")
+    return r
+
+def finalize_regs(regs, seed=0, theme=None):
     """Every layout passes through here: drop dead controls, make seek a freeform
-    spline, give the visualizer a freeform ribbon. Single chokepoint so new
-    layouts inherit all three rules."""
-    return [vis_freeform(seek_to_spline(r, seed), seed) for r in spotify_only(regs)]
+    spline, give the visualizer a freeform ribbon (or a themed round dial). Single
+    chokepoint so new layouts inherit all the rules."""
+    return [dial_for_theme(vis_freeform(seek_to_spline(r, seed), seed), theme)
+            for r in spotify_only(regs)]
 
 def covers(mask, regs):
     """Every control/screen must sit fully inside the enveloping body."""
@@ -698,7 +719,7 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
         regs = finalize_regs(layout_radial() if variant == "radial" else
                 layout_capsule() if variant == "capsule" else
                 layout_minimal() if variant == "minimal" else layout_manray(),
-                seed=sum(map(ord, out_id)))
+                seed=sum(map(ord, out_id)), theme=style)
         wells = draw_wells_only(regs)
         rmask = region_mask(regs)
         for attempt in range(3):
@@ -713,7 +734,7 @@ def main(out_id, style, brief, sil_path=None, variant="classic", refs=None):
     else:
         for attempt in range(3):
             mask = gen_silhouette(brief, out_id, sil_path); sil_path = None
-            regs = finalize_regs(layout_in_mask(mask, variant), seed=sum(map(ord, out_id)))
+            regs = finalize_regs(layout_in_mask(mask, variant), seed=sum(map(ord, out_id)), theme=style)
             if usable(regs):
                 break
             print(f"[{out_id}] silhouette unusable (screens too small) — retry {attempt+1}", flush=True)

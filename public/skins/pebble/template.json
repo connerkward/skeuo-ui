@@ -18,7 +18,8 @@
         "h": 0.24666666666666667
       },
       "dynamicType": "visualizer",
-      "shape": "ellipse"
+      "shape": "ellipse",
+      "dialStyle": "bloom"
     },
     {
       "id": "seek",

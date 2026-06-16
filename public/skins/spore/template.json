@@ -18,7 +18,8 @@
         "h": 0.17272957921103385
       },
       "dynamicType": "visualizer",
-      "shape": "ellipse"
+      "shape": "ellipse",
+      "dialStyle": "wave"
     },
     {
       "id": "prev",

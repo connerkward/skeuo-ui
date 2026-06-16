@@ -7,16 +7,6 @@ import { buildSpline, splineAt, splineProject } from "./spline";
 import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, skinMolded, spriteUrl } from "./skins";
 import type { SpotifyDrive } from "../spotify/useSpotify";
 
-// Round-dial sub-styles, spread deterministically across skins so the 16 round
-// screens don't all render the identical bar ring. A template may override per
-// region via `dialStyle`; otherwise it's hashed from the skin id.
-const DIAL_STYLES = ["bars", "rings", "radar", "bloom", "wave"] as const;
-function dialStyleFor(skinId: string): (typeof DIAL_STYLES)[number] {
-  let h = 7;
-  for (let i = 0; i < skinId.length; i++) h = (h * 7 + skinId.charCodeAt(i)) >>> 0;
-  return DIAL_STYLES[h % DIAL_STYLES.length];
-}
-
 // A skin created at runtime (POST /api/generate): its frame is an inline URL
 // and its template lives in memory, so it bypasses the on-disk registry lookups.
 export interface RuntimeSkinView {
@@ -185,7 +175,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
         if (r.shape === "ellipse") {
           return (
             <div className="dial-vis">
-              <Visualizer playing={ps.playing} analyser={ps.analyser} variant="radial" dialStyle={r.dialStyle ?? dialStyleFor(skinId)} />
+              <Visualizer playing={ps.playing} analyser={ps.analyser} variant="radial" dialStyle={r.dialStyle ?? "bars"} />
               <div className="dial-readout">
                 <span className="dial-time" data-paused={!ps.playing}>{fmtTime(ps.elapsed)}</span>
                 <span className="dial-track">{ps.track.title}</span>
