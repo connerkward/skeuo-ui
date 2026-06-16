@@ -34,6 +34,20 @@ def _comfy_api_key():
     return None
 
 
+def _comfy_auth_token():
+    """Short-lived comfy.org login token (auth_token_comfy_org). Lets a headless
+    run reuse an already-signed-in Comfy Desktop session without an API key.
+    From COMFY_AUTH_TOKEN, else the ephemeral /tmp/_comfy_tok. Expires ~1h; the
+    API key (above) is the durable path. Never committed — secret stays out of git."""
+    t = os.environ.get("COMFY_AUTH_TOKEN")
+    if t:
+        return t.strip()
+    p = "/tmp/_comfy_tok"
+    if os.path.exists(p):
+        return open(p).read().strip()
+    return None
+
+
 def _req(path, data=None):
     url = f"http://{SERVER}{path}"
     body = json.dumps(data).encode() if data is not None else None
@@ -49,11 +63,15 @@ def run(wf_path, out_prefix=None):
     cid = uuid.uuid4().hex
     payload = {"prompt": prompt, "client_id": cid}
     key = _comfy_api_key()
+    tok = _comfy_auth_token()
     if key:
         payload["extra_data"] = {"api_key_comfy_org": key}
         print("auth: COMFY_API_KEY present", flush=True)
+    elif tok:
+        payload["extra_data"] = {"auth_token_comfy_org": tok}
+        print("auth: desktop login token present (may expire ~1h)", flush=True)
     else:
-        print("auth: NO COMFY_API_KEY — cloud API nodes will return Unauthorized", flush=True)
+        print("auth: none — cloud API nodes will return Unauthorized", flush=True)
     print(f"queue {os.path.basename(wf_path)} (client {cid[:8]})", flush=True)
     try:
         res = _req("/prompt", payload)
