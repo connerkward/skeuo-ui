@@ -252,6 +252,34 @@
       },
       "bind": "seek",
       "label": "Seek"
+    },
+    {
+      "id": "sw0",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.787,
+        "y": 0.323,
+        "w": 0.057,
+        "h": 0.072
+      },
+      "bind": "shuffle",
+      "label": "SHUF"
+    },
+    {
+      "id": "sw1",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.787,
+        "y": 0.402,
+        "w": 0.057,
+        "h": 0.072
+      },
+      "bind": "eqOn",
+      "label": "EQ"
     }
   ]
 }

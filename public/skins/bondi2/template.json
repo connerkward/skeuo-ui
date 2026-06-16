@@ -103,6 +103,34 @@
       "label": "next"
     },
     {
+      "id": "sw0",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.6341820693597562,
+        "y": 0.4114583333333333,
+        "w": 0.08129763719512197,
+        "h": 0.061197916666666664
+      },
+      "bind": "shuffle",
+      "label": "SHUF"
+    },
+    {
+      "id": "sw1",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.7269674161585367,
+        "y": 0.4114583333333333,
+        "w": 0.08129763719512197,
+        "h": 0.061197916666666664
+      },
+      "bind": "eqOn",
+      "label": "EQ"
+    },
+    {
       "id": "knob0",
       "kind": "knob",
       "content": "sprite",

@@ -163,6 +163,34 @@
       "shape": "ellipse"
     },
     {
+      "id": "sw0",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.039640625,
+        "y": 0.48845052083333335,
+        "w": 0.06499023437500001,
+        "h": 0.06932291666666666
+      },
+      "bind": "shuffle",
+      "label": "SHUF"
+    },
+    {
+      "id": "sw1",
+      "kind": "toggle",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.895369140625,
+        "y": 0.48845052083333335,
+        "w": 0.06499023437500001,
+        "h": 0.06932291666666666
+      },
+      "bind": "eqOn",
+      "label": "EQ"
+    },
+    {
       "id": "eq0",
       "kind": "slider-v",
       "content": "sprite",

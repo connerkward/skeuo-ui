@@ -52,19 +52,16 @@
    SPRITE CONTROLS — AI-rendered parts with real states
    ============================================================ */
 /* flip switch: two stacked state images of the SAME switch; toggling swaps art */
-.flipsw.sp-sw { container-type: size; }
-.sp-sw-stack { position: relative; flex: 1; width: 100%; min-height: 0; }
-/* short regions: let the switch art fill, drop the text label */
-@container (max-height: 44px) {
-  .flipsw.sp-sw .fsw-label { display: none; }
-}
+.flipsw.sp-sw { container-type: size; position: relative; }
+/* the sprite IS the labelled switch — fill the entire allotted slot, no text */
+.flipsw.sp-sw .fsw-label { display: none; }
+.sp-sw-stack { position: absolute; inset: 0; width: 100%; height: 100%; }
 .sp-sw-img {
-  /* the art may BLEED beyond its well box (transparent PNG) — scaled up and
-     un-clipped so levers/tongues/eyes overhang the body like real hardware */
-  position: absolute; left: -18%; top: -18%; width: 136%; height: 136%;
-  object-fit: contain; pointer-events: none;
+  /* FILL the allotted slot exactly — the sprite is a switch-in-a-bezel sized to
+     the region box, so it sits crisply in its slot edge-to-edge, no overhang. */
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: fill; pointer-events: none;
   transition: opacity .09s steps(2, jump-end);
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 }
 .flipsw.sp-sw .sp-sw-img.on { opacity: 0; }
 .flipsw.sp-sw[data-on="true"] .sp-sw-img.on { opacity: 1; }
