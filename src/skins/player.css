@@ -73,9 +73,10 @@
 .sp-knob { cursor: ns-resize; position: relative; }
 .sp-knob .knob-label { display: none; }
 .sp-knob-img {
+  /* fill the allotted knob well; contain keeps the cap circular in a square box */
   position: absolute; inset: 0; margin: auto;
-  width: 116%; height: 116%; object-fit: contain; pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,.45));
+  width: 100%; height: 100%; object-fit: contain; pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
 }
 .sp-knob-ptr {
   position: absolute; inset: 0; margin: auto;
