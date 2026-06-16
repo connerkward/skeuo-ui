@@ -135,34 +135,6 @@
       "shape": "ellipse"
     },
     {
-      "id": "sw0",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.37890625,
-        "y": 0.44140625,
-        "w": 0.0198388671875,
-        "h": 0.10416666666666667
-      },
-      "bind": "shuffle",
-      "label": "SHUF"
-    },
-    {
-      "id": "sw1",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.5768408203125,
-        "y": 0.44140625,
-        "w": 0.0198388671875,
-        "h": 0.10416666666666667
-      },
-      "bind": "eqOn",
-      "label": "EQ"
-    },
-    {
       "id": "knob0",
       "kind": "knob",
       "content": "sprite",

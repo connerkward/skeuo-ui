@@ -252,34 +252,6 @@
       },
       "bind": "seek",
       "label": "Seek"
-    },
-    {
-      "id": "sw0",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.802734375,
-        "y": 0.3450520833333333,
-        "w": 0.0625,
-        "h": 0.0625
-      },
-      "bind": "shuffle",
-      "label": "SHUF"
-    },
-    {
-      "id": "sw1",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.802734375,
-        "y": 0.4231770833333333,
-        "w": 0.0625,
-        "h": 0.0625
-      },
-      "bind": "eqOn",
-      "label": "EQ"
     }
   ]
 }

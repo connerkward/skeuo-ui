@@ -137,34 +137,6 @@
       "dynamicType": "marquee"
     },
     {
-      "id": "sw0",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.1253984375,
-        "y": 0.5258854166666667,
-        "w": 0.051562500000000004,
-        "h": 0.055
-      },
-      "bind": "shuffle",
-      "label": "SHUF"
-    },
-    {
-      "id": "sw1",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.8210859375,
-        "y": 0.5258854166666667,
-        "w": 0.051562500000000004,
-        "h": 0.055
-      },
-      "bind": "eqOn",
-      "label": "EQ"
-    },
-    {
       "id": "eq0",
       "kind": "slider-v",
       "content": "sprite",

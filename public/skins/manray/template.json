@@ -62,20 +62,6 @@
       "bind": "next",
       "label": "next",
       "shape": "ellipse"
-    },
-    {
-      "id": "shuffle",
-      "kind": "toggle",
-      "content": "sprite",
-      "layer": "components",
-      "rect": {
-        "x": 0.22500000000000003,
-        "y": 0.6249999999999999,
-        "w": 0.135,
-        "h": 0.07
-      },
-      "bind": "shuffle",
-      "label": "SHUF"
     }
   ]
 }
