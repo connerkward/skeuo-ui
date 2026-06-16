@@ -28,7 +28,8 @@ OUT = "/Users/conner/Desktop/cc-skeuo"
 W, H = 1024, 1536
 FAL = os.environ.get("FAL_KEY")
 SAM = "https://queue.fal.run/fal-ai/sam-3-1/image"
-PAD = 0.18          # enlarge the box prompt by this fraction to catch drift
+PAD = 0.6           # enlarge the box prompt to catch drift — but ADAPTIVELY clamped
+PAD_GAP = 0.45      # never grow a box past this fraction of the gap to its neighbour
 MIN_SCORE = 0.55    # below this, keep the prior
 CTRL = {"button", "toggle", "knob", "slider-h", "slider-v", "slider-arc", "slider-path"}
 
@@ -61,8 +62,28 @@ def composite(skin):
     p = f"/tmp/sam-{skin}.png"; bg.convert("RGB").save(p); return p
 
 
-def pad_box(rc):
-    px, py = rc["w"]*PAD, rc["h"]*PAD
+def adaptive_pads(rects):
+    """Per-control pad: expand by PAD×size, CLAMPED to PAD_GAP×(gap to nearest
+    neighbour) so densely-packed controls (the EQ row) don't grow into each other
+    and get merged by SAM. Isolated controls get the full expansion to catch drift;
+    packed ones stay tight. (Uniform expansion collapses dense rows — measured.)"""
+    out = []
+    for i, a in enumerate(rects):
+        gx = gy = 1.0
+        for j, b in enumerate(rects):
+            if i == j: continue
+            if not (a["y"]+a["h"] < b["y"] or b["y"]+b["h"] < a["y"]):   # shares a row
+                gap = abs((b["x"]+b["w"]/2)-(a["x"]+a["w"]/2)) - (a["w"]+b["w"])/2
+                if gap >= -0.01: gx = min(gx, max(0.0, gap))
+            if not (a["x"]+a["w"] < b["x"] or b["x"]+b["w"] < a["x"]):   # shares a column
+                gap = abs((b["y"]+b["h"]/2)-(a["y"]+a["h"]/2)) - (a["h"]+b["h"])/2
+                if gap >= -0.01: gy = min(gy, max(0.0, gap))
+        out.append((min(a["w"]*PAD, PAD_GAP*gx), min(a["h"]*PAD, PAD_GAP*gy)))
+    return out
+
+
+def pad_box(rc, pad):
+    px, py = pad
     x0 = max(0.0, rc["x"]-px); y0 = max(0.0, rc["y"]-py)
     x1 = min(1.0, rc["x"]+rc["w"]+px); y1 = min(1.0, rc["y"]+rc["h"]+py)
     return [round(x0*W), round(y0*H), round(x1*W), round(y1*H)]
@@ -72,7 +93,8 @@ def detect(url, regs):
     """One SAM call with a box prompt per control. Returns list aligned to ctrl regs:
     {cx,cy,w,h,score} (normalized) or None."""
     ctrl = [r for r in regs if r["kind"] in CTRL]
-    boxes = [pad_box(r["rect"]) for r in ctrl]
+    pads = adaptive_pads([r["rect"] for r in ctrl])
+    boxes = [pad_box(r["rect"], p) for r, p in zip(ctrl, pads)]
     payload = {"image_url": url,
                "box_prompts": [{"x_min": b[0], "y_min": b[1], "x_max": b[2], "y_max": b[3]} for b in boxes],
                "include_boxes": True, "include_scores": True,
