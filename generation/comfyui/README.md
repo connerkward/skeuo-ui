@@ -54,3 +54,17 @@ python3 run.py workflow_paint.json          # stage 3 (paints a blueprint)
 Inputs for the paint workflow live in `~/ComfyUI-Shared/input/`
 (`skeuo_blueprint_fallout.png`, `skeuo_ref_pipboy.png`). Comfy Desktop serves on
 `http://127.0.0.1:8188` (override with `COMFY_SERVER`).
+
+## Opening in the Desktop app
+
+The `workflow_*.json` here are **API format** (for `run.py` / `/prompt`). To open
+in the ComfyUI Desktop GUI, convert to UI-graph format first:
+
+```bash
+python3 to_ui.py workflow_paint.json ~/ComfyUI-Installs/Local/ComfyUI/user/default/workflows/skeuo_paint.json
+```
+
+Then in the app: **Workflows sidebar → skeuo_paint** (already done for paint/alpha/
+silhouette). API-format files only load via **drag-drop onto the canvas**
+(`loadApiJson`), not the sidebar — that's why a sidebar-opened API file looks empty.
+Verified: the converted graphs load in the live frontend with correct widget values.
