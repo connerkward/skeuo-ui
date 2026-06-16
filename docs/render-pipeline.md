@@ -17,9 +17,14 @@ serves **5173** by default, so you MUST override the port or capture hits nothin
 
 ```bash
 cd ~/dev/skeuo-ui
-npm install                 # first time in a fresh checkout/worktree only
-npm run dev -- --port 5210  # leave running; capture.mjs talks to this
+npm install                       # first time in a fresh checkout/worktree (installs playwright too)
+npx playwright install chromium   # first time only — fetches the version-matched browser (reuses shared cache)
+npm run dev -- --port 5210        # leave running; capture.mjs talks to this
 ```
+
+`capture.mjs` uses this repo's own `playwright` devDependency and its bundled,
+version-matched chromium (no hardcoded browser path), so it runs on any machine after
+the two install steps above.
 
 Verify: `curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5210/export.html` → `200`.
 

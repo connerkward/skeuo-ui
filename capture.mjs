@@ -9,13 +9,15 @@
 // frame, screenshotting each step. Every frame is fully rendered regardless of
 // how heavy the scene is, so there are ZERO dropped frames → no stutter, ever —
 // and screenshots are @2x (sharp) with no grey. JPEG keeps it ~105ms/frame.
-import pw from "/Users/conner/.npm/_npx/9833c18b2d85bc59/node_modules/playwright/index.js";
-const { chromium } = pw;
+import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
-const CHROME = "/Users/conner/Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing";
+// Browser is playwright's own bundled, version-matched chromium (the "Google Chrome
+// for Testing" build). No hardcoded executablePath — playwright manages the binary in
+// the shared ~/Library/Caches/ms-playwright cache, so this runs on any machine after
+// `npm install` + `npx playwright install chromium`.
 const BASE = "http://localhost:5210/export.html";
 const W = 1080, H = 1920;
 const FPS = 30;            // deterministic output framerate
@@ -28,7 +30,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const qp = (extra) => [PARAMS, extra].filter(Boolean).join("&");
 
 const browser = await chromium.launch({
-  executablePath: CHROME,
   args: [
     "--autoplay-policy=no-user-gesture-required", "--force-color-profile=srgb",
     "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=metal",
