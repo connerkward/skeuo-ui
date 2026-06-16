@@ -23,9 +23,13 @@ draw logic as a custom ComfyUI node for a single end-to-end graph.
   (`_sculpt-fallout.png`) + a reference frame, preserving every well/screen.
   Verbatim `STYLE_PROMPT` + `MATERIAL['fallout']`. Output is directly
   comparable to `generation/_sculpt-fallout-out.png` (the fal baseline).
+- `workflow_alpha.json` — stage 4: "the SAME mask becomes the alpha". **Pure
+  native nodes, NO API/credits** — thresholds the blueprint's white background to
+  a mask and joins it as alpha → an RGBA cutout (body+wells opaque, background
+  transparent). Runs offline; verified working (`~/Desktop/cc-skeuo/`).
 - `run.py` — headless runner: POST `/prompt`, poll `/history`, save outputs to
   `~/Desktop/cc-skeuo/`. Reads `COMFY_API_KEY` and passes it as
-  `extra_data.api_key_comfy_org`.
+  `extra_data.api_key_comfy_org` (only needed for the cloud stages 1 & 3).
 
 ## Auth (one-time)
 

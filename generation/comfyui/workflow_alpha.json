@@ -1,0 +1,30 @@
+{
+  "_comment": "skeuo wild_sculpt STAGE 4 — 'the SAME mask becomes the alpha'. Pure native nodes, NO API/credits. Take the blueprint (gray silhouette on pure white), threshold the white background to a mask, invert it so the body+wells are the alpha, and join → an RGBA cutout with transparent background. This is the deterministic alpha step done in ComfyUI; runs offline and is directly inspectable.",
+  "prompt": {
+    "20": {
+      "class_type": "LoadImage",
+      "_meta": {"title": "blueprint"},
+      "inputs": {"image": "skeuo_blueprint_fallout.png"}
+    },
+    "21": {
+      "class_type": "ImageToMask",
+      "_meta": {"title": "red channel -> mask"},
+      "inputs": {"image": ["20", 0], "channel": "red"}
+    },
+    "22": {
+      "class_type": "ThresholdMask",
+      "_meta": {"title": "white background mask (>=0.9)"},
+      "inputs": {"mask": ["21", 0], "value": 0.9}
+    },
+    "24": {
+      "class_type": "JoinImageWithAlpha",
+      "_meta": {"title": "cut white to transparency"},
+      "inputs": {"image": ["20", 0], "alpha": ["22", 0]}
+    },
+    "25": {
+      "class_type": "SaveImage",
+      "_meta": {"title": "save RGBA cutout"},
+      "inputs": {"images": ["24", 0], "filename_prefix": "skeuo_alpha_fallout"}
+    }
+  }
+}
