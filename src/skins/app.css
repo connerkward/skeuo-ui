@@ -70,12 +70,22 @@ body {
 /* ====================================================================== */
 .m-shell {
   position: fixed; inset: 0;
+  /* iOS: real visible height (svh) and honour the notch/home-indicator insets
+     so the top bar isn't under the notch and the dots aren't under the home bar */
+  height: 100svh;
   display: grid; grid-template-rows: auto 1fr auto;
   background: radial-gradient(circle at 28% 18%, #1c1c1f, #060607 72%);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
   /* heights of the top bar + dots strip, used to compute the player fit */
   --m-topbar-h: 52px;
   --m-dots-h: 44px;
+  /* total chrome the player must subtract = bars + the safe-area we padded with */
+  --m-safe-v: calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
   touch-action: pan-y; /* let the page own vertical; we own horizontal */
+  /* dragging the carriage must never paint a text selection on iOS */
+  user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .m-topbar {
@@ -91,8 +101,9 @@ body {
 }
 .m-menu {
   background: #1a1a1d; color: #cfcfd4; border: 1px solid #34343a;
-  border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12px;
+  border-radius: 999px; padding: 10px 16px; min-height: 44px; font: inherit; font-size: 13px;
   font-weight: 650; cursor: pointer; letter-spacing: .3px;
+  display: inline-flex; align-items: center;
   transition: background .15s, border-color .15s;
 }
 .m-menu:active { background: #26262b; border-color: #56565e; }
@@ -110,7 +121,9 @@ body {
 /* size the player to fit: width-bound (94vw) OR height-bound (the carriage's
    own height × aspect 0.667), whichever is smaller — guarantees no crop. */
 .m-page .player {
-  --w: min(94vw, calc((100svh - var(--m-topbar-h) - var(--m-dots-h) - 16px) * 0.667));
+  /* 24px gutter covers the .m-page vertical padding (16px) + a hair of slack so
+     the tall 2:3 player never crops at the bottom in short (landscape) viewports */
+  --w: min(94vw, calc((100svh - var(--m-safe-v) - var(--m-topbar-h) - var(--m-dots-h) - 24px) * 0.667));
   transform: none !important; /* mobile: no desktop drag-offset translate */
 }
 
@@ -136,19 +149,25 @@ body {
 
 /* dots / position indicator */
 .m-dots {
-  height: var(--m-dots-h);
+  min-height: var(--m-dots-h);
   display: flex; align-items: center; justify-content: center;
-  gap: 7px; padding: 0 16px; flex-wrap: wrap; overflow: hidden;
+  gap: 2px; padding: 0 12px; flex-wrap: wrap; overflow: hidden;
   border-top: 1px solid #1c1c1c; background: rgba(0,0,0,.45);
 }
+/* the dot stays a small 8px visual, but the button gives a generous tap target
+   (28×30) so a thumb can reliably hit it without enlarging the whole strip */
 .m-dot {
-  width: 7px; height: 7px; padding: 0; border-radius: 50%;
-  background: #3a3a42; border: 0; cursor: pointer;
-  transition: background .2s, transform .2s, width .2s;
+  width: 28px; height: 30px; padding: 0; border: 0; cursor: pointer;
+  background: transparent; position: relative; -webkit-tap-highlight-color: transparent;
 }
-.m-dot.on { background: #cfcfd6; transform: scale(1.05); }
-.m-dot-create { border-radius: 2px; background: #4a4a52; }
-.m-dot-create.on { background: #cfcfd6; }
+.m-dot::before {
+  content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 8px; height: 8px; border-radius: 50%; background: #3a3a42;
+  transition: background .2s, transform .2s;
+}
+.m-dot.on::before { background: #cfcfd6; transform: translate(-50%, -50%) scale(1.15); }
+.m-dot-create::before { border-radius: 2px; background: #4a4a52; }
+.m-dot-create.on::before { background: #cfcfd6; }
 
 /* keep the desktop layout untouched above the breakpoint */
 @media (max-width: 820px) {
