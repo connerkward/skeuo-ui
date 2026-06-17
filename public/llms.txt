@@ -1,0 +1,36 @@
+# skeuo.fm
+
+> skeuo.fm turns a typed sentence into a real, working, skeuomorphic music player:
+> an AI-generated player body (the "skin") wrapped around functional controls —
+> play/pause, scrub, volume, transport — that drive real Spotify playback. Describe
+> a player ("a translucent Bondi-blue iMac jukebox", "a Halo UNSC console", "a chrome
+> cthulhu deck") and the pipeline paints the body, fits the controls to it, and hands
+> you a player you can actually use.
+
+## What it is
+
+skeuo.fm is a generative skeuomorphism toy and tool. Skeuomorphism is interface
+design that imitates the look and feel of real-world physical objects (brushed metal,
+glass, knobs, LEDs). Here the skeuomorphic shell is generated from a text prompt by an
+image model, then a layout step fits real, interactive music controls onto the painted
+body so the result is a genuinely usable player, not a static picture. Playback is real
+Spotify.
+
+## How it works
+
+- A text prompt describes the desired player body.
+- An image model paints the skeuomorphic body (the "skin").
+- A template + vision step masks and snaps real controls (play, scrub, volume) onto
+  the painted body so they line up with the artwork.
+- The finished player drives real Spotify playback in the browser.
+
+## Key links
+
+- Home / app: https://skeuo.fm/
+- Process / how-it-works pipeline: https://skeuo.fm/process/
+- Social share image: https://skeuo.fm/og-image.png
+
+## Notes
+
+- skeuo = "skeuomorphic"; .fm = the music/radio top-level domain. Read as "skew-oh dot F M".
+- Built by Conner Ward.

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name skeuo-ui",
     "lint": "eslint .",
     "preview": "vite preview",
     "tauri": "tauri",
