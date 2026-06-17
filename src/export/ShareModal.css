@@ -1,0 +1,216 @@
+/* ── Share modal: dark, on-brand (matches the skeuo.fm stage chrome) ───────── */
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 7, 9, 0.66);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: share-fade 0.16s ease-out;
+}
+@keyframes share-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.share-modal {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  color: #f0f2f6;
+  background: linear-gradient(165deg, #1c1c20, #111114);
+  border: 1px solid #34343c;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: share-pop 0.18s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes share-pop {
+  from { transform: translateY(10px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.share-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.share-title {
+  margin: 0;
+  font: 700 16px/1.2 -apple-system, "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+.share-title .fm { color: #2dff6e; }
+.share-sub {
+  margin: 2px 0 0;
+  font: 500 12px/1.3 -apple-system, "Segoe UI", system-ui, sans-serif;
+  color: #9a9aa6;
+}
+
+.share-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #cfcfd8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #3a3a42;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.share-close:hover { background: rgba(255, 255, 255, 0.1); border-color: #6a6a76; }
+.share-close svg { width: 14px; height: 14px; }
+
+/* ── preview ────────────────────────────────────────────────────────────── */
+.share-preview {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0d0d0f;
+  border: 1px solid #2a2a30;
+  aspect-ratio: 1024 / 1536;
+  display: grid;
+  place-items: center;
+}
+.share-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.share-preview .share-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #2dff6e;
+  border-radius: 50%;
+  animation: share-spin 0.8s linear infinite;
+}
+@keyframes share-spin { to { transform: rotate(360deg); } }
+.share-preview .share-preview-err {
+  font: 500 12px/1.4 system-ui, sans-serif;
+  color: #9a9aa6;
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* ── action buttons ─────────────────────────────────────────────────────── */
+.share-actions {
+  display: grid;
+  gap: 8px;
+}
+.share-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  font: 600 13px/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+  color: #f0f2f6;
+  background: linear-gradient(160deg, #26262c, #161619);
+  border: 1px solid #3a3a42;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.08s, border-color 0.15s, background 0.15s;
+}
+.share-btn:hover:not(:disabled) {
+  border-color: #6a6a76;
+  background: linear-gradient(160deg, #2d2d34, #1a1a1d);
+}
+.share-btn:active:not(:disabled) { transform: translateY(1px); }
+.share-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.share-btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+
+/* primary (native share / copy link) gets the brand accent */
+.share-btn.primary {
+  background: linear-gradient(160deg, #1f3a28, #15271c);
+  border-color: #2a6b42;
+}
+.share-btn.primary:hover:not(:disabled) {
+  border-color: #2dff6e;
+  background: linear-gradient(160deg, #244732, #182d20);
+}
+
+.share-btn.busy { cursor: progress; }
+.share-btn .share-spin-sm {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #2dff6e;
+  border-radius: 50%;
+  animation: share-spin 0.7s linear infinite;
+}
+
+.share-btn .desktop-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #2dff6e;
+  opacity: 0.85;
+}
+
+/* progress bar under a downloading button */
+.share-prog {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.share-prog > i {
+  display: block;
+  height: 100%;
+  background: #2dff6e;
+  transition: width 0.12s linear;
+}
+
+.share-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  font: 500 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #b8b8c2;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a30;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.share-link-row .url {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-feedback {
+  min-height: 16px;
+  text-align: center;
+  font: 600 12px/1.3 -apple-system, system-ui, sans-serif;
+  color: #2dff6e;
+}
+
+/* ── mobile: stack actions one-per-row, prioritize share + link ───────────── */
+@media (max-width: 460px) {
+  .share-row { grid-template-columns: 1fr; }
+}

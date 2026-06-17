@@ -188,19 +188,33 @@ export interface ExportResult {
   samples: ImageData[];
 }
 
-// Record the given element as an animated GIF. onProgress fires through capture
-// then encode. Returns the gif Blob plus sample frames for verification.
-export async function recordPlayerGif(
-  el: HTMLElement,
-  onProgress?: (p: ExportProgress) => void,
-): Promise<ExportResult> {
-  const logo = await loadLogo();
-  const bench = startBench();
+// ── shared compositor setup ──────────────────────────────────────────────────
+// Both the GIF and the VIDEO export need the exact same pipeline: rasterize the
+// static base ONCE (excluding the live elements), then per-frame blit that base
+// and composite only the cheap live regions (the real spectrum <canvas> straight
+// via drawImage + the tiny changing text overlays). This builds that machinery
+// once and hands back a `composite()` that paints one frame into `outCtx`, plus a
+// `dispose()` to release the heavy capture contexts. Reused by recordPlayerGif
+// (encode → GIF) and recordPlayerVideo (captureStream → MediaRecorder).
+interface Compositor {
+  outCanvas: HTMLCanvasElement;
+  outCtx: CanvasRenderingContext2D;
+  outW: number;
+  outH: number;
+  composite: () => Promise<void>;
+  dispose: () => void;
+}
 
+async function buildCompositor(
+  el: HTMLElement,
+  outW: number,
+  logo: HTMLImageElement | null,
+  bench?: ReturnType<typeof startBench>,
+  willReadFrequently = true,
+): Promise<Compositor> {
   const playerRect = el.getBoundingClientRect();
   const aspect = el.offsetHeight / el.offsetWidth || 1536 / 1024;
-  const outW = TARGET_W;
-  const outH = Math.round(TARGET_W * aspect);
+  const outH = Math.round(outW * aspect);
   const sx = outW / (playerRect.width || outW);
   const sy = outH / (playerRect.height || outH);
 
@@ -224,7 +238,7 @@ export async function recordPlayerGif(
   });
   const baseT0 = performance.now();
   const baseCanvas = await domToCanvas(ctxCache);
-  bench.base(performance.now() - baseT0);
+  bench?.base(performance.now() - baseT0);
 
   const liveCanvases: LiveRegion[] = liveCanvasEls
     .map((c) => ({ el: c, ...regionRect(c, playerRect, sx, sy) }));
@@ -237,29 +251,13 @@ export async function recordPlayerGif(
     liveTexts.push({ el: t, ...rect, ctx: tctx });
   }
 
-  // one reusable output canvas for the composite
   const out = document.createElement("canvas");
   out.width = outW; out.height = outH;
-  const outCtx = out.getContext("2d", { willReadFrequently: true })!;
+  const outCtx = out.getContext("2d", { willReadFrequently })!;
   outCtx.imageSmoothingEnabled = true;
   outCtx.imageSmoothingQuality = "high";
 
-  // spin up the encode worker NOW so it's warm by the time capture finishes
-  const worker = new Worker(new URL("./gifWorker.ts", import.meta.url), { type: "module" });
-
-  // ── capture phase: composite across real animation time ─────────────────────
-  const frameBuffers: ArrayBuffer[] = [];   // RGBA, transferred to the worker
-  const samples: ImageData[] = [];          // kept copies for verification
-  const interval = DURATION_MS / FRAME_COUNT;
-  const t0 = performance.now();
-  bench.captureStart();
-  for (let i = 0; i < FRAME_COUNT; i++) {
-    const target = t0 + i * interval;
-    // let the live animation advance to this frame's wall-clock target
-    while (performance.now() < target) await nextFrame();
-    const cap0 = performance.now();
-
-    // static base (one instant blit), then overlay the live regions
+  const composite = async () => {
     outCtx.fillStyle = PAGE_BG;
     outCtx.fillRect(0, 0, outW, outH);
     outCtx.drawImage(baseCanvas, 0, 0, outW, outH);
@@ -278,6 +276,44 @@ export async function recordPlayerGif(
       } catch { /* skip this overlay this frame */ }
     }
     drawWatermark(outCtx, outW, outH, logo);
+  };
+
+  const dispose = () => {
+    destroyContext(ctxCache);
+    for (const r of liveTexts) r.ctx && destroyContext(r.ctx);
+  };
+
+  return { outCanvas: out, outCtx, outW, outH, composite, dispose };
+}
+
+// Record the given element as an animated GIF. onProgress fires through capture
+// then encode. Returns the gif Blob plus sample frames for verification.
+export async function recordPlayerGif(
+  el: HTMLElement,
+  onProgress?: (p: ExportProgress) => void,
+): Promise<ExportResult> {
+  const logo = await loadLogo();
+  const bench = startBench();
+
+  const comp = await buildCompositor(el, TARGET_W, logo, bench);
+  const { outCtx, outW, outH } = comp;
+
+  // spin up the encode worker NOW so it's warm by the time capture finishes
+  const worker = new Worker(new URL("./gifWorker.ts", import.meta.url), { type: "module" });
+
+  // ── capture phase: composite across real animation time ─────────────────────
+  const frameBuffers: ArrayBuffer[] = [];   // RGBA, transferred to the worker
+  const samples: ImageData[] = [];          // kept copies for verification
+  const interval = DURATION_MS / FRAME_COUNT;
+  const t0 = performance.now();
+  bench.captureStart();
+  for (let i = 0; i < FRAME_COUNT; i++) {
+    const target = t0 + i * interval;
+    // let the live animation advance to this frame's wall-clock target
+    while (performance.now() < target) await nextFrame();
+    const cap0 = performance.now();
+
+    await comp.composite();
 
     const rgba = outCtx.getImageData(0, 0, outW, outH).data;
     bench.frame(performance.now() - cap0);
@@ -287,8 +323,7 @@ export async function recordPlayerGif(
   }
   bench.captureEnd();
   // capture done — the expensive contexts can go
-  destroyContext(ctxCache);
-  for (const r of liveTexts) r.ctx && destroyContext(r.ctx);
+  comp.dispose();
 
   // keep early/mid/late samples for verification BEFORE the buffers are transferred
   const midIdx = Math.floor(frameBuffers.length / 2);
@@ -320,6 +355,103 @@ export async function recordPlayerGif(
   onProgress?.({ phase: "done", pct: 1 });
 
   return { blob, width: outW, height: outH, frames: FRAME_COUNT, samples };
+}
+
+// ── short looping VIDEO of the running skin ──────────────────────────────────
+// Same static-base + live-canvas compositor as the GIF, but instead of capturing
+// RGBA frames for a quantized GIF we drive the output canvas in real time and let
+// MediaRecorder pull from canvas.captureStream(). That keeps the heavy work the
+// same (the page stays responsive — base is rastered once, per-frame is the cheap
+// composite) while producing a full-color, properly-compressed clip. We prefer
+// H.264 in MP4 (universally playable) and fall back to VP9/WebM where MP4 isn't
+// offered (Chrome/Firefox). ~3s, then download.
+const VIDEO_W = 720;             // video output width; height follows player aspect
+const VIDEO_MS = 3000;           // ~3s loop
+const VIDEO_FPS = 30;            // smooth playback
+
+export interface VideoResult {
+  blob: Blob;
+  mimeType: string;
+  ext: "mp4" | "webm";
+  width: number;
+  height: number;
+  durationMs: number;
+}
+
+// Pick the best supported recording container/codec. MP4/avc1 first (plays
+// everywhere incl. iOS/QuickTime/Discord), then VP9/WebM, then a plain fallback.
+function pickVideoMime(): { mimeType: string; ext: "mp4" | "webm" } {
+  const candidates: { mimeType: string; ext: "mp4" | "webm" }[] = [
+    { mimeType: "video/mp4;codecs=avc1.42E01E", ext: "mp4" },
+    { mimeType: "video/mp4;codecs=avc1", ext: "mp4" },
+    { mimeType: "video/mp4", ext: "mp4" },
+    { mimeType: "video/webm;codecs=vp9", ext: "webm" },
+    { mimeType: "video/webm;codecs=vp8", ext: "webm" },
+    { mimeType: "video/webm", ext: "webm" },
+  ];
+  const supports =
+    typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function";
+  for (const c of candidates) {
+    if (supports && MediaRecorder.isTypeSupported(c.mimeType)) return c;
+  }
+  return { mimeType: "video/webm", ext: "webm" }; // last-ditch
+}
+
+export async function recordPlayerVideo(
+  el: HTMLElement,
+  onProgress?: (p: ExportProgress) => void,
+): Promise<VideoResult> {
+  const logo = await loadLogo();
+  const { mimeType, ext } = pickVideoMime();
+
+  // willReadFrequently=false: captureStream pulls the canvas via the GPU path, so
+  // we do NOT want the readback-optimized (CPU) backing store here.
+  const comp = await buildCompositor(el, VIDEO_W, logo, undefined, false);
+  const { outCanvas, outW, outH } = comp;
+
+  // paint the first frame before the stream starts so the recording never opens
+  // on an empty canvas.
+  await comp.composite();
+
+  const stream = outCanvas.captureStream(VIDEO_FPS);
+  const recorder = new MediaRecorder(stream, {
+    mimeType,
+    videoBitsPerSecond: 8_000_000, // generous — short clip, want it clean
+  });
+  const chunks: BlobPart[] = [];
+  recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+  const done = new Promise<void>((resolve) => { recorder.onstop = () => resolve(); });
+  recorder.start();
+
+  // drive the compositor in real time for VIDEO_MS. The composite() is the same
+  // cheap per-frame work as the GIF path, so the page stays responsive; the
+  // captureStream samples the canvas as we repaint it.
+  const t0 = performance.now();
+  let stopped = false;
+  while (!stopped) {
+    const now = performance.now();
+    const elapsed = now - t0;
+    if (elapsed >= VIDEO_MS) { stopped = true; break; }
+    await comp.composite();
+    onProgress?.({ phase: "capturing", pct: Math.min(0.95, elapsed / VIDEO_MS) });
+    await nextFrame();
+  }
+  // one final paint so the last sampled frame is complete, then close out.
+  await comp.composite();
+  recorder.stop();
+  await done;
+  comp.dispose();
+  stream.getTracks().forEach((t) => t.stop());
+
+  const blob = new Blob(chunks, { type: mimeType.split(";")[0] });
+  onProgress?.({ phase: "done", pct: 1 });
+  return { blob, mimeType, ext, width: outW, height: outH, durationMs: VIDEO_MS };
+}
+
+// Trigger a browser download of the recorded video.
+export function downloadVideo(blob: Blob, skinId: string, ext: "mp4" | "webm") {
+  downloadBlob(blob, `skeuo-${skinId}.${ext}`);
 }
 
 // ── crisp full-res PNG still (the primary SHARE artifact) ────────────────────
