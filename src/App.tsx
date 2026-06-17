@@ -141,43 +141,72 @@ export default function App() {
   return (
     <div className="page">
       <aside className="sidebar">
-        <Brand className="sidebar-brand" />
-        <h1>Skins</h1>
-        {visible.map((s) => (
-          <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
-            onClick={() => { setSkinId(s.id); setEdited(null); }}>
-            <img className="thumb" loading="lazy" alt=""
-              src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-            <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
+        {/* ── header: brand · what-it-is · primary action ── */}
+        <div className="sb-header">
+          <Brand className="sidebar-brand" />
+          <p className="sb-tagline">
+            One sentence becomes a <b>real, working</b> skeuomorphic player that
+            drives your music. Pick a skin below, or make your own.
+          </p>
+          <button className={`sb-cta ${showCreate ? "open" : ""}`} onClick={() => setShowCreate((v) => !v)}>
+            {showCreate
+              ? <>× Close create</>
+              : <><span className="sb-cta-plus">+</span> Create a skin</>}
           </button>
-        ))}
-        {runtimeSkins.map((s) => (
-          <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
-            onClick={() => { setSkinId(s.id); setEdited(null); }}>
-            <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-            <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
-          </button>
-        ))}
-        <button className="feature-btn" onClick={() => setShowCreate((v) => !v)}>
-          {showCreate ? "× Close create" : "+ Create skin"}
-        </button>
-        <button className="feature-btn" onClick={() => { setEdited(null); setEditing(true); }}>
-          ✎ Edit template
-        </button>
-        <label className="wire-toggle-row">
-          <input type="checkbox" checked={wire} onChange={(e) => setWire(e.target.checked)} />
-          <span>Wireframe (template)</span>
-        </label>
-        <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />
-        <DesktopHandoff
-          skinId={skinId}
-          skinName={[...visible, ...runtimeSkins].find((s) => s.id === skinId)?.name ?? skinId}
-        />
-        <div className="hint">
-          One template → many skins. Buttons / sliders are baked sprites;
-          the clock, spectrum, marquee &amp; playlist are live.
+          <a className="sb-howlink" href="/process/" target="_blank" rel="noopener">
+            How does it work? <span className="arr">→</span>
+          </a>
+        </div>
+
+        {/* ── scrolling body: skin list + secondary groups ── */}
+        <div className="sb-body">
+          <div className="sb-skins">
+          <p className="sb-label">Skins</p>
+          {visible.map((s) => (
+            <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
+              onClick={() => { setSkinId(s.id); setEdited(null); }}>
+              <img className="thumb" loading="lazy" alt=""
+                src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+              <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
+            </button>
+          ))}
+          {runtimeSkins.length > 0 && <p className="sb-label" style={{ marginTop: 4 }}>Your skins</p>}
+          {runtimeSkins.map((s) => (
+            <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
+              onClick={() => { setSkinId(s.id); setEdited(null); }}>
+              <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+              <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
+            </button>
+          ))}
+          </div>
+
+        {/* ── secondary: customize · connect · desktop ── */}
+        <div className="sb-footer">
+          <div className="sb-group">
+            <p className="sb-label">Customize</p>
+            <button className="feature-btn" onClick={() => { setEdited(null); setEditing(true); }}>
+              ✎ Edit template
+            </button>
+            <label className="wire-toggle-row">
+              <input type="checkbox" checked={wire} onChange={(e) => setWire(e.target.checked)} />
+              <span>Show wireframe</span>
+            </label>
+          </div>
+          <div className="sb-group">
+            <p className="sb-label">Connect</p>
+            <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />
+            <DesktopHandoff
+              skinId={skinId}
+              skinName={[...visible, ...runtimeSkins].find((s) => s.id === skinId)?.name ?? skinId}
+            />
+          </div>
+          <div className="hint">
+            One template → many skins. Buttons / sliders are baked sprites;
+            the clock, spectrum, marquee &amp; playlist are live.
+          </div>
+        </div>
         </div>
       </aside>
       <main className="stage">
