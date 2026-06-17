@@ -1,0 +1,137 @@
+/* ============================================================
+   workshop.css — styles for the standalone WorkshopEditor (/editor.html).
+   Namespaced .wk-* so it never collides with the App's editor.css (.te-*).
+   Responsive: stage + panel sit side-by-side on desktop, STACK on phones.
+   ============================================================ */
+
+:root {
+  --wk-bg: #0d0e11;
+  --wk-panel: #15171c;
+  --wk-ink: #e8eaef;
+  --wk-mut: #959bab;
+  --wk-line: #2a2e36;
+  --wk-acc: #5cc8ff;
+  --wk-warn: #ff6a4d;
+  --wk-ok: #5dd28a;
+  --wk-mono: ui-monospace, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; }
+body { background: var(--wk-bg); color: var(--wk-ink); font-family: ui-sans-serif, system-ui, sans-serif; }
+
+.wk-root { display: flex; flex-direction: column; min-height: 100%; }
+
+.wk-head {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--wk-line); background: #0b0c0f;
+}
+.wk-head strong { letter-spacing: .04em; }
+.wk-sub { color: var(--wk-mut); font-size: 12px; }
+
+/* desktop: stage on the left, panel on the right */
+.wk-body { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; align-items: flex-start; }
+
+.wk-stage-wrap { flex: 1 1 380px; min-width: 280px; display: flex; justify-content: center; }
+.wk-stage {
+  position: relative; width: 100%; max-width: 520px;
+  background: #0a0b0e center / contain no-repeat;
+  border: 1px solid var(--wk-line); border-radius: 12px; overflow: hidden;
+  user-select: none; touch-action: none;
+}
+
+/* a region box: draggable, with a single SE resize handle (v1) */
+.wk-region {
+  position: absolute; box-sizing: border-box;
+  border: 1.5px solid rgba(92, 200, 255, .85);
+  background: rgba(92, 200, 255, .12);
+  border-radius: 4px; cursor: move; touch-action: none;
+}
+.wk-region.is-sel { border-color: #ffcf6a; background: rgba(255, 207, 106, .18); z-index: 3; }
+.wk-region.kind-display { border-color: rgba(120, 255, 180, .8); background: rgba(120, 255, 180, .08); }
+.wk-region.kind-slider-arc, .wk-region.kind-slider-path { border-style: dashed; background: rgba(255, 106, 77, .08); }
+
+.wk-region-label {
+  position: absolute; top: -15px; left: 0; font-size: 9px; line-height: 1;
+  color: #cfe2ff; background: rgba(0, 0, 0, .72); padding: 2px 4px; border-radius: 3px;
+  white-space: nowrap; pointer-events: none;
+}
+.wk-region.is-sel .wk-region-label { color: #ffcf6a; }
+
+.wk-handle {
+  position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px;
+  background: #ffcf6a; border: 1px solid #1a1a1a; border-radius: 3px; cursor: nwse-resize;
+}
+.wk-region:not(.is-sel) .wk-handle { opacity: 0; }
+
+/* in-box shape previews (round well / blob / spline) */
+.wk-shape { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.wk-shape path, .wk-shape ellipse { fill: rgba(120, 255, 180, .14); stroke: rgba(120, 255, 180, .85); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.wk-shape.line path { fill: none; stroke: var(--wk-warn); stroke-width: 2; }
+
+/* the seek curve, drawn full-stage so an arc reads as a real CAD curve */
+.wk-seek-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.wk-seek-overlay path { stroke: var(--wk-warn); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+
+/* ---- panel ---- */
+.wk-panel { flex: 1 1 320px; min-width: 280px; max-width: 400px; font-size: 12px; }
+.wk-panel section { border-bottom: 1px solid var(--wk-line); padding-bottom: 12px; margin-bottom: 12px; }
+.wk-panel h3 {
+  font-size: 10px; color: var(--wk-mut); text-transform: uppercase; letter-spacing: .12em;
+  margin: 0 0 8px;
+}
+
+.wk-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; color: var(--wk-mut); }
+.wk-row span { flex: 0 0 auto; }
+.wk-row select, .wk-row input[type=text], .wk-row input:not([type]) {
+  flex: 1 1 auto; min-width: 0;
+  background: #1a1d24; color: var(--wk-ink); border: 1px solid var(--wk-line);
+  border-radius: 6px; padding: 5px 7px; font: inherit;
+}
+.wk-row input[type=file] { color: var(--wk-mut); font-size: 11px; max-width: 60%; }
+
+.wk-seg { display: flex; border: 1px solid var(--wk-line); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+.wk-seg button {
+  flex: 1; background: #1a1d24; color: var(--wk-ink); border: 0; border-right: 1px solid var(--wk-line);
+  padding: 8px 6px; font: inherit; font-size: 11.5px; cursor: pointer;
+}
+.wk-seg button:last-child { border-right: 0; }
+.wk-seg button[data-on="true"] { background: var(--wk-acc); color: #04222e; font-weight: 600; }
+
+.wk-range { display: flex; flex-direction: column; gap: 4px; margin-bottom: 9px; }
+.wk-range-top { display: flex; justify-content: space-between; color: var(--wk-mut); font-family: var(--wk-mono); }
+.wk-range-top b { color: var(--wk-ink); }
+.wk-range input[type=range] { width: 100%; accent-color: var(--wk-acc); }
+
+.wk-check { display: flex; align-items: center; gap: 7px; color: var(--wk-mut); margin: 6px 0 10px; cursor: pointer; }
+
+.wk-btn {
+  display: block; width: 100%; margin-top: 6px;
+  background: #1a1d24; color: var(--wk-ink); border: 1px solid var(--wk-line);
+  border-radius: 8px; padding: 9px; font: inherit; font-size: 12px; cursor: pointer;
+}
+.wk-btn:hover { background: #232733; border-color: #3a4150; }
+.wk-btn.primary { background: var(--wk-acc); color: #04222e; font-weight: 600; border-color: transparent; }
+.wk-btn.ghost { background: #2a1a1d; color: #f4b4b4; border-color: #5a2f33; }
+
+.wk-stat { color: var(--wk-mut); font-family: var(--wk-mono); margin: 6px 0 0; }
+.wk-stat b[data-bad="true"] { color: var(--wk-warn); }
+.wk-stat b { color: var(--wk-ok); }
+
+.wk-json {
+  width: 100%; height: 180px; margin-top: 8px;
+  background: #11131a; color: #cbe; border: 1px solid var(--wk-line); border-radius: 8px;
+  padding: 8px; font-family: var(--wk-mono); font-size: 10.5px; resize: vertical;
+}
+
+/* ============================================================
+   RESPONSIVE — at narrow widths the stage + panel STACK (hard rule).
+   The flex-wrap above already wraps; here we force a clean single column
+   and let the panel grow to full width on phones (~≤640px).
+   ============================================================ */
+@media (max-width: 640px) {
+  .wk-body { flex-direction: column; padding: 12px; gap: 14px; }
+  .wk-stage-wrap, .wk-panel { flex: 1 1 100%; max-width: 100%; width: 100%; }
+  .wk-stage { max-width: 100%; }
+  .wk-head { flex-direction: column; gap: 2px; }
+}

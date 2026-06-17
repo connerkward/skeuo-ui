@@ -49,3 +49,5 @@ generation/_sil-*.png
 generation/_sculpt-*.png
 generation/_env-*.png
 generation/_wells-*.png
+scripts/.lookdev*
+**/.serve-url

@@ -4,7 +4,7 @@
 // (req → body, ip) extraction and (response → HTTP) serialization.
 import type { GenerateRequest, GenerateResponse } from "./api";
 import type { RuntimeDeps } from "./pipeline";
-import { generateSkin, DONOR_STYLES, type DonorStyle } from "./pipeline";
+import { generateSkin, DONOR_STYLES, MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
 import { checkAndReserve, release } from "./ratelimit";
 
@@ -22,9 +22,12 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   const prompt = (body.prompt ?? "").trim();
   const style = body.style as DonorStyle;
   const variant = body.variant as LayoutVariant;
+  const model = (body.model ?? DEFAULT_MODEL) as ModelId;
+  const envelope = body.envelope ?? true;
   if (!prompt) return { status: "error", error: "prompt is required" };
   if (!DONOR_STYLES.includes(style)) return { status: "error", error: `style must be one of ${DONOR_STYLES.join(", ")}` };
   if (!LAYOUT_VARIANTS.includes(variant)) return { status: "error", error: `variant must be one of ${LAYOUT_VARIANTS.join(", ")}` };
+  if (!MODELS.some((m) => m.id === model)) return { status: "error", error: `model must be one of ${MODELS.map((m) => m.id).join(", ")}` };
 
   const rl = checkAndReserve(ip);
   if (!rl.ok) return { status: "error", error: rl.reason ?? "rate limited" };
@@ -45,11 +48,12 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     }
   } catch { /* ref upload is best-effort; ignore and paint without it */ }
 
-  const id = `${slug(prompt)}-${variant}-${Date.now().toString(36).slice(-4)}`;
+  const modelTag = MODELS.find((m) => m.id === model)?.label ?? "model";
+  const id = `${slug(prompt)}-${variant}-${modelTag}-${Date.now().toString(36).slice(-4)}`;
   try {
-    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls });
+    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls, model, envelope });
     return {
-      status: "done", id: r.id, style: r.style, variant: r.variant,
+      status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,
       template: r.template, frameUrl: r.frameUrl, timingMs: r.timingMs,
     };
   } catch (e) {

@@ -1,0 +1,301 @@
+{
+  "last_node_id": 16,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [80, 360],
+      "size": [320, 320],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [1], "slot_index": 0 },
+        { "name": "MASK", "type": "MASK", "links": null, "slot_index": 1 }
+      ],
+      "properties": { "Node name for S&R": "LoadImage" },
+      "widgets_values": ["blueprint_wells_only.png", "image"],
+      "title": "1. Blueprint (wells-only, control layout on white)"
+    },
+    {
+      "id": 2,
+      "type": "NanoBananaPro_fal",
+      "pos": [480, 200],
+      "size": [430, 320],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        { "name": "images", "type": "IMAGE", "link": 1 }
+      ],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [3], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "NanoBananaPro_fal" },
+      "widgets_values": [
+        "Keep every dark control socket, round well, ring groove and dark screen EXACTLY where it is, pixel-identical, unchanged. Around and BEHIND them, paint ONE flat solid dark-gray SILHOUETTE shape on the pure white background: the outline of {brief}. The silhouette must fully CONTAIN every socket and screen with generous margin on all sides, and its wild parts — horns, fins, tendrils, legs, jaws — grow outward from that mass. Completely flat dark-gray fill, no interior detail, no shading, no outline strokes. Everything else stays pure white.",
+        1,
+        "2:3",
+        "png",
+        "2K",
+        false
+      ],
+      "title": "2. ENVELOPE pass  —  fal-ai/gemini-3-pro-image-preview/edit  (ENVELOPE_PROMPT)"
+    },
+    {
+      "id": 4,
+      "type": "NanoBananaPro_fal",
+      "pos": [1280, 200],
+      "size": [430, 320],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        { "name": "images", "type": "IMAGE", "link": 3 }
+      ],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [5], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "NanoBananaPro_fal" },
+      "widgets_values": [
+        "Restyle this blueprint into a photoreal, wildly-shaped skeuomorphic MP3-player device. CRITICAL: keep the EXACT silhouette, and keep EVERY dark recessed well and screen EXACTLY where it is, same size and shape — every recessed well stays a DEEP DARK EMPTY socket: a near-black matte cavity with a crisp raised rim, NOTHING mounted inside, NOT glowing, NOT filled with material; and every screen — INCLUDING the thin marquee strip — stays switched-off NEAR-BLACK glass, a CLEAN FLAT RECTANGLE never tinted or overgrown by the body material (no text, no graphics). Make the body rich and detailed BETWEEN the wells. Everything outside the silhouette stays pure white. Front-on orthographic, even light, high detail. MATERIAL: polished chrome and brushed gunmetal over dark charcoal plastic, thin green LED accent lines tracing the curves, tiny screws.",
+        1,
+        "2:3",
+        "png",
+        "2K",
+        false
+      ],
+      "title": "4. PAINT pass  —  same endpoint  (STYLE_PROMPT + MATERIAL[winamp])"
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [840, 600],
+      "size": [320, 320],
+      "flags": {},
+      "order": 1,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [6], "slot_index": 0 },
+        { "name": "MASK", "type": "MASK", "links": null, "slot_index": 1 }
+      ],
+      "properties": { "Node name for S&R": "LoadImage" },
+      "widgets_values": ["reference_style.png", "image"],
+      "title": "(optional) reference-style image  —  MUTED. Un-mute + wire via ImageBatch to ride along in PAINT"
+    },
+    {
+      "id": 11,
+      "type": "ImageBatch",
+      "pos": [1280, 600],
+      "size": [300, 80],
+      "flags": {},
+      "order": 4,
+      "mode": 4,
+      "inputs": [
+        { "name": "image1", "type": "IMAGE", "link": null },
+        { "name": "image2", "type": "IMAGE", "link": 6 }
+      ],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "ImageBatch" },
+      "widgets_values": [],
+      "title": "(optional) batch envelope + refs  —  MUTED. image1 = envelope, image2 = ref; output → PAINT.images"
+    },
+    {
+      "id": 5,
+      "type": "LoadImage",
+      "pos": [1280, 760],
+      "size": [320, 320],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [7], "slot_index": 0 },
+        { "name": "MASK", "type": "MASK", "links": null, "slot_index": 1 }
+      ],
+      "properties": { "Node name for S&R": "LoadImage" },
+      "widgets_values": ["region_alpha_mask.png", "image"],
+      "title": "5. Region alpha mask (white = keep, black = transparent)"
+    },
+    {
+      "id": 6,
+      "type": "ImageToMask",
+      "pos": [1660, 760],
+      "size": [260, 80],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 7 }
+      ],
+      "outputs": [
+        { "name": "MASK", "type": "MASK", "links": [8], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "ImageToMask" },
+      "widgets_values": ["red"],
+      "title": "5b. mask PNG → MASK (luminance of a channel; mask is grayscale so any channel works)"
+    },
+    {
+      "id": 7,
+      "type": "JoinImageWithAlpha",
+      "pos": [1980, 360],
+      "size": [280, 80],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 5 },
+        { "name": "alpha", "type": "MASK", "link": 8 }
+      ],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [9], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "JoinImageWithAlpha" },
+      "widgets_values": [],
+      "title": "6. COMPOSITE  —  paint × alpha-mask → RGBA frame"
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "pos": [2320, 280],
+      "size": [400, 440],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        { "name": "images", "type": "IMAGE", "link": 9 }
+      ],
+      "outputs": [],
+      "properties": { "Node name for S&R": "SaveImage" },
+      "widgets_values": ["skeuo_frame"],
+      "title": "Final RGBA frame.png"
+    },
+    {
+      "id": 12,
+      "type": "Note",
+      "pos": [80, 40],
+      "size": [560, 260],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "SKEUO-UI  —  idea → skin pipeline (ported from src/generate/pipeline.ts)\n\nFLOW:\n  1. LoadImage = wells-only blueprint (control layout on white).\n  2. ENVELOPE pass  → fal gemini-3-pro-image edit: grow a flat dark-gray\n     body silhouette AROUND the wells.            [node 2, ENVELOPE_PROMPT]\n  3. PAINT pass     → same endpoint: restyle the envelope into the chosen\n     MATERIAL, wells stay empty.                   [node 4, STYLE_PROMPT+MATERIAL]\n  4. COMPOSITE      → paint × region alpha-mask = final RGBA frame.\n\nNODE USED FOR THE fal EDIT CALLS: 'Nano Banana Pro (fal)'  (NanoBananaPro_fal)\nfrom the ComfyUI-fal-API pack. Nano Banana Pro IS Google's Gemini 3 Pro Image\nmodel = fal-ai/gemini-3-pro-image-preview — the exact endpoint pipeline.ts calls.\nWidgets here are set to resolution=2K, aspect_ratio=2:3, output_format=png to\nmatch falSubmit() in pipeline.ts.\n\nSee skeuo-pipeline.comfyui.README.md for install + FAL_KEY setup + caveats."
+      ],
+      "title": "READ ME FIRST"
+    },
+    {
+      "id": 13,
+      "type": "Note",
+      "pos": [480, 560],
+      "size": [430, 150],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "{brief} in the ENVELOPE_PROMPT (node 2) is a placeholder — in pipeline.ts\nit is replaced at runtime with the silhouette brief, e.g.\n\"a fanged anglerfish jaw\". EDIT node 2's prompt and swap {brief} for your\nown creature/object description before running."
+      ],
+      "title": "edit {brief}"
+    },
+    {
+      "id": 14,
+      "type": "Note",
+      "pos": [1280, 40],
+      "size": [430, 150],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "MATERIAL strings (pipeline.ts) — paste one onto the end of node 4's prompt\nafter 'MATERIAL: ' to switch skin. Current = winamp.\n\nbiomech: H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence glowing from the recesses.\nwinamp: polished chrome and brushed gunmetal over dark charcoal plastic, thin green LED accent lines tracing the curves, tiny screws.\nfrog: glossy moulded rubber toy-frog skin in vivid green with subtle mottling, bulging highlights, bright orange plastic hardware accents.\nwmp: Windows Media Player 9 / XP Luna capsule hardware: glossy silver-white plastic shells, translucent aqua-blue gel inlays, polished chrome trim rings, soft blue gradients, subtle green LED accents.\nhalo: Halo 2 UNSC military hardware: olive-drab armored metal plating with scuffed edges, hex bolts, vents, layered angular armor ridges, amber-orange holographic tick marks and warning chevrons glowing from recesses."
+      ],
+      "title": "MATERIAL presets"
+    },
+    {
+      "id": 15,
+      "type": "Note",
+      "pos": [1980, 480],
+      "size": [340, 230],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "COMPOSITE notes:\n• pipeline.ts does: paint × alpha (8-bit L) → RGBA PNG.\n• Here: ImageToMask reads the mask PNG into a MASK, then\n  JoinImageWithAlpha attaches it as the alpha channel of the\n  paint image → RGBA. SaveImage writes a PNG with transparency.\n• The mask must be the SAME WxH as the paint output. The paint\n  is 2K @ 2:3; render/resize your region mask to match (e.g. an\n  ImageScale node before ImageToMask if sizes differ).\n• If you don't have a region mask, you can substitute the MASK\n  output of a background remover (e.g. a BiRefNet/RMBG node) —\n  pipeline.ts deliberately uses a constant region mask instead."
+      ],
+      "title": "composite"
+    },
+    {
+      "id": 16,
+      "type": "Note",
+      "pos": [2320, 760],
+      "size": [400, 240],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "INSTALL (ComfyUI Manager → Install via Git URL, or clone into custom_nodes/):\n  https://github.com/gokayfem/ComfyUI-fal-API\n  pip install -r ComfyUI-fal-API/requirements.txt\n\nSET THE FAL KEY (either one):\n  • env var:  export FAL_KEY=your_fal_key   (before launching ComfyUI)\n  • or edit  custom_nodes/ComfyUI-fal-API/config.ini  → [API] fal_key = ...\n\nImageToMask / JoinImageWithAlpha / ImageBatch / LoadImage / SaveImage are\nCOMFYUI CORE nodes — no extra install.\n\nIf 'Nano Banana Pro (fal)' shows as a red 'missing' node after install,\nupdate the pack (it was added in the gemini-3 / nano-banana-pro wave); the\nfallback is 'Nano Banana Edit (fal)' (NanoBananaEdit_fal) which takes the\nsame prompt + image_1..image_4 slots."
+      ],
+      "title": "INSTALL + FAL_KEY"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "IMAGE"],
+    [3, 2, 0, 4, 0, "IMAGE"],
+    [5, 4, 0, 7, 0, "IMAGE"],
+    [6, 3, 0, 11, 1, "IMAGE"],
+    [7, 5, 0, 6, 0, "IMAGE"],
+    [8, 6, 0, 7, 1, "MASK"],
+    [9, 7, 0, 8, 0, "IMAGE"]
+  ],
+  "groups": [
+    {
+      "title": "1. INPUT",
+      "bounding": [60, 320, 360, 400],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "2. ENVELOPE (fal gemini-3-pro edit)",
+      "bounding": [460, 160, 470, 380],
+      "color": "#a1309b",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "3. PAINT (fal gemini-3-pro edit)",
+      "bounding": [1260, 160, 470, 540],
+      "color": "#b58b2a",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "4. COMPOSITE → RGBA frame",
+      "bounding": [1640, 320, 1100, 540],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

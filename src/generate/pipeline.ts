@@ -50,7 +50,27 @@ export const MATERIAL: Record<string, string> = {
 export const DONOR_STYLES = Object.keys(MATERIAL);
 export type DonorStyle = keyof typeof MATERIAL;
 
-const ENDPOINT = "fal-ai/gemini-3-pro-image-preview/edit";
+// ---- image-model registry: the three selectable edit endpoints ----
+// label  → the fal edit endpoint + an est per-skin cost (2 passes: envelope+paint).
+export type ModelId =
+  | "fal-ai/gemini-3-pro-image-preview/edit"
+  | "fal-ai/gemini-3.1-flash-image-preview/edit"
+  | "openai/gpt-image-2/edit";
+
+export interface ModelInfo {
+  id: ModelId;
+  label: string;
+  costPerSkin: number;   // est $ for the two passes
+  approx?: boolean;      // mark approximate pricing
+}
+
+export const MODELS: ModelInfo[] = [
+  { id: "fal-ai/gemini-3-pro-image-preview/edit", label: "nano-banana-pro", costPerSkin: 0.30 },
+  { id: "fal-ai/gemini-3.1-flash-image-preview/edit", label: "nano-banana-2", costPerSkin: 0.16 },
+  { id: "openai/gpt-image-2/edit", label: "gpt-image-2", costPerSkin: 0.34, approx: true },
+];
+export const DEFAULT_MODEL: ModelId = "fal-ai/gemini-3-pro-image-preview/edit";
+const modelLabel = (id: ModelId): string => MODELS.find((m) => m.id === id)?.label ?? id;
 
 export interface RuntimeDeps {
   falKey: string;
@@ -70,12 +90,15 @@ export interface GenerateInput {
   style: DonorStyle;
   brief: string;          // the silhouette brief, e.g. "a fanged anglerfish jaw"
   refImageUrls?: string[]; // optional reference-style images (palette/material steer)
+  model?: ModelId;        // image edit endpoint (default DEFAULT_MODEL)
+  envelope?: boolean;     // run the AI envelope pass first (default true)
 }
 
 export interface GenerateResult {
   id: string;
   style: DonorStyle;
   variant: LayoutVariant;
+  model: ModelId;
   template: Template;
   frameUrl: string;       // public URL or data: URL
   timingMs: { envelope: number; paint: number; total: number };
@@ -106,11 +129,15 @@ async function falUpload(falKey: string, png: Uint8Array): Promise<string> {
   if (!put.ok) throw new Error(`fal upload PUT → ${put.status}`);
   return init.file_url;
 }
-// submit one gemini-3-pro edit job (blueprint first = layout authority)
-function falSubmit(falKey: string, imageUrls: string[], prompt: string) {
-  return falPost(falKey, `https://queue.fal.run/${ENDPOINT}`, {
-    prompt, image_urls: imageUrls, resolution: "2K", aspect_ratio: "2:3", output_format: "png",
-  });
+// submit one edit job (blueprint first = layout authority). The fal input schema
+// differs by model: the gemini endpoints take resolution + aspect_ratio; gpt-image-2
+// takes image_size + quality and rejects resolution/aspect_ratio — so branch the body.
+function falSubmit(falKey: string, model: ModelId, imageUrls: string[], prompt: string) {
+  const body: Record<string, unknown> =
+    model === "openai/gpt-image-2/edit"
+      ? { prompt, image_urls: imageUrls, image_size: { width: 1024, height: 1536 }, quality: "high", output_format: "png" }
+      : { prompt, image_urls: imageUrls, resolution: "2K", aspect_ratio: "2:3", output_format: "png" };
+  return falPost(falKey, `https://queue.fal.run/${model}`, body);
 }
 async function falPoll(falKey: string, job: any, timeoutMs: number): Promise<string> {
   const t0 = Date.now();
@@ -131,6 +158,8 @@ async function fetchPng(url: string): Promise<Uint8Array> {
 
 export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Promise<GenerateResult> {
   const log = deps.log ?? (() => {});
+  const model = input.model ?? DEFAULT_MODEL;
+  const useEnvelope = input.envelope ?? true;
   const regs: Region[] = regionsForVariant(input.variant);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
@@ -138,32 +167,37 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   // 2. wells-only blueprint PNG (envelope input)
   const wellsPng = await deps.rasterize(wellsOnlySvg(regs));
 
-  // 3. ENVELOPE pass — grow a flat silhouette around the wells
-  const tEnv = Date.now();
-  const wellsUrl = await falUpload(deps.falKey, wellsPng);
-  const envJob = await falSubmit(deps.falKey, [wellsUrl], ENVELOPE_PROMPT.replace("{brief}", input.brief));
-  const envUrl = await falPoll(deps.falKey, envJob, 7 * 60_000);
-  const envPng = await fetchPng(envUrl);
-  const envMs = Date.now() - tEnv;
-  log(`[${input.id}] envelope ${(envMs / 1000) | 0}s`);
+  // 3. ENVELOPE pass — grow a flat silhouette around the wells. Optional: when
+  //    disabled, the paint pass works straight from the wells-only blueprint.
+  let paintInputPng = wellsPng;
+  let envMs = 0;
+  if (useEnvelope) {
+    const tEnv = Date.now();
+    const wellsUrl = await falUpload(deps.falKey, wellsPng);
+    const envJob = await falSubmit(deps.falKey, model, [wellsUrl], ENVELOPE_PROMPT.replace("{brief}", input.brief));
+    const envUrl = await falPoll(deps.falKey, envJob, 7 * 60_000);
+    paintInputPng = await fetchPng(envUrl);
+    envMs = Date.now() - tEnv;
+    log(`[${input.id}] envelope (${modelLabel(model)}) ${(envMs / 1000) | 0}s`);
+  }
 
   // 4. PAINT pass — restyle the ENVELOPE (silhouette + wells) into the material.
   //    The envelope already carries the wells (pixel-identical) plus the body
   //    silhouette, so it is the layout authority for the paint, exactly like the
   //    Python draw_blueprint() output. Reference-style images ride along.
   const tPaint = Date.now();
-  const envUploadUrl = await falUpload(deps.falKey, envPng);
+  const paintInputUrl = await falUpload(deps.falKey, paintInputPng);
   let prompt = STYLE_PROMPT + (MATERIAL[input.style] ?? MATERIAL.winamp);
   const refs = input.refImageUrls ?? [];
   if (refs.length) {
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +
       "image(s) provided, but DO NOT copy their layout or shape — the silhouette and wells come only from the blueprint.";
   }
-  const paintJob = await falSubmit(deps.falKey, [envUploadUrl, ...refs], prompt);
+  const paintJob = await falSubmit(deps.falKey, model, [paintInputUrl, ...refs], prompt);
   const paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
   const paintPng = await fetchPng(paintUrl);
   const paintMs = Date.now() - tPaint;
-  log(`[${input.id}] paint ${(paintMs / 1000) | 0}s`);
+  log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);
 
   // 5. alpha = constant region mask (no BiRefNet); 6. composite
   const alphaPng = await deps.rasterize(regionMaskSvg(regs));
@@ -175,7 +209,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
     : `data:image/png;base64,${toBase64(framePng)}`;
 
   return {
-    id: input.id, style: input.style, variant: input.variant, template, frameUrl,
+    id: input.id, style: input.style, variant: input.variant, model, template, frameUrl,
     timingMs: { envelope: envMs, paint: paintMs, total: Date.now() - tAll },
   };
 }

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { devApiPlugin } from './server/devApiPlugin'
 
@@ -11,6 +12,17 @@ const allowedHosts = ['.local', '.ts.net', 'lappy-heavy']
 export default defineConfig({
   // devApiPlugin serves POST /api/generate locally (mirrors the CF Pages Function)
   plugins: [react(), devApiPlugin()],
+  // Multi-page: the main app (index.html) PLUS the standalone template editor
+  // workshop (editor.html). Listing input explicitly keeps both entries; the
+  // default single-page behavior would otherwise drop index.html.
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        editor: resolve(__dirname, 'editor.html'),
+      },
+    },
+  },
   // Pre-bundle the Tauri packages so the widget's lazy import()s resolve in dev
   // (a cold, un-optimized dep makes the WKWebView throw "Importing a module
   // script failed" on first dynamic import). Harmless for the web build.

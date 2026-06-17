@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { GenerateRequest, GenerateResponse } from "./api";
-import type { DonorStyle } from "./pipeline";
+import { MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import type { LayoutVariant } from "./layouts";
 import type { Template } from "../template/schema";
 
@@ -21,13 +21,26 @@ export interface RuntimeSkin {
 const DEFAULT_STYLE: DonorStyle = "biomech";
 const DEFAULT_VARIANT: LayoutVariant = "radial";
 
+const fmt$ = (n: number) => `$${n.toFixed(2)}`;
+const modelLabel = (id: ModelId) => MODELS.find((m) => m.id === id)?.label ?? id;
+
 export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void }) {
   const [prompt, setPrompt] = useState("a fanged anglerfish jaw");
   const [refImage, setRefImage] = useState<string | undefined>();
+  // selected image models — one OR many; default to nano-banana-pro only.
+  const [selected, setSelected] = useState<ModelId[]>([DEFAULT_MODEL]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [stage, setStage] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const toggleModel = (id: ModelId) =>
+    setSelected((cur) =>
+      cur.includes(id) ? cur.filter((m) => m !== id) : [...cur, id]);
+
+  const total = MODELS.filter((m) => selected.includes(m.id))
+    .reduce((sum, m) => sum + m.costPerSkin, 0);
+  const anyApprox = MODELS.some((m) => selected.includes(m.id) && m.approx);
 
   const pickRef = (f: File | undefined) => {
     if (!f) { setRefImage(undefined); return; }
@@ -37,23 +50,32 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
   };
 
   const submit = async () => {
-    setBusy(true); setErr(null); setStage("envelope → paint (~30-90s)…");
-    const req: GenerateRequest = { prompt: prompt.trim(), style: DEFAULT_STYLE, variant: DEFAULT_VARIANT, refImage };
+    if (!selected.length) { setErr("pick at least one model"); return; }
+    setBusy(true); setErr(null);
+    // one generation per selected model — each registers as its own runtime skin
+    // so the user can compare. Sequential so the stage line reflects real progress.
     try {
-      const r = await fetch("/api/generate", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
-      });
-      const data: GenerateResponse = await r.json();
-      if (data.status === "error") { setErr(data.error); return; }
-      if (data.status !== "done") { setErr("unexpected pending response (no poller wired in v1)"); return; }
-      onCreated({
-        id: data.id,
-        name: `${prompt.trim().slice(0, 22)} ✦`,
-        blurb: "generated",
-        style: data.style,
-        frameUrl: data.frameUrl,
-        template: data.template,
-      });
+      for (let i = 0; i < selected.length; i++) {
+        const model = selected[i];
+        setStage(`model ${i + 1}/${selected.length} · ${modelLabel(model)} — envelope → paint (~30-90s)…`);
+        const req: GenerateRequest = {
+          prompt: prompt.trim(), style: DEFAULT_STYLE, variant: DEFAULT_VARIANT, refImage, model,
+        };
+        const r = await fetch("/api/generate", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
+        });
+        const data: GenerateResponse = await r.json();
+        if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
+        if (data.status !== "done") { setErr("unexpected pending response (no poller wired in v1)"); continue; }
+        onCreated({
+          id: data.id,
+          name: `${prompt.trim().slice(0, 18)} · ${modelLabel(data.model)}`,
+          blurb: `generated · ${modelLabel(data.model)}`,
+          style: data.style,
+          frameUrl: data.frameUrl,
+          template: data.template,
+        });
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -75,8 +97,37 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
           onChange={(e) => pickRef(e.target.files?.[0])} />
         {refImage && <img className="cp-ref-thumb" src={refImage} alt="reference" />}
       </label>
-      <button className="cp-submit" disabled={busy || !prompt.trim()} onClick={submit}>
-        {busy ? "Generating…" : "Generate (~$0.30 fal)"}
+
+      <fieldset className="cp-field cp-models">
+        <span className="cp-models-legend">Image model(s)</span>
+        <div className="cp-model-list">
+          {MODELS.map((m) => {
+            const on = selected.includes(m.id);
+            return (
+              <label key={m.id} className={`cp-model ${on ? "on" : ""}`}>
+                <input type="checkbox" checked={on} onChange={() => toggleModel(m.id)} />
+                <span className="cp-model-name">{m.label}</span>
+                <span className="cp-model-cost">
+                  ~{fmt$(m.costPerSkin)}{m.approx ? "*" : ""}/skin
+                </span>
+              </label>
+            );
+          })}
+        </div>
+        <div className="cp-total">
+          <strong>{selected.length} model{selected.length === 1 ? "" : "s"}</strong>
+          <span> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</span>
+        </div>
+        <p className="cp-models-hint">
+          Each selected model produces its own variant — they give interestingly
+          different results.{anyApprox ? " * approximate pricing." : ""}
+        </p>
+      </fieldset>
+
+      <button className="cp-submit" disabled={busy || !prompt.trim() || !selected.length} onClick={submit}>
+        {busy
+          ? "Generating…"
+          : `Generate ${selected.length} skin${selected.length === 1 ? "" : "s"} (~${fmt$(total)}${anyApprox ? "*" : ""} fal)`}
       </button>
       {stage && <div className="cp-stage">{stage}</div>}
       {err && <div className="cp-error">{err}</div>}

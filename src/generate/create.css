@@ -32,6 +32,29 @@
 .cp-error { font-size: 12px; color: #f4a0a0; background: #2a1414; border: 1px solid #5a2a2a; padding: 8px; border-radius: 6px; }
 .cp-note { font-size: 11px; color: #6a6a70; line-height: 1.5; margin: 4px 0 0; }
 
+/* model multi-select — reflows: rows wrap, costs stay right-aligned */
+.cp-models { border: 1px solid #2a2a30; border-radius: 8px; padding: 10px 11px; margin: 0; }
+.cp-models-legend { font-size: 11px; color: #9a9aa0; padding: 0; }
+.cp-model-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.cp-model {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: #141418; border: 1px solid #2c2c34; border-radius: 6px;
+  padding: 7px 9px; cursor: pointer; font-size: 12px;
+}
+.cp-model:hover { border-color: #3a3a46; }
+.cp-model.on { background: #15223a; border-color: #2c4a78; }
+.cp-model input { margin: 0; accent-color: #2a5cc0; flex: 0 0 auto; }
+.cp-model-name { color: #e8e8ee; font-weight: 600; flex: 1 1 auto; min-width: 0; }
+.cp-model-cost { color: #8a8a92; font-size: 11px; flex: 0 0 auto; white-space: nowrap; }
+.cp-model.on .cp-model-cost { color: #9fc0ff; }
+.cp-total {
+  display: flex; flex-wrap: wrap; gap: 2px 6px; align-items: baseline;
+  margin-top: 9px; padding-top: 8px; border-top: 1px solid #26262c;
+  font-size: 13px; color: #cfe2ff;
+}
+.cp-total strong { color: #fff; }
+.cp-models-hint { font-size: 11px; color: #6a6a70; line-height: 1.5; margin: 7px 0 0; }
+
 /* mobile: the create drawer goes full-width with a close affordance */
 .m-create-drawer { width: 100%; left: 0; }
 .create-close {
