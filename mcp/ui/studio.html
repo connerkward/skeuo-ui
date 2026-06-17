@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>skeuo studio</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; height: 100%; background: #0b0b0d; color: #e8e8ea;
+        font: 14px/1.4 -apple-system, system-ui, sans-serif; }
+      .wrap { display: flex; flex-direction: column; height: 100%; }
+      .bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+        background: #14141a; border-bottom: 1px solid #26262e; flex: 0 0 auto; }
+      .bar b { font-weight: 650; letter-spacing: .2px; }
+      .bar .sub { color: #8a8a93; font-size: 12px; }
+      .bar a { margin-left: auto; color: #7db4ff; text-decoration: none; font-size: 12px; }
+      iframe { border: 0; flex: 1 1 auto; width: 100%; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="bar">
+        <b>skeuo</b>
+        <span class="sub">a sentence → a working skeuomorphic player</span>
+        <a href="__STUDIO_URL__" target="_blank" rel="noopener">open in new tab ↗</a>
+      </div>
+      <!-- The live skeuo Create/preview surface. The MCP ext-app host renders
+           this resource inline; __STUDIO_URL__ is substituted by the server. -->
+      <iframe src="__STUDIO_URL__" allow="clipboard-write; autoplay"></iframe>
+    </div>
+  </body>
+</html>

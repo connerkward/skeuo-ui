@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.connerkward/skeuo-mcp",
+  "description": "Turn a sentence into a real, working skeuomorphic music-player skin — a wildly-shaped photoreal device whose switches flip, knobs turn, and faders slide.",
+  "title": "skeuo",
+  "websiteUrl": "https://github.com/connerkward/skeuo-mcp",
+  "repository": {
+    "url": "https://github.com/connerkward/skeuo-mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/connerkward/skeuo-mcp/releases/download/v1.0.0/skeuo-mcp.mcpb",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "SKEUO_API_BASE",
+          "description": "Optional. Base URL of the skeuo generate endpoint (default https://skeuo-ui.pages.dev). Override only to point at a self-hosted deployment. NOT a secret — the image-model key (FAL_KEY) lives server-side at this endpoint and is never handled by the client.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
