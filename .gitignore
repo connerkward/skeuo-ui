@@ -20,6 +20,10 @@ _mkicon.mjs
 # secrets — Cloudflare local dev vars / wrangler state (NEVER commit FAL_KEY)
 .dev.vars
 .wrangler/
+# Apple signing/notarization creds read by scripts/build-desktop.sh (NEVER commit)
+.env
+.env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*
