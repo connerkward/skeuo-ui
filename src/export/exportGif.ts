@@ -100,9 +100,10 @@ function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, logo
   const pad = Math.round(w * 0.022);
   const logoSize = Math.round(w * 0.09);          // ~36px at 400w
   const fontSize = Math.round(logoSize * 0.62);
-  ctx.font = `600 ${fontSize}px -apple-system, "Segoe UI", system-ui, sans-serif`;
-  const word = "skeuo";
-  const textW = ctx.measureText(word).width;
+  ctx.font = `700 ${fontSize}px -apple-system, "Segoe UI", system-ui, sans-serif`;
+  const word = "skeuo", tld = ".fm";
+  const wordW = ctx.measureText(word).width;
+  const textW = wordW + ctx.measureText(tld).width;
   const gap = Math.round(logoSize * 0.28);
   const innerW = logoSize + gap + textW;
   const pillH = logoSize + pad;
@@ -132,10 +133,13 @@ function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, logo
   if (logo) {
     ctx.drawImage(logo, lx, cy - logoSize / 2, logoSize, logoSize);
   }
-  ctx.font = `600 ${fontSize}px -apple-system, "Segoe UI", system-ui, sans-serif`;
+  ctx.font = `700 ${fontSize}px -apple-system, "Segoe UI", system-ui, sans-serif`;
   ctx.textBaseline = "middle";
+  const tx = lx + logoSize + gap;
   ctx.fillStyle = "rgba(240,242,246,0.95)";
-  ctx.fillText(word, lx + logoSize + gap, cy + 1);
+  ctx.fillText(word, tx, cy + 1);
+  ctx.fillStyle = "#2dff6e";                 // green ".fm" — matches the brand
+  ctx.fillText(tld, tx + wordW, cy + 1);
 }
 
 // ── live-overlay compositing ────────────────────────────────────────────────

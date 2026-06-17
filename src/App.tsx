@@ -137,15 +137,18 @@ export default function App() {
         {visible.map((s) => (
           <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
             onClick={() => { setSkinId(s.id); setEdited(null); }}>
-            <span className="name">{s.name}</span>
-            <span className="blurb">{s.blurb}</span>
+            <img className="thumb" loading="lazy" alt=""
+              src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+            <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
           </button>
         ))}
         {runtimeSkins.map((s) => (
           <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
             onClick={() => { setSkinId(s.id); setEdited(null); }}>
-            <span className="name">{s.name}</span>
-            <span className="blurb">{s.blurb}</span>
+            <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+            <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
           </button>
         ))}
         <button className="feature-btn" onClick={() => setShowCreate((v) => !v)}>
