@@ -1,16 +1,29 @@
 import { useState } from "react";
 import { ShareModal } from "./ShareModal";
+import type { Template } from "../template/schema";
+import type { RuntimeSkinView } from "../player/Composite";
+import type { SpotifyDrive } from "../spotify/useSpotify";
 import "./exportGif.css";
 
-// Floating bottom-right SHARE button. Clicking it now OPENS A MODAL with a live
-// preview of exactly what will be shared (a crisp watermarked PNG of the current
-// skin) plus options: native Share / copy link, Download PNG, and — on desktop —
-// Download GIF and Download Video. It no longer shares immediately.
+// Floating bottom-right SHARE button. Clicking it OPENS A MODAL with a LIVE,
+// self-animating preview of exactly what will be shared (a real <Composite> of
+// the current skin, the same one rendered on the page) plus options: native
+// Share / copy link, Download PNG, and — on desktop — Download GIF and Download
+// Video. The modal's own live player is the export CAPTURE TARGET (WYSIWYG).
 //
-// Exported as `ExportGifButton` for backwards compatibility with App.tsx's
-// import — only the behaviour changed, not the mount point or the export name.
+// The skin props (template / runtime / spotifyDrive) are threaded through from
+// App so the modal can mount its own identical <Composite> rather than scraping
+// the page's DOM. Exported as `ExportGifButton` for backwards compatibility with
+// App.tsx's import — only the behaviour changed, not the mount point or name.
 
-export function ExportGifButton({ skinId }: { skinId: string }) {
+interface Props {
+  skinId: string;
+  template: Template;
+  runtime?: RuntimeSkinView;
+  spotifyDrive?: SpotifyDrive | null;
+}
+
+export function ExportGifButton({ skinId, template, runtime, spotifyDrive }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -23,7 +36,15 @@ export function ExportGifButton({ skinId }: { skinId: string }) {
         <ShareGlyph />
         <span>Share</span>
       </button>
-      {open && <ShareModal skinId={skinId} onClose={() => setOpen(false)} />}
+      {open && (
+        <ShareModal
+          skinId={skinId}
+          template={template}
+          runtime={runtime}
+          spotifyDrive={spotifyDrive}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }

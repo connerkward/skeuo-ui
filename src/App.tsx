@@ -236,7 +236,12 @@ export default function App() {
           onClose={() => { setEditing(false); setEdited(null); }}
         />
       )}
-      <ExportGifButton skinId={skinId} />
+      <ExportGifButton
+        skinId={skinId}
+        template={playerTemplate}
+        runtime={runtimeView}
+        spotifyDrive={spotifyDrive}
+      />
     </div>
   );
 }

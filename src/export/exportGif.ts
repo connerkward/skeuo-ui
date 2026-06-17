@@ -409,11 +409,18 @@ export async function recordPlayerVideo(
   const comp = await buildCompositor(el, VIDEO_W, logo, undefined, false);
   const { outCanvas, outW, outH } = comp;
 
-  // paint the first frame before the stream starts so the recording never opens
-  // on an empty canvas.
+  // ── DETERMINISTIC capture (no flicker) ───────────────────────────────────────
+  // The OLD path used captureStream(VIDEO_FPS): MediaRecorder pulled frames on its
+  // OWN timer, asynchronously, so it frequently sampled the canvas MID-composite —
+  // after drawImage(base) but before the marquee/visualizer overlay landed. That
+  // gave torn frames and a flickering marquee. The fix: open the stream at 0 fps
+  // (captureStream(0) → MediaRecorder NEVER auto-samples) and push exactly one
+  // frame per FULLY-composited paint via track.requestFrame(). Every recorded
+  // frame is therefore a complete, consistent composite → smooth marquee, no tear.
   await comp.composite();
 
-  const stream = outCanvas.captureStream(VIDEO_FPS);
+  const stream = outCanvas.captureStream(0);
+  const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined;
   const recorder = new MediaRecorder(stream, {
     mimeType,
     videoBitsPerSecond: 8_000_000, // generous — short clip, want it clean
@@ -423,22 +430,25 @@ export async function recordPlayerVideo(
 
   const done = new Promise<void>((resolve) => { recorder.onstop = () => resolve(); });
   recorder.start();
+  // push the opening frame (already composited above) into the stream
+  track?.requestFrame();
 
-  // drive the compositor in real time for VIDEO_MS. The composite() is the same
-  // cheap per-frame work as the GIF path, so the page stays responsive; the
-  // captureStream samples the canvas as we repaint it.
+  // Drive the compositor on a FIXED frame clock. Each iteration: fully composite,
+  // THEN request exactly that frame — the only frames the recorder ever sees are
+  // complete ones. Paced to VIDEO_FPS via the wall clock so playback runs at real
+  // speed regardless of how long a composite() takes.
+  const frameInterval = 1000 / VIDEO_FPS;
+  const totalFrames = Math.round(VIDEO_MS / frameInterval);
   const t0 = performance.now();
-  let stopped = false;
-  while (!stopped) {
-    const now = performance.now();
-    const elapsed = now - t0;
-    if (elapsed >= VIDEO_MS) { stopped = true; break; }
-    await comp.composite();
-    onProgress?.({ phase: "capturing", pct: Math.min(0.95, elapsed / VIDEO_MS) });
-    await nextFrame();
+  for (let i = 1; i <= totalFrames; i++) {
+    // wait until this frame's wall-clock slot so the marquee advances at real speed
+    const target = t0 + i * frameInterval;
+    while (performance.now() < target) await nextFrame();
+    await comp.composite();      // fully paint base + live overlays + watermark
+    track?.requestFrame();        // emit ONLY this complete frame to the recorder
+    onProgress?.({ phase: "capturing", pct: Math.min(0.95, (performance.now() - t0) / VIDEO_MS) });
   }
-  // one final paint so the last sampled frame is complete, then close out.
-  await comp.composite();
+
   recorder.stop();
   await done;
   comp.dispose();

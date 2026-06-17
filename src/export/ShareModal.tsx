@@ -6,13 +6,21 @@ import {
   downloadGif,
   recordPlayerVideo,
   downloadVideo,
-  type ExportProgress,
 } from "./exportGif";
+import { Composite, type RuntimeSkinView } from "../player/Composite";
+import type { Template } from "../template/schema";
+import type { SpotifyDrive } from "../spotify/useSpotify";
 import "./ShareModal.css";
 
-// Share modal: opens from the floating bottom-right button. Shows a PNG preview of
-// exactly what will be shared (watermark included) and a set of options — native
-// Share / copy link, download PNG, download GIF, download Video. On-brand dark.
+// Share modal: opens from the floating bottom-right button. It mounts a REAL,
+// self-animating <Composite> of the current skin in the preview box (the same
+// player the page renders — the spectrum sweeps, the marquee scrolls, the clock
+// ticks). That live player is ALSO the export capture target, so the GIF/Video/
+// PNG are exactly what the user sees (WYSIWYG).
+//
+// On open we PRE-GENERATE the GIF and the Video in the background and cache the
+// Blobs in a module-level map keyed by skinId, so by the time the user clicks
+// Download either is instant — and re-opening / re-downloading never regenerates.
 //
 // The share LINK distinguishes generated skins (persisted in localStorage under
 // "skeuo:skins") from built-in skins: generated → /share?id=<id>, built-in →
@@ -41,38 +49,85 @@ const shareText = (skinId: string) =>
 const isDesktop = () =>
   typeof window !== "undefined" && window.matchMedia("(min-width: 700px)").matches;
 
-type Job = "png" | "gif" | "video" | "share" | "copy" | null;
+// ── module-level export cache ─────────────────────────────────────────────────
+// Keyed by skinId. Each entry holds the in-flight PROMISE (so a download click
+// that lands before pre-gen finishes just awaits it) and, once resolved, the
+// Blob (so re-clicks / re-opens are instant and never re-encode).
+interface CachedExport {
+  gifPromise?: Promise<Blob>;
+  gif?: Blob;
+  videoPromise?: Promise<{ blob: Blob; ext: "mp4" | "webm" }>;
+  video?: Blob;
+  videoExt?: "mp4" | "webm";
+}
+const exportCache = new Map<string, CachedExport>();
 
-export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () => void }) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewErr, setPreviewErr] = useState(false);
+type Job = "png" | "gif" | "video" | "share" | "copy" | null;
+type AssetState = "idle" | "preparing" | "ready" | "error";
+
+interface ShareModalProps {
+  skinId: string;
+  template: Template;
+  runtime?: RuntimeSkinView;
+  spotifyDrive?: SpotifyDrive | null;
+  onClose: () => void;
+}
+
+export function ShareModal({ skinId, template, runtime, spotifyDrive, onClose }: ShareModalProps) {
   const [job, setJob] = useState<Job>(null);
-  const [pct, setPct] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [desktop] = useState(isDesktop);
+  const [gifState, setGifState] = useState<AssetState>("idle");
+  const [videoState, setVideoState] = useState<AssetState>("idle");
+  const previewRef = useRef<HTMLDivElement>(null);
   const previewBlobRef = useRef<Blob | null>(null);
-  const objUrlRef = useRef<string | null>(null);
   const url = buildShareUrl(skinId);
 
-  // ── render the live preview PNG once on open ────────────────────────────────
+  // the modal's OWN live player element — the capture target for every export.
+  const player = () => previewRef.current?.querySelector<HTMLElement>(".player") ?? null;
+
+  // ── kick off background pre-generation of GIF + Video on open ────────────────
+  // We wait a couple of animation frames so the freshly-mounted <Composite> has
+  // laid out (and its spectrum canvas exists) before we capture. Results land in
+  // the module cache; re-opens reuse them and never regenerate.
   useEffect(() => {
+    if (!desktop) return; // GIF/Video are desktop-only options
     let cancelled = false;
-    const el = document.querySelector<HTMLElement>(".stage .player");
-    if (!el) { setPreviewErr(true); return; }
-    snapshotPlayerPng(el, skinId)
-      .then(({ blob }) => {
-        if (cancelled) return;
-        previewBlobRef.current = blob;
-        const u = URL.createObjectURL(blob);
-        objUrlRef.current = u;
-        setPreviewUrl(u);
-      })
-      .catch(() => { if (!cancelled) setPreviewErr(true); });
-    return () => {
-      cancelled = true;
-      if (objUrlRef.current) URL.revokeObjectURL(objUrlRef.current);
-    };
-  }, [skinId]);
+    let entry = exportCache.get(skinId);
+    if (!entry) { entry = {}; exportCache.set(skinId, entry); }
+
+    // GIF: already cached → ready; otherwise start (or reuse an in-flight) encode.
+    if (entry.gif) {
+      setGifState("ready");
+    } else {
+      setGifState("preparing");
+      if (!entry.gifPromise) {
+        entry.gifPromise = waitForPlayer(player)
+          .then((el) => recordPlayerGif(el).then((r) => r.blob))
+          .then((blob) => { entry!.gif = blob; return blob; });
+      }
+      entry.gifPromise
+        .then(() => { if (!cancelled) setGifState("ready"); })
+        .catch(() => { if (!cancelled) setGifState("error"); });
+    }
+
+    // Video: same pattern.
+    if (entry.video) {
+      setVideoState("ready");
+    } else {
+      setVideoState("preparing");
+      if (!entry.videoPromise) {
+        entry.videoPromise = waitForPlayer(player)
+          .then((el) => recordPlayerVideo(el).then((r) => ({ blob: r.blob, ext: r.ext })))
+          .then((r) => { entry!.video = r.blob; entry!.videoExt = r.ext; return r; });
+      }
+      entry.videoPromise
+        .then(() => { if (!cancelled) setVideoState("ready"); })
+        .catch(() => { if (!cancelled) setVideoState("error"); });
+    }
+
+    return () => { cancelled = true; };
+  }, [skinId, desktop]);
 
   // ── esc to close ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -86,16 +141,17 @@ export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () =>
     setTimeout(() => setFeedback((m) => (m === msg ? "" : m)), 2600);
   };
 
-  const player = () => document.querySelector<HTMLElement>(".stage .player");
-
-  // native share (mobile) — share the already-rendered preview PNG + link
+  // native share (mobile) — share a fresh PNG snapshot of the live player + link
   const onShare = async () => {
     if (job) return;
     setJob("share");
     try {
+      const el = player();
       let file: File | null = null;
-      if (previewBlobRef.current) {
-        file = new File([previewBlobRef.current], `skeuo-${skinId}.png`, { type: "image/png" });
+      if (el) {
+        const snap = await snapshotPlayerPng(el, skinId);
+        previewBlobRef.current = snap.blob;
+        file = snap.file;
       }
       const canShareFiles =
         !!navigator.canShare && !!file && navigator.canShare({ files: [file] });
@@ -107,7 +163,6 @@ export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () =>
         );
         flash("Shared ✓");
       } else {
-        // no Web Share at all → fall back to copying the link
         await copyLink();
       }
     } catch (err) {
@@ -133,11 +188,11 @@ export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () =>
 
   const onPng = async () => {
     if (job) return;
+    const el = player();
+    if (!el) return;
     setJob("png");
     try {
-      // reuse the already-rendered preview blob if we have it (sharp 1080px)
-      const blob = previewBlobRef.current
-        ?? (await snapshotPlayerPng(player()!, skinId)).blob;
+      const { blob } = await snapshotPlayerPng(el, skinId);
       downloadPng(blob, skinId);
       flash("PNG saved");
     } catch {
@@ -147,43 +202,51 @@ export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () =>
     }
   };
 
+  // GIF: serve the cached blob if ready, otherwise AWAIT the in-flight pre-gen
+  // (download-before-ready → wait then download). Never regenerates.
   const onGif = async () => {
     if (job) return;
-    const el = player();
-    if (!el) return;
-    setJob("gif"); setPct(0);
+    setJob("gif");
     try {
-      const { blob } = await recordPlayerGif(el, (p: ExportProgress) => setPct(p.pct));
+      const entry = exportCache.get(skinId);
+      const blob = entry?.gif ?? (await entry?.gifPromise);
+      if (!blob) throw new Error("no gif");
       downloadGif(blob, skinId);
       flash("GIF saved");
     } catch {
       flash("GIF failed");
     } finally {
-      setJob(null); setPct(0);
+      setJob(null);
     }
   };
 
   const onVideo = async () => {
     if (job) return;
-    const el = player();
-    if (!el) return;
-    setJob("video"); setPct(0);
+    setJob("video");
     try {
-      const { blob, ext } = await recordPlayerVideo(el, (p: ExportProgress) => setPct(p.pct));
+      const entry = exportCache.get(skinId);
+      let blob = entry?.video;
+      let ext = entry?.videoExt;
+      if (!blob && entry?.videoPromise) {
+        const r = await entry.videoPromise;
+        blob = r.blob; ext = r.ext;
+      }
+      if (!blob || !ext) throw new Error("no video");
       downloadVideo(blob, skinId, ext);
       flash(`Video saved (.${ext})`);
     } catch {
       flash("Video failed");
     } finally {
-      setJob(null); setPct(0);
+      setJob(null);
     }
   };
 
   const busy = (j: Job) => job === j;
-  const progBar = (j: Job) =>
-    busy(j) && pct > 0 ? (
-      <div className="share-prog"><i style={{ width: `${Math.round(pct * 100)}%` }} /></div>
-    ) : null;
+
+  // button label reflects pre-gen state: "Preparing…" until the asset is cached,
+  // then the normal download label (instant on click).
+  const assetLabel = (base: string, state: AssetState) =>
+    state === "preparing" ? "Preparing…" : state === "error" ? `${base} (retry)` : base;
 
   return (
     <div
@@ -204,14 +267,15 @@ export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () =>
           </div>
         </div>
 
-        <div className="share-preview">
-          {previewUrl ? (
-            <img src={previewUrl} alt={`Preview of the ${skinId} skin`} />
-          ) : previewErr ? (
-            <span className="share-preview-err">Couldn't render a preview — you can still share the link below.</span>
-          ) : (
-            <span className="share-spinner" aria-label="Rendering preview" />
-          )}
+        {/* LIVE animated preview — a real <Composite>, the same one on the page.
+            It animates itself and is the export capture target. */}
+        <div className="share-preview" ref={previewRef}>
+          <Composite
+            template={template}
+            skinId={skinId}
+            runtime={runtime}
+            spotifyDrive={spotifyDrive}
+          />
         </div>
 
         <div className="share-link-row">
@@ -237,17 +301,23 @@ export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () =>
 
           {desktop && (
             <>
-              <button className={`share-btn ${busy("gif") ? "busy" : ""}`} onClick={onGif} disabled={!!job}>
-                {busy("gif") ? <span className="share-spin-sm" /> : <GifIcon />}
-                Download GIF <span className="desktop-tag">desktop</span>
+              <button
+                className={`share-btn ${busy("gif") || gifState === "preparing" ? "busy" : ""}`}
+                onClick={onGif}
+                disabled={!!job || gifState === "preparing"}
+              >
+                {busy("gif") || gifState === "preparing" ? <span className="share-spin-sm" /> : <GifIcon />}
+                {assetLabel("Download GIF", gifState)} <span className="desktop-tag">desktop</span>
               </button>
-              {progBar("gif")}
 
-              <button className={`share-btn ${busy("video") ? "busy" : ""}`} onClick={onVideo} disabled={!!job}>
-                {busy("video") ? <span className="share-spin-sm" /> : <VideoIcon />}
-                Download Video <span className="desktop-tag">desktop</span>
+              <button
+                className={`share-btn ${busy("video") || videoState === "preparing" ? "busy" : ""}`}
+                onClick={onVideo}
+                disabled={!!job || videoState === "preparing"}
+              >
+                {busy("video") || videoState === "preparing" ? <span className="share-spin-sm" /> : <VideoIcon />}
+                {assetLabel("Download Video", videoState)} <span className="desktop-tag">desktop</span>
               </button>
-              {progBar("video")}
             </>
           )}
         </div>
@@ -256,6 +326,22 @@ export function ShareModal({ skinId, onClose }: { skinId: string; onClose: () =>
       </div>
     </div>
   );
+}
+
+// Resolve the modal's live .player element once it has mounted + laid out (its
+// spectrum <canvas> exists). Polls a few rAF ticks; rejects if it never appears.
+function waitForPlayer(getEl: () => HTMLElement | null): Promise<HTMLElement> {
+  return new Promise((resolve, reject) => {
+    let tries = 0;
+    const tick = () => {
+      const el = getEl();
+      // need a laid-out player with non-zero size (so capture rects are valid)
+      if (el && el.offsetWidth > 0 && el.offsetHeight > 0) { resolve(el); return; }
+      if (tries++ > 120) { reject(new Error("player never mounted")); return; }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
 }
 
 // ── inline icons (no asset deps) ───────────────────────────────────────────────

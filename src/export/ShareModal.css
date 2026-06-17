@@ -75,7 +75,7 @@
 .share-close:hover { background: rgba(255, 255, 255, 0.1); border-color: #6a6a76; }
 .share-close svg { width: 14px; height: 14px; }
 
-/* ── preview ────────────────────────────────────────────────────────────── */
+/* ── preview (a LIVE, self-animating <Composite>, also the export target) ──── */
 .share-preview {
   position: relative;
   width: 100%;
@@ -83,31 +83,23 @@
   overflow: hidden;
   background: #0d0d0f;
   border: 1px solid #2a2a30;
-  aspect-ratio: 1024 / 1536;
+  /* the player is portrait (1024/1536); cap height so the modal stays compact and
+     centre the live player within. */
+  min-height: 120px;
+  max-height: 56dvh;
   display: grid;
   place-items: center;
+  padding: 10px 0;
 }
-.share-preview img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.share-preview .share-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  border-top-color: #2dff6e;
-  border-radius: 50%;
-  animation: share-spin 0.8s linear infinite;
+/* the modal's own live player fills the preview box width (its aspect-ratio,
+   set inline by <Composite>, drives the height). --w overrides the page's stage
+   sizing so the player scales to the modal, not the viewport. */
+.share-preview .player {
+  --w: min(300px, calc(56dvh * 0.686));
+  transform: none !important;   /* ignore any page drag offset inside the modal */
+  margin: 0;
 }
 @keyframes share-spin { to { transform: rotate(360deg); } }
-.share-preview .share-preview-err {
-  font: 500 12px/1.4 system-ui, sans-serif;
-  color: #9a9aa6;
-  text-align: center;
-  padding: 0 24px;
-}
 
 /* ── action buttons ─────────────────────────────────────────────────────── */
 .share-actions {
