@@ -74,6 +74,9 @@ const modelLabel = (id: ModelId): string => MODELS.find((m) => m.id === id)?.lab
 
 export interface RuntimeDeps {
   falKey: string;
+  // optional: OpenAI key for the Director (prompt → material). When absent, the
+  // handler falls back to a default style and the MATERIAL dict.
+  openaiKey?: string;
   // SVG string → PNG bytes (resvg-wasm in CF, resvg-js in Node)
   rasterize: (svg: string) => Promise<Uint8Array>;
   // paint PNG × alpha PNG (8-bit L) → RGBA PNG bytes
@@ -88,6 +91,7 @@ export interface GenerateInput {
   id: string;
   variant: LayoutVariant;
   style: DonorStyle;
+  materialPrompt?: string; // Director-derived custom material; overrides the MATERIAL dict when set
   brief: string;          // the silhouette brief, e.g. "a fanged anglerfish jaw"
   refImageUrls?: string[]; // optional reference-style images (palette/material steer)
   model?: ModelId;        // image edit endpoint (default DEFAULT_MODEL)
@@ -194,7 +198,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   //    Python draw_blueprint() output. Reference-style images ride along.
   const tPaint = Date.now();
   const paintInputUrl = await falUpload(deps.falKey, paintInputPng);
-  let prompt = STYLE_PROMPT + (MATERIAL[input.style] ?? MATERIAL.winamp);
+  let prompt = STYLE_PROMPT + (input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp);
   const refs = input.refImageUrls ?? [];
   if (refs.length) {
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +

@@ -7,6 +7,7 @@ import type { RuntimeDeps } from "./pipeline";
 import { generateSkin, DONOR_STYLES, MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
 import { checkAndReserve, release } from "./ratelimit";
+import { deriveMaterial } from "./director";
 
 function slug(s: string): string {
   return (s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 24) || "skin");
@@ -20,14 +21,26 @@ export interface HandlerInput {
 
 export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<GenerateResponse> {
   const prompt = (body.prompt ?? "").trim();
-  const style = body.style as DonorStyle;
+  const reqStyle = body.style as DonorStyle | undefined;
   const variant = body.variant as LayoutVariant;
   const model = (body.model ?? DEFAULT_MODEL) as ModelId;
   const envelope = body.envelope ?? true;
   if (!prompt) return { status: "error", error: "prompt is required" };
-  if (!DONOR_STYLES.includes(style)) return { status: "error", error: `style must be one of ${DONOR_STYLES.join(", ")}` };
   if (!LAYOUT_VARIANTS.includes(variant)) return { status: "error", error: `variant must be one of ${LAYOUT_VARIANTS.join(", ")}` };
   if (!MODELS.some((m) => m.id === model)) return { status: "error", error: `model must be one of ${MODELS.map((m) => m.id).join(", ")}` };
+
+  // Resolve the material. A valid donor named in the request is honored (back-compat,
+  // no custom materialPrompt). Otherwise the Director derives {style, materialPrompt}
+  // from the prompt; with no OpenAI key, default to winamp so it never hard-errors.
+  let style: DonorStyle;
+  let materialPrompt: string | undefined;
+  if (reqStyle && DONOR_STYLES.includes(reqStyle)) {
+    style = reqStyle;
+  } else if (deps.openaiKey) {
+    ({ style, materialPrompt } = await deriveMaterial(deps.openaiKey, prompt));
+  } else {
+    style = "winamp" as DonorStyle;
+  }
 
   const rl = checkAndReserve(ip);
   if (!rl.ok) return { status: "error", error: rl.reason ?? "rate limited" };
@@ -48,7 +61,7 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   const id = `${slug(prompt)}-${variant}-${modelTag}-${Date.now().toString(36).slice(-4)}`;
   try {
     const regions = Array.isArray(body.regions) && body.regions.length ? body.regions : undefined;
-    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
+    const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,
       template: r.template, frameUrl: r.frameUrl, timingMs: r.timingMs,

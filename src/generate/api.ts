@@ -6,7 +6,7 @@ import type { DonorStyle, ModelId } from "./pipeline";
 
 export interface GenerateRequest {
   prompt: string;             // silhouette brief, e.g. "a fanged anglerfish jaw"
-  style: DonorStyle;          // donor material: frog | biomech | winamp | wmp | halo
+  style?: DonorStyle;         // OPTIONAL donor; when absent, the Director derives material from the prompt
   variant: LayoutVariant;     // radial | capsule | minimal (layout-first only)
   refImage?: string;          // optional reference-style image as a data: URL
   model?: ModelId;            // image edit endpoint (default nano-banana-pro)

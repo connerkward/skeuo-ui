@@ -14,19 +14,18 @@ import UPNG from "upng-js";
 import { handleGenerate } from "../src/generate/handler";
 import type { RuntimeDeps } from "../src/generate/pipeline";
 
-function loadFalKey(root: string): string | undefined {
-  // 1. .dev.vars in repo root (Cloudflare convention, gitignored)
+// Read a key from .dev.vars → process.env → central/.env (dev convenience),
+// the same precedence used for both FAL_KEY and OPENAI_API_KEY.
+function loadKey(root: string, name: string): string | undefined {
   const devVars = resolve(root, ".dev.vars");
   if (existsSync(devVars)) {
-    const m = readFileSync(devVars, "utf8").match(/^FAL_KEY=(.+)$/m);
+    const m = readFileSync(devVars, "utf8").match(new RegExp(`^${name}=(.+)$`, "m"));
     if (m) return m[1].trim();
   }
-  // 2. process env
-  if (process.env.FAL_KEY) return process.env.FAL_KEY;
-  // 3. dev convenience: central/.env on this machine
+  if (process.env[name]) return process.env[name];
   const central = "/Users/conner/dev/central/.env";
   if (existsSync(central)) {
-    const m = readFileSync(central, "utf8").match(/^FAL_KEY=(.+)$/m);
+    const m = readFileSync(central, "utf8").match(new RegExp(`^${name}=(.+)$`, "m"));
     if (m) return m[1].trim();
   }
   return undefined;
@@ -58,7 +57,8 @@ export function devApiPlugin(): Plugin {
   return {
     name: "skeuo-dev-api",
     configureServer(server: ViteDevServer) {
-      const falKey = loadFalKey(server.config.root);
+      const falKey = loadKey(server.config.root, "FAL_KEY");
+      const openaiKey = loadKey(server.config.root, "OPENAI_API_KEY");
       server.middlewares.use("/api/generate", (req, res) => {
         if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
         if (!falKey) { res.statusCode = 500; res.end(JSON.stringify({ status: "error", error: "server missing FAL_KEY (.dev.vars)" })); return; }
@@ -69,7 +69,7 @@ export function devApiPlugin(): Plugin {
           try { body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"); }
           catch { res.statusCode = 400; res.end(JSON.stringify({ status: "error", error: "invalid JSON" })); return; }
           const ip = (req.socket.remoteAddress || "local").toString();
-          const deps: RuntimeDeps = { falKey, rasterize, composite, log: (m) => server.config.logger.info(m) };
+          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, composite, log: (m) => server.config.logger.info(m) };
           try {
             const out = await handleGenerate({ body, ip, deps });
             res.statusCode = out.status === "error" ? 429 : 200;

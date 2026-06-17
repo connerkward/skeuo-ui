@@ -39,6 +39,7 @@ import type { RuntimeDeps } from "../../src/generate/pipeline";
 
 interface Env {
   FAL_KEY: string;
+  OPENAI_API_KEY?: string;   // optional: Director (prompt → material). NEVER sent to client.
   SKINS?: R2Bucket;          // optional R2 bucket binding
   ASSETS_BASE_URL?: string;  // public base for stored frames (e.g. https://cdn/skins)
 }
@@ -87,6 +88,7 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
 
   const deps: RuntimeDeps = {
     falKey: env.FAL_KEY,
+    openaiKey: env.OPENAI_API_KEY,
     rasterize,
     composite,
     store: env.SKINS
