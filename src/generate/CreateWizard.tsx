@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { GenerateRequest, GenerateResponse } from "./api";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, type LayoutVariant } from "./layouts";
-import type { Region, Rect, Kind } from "../template/schema";
+import type { Region, Rect, Kind, DynamicType } from "../template/schema";
 import type { RuntimeSkin } from "./CreatePanel";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10,7 +10,7 @@ import type { RuntimeSkin } from "./CreatePanel";
 // workshop. Four steps, always a live layout preview:
 //   1 · Idea      — type the sentence (+ optional reference image)
 //   2 · Layout    — pick a preset, then drag the controls where you want them
-//   3 · Body      — how the body is built (freeform / AI envelope / uploaded); material derives from the prompt
+//   3 · Body      — a body auto-grows around the controls (uploaded body optional); material derives from the prompt
 //   4 · Generate  — pick one/many image models, see the price, go
 // The authored layout is sent to /api/generate (regions[]) so dragging actually
 // changes the painted skin, not just the preview.
@@ -19,20 +19,45 @@ import type { RuntimeSkin } from "./CreatePanel";
 const STEPS = ["Idea", "Layout", "Body", "Generate"] as const;
 type Step = 0 | 1 | 2 | 3;
 
+// curated skeuomorphic-player prompts for the 🎲 Random button (idea step)
+const RANDOM_PROMPTS = [
+  "a chunky red toy crab with huge claws",
+  "a glossy frog puck on a lilypad",
+  "a brushed-chrome boombox",
+  "a translucent Y2K grape gadget",
+  "an Aztec stone eagle console",
+  "a deep-sea anglerfish jaw",
+  "a melting neon ice-cream pod",
+  "a worn leather hip-flask radio",
+  "a porcelain cat with blinking eyes",
+  "a rusted submarine control panel",
+  "a bubblegum-pink jelly bug",
+  "a carved obsidian beetle deck",
+];
+
 const VARIANTS: { id: LayoutVariant; label: string; blurb: string }[] = [
+  { id: "simple", label: "Simple", blurb: "big visualizer, marquee + seek, prev/play/next" },
   { id: "radial", label: "Radial dial", blurb: "round dial, buttons orbiting, ring seek" },
   { id: "capsule", label: "Capsule pod", blurb: "WMP-style pod, pill marquee, EQ" },
   { id: "minimal", label: "Minimal puck", blurb: "now-playing puck, big play, one knob" },
 ];
 
-// control kinds the palette can drop, with a default rect + bind
-const PALETTE: { kind: Kind; label: string; bind?: string; shape?: "ellipse" }[] = [
-  { kind: "button", label: "Button", bind: "play", shape: "ellipse" },
-  { kind: "knob", label: "Knob", bind: "volume" },
-  { kind: "toggle", label: "Toggle", bind: "shuffle" },
-  { kind: "slider-h", label: "Slider", bind: "seek" },
-  { kind: "display", label: "Screen", },
+// control kinds the palette can drop. Each adds a REAL player control with a
+// meaningful name/bind — never a generic "display"/"slider-h". `screen` cycles
+// its dynamicType (visualizer → marquee → playlist); the others pick an unused
+// transport/bind so repeated clicks don't pile up duplicates of the same thing.
+type PaletteKind = "screen" | "button" | "knob" | "toggle" | "slider";
+const PALETTE: { palette: PaletteKind; label: string }[] = [
+  { palette: "screen", label: "Screen" },
+  { palette: "button", label: "Button" },
+  { palette: "knob", label: "Knob" },
+  { palette: "toggle", label: "Toggle" },
+  { palette: "slider", label: "Slider" },
 ];
+// kind used for color-coding the palette button
+const PALETTE_KIND: Record<PaletteKind, Kind> = {
+  screen: "display", button: "button", knob: "knob", toggle: "toggle", slider: "slider-h",
+};
 
 const KIND_COLOR: Record<string, string> = {
   button: "#5aff82", knob: "#5ab4ff", toggle: "#ff8a3d", "slider-h": "#ff5a6e",
@@ -51,23 +76,35 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   const [prompt, setPrompt] = useState("a fanged anglerfish jaw");
   const [refImage, setRefImage] = useState<string | undefined>();
   const fileRef = useRef<HTMLInputElement>(null);
+  // rotating counter (NOT Math.random — banned here) so each 🎲 press advances
+  const [diceIdx, setDiceIdx] = useState(0);
 
-  // step 2 — layout
-  const [variant, setVariant] = useState<LayoutVariant>("radial");
-  const [regions, setRegions] = useState<Region[]>(() => regionsForVariant("radial"));
+  // step 2 — layout (defaults to the SIMPLE 6-control layout)
+  const [variant, setVariant] = useState<LayoutVariant>("simple");
+  const [regions, setRegions] = useState<Region[]>(() => regionsForVariant("simple"));
 
-  // step 3 — body
-  const [envelope, setEnvelope] = useState(false); // AI body is OPT-IN (cheaper/freeform by default)
-  const [envImage, setEnvImage] = useState<string | undefined>(); // user-uploaded body envelope (data URL); when set it wins
+  // step 3 — body. Bodies auto-grow now (envelope: true on the server by
+  // default), so there's no toggle — only the optional uploaded-body override.
+  const [envImage, setEnvImage] = useState<string | undefined>(); // user-uploaded body envelope (data URL); when set it's used directly
   const envFileRef = useRef<HTMLInputElement>(null);
 
   // step 4 — generate
   const [models, setModels] = useState<ModelId[]>([DEFAULT_MODEL]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [stage, setStage] = useState("");
+  // live paint-pass progress: which model is in flight + when its pass started
+  const [progress, setProgress] = useState<GenProgress | null>(null);
+  const [elapsed, setElapsed] = useState(0); // seconds since the current pass began
 
   const usePreset = (v: LayoutVariant) => { setVariant(v); setRegions(regionsForVariant(v)); };
+
+  // 🎲 fill the prompt with the next curated idea (rotates; never repeats current)
+  const rollPrompt = () => {
+    let i = (diceIdx + 1) % RANDOM_PROMPTS.length;
+    if (RANDOM_PROMPTS[i] === prompt.trim()) i = (i + 1) % RANDOM_PROMPTS.length;
+    setDiceIdx(i);
+    setPrompt(RANDOM_PROMPTS[i]);
+  };
 
   const pickRef = (f: File | undefined) => {
     if (!f) { setRefImage(undefined); return; }
@@ -87,11 +124,10 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   const toggleModel = (id: ModelId) =>
     setModels((cur) => (cur.includes(id) ? cur.filter((m) => m !== id) : [...cur, id]));
 
-  // a user-uploaded envelope skips the AI envelope pass, so it costs like freeform.
-  // two passes (full price) only when the AI envelope actually runs.
-  const aiEnvelope = envelope && !envImage;
-  // envelope OFF ≈ one image pass instead of two → roughly half the per-skin cost.
-  const factor = aiEnvelope ? 1 : 0.55;
+  // Body auto-grows by default → two image passes (expand + paint), full price.
+  // An uploaded body is painted directly → one pass, ~half the per-skin cost.
+  const autoBody = !envImage;
+  const factor = autoBody ? 1 : 0.55;
   const total = MODELS.filter((m) => models.includes(m.id)).reduce((s, m) => s + m.costPerSkin * factor, 0);
   const anyApprox = MODELS.some((m) => models.includes(m.id) && m.approx);
 
@@ -103,9 +139,11 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
     try {
       for (let i = 0; i < models.length; i++) {
         const model = models[i];
-        setStage(`model ${i + 1}/${models.length} · ${modelLabel(model)} — ${aiEnvelope ? "envelope → paint" : "paint"} (~30–90s)…`);
+        setProgress({ idx: i, total: models.length, model, startedAt: Date.now() });
         const req: GenerateRequest = {
-          prompt: prompt.trim(), variant, refImage, model, envelope, envelopeImage: envImage, regions,
+          // envelope:true → the server grows a body around the controls. An
+          // uploaded body is sent directly and used in place of the grown one.
+          prompt: prompt.trim(), variant, refImage, model, envelope: autoBody, envelopeImage: envImage, regions,
         };
         const r = await fetch("/api/generate", {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
@@ -125,9 +163,18 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false); setStage("");
+      setBusy(false); setProgress(null);
     }
   };
+
+  // drive the elapsed-seconds counter while a paint pass is in flight. Resets on
+  // each new pass (progress.startedAt changes), stops when progress clears.
+  useEffect(() => {
+    if (!progress) { setElapsed(0); return; }
+    setElapsed(0);
+    const t = setInterval(() => setElapsed(Math.floor((Date.now() - progress.startedAt) / 1000)), 250);
+    return () => clearInterval(t);
+  }, [progress]);
 
   return (
     <div className="wiz">
@@ -155,7 +202,11 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
             <>
               <h3>What is it?</h3>
               <label className="wiz-field">
-                <span>Describe the silhouette</span>
+                <span className="wiz-field-row">
+                  Describe the silhouette
+                  <button type="button" className="wiz-dice" onClick={rollPrompt}
+                    title="Fill with a random idea">🎲 Random</button>
+                </span>
                 <textarea rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)}
                   placeholder="a fanged anglerfish jaw" />
               </label>
@@ -181,8 +232,8 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
               <div className="wiz-palette">
                 <span className="wiz-palette-lbl">Add:</span>
                 {PALETTE.map((p) => (
-                  <button key={p.kind} className="wiz-add" style={{ borderColor: colorFor(p.kind) }}
-                    onClick={() => setRegions((rs) => [...rs, newRegion(p)])}>+ {p.label}</button>
+                  <button key={p.palette} className="wiz-add" style={{ borderColor: colorFor(PALETTE_KIND[p.palette]) }}
+                    onClick={() => setRegions((rs) => [...rs, newRegion(p.palette, rs)])}>+ {p.label}</button>
                 ))}
                 <button className="wiz-reset" onClick={() => usePreset(variant)}>↺ Reset preset</button>
               </div>
@@ -192,26 +243,23 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
           {step === 2 && (
             <>
               <h3>Body</h3>
-              <p className="wiz-hint">The material is read from your prompt — the Director picks the finish (glossy rubber, brushed chrome, biomech sinew…). Here you choose how the body itself is built:</p>
-              <label className={`wiz-env ${envelope && !envImage ? "on" : ""} ${envImage ? "disabled" : ""}`}>
-                <input type="checkbox" checked={envelope && !envImage} disabled={!!envImage}
-                  onChange={(e) => setEnvelope(e.target.checked)} />
+              <p className="wiz-hint">The material is read from your prompt — the Director picks the finish (glossy rubber, brushed chrome, biomech sinew…).</p>
+              <div className={`wiz-env wiz-env-auto ${envImage ? "disabled" : ""}`}>
+                <span className="wiz-env-mark">✓</span>
                 <span className="wiz-env-txt">
-                  <strong>Grow an AI body envelope around the controls</strong>
+                  <strong>No action needed</strong>
                   <small>{envImage
-                    ? "Disabled — you uploaded your own body below, so the AI envelope is skipped."
-                    : envelope
-                    ? "Two image passes: first sculpts a silhouette around your wells, then paints it. More control over shape, ~2× the cost."
-                    : "Off (default): one pass — the model paints a freeform body straight from your control layout. Cheaper, wilder shapes."}</small>
+                    ? "Overridden — you uploaded your own body below, so it's used directly instead of growing one."
+                    : "A body is grown automatically around your controls, expanded from your prompt."}</small>
                 </span>
-              </label>
+              </div>
 
               <label className={`wiz-env wiz-env-upload ${envImage ? "on" : ""}`}>
                 <span className="wiz-env-txt">
                   <strong>…or upload your own body</strong>
                   <small>{envImage
-                    ? "Uploaded body — the paint pass uses this directly (AI envelope skipped)."
-                    : "A pre-made silhouette PNG (drawn by hand or in another tool). The paint pass paints straight onto it."}</small>
+                    ? "Uploaded body — the paint pass uses this directly (auto-grow skipped)."
+                    : "A pre-made silhouette PNG (drawn by hand or in another tool). The paint pass paints straight onto it, skipping the auto-grow."}</small>
                   <input ref={envFileRef} type="file" accept="image/*"
                     onChange={(e) => pickEnv(e.target.files?.[0])} />
                 </span>
@@ -244,10 +292,10 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
               <div className="wiz-summary">
                 <div><b>{prompt.trim().slice(0, 32) || "—"}</b></div>
                 <div>{variant} · {regions.length} controls · material from prompt
-                  {envImage ? " · uploaded body" : aiEnvelope ? " · AI body" : " · freeform body"}</div>
+                  {envImage ? " · uploaded body" : " · auto-grown body"}</div>
                 <div className="wiz-total"><strong>{models.length} model{models.length === 1 ? "" : "s"}</strong> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</div>
               </div>
-              {stage && <div className="wiz-genstage">{stage}</div>}
+              {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={autoBody} />}
               {err && <div className="wiz-err">{err}</div>}
             </>
           )}
@@ -270,23 +318,116 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   );
 }
 
-// ── new region from a palette entry (centered, sensible default size) ──────────
-function newRegion(p: { kind: Kind; bind?: string; shape?: "ellipse" }): Region {
-  const id = `${p.kind}-${Math.random().toString(36).slice(2, 6)}`;
-  const size: Record<string, Rect> = {
-    button: { x: 0.44, y: 0.45, w: 0.1, h: 0.067 },
-    knob: { x: 0.42, y: 0.44, w: 0.12, h: 0.08 },
-    toggle: { x: 0.45, y: 0.44, w: 0.06, h: 0.09 },
-    "slider-h": { x: 0.28, y: 0.5, w: 0.44, h: 0.02 },
-    display: { x: 0.3, y: 0.4, w: 0.4, h: 0.16 },
-  };
+// ── new region from a palette entry — always a REAL player control ─────────────
+// Each palette kind owns a list of meaningful names; we add the first one not
+// already present so repeated clicks cycle through real controls instead of
+// piling up duplicates. Ids are friendly (the bind/dynamicType), never "slider-h-14sr".
+const SCREEN_TYPES: DynamicType[] = ["visualizer", "marquee", "playlist"];
+const BUTTON_BINDS = ["play", "prev", "next", "stop"];
+const KNOB_BINDS = ["volume", "balance"];
+const TOGGLE_BINDS = ["shuffle", "eqOn"];
+const SLIDER_BINDS = ["seek", "volume"];
+
+// first option not already used by an existing region (matched on bind or
+// dynamicType); falls back to the first when all are taken.
+function firstFree(used: Set<string>, opts: string[]): string {
+  return opts.find((o) => !used.has(o)) ?? opts[0];
+}
+// make the id unique even if its base name repeats (volume slider vs volume knob)
+function uniqueId(base: string, regions: Region[]): string {
+  if (!regions.some((r) => r.id === base)) return base;
+  for (let n = 2; ; n++) { const id = `${base}-${n}`; if (!regions.some((r) => r.id === id)) return id; }
+}
+
+function newRegion(palette: PaletteKind, regions: Region[]): Region {
+  const usedBinds = new Set(regions.map((r) => r.bind).filter(Boolean) as string[]);
+  const usedTypes = new Set(regions.map((r) => r.dynamicType).filter(Boolean) as string[]);
+
+  if (palette === "screen") {
+    const dt = firstFree(usedTypes, SCREEN_TYPES) as DynamicType;
+    return {
+      id: uniqueId(dt, regions), kind: "display", content: "dynamic", layer: "screen",
+      rect: { x: 0.3, y: 0.4, w: 0.4, h: 0.16 }, dynamicType: dt, label: dt,
+    };
+  }
+  if (palette === "button") {
+    const bind = firstFree(usedBinds, BUTTON_BINDS);
+    return {
+      id: uniqueId(bind, regions), kind: "button", content: "sprite", layer: "components",
+      rect: { x: 0.44, y: 0.45, w: 0.1, h: 0.067 }, bind, label: bind, shape: "ellipse",
+    };
+  }
+  if (palette === "knob") {
+    const bind = firstFree(usedBinds, KNOB_BINDS);
+    return {
+      id: uniqueId(bind, regions), kind: "knob", content: "sprite", layer: "components",
+      rect: { x: 0.42, y: 0.44, w: 0.12, h: 0.08 }, bind, label: bind,
+    };
+  }
+  if (palette === "toggle") {
+    const bind = firstFree(usedBinds, TOGGLE_BINDS);
+    return {
+      id: uniqueId(bind, regions), kind: "toggle", content: "sprite", layer: "components",
+      rect: { x: 0.45, y: 0.44, w: 0.06, h: 0.09 }, bind, label: bind,
+    };
+  }
+  // slider
+  const bind = firstFree(usedBinds, SLIDER_BINDS);
   return {
-    id, kind: p.kind, content: p.kind === "display" ? "dynamic" : "sprite",
-    layer: p.kind === "display" ? "screen" : "components",
-    rect: size[p.kind] ?? { x: 0.44, y: 0.45, w: 0.1, h: 0.08 },
-    bind: p.bind, label: p.bind ?? p.kind, ...(p.shape ? { shape: p.shape } : {}),
-    ...(p.kind === "display" ? { dynamicType: "visualizer" as const } : {}),
+    id: uniqueId(bind, regions), kind: "slider-h", content: "sprite", layer: "components",
+    rect: { x: 0.28, y: 0.5, w: 0.44, h: 0.02 }, bind, label: bind,
   };
+}
+
+// ── paint-pass progress: a labeled, phase-walking bar for the ~40–90s paint ────
+type GenProgress = { idx: number; total: number; model: ModelId; startedAt: number };
+
+// the honest phases the pipeline walks through. We can't read true server
+// progress, so the bar eases toward ~90% over the expected duration and the
+// phase label advances on a time schedule that mirrors the real pass.
+const PAINT_PHASES = [
+  "Reading your prompt",
+  "Drawing the blueprint",
+  "Growing the body",
+  "Painting the material",
+  "Cutting it out",
+] as const;
+// cumulative fraction of the (expected) duration each phase ends at
+const PHASE_ENDS = [0.06, 0.18, 0.42, 0.86, 1.0];
+
+function PaintProgress({ progress, elapsed, autoBody }: {
+  progress: GenProgress; elapsed: number; autoBody: boolean;
+}) {
+  // expected duration of THIS pass — two passes (auto-grow) run longer than one.
+  const expected = autoBody ? 75 : 45;
+  // eased fill: asymptotes toward ~92% so we never claim "done" before the server
+  // returns; completes to 100% only when the pass actually resolves (component unmounts).
+  const fill = Math.min(0.92, 1 - Math.exp(-1.9 * (elapsed / expected)));
+  // pick the phase by elapsed-fraction (auto-grow skips "Growing the body" cheaply
+  // when no body is grown, but the label list is honest for the common path).
+  const frac = elapsed / expected;
+  let phaseIdx = PHASE_ENDS.findIndex((end) => frac < end);
+  if (phaseIdx < 0) phaseIdx = PAINT_PHASES.length - 1;
+  // an uploaded body skips the grow phase — collapse that label so it stays honest
+  const phases = autoBody ? PAINT_PHASES : PAINT_PHASES.filter((p) => p !== "Growing the body");
+  const phaseLabel = phases[Math.min(phaseIdx, phases.length - 1)];
+
+  return (
+    <div className="wiz-paint" role="status" aria-live="polite">
+      <div className="wiz-paint-head">
+        <span className="wiz-paint-model">
+          {progress.total > 1 && <b>model {progress.idx + 1}/{progress.total} · </b>}
+          {modelLabel(progress.model)}
+        </span>
+        <span className="wiz-paint-elapsed">{elapsed}s</span>
+      </div>
+      <div className="wiz-paint-bar"><div className="wiz-paint-fill" style={{ width: `${fill * 100}%` }} /></div>
+      <div className="wiz-paint-phase">
+        <span className="wiz-paint-dot" />{phaseLabel}…
+        <span className="wiz-paint-steps">{Math.min(phaseIdx + 1, phases.length)}/{phases.length}</span>
+      </div>
+    </div>
+  );
 }
 
 // ── draggable layout stage (move + corner resize + snap + multi-select), 2:3 ────
