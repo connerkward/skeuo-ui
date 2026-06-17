@@ -23,8 +23,8 @@ const BSIZE: Record<string, number> = {
   play: 1.5, pause: 1.0, prev: 0.9, next: 0.9, stop: 0.82,
 };
 
-export type LayoutVariant = "radial" | "capsule" | "minimal";
-export const LAYOUT_VARIANTS: LayoutVariant[] = ["radial", "capsule", "minimal"];
+export type LayoutVariant = "simple" | "radial" | "capsule" | "minimal";
+export const LAYOUT_VARIANTS: LayoutVariant[] = ["simple", "radial", "capsule", "minimal"];
 
 // internal builder mirroring the Python `add()` closures (px in, normalized out)
 type AddExtra = Partial<Region> & { content?: Region["content"]; layer?: Region["layer"] };
@@ -39,6 +39,45 @@ function makeAdder(regs: Region[]) {
   };
 }
 const rad = (deg: number) => (deg * Math.PI) / 180;
+
+// ---- simple: the friendly default — a big visualizer (left), marquee + seek
+// (top-right), and a prev/play/next transport row (play dominant, bottom-right).
+// ~6 controls, nothing else. This is what a first-time user starts on.
+export function layoutSimple(): Region[] {
+  const regs: Region[] = [];
+  const add = makeAdder(regs);
+
+  // big round visualizer, left side, vertically centred-ish high
+  const vd = GEN_W * 0.50;                 // visualizer diameter
+  const vx = GEN_W * 0.07, vy = GEN_H * 0.22;
+  add("visualizer", "display", vx, vy, vd, vd,
+    { content: "dynamic", layer: "screen", dynamicType: "visualizer", shape: "ellipse" });
+
+  // marquee bar — top-right, beside the visualizer
+  const rx0 = vx + vd + GEN_W * 0.05;      // right column left edge
+  const rw = GEN_W * 0.93 - rx0;           // right column width
+  const my = vy + GEN_H * 0.02;
+  add("marquee", "display", rx0, my, rw, 64,
+    { content: "dynamic", layer: "screen", dynamicType: "marquee" });
+
+  // seek bar — directly under the marquee
+  add("seek", "slider-h", rx0, my + 92, rw, 30, { bind: "seek", label: "Seek" });
+
+  // transport row — prev / play / next, play larger, bottom-right under the seek
+  const playD = 124.0, smallD = 80.0, gap = 34.0;
+  const rowW = smallD + gap + playD + gap + smallD;
+  const tx0 = rx0 + (rw - rowW) / 2;       // centre the row in the right column
+  const ty = my + 92 + 30 + GEN_H * 0.06;  // a bit below the seek
+  const cyRow = ty + playD / 2;
+  add("prev", "button", tx0, cyRow - smallD / 2, smallD, smallD,
+    { bind: "prev", label: "prev", shape: "ellipse" });
+  add("play", "button", tx0 + smallD + gap, cyRow - playD / 2, playD, playD,
+    { bind: "play", label: "play", shape: "ellipse" });
+  add("next", "button", tx0 + smallD + gap + playD + gap, cyRow - smallD / 2, smallD, smallD,
+    { bind: "next", label: "next", shape: "ellipse" });
+
+  return regs;
+}
 
 // ---- radial: round dial, buttons orbiting lower rim, knobs as eyes, seek ring
 export function layoutRadial(): Region[] {
@@ -153,7 +192,10 @@ export function layoutMinimal(): Region[] {
 }
 
 export function regionsForVariant(v: LayoutVariant): Region[] {
-  return v === "radial" ? layoutRadial() : v === "capsule" ? layoutCapsule() : layoutMinimal();
+  return v === "simple" ? layoutSimple()
+    : v === "radial" ? layoutRadial()
+    : v === "capsule" ? layoutCapsule()
+    : layoutMinimal();
 }
 
 export function templateForVariant(id: string, v: LayoutVariant): Template {
