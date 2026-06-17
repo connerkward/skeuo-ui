@@ -1,5 +1,5 @@
-import { domToCanvas } from "modern-screenshot";
-import { GIFEncoder, quantize, applyPalette } from "gifenc";
+import { domToCanvas, createContext, destroyContext, type Context } from "modern-screenshot";
+import type { DoneMsg, ProgressMsg } from "./gifWorker";
 
 // ── tuning ───────────────────────────────────────────────────────────────────
 const DURATION_MS = 2500;       // ~2.5s of motion
@@ -16,6 +16,68 @@ export interface ExportProgress {
 }
 
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+
+// ── benchmark: real numbers for "is the page actually responsive during export" ─
+// Exposes window.__gifBench after each run. An INDEPENDENT rAF tick counter runs
+// for the whole export: a responsive page fires ~60 rAF ticks/sec; a frozen one
+// fires far fewer and shows a large worst-stall gap between consecutive ticks.
+export interface GifBench {
+  perFrameMs: number[];     // per-frame COMPOSITE cost (base blit + live overlays)
+  frameMaxMs: number;
+  frameMeanMs: number;
+  baseMs: number;           // ONE-TIME static base raster (the only ~4MB SVG decode)
+  encodeMs: number;         // now runs in a worker (off main thread)
+  totalMs: number;
+  rafTicks: number;
+  rafSeconds: number;
+  rafPerSec: number;        // ~60 = smooth, low = janky
+  rafWorstStallMs: number;        // longest rAF gap over the whole export
+  rafWorstStallCaptureMs: number; // longest rAF gap DURING the per-frame capture loop
+}
+function startBench() {
+  const t0 = performance.now();
+  const perFrameMs: number[] = [];
+  let lastRaf = t0;
+  let rafTicks = 0;
+  let worstStall = 0;
+  let worstStallCapture = 0;
+  let inCapture = false;     // true only during the per-frame composite loop
+  let running = true;
+  const tick = () => {
+    if (!running) return;
+    const now = performance.now();
+    const gap = now - lastRaf;
+    if (rafTicks > 0 && gap > worstStall) worstStall = gap;
+    if (rafTicks > 0 && inCapture && gap > worstStallCapture) worstStallCapture = gap;
+    lastRaf = now;
+    rafTicks++;
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  let encodeMs = 0;
+  let baseMs = 0;
+  return {
+    base: (ms: number) => { baseMs = ms; },
+    captureStart: () => { inCapture = true; },
+    captureEnd: () => { inCapture = false; },
+    frame: (ms: number) => perFrameMs.push(ms),
+    encode: (ms: number) => { encodeMs = ms; },
+    done: () => {
+      running = false;
+      const totalMs = performance.now() - t0;
+      const frameMaxMs = perFrameMs.length ? Math.max(...perFrameMs) : 0;
+      const frameMeanMs = perFrameMs.length ? perFrameMs.reduce((a, b) => a + b, 0) / perFrameMs.length : 0;
+      const rafSeconds = totalMs / 1000;
+      const b: GifBench = {
+        perFrameMs, frameMaxMs, frameMeanMs, baseMs, encodeMs, totalMs,
+        rafTicks, rafSeconds, rafPerSec: rafTicks / rafSeconds,
+        rafWorstStallMs: worstStall, rafWorstStallCaptureMs: worstStallCapture,
+      };
+      (window as unknown as { __gifBench?: GifBench }).__gifBench = b;
+      console.info("[gif-bench]", JSON.stringify(b));
+    },
+  };
+}
 
 // Load the watermark logo once. Returns null on any failure (we still emit a GIF).
 let logoPromise: Promise<HTMLImageElement | null> | null = null;
@@ -76,33 +138,38 @@ function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, logo
   ctx.fillText(word, lx + logoSize + gap, cy + 1);
 }
 
-// Capture the live player element to a downscaled canvas, on a dark bg, with the
-// watermark composited in. Returns ImageData ready for the GIF encoder.
-async function captureFrame(
-  el: HTMLElement,
-  outW: number,
-  outH: number,
-  logo: HTMLImageElement | null,
-): Promise<ImageData> {
-  // rasterize the DOM, capping the raster scale at the output size so we never
-  // pay to render larger than the GIF needs (cheaper per-frame, less main-thread jank)
-  const snap = await domToCanvas(el, {
-    width: el.offsetWidth, height: el.offsetHeight,
-    scale: Math.min(1, outW / (el.offsetWidth || outW)),
-  });
+// ── live-overlay compositing ────────────────────────────────────────────────
+// The bottleneck was NOT the DOM clone (only ~17ms once the Context is reused) —
+// it was the per-frame SVG→<img> DECODE of a ~4 MB inlined-PNG foreignObject
+// (~140ms × 25 frames = the freeze). Those PNGs (the skin faceplate, screen, and
+// sprite layers) are STATIC across the recording. So:
+//   • rasterize the WHOLE player ONCE → a static base (one 4 MB decode, paid once)
+//   • per frame, redraw the base (instant) then composite only the LIVE elements:
+//       - <canvas class="vis-canvas">  → drawImage straight from the live canvas (~0ms)
+//       - text overlays (marquee/clock) → a tiny per-element capture (~5ms, 6 KB SVG)
+// Per-frame cost goes from ~180ms (full re-raster) to single-digit ms.
 
-  const out = document.createElement("canvas");
-  out.width = outW;
-  out.height = outH;
-  const ctx = out.getContext("2d", { willReadFrequently: true })!;
-  ctx.fillStyle = PAGE_BG;
-  ctx.fillRect(0, 0, outW, outH);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(snap, 0, 0, outW, outH);
-  drawWatermark(ctx, outW, outH, logo);
+// Live text overlays whose content changes mid-recording: the scrolling marquee
+// and the ticking clock read-outs. Captured per frame (cheap — they're tiny).
+const LIVE_TEXT_SEL = ".marquee, .lcd-time, .dial-time, .dial-track";
 
-  return ctx.getImageData(0, 0, outW, outH);
+interface LiveRegion {
+  el: HTMLElement;
+  // destination rect in OUTPUT canvas pixels
+  dx: number; dy: number; dw: number; dh: number;
+  // reused per-element capture context (text overlays only; canvases don't need one)
+  ctx?: Context<HTMLElement>;
+}
+
+// player-relative rect → output-canvas pixels
+function regionRect(el: HTMLElement, playerRect: DOMRect, sx: number, sy: number) {
+  const r = el.getBoundingClientRect();
+  return {
+    dx: Math.round((r.left - playerRect.left) * sx),
+    dy: Math.round((r.top - playerRect.top) * sy),
+    dw: Math.max(1, Math.round(r.width * sx)),
+    dh: Math.max(1, Math.round(r.height * sy)),
+  };
 }
 
 export interface ExportResult {
@@ -121,48 +188,131 @@ export async function recordPlayerGif(
   onProgress?: (p: ExportProgress) => void,
 ): Promise<ExportResult> {
   const logo = await loadLogo();
+  const bench = startBench();
 
+  const playerRect = el.getBoundingClientRect();
   const aspect = el.offsetHeight / el.offsetWidth || 1536 / 1024;
   const outW = TARGET_W;
   const outH = Math.round(TARGET_W * aspect);
+  const sx = outW / (playerRect.width || outW);
+  const sy = outH / (playerRect.height || outH);
 
-  // ── capture phase: snapshot across real animation time ──────────────────────
-  const frames: ImageData[] = [];
+  // identify the live elements to re-composite each frame (general across skins):
+  // every real <canvas> visualizer (drawn straight from the live canvas) and the
+  // changing text overlays (captured tiny, per frame).
+  const liveCanvasEls = [...el.querySelectorAll<HTMLCanvasElement>(".vis-canvas")];
+  const liveTextEls = [...el.querySelectorAll<HTMLElement>(LIVE_TEXT_SEL)];
+  const liveSet = new Set<Node>([...liveCanvasEls, ...liveTextEls]);
+
+  // ── rasterize the STATIC base ONCE, EXCLUDING the live elements ──────────────
+  // The static faceplate/sprite PNGs (~4 MB inlined) are captured a single time
+  // with the live spectrum + text FILTERED OUT, so the base is pure static art.
+  // We never pay the ~4 MB SVG decode again — every frame just blits this base and
+  // composites the (cheap) live regions over the holes left for them.
+  const ctxCache = await createContext(el, {
+    width: el.offsetWidth, height: el.offsetHeight,
+    scale: Math.min(1, outW / (el.offsetWidth || outW)),
+    autoDestruct: false,
+    filter: (node) => !liveSet.has(node),
+  });
+  const baseT0 = performance.now();
+  const baseCanvas = await domToCanvas(ctxCache);
+  bench.base(performance.now() - baseT0);
+
+  const liveCanvases: LiveRegion[] = liveCanvasEls
+    .map((c) => ({ el: c, ...regionRect(c, playerRect, sx, sy) }));
+  const liveTexts: LiveRegion[] = [];
+  for (const t of liveTextEls) {
+    const rect = regionRect(t, playerRect, sx, sy);
+    const tctx = await createContext(t, {
+      width: t.offsetWidth, height: t.offsetHeight, autoDestruct: false,
+    });
+    liveTexts.push({ el: t, ...rect, ctx: tctx });
+  }
+
+  // one reusable output canvas for the composite
+  const out = document.createElement("canvas");
+  out.width = outW; out.height = outH;
+  const outCtx = out.getContext("2d", { willReadFrequently: true })!;
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = "high";
+
+  // spin up the encode worker NOW so it's warm by the time capture finishes
+  const worker = new Worker(new URL("./gifWorker.ts", import.meta.url), { type: "module" });
+
+  // ── capture phase: composite across real animation time ─────────────────────
+  const frameBuffers: ArrayBuffer[] = [];   // RGBA, transferred to the worker
+  const samples: ImageData[] = [];          // kept copies for verification
   const interval = DURATION_MS / FRAME_COUNT;
   const t0 = performance.now();
+  bench.captureStart();
   for (let i = 0; i < FRAME_COUNT; i++) {
     const target = t0 + i * interval;
     // let the live animation advance to this frame's wall-clock target
     while (performance.now() < target) await nextFrame();
-    frames.push(await captureFrame(el, outW, outH, logo));
+    const cap0 = performance.now();
+
+    // static base (one instant blit), then overlay the live regions
+    outCtx.fillStyle = PAGE_BG;
+    outCtx.fillRect(0, 0, outW, outH);
+    outCtx.drawImage(baseCanvas, 0, 0, outW, outH);
+    // live visualizers: a real canvas → straight drawImage, no raster cost. The
+    // base has a HOLE here (live element filtered out), so just draw over it.
+    for (const r of liveCanvases) {
+      outCtx.drawImage(r.el as HTMLCanvasElement, r.dx, r.dy, r.dw, r.dh);
+    }
+    // live text overlays (marquee/clock): tiny per-element capture (~5ms, ~6 KB SVG)
+    // drawn over the hole left in the base. A single bad capture must not abort the
+    // whole export — fall back to leaving the base's hole (no overlay) for that one.
+    for (const r of liveTexts) {
+      try {
+        const snap = await domToCanvas(r.ctx!);
+        outCtx.drawImage(snap, r.dx, r.dy, r.dw, r.dh);
+      } catch { /* skip this overlay this frame */ }
+    }
+    drawWatermark(outCtx, outW, outH, logo);
+
+    const rgba = outCtx.getImageData(0, 0, outW, outH).data;
+    bench.frame(performance.now() - cap0);
+    const copy = new Uint8ClampedArray(rgba);
+    frameBuffers.push(copy.buffer);
     onProgress?.({ phase: "capturing", pct: ((i + 1) / FRAME_COUNT) * 0.7 });
   }
+  bench.captureEnd();
+  // capture done — the expensive contexts can go
+  destroyContext(ctxCache);
+  for (const r of liveTexts) r.ctx && destroyContext(r.ctx);
 
-  // ── encode phase ────────────────────────────────────────────────────────────
-  // Quantize ONE shared palette (from a mid frame) instead of per-frame — the
-  // per-frame quantize() was the main main-thread hog. Also yields every frame so
-  // the page stays responsive, and a shared palette removes inter-frame flicker.
-  const enc = GIFEncoder();
-  const mid0 = frames[Math.floor(frames.length / 2)] ?? frames[0];
-  const palette = quantize(mid0.data, 256);
-  for (let i = 0; i < frames.length; i++) {
-    const { data, width, height } = frames[i];
-    const index = applyPalette(data, palette);
-    enc.writeFrame(index, width, height, { palette, delay: FRAME_DELAY });
-    onProgress?.({ phase: "encoding", pct: 0.7 + ((i + 1) / frames.length) * 0.3 });
-    await nextFrame(); // yield every frame so the UI doesn't freeze
+  // keep early/mid/late samples for verification BEFORE the buffers are transferred
+  const midIdx = Math.floor(frameBuffers.length / 2);
+  for (const idx of [0, midIdx, frameBuffers.length - 1]) {
+    const b = frameBuffers[idx];
+    if (b) samples.push(new ImageData(new Uint8ClampedArray(b.slice(0)), outW, outH));
   }
-  enc.finish();
 
-  // copy into a fresh ArrayBuffer-backed view (gifenc's view may be over a
-  // pooled buffer; the copy also satisfies the Blob/ArrayBuffer typing)
-  const bytes = Uint8Array.from(enc.bytesView());
-  const blob = new Blob([bytes], { type: "image/gif" });
+  // ── encode phase: entirely OFF the main thread ──────────────────────────────
+  const encT0 = performance.now();
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    worker.onmessage = (e: MessageEvent<ProgressMsg | DoneMsg>) => {
+      const m = e.data;
+      if (m.type === "progress") {
+        onProgress?.({ phase: "encoding", pct: 0.7 + (m.current / m.total) * 0.3 });
+      } else if (m.type === "done") {
+        resolve(new Blob([m.gif], { type: "image/gif" }));
+      }
+    };
+    worker.onerror = (err) => { worker.terminate(); reject(err); };
+    worker.postMessage(
+      { type: "encode", width: outW, height: outH, delay: FRAME_DELAY, frames: frameBuffers },
+      frameBuffers, // transfer (zero-copy) — encode runs in the worker
+    );
+  });
+  worker.terminate();
+  bench.encode(performance.now() - encT0);
+  bench.done();
   onProgress?.({ phase: "done", pct: 1 });
 
-  const mid = Math.floor(frames.length / 2);
-  const samples = [frames[0], frames[mid], frames[frames.length - 1]].filter(Boolean);
-  return { blob, width: outW, height: outH, frames: frames.length, samples };
+  return { blob, width: outW, height: outH, frames: FRAME_COUNT, samples };
 }
 
 // Trigger a browser download of the gif blob.
