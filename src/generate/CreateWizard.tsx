@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GenerateRequest, GenerateResponse } from "./api";
-import { MODELS, DEFAULT_MODEL, MATERIAL, type DonorStyle, type ModelId } from "./pipeline";
+import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, type LayoutVariant } from "./layouts";
 import type { Region, Rect, Kind } from "../template/schema";
 import type { RuntimeSkin } from "./CreatePanel";
@@ -10,7 +10,7 @@ import type { RuntimeSkin } from "./CreatePanel";
 // workshop. Four steps, always a live layout preview:
 //   1 · Idea      — type the sentence (+ optional reference image)
 //   2 · Layout    — pick a preset, then drag the controls where you want them
-//   3 · Body      — material + whether to grow an AI envelope (optional, off by default)
+//   3 · Body      — how the body is built (freeform / AI envelope / uploaded); material derives from the prompt
 //   4 · Generate  — pick one/many image models, see the price, go
 // The authored layout is sent to /api/generate (regions[]) so dragging actually
 // changes the painted skin, not just the preview.
@@ -24,11 +24,6 @@ const VARIANTS: { id: LayoutVariant; label: string; blurb: string }[] = [
   { id: "capsule", label: "Capsule pod", blurb: "WMP-style pod, pill marquee, EQ" },
   { id: "minimal", label: "Minimal puck", blurb: "now-playing puck, big play, one knob" },
 ];
-
-const MATERIALS: { id: DonorStyle; label: string }[] = Object.keys(MATERIAL).map((k) => ({
-  id: k as DonorStyle,
-  label: { biomech: "Biomech", winamp: "Chrome", frog: "Rubber frog", wmp: "Aqua (WMP)", halo: "Military (Halo)" }[k] ?? k,
-}));
 
 // control kinds the palette can drop, with a default rect + bind
 const PALETTE: { kind: Kind; label: string; bind?: string; shape?: "ellipse" }[] = [
@@ -62,7 +57,6 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   const [regions, setRegions] = useState<Region[]>(() => regionsForVariant("radial"));
 
   // step 3 — body
-  const [material, setMaterial] = useState<DonorStyle>("biomech");
   const [envelope, setEnvelope] = useState(false); // AI body is OPT-IN (cheaper/freeform by default)
   const [envImage, setEnvImage] = useState<string | undefined>(); // user-uploaded body envelope (data URL); when set it wins
   const envFileRef = useRef<HTMLInputElement>(null);
@@ -111,7 +105,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         const model = models[i];
         setStage(`model ${i + 1}/${models.length} · ${modelLabel(model)} — ${aiEnvelope ? "envelope → paint" : "paint"} (~30–90s)…`);
         const req: GenerateRequest = {
-          prompt: prompt.trim(), style: material, variant, refImage, model, envelope, envelopeImage: envImage, regions,
+          prompt: prompt.trim(), variant, refImage, model, envelope, envelopeImage: envImage, regions,
         };
         const r = await fetch("/api/generate", {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
@@ -197,17 +191,8 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
 
           {step === 2 && (
             <>
-              <h3>Body &amp; material</h3>
-              <div className="wiz-field">
-                <span>Material the body is painted in</span>
-                <div className="wiz-mats">
-                  {MATERIALS.map((m) => (
-                    <button key={m.id} className={`wiz-mat ${material === m.id ? "on" : ""}`} onClick={() => setMaterial(m.id)}>
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <h3>Body</h3>
+              <p className="wiz-hint">The material is read from your prompt — the Director picks the finish (glossy rubber, brushed chrome, biomech sinew…). Here you choose how the body itself is built:</p>
               <label className={`wiz-env ${envelope && !envImage ? "on" : ""} ${envImage ? "disabled" : ""}`}>
                 <input type="checkbox" checked={envelope && !envImage} disabled={!!envImage}
                   onChange={(e) => setEnvelope(e.target.checked)} />
@@ -258,7 +243,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
               </div>
               <div className="wiz-summary">
                 <div><b>{prompt.trim().slice(0, 32) || "—"}</b></div>
-                <div>{variant} · {regions.length} controls · {MATERIALS.find((m) => m.id === material)?.label}
+                <div>{variant} · {regions.length} controls · material from prompt
                   {envImage ? " · uploaded body" : aiEnvelope ? " · AI body" : " · freeform body"}</div>
                 <div className="wiz-total"><strong>{models.length} model{models.length === 1 ? "" : "s"}</strong> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</div>
               </div>
