@@ -3,6 +3,7 @@ import { Composite } from "../player/Composite";
 import type { Template } from "../template/schema";
 import type { SkinAssets } from "../player/skins";
 import { useSwipe } from "./useSwipe";
+import { Brand } from "../components/Brand";
 
 interface Props {
   template: Template;
@@ -33,7 +34,7 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate }: P
   return (
     <div className="m-shell">
       <header className="m-topbar">
-        <h1 className="m-title">skeuo-ui</h1>
+        <Brand size="sm" className="m-title" />
         <button className="m-menu" onClick={() => sw.goTo(createIdx)} aria-label="Generate your own skin">
           + skin
         </button>

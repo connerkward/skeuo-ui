@@ -11,6 +11,13 @@ compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
+# Global daily spend cap for /api/generate — an edge-shared counter so the public,
+# discoverable endpoint can't run away with the fal/OpenAI bill. Default cap is 40/day
+# (override with a GEN_DAILY_CAP env var). See functions/api/generate.ts.
+[[kv_namespaces]]
+binding = "RATELIMIT"
+id = "eb42fcf3bd7c498d95889911ab1f86dd"
+
 # Optional: persist generated frames to R2 instead of returning data: URLs.
 # Create the bucket (`npx wrangler r2 bucket create skeuo-skins`) then uncomment:
 # [[r2_buckets]]

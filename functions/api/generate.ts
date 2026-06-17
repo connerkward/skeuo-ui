@@ -43,6 +43,8 @@ interface Env {
   OPENAI_API_KEY?: string;   // optional: Director (prompt → material). NEVER sent to client.
   SKINS?: R2Bucket;          // optional R2 bucket binding
   ASSETS_BASE_URL?: string;  // public base for stored frames (e.g. https://cdn/skins)
+  RATELIMIT?: KVNamespace;   // global daily spend cap (edge-shared) — see below
+  GEN_DAILY_CAP?: string;    // max paid generations/day across ALL users (default 40)
 }
 
 let wasmReady: Promise<void> | null = null;
@@ -98,7 +100,26 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
       : undefined,
   };
 
+  // GLOBAL daily spend cap (edge-shared via KV) — hard ceiling on paid generations
+  // so a public, discoverable endpoint can't run away with the account's fal/OpenAI
+  // bill. Per-IP limiting still happens inside handleGenerate; this is the backstop.
+  // Only SUCCESSFUL (cost-incurring) generations count. KV is eventually consistent,
+  // so a few may slip under burst — fine for a cost ceiling. 2-day TTL auto-cleans.
+  const cap = Number(env.GEN_DAILY_CAP ?? "40");
+  const capKey = `gen:${new Date().toISOString().slice(0, 10)}`;
+  if (env.RATELIMIT) {
+    const used = Number((await env.RATELIMIT.get(capKey)) ?? "0");
+    if (used >= cap) {
+      return json({ status: "error", error: `Daily generation limit reached (${cap}/day across everyone). Try again tomorrow.` }, 429);
+    }
+  }
+
   const res = await handleGenerate({ body, ip: clientIp(request), deps });
+
+  if (env.RATELIMIT && res.status === "done") {
+    const used = Number((await env.RATELIMIT.get(capKey)) ?? "0");
+    await env.RATELIMIT.put(capKey, String(used + 1), { expirationTtl: 172800 });
+  }
   return json(res, res.status === "error" ? 429 : 200);
 };
 

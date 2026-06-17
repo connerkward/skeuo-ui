@@ -20,6 +20,7 @@ import { DesktopHandoff } from "./desktop/DesktopHandoff";
 // ── feature: export the running skin as an animated GIF ──────────────────────
 import { ExportGifButton } from "./export/ExportGifButton";
 import { Brand } from "./components/Brand";
+import { initialSkinParam } from "./platform";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;
@@ -28,7 +29,15 @@ const skinHasFrame = (id: string) => !!skinList.find((s) => s.id === id)?.has.in
 
 export default function App() {
   const visible = skinList.filter((s) => !s.hidden);
-  const [skinId, setSkinId] = useState(visible[0].id);
+  // honor a shared ?skin=<id> link (skeuo.fm/?skin=…) when it names a known skin
+  // (built-in or a persisted generated one); otherwise the first skin.
+  const [skinId, setSkinId] = useState(() => {
+    const p = initialSkinParam();
+    if (!p) return visible[0].id;
+    if (visible.some((s) => s.id === p)) return p;
+    try { if ((JSON.parse(localStorage.getItem("skeuo:skins") || "[]") as RuntimeSkin[]).some((s) => s.id === p)) return p; } catch { /* ignore */ }
+    return visible[0].id;
+  });
   const [wire, setWire] = useState(false);
 
   // generate-from-prompt + live template editor. Generated skins are PAID content —
