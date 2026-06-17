@@ -16,7 +16,11 @@ export default defineConfig({
   // Layout step — the old standalone editor.html / WorkshopEditor was removed.)
   build: {
     rollupOptions: {
-      input: { main: resolve(__dirname, 'index.html') },
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        // standalone per-skin share page (skeuo.fm/share?id=<id>)
+        share: resolve(__dirname, 'share.html'),
+      },
     },
   },
   // Pre-bundle the Tauri packages so the widget's lazy import()s resolve in dev

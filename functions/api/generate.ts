@@ -17,7 +17,9 @@
 //      a Durable Object keyed by IP+day, and the cost cap with the same.
 //   2. STORAGE: with no R2 binding, the frame is returned as a data: URL
 //      (fine to demo, heavy on the wire). Bind R2 (env.SKINS) and the
-//      pipeline's store() persists frame.png and returns a public URL.
+//      pipeline's store() persists frame.png + template.json + meta.json
+//      under skins/<id>/ and returns public /api/asset URLs, so every skin
+//      is a shared cloud artifact rebuildable by id (see /api/skin/<id>).
 //   3. (fixed) ALPHA MASK now traces the wild outline: it is keyed out of
 //      the PAINTED silhouette (cutout — non-white body, largest connected
 //      component, internal holes filled), so horns/jaws/legs are kept and
@@ -35,7 +37,7 @@ import { initWasm, Resvg } from "@resvg/resvg-wasm";
 import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
 import UPNG from "upng-js";
 import { handleGenerate } from "../../src/generate/handler";
-import type { RuntimeDeps } from "../../src/generate/pipeline";
+import { MODELS, DEFAULT_MODEL, type ModelId, type RuntimeDeps } from "../../src/generate/pipeline";
 import { cutoutAlpha } from "../../src/generate/blueprint";
 
 interface Env {
@@ -43,8 +45,37 @@ interface Env {
   OPENAI_API_KEY?: string;   // optional: Director (prompt → material). NEVER sent to client.
   SKINS?: R2Bucket;          // optional R2 bucket binding
   ASSETS_BASE_URL?: string;  // public base for stored frames (e.g. https://cdn/skins)
-  RATELIMIT?: KVNamespace;   // global daily spend cap (edge-shared) — see below
-  GEN_DAILY_CAP?: string;    // max paid generations/day across ALL users (default 40)
+  RATELIMIT?: KVNamespace;   // lifetime spend ledger (edge-shared) — see below
+  SPEND_CAP_CENTS?: string;  // lifetime budget ceiling in cents (default 1000 = $10)
+}
+
+// ---- $10 LIFETIME spend cap (KV ledger, NOT auto-resetting) -----------------
+// A cumulative dollar budget for the whole public endpoint. We keep a single
+// running total `spend:cents` in the RATELIMIT KV — NO TTL, so it never silently
+// resets the way the old per-day count did. The cap is SPEND_CAP_CENTS (default
+// 1000 = $10). Each request estimates its own cost from the chosen model and the
+// envelope factor; if spend + estCost would exceed the cap we refuse BEFORE
+// paying fal, and only ADD the cost AFTER a successful (cost-incurring) gen.
+//
+// TOP-UP / RESET (owner only): the budget does not refill itself. To reopen
+// generation, either zero the ledger or raise the cap:
+//   npx wrangler kv key put --binding RATELIMIT spend:cents 0 --remote
+//   (or set a higher SPEND_CAP_CENTS env var in the Pages dashboard)
+// Read the current total any time:
+//   npx wrangler kv key get --binding RATELIMIT spend:cents --remote
+const SPEND_KEY = "spend:cents";
+const DEFAULT_CAP_CENTS = 1000;
+
+// Estimate the cost of ONE generation in cents. costPerSkin in MODELS already
+// covers the two paid passes (envelope + paint) at full price; when the envelope
+// pass is skipped (envelope:false or a user-uploaded envelope) only the paint
+// pass runs, so we bill the ~0.55 fraction. This is an ESTIMATE for the ceiling —
+// the real bill is whatever fal charges. We Math.ceil so we lean toward stopping
+// early, not overspending.
+function estCostCents(model: ModelId, envelope: boolean): number {
+  const m = MODELS.find((x) => x.id === model) ?? MODELS.find((x) => x.id === DEFAULT_MODEL)!;
+  const dollars = m.costPerSkin * (envelope ? 1 : 0.55);
+  return Math.ceil(dollars * 100);
 }
 
 let wasmReady: Promise<void> | null = null;
@@ -85,40 +116,51 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
   let body: any;
   try { body = await request.json(); } catch { return json({ status: "error", error: "invalid JSON" }, 400); }
 
+  // R2 store for EVERY generated skin: frame.png (binary) + template.json + meta.json
+  // (JSON strings) under skins/<id>/, served publicly via /api/asset/skins/<id>/…
+  // (ASSETS_BASE_URL defaults to the same-origin asset route, so a deploy needs no
+  // extra var). Returns each object's public URL.
+  const assetBase = env.ASSETS_BASE_URL ?? "/api/asset";
   const deps: RuntimeDeps = {
     falKey: env.FAL_KEY,
     openaiKey: env.OPENAI_API_KEY,
     rasterize,
     cutout,
     store: env.SKINS
-      ? async (id, kind, png) => {
-          const key = `skins/${id}/${kind}.png`;
-          await env.SKINS!.put(key, png, { httpMetadata: { contentType: "image/png" } });
-          const base = env.ASSETS_BASE_URL ?? "";
-          return `${base}/${key}`;
+      ? async (id, kind, data) => {
+          const ext = kind === "frame" ? "png" : "json";
+          const contentType = kind === "frame" ? "image/png" : "application/json";
+          const key = `skins/${id}/${kind}.${ext}`;
+          await env.SKINS!.put(key, data, { httpMetadata: { contentType } });
+          return `${assetBase}/${key}`;
         }
       : undefined,
   };
 
-  // GLOBAL daily spend cap (edge-shared via KV) — hard ceiling on paid generations
-  // so a public, discoverable endpoint can't run away with the account's fal/OpenAI
-  // bill. Per-IP limiting still happens inside handleGenerate; this is the backstop.
-  // Only SUCCESSFUL (cost-incurring) generations count. KV is eventually consistent,
-  // so a few may slip under burst — fine for a cost ceiling. 2-day TTL auto-cleans.
-  const cap = Number(env.GEN_DAILY_CAP ?? "40");
-  const capKey = `gen:${new Date().toISOString().slice(0, 10)}`;
+  // $10 LIFETIME spend cap (edge-shared via KV ledger) — a cumulative-dollars
+  // budget that does NOT auto-reset. Estimate THIS request's cost from the model +
+  // envelope factor; refuse BEFORE paying fal if it would push us over the cap.
+  // Per-IP limiting still happens inside handleGenerate; this is the cost backstop.
+  const cap = Number(env.SPEND_CAP_CENTS ?? String(DEFAULT_CAP_CENTS));
+  const model = (body?.model as ModelId) ?? DEFAULT_MODEL;
+  const envelope = body?.envelope ?? true;
+  const est = estCostCents(model, envelope);
+  let spent = 0;
   if (env.RATELIMIT) {
-    const used = Number((await env.RATELIMIT.get(capKey)) ?? "0");
-    if (used >= cap) {
-      return json({ status: "error", error: `Daily generation limit reached (${cap}/day across everyone). Try again tomorrow.` }, 429);
+    spent = Number((await env.RATELIMIT.get(SPEND_KEY)) ?? "0");
+    if (spent + est > cap) {
+      return json({ status: "error", error: "Budget exhausted — generation paused until the owner tops up." }, 429);
     }
   }
 
   const res = await handleGenerate({ body, ip: clientIp(request), deps });
 
+  // Only a SUCCESSFUL (cost-incurring) generation adds to the ledger. KV is
+  // eventually consistent, so a couple of concurrent gens could under-count under
+  // burst — acceptable slack for a cost ceiling. No TTL: it's a lifetime budget.
   if (env.RATELIMIT && res.status === "done") {
-    const used = Number((await env.RATELIMIT.get(capKey)) ?? "0");
-    await env.RATELIMIT.put(capKey, String(used + 1), { expirationTtl: 172800 });
+    const cur = Number((await env.RATELIMIT.get(SPEND_KEY)) ?? "0");
+    await env.RATELIMIT.put(SPEND_KEY, String(cur + est));
   }
   return json(res, res.status === "error" ? 429 : 200);
 };

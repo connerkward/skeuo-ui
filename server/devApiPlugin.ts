@@ -59,13 +59,21 @@ export function devApiPlugin(): Plugin {
     configureServer(server: ViteDevServer) {
       const falKey = loadKey(server.config.root, "FAL_KEY");
       const openaiKey = loadKey(server.config.root, "OPENAI_API_KEY");
-      // persist generated frames to public/generated/ so a page reload or dev-server
+      // persist generated artifacts to public/generated/ so a page reload or dev-server
       // restart no longer wipes a just-created skin (the client stores only the URL).
+      // Mirrors the prod R2 layout: frame.png + template.json + meta.json per skin, so
+      // local dev exercises the same store path as the deployed pipeline.
       const genDir = resolve(server.config.root, "public", "generated");
-      const store = async (id: string, kind: "frame", png: Uint8Array): Promise<string> => {
+      const store = async (
+        id: string,
+        kind: "frame" | "template" | "meta",
+        data: Uint8Array | string,
+      ): Promise<string> => {
         mkdirSync(genDir, { recursive: true });
-        writeFileSync(resolve(genDir, `${id}-${kind}.png`), png);
-        return `/generated/${id}-${kind}.png`;
+        const ext = kind === "frame" ? "png" : "json";
+        const file = `${id}-${kind}.${ext}`;
+        writeFileSync(resolve(genDir, file), data as Uint8Array | string);
+        return `/generated/${file}`;
       };
       server.middlewares.use("/api/generate", (req, res) => {
         if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
@@ -88,6 +96,36 @@ export function devApiPlugin(): Plugin {
             res.end(JSON.stringify({ status: "error", error: e instanceof Error ? e.message : String(e) }));
           }
         });
+      });
+
+      // GET /api/skin/<id> — local parity with the CF Function: reconstruct a
+      // shared skin from the files the dev `store` wrote to public/generated/.
+      // This makes /share?id=<id> work end-to-end in `npm run dev` for skins
+      // generated locally.
+      server.middlewares.use("/api/skin/", (req, res) => {
+        const id = decodeURIComponent((req.url ?? "").replace(/^\/+/, "").split(/[?#]/)[0]);
+        const tplPath = resolve(genDir, `${id}-template.json`);
+        const metaPath = resolve(genDir, `${id}-meta.json`);
+        res.setHeader("Content-Type", "application/json");
+        if (!id || !existsSync(tplPath)) { res.statusCode = 404; res.end(JSON.stringify({ error: "skin not found" })); return; }
+        try {
+          const template = JSON.parse(readFileSync(tplPath, "utf8"));
+          const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, "utf8")) : null;
+          res.statusCode = 200;
+          res.end(JSON.stringify({ id, frameUrl: `/generated/${id}-frame.png`, template, meta }));
+        } catch (e) {
+          res.statusCode = 502;
+          res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
+        }
+      });
+
+      // GET /api/budget — local stub of the lifetime spend ledger. There is no KV
+      // in dev, so report the full cap as remaining (the real ceiling is enforced
+      // at the edge). SPEND_CAP_CENTS env overrides the default $10.
+      server.middlewares.use("/api/budget", (_req, res) => {
+        const capCents = Number(process.env.SPEND_CAP_CENTS ?? "1000");
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ capCents, spentCents: 0, remainingCents: capCents }));
       });
     },
   };

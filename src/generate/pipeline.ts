@@ -88,10 +88,24 @@ export interface RuntimeDeps {
   // internal holes filled so dark control wells stay opaque, light feather).
   // This replaces the old region-union alpha that shrink-wrapped the body.
   cutout: (paintPng: Uint8Array) => Promise<Uint8Array>;
-  // optional: persist a frame for skin <id>, return its public URL. If omitted,
-  // the caller gets a data: URL (v1 default — no R2 needed to demo).
-  store?: (id: string, kind: "frame", png: Uint8Array) => Promise<string>;
+  // optional: persist one artifact for skin <id>, return its public URL. The
+  // frame is binary PNG (Uint8Array); template/meta are JSON strings. When omitted,
+  // the frame is returned inline as a data: URL (v1 default — no R2 needed to demo)
+  // and template/meta are simply not persisted. Wiring R2 (env.SKINS) makes EVERY
+  // generated skin a shared cloud artifact under skins/<id>/ (frame.png +
+  // template.json + meta.json), reconstructable by id via /api/skin/<id>.
+  store?: (id: string, kind: "frame" | "template" | "meta", data: Uint8Array | string) => Promise<string>;
   log?: (msg: string) => void;
+}
+
+// Small per-skin record persisted alongside the frame + template so a shared link
+// can show what made the skin without re-deriving it. Lives at skins/<id>/meta.json.
+export interface SkinMeta {
+  prompt: string;
+  model: ModelId;
+  style: string;
+  variant: string;
+  createdAt: string;   // ISO
 }
 
 export interface GenerateInput {
@@ -228,10 +242,25 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   //    shrink-wrap.
   const framePng = await deps.cutout(paintPng);
 
-  // 6. store or inline
-  const frameUrl = deps.store
-    ? await deps.store(input.id, "frame", framePng)
-    : `data:image/png;base64,${toBase64(framePng)}`;
+  // 6. store or inline. With R2 wired, persist the WHOLE skin (frame + template +
+  //    meta) under skins/<id>/ so it's a shared cloud artifact rebuildable by id;
+  //    template/meta persistence is best-effort (don't fail a paid gen if a small
+  //    sidecar write hiccups — the frame is the expensive part). Without a store,
+  //    the frame returns inline as a data: URL (demo path).
+  let frameUrl: string;
+  if (deps.store) {
+    frameUrl = await deps.store(input.id, "frame", framePng);
+    const meta: SkinMeta = {
+      prompt: input.brief, model, style: input.style, variant: input.variant,
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      await deps.store(input.id, "template", JSON.stringify(template));
+      await deps.store(input.id, "meta", JSON.stringify(meta));
+    } catch (e) { log(`[${input.id}] sidecar store failed: ${e instanceof Error ? e.message : e}`); }
+  } else {
+    frameUrl = `data:image/png;base64,${toBase64(framePng)}`;
+  }
 
   return {
     id: input.id, style: input.style, variant: input.variant, model, template, frameUrl,
