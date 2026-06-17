@@ -11,21 +11,22 @@ const PAGE_BG = "#08080a";       // near-black IG backdrop (matches the referenc
 
 // ── Instagram 9:16 canvas ────────────────────────────────────────────────────
 // All export artifacts (PNG / GIF / Video) render into a 1080×1920 story/reel
-// frame. The device is composited "zoomed out": centered, ~62% of the frame
-// height, with generous margins, and all text lives in the MARGINS — nothing
-// overlaps the device. Layout mirrors the hero reference (Bone Totem).
+// frame. Layout mirrors the hero reference (Bone Totem / Scarab): a BIG hero
+// device floating high in a pool of near-black, with whisper-thin micro-type
+// hugging the corners — nothing overlaps the device, nothing shouts.
 const IG_W = 1080;
 const IG_H = 1920;
-// the device occupies this fraction of the frame HEIGHT (zoomed-out, lots of air)
-const DEVICE_H_FRAC = 0.62;
+// the device is the hero — it occupies this fraction of the frame HEIGHT
+const DEVICE_H_FRAC = 0.72;
 // safe horizontal inset for the player (also caps width on wide skins)
-const SIDE_PAD = 96;
+const SIDE_PAD = 72;
 // margin label geometry (output px)
-const LABEL_PAD = 64;
+const LABEL_PAD = 56;
 
-const ACCENT = "#9dff4d";        // brand green
 const INK = "#e8ece2";           // near-white text
 const DIM = "#6c7466";           // muted meta text
+// proportional sans for the skin name (the brand/meta lines stay mono)
+const SANS = `"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
 
 export interface ExportProgress {
   phase: "capturing" | "encoding" | "done";
@@ -83,88 +84,67 @@ function drawIgChrome(
   // backdrop
   ctx.fillStyle = PAGE_BG;
   ctx.fillRect(0, 0, IG_W, IG_H);
-  // a barely-there vertical vignette so the device sits in a pool of light
-  const grad = ctx.createRadialGradient(IG_W / 2, IG_H * 0.46, IG_H * 0.1, IG_W / 2, IG_H * 0.46, IG_H * 0.62);
-  grad.addColorStop(0, "rgba(28,30,26,0.55)");
+  // a barely-there pool of light, sat slightly high so the device floats in it
+  const grad = ctx.createRadialGradient(IG_W / 2, IG_H * 0.42, IG_H * 0.08, IG_W / 2, IG_H * 0.42, IG_H * 0.58);
+  grad.addColorStop(0, "rgba(26,28,24,0.45)");
   grad.addColorStop(1, "rgba(8,8,10,0)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, IG_W, IG_H);
 
-  // ── device box: fit DEVICE_H_FRAC of frame height, centered, capped by side pad
+  // ── device box: the hero. Fit DEVICE_H_FRAC of height, capped by side pad, and
+  // float it slightly high so the name sits in a roomy bottom-left band.
   let destH = IG_H * DEVICE_H_FRAC;
   let destW = destH * playerAspect;
   const maxW = IG_W - SIDE_PAD * 2;
   if (destW > maxW) { destW = maxW; destH = destW / playerAspect; }
   const destX = (IG_W - destW) / 2;
-  const destY = (IG_H - destH) / 2 + IG_H * 0.012; // nudge down for slightly larger top margin
+  const destY = (IG_H - destH) / 2 - IG_H * 0.03; // nudge up → bigger bottom margin
 
   const name = skinName(skinId);
   const blurb = skinBlurb(skinId);
 
-  // ── TOP-LEFT brand/meta line: logomark + "skeuo/fm · <skin>" ─────────────────
-  const brandY = LABEL_PAD + 14;
+  // ── TOP-LEFT: whisper-thin brand line — logomark + "skeuo/fm · <skin>" ────────
+  const topY = LABEL_PAD + 8;
   let bx = LABEL_PAD;
-  if (logo) {
-    const ls = 30;
-    ctx.drawImage(logo, bx, brandY - ls / 2, ls, ls);
-    bx += ls + 16;
-  }
   ctx.textBaseline = "middle";
-  ctx.font = `500 26px ${MONO}`;
-  ctx.fillStyle = INK;
-  ctx.fillText("skeuo", bx, brandY);
+  if (logo) {
+    const ls = 19;
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(logo, bx, topY - ls / 2, ls, ls);
+    ctx.globalAlpha = 1;
+    bx += ls + 12;
+  }
+  ctx.font = `500 21px ${MONO}`;
+  ctx.fillStyle = "rgba(232,236,226,0.8)";
+  ctx.fillText("skeuo", bx, topY);
   const sw = ctx.measureText("skeuo").width;
-  ctx.fillStyle = ACCENT;
-  ctx.fillText("/fm", bx + sw, brandY);
+  ctx.fillStyle = "rgba(157,255,77,0.8)";
+  ctx.fillText("/fm", bx + sw, topY);
   const fw = ctx.measureText("/fm").width;
   ctx.fillStyle = DIM;
-  ctx.fillText(`  ·  ${name}`, bx + sw + fw, brandY);
+  ctx.fillText(`   ·   ${name.toLowerCase()}`, bx + sw + fw, topY);
 
-  // ── TOP-RIGHT tiny index ─────────────────────────────────────────────────────
-  ctx.font = `400 22px ${MONO}`;
-  ctx.fillStyle = DIM;
+  // ── TOP-RIGHT: tiny, dim tag ──────────────────────────────────────────────────
+  ctx.font = `400 19px ${MONO}`;
+  ctx.fillStyle = "rgba(108,116,102,0.8)";
   ctx.textAlign = "right";
-  ctx.fillText("[ skeuomorphic player ]", IG_W - LABEL_PAD, brandY);
+  ctx.fillText("[ skeuomorphic player ]", IG_W - LABEL_PAD, topY);
   ctx.textAlign = "left";
 
-  // hairline rule under the header
-  ctx.strokeStyle = "rgba(255,255,255,0.07)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(LABEL_PAD, brandY + 30);
-  ctx.lineTo(IG_W - LABEL_PAD, brandY + 30);
-  ctx.stroke();
-
-  // ── BOTTOM-LEFT: skin NAME (big) + descriptor + tech line ────────────────────
-  const baseY = IG_H - LABEL_PAD - 6;
-  // tech line (smallest, lowest)
-  ctx.font = `400 22px ${MONO}`;
-  ctx.fillStyle = DIM;
-  ctx.fillText("css + canvas · live spectrum · 9:16", LABEL_PAD, baseY);
-  // descriptor (blurb) above it, wrapped
-  let cursorY = baseY - 40;
-  if (blurb) {
-    ctx.font = `400 28px ${MONO}`;
-    ctx.fillStyle = "rgba(232,236,226,0.72)";
-    const lines = wrapLines(ctx, blurb, IG_W - LABEL_PAD * 2, 2);
-    for (let i = lines.length - 1; i >= 0; i--) {
-      ctx.fillText(lines[i], LABEL_PAD, cursorY);
-      cursorY -= 38;
-    }
-    cursorY -= 8;
-  }
-  // skin NAME (bold, largest)
-  ctx.font = `700 58px ${MONO}`;
-  ctx.fillStyle = INK;
+  // ── BOTTOM-LEFT: small name (sans) + one dim caption line. Nothing else. ──────
   ctx.textBaseline = "alphabetic";
-  ctx.fillText(name, LABEL_PAD, cursorY);
-  // a short accent tick above the name
-  ctx.strokeStyle = ACCENT;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(LABEL_PAD, cursorY - 78);
-  ctx.lineTo(LABEL_PAD + 56, cursorY - 78);
-  ctx.stroke();
+  const capY = IG_H - LABEL_PAD - 2;
+  if (blurb) {
+    ctx.font = `400 21px ${MONO}`;
+    ctx.fillStyle = "rgba(108,116,102,0.92)";
+    const oneLine = wrapLines(ctx, blurb, IG_W - LABEL_PAD * 2, 1)[0] ?? "";
+    ctx.fillText(oneLine, LABEL_PAD, capY);
+  }
+  ctx.font = `600 42px ${SANS}`;
+  if ("letterSpacing" in ctx) (ctx as unknown as { letterSpacing: string }).letterSpacing = "-0.5px";
+  ctx.fillStyle = INK;
+  ctx.fillText(name, LABEL_PAD, capY - 32);
+  if ("letterSpacing" in ctx) (ctx as unknown as { letterSpacing: string }).letterSpacing = "0px";
 
   return { destX, destY, destW, destH };
 }
