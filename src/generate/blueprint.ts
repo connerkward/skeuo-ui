@@ -69,6 +69,87 @@ export function wellsOnlySvg(regs: Region[]): string {
 // it guarantees no holes inside the controls, but does NOT trace the wild outline
 // the way the Python mask (from the fal-generated envelope image) does. See the
 // honest-stub note in functions/api/generate.ts.
+// ============================================================
+// cutoutAlpha — derive the FINAL alpha from the PAINTED silhouette, not the
+// region union. The paint prompt forces "everything outside the silhouette
+// stays pure white", so the non-white body IS the real (expanded) outline.
+// This replaces the shrink-wrapping regionMaskSvg alpha for the composite.
+//
+// rgba: tightly-packed RGBA bytes (W*H*4). Returns an 8-bit alpha plane (W*H):
+//   1. body = pixel whose R,G,B are NOT all ≥ WHITE_CUTOFF (i.e. non-white).
+//   2. keep the LARGEST connected component (4-connectivity) → drops stray
+//      JPEG-speckle islands in the "white" margin.
+//   3. fill INTERNAL holes: flood the background inward from the image border;
+//      any non-body pixel the flood can't reach is enclosed (a dark control
+//      well) → mark it opaque so wells don't punch through.
+//   4. light 1px erode → kills the pale halo of near-white edge pixels.
+// Pure, runtime-agnostic (no PNG codec) so both the Node dev server and the CF
+// Worker share one implementation over their own decoded RGBA buffers.
+// ============================================================
+const WHITE_CUTOFF = 244; // R,G,B all ≥ this ⇒ background (pure white)
+export function cutoutAlpha(rgba: Uint8Array, W: number, H: number): Uint8Array {
+  const N = W * H;
+  // 1. body mask: non-white pixels.
+  const body = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    const r = rgba[i * 4], g = rgba[i * 4 + 1], b = rgba[i * 4 + 2];
+    if (!(r >= WHITE_CUTOFF && g >= WHITE_CUTOFF && b >= WHITE_CUTOFF)) body[i] = 1;
+  }
+
+  // 2. largest connected component of body (4-connectivity, iterative BFS).
+  const label = new Int32Array(N).fill(-1);
+  const queue = new Int32Array(N);
+  let best = -1, bestSize = 0, cur = 0;
+  for (let s = 0; s < N; s++) {
+    if (!body[s] || label[s] !== -1) continue;
+    let head = 0, tail = 0, size = 0;
+    queue[tail++] = s; label[s] = cur;
+    while (head < tail) {
+      const p = queue[head++]; size++;
+      const x = p % W, y = (p / W) | 0;
+      if (x > 0 && body[p - 1] && label[p - 1] === -1) { label[p - 1] = cur; queue[tail++] = p - 1; }
+      if (x < W - 1 && body[p + 1] && label[p + 1] === -1) { label[p + 1] = cur; queue[tail++] = p + 1; }
+      if (y > 0 && body[p - W] && label[p - W] === -1) { label[p - W] = cur; queue[tail++] = p - W; }
+      if (y < H - 1 && body[p + W] && label[p + W] === -1) { label[p + W] = cur; queue[tail++] = p + W; }
+    }
+    if (size > bestSize) { bestSize = size; best = cur; }
+    cur++;
+  }
+  const mask = new Uint8Array(N); // 1 = inside the chosen body component
+  if (best >= 0) for (let i = 0; i < N; i++) if (label[i] === best) mask[i] = 1;
+
+  // 3. fill internal holes: flood the OUTSIDE (non-mask) from the border; any
+  //    non-mask pixel not reached is enclosed → make it part of the body.
+  const outside = new Uint8Array(N);
+  let qh = 0, qt = 0;
+  const push = (i: number) => { if (!mask[i] && !outside[i]) { outside[i] = 1; queue[qt++] = i; } };
+  for (let x = 0; x < W; x++) { push(x); push((H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }
+  while (qh < qt) {
+    const p = queue[qh++];
+    const x = p % W, y = (p / W) | 0;
+    if (x > 0) push(p - 1);
+    if (x < W - 1) push(p + 1);
+    if (y > 0) push(p - W);
+    if (y < H - 1) push(p + W);
+  }
+  for (let i = 0; i < N; i++) if (!outside[i]) mask[i] = 1; // enclosed ⇒ opaque
+
+  // 4. light 1px erode → drop the pale near-white halo at the silhouette edge.
+  const alpha = new Uint8Array(N);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      if (!mask[i]) continue;
+      const edge =
+        (x > 0 && !mask[i - 1]) || (x < W - 1 && !mask[i + 1]) ||
+        (y > 0 && !mask[i - W]) || (y < H - 1 && !mask[i + W]);
+      alpha[i] = edge ? 0 : 255;
+    }
+  }
+  return alpha;
+}
+
 export function regionMaskSvg(regs: Region[], dilate = 28): string {
   const shapes = regs.map((r) => {
     const rc = r.rect;

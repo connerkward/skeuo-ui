@@ -3,9 +3,10 @@
 //
 // Runs the LAYOUT-FIRST pipeline (radial/capsule/minimal) entirely
 // server-side: ports of layout_radial/capsule/minimal + the wells
-// blueprint draw, then the two fal passes (envelope → paint), with the
-// constant drawn region mask as alpha (no BiRefNet). FAL_KEY comes from
-// the env binding and is NEVER sent to the client.
+// blueprint draw, then the two fal passes (envelope → paint). The final
+// alpha is keyed out of the PAINTED silhouette (cutout), so the body
+// follows the expanded outline instead of shrink-wrapping the controls.
+// FAL_KEY comes from the env binding and is NEVER sent to the client.
 //
 // ------------------------------------------------------------------
 // HONEST PRODUCTION-STUB LIST (what is NOT production-grade here):
@@ -17,12 +18,11 @@
 //   2. STORAGE: with no R2 binding, the frame is returned as a data: URL
 //      (fine to demo, heavy on the wire). Bind R2 (env.SKINS) and the
 //      pipeline's store() persists frame.png and returns a public URL.
-//   3. ALPHA MASK is the LOOSE constant region mask (union of dilated
-//      well/screen footprints), not the wild outline the Python derives
-//      from the fal-generated envelope image. The frame therefore keeps
-//      a rectangular-ish bounding alpha rather than tracing horns/jaws.
-//      Tightening it means thresholding the envelope PNG server-side
-//      (an extra decode) — deferred for v1. Controls never get holes.
+//   3. (fixed) ALPHA MASK now traces the wild outline: it is keyed out of
+//      the PAINTED silhouette (cutout — non-white body, largest connected
+//      component, internal holes filled), so horns/jaws/legs are kept and
+//      the body no longer shrink-wraps to the control cluster. Controls
+//      never get holes (their dark wells are non-white → filled as body).
 //   4. SYNCHRONOUS: this awaits both fal passes inline (~30-90s). A CF
 //      Function can exceed the default execution window on slow paints;
 //      production should enqueue (Queues/DO) and let the client poll the
@@ -36,6 +36,7 @@ import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
 import UPNG from "upng-js";
 import { handleGenerate } from "../../src/generate/handler";
 import type { RuntimeDeps } from "../../src/generate/pipeline";
+import { cutoutAlpha } from "../../src/generate/blueprint";
 
 interface Env {
   FAL_KEY: string;
@@ -56,23 +57,19 @@ async function rasterize(svg: string): Promise<Uint8Array> {
   return r.render().asPng();
 }
 
-// paint (RGBA PNG) × alpha (grayscale PNG, white=opaque) → RGBA PNG.
+// Key the near-white background out of the PAINTED silhouette → RGBA PNG.
+// The paint prompt forces "everything outside the silhouette stays pure white",
+// so the non-white region is the real (expanded) outline. cutoutAlpha (shared,
+// in blueprint.ts) does the threshold + largest-CC + hole-fill + 1px erode; we
+// only decode the PNG here and stamp the returned alpha plane back in.
 // Pure-JS via UPNG so it runs in the Worker with no native sharp.
 const toAB = (u: Uint8Array): ArrayBuffer => u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength) as ArrayBuffer;
-async function composite(paintPng: Uint8Array, alphaPng: Uint8Array): Promise<Uint8Array> {
+async function cutout(paintPng: Uint8Array): Promise<Uint8Array> {
   const p = UPNG.decode(toAB(paintPng));
   const pr = new Uint8Array(UPNG.toRGBA8(p)[0]);   // RGBA, p.width×p.height
-  const a = UPNG.decode(toAB(alphaPng));
-  const ar = new Uint8Array(UPNG.toRGBA8(a)[0]);
   const W = p.width, H = p.height;
-  // alpha image may differ in size; sample nearest
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const ax = Math.min(a.width - 1, (x * a.width / W) | 0);
-      const ay = Math.min(a.height - 1, (y * a.height / H) | 0);
-      pr[(y * W + x) * 4 + 3] = ar[(ay * a.width + ax) * 4]; // red of mask → alpha
-    }
-  }
+  const alpha = cutoutAlpha(pr, W, H);
+  for (let i = 0; i < W * H; i++) pr[i * 4 + 3] = alpha[i];
   return new Uint8Array(UPNG.encode([pr.buffer], W, H, 0));
 }
 
@@ -90,7 +87,7 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
     falKey: env.FAL_KEY,
     openaiKey: env.OPENAI_API_KEY,
     rasterize,
-    composite,
+    cutout,
     store: env.SKINS
       ? async (id, kind, png) => {
           const key = `skins/${id}/${kind}.png`;

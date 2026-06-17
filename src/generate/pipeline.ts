@@ -10,16 +10,19 @@
 //      flat dark-gray silhouette AROUND the wells       [ENVELOPE_PROMPT]
 //   4. fal PAINT pass (same endpoint): restyle the blueprint into the
 //      material, wells stay empty                       [STYLE + MATERIAL]
-//   5. alpha = the constant drawn region mask (NO BiRefNet)
-//   6. composite paint × alpha → frame.png; emit template.json
+//   5. alpha = the PAINTED SILHOUETTE keyed out of the paint PNG (the
+//      prompt forces "everything outside the silhouette stays pure
+//      white", so the non-white body IS the real outline — no shrink-wrap)
+//   6. the cutout returns the framed RGBA directly; emit template.json
 //
-// The caller injects `rasterize` (SVG→PNG bytes) and `composite`
-// (paint × alpha → RGBA PNG bytes) so the SAME pipeline runs under
-// resvg-wasm in a CF Worker or resvg-js + sharp in Node.
+// The caller injects `rasterize` (SVG→PNG bytes) and `cutout`
+// (paint PNG → RGBA PNG with white keyed transparent, holes filled,
+// largest connected component kept) so the SAME pipeline runs under
+// resvg-wasm in a CF Worker or resvg-js + UPNG in Node.
 // ============================================================
 import type { Region, Template } from "../template/schema";
 import { GEN_W, GEN_H, regionsForVariant, type LayoutVariant } from "./layouts";
-import { wellsOnlySvg, regionMaskSvg } from "./blueprint";
+import { wellsOnlySvg } from "./blueprint";
 
 // ---- prompts: verbatim from wild_sculpt.py so output matches the Python ----
 export const ENVELOPE_PROMPT =
@@ -79,8 +82,11 @@ export interface RuntimeDeps {
   openaiKey?: string;
   // SVG string → PNG bytes (resvg-wasm in CF, resvg-js in Node)
   rasterize: (svg: string) => Promise<Uint8Array>;
-  // paint PNG × alpha PNG (8-bit L) → RGBA PNG bytes
-  composite: (paintPng: Uint8Array, alphaPng: Uint8Array) => Promise<Uint8Array>;
+  // paint PNG → RGBA PNG bytes with the near-white background keyed out:
+  // alpha follows the PAINTED silhouette (largest connected component,
+  // internal holes filled so dark control wells stay opaque, light feather).
+  // This replaces the old region-union alpha that shrink-wrapped the body.
+  cutout: (paintPng: Uint8Array) => Promise<Uint8Array>;
   // optional: persist a frame for skin <id>, return its public URL. If omitted,
   // the caller gets a data: URL (v1 default — no R2 needed to demo).
   store?: (id: string, kind: "frame", png: Uint8Array) => Promise<string>;
@@ -174,8 +180,11 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   // 2. wells-only blueprint PNG (envelope input)
   const wellsPng = await deps.rasterize(wellsOnlySvg(regs));
 
-  // 3. ENVELOPE pass — grow a flat silhouette around the wells. Optional: when
-  //    disabled, the paint pass works straight from the wells-only blueprint.
+  // 3. ENVELOPE pass — grow a flat silhouette around the wells. This is the
+  //    DEFAULT (useEnvelope defaults true): with no uploaded envelope the body
+  //    auto-expands from the prompt instead of freeform-shrinking to the wells.
+  //    Only an uploaded envelopeUrl skips it; explicitly passing envelope:false
+  //    falls back to painting straight from the wells-only blueprint.
   let paintInputPng = wellsPng;
   let envMs = 0;
   if (input.envelopeUrl) {
@@ -210,9 +219,13 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const paintMs = Date.now() - tPaint;
   log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);
 
-  // 5. alpha = constant region mask (no BiRefNet); 6. composite
-  const alphaPng = await deps.rasterize(regionMaskSvg(regs));
-  const framePng = await deps.composite(paintPng, alphaPng);
+  // 5/6. alpha = the PAINTED silhouette, keyed out of the paint PNG. The paint
+  //    prompt forces "everything outside the silhouette stays pure white", so the
+  //    non-white region IS the real (expanded) outline. cutout() keys white →
+  //    transparent, keeps the largest connected component, and fills internal
+  //    holes so dark control wells inside the body stay opaque. No region-union
+  //    shrink-wrap.
+  const framePng = await deps.cutout(paintPng);
 
   // 6. store or inline
   const frameUrl = deps.store
