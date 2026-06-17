@@ -92,6 +92,7 @@ export interface GenerateInput {
   refImageUrls?: string[]; // optional reference-style images (palette/material steer)
   model?: ModelId;        // image edit endpoint (default DEFAULT_MODEL)
   envelope?: boolean;     // run the AI envelope pass first (default true)
+  regions?: Region[];     // custom authored layout (else the variant preset)
 }
 
 export interface GenerateResult {
@@ -160,7 +161,8 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const log = deps.log ?? (() => {});
   const model = input.model ?? DEFAULT_MODEL;
   const useEnvelope = input.envelope ?? true;
-  const regs: Region[] = regionsForVariant(input.variant);
+  // custom layout from the wizard wins; otherwise the constant variant preset.
+  const regs: Region[] = input.regions?.length ? input.regions : regionsForVariant(input.variant);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 

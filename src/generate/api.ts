@@ -1,6 +1,6 @@
 // Shared request/response contract for POST /api/generate, used by the
 // frontend Create panel, the CF Pages Function, and the local Node dev server.
-import type { Template } from "../template/schema";
+import type { Template, Region } from "../template/schema";
 import type { LayoutVariant } from "./layouts";
 import type { DonorStyle, ModelId } from "./pipeline";
 
@@ -11,6 +11,7 @@ export interface GenerateRequest {
   refImage?: string;          // optional reference-style image as a data: URL
   model?: ModelId;            // image edit endpoint (default nano-banana-pro)
   envelope?: boolean;         // run the AI envelope pass first (default true)
+  regions?: Region[];         // custom layout authored in the wizard (else the variant preset)
 }
 
 export interface GeneratePending { status: "pending"; jobId: string }

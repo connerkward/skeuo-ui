@@ -5,7 +5,8 @@ import { skinList, skinTemplateUrl } from "./player/skins";
 import type { Template } from "./template/schema";
 import "./skins/all"; // app.css + player.css + every skin palette (shared with the widget)
 // ── feature: template editor + generate-from-prompt ──────────────────────────
-import { CreatePanel, type RuntimeSkin } from "./generate/CreatePanel";
+import { type RuntimeSkin } from "./generate/CreatePanel";
+import { CreateWizard } from "./generate/CreateWizard";
 import { TemplateEditor } from "./editor/TemplateEditor";
 import "./generate/create.css";
 // ── feature: Spotify connect & control ───────────────────────────────────────
@@ -106,9 +107,9 @@ export default function App() {
           onCreate={() => setShowCreate(true)}
         />
         {showCreate && (
-          <div className="create-drawer m-create-drawer">
+          <div className="wiz-modal" onPointerDown={(e) => e.target === e.currentTarget && setShowCreate(false)}>
             <button className="create-close" onClick={() => setShowCreate(false)} aria-label="Close create">×</button>
-            <CreatePanel onCreated={onCreated} />
+            <CreateWizard onCreated={onCreated} />
           </div>
         )}
       </>
@@ -168,8 +169,9 @@ export default function App() {
       </main>
 
       {showCreate && (
-        <div className="create-drawer">
-          <CreatePanel onCreated={onCreated} />
+        <div className="wiz-modal" onPointerDown={(e) => e.target === e.currentTarget && setShowCreate(false)}>
+          <button className="create-close" onClick={() => setShowCreate(false)} aria-label="Close create">×</button>
+          <CreateWizard onCreated={onCreated} />
         </div>
       )}
       {editing && (

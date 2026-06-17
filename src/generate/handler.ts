@@ -51,7 +51,8 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   const modelTag = MODELS.find((m) => m.id === model)?.label ?? "model";
   const id = `${slug(prompt)}-${variant}-${modelTag}-${Date.now().toString(36).slice(-4)}`;
   try {
-    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls, model, envelope });
+    const regions = Array.isArray(body.regions) && body.regions.length ? body.regions : undefined;
+    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls, model, envelope, regions });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,
       template: r.template, frameUrl: r.frameUrl, timingMs: r.timingMs,

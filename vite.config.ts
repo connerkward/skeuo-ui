@@ -12,15 +12,11 @@ const allowedHosts = ['.local', '.ts.net', 'lappy-heavy']
 export default defineConfig({
   // devApiPlugin serves POST /api/generate locally (mirrors the CF Pages Function)
   plugins: [react(), devApiPlugin()],
-  // Multi-page: the main app (index.html) PLUS the standalone template editor
-  // workshop (editor.html). Listing input explicitly keeps both entries; the
-  // default single-page behavior would otherwise drop index.html.
+  // Single-page app. (Template authoring is now the in-app Create wizard's
+  // Layout step — the old standalone editor.html / WorkshopEditor was removed.)
   build: {
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        editor: resolve(__dirname, 'editor.html'),
-      },
+      input: { main: resolve(__dirname, 'index.html') },
     },
   },
   // Pre-bundle the Tauri packages so the widget's lazy import()s resolve in dev
