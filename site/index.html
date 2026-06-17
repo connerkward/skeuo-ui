@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Skeuo — idea → live player pipeline</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>skeuo.fm — idea → live player pipeline</title>
 <style>
   :root{--bg:#0c0d10;--card:#15171c;--card2:#1a1d24;--ink:#e8eaef;--mut:#9aa0ab;--line:#2a2e36;
     --acc:#5cc8ff;--cost:#ffcf5c;--time:#7fe0a8;--loop:#c08bff;--free:#5b6472;
@@ -86,8 +87,14 @@
   .mbench .mb-copy b{color:var(--ink)}
   .mbench .mb-copy a{color:var(--acc);text-decoration:none;border-bottom:1px solid #2a4a5a}
   .mbench .mb-copy a:hover{border-bottom-color:var(--acc)}
+  /* skeuo.fm brand — favicon logomark + wordmark, consistent across the site */
+  .brand{display:inline-flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin:0 0 18px;user-select:none}
+  .brand img{width:26px;height:26px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .brand .word{font-size:21px}
+  .brand .tld{color:#2dff6e}
 </style></head>
 <body><div class="wrap">
+  <span class="brand"><img src="favicon.svg" alt=""><span class="word">skeuo<span class="tld">.fm</span></span></span>
   <h1>Idea → live player</h1>
   <p class="sub">One sentence becomes a working, skeuomorphic music player that drives your real music. Here's the whole pipeline — what each step costs, how long it takes, and where it loops back on itself.</p>
 

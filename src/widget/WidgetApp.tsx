@@ -18,6 +18,7 @@ import { useSpotify } from "../spotify/useSpotify";
 import { initialSkinParam, isTauri } from "../platform";
 import { initDeepLinks } from "../desktop/deeplink";
 import { startWidgetDrag } from "./drag";
+import { Brand } from "../components/Brand";
 import { initClickThrough, updateClickThroughSkin } from "./clickthrough";
 import "../skins/all"; // player + skin CSS (same set the website loads)
 import "./widget.css";
@@ -96,6 +97,7 @@ function WidgetBar({ skinName, status, configured, onConnect }: {
     // widget-root handler); its buttons opt out via the `button` NO_DRAG rule.
   return (
     <div className="widget-bar">
+      <Brand size="sm" className="wb-brand" />
       <span className="wb-skin">{skinName}</span>
       <button
         className="wb-sp"

@@ -19,6 +19,7 @@ import { MobileChrome } from "./mobile/MobileChrome";
 import { DesktopHandoff } from "./desktop/DesktopHandoff";
 // ── feature: export the running skin as an animated GIF ──────────────────────
 import { ExportGifButton } from "./export/ExportGifButton";
+import { Brand } from "./components/Brand";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;
@@ -131,7 +132,8 @@ export default function App() {
   return (
     <div className="page">
       <aside className="sidebar">
-        <h1>Skin</h1>
+        <Brand className="sidebar-brand" />
+        <h1>Skins</h1>
         {visible.map((s) => (
           <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
             onClick={() => { setSkinId(s.id); setEdited(null); }}>

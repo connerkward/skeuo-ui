@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4047"/>
+      <stop offset=".55" stop-color="#23272c"/>
+      <stop offset="1" stop-color="#15181c"/>
+    </linearGradient>
+    <radialGradient id="cap" cx=".5" cy=".35" r=".75">
+      <stop offset="0" stop-color="#7b848e"/>
+      <stop offset=".55" stop-color="#3a4148"/>
+      <stop offset="1" stop-color="#1b1f24"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8edf2"/>
+      <stop offset=".5" stop-color="#8a939c"/>
+      <stop offset="1" stop-color="#4a525a"/>
+    </linearGradient>
+  </defs>
+  <!-- faceplate -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#panel)"/>
+  <rect x="2.8" y="2.8" width="58.4" height="58.4" rx="13.4" fill="none" stroke="#0a0c0e" stroke-width="1.6"/>
+  <rect x="4.5" y="4.5" width="55" height="55" rx="11.8" fill="none" stroke="#ffffff" stroke-opacity=".14" stroke-width="1"/>
+  <!-- chrome knob -->
+  <circle cx="32" cy="31" r="19.5" fill="url(#rim)"/>
+  <circle cx="32" cy="31" r="16.5" fill="url(#cap)"/>
+  <!-- pointer at ~2 o'clock -->
+  <g transform="rotate(40 32 31)">
+    <rect x="30.2" y="16.5" width="3.6" height="10.5" rx="1.8" fill="#2dff6e"/>
+  </g>
+  <!-- green LED -->
+  <circle cx="51" cy="52" r="5.5" fill="#2dff6e" opacity=".22"/>
+  <circle cx="51" cy="52" r="3" fill="#2dff6e"/>
+  <!-- screws -->
+  <circle cx="9" cy="9" r="1.7" fill="#0d0f12"/>
+  <circle cx="55" cy="9" r="1.7" fill="#0d0f12"/>
+  <circle cx="9" cy="55" r="1.7" fill="#0d0f12"/>
+</svg>

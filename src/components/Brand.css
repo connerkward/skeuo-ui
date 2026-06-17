@@ -1,0 +1,12 @@
+.brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 800;
+  letter-spacing: -0.02em; color: #e8eaef; line-height: 1; user-select: none;
+}
+.brand-ico { border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.5); flex: 0 0 auto; }
+.brand-word { display: inline-flex; align-items: baseline; }
+.brand-tld { color: #2dff6e; }       /* matches the logomark's green LED / pointer */
+.brand-md .brand-word { font-size: 19px; }
+.brand-md .brand-ico { width: 24px; height: 24px; }
+.brand-sm .brand-word { font-size: 14px; }
+.brand-sm .brand-ico { width: 17px; height: 17px; }
