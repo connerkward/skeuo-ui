@@ -69,7 +69,10 @@
   .loop{display:flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11.5px;color:var(--loop);
     background:#1a1424;border:1px solid #2e2440;border-radius:7px;padding:4px 8px;width:fit-content;max-width:100%}
   .loop b{color:#d8c2ff}
-  .conn{height:12px;display:grid;place-items:center;color:var(--line)}
+  .conn{height:20px;position:relative}
+  .conn span{display:none}
+  .conn::before{content:"";position:absolute;left:50%;top:-12px;height:18px;width:2px;background:var(--line);transform:translateX(-50%)}
+  .conn::after{content:"";position:absolute;left:50%;top:4px;width:9px;height:9px;border-right:2px solid #6b7480;border-bottom:2px solid #6b7480;transform:translateX(-50%) rotate(45deg)}
   .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;color:var(--mut);font-size:12px;font-family:var(--mono)}
   .legend span{display:flex;gap:6px;align-items:center}.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
   .note{color:var(--mut);font-size:12.5px;margin-top:20px;line-height:1.55;max-width:64ch}
@@ -166,7 +169,7 @@ function render(){
       ${(s.loops||[]).map(l=>`<div class="loops"><div class="loop">↺ ${l.label} <b>+${fmtT(l.t)} · +${fmtC(l.c)}</b></div></div>`).join('')}</div>
       ${s.img&&on?`<div class="shot"><img loading="lazy" src="process/${s.img}" alt="${s.name}"></div>`:''}`;
     flow.appendChild(el);
-    if(i<STAGES.length-1){const c=document.createElement('div');c.className='conn';c.textContent='↓';flow.appendChild(c);}
+    if(i<STAGES.length-1){const c=document.createElement('div');c.className='conn';flow.appendChild(c);}
   });
   // totals (linear pass)
   let t=0,c=0;for(const s of STAGES){if(s.n===9)continue;if(s.n===7&&!align)continue;t+=s.t;c+=s.c;}
