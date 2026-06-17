@@ -72,7 +72,8 @@ export const MODELS: ModelInfo[] = [
   { id: "fal-ai/gemini-3.1-flash-image-preview/edit", label: "nano-banana-2", costPerSkin: 0.16 },
   { id: "openai/gpt-image-2/edit", label: "gpt-image-2", costPerSkin: 0.34, approx: true },
 ];
-export const DEFAULT_MODEL: ModelId = "fal-ai/gemini-3-pro-image-preview/edit";
+// default to nano-banana-2 — the cheapest paint endpoint
+export const DEFAULT_MODEL: ModelId = "fal-ai/gemini-3.1-flash-image-preview/edit";
 const modelLabel = (id: ModelId): string => MODELS.find((m) => m.id === id)?.label ?? id;
 
 export interface RuntimeDeps {

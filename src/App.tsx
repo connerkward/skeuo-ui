@@ -30,8 +30,17 @@ export default function App() {
   const [skinId, setSkinId] = useState(visible[0].id);
   const [wire, setWire] = useState(false);
 
-  // generate-from-prompt + live template editor
-  const [runtimeSkins, setRuntimeSkins] = useState<RuntimeSkin[]>([]);
+  // generate-from-prompt + live template editor. Generated skins are PAID content —
+  // persist them to localStorage (frames live on disk via the server `store`, so the
+  // entries are just small URLs) and rehydrate on load so a reload/restart never wipes them.
+  const [runtimeSkins, setRuntimeSkins] = useState<RuntimeSkin[]>(() => {
+    try { return JSON.parse(localStorage.getItem("skeuo:skins") || "[]") as RuntimeSkin[]; }
+    catch { return []; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("skeuo:skins", JSON.stringify(runtimeSkins)); }
+    catch { try { localStorage.setItem("skeuo:skins", JSON.stringify(runtimeSkins.slice(-6))); } catch { /* quota; keep last 6 */ } }
+  }, [runtimeSkins]);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState(false);
   const [edited, setEdited] = useState<Template | null>(null);          // live editor override

@@ -3,9 +3,9 @@ import { GIFEncoder, quantize, applyPalette } from "gifenc";
 
 // ── tuning ───────────────────────────────────────────────────────────────────
 const DURATION_MS = 2500;       // ~2.5s of motion
-const FPS = 12;                  // ~12 fps
-const FRAME_COUNT = Math.round((DURATION_MS / 1000) * FPS); // ~30
-const FRAME_DELAY = Math.round(1000 / FPS);                 // ~83ms
+const FPS = 10;                  // ~10 fps (fewer heavy DOM rasters → less main-thread jank)
+const FRAME_COUNT = Math.round((DURATION_MS / 1000) * FPS); // ~25
+const FRAME_DELAY = Math.round(1000 / FPS);                 // ~100ms
 const TARGET_W = 400;            // downscale width; height follows the player aspect
 const PAGE_BG = "#0d0d0f";       // matches the dark stage so the transparent player isn't a weird matte
 
@@ -84,8 +84,12 @@ async function captureFrame(
   outH: number,
   logo: HTMLImageElement | null,
 ): Promise<ImageData> {
-  // rasterize the DOM at the output width; modern-screenshot fills bg first
-  const snap = await domToCanvas(el, { width: el.offsetWidth, height: el.offsetHeight });
+  // rasterize the DOM, capping the raster scale at the output size so we never
+  // pay to render larger than the GIF needs (cheaper per-frame, less main-thread jank)
+  const snap = await domToCanvas(el, {
+    width: el.offsetWidth, height: el.offsetHeight,
+    scale: Math.min(1, outW / (el.offsetWidth || outW)),
+  });
 
   const out = document.createElement("canvas");
   out.width = outW;
@@ -135,14 +139,18 @@ export async function recordPlayerGif(
   }
 
   // ── encode phase ────────────────────────────────────────────────────────────
+  // Quantize ONE shared palette (from a mid frame) instead of per-frame — the
+  // per-frame quantize() was the main main-thread hog. Also yields every frame so
+  // the page stays responsive, and a shared palette removes inter-frame flicker.
   const enc = GIFEncoder();
+  const mid0 = frames[Math.floor(frames.length / 2)] ?? frames[0];
+  const palette = quantize(mid0.data, 256);
   for (let i = 0; i < frames.length; i++) {
     const { data, width, height } = frames[i];
-    const palette = quantize(data, 256);
     const index = applyPalette(data, palette);
     enc.writeFrame(index, width, height, { palette, delay: FRAME_DELAY });
     onProgress?.({ phase: "encoding", pct: 0.7 + ((i + 1) / frames.length) * 0.3 });
-    if (i % 4 === 0) await nextFrame(); // keep the UI responsive
+    await nextFrame(); // yield every frame so the UI doesn't freeze
   }
   enc.finish();
 

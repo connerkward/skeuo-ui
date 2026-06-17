@@ -51,3 +51,6 @@ generation/_env-*.png
 generation/_wells-*.png
 scripts/.lookdev*
 **/.serve-url
+
+# generated skin frames (paid output; persisted locally, not committed)
+public/generated/

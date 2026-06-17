@@ -7,7 +7,7 @@
 // dev convenience on this machine, central/.env. It is never bundled into client
 // code and never returned to the browser.
 import type { Plugin, ViteDevServer } from "vite";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import UPNG from "upng-js";
@@ -59,6 +59,14 @@ export function devApiPlugin(): Plugin {
     configureServer(server: ViteDevServer) {
       const falKey = loadKey(server.config.root, "FAL_KEY");
       const openaiKey = loadKey(server.config.root, "OPENAI_API_KEY");
+      // persist generated frames to public/generated/ so a page reload or dev-server
+      // restart no longer wipes a just-created skin (the client stores only the URL).
+      const genDir = resolve(server.config.root, "public", "generated");
+      const store = async (id: string, kind: "frame", png: Uint8Array): Promise<string> => {
+        mkdirSync(genDir, { recursive: true });
+        writeFileSync(resolve(genDir, `${id}-${kind}.png`), png);
+        return `/generated/${id}-${kind}.png`;
+      };
       server.middlewares.use("/api/generate", (req, res) => {
         if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
         if (!falKey) { res.statusCode = 500; res.end(JSON.stringify({ status: "error", error: "server missing FAL_KEY (.dev.vars)" })); return; }
@@ -69,7 +77,7 @@ export function devApiPlugin(): Plugin {
           try { body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"); }
           catch { res.statusCode = 400; res.end(JSON.stringify({ status: "error", error: "invalid JSON" })); return; }
           const ip = (req.socket.remoteAddress || "local").toString();
-          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, cutout, log: (m) => server.config.logger.info(m) };
+          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, cutout, store, log: (m) => server.config.logger.info(m) };
           try {
             const out = await handleGenerate({ body, ip, deps });
             res.statusCode = out.status === "error" ? 429 : 200;
