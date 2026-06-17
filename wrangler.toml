@@ -24,15 +24,14 @@ id = "eb42fcf3bd7c498d95889911ab1f86dd"
 # R2: persist EVERY generated skin (frame.png + template.json + meta.json under
 # skins/<id>/) so generations are a shared cloud library, served publicly via
 # /api/asset/<key> and rebuilt by id via /api/skin/<id>.
-# ⚠️ DORMANT until R2 is enabled: enable R2 once in the Cloudflare dashboard
-# (Dashboard → R2 → Enable), then `npx wrangler r2 bucket create skeuo-skins`,
-# then UNCOMMENT the binding below + the [vars] block and redeploy. Until then the
-# pipeline gracefully falls back to in-memory data: URLs (no shared library / links).
-# [[r2_buckets]]
-# binding = "SKINS"
-# bucket_name = "skeuo-skins"
+# R2 ENABLED: bucket skeuo-skins exists. Writes are bounded by the $10 lifetime
+# generation cap (~110 gens → ~330 small objects → trivial storage). Reads are
+# CDN-cached (immutable Cache-Control on /api/asset/* in public/_headers) so R2
+# Class-B ops only fire on a cache miss — the overage guard.
+[[r2_buckets]]
+binding = "SKINS"
+bucket_name = "skeuo-skins"
 
-# Public base for stored skin artifacts (same-origin /api/asset route). Uncomment
-# together with the R2 binding above once R2 is enabled.
-# [vars]
-# ASSETS_BASE_URL = "/api/asset"
+# Stored skin artifacts are served same-origin via /api/asset (functions/api/asset).
+[vars]
+ASSETS_BASE_URL = "/api/asset"
