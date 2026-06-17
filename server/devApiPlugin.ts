@@ -13,6 +13,7 @@ import { Resvg } from "@resvg/resvg-js";
 import UPNG from "upng-js";
 import { handleGenerate } from "../src/generate/handler";
 import type { RuntimeDeps } from "../src/generate/pipeline";
+import { cutoutAlpha } from "../src/generate/blueprint";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
 // the same precedence used for both FAL_KEY and OPENAI_API_KEY.
@@ -36,19 +37,18 @@ function rasterize(svg: string): Promise<Uint8Array> {
   return Promise.resolve(new Uint8Array(r.render().asPng()));
 }
 
-function composite(paintPng: Uint8Array, alphaPng: Uint8Array): Promise<Uint8Array> {
+// Key the near-white background out of the PAINTED silhouette → RGBA PNG.
+// The paint prompt forces "everything outside the silhouette stays pure white",
+// so the non-white region is the real (expanded) body outline. Steps: threshold
+// non-white → body mask; keep the largest connected component (drop stray specks);
+// fill internal holes (so dark control wells inside the body stay opaque); a light
+// 1px erode to kill the white halo at the edge. See cutoutAlpha() (shared logic).
+function cutout(paintPng: Uint8Array): Promise<Uint8Array> {
   const p = UPNG.decode(toAB(paintPng));
   const pr = new Uint8Array(UPNG.toRGBA8(p)[0]);
-  const a = UPNG.decode(toAB(alphaPng));
-  const ar = new Uint8Array(UPNG.toRGBA8(a)[0]);
   const W = p.width, H = p.height;
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const ax = Math.min(a.width - 1, ((x * a.width) / W) | 0);
-      const ay = Math.min(a.height - 1, ((y * a.height) / H) | 0);
-      pr[(y * W + x) * 4 + 3] = ar[(ay * a.width + ax) * 4];
-    }
-  }
+  const alpha = cutoutAlpha(pr, W, H);
+  for (let i = 0; i < W * H; i++) pr[i * 4 + 3] = alpha[i];
   return Promise.resolve(new Uint8Array(UPNG.encode([pr.buffer], W, H, 0)));
 }
 const toAB = (u: Uint8Array): ArrayBuffer => u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength) as ArrayBuffer;
@@ -69,7 +69,7 @@ export function devApiPlugin(): Plugin {
           try { body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"); }
           catch { res.statusCode = 400; res.end(JSON.stringify({ status: "error", error: "invalid JSON" })); return; }
           const ip = (req.socket.remoteAddress || "local").toString();
-          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, composite, log: (m) => server.config.logger.info(m) };
+          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, cutout, log: (m) => server.config.logger.info(m) };
           try {
             const out = await handleGenerate({ body, ip, deps });
             res.statusCode = out.status === "error" ? 429 : 200;
