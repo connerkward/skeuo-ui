@@ -39,6 +39,18 @@
   cursor: move; touch-action: none;
 }
 .te-region.sel { border-color: #ffcf6a; background: rgba(255, 207, 106, .16); z-index: 2; }
+.te-region.multi { border-style: dashed; }
+
+/* alignment guide lines (shown while snapping) */
+.te-guide { position: absolute; pointer-events: none; z-index: 5; }
+.te-guide.v { top: 0; bottom: 0; width: 1px; background: #2ee6e6; box-shadow: 0 0 3px rgba(46,230,230,.8); }
+.te-guide.h { left: 0; right: 0; height: 1px; background: #2ee6e6; box-shadow: 0 0 3px rgba(46,230,230,.8); }
+
+/* rubber-band selection rectangle */
+.te-band {
+  position: absolute; pointer-events: none; z-index: 4;
+  border: 1px dashed #6aa7ff; background: rgba(106, 167, 255, .12);
+}
 .te-region.k-display { border-color: rgba(120,255,180,.7); background: rgba(120,255,180,.08); }
 .te-region.k-knob, .te-region.k-button { border-radius: 4px; }
 .te-tag {
@@ -70,6 +82,7 @@
 .te-item-kind { color: #888; font-size: 11px; }
 
 .te-inspector { padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.te-multi-note { color: #9a9aa0; font-size: 12px; line-height: 1.4; }
 .te-inspector label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #9a9aa0; }
 .te-inspector input, .te-inspector select {
   background: #1a1a1e; color: #eee; border: 1px solid #333; border-radius: 5px; padding: 5px 7px; font: inherit;
