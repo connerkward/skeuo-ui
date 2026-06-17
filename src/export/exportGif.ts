@@ -6,7 +6,10 @@ const DURATION_MS = 2500;       // ~2.5s of motion
 const FPS = 10;                  // ~10 fps (fewer heavy DOM rasters → less main-thread jank)
 const FRAME_COUNT = Math.round((DURATION_MS / 1000) * FPS); // ~25
 const FRAME_DELAY = Math.round(1000 / FPS);                 // ~100ms
-const TARGET_W = 400;            // downscale width; height follows the player aspect
+const TARGET_W = 640;            // GIF downscale width; height follows the player aspect.
+                                 // Up from 400 — bigger source pixels survive the 256-color quantize
+                                 // far better, and dithering (see gifWorker) kills the residual banding.
+const PNG_W = 1080;              // SHARE artifact: a crisp full-res PNG still (much sharper than the GIF).
 const PAGE_BG = "#0d0d0f";       // matches the dark stage so the transparent player isn't a weird matte
 
 export interface ExportProgress {
@@ -319,14 +322,71 @@ export async function recordPlayerGif(
   return { blob, width: outW, height: outH, frames: FRAME_COUNT, samples };
 }
 
-// Trigger a browser download of the gif blob.
-export function downloadGif(blob: Blob, skinId: string) {
+// ── crisp full-res PNG still (the primary SHARE artifact) ────────────────────
+// A single high-resolution snapshot of the live player — no quantization, no
+// frame budget — so it's MUCH sharper than the GIF. Renders the player at PNG_W
+// directly via modern-screenshot (the live spectrum + clock are captured in
+// whatever state they're in at the click), composites the watermark, returns a
+// PNG Blob plus a File suitable for navigator.share({ files }).
+export interface SnapshotResult {
+  blob: Blob;
+  file: File;
+  width: number;
+  height: number;
+}
+
+export async function snapshotPlayerPng(el: HTMLElement, skinId: string): Promise<SnapshotResult> {
+  const logo = await loadLogo();
+  const aspect = el.offsetHeight / el.offsetWidth || 1536 / 1024;
+  const outW = PNG_W;
+  const outH = Math.round(PNG_W * aspect);
+  // scale up from the live element's CSS size to the target resolution
+  const scale = outW / (el.offsetWidth || outW);
+
+  // one high-res raster of the whole player (static art + live overlays as-is)
+  const canvas = await domToCanvas(el, {
+    width: el.offsetWidth,
+    height: el.offsetHeight,
+    scale,
+    backgroundColor: null,
+  });
+
+  // composite onto the dark stage bg + watermark, at exact target dims
+  const out = document.createElement("canvas");
+  out.width = outW; out.height = outH;
+  const octx = out.getContext("2d")!;
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = "high";
+  octx.fillStyle = PAGE_BG;
+  octx.fillRect(0, 0, outW, outH);
+  octx.drawImage(canvas, 0, 0, outW, outH);
+  drawWatermark(octx, outW, outH, logo);
+
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    out.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"),
+  );
+  const file = new File([blob], `skeuo-${skinId}.png`, { type: "image/png" });
+  return { blob, file, width: outW, height: outH };
+}
+
+// Trigger a browser download of a blob with a given filename.
+function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `skeuo-${skinId}.gif`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Trigger a browser download of the gif blob.
+export function downloadGif(blob: Blob, skinId: string) {
+  downloadBlob(blob, `skeuo-${skinId}.gif`);
+}
+
+// Trigger a browser download of the PNG still.
+export function downloadPng(blob: Blob, skinId: string) {
+  downloadBlob(blob, `skeuo-${skinId}.png`);
 }

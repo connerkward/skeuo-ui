@@ -31,7 +31,17 @@
   background: #2dff6e;
   box-shadow: 0 0 6px rgba(45, 255, 110, .7);
 }
+.export-gif-btn .dot.ok { background: #2dff6e; }
 .export-gif-btn:disabled .dot { animation: egb-pulse 1s ease-in-out infinite; }
+
+/* share glyph: three nodes + connecting links, in the brand off-white */
+.export-gif-btn .share-glyph { flex: 0 0 auto; }
+.export-gif-btn .share-glyph circle { fill: #f0f2f6; }
+.export-gif-btn .share-glyph path {
+  stroke: #f0f2f6;
+  stroke-width: 1.6;
+  fill: none;
+}
 
 @keyframes egb-pulse {
   0%, 100% { opacity: 1; }
