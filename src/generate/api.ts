@@ -11,6 +11,7 @@ export interface GenerateRequest {
   refImage?: string;          // optional reference-style image as a data: URL
   model?: ModelId;            // image edit endpoint (default nano-banana-pro)
   envelope?: boolean;         // run the AI envelope pass first (default true)
+  envelopeImage?: string;     // optional user-uploaded body envelope PNG as a data: URL (skips the AI envelope pass)
   regions?: Region[];         // custom layout authored in the wizard (else the variant preset)
 }
 

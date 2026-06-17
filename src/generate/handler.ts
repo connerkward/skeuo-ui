@@ -35,24 +35,20 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   // optional reference image (data: URL) → upload to fal so it can ride the paint pass
   const refUrls: string[] = [];
   try {
-    if (body.refImage?.startsWith("data:")) {
-      const png = dataUrlToBytes(body.refImage);
-      // reuse the pipeline's upload via a tiny inline call is awkward; upload here
-      const init = (await (await fetch("https://rest.alpha.fal.ai/storage/upload/initiate", {
-        method: "POST",
-        headers: { Authorization: `Key ${deps.falKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ file_name: "ref.png", content_type: "image/png" }),
-      })).json()) as { upload_url: string; file_url: string };
-      await fetch(init.upload_url, { method: "PUT", headers: { "Content-Type": "image/png" }, body: png as unknown as ArrayBuffer });
-      refUrls.push(init.file_url);
-    }
+    if (body.refImage?.startsWith("data:")) refUrls.push(await uploadDataUrl(deps.falKey, body.refImage, "ref.png"));
   } catch { /* ref upload is best-effort; ignore and paint without it */ }
+
+  // optional user-uploaded body envelope (data: URL) → upload to fal; paints from it directly
+  let envelopeUrl: string | undefined;
+  try {
+    if (body.envelopeImage?.startsWith("data:")) envelopeUrl = await uploadDataUrl(deps.falKey, body.envelopeImage, "envelope.png");
+  } catch { /* envelope upload is best-effort; fall back to the normal path */ }
 
   const modelTag = MODELS.find((m) => m.id === model)?.label ?? "model";
   const id = `${slug(prompt)}-${variant}-${modelTag}-${Date.now().toString(36).slice(-4)}`;
   try {
     const regions = Array.isArray(body.regions) && body.regions.length ? body.regions : undefined;
-    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls, model, envelope, regions });
+    const r = await generateSkin(deps, { id, variant, style, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,
       template: r.template, frameUrl: r.frameUrl, timingMs: r.timingMs,
@@ -61,6 +57,18 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     release(ip);   // our failure — don't bill the user's quota
     return { status: "error", error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+// upload a data: URL PNG to fal storage (initiate → PUT), return its file_url.
+async function uploadDataUrl(falKey: string, dataUrl: string, fileName: string): Promise<string> {
+  const png = dataUrlToBytes(dataUrl);
+  const init = (await (await fetch("https://rest.alpha.fal.ai/storage/upload/initiate", {
+    method: "POST",
+    headers: { Authorization: `Key ${falKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ file_name: fileName, content_type: "image/png" }),
+  })).json()) as { upload_url: string; file_url: string };
+  await fetch(init.upload_url, { method: "PUT", headers: { "Content-Type": "image/png" }, body: png as unknown as ArrayBuffer });
+  return init.file_url;
 }
 
 function dataUrlToBytes(dataUrl: string): Uint8Array {

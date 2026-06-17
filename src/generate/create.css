@@ -131,6 +131,14 @@
 .wiz-env-txt { display: flex; flex-direction: column; gap: 3px; }
 .wiz-env-txt strong { font-size: 12px; color: #e8e8ee; }
 .wiz-env-txt small { font-size: 11px; color: #8a8a92; line-height: 1.5; }
+.wiz-env.disabled { opacity: 0.5; cursor: not-allowed; }
+.wiz-env + .wiz-env { margin-top: 8px; }
+.wiz-env-upload { flex-direction: column; align-items: stretch; cursor: default; }
+.wiz-env-upload input[type="file"] { margin-top: 6px; font-size: 11px; color: #8a8a92; }
+.wiz-env-thumb { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.wiz-env-thumb img { max-width: 88px; max-height: 88px; border-radius: 6px; border: 1px solid #2c4a78; background: #fff; }
+.wiz-env-rm { background: #2a1416; border: 1px solid #5a2c34; color: #e8a8b0; border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
+.wiz-env-rm:hover { background: #3a1a1e; }
 
 .wiz-models { display: flex; flex-direction: column; gap: 6px; }
 .wiz-model { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #141418; border: 1px solid #2c2c34; border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 12px; }

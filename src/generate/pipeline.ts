@@ -92,6 +92,7 @@ export interface GenerateInput {
   refImageUrls?: string[]; // optional reference-style images (palette/material steer)
   model?: ModelId;        // image edit endpoint (default DEFAULT_MODEL)
   envelope?: boolean;     // run the AI envelope pass first (default true)
+  envelopeUrl?: string;   // optional fal-hosted user-uploaded envelope; paints from it directly, skipping the AI envelope pass
   regions?: Region[];     // custom authored layout (else the variant preset)
 }
 
@@ -173,7 +174,11 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   //    disabled, the paint pass works straight from the wells-only blueprint.
   let paintInputPng = wellsPng;
   let envMs = 0;
-  if (useEnvelope) {
+  if (input.envelopeUrl) {
+    // user-uploaded envelope wins: paint straight from it, skip the AI envelope pass.
+    paintInputPng = await fetchPng(input.envelopeUrl);
+    log(`[${input.id}] using uploaded envelope`);
+  } else if (useEnvelope) {
     const tEnv = Date.now();
     const wellsUrl = await falUpload(deps.falKey, wellsPng);
     const envJob = await falSubmit(deps.falKey, model, [wellsUrl], ENVELOPE_PROMPT.replace("{brief}", input.brief));

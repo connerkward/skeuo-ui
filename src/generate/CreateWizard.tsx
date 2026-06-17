@@ -64,6 +64,8 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   // step 3 — body
   const [material, setMaterial] = useState<DonorStyle>("biomech");
   const [envelope, setEnvelope] = useState(false); // AI body is OPT-IN (cheaper/freeform by default)
+  const [envImage, setEnvImage] = useState<string | undefined>(); // user-uploaded body envelope (data URL); when set it wins
+  const envFileRef = useRef<HTMLInputElement>(null);
 
   // step 4 — generate
   const [models, setModels] = useState<ModelId[]>([DEFAULT_MODEL]);
@@ -80,11 +82,22 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
     r.readAsDataURL(f);
   };
 
+  const pickEnv = (f: File | undefined) => {
+    if (!f) { setEnvImage(undefined); return; }
+    const r = new FileReader();
+    r.onload = () => setEnvImage(typeof r.result === "string" ? r.result : undefined);
+    r.readAsDataURL(f);
+  };
+  const clearEnv = () => { setEnvImage(undefined); if (envFileRef.current) envFileRef.current.value = ""; };
+
   const toggleModel = (id: ModelId) =>
     setModels((cur) => (cur.includes(id) ? cur.filter((m) => m !== id) : [...cur, id]));
 
+  // a user-uploaded envelope skips the AI envelope pass, so it costs like freeform.
+  // two passes (full price) only when the AI envelope actually runs.
+  const aiEnvelope = envelope && !envImage;
   // envelope OFF ≈ one image pass instead of two → roughly half the per-skin cost.
-  const factor = envelope ? 1 : 0.55;
+  const factor = aiEnvelope ? 1 : 0.55;
   const total = MODELS.filter((m) => models.includes(m.id)).reduce((s, m) => s + m.costPerSkin * factor, 0);
   const anyApprox = MODELS.some((m) => models.includes(m.id) && m.approx);
 
@@ -96,9 +109,9 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
     try {
       for (let i = 0; i < models.length; i++) {
         const model = models[i];
-        setStage(`model ${i + 1}/${models.length} · ${modelLabel(model)} — ${envelope ? "envelope → paint" : "paint"} (~30–90s)…`);
+        setStage(`model ${i + 1}/${models.length} · ${modelLabel(model)} — ${aiEnvelope ? "envelope → paint" : "paint"} (~30–90s)…`);
         const req: GenerateRequest = {
-          prompt: prompt.trim(), style: material, variant, refImage, model, envelope, regions,
+          prompt: prompt.trim(), style: material, variant, refImage, model, envelope, envelopeImage: envImage, regions,
         };
         const r = await fetch("/api/generate", {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
@@ -195,14 +208,34 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                   ))}
                 </div>
               </div>
-              <label className={`wiz-env ${envelope ? "on" : ""}`}>
-                <input type="checkbox" checked={envelope} onChange={(e) => setEnvelope(e.target.checked)} />
+              <label className={`wiz-env ${envelope && !envImage ? "on" : ""} ${envImage ? "disabled" : ""}`}>
+                <input type="checkbox" checked={envelope && !envImage} disabled={!!envImage}
+                  onChange={(e) => setEnvelope(e.target.checked)} />
                 <span className="wiz-env-txt">
                   <strong>Grow an AI body envelope around the controls</strong>
-                  <small>{envelope
+                  <small>{envImage
+                    ? "Disabled — you uploaded your own body below, so the AI envelope is skipped."
+                    : envelope
                     ? "Two image passes: first sculpts a silhouette around your wells, then paints it. More control over shape, ~2× the cost."
                     : "Off (default): one pass — the model paints a freeform body straight from your control layout. Cheaper, wilder shapes."}</small>
                 </span>
+              </label>
+
+              <label className={`wiz-env wiz-env-upload ${envImage ? "on" : ""}`}>
+                <span className="wiz-env-txt">
+                  <strong>…or upload your own body</strong>
+                  <small>{envImage
+                    ? "Uploaded body — the paint pass uses this directly (AI envelope skipped)."
+                    : "A pre-made silhouette PNG (drawn by hand or in another tool). The paint pass paints straight onto it."}</small>
+                  <input ref={envFileRef} type="file" accept="image/*"
+                    onChange={(e) => pickEnv(e.target.files?.[0])} />
+                </span>
+                {envImage && (
+                  <span className="wiz-env-thumb">
+                    <img src={envImage} alt="uploaded body envelope" />
+                    <button type="button" className="wiz-env-rm" onClick={clearEnv}>× remove</button>
+                  </span>
+                )}
               </label>
             </>
           )}
@@ -226,7 +259,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
               <div className="wiz-summary">
                 <div><b>{prompt.trim().slice(0, 32) || "—"}</b></div>
                 <div>{variant} · {regions.length} controls · {MATERIALS.find((m) => m.id === material)?.label}
-                  {envelope ? " · AI body" : " · freeform body"}</div>
+                  {envImage ? " · uploaded body" : aiEnvelope ? " · AI body" : " · freeform body"}</div>
                 <div className="wiz-total"><strong>{models.length} model{models.length === 1 ? "" : "s"}</strong> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</div>
               </div>
               {stage && <div className="wiz-genstage">{stage}</div>}
