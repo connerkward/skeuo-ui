@@ -58,13 +58,16 @@
 /* ═══ CreateWizard — guided modal: stepper · live layout · panel · nav ═══════ */
 .wiz-modal {
   position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,.62); backdrop-filter: blur(3px); padding: 20px;
+  background: rgba(0,0,0,.62); backdrop-filter: blur(3px);
+  /* respect the notch/home-indicator so the modal + its close button are reachable */
+  padding: calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
+           calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
   animation: wiz-fade .18s ease;
 }
 @keyframes wiz-fade { from { opacity: 0; } to { opacity: 1; } }
 .wiz-modal .create-close { top: 12px; left: auto; right: 12px; }
 .wiz {
-  position: relative; width: min(880px, 96vw); max-height: 92vh; overflow: hidden;
+  position: relative; width: min(880px, 96vw); max-height: 92svh; overflow: hidden;
   display: flex; flex-direction: column;
   background: #0d0d10; border: 1px solid #26262c; border-radius: 12px;
   box-shadow: 0 24px 80px rgba(0,0,0,.6); color: #ddd; font: 13px system-ui, sans-serif;
@@ -214,7 +217,21 @@
 .m-create-drawer { width: 100%; left: 0; }
 .create-close {
   position: absolute; top: 8px; left: 10px; z-index: 1;
-  width: 34px; height: 34px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center;
   background: #1a1a1e; color: #ccc; border: 1px solid #333;
-  font-size: 20px; line-height: 1; cursor: pointer;
+  font-size: 22px; line-height: 1; cursor: pointer;
+}
+
+/* phone: full-bleed wizard, momentum scroll, bigger nav tap targets */
+@media (max-width: 560px) {
+  .wiz { width: 100%; max-height: 100%; border-radius: 12px; }
+  .wiz-body { -webkit-overflow-scrolling: touch; }
+  .wiz-steps { padding: 12px 12px; }
+  .wiz-step .wiz-lbl { display: none; }   /* numbers only — labels overflow at 390px */
+  .wiz-step.on .wiz-lbl { display: inline; } /* show the current step's label */
+  .wiz-nav { padding: 12px; }
+  .wiz-back, .wiz-next, .wiz-go { min-height: 44px; }
+  /* the close sits over the stepper; nudge it clear of the safe-area padding */
+  .wiz-modal .create-close { top: 6px; right: 6px; }
 }

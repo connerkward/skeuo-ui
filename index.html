@@ -3,15 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>skeuo.fm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#060607" />
+    <title>skeuo.fm — turn a sentence into a real, working skeuomorphic music player</title>
+    <meta name="description" content="skeuo.fm turns one sentence into a real, working skeuomorphic music player that drives your actual music — live knobs, sliders, spectrum and marquee, generated from a prompt." />
+    <link rel="canonical" href="https://skeuo.fm/" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="skeuo.fm" />
+    <meta property="og:url" content="https://skeuo.fm/" />
+    <meta property="og:title" content="skeuo.fm — turn a sentence into a real, working skeuomorphic music player" />
+    <meta property="og:description" content="One sentence becomes a working, skeuomorphic music player that drives your real music. Live knobs, sliders, spectrum, marquee — generated from a prompt." />
+    <meta property="og:image" content="https://skeuo.fm/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="skeuo.fm — turn a sentence into a real, working skeuomorphic music player" />
+    <meta name="twitter:description" content="One sentence becomes a working, skeuomorphic music player that drives your real music." />
+    <meta name="twitter:image" content="https://skeuo.fm/og-image.png" />
+    <!-- structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "skeuo.fm",
+      "url": "https://skeuo.fm/",
+      "description": "Turn a sentence into a real, working skeuomorphic music player that drives your actual music — live knobs, sliders, spectrum and marquee, generated from a prompt.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any (web)",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
     <!-- per-skin display typefaces (the soul of skeuomorphic UI) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=VT323&family=Share+Tech+Mono&family=Orbitron:wght@500;700&family=Gochi+Hand&family=DotGothic16&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- crawlable entity definition + tagline; React replaces this on mount -->
+      <main style="max-width:40rem;margin:18vh auto;padding:0 24px;font-family:system-ui,sans-serif;color:#ddd">
+        <h1 style="font-size:28px;letter-spacing:-.01em;margin:0 0 .4em">skeuo.fm</h1>
+        <p style="color:#9aa0ab;line-height:1.5;margin:0">
+          skeuo.fm turns one sentence into a real, working skeuomorphic music player that
+          drives your actual music — live knobs, sliders, spectrum and marquee, generated
+          from a prompt.
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
