@@ -17,6 +17,8 @@ import "./spotify/spotify.css";
 import { MobileChrome } from "./mobile/MobileChrome";
 // ── feature: desktop widget handoff (skeuo:// → Tauri app) ───────────────────
 import { DesktopHandoff } from "./desktop/DesktopHandoff";
+// ── feature: export the running skin as an animated GIF ──────────────────────
+import { ExportGifButton } from "./export/ExportGifButton";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;
@@ -182,6 +184,7 @@ export default function App() {
           onClose={() => { setEditing(false); setEdited(null); }}
         />
       )}
+      <ExportGifButton skinId={skinId} />
     </div>
   );
 }

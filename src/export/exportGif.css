@@ -1,0 +1,39 @@
+.export-gif-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  font: 600 13px/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+  letter-spacing: .02em;
+  color: #f0f2f6;
+  background: linear-gradient(160deg, #232328, #131316);
+  border: 1px solid #3a3a42;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .08);
+  cursor: pointer;
+  transition: transform .1s, border-color .15s, background .15s;
+}
+.export-gif-btn:hover:not(:disabled) {
+  border-color: #6a6a76;
+  background: linear-gradient(160deg, #2a2a30, #171719);
+}
+.export-gif-btn:active:not(:disabled) { transform: translateY(1px); }
+.export-gif-btn:disabled { cursor: progress; opacity: .9; }
+
+.export-gif-btn .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2dff6e;
+  box-shadow: 0 0 6px rgba(45, 255, 110, .7);
+}
+.export-gif-btn:disabled .dot { animation: egb-pulse 1s ease-in-out infinite; }
+
+@keyframes egb-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .35; }
+}
