@@ -33,6 +33,17 @@ export function skinLive(id: string): boolean {
   return !!skinList.find((x) => x.id === id)?.live;
 }
 
+// Human-facing display name (without the ✦ marker) and one-line blurb, used by
+// the IG export layout. Falls back to the raw id when the skin isn't registered
+// (e.g. a runtime-generated skin).
+export function skinName(id: string): string {
+  const n = skinList.find((x) => x.id === id)?.name;
+  return (n ? n.replace(/\s*✦\s*$/, "") : id).trim();
+}
+export function skinBlurb(id: string): string {
+  return skinList.find((x) => x.id === id)?.blurb ?? "";
+}
+
 export function skinStyle(id: string): string {
   const s = skinList.find((x) => x.id === id);
   return s?.style ?? id;

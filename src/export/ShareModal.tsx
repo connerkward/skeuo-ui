@@ -103,7 +103,7 @@ export function ShareModal({ skinId, template, runtime, spotifyDrive, onClose }:
       setGifState("preparing");
       if (!entry.gifPromise) {
         entry.gifPromise = waitForPlayer(player)
-          .then((el) => recordPlayerGif(el).then((r) => r.blob))
+          .then((el) => recordPlayerGif(el, undefined, skinId).then((r) => r.blob))
           .then((blob) => { entry!.gif = blob; return blob; });
       }
       entry.gifPromise
@@ -118,7 +118,7 @@ export function ShareModal({ skinId, template, runtime, spotifyDrive, onClose }:
       setVideoState("preparing");
       if (!entry.videoPromise) {
         entry.videoPromise = waitForPlayer(player)
-          .then((el) => recordPlayerVideo(el).then((r) => ({ blob: r.blob, ext: r.ext })))
+          .then((el) => recordPlayerVideo(el, undefined, skinId).then((r) => ({ blob: r.blob, ext: r.ext })))
           .then((r) => { entry!.video = r.blob; entry!.videoExt = r.ext; return r; });
       }
       entry.videoPromise
