@@ -89,6 +89,9 @@ export function Composite({ template, skinId, showWireframe, runtime, templateOv
     >
       {/* generated chrome as a transparent layer (lets each skin's silhouette differ) */}
       {hasFrame && !showWireframe && <img className="layer frame-layer" src={frameSrc} alt="" />}
+      {/* wireframe: show the body ENVELOPE (the painted silhouette) as a faded ghost
+          behind the control wires, so you can see where the body sits vs the controls */}
+      {hasFrame && showWireframe && <img className="layer envelope-ghost" src={frameSrc} alt="body envelope" />}
       {!runtime && skinHas(skinId, "screen") && !showWireframe && (
         <img className="layer screen-layer" src={layerUrl(skinId, "screen")} alt="" />
       )}

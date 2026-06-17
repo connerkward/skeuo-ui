@@ -87,6 +87,10 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   // default), so there's no toggle — only the optional uploaded-body override.
   const [envImage, setEnvImage] = useState<string | undefined>(); // user-uploaded body envelope (data URL); when set it's used directly
   const envFileRef = useRef<HTMLInputElement>(null);
+  // optional: run the extra ENVELOPE pass to sculpt a wilder, more elaborate body
+  // (2× cost). Default OFF — one pass already expands the shape (the fixed cutout
+  // alpha follows the painted silhouette, so it no longer shrink-wraps).
+  const [sculpt, setSculpt] = useState(false);
 
   // step 4 — generate
   const [models, setModels] = useState<ModelId[]>([DEFAULT_MODEL]);
@@ -124,10 +128,12 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   const toggleModel = (id: ModelId) =>
     setModels((cur) => (cur.includes(id) ? cur.filter((m) => m !== id) : [...cur, id]));
 
-  // Body auto-grows by default → two image passes (expand + paint), full price.
-  // An uploaded body is painted directly → one pass, ~half the per-skin cost.
-  const autoBody = !envImage;
-  const factor = autoBody ? 1 : 0.55;
+  // Default = ONE pass: the paint model invents + expands its own body, and the
+  // cutout alpha follows that silhouette (no shrink-wrap). The envelope "sculpt"
+  // pass is an OPTIONAL second pass for a wilder, more controlled shape (2× cost).
+  // An uploaded body is also one pass (painted directly).
+  const grows = !envImage && sculpt;            // does the extra envelope pass run?
+  const factor = grows ? 1 : 0.55;
   const total = MODELS.filter((m) => models.includes(m.id)).reduce((s, m) => s + m.costPerSkin * factor, 0);
   const anyApprox = MODELS.some((m) => models.includes(m.id) && m.approx);
 
@@ -141,9 +147,9 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         const model = models[i];
         setProgress({ idx: i, total: models.length, model, startedAt: Date.now() });
         const req: GenerateRequest = {
-          // envelope:true → the server grows a body around the controls. An
-          // uploaded body is sent directly and used in place of the grown one.
-          prompt: prompt.trim(), variant, refImage, model, envelope: autoBody, envelopeImage: envImage, regions,
+          // envelope:true runs the extra sculpt pass (opt-in). Otherwise one pass:
+          // the model expands its own shape. An uploaded body is used directly.
+          prompt: prompt.trim(), variant, refImage, model, envelope: grows, envelopeImage: envImage, regions,
         };
         const r = await fetch("/api/generate", {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
@@ -249,10 +255,19 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                 <span className="wiz-env-txt">
                   <strong>No action needed</strong>
                   <small>{envImage
-                    ? "Overridden — you uploaded your own body below, so it's used directly instead of growing one."
-                    : "A body is grown automatically around your controls, expanded from your prompt."}</small>
+                    ? "Overridden — you uploaded your own body below, so it's used directly."
+                    : "The model expands its own body around your controls from your prompt — one pass, cheapest."}</small>
                 </span>
               </div>
+
+              <label className={`wiz-env wiz-env-sculpt ${sculpt && !envImage ? "on" : ""} ${envImage ? "disabled" : ""}`}>
+                <input type="checkbox" checked={sculpt && !envImage} disabled={!!envImage}
+                  onChange={(e) => setSculpt(e.target.checked)} />
+                <span className="wiz-env-txt">
+                  <strong>✦ Sculpt a wilder body (optional)</strong>
+                  <small>Adds a shaping pass that grows a more elaborate silhouette — horns, fins, tendrils — and guarantees the body wraps the controls with margin. ~2× cost, a bit slower.</small>
+                </span>
+              </label>
 
               <label className={`wiz-env wiz-env-upload ${envImage ? "on" : ""}`}>
                 <span className="wiz-env-txt">
@@ -292,10 +307,10 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
               <div className="wiz-summary">
                 <div><b>{prompt.trim().slice(0, 32) || "—"}</b></div>
                 <div>{variant} · {regions.length} controls · material from prompt
-                  {envImage ? " · uploaded body" : " · auto-grown body"}</div>
+                  {envImage ? " · uploaded body" : grows ? " · sculpted body (2 passes)" : " · auto body (1 pass)"}</div>
                 <div className="wiz-total"><strong>{models.length} model{models.length === 1 ? "" : "s"}</strong> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</div>
               </div>
-              {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={autoBody} />}
+              {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={grows} />}
               {err && <div className="wiz-err">{err}</div>}
             </>
           )}

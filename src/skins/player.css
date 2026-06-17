@@ -372,6 +372,8 @@
    Wireframe overlay (the designer mockup view)
    ============================================================ */
 .is-wireframe { background: #11151c !important; }
+/* the body envelope shown faded behind the wireframe controls */
+.envelope-ghost { z-index: 0; object-fit: fill; opacity: .26; filter: grayscale(1) brightness(1.5) contrast(.9); pointer-events: none; }
 .wire {
   border: 1.5px solid currentColor; border-radius: 3px;
   display: flex; align-items: center; justify-content: center;
