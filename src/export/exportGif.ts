@@ -100,8 +100,8 @@ function loadLogo(): Promise<HTMLImageElement | null> {
 // the chrome-knob logomark and the "skeuo" wordmark beside it. Sized to the
 // output canvas so it stays legible at the GIF's small dimensions.
 function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, logo: HTMLImageElement | null) {
-  const pad = Math.round(w * 0.022);
-  const logoSize = Math.round(w * 0.09);          // ~36px at 400w
+  const pad = Math.round(w * 0.02);
+  const logoSize = Math.round(w * 0.07);          // subtler — smaller mark
   const fontSize = Math.round(logoSize * 0.62);
   ctx.font = `700 ${fontSize}px -apple-system, "Segoe UI", system-ui, sans-serif`;
   const word = "skeuo", tld = ".fm";
@@ -114,6 +114,10 @@ function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, logo
   const x = w - pillW - pad;
   const y = h - pillH - pad;
   const r = pillH / 2;
+
+  // whole watermark is drawn at reduced opacity so it reads as a subtle mark
+  ctx.save();
+  ctx.globalAlpha = 0.55;
 
   // backing pill
   ctx.save();
@@ -143,6 +147,7 @@ function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, logo
   ctx.fillText(word, tx, cy + 1);
   ctx.fillStyle = "#2dff6e";                 // green ".fm" — matches the brand
   ctx.fillText(tld, tx + wordW, cy + 1);
+  ctx.restore();                              // end reduced-opacity watermark
 }
 
 // ── live-overlay compositing ────────────────────────────────────────────────

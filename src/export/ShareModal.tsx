@@ -146,7 +146,7 @@ export function ShareModal({ skinId, template, runtime, spotifyDrive, onClose }:
     if (job) return;
     setJob("share");
     try {
-      const el = player();
+      const el = await waitForPlayer(player).catch(() => null);
       let file: File | null = null;
       if (el) {
         const snap = await snapshotPlayerPng(el, skinId);
@@ -188,10 +188,9 @@ export function ShareModal({ skinId, template, runtime, spotifyDrive, onClose }:
 
   const onPng = async () => {
     if (job) return;
-    const el = player();
-    if (!el) return;
     setJob("png");
     try {
+      const el = await waitForPlayer(player);
       const { blob } = await snapshotPlayerPng(el, skinId);
       downloadPng(blob, skinId);
       flash("PNG saved");
@@ -328,20 +327,32 @@ export function ShareModal({ skinId, template, runtime, spotifyDrive, onClose }:
   );
 }
 
-// Resolve the modal's live .player element once it has mounted + laid out (its
-// spectrum <canvas> exists). Polls a few rAF ticks; rejects if it never appears.
-function waitForPlayer(getEl: () => HTMLElement | null): Promise<HTMLElement> {
-  return new Promise((resolve, reject) => {
-    let tries = 0;
-    const tick = () => {
-      const el = getEl();
-      // need a laid-out player with non-zero size (so capture rects are valid)
-      if (el && el.offsetWidth > 0 && el.offsetHeight > 0) { resolve(el); return; }
-      if (tries++ > 120) { reject(new Error("player never mounted")); return; }
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
+// Resolve the modal's live .player element once it's READY to capture: mounted +
+// laid out AND its skin frame image actually decoded. Capturing before the frame
+// PNG loads yields a blank export (only the watermark) — so we wait for images,
+// then a few rAFs so the spectrum <canvas> has painted at least one frame.
+async function waitForPlayer(getEl: () => HTMLElement | null): Promise<HTMLElement> {
+  const raf = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+  let el: HTMLElement | null = null;
+  for (let i = 0; i < 120; i++) {
+    el = getEl();
+    if (el && el.offsetWidth > 0 && el.offsetHeight > 0) break;
+    await raf();
+  }
+  if (!el || !el.offsetWidth) throw new Error("player never mounted");
+  // wait for every <img> in the player (the skin frame is the big one) to load
+  const imgs = [...el.querySelectorAll("img")];
+  await Promise.all(
+    imgs.map((img) =>
+      img.complete && img.naturalWidth > 0
+        ? Promise.resolve()
+        : img.decode().catch(
+            () => new Promise<void>((res) => { img.onload = () => res(); img.onerror = () => res(); }),
+          ),
+    ),
+  );
+  await raf(); await raf(); await raf();   // let the spectrum canvas draw
+  return el;
 }
 
 // ── inline icons (no asset deps) ───────────────────────────────────────────────

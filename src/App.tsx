@@ -51,6 +51,15 @@ export default function App() {
     try { localStorage.setItem("skeuo:skins", JSON.stringify(runtimeSkins)); }
     catch { try { localStorage.setItem("skeuo:skins", JSON.stringify(runtimeSkins.slice(-6))); } catch { /* quota; keep last 6 */ } }
   }, [runtimeSkins]);
+  // keep ?skin= in sync with the active skin so the address bar + any copied link
+  // always reflect what's on screen, even after switching skins.
+  useEffect(() => {
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("skin", skinId);
+      window.history.replaceState(null, "", u);
+    } catch { /* ignore */ }
+  }, [skinId]);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState(false);
   const [edited, setEdited] = useState<Template | null>(null);          // live editor override
