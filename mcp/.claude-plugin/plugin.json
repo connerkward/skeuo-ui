@@ -1,0 +1,27 @@
+{
+  "name": "skeuo",
+  "description": "An MCP server that turns a sentence into a real, working skeuomorphic music-player skin — a wildly-shaped photoreal device whose switches flip, knobs turn, and faders slide. Bundles the skeuo-skin-generator skill and an embedded Create/preview ext-app.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Conner K Ward",
+    "url": "https://github.com/connerkward"
+  },
+  "homepage": "https://github.com/connerkward/skeuo-mcp",
+  "repository": "https://github.com/connerkward/skeuo-mcp",
+  "license": "MIT",
+  "keywords": [
+    "skeuomorphic",
+    "music-player",
+    "ui-generation",
+    "generative-ui",
+    "mcp",
+    "claude-skill",
+    "image-generation"
+  ],
+  "mcpServers": {
+    "skeuo": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/index.js"]
+    }
+  }
+}
