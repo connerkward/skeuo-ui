@@ -36,16 +36,30 @@ export function initialSkinParam(): string | null {
   return new URLSearchParams(window.location.search).get("skin");
 }
 
-// OAuth redirect target. The website registers its own origin with Spotify; both
-// native shells (macOS widget AND iOS app) use a LOOPBACK redirect — a one-shot
-// 127.0.0.1 listener in Rust captures the code. Loopback (http://127.0.0.1) is
-// the one redirect type Spotify's docs guarantee for native apps (custom schemes
-// like skeuo:// hit an INVALID_CLIENT "insecure redirect URI" regression for some
-// PKCE apps post-2025, so we avoid them). Spotify requires an EXACT match for
-// whatever we send, so this must match the dashboard exactly. Keep the port in
-// sync with oauth_loopback() in lib.rs.
+// OAuth redirect target — three cases, because the return path differs per shell:
+//
+// • Web → the site's own origin. Spotify reloads it with ?code and the SPA
+//   exchanges it.
+// • macOS widget → a LOOPBACK (http://127.0.0.1:14565) caught by a one-shot
+//   listener in Rust. Works on desktop because the system browser and the app
+//   coexist — the app stays alive to answer the loopback.
+// • iOS → an HTTPS bounce page (skeuo.fm/callback.html) that forwards the code to
+//   the app's skeuo:// scheme. A loopback is UNREACHABLE on iOS: opening Safari
+//   backgrounds the app and iOS suspends it, killing the listener — so the
+//   127.0.0.1 redirect hangs forever. The HTTPS→deep-link bounce re-foregrounds
+//   the app with the code instead. Custom schemes can't be sent to Spotify
+//   directly (its authorize endpoint only accepts https/loopback redirect URIs),
+//   hence the HTTPS hop first.
+//
+// Spotify requires an EXACT match between the authorize and token-exchange
+// redirect_uri AND the dashboard entry, so each constant must be registered there
+// verbatim. Keep NATIVE_REDIRECT's port in sync with oauth_loopback() in lib.rs.
 export const NATIVE_REDIRECT = "http://127.0.0.1:14565/callback";
+// Clean URL (Cloudflare Pages serves public/callback.html here; the .html form
+// just 308s to this). Register this EXACT string in the Spotify dashboard.
+export const MOBILE_REDIRECT = "https://skeuo.fm/callback";
 export function redirectUri(): string {
+  if (isMobileApp()) return MOBILE_REDIRECT;
   if (isTauri()) return NATIVE_REDIRECT;
   return window.location.origin + "/";
 }

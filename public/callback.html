@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Connecting to Spotify…</title>
+<style>
+  html,body{margin:0;height:100%;background:#08080a;color:#e7e7ea;
+    font:17px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+  .wrap{height:100%;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:0 28px;gap:18px}
+  a{color:#1db954;font-weight:600;text-decoration:none}
+  .sub{color:#8b8b92;font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>Connected to Spotify.</div>
+  <div><a id="back" href="#">Return to Skeuo →</a></div>
+  <div class="sub">If nothing happens, tap the link above.</div>
+</div>
+<script>
+  // The native iOS app sends Spotify here (an HTTPS redirect, which Spotify
+  // requires) instead of to a 127.0.0.1 loopback — a loopback listener can't be
+  // reached once iOS suspends the backgrounded app. We immediately forward the
+  // OAuth result to the app's own scheme; the deep-link handler finishes the
+  // PKCE exchange in-app. The whole query (?code=… or ?error=…) is preserved.
+  var target = "skeuo://callback" + (window.location.search || "");
+  document.getElementById("back").href = target;
+  // replace() so the back button doesn't land on this interstitial
+  setTimeout(function(){ window.location.replace(target); }, 200);
+</script>
+</body>
+</html>

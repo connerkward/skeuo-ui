@@ -18,7 +18,7 @@ import * as api from "./api";
 import { NoActiveDeviceError, type PlaybackState, type SimplifiedPlaylist, type SpotifyTrack } from "./api";
 import { initWebPlaybackSDK, type SdkHandle } from "./sdk";
 import type { Track } from "../player/data";
-import { isTauri, awaitDesktopCallback } from "../platform";
+import { isTauri, isMobileApp, awaitDesktopCallback } from "../platform";
 
 // The interface usePlayer reads when Spotify-connected. All transport methods
 // are fire-and-forget against the Web API; reflected state comes from polling.
@@ -209,10 +209,10 @@ export function useSpotify() {
   // ---- public actions -----------------------------------------------------
   const login = useCallback(() => {
     setStatus("connecting");
-    if (isTauri()) {
-      // Desktop: Spotify rejects custom-scheme redirects, so we open the system
-      // browser and catch the code on a 127.0.0.1 loopback. Bind the listener
-      // BEFORE opening the browser so the redirect can't beat us to it.
+    if (isTauri() && !isMobileApp()) {
+      // macOS widget: open the system browser and catch the code on a 127.0.0.1
+      // loopback. Bind the listener BEFORE opening the browser so the redirect
+      // can't beat us to it. (iOS can't use this — see the deep-link effect.)
       void (async () => {
         try {
           const cb = awaitDesktopCallback();
@@ -225,8 +225,38 @@ export function useSpotify() {
       })();
       return;
     }
+    // iOS + web: just open Spotify's authorize page. Web navigates the tab and
+    // returns via ?code on reload; iOS opens Safari and the code comes back via
+    // the skeuo:// deep link, completed in the effect below.
     void beginLogin().catch((e) => { setError((e as Error).message); setStatus("error"); });
   }, []);
+
+  // iOS OAuth return. The code comes back via skeuo://callback?code=… (Spotify
+  // → skeuo.fm/callback.html → the app's scheme), NOT a loopback — a 127.0.0.1
+  // listener is dead while the app is backgrounded behind Safari. We subscribe to
+  // the deep link, finish the PKCE exchange, then flip status. Handles both warm
+  // (app still alive, onOpenUrl) and cold (relaunched by the URL, getCurrent).
+  useEffect(() => {
+    if (!isMobileApp()) return;
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+    const complete = async (url: string) => {
+      if (!url.includes("callback")) return;
+      try {
+        const ok = await handleRedirectCallback(url);
+        if (cancelled) return;
+        if (ok) { const t = await getAccessToken(); setStatus(t ? "connected" : "disconnected"); void refresh(); }
+      } catch (e) { if (!cancelled) { setError((e as Error).message); setStatus("error"); } }
+    };
+    void (async () => {
+      try {
+        const dl = await import("@tauri-apps/plugin-deep-link");
+        try { (await dl.getCurrent())?.forEach((u) => void complete(u)); } catch { /* none on plain launch */ }
+        unlisten = await dl.onOpenUrl((urls) => urls.forEach((u) => void complete(u)));
+      } catch (e) { console.error("[skeuo] mobile oauth deep-link:", e); }
+    })();
+    return () => { cancelled = true; unlisten?.(); };
+  }, [refresh]);
 
   const logout = useCallback(() => {
     sdkRef.current?.disconnect();
