@@ -19,7 +19,6 @@
     "core:event:default",
     "deep-link:default",
     "opener:default",
-    "opener:allow-open-url",
-    "window-state:default"
+    "opener:allow-open-url"
   ]
 }

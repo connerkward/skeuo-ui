@@ -2,8 +2,10 @@ import { useEffect } from "react";
 import { Composite } from "../player/Composite";
 import type { Template } from "../template/schema";
 import type { SkinAssets } from "../player/skins";
+import type { SpotifyDrive, SpotifyHook } from "../spotify/useSpotify";
 import { useSwipe } from "./useSwipe";
 import { Brand } from "../components/Brand";
+import { MobileSpotify } from "./MobileSpotify";
 
 interface Props {
   template: Template;
@@ -11,11 +13,17 @@ interface Props {
   skinId: string;
   setSkinId: (id: string) => void;
   onCreate?: () => void;        // fired by the trailing "Generate your own" page
+  // Spotify connect lives in the top bar; the drive (when in spotify mode) makes
+  // the on-screen skin reflect real playback instead of the local demo.
+  sp: SpotifyHook;
+  mode: "local" | "spotify";
+  setMode: (m: "local" | "spotify") => void;
+  spotifyDrive: SpotifyDrive | null;
 }
 
 // Mobile shell (<820px): a compact top bar + a swipeable carriage of skins,
 // with a trailing "+ Generate your own" page. Desktop never mounts this.
-export function MobileChrome({ template, skins, skinId, setSkinId, onCreate }: Props) {
+export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp, mode, setMode, spotifyDrive }: Props) {
   // pages = every visible skin, plus one trailing "create" page
   const createIdx = skins.length;
   const startIdx = Math.max(0, skins.findIndex((s) => s.id === skinId));
@@ -35,9 +43,12 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate }: P
     <div className="m-shell">
       <header className="m-topbar">
         <Brand size="sm" className="m-title" />
-        <button className="m-menu" onClick={() => sw.goTo(createIdx)} aria-label="Generate your own skin">
-          + skin
-        </button>
+        <div className="m-topbar-actions">
+          <MobileSpotify sp={sp} mode={mode} setMode={setMode} />
+          <button className="m-menu" onClick={() => sw.goTo(createIdx)} aria-label="Generate your own skin">
+            + skin
+          </button>
+        </div>
       </header>
 
       <div className="m-stage" {...sw.bind}>
@@ -53,7 +64,10 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate }: P
               {/* only mount the composite for nearby pages — the audio/canvas
                   graph is heavy; off-screen skins render an empty placeholder */}
               {Math.abs(i - sw.index) <= 1 ? (
-                <Composite template={template} skinId={s.id} />
+                // drive the CURRENT page from real Spotify when connected; the
+                // neighbors stay on the local demo (off-screen, about to mount)
+                <Composite template={template} skinId={s.id}
+                  spotifyDrive={i === sw.index ? spotifyDrive : null} />
               ) : (
                 <div className="m-placeholder" />
               )}

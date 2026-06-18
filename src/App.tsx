@@ -15,12 +15,13 @@ import { SpotifyConnect } from "./spotify/SpotifyConnect";
 import "./spotify/spotify.css";
 // ── feature: mobile swipe shell ──────────────────────────────────────────────
 import { MobileChrome } from "./mobile/MobileChrome";
+import { MobileSpotify } from "./mobile/MobileSpotify";
 // ── feature: desktop widget handoff (skeuo:// → Tauri app) ───────────────────
 import { DesktopHandoff } from "./desktop/DesktopHandoff";
 // ── feature: export the running skin as an animated GIF ──────────────────────
 import { ExportGifButton } from "./export/ExportGifButton";
 import { Brand } from "./components/Brand";
-import { initialSkinParam } from "./platform";
+import { initialSkinParam, isMobileApp } from "./platform";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;
@@ -74,10 +75,13 @@ export default function App() {
   // local demo while the panel says "connected" (the user can switch back)
   useEffect(() => { if (sp.status === "connected") setMode("spotify"); }, [sp.status]);
 
-  // responsive: below ~820px mount the swipe shell instead of the sidebar
+  // responsive: below ~820px mount the swipe shell instead of the sidebar. The
+  // iOS app ALWAYS uses the mobile shell (full-screen skin + swipe), regardless
+  // of viewport — it's a phone app, never the desktop sidebar.
   const [mobile, setMobile] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches);
+    isMobileApp() || (typeof window !== "undefined" && window.matchMedia("(max-width: 820px)").matches));
   useEffect(() => {
+    if (isMobileApp()) { setMobile(true); return; }
     const mq = window.matchMedia("(max-width: 820px)");
     const on = () => setMobile(mq.matches);
     mq.addEventListener("change", on);
@@ -118,6 +122,9 @@ export default function App() {
           <header className="m-topbar">
             <button className="m-menu" onClick={() => setSkinId(visible[0].id)} aria-label="Back to skins">← skins</button>
             <h1 className="m-title">{activeRuntime.name}</h1>
+            <div className="m-topbar-actions">
+              <MobileSpotify sp={sp} mode={mode} setMode={setMode} />
+            </div>
           </header>
           <div className="m-stage">
             <div className="m-page">
@@ -135,6 +142,10 @@ export default function App() {
           skinId={skinId}
           setSkinId={setSkinId}
           onCreate={() => setShowCreate(true)}
+          sp={sp}
+          mode={mode}
+          setMode={setMode}
+          spotifyDrive={spotifyDrive}
         />
         {showCreate && (
           <div className="wiz-modal" onPointerDown={(e) => e.target === e.currentTarget && setShowCreate(false)}>

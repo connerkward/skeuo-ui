@@ -15,18 +15,22 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+# macos-private-api must be in the BASE feature set so Tauri's build-script can
+# match it against `app.macOSPrivateApi: true` in tauri.conf.json. The feature is
+# inert on iOS (its code is cfg(target_os = "macos")), so this is harmless there.
 [dependencies]
-tauri = { version = "2", features = ["macos-private-api", "tray-icon", "image-png"] }
+tauri = { version = "2", features = ["tray-icon", "macos-private-api", "image-png"] }
 tauri-plugin-deep-link = "2"
 tauri-plugin-opener = "2"
-tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-# single-instance forwards a second launch (e.g. clicking a skeuo:// link) to
-# the already-running app; the "deep-link" feature wires that to the deep-link
-# plugin so the URL reaches us instead of opening a second window.
+# Desktop-only: the menu-bar tray (the tray-icon crate doesn't build for iOS),
+# window-state (position/size) persistence, and single-instance forwarding. None
+# apply on iOS — one full-screen webview, no tray, no second instance.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-window-state = "2"
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 
 [profile.release]

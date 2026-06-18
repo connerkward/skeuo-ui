@@ -58,7 +58,13 @@
     "deep-link": {
       "desktop": {
         "schemes": ["skeuo"]
-      }
+      },
+      "mobile": [
+        {
+          "scheme": ["skeuo"],
+          "appLink": false
+        }
+      ]
     }
   }
 }

@@ -72,6 +72,20 @@ npm run tauri:build    # local .app + .dmg
 
 → [Desktop widget docs](docs/desktop.md) (transparency, tray, deep-link handoff, OAuth)
 
+## 📱 iOS app
+
+The **same React bundle** is also a **full-screen iOS app** (Tauri) — the skin
+fills the screen, you swipe between skins, and a one-tap **Connect Spotify** pill
+drives real playback through your active Spotify device. It's the full site
+running natively, *not* the transparent widget.
+
+```bash
+npm run tauri:ios:dev                                    # run on a booted Simulator
+npm run tauri:ios:build -- --debug --target aarch64-sim  # build a Simulator .app
+```
+
+→ [iOS app docs](docs/ios.md) (mode split, loopback OAuth + `skeuo://` bounce, build/sign)
+
 ## 🛠️ How it's built
 
 Three layers, composited live by React:
