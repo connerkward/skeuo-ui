@@ -90,6 +90,14 @@ export async function beginLogin(): Promise<void> {
     code_challenge: challenge,
     scope: SCOPES,
   });
+  // NATIVE (iOS/desktop) opens the SYSTEM browser, which may already hold a
+  // Spotify session for a DIFFERENT account than the one the user expects — and
+  // Spotify silently consents as that session, so the app gets a token for the
+  // wrong account (→ Web API 403 "User not registered" in dev mode even though
+  // the *intended* account is allowlisted). `show_dialog=true` forces the account
+  // / consent chooser so the user sees and picks the right account. The website
+  // works without it (its browser session IS the user's), so web stays untouched.
+  if (isTauri()) params.set("show_dialog", "true");
   // Web: navigate the page to /authorize. Tauri: open the system browser, since
   // Spotify won't authorize inside an embedded webview (the callback returns via
   // the skeuo:// deep link). openAuthorizeUrl branches on platform.
