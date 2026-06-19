@@ -315,11 +315,9 @@ body {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; object-position: center; display: block;
 }
-.m-mini-vis {
-  position: absolute; left: 12%; right: 12%; bottom: 8%; height: 26%;
-  opacity: .9; pointer-events: none;
-}
-.m-mini-vis canvas { width: 100%; height: 100%; display: block; }
+/* the visualizer sits at the skin's real screen region (rect set inline) */
+.m-mini-vis { pointer-events: none; }
+.m-mini-vis canvas, .m-mini-vis .vis { width: 100%; height: 100%; display: block; }
 .m-strip-item.on .m-strip-mini {
   box-shadow: 0 0 0 2px var(--m-accent, #1db954), 0 5px 16px rgba(0,0,0,.55);
 }

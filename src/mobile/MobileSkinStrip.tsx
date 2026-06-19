@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Visualizer } from "../player/Visualizer";
-import { thumbUrl } from "../player/skins";
+import { thumbUrl, skinTemplateUrl, skinStyle } from "../player/skins";
 import type { SkinAssets } from "../player/skins";
+import type { Template, Region } from "../template/schema";
 
 // The bottom tray on mobile: a horizontally-scrolling filmstrip of skin minis —
-// a LOW-RES WebP thumbnail (~16 KB) of each skin with a small animated visualizer
-// over it, so the strip reads as "alive" without loading the 2–5 MB full frames
-// (loading dozens of those is what made the strip crawl). Tap a mini to jump to
-// that skin; the active one is ringed and auto-scrolled into view.
+// a LOW-RES WebP thumbnail (~16 KB) of each skin with the REAL visualizer
+// rendered at its REAL position (read from the skin's template), so the strip
+// reads as a row of live little players without loading the 2–5 MB full frames.
+// Tap a mini to jump to that skin; the active one is ringed and auto-scrolled in.
 //
-// Perf: only minis in (or just off) the viewport mount their image + canvas — an
-// IntersectionObserver tracks visibility so a long skin list doesn't run dozens
-// of canvas loops or image loads at once. Off-screen items render an empty
-// same-size slot, so scroll geometry never shifts.
+// Perf: only minis in (or just off) the viewport mount — an IntersectionObserver
+// tracks visibility so a long list never runs dozens of canvas loops / image
+// loads at once. Off-screen items keep an empty same-size slot (stable scroll).
 export function MobileSkinStrip({ skins, index, createIdx, onPick }: {
   skins: SkinAssets[];
   index: number;       // current page (a skin index, or createIdx for the create page)
@@ -23,7 +23,6 @@ export function MobileSkinStrip({ skins, index, createIdx, onPick }: {
   const items = useRef<(HTMLButtonElement | null)[]>([]);
   const [live, setLive] = useState<Set<number>>(new Set());
 
-  // mount/unmount minis as they enter/leave the strip viewport (preload a bit)
   useEffect(() => {
     const root = scroller.current;
     if (!root) return;
@@ -60,12 +59,12 @@ export function MobileSkinStrip({ skins, index, createIdx, onPick }: {
           aria-current={i === index}
           title={s.name}
         >
-          <span className="m-strip-mini">
+          <span className="m-strip-mini" data-skin={skinStyle(s.id)}>
             {live.has(i) ? (
               <>
                 <img className="m-mini-img" src={thumbUrl(s.id)} alt="" draggable={false}
                   loading="lazy" decoding="async" />
-                <span className="m-mini-vis"><Visualizer playing analyser={null} bars={7} /></span>
+                <MiniVis skinId={s.id} />
               </>
             ) : null}
           </span>
@@ -83,4 +82,54 @@ export function MobileSkinStrip({ skins, index, createIdx, onPick }: {
       </button>
     </nav>
   );
+}
+
+// Render the skin's visualizer region(s) at their real normalized rects over the
+// thumbnail — the SAME placement + variant the full Composite uses, just driven
+// by the mock animation (no analyser). Mirrors Composite.renderControl's
+// visualizer branch so a dial skin gets the radial dial, a teeth/ribbon skin its
+// own shape, etc.
+function MiniVis({ skinId }: { skinId: string }) {
+  const [tpl, setTpl] = useState<Template | null>(null);
+  const url = skinTemplateUrl(skinId);
+  useEffect(() => {
+    if (!url) return;
+    let liveFetch = true;
+    fetch(url).then((r) => r.json()).then((t: Template) => { if (liveFetch) setTpl(t); }).catch(() => {});
+    return () => { liveFetch = false; };
+  }, [url]);
+  if (!tpl) return null;
+  const vizRegions = tpl.regions.filter(
+    (r) => r.content === "dynamic" && r.dynamicType === "visualizer",
+  );
+  return (
+    <>
+      {vizRegions.map((r) => (
+        <span key={r.id} className="m-mini-vis" style={rectStyle(r)}>
+          {renderViz(r)}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function rectStyle(r: Region): React.CSSProperties {
+  const { x, y, w, h } = r.rect;
+  const round = r.shape === "ellipse";
+  return {
+    position: "absolute",
+    left: `${x * 100}%`, top: `${y * 100}%`,
+    width: `${w * 100}%`, height: `${h * 100}%`,
+    ...(round ? { borderRadius: "50%", overflow: "hidden" } : {}),
+  };
+}
+
+// same variant selection as Composite: ellipse → radial dial; teeth/ribbon keep
+// their shape; everything else is the linear spectrum.
+function renderViz(r: Region) {
+  if (r.shape === "ellipse")
+    return <Visualizer playing analyser={null} variant="radial" dialStyle={r.dialStyle ?? "bars"} />;
+  if (r.vis === "teeth") return <Visualizer playing analyser={null} variant="teeth" />;
+  if (r.vis === "ribbon") return <Visualizer playing analyser={null} variant="ribbon" path={r.path} />;
+  return <Visualizer playing analyser={null} />;
 }
