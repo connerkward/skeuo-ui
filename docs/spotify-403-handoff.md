@@ -1,9 +1,37 @@
 # Spotify 403 — handoff context
 
-**Status:** OAuth is FIXED (build 0.1.2). Login now returns to the app and a token
-is obtained — the user successfully reaches the Spotify Web API. The remaining
-failure is the API itself returning **403** on the authenticated calls. This is a
-**post-auth authorization** problem, not a login/redirect problem.
+**Status:** OAuth is FIXED (build 0.1.2). Login returns to the app and a token is
+obtained — the user reaches the Spotify Web API. The API then returns **403** on
+the authenticated calls. Post-auth authorization problem, not login/redirect.
+
+## ⭐ KEY FACT (2026-06-18): works on WEB, fails ONLY on iOS TestFlight
+
+The user confirmed the **exact same Spotify flow succeeds on the website**
+(skeuo.fm) and 403s **only in the TestFlight iOS app**. Same client ID, same
+scopes, same Web API. **This rules out the two "account-wide" causes** — they would
+fail on web too:
+- ❌ NOT Premium-required (a Free account would 403 on web as well).
+- ❌ NOT the web account missing from User Management (it works on web → it's allowlisted).
+
+So the difference is **iOS-flow-specific**. Given the body is "user not registered,"
+the token the iOS app obtained almost certainly belongs to a **DIFFERENT Spotify
+account than the allowlisted one** — i.e., the phone's Safari was already signed
+into Spotify as another account, so the OAuth consented as that account (no
+re-login prompt), and that account isn't in User Management.
+
+**Confirm in ~1 min:** call `GET https://api.spotify.com/v1/me` with the iOS token
+and read `email`/`id`; compare to the account that works on web / is in User
+Management. (Add a temporary `console.error(await api.call('/me'))` after connect,
+or read it off the device.) If they differ → that's it.
+
+**Fixes:** on the phone, sign Safari OUT of Spotify (or use the account switcher /
+a private tab) and authorize with the SAME account that's allowlisted — OR add the
+phone's actual account to User Management. Longer term, forcing the account chooser
+(`show_dialog=true` on the authorize URL) avoids silently reusing Safari's session.
+
+---
+
+### (Superseded) earlier ranked hypotheses — kept for reference
 
 ## Symptom
 

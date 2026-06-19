@@ -5,21 +5,15 @@
 // error / device readout. All Spotify logic lives in useSpotify; this is pure UI.
 
 import type { SpotifyHook } from "./useSpotify";
-import { isMobileApp } from "../platform";
 
 export function SpotifyConnect({ sp, mode, onMode }: {
   sp: SpotifyHook;
   mode: "local" | "spotify";
   onMode: (m: "local" | "spotify") => void;
 }) {
-  const { status, error, isConfigured, deviceName, playHere, setPlayHere,
+  const { status, error, isConfigured, deviceName,
           playlists, chosenPlaylistId, setChosenPlaylistId, login, logout } = sp;
   const linked = status === "connected" || status === "connecting";
-  // "Play here" is the in-page Web Playback SDK device — it needs EME/Widevine,
-  // which the iOS WKWebView doesn't provide, so hide it in the iOS app. There,
-  // playback always runs on the user's active Spotify device (their phone's
-  // Spotify app or any Connect target).
-  const canPlayHere = !isMobileApp();
 
   return (
     <div className="sp-panel">
@@ -62,13 +56,8 @@ export function SpotifyConnect({ sp, mode, onMode }: {
             )}
           </div>
 
-          {/* in-page SDK device (Premium) — desktop/web only (no EME on iOS) */}
-          {canPlayHere && (
-            <label className="sp-toggle">
-              <input type="checkbox" checked={playHere} onChange={(e) => setPlayHere(e.target.checked)} />
-              <span>Play here (this tab · Premium)</span>
-            </label>
-          )}
+          {/* "Play here" (in-page Web Playback SDK device) removed for now — see
+              TODO.md. Playback runs on the user's active Spotify device. */}
 
           {/* playlist picker → the playlist screen + selectTrack context */}
           {playlists.length > 0 && (

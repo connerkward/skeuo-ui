@@ -1,5 +1,16 @@
 # skeuo-ui — TODO
 
+## Open
+
+- [ ] **Restore the "Play here" switch** (removed 2026-06-18). The in-page Web
+      Playback SDK device (`playHere`/`setPlayHere` in `useSpotify`, `sdk.ts`,
+      `initWebPlaybackSDK`) lets a Premium user play audio in the page/tab itself
+      instead of on an external Spotify Connect device. The UI toggle was pulled
+      from `SpotifyConnect.tsx` for now (the hook plumbing is left intact, just
+      unused). Re-add the `<label className="sp-toggle">` checkbox (desktop/web
+      only — gate with `!isMobileApp()`, since iOS WKWebView lacks EME/Widevine)
+      when we revisit in-page playback.
+
 ## Done (2026-06-13) — Tauri desktop widget + web→desktop handoff
 - [x] **Tauri macOS app** (`src-tauri/`) reusing the same React bundle — `isWidget()`
       mounts `WidgetApp` (one transparent skin) instead of the website.
