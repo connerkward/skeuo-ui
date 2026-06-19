@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import type { GenerateRequest, GenerateResponse } from "./api";
+import type { GenerateRequest } from "./api";
+import { postGenerate } from "./api";
 import { MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import type { LayoutVariant } from "./layouts";
 import type { Template } from "../template/schema";
@@ -61,10 +62,7 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
         const req: GenerateRequest = {
           prompt: prompt.trim(), style: DEFAULT_STYLE, variant: DEFAULT_VARIANT, refImage, model,
         };
-        const r = await fetch("/api/generate", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
-        });
-        const data: GenerateResponse = await r.json();
+        const data = await postGenerate(req);
         if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
         if (data.status !== "done") { setErr("unexpected pending response (no poller wired in v1)"); continue; }
         onCreated({

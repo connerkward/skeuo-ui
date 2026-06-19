@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import type { GenerateRequest, GenerateResponse } from "./api";
+import type { GenerateRequest } from "./api";
+import { postGenerate } from "./api";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, type LayoutVariant } from "./layouts";
 import type { Region, Rect, Kind, DynamicType } from "../template/schema";
@@ -151,10 +152,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
           // the model expands its own shape. An uploaded body is used directly.
           prompt: prompt.trim(), variant, refImage, model, envelope: grows, envelopeImage: envImage, regions,
         };
-        const r = await fetch("/api/generate", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req),
-        });
-        const data: GenerateResponse = await r.json();
+        const data = await postGenerate(req);
         if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
         if (data.status !== "done") { setErr("unexpected pending response"); continue; }
         onCreated({
