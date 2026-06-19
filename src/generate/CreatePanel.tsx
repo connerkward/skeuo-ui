@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { GenerateRequest } from "./api";
 import { postGenerate } from "./api";
+import { finishCutout } from "./cutoutClient";
 import { MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import type { LayoutVariant } from "./layouts";
 import type { Template } from "../template/schema";
@@ -65,12 +66,19 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
         const data = await postGenerate(req);
         if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
         if (data.status !== "done") { setErr("unexpected pending response (no poller wired in v1)"); continue; }
+        // CF Worker defers the alpha cutout to the browser (CPU ceiling) — cut the
+        // raw paint here and upload the finished frame.png back. No-op server-side.
+        let frameUrl = data.frameUrl;
+        if (data.needsCutout && data.paintUrl) {
+          try { frameUrl = await finishCutout(data.id, data.paintUrl, data.frameUrl); }
+          catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
+        }
         onCreated({
           id: data.id,
           name: `${prompt.trim().slice(0, 18)} · ${modelLabel(data.model)}`,
           blurb: `generated · ${modelLabel(data.model)}`,
           style: data.style,
-          frameUrl: data.frameUrl,
+          frameUrl,
           template: data.template,
         });
       }

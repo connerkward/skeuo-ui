@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { GenerateRequest } from "./api";
 import { postGenerate } from "./api";
+import { finishCutout } from "./cutoutClient";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, type LayoutVariant } from "./layouts";
 import type { Region, Rect, Kind, DynamicType } from "../template/schema";
@@ -155,12 +156,19 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         const data = await postGenerate(req);
         if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
         if (data.status !== "done") { setErr("unexpected pending response"); continue; }
+        // The CF Worker defers the alpha cutout to here (CPU ceiling) — cut the raw
+        // paint in-browser and upload the finished frame.png back. No-op server-side.
+        let frameUrl = data.frameUrl;
+        if (data.needsCutout && data.paintUrl) {
+          try { frameUrl = await finishCutout(data.id, data.paintUrl, data.frameUrl); }
+          catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
+        }
         onCreated({
           id: data.id,
           name: `${prompt.trim().slice(0, 18)} · ${modelLabel(data.model)}`,
           blurb: `generated · ${modelLabel(data.model)}`,
           style: data.style,
-          frameUrl: data.frameUrl,
+          frameUrl,
           template: data.template,
         });
       }

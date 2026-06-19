@@ -86,15 +86,18 @@ export interface RuntimeDeps {
   // paint PNG → RGBA PNG bytes with the near-white background keyed out:
   // alpha follows the PAINTED silhouette (largest connected component,
   // internal holes filled so dark control wells stay opaque, light feather).
-  // This replaces the old region-union alpha that shrink-wrapped the body.
-  cutout: (paintPng: Uint8Array) => Promise<Uint8Array>;
-  // optional: persist one artifact for skin <id>, return its public URL. The
-  // frame is binary PNG (Uint8Array); template/meta are JSON strings. When omitted,
-  // the frame is returned inline as a data: URL (v1 default — no R2 needed to demo)
-  // and template/meta are simply not persisted. Wiring R2 (env.SKINS) makes EVERY
-  // generated skin a shared cloud artifact under skins/<id>/ (frame.png +
-  // template.json + meta.json), reconstructable by id via /api/skin/<id>.
-  store?: (id: string, kind: "frame" | "template" | "meta", data: Uint8Array | string) => Promise<string>;
+  // OPTIONAL: this is ~2s of pure-JS CPU. Runtimes with no CPU ceiling (the Node
+  // dev server) provide it and cut server-side. The CF Pages Function OMITS it —
+  // that CPU trips the Function ceiling (CF 1102) — so the pipeline persists the
+  // RAW paint instead and the browser does the cutout + uploads frame.png back.
+  cutout?: (paintPng: Uint8Array) => Promise<Uint8Array>;
+  // optional: persist one artifact for skin <id>, return its public URL. frame/paint
+  // are binary PNG (Uint8Array); template/meta are JSON strings. When omitted, the
+  // image is returned inline as a data: URL (demo — no R2 needed) and template/meta
+  // are simply not persisted. Wiring R2 (env.SKINS) makes EVERY generated skin a
+  // shared cloud artifact under skins/<id>/ (frame.png OR paint.png + template.json +
+  // meta.json), reconstructable by id via /api/skin/<id>.
+  store?: (id: string, kind: "frame" | "paint" | "template" | "meta", data: Uint8Array | string) => Promise<string>;
   log?: (msg: string) => void;
 }
 
@@ -127,7 +130,9 @@ export interface GenerateResult {
   variant: LayoutVariant;
   model: ModelId;
   template: Template;
-  frameUrl: string;       // public URL or data: URL
+  frameUrl: string;       // public URL or data: URL of the CUT frame
+  needsCutout?: boolean;  // true when the cutout was deferred to the browser (CF Worker path)
+  paintUrl?: string;      // raw paint PNG to cut client-side — present when needsCutout
   timingMs: { envelope: number; paint: number; total: number };
 }
 
@@ -240,30 +245,59 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   //    transparent, keeps the largest connected component, and fills internal
   //    holes so dark control wells inside the body stay opaque. No region-union
   //    shrink-wrap.
-  const framePng = await deps.cutout(paintPng);
-
-  // 6. store or inline. With R2 wired, persist the WHOLE skin (frame + template +
-  //    meta) under skins/<id>/ so it's a shared cloud artifact rebuildable by id;
-  //    template/meta persistence is best-effort (don't fail a paid gen if a small
-  //    sidecar write hiccups — the frame is the expensive part). Without a store,
-  //    the frame returns inline as a data: URL (demo path).
-  let frameUrl: string;
-  if (deps.store) {
-    frameUrl = await deps.store(input.id, "frame", framePng);
-    const meta: SkinMeta = {
-      prompt: input.brief, model, style: input.style, variant: input.variant,
-      createdAt: new Date().toISOString(),
-    };
+  //
+  //    cutout is ~2s of pure-JS CPU. Two paths:
+  //      • deps.cutout PRESENT (Node dev, no CPU limit): cut server-side, store the
+  //        finished frame.png — the contract's frameUrl is the cut frame, done.
+  //      • deps.cutout ABSENT (CF Pages Function): that CPU trips the Function
+  //        ceiling (CF 1102 exceededCpu), so DEFER it. Persist the RAW paint and
+  //        return needsCutout + paintUrl; the browser cuts and uploads frame.png
+  //        back to skins/<id>/ via /api/finalize/<id> (a no-CPU R2 write).
+  const meta: SkinMeta = {
+    prompt: input.brief, model, style: input.style, variant: input.variant,
+    createdAt: new Date().toISOString(),
+  };
+  const storeSidecars = async () => {
+    if (!deps.store) return;
     try {
-      await deps.store(input.id, "template", JSON.stringify(template));
-      await deps.store(input.id, "meta", JSON.stringify(meta));
+      await deps.store!(input.id, "template", JSON.stringify(template));
+      await deps.store!(input.id, "meta", JSON.stringify(meta));
     } catch (e) { log(`[${input.id}] sidecar store failed: ${e instanceof Error ? e.message : e}`); }
+  };
+
+  let frameUrl: string;
+  let needsCutout: boolean | undefined;
+  let paintOut: string | undefined;   // raw paint URL returned to the client to cut
+
+  if (deps.cutout) {
+    // server-side cutout (no CPU ceiling) — store/inline the finished frame
+    const framePng = await deps.cutout(paintPng);
+    if (deps.store) {
+      frameUrl = await deps.store(input.id, "frame", framePng);
+      await storeSidecars();
+    } else {
+      frameUrl = `data:image/png;base64,${toBase64(framePng)}`;
+    }
   } else {
-    frameUrl = `data:image/png;base64,${toBase64(framePng)}`;
+    // deferred cutout (CF Worker) — persist the raw paint; the browser finishes it.
+    needsCutout = true;
+    if (deps.store) {
+      paintOut = await deps.store(input.id, "paint", paintPng);
+      // frame.png is the sibling key the browser will upload to (same skins/<id>/
+      // prefix). Derive it from the paint URL so it tracks ASSETS_BASE_URL.
+      frameUrl = paintOut.replace(/paint\.png(\?.*)?$/, "frame.png");
+      await storeSidecars();
+    } else {
+      // demo (no R2): hand the raw paint to the client inline; it cuts in-memory
+      // and there is no durable frame URL to point at.
+      paintOut = `data:image/png;base64,${toBase64(paintPng)}`;
+      frameUrl = paintOut;
+    }
   }
 
   return {
     id: input.id, style: input.style, variant: input.variant, model, template, frameUrl,
+    needsCutout, paintUrl: paintOut,
     timingMs: { envelope: envMs, paint: paintMs, total: Date.now() - tAll },
   };
 }

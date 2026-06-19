@@ -35,10 +35,8 @@
 import { initWasm, Resvg } from "@resvg/resvg-wasm";
 // @ts-expect-error — wasm asset import resolved by the CF/wrangler bundler
 import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
-import UPNG from "upng-js";
 import { handleGenerate } from "../../src/generate/handler";
 import { MODELS, DEFAULT_MODEL, type ModelId, type RuntimeDeps } from "../../src/generate/pipeline";
-import { cutoutAlpha } from "../../src/generate/blueprint";
 
 interface Env {
   FAL_KEY: string;
@@ -90,21 +88,13 @@ async function rasterize(svg: string): Promise<Uint8Array> {
   return r.render().asPng();
 }
 
-// Key the near-white background out of the PAINTED silhouette → RGBA PNG.
-// The paint prompt forces "everything outside the silhouette stays pure white",
-// so the non-white region is the real (expanded) outline. cutoutAlpha (shared,
-// in blueprint.ts) does the threshold + largest-CC + hole-fill + 1px erode; we
-// only decode the PNG here and stamp the returned alpha plane back in.
-// Pure-JS via UPNG so it runs in the Worker with no native sharp.
-const toAB = (u: Uint8Array): ArrayBuffer => u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength) as ArrayBuffer;
-async function cutout(paintPng: Uint8Array): Promise<Uint8Array> {
-  const p = UPNG.decode(toAB(paintPng));
-  const pr = new Uint8Array(UPNG.toRGBA8(p)[0]);   // RGBA, p.width×p.height
-  const W = p.width, H = p.height;
-  const alpha = cutoutAlpha(pr, W, H);
-  for (let i = 0; i < W * H; i++) pr[i * 4 + 3] = alpha[i];
-  return new Uint8Array(UPNG.encode([pr.buffer], W, H, 0));
-}
+// NOTE: the alpha cutout (UPNG decode/encode + cutoutAlpha connected-components/
+// flood-fill, ~2s of pure-JS CPU on a 2K paint) used to run HERE and tripped the
+// Pages Function CPU ceiling → CF 1102 "Worker exceeded CPU time limit". It now
+// runs in the BROWSER: this Function omits `cutout` from deps, so the pipeline
+// persists the raw paint and the client cuts + uploads frame.png back to R2 via
+// /api/finalize/<id> (a no-CPU write). See src/generate/pipeline.ts step 5/6 and
+// src/generate/cutoutClient.ts.
 
 function clientIp(req: Request): string {
   return req.headers.get("CF-Connecting-IP") || req.headers.get("X-Forwarded-For") || "anon";
@@ -125,11 +115,12 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
     falKey: env.FAL_KEY,
     openaiKey: env.OPENAI_API_KEY,
     rasterize,
-    cutout,
+    // NO `cutout`: deferred to the browser to stay under the Function CPU ceiling.
     store: env.SKINS
       ? async (id, kind, data) => {
-          const ext = kind === "frame" ? "png" : "json";
-          const contentType = kind === "frame" ? "image/png" : "application/json";
+          const isImg = kind === "frame" || kind === "paint";
+          const ext = isImg ? "png" : "json";
+          const contentType = isImg ? "image/png" : "application/json";
           const key = `skins/${id}/${kind}.${ext}`;
           await env.SKINS!.put(key, data, { httpMetadata: { contentType } });
           return `${assetBase}/${key}`;

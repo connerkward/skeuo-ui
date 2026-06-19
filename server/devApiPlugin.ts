@@ -10,10 +10,8 @@ import type { Plugin, ViteDevServer } from "vite";
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
-import UPNG from "upng-js";
 import { handleGenerate } from "../src/generate/handler";
 import type { RuntimeDeps } from "../src/generate/pipeline";
-import { cutoutAlpha } from "../src/generate/blueprint";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
 // the same precedence used for both FAL_KEY and OPENAI_API_KEY.
@@ -37,21 +35,11 @@ function rasterize(svg: string): Promise<Uint8Array> {
   return Promise.resolve(new Uint8Array(r.render().asPng()));
 }
 
-// Key the near-white background out of the PAINTED silhouette → RGBA PNG.
-// The paint prompt forces "everything outside the silhouette stays pure white",
-// so the non-white region is the real (expanded) body outline. Steps: threshold
-// non-white → body mask; keep the largest connected component (drop stray specks);
-// fill internal holes (so dark control wells inside the body stay opaque); a light
-// 1px erode to kill the white halo at the edge. See cutoutAlpha() (shared logic).
-function cutout(paintPng: Uint8Array): Promise<Uint8Array> {
-  const p = UPNG.decode(toAB(paintPng));
-  const pr = new Uint8Array(UPNG.toRGBA8(p)[0]);
-  const W = p.width, H = p.height;
-  const alpha = cutoutAlpha(pr, W, H);
-  for (let i = 0; i < W * H; i++) pr[i * 4 + 3] = alpha[i];
-  return Promise.resolve(new Uint8Array(UPNG.encode([pr.buffer], W, H, 0)));
-}
-const toAB = (u: Uint8Array): ArrayBuffer => u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength) as ArrayBuffer;
+// NOTE: the alpha cutout runs in the BROWSER (see src/generate/cutoutClient.ts),
+// not here — dev mirrors the deployed CF Worker path exactly: /api/generate stores
+// the RAW paint, the client cuts it and uploads frame.png back via /api/finalize.
+// (The Worker must defer it to dodge the Function CPU ceiling / CF 1102; dev mirrors
+// it so the one code path is what gets tested locally.)
 
 export function devApiPlugin(): Plugin {
   return {
@@ -66,11 +54,11 @@ export function devApiPlugin(): Plugin {
       const genDir = resolve(server.config.root, "public", "generated");
       const store = async (
         id: string,
-        kind: "frame" | "template" | "meta",
+        kind: "frame" | "paint" | "template" | "meta",
         data: Uint8Array | string,
       ): Promise<string> => {
         mkdirSync(genDir, { recursive: true });
-        const ext = kind === "frame" ? "png" : "json";
+        const ext = kind === "frame" || kind === "paint" ? "png" : "json";
         const file = `${id}-${kind}.${ext}`;
         writeFileSync(resolve(genDir, file), data as Uint8Array | string);
         return `/generated/${file}`;
@@ -85,7 +73,8 @@ export function devApiPlugin(): Plugin {
           try { body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"); }
           catch { res.statusCode = 400; res.end(JSON.stringify({ status: "error", error: "invalid JSON" })); return; }
           const ip = (req.socket.remoteAddress || "local").toString();
-          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, cutout, store, log: (m) => server.config.logger.info(m) };
+          // no `cutout`: deferred to the browser, mirroring the deployed Worker.
+          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, store, log: (m) => server.config.logger.info(m) };
           try {
             const out = await handleGenerate({ body, ip, deps });
             res.statusCode = out.status === "error" ? 429 : 200;
@@ -94,6 +83,30 @@ export function devApiPlugin(): Plugin {
           } catch (e) {
             res.statusCode = 500;
             res.end(JSON.stringify({ status: "error", error: e instanceof Error ? e.message : String(e) }));
+          }
+        });
+      });
+
+      // POST /api/finalize/<id> — local parity with functions/api/finalize/[id].ts.
+      // The browser cuts the raw paint and uploads the finished frame.png here; we
+      // write it next to the other artifacts so /api/skin + /share work end-to-end.
+      server.middlewares.use("/api/finalize/", (req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        if (req.method !== "POST") { res.statusCode = 405; res.end(JSON.stringify({ error: "POST only" })); return; }
+        const id = decodeURIComponent((req.url ?? "").replace(/^\/+/, "").split(/[?#]/)[0]);
+        if (!id || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(id)) { res.statusCode = 400; res.end(JSON.stringify({ error: "bad id" })); return; }
+        if (!existsSync(resolve(genDir, `${id}-template.json`))) { res.statusCode = 404; res.end(JSON.stringify({ error: "unknown skin" })); return; }
+        const chunks: Buffer[] = [];
+        req.on("data", (c) => chunks.push(c as Buffer));
+        req.on("end", () => {
+          try {
+            mkdirSync(genDir, { recursive: true });
+            writeFileSync(resolve(genDir, `${id}-frame.png`), Buffer.concat(chunks));
+            res.statusCode = 200;
+            res.end(JSON.stringify({ id, frameUrl: `/generated/${id}-frame.png` }));
+          } catch (e) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
           }
         });
       });
