@@ -317,7 +317,16 @@ body {
 }
 /* the visualizer sits at the skin's real screen region (rect set inline) */
 .m-mini-vis { pointer-events: none; }
-.m-mini-vis canvas, .m-mini-vis .vis { width: 100%; height: 100%; display: block; }
+.m-mini-vis canvas, .m-mini-vis .vis-canvas { width: 100%; height: 100%; display: block; }
+/* the RADIAL visualizer fills a ~15px disc and its near-white peaks/gradient
+   merge into a bright blob at that size — sit it in a recessed dark-glass well
+   and dim the spectrum to a subtle animated glow (legible at thumbnail scale,
+   no white smear). */
+.m-mini-vis.is-round {
+  border-radius: 50%; overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, #1b1f27 0%, #0a0c11 58%, #050608 100%);
+}
+.m-mini-vis.is-round canvas { opacity: .5; }
 .m-strip-item.on .m-strip-mini {
   box-shadow: 0 0 0 2px var(--m-accent, #1db954), 0 5px 16px rgba(0,0,0,.55);
 }

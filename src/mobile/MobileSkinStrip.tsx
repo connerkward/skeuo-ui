@@ -105,7 +105,7 @@ function MiniVis({ skinId }: { skinId: string }) {
   return (
     <>
       {vizRegions.map((r) => (
-        <span key={r.id} className="m-mini-vis" style={rectStyle(r)}>
+        <span key={r.id} className={`m-mini-vis ${r.shape === "ellipse" ? "is-round" : ""}`} style={rectStyle(r)}>
           {renderViz(r)}
         </span>
       ))}
@@ -115,12 +115,10 @@ function MiniVis({ skinId }: { skinId: string }) {
 
 function rectStyle(r: Region): React.CSSProperties {
   const { x, y, w, h } = r.rect;
-  const round = r.shape === "ellipse";
   return {
     position: "absolute",
     left: `${x * 100}%`, top: `${y * 100}%`,
     width: `${w * 100}%`, height: `${h * 100}%`,
-    ...(round ? { borderRadius: "50%", overflow: "hidden" } : {}),
   };
 }
 
