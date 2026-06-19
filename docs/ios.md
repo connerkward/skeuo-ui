@@ -135,6 +135,14 @@ two local fixes there must be **reapplied after any re-init** (then
    never copied. (No more manual `rm libapp.a` after archiving.)
 2. **`project.yml` → `info.properties: ITSAppUsesNonExemptEncryption: false`** —
    skips the manual export-compliance prompt in App Store Connect each build.
+3. **`project.yml` → `info.properties: CFBundleURLTypes` (the `skeuo` scheme).**
+   `tauri ios init` injects the URL scheme into `Info.plist`, but `xcodegen
+   generate` **rewrites `Info.plist` from `info.properties`** and silently drops
+   anything not listed there — including `CFBundleURLTypes`. Without it the app
+   doesn't claim `skeuo://`, so the OAuth bounce dies with **"Safari cannot open
+   the page because the address is invalid"** on device (the Simulator can mask
+   it if its build predated the strip). Any property that must survive a
+   regeneration has to live in `info.properties`.
 
 Pipeline: `tauri ios build --export-method app-store-connect --archive-only` →
 `xcodebuild -exportArchive … -exportOptionsPlist /tmp/skeuo-export-options.plist`
