@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Visualizer } from "../player/Visualizer";
-import { thumbUrl, skinTemplateUrl, skinStyle } from "../player/skins";
+import { thumbUrl, skinTemplateUrl, skinStyle, layerUrl, skinHas } from "../player/skins";
 import type { SkinAssets } from "../player/skins";
 import type { Template, Region } from "../template/schema";
 
@@ -22,6 +22,32 @@ export function MobileSkinStrip({ skins, index, createIdx, onPick }: {
   const scroller = useRef<HTMLDivElement>(null);
   const items = useRef<(HTMLButtonElement | null)[]>([]);
   const [live, setLive] = useState<Set<number>>(new Set());
+  const preloaded = useRef<Set<number>>(new Set());
+
+  // After the critical thumbnail/main-player network settles, warm the FULL-SIZE
+  // skin assets for the minis currently in view, at idle priority, so tapping one
+  // loads the full <Composite> instantly (cache hit). requestIdleCallback naturally
+  // defers until the page is quiet, so this never competes with the thumbs/main
+  // player. We warm frame + screen (via Image) and the template (via fetch) — NOT
+  // the sprites dir (~10 MB/skin, far too heavy).
+  useEffect(() => {
+    const ric: typeof window.requestIdleCallback | undefined =
+      typeof window !== "undefined" ? window.requestIdleCallback : undefined;
+    const schedule = (cb: () => void) =>
+      ric ? ric(cb, { timeout: 1500 }) : window.setTimeout(cb, 600);
+    for (const i of live) {
+      if (i >= skins.length) continue;          // skip the trailing "+" create item
+      if (preloaded.current.has(i)) continue;
+      preloaded.current.add(i);
+      const id = skins[i].id;
+      schedule(() => {
+        new Image().src = layerUrl(id, "frame");
+        if (skinHas(id, "screen")) new Image().src = layerUrl(id, "screen");
+        const t = skinTemplateUrl(id);
+        if (t) fetch(t).catch(() => {});
+      });
+    }
+  }, [live, skins]);
 
   useEffect(() => {
     const root = scroller.current;
