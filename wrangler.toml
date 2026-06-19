@@ -35,3 +35,13 @@ bucket_name = "skeuo-skins"
 # Stored skin artifacts are served same-origin via /api/asset (functions/api/asset).
 [vars]
 ASSETS_BASE_URL = "/api/asset"
+
+# The /api/generate Function does heavy PURE-JS image work after the fal paint —
+# UPNG decode + cutoutAlpha (connected-components/flood-fill) + UPNG re-encode of
+# the paint PNG. That CPU (~2s) trips the default Worker CPU ceiling → CF error
+# 1102 "Worker exceeded CPU time limit" (outcome=exceededCpu in `wrangler tail`).
+# Raise the per-invocation CPU budget to the max (5 min). NOTE: cpu_ms only applies
+# on the Workers Standard Usage Model (paid). On the free/Bundled plan it is ignored
+# and the real fix is moving the heavy image work off the Worker (client-side cutout).
+[limits]
+cpu_ms = 300_000
