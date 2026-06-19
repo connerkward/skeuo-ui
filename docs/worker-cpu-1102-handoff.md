@@ -1,6 +1,19 @@
 # /api/generate is down on skeuo.fm — CF Worker CPU limit (error 1102) — handoff
 
-**Status:** the wizard error is now *legible* but generation still fails in production.
+**STATUS: RESOLVED (2026-06-18).** `cpu_ms` was confirmed a no-op on Pages Functions
+(live tail still showed `exceededCpu` at 2010ms with `cpu_ms=300000` deployed). Fixed
+by moving the post-paint cutout OFF the Worker: it now stores the raw paint and the
+**browser** does the cutout + uploads the finished `frame.png` back to R2 via a new
+no-CPU `POST /api/finalize/<id>` (write-once, gated on an existing `template.json`).
+`/api/generate` is now 200 in production. Commits: `bd9e4ee` (web fix), `86130dd`
+(don't cache the 404 while frame.png is mid-upload), `d41be95` (make generation work
+in the native iOS app + macOS widget: absolute API base + CORS), `1c826ec` (iOS 0.1.4
+→ TestFlight). Verified live: generate 200, paint→cut→finalize→frame.png 200, CORS
+preflight 204. The original handoff below is kept for context.
+
+---
+
+**Status (original):** the wizard error is now *legible* but generation still fails in production.
 Local dev is unaffected. This doc is everything the next agent needs.
 
 ## Symptom
