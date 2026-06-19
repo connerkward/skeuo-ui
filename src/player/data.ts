@@ -6,6 +6,7 @@ export interface Track {
   artist: string;
   title: string;
   seconds: number;
+  cover?: string;   // album-art URL (real when Spotify-driven; absent for the mock playlists → CD/art uses a CSS fallback)
 }
 
 export interface SkinContent {

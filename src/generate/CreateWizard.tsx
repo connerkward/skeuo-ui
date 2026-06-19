@@ -343,7 +343,9 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
 // Each palette kind owns a list of meaningful names; we add the first one not
 // already present so repeated clicks cycle through real controls instead of
 // piling up duplicates. Ids are friendly (the bind/dynamicType), never "slider-h-14sr".
-const SCREEN_TYPES: DynamicType[] = ["visualizer", "marquee", "playlist"];
+const SCREEN_TYPES: DynamicType[] = ["visualizer", "cd", "albumart", "marquee", "playlist"];
+// cd/albumart want a SQUARE pixel region; canvas is 1024×1536 so a square needs w = 1.5·h.
+const SQUARE_TYPES = new Set<DynamicType>(["cd", "albumart"]);
 const BUTTON_BINDS = ["play", "prev", "next", "stop"];
 const KNOB_BINDS = ["volume", "balance"];
 const TOGGLE_BINDS = ["shuffle", "eqOn"];
@@ -366,9 +368,13 @@ function newRegion(palette: PaletteKind, regions: Region[]): Region {
 
   if (palette === "screen") {
     const dt = firstFree(usedTypes, SCREEN_TYPES) as DynamicType;
+    // a square pixel region for the disc/cover (w = 1.5·h on the 1024×1536 canvas)
+    const rect = SQUARE_TYPES.has(dt)
+      ? { x: 0.3, y: 0.33, w: 0.4, h: 0.267 }
+      : { x: 0.3, y: 0.4, w: 0.4, h: 0.16 };
     return {
       id: uniqueId(dt, regions), kind: "display", content: "dynamic", layer: "screen",
-      rect: { x: 0.3, y: 0.4, w: 0.4, h: 0.16 }, dynamicType: dt, label: dt,
+      rect, dynamicType: dt, label: dt,
     };
   }
   if (palette === "button") {

@@ -227,6 +227,10 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
             ))}
           </ol>
         );
+      case "cd":
+        return <CdDisc ps={ps} />;
+      case "albumart":
+        return <AlbumArt ps={ps} />;
     }
   }
 
@@ -583,6 +587,65 @@ function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
       <span className="eq-label">{r.label}</span>
     </div>
   );
+}
+
+/* ---------- mock CD: album art on a spinning, reflective disc ----------
+   The platter ramps its angular velocity up to a cruise speed when playback
+   starts and eases back to a stop when paused/stopped — a real spin-up /
+   spin-down, driven by rAF on a ref (no per-frame React re-render). The
+   iridescent ring rotates WITH the disc; the specular gloss is fixed (the
+   light source doesn't move), which is what reads as a reflective CD. */
+function CdDisc({ ps }: { ps: PlayerState }) {
+  const platter = useRef<HTMLDivElement>(null);
+  const playingRef = useRef(ps.playing);
+  playingRef.current = ps.playing;
+  useEffect(() => {
+    let raf = 0, angle = 0, vel = 0, last = 0;
+    const CRUISE = 190;   // deg/s while playing (~32 rpm — a believable CD-ish spin)
+    const ACCEL = 230;    // deg/s² ramp — ~0.8s to spin up, a touch longer to coast down
+    const COAST = 150;    // deg/s² spin-down (gentler than spin-up)
+    const tick = (t: number) => {
+      if (!last) last = t;
+      const dt = Math.min(0.05, (t - last) / 1000); last = t;
+      const target = playingRef.current ? CRUISE : 0;
+      if (vel < target) vel = Math.min(target, vel + ACCEL * dt);
+      else if (vel > target) vel = Math.max(target, vel - COAST * dt);
+      angle = (angle + vel * dt) % 360;
+      if (platter.current) platter.current.style.transform = `rotate(${angle}deg)`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const cover = ps.track.cover;
+  return (
+    <div className="dyn cd-disc" data-playing={ps.playing}>
+      <div className="cd-wrap">
+        <div className="cd-platter" ref={platter}>
+          {cover
+            ? <img className="cd-art" src={cover} alt="" draggable={false} />
+            : <div className="cd-art cd-art-fallback">
+                <span className="cd-fb-title">{ps.track.title}</span>
+                <span className="cd-fb-artist">{ps.track.artist}</span>
+              </div>}
+          <div className="cd-iris" />
+          <div className="cd-hole" />
+        </div>
+        <div className="cd-gloss" />
+      </div>
+    </div>
+  );
+}
+
+/* the bare cover image as a placeable element (no disc) */
+function AlbumArt({ ps }: { ps: PlayerState }) {
+  const cover = ps.track.cover;
+  return cover
+    ? <img className="dyn albumart" src={cover} alt={`${ps.track.artist} — ${ps.track.title}`} draggable={false} />
+    : <div className="dyn albumart albumart-fallback">
+        <span className="cd-fb-title">{ps.track.title}</span>
+        <span className="cd-fb-artist">{ps.track.artist}</span>
+      </div>;
 }
 
 function EqCurve({ bands, active }: { bands: number[]; active: boolean }) {

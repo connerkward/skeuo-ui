@@ -71,10 +71,12 @@ const REPEAT_TO_NUM: Record<PlaybackState["repeat_state"], number> = { off: 0, t
 const NUM_TO_REPEAT: Record<number, PlaybackState["repeat_state"]> = { 0: "off", 1: "track", 2: "context" };
 
 function toTrack(t: SpotifyTrack): Track {
+  // album.images are ordered largest-first; take the biggest for a crisp CD label.
   return {
     artist: t.artists.map((a) => a.name).join(", ") || "Unknown",
     title: t.name,
     seconds: Math.round(t.duration_ms / 1000),
+    cover: t.album?.images?.[0]?.url,
   };
 }
 
