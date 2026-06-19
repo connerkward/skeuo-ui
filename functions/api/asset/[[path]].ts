@@ -11,18 +11,28 @@ interface Env {
   SKINS?: R2Bucket;
 }
 
+// A MISS must NOT be cached: generated skins are written in two steps (the Worker
+// stores paint.png; the browser uploads the cut frame.png afterward — see
+// /api/finalize), so frame.png is briefly absent. If a 404 in that window got
+// cached (a crawler, an early share-open, a probe), the long immutable cache would
+// serve a stale 404 forever — even after the frame lands. So 404/503 carry
+// `no-store`, and the immutable cache lives ONLY on the 200 below (NOT in _headers,
+// which can't condition on status). The object is content-addressed → immutable.
+const miss = (msg: string, status: number) =>
+  new Response(msg, { status, headers: { "Cache-Control": "no-store" } });
+
 export const onRequestGet = async (
   ctx: { params: { path: string | string[] }; env: Env }
 ): Promise<Response> => {
   const { params, env } = ctx;
-  if (!env.SKINS) return new Response("storage not configured", { status: 503 });
+  if (!env.SKINS) return miss("storage not configured", 503);
 
   const parts = Array.isArray(params.path) ? params.path : [params.path];
   const key = parts.map((p) => decodeURIComponent(p)).join("/");
-  if (!key) return new Response("not found", { status: 404 });
+  if (!key) return miss("not found", 404);
 
   const obj = await env.SKINS.get(key);
-  if (!obj) return new Response("not found", { status: 404 });
+  if (!obj) return miss("not found", 404);
 
   const headers = new Headers();
   obj.writeHttpMetadata(headers);

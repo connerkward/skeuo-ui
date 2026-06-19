@@ -10,10 +10,13 @@
   # spend-capped and costs the owner, not the visitor. frame-ancestors stays open.
   Content-Security-Policy: frame-ancestors *
 
-# R2-served generated skin artifacts — immutable, long cache so Cloudflare's CDN
-# absorbs reads and R2 Class-B ops only happen on a cache miss (overage guard).
-/api/asset/*
-  Cache-Control: public, max-age=31536000, immutable
+# R2-served generated skin artifacts: the long immutable Cache-Control is set by
+# the asset Function ITSELF, on 200 responses only (functions/api/asset/[[path]].ts).
+# It is deliberately NOT set here: a blanket _headers rule can't condition on status,
+# so it would also cache 404s — and a generated skin's frame.png is briefly 404 while
+# the browser uploads it (two-step write, see /api/finalize). Caching that 404 under
+# `immutable` would serve a stale 404 forever. The Function gives 200→immutable,
+# 404→no-store, which is what we want.
 
 # Vite emits content-hashed JS/CSS into /assets — safe to cache forever.
 /assets/*
