@@ -1,0 +1,110 @@
+{
+  "id": "gremlin",
+  "name": "wild-sculpt",
+  "canvas": {
+    "w": 1024,
+    "h": 1536
+  },
+  "regions": [
+    {
+      "id": "visualizer",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.315,
+        "y": 0.13166666666666668,
+        "w": 0.37,
+        "h": 0.24666666666666667
+      },
+      "dynamicType": "visualizer",
+      "shape": "ellipse"
+    },
+    {
+      "id": "seek",
+      "kind": "slider-h",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.23,
+        "y": 0.39786458333333335,
+        "w": 0.54,
+        "h": 0.018229166666666668
+      },
+      "bind": "seek",
+      "label": "Seek"
+    },
+    {
+      "id": "play",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.435546875,
+        "y": 0.41739583333333335,
+        "w": 0.12890625,
+        "h": 0.0859375
+      },
+      "bind": "play",
+      "label": "play",
+      "shape": "ellipse"
+    },
+    {
+      "id": "prev",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.31640625,
+        "y": 0.43497395833333335,
+        "w": 0.076171875,
+        "h": 0.05078125
+      },
+      "bind": "prev",
+      "label": "prev",
+      "shape": "ellipse"
+    },
+    {
+      "id": "next",
+      "kind": "button",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.607421875,
+        "y": 0.43497395833333335,
+        "w": 0.076171875,
+        "h": 0.05078125
+      },
+      "bind": "next",
+      "label": "next",
+      "shape": "ellipse"
+    },
+    {
+      "id": "knob0",
+      "kind": "knob",
+      "content": "sprite",
+      "layer": "components",
+      "rect": {
+        "x": 0.453125,
+        "y": 0.529375,
+        "w": 0.09375,
+        "h": 0.0625
+      },
+      "bind": "volume",
+      "label": "VOL"
+    },
+    {
+      "id": "marquee",
+      "kind": "display",
+      "content": "dynamic",
+      "layer": "screen",
+      "rect": {
+        "x": 0.19,
+        "y": 0.6127083333333333,
+        "w": 0.62,
+        "h": 0.032552083333333336
+      },
+      "dynamicType": "marquee"
+    }
+  ]
+}

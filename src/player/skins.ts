@@ -119,6 +119,7 @@ export const skinList: SkinAssets[] = [
   { id: "stonehead",name: "Olmec Head ✦",   blurb: "Colossal basalt stone head, chiselled sockets", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/stonehead/template.json" },
   { id: "cupcake",  name: "Princess Cake ✦", blurb: "Cupcake: swirl frosting, sprinkles, gold tiara", has: ["frame"], live: true, style: "manray", templateUrl: "/skins/cupcake/template.json" },
   { id: "chacmool", name: "Chacmool ✦",     blurb: "Reclining Mesoamerican basalt statue (ref-matched)", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/chacmool/template.json" },
+  { id: "gremlin",  name: "Green Gremlin ✦", blurb: "Glossy green rubber demon: dark horns, red backwards cap, fang grin", has: ["frame"], live: true, style: "frog", templateUrl: "/skins/gremlin/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
