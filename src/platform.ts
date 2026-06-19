@@ -36,6 +36,18 @@ export function initialSkinParam(): string | null {
   return new URLSearchParams(window.location.search).get("skin");
 }
 
+// API origin for the backend (Cloudflare Pages Functions). The native shells
+// (macOS widget + iOS app) bundle the frontend and serve it from a non-HTTP
+// origin (tauri://localhost), so a RELATIVE "/api/…" never reaches the backend —
+// the same reason redirectUri() uses an absolute OAuth URL on native. So under
+// Tauri we point API calls at the deployed origin; on the web they stay relative
+// (same-origin). Pass through anything already absolute (http(s)/data/blob).
+export const API_ORIGIN = "https://skeuo.fm";
+export function apiUrl(path: string): string {
+  if (/^(https?:|data:|blob:)/.test(path)) return path;
+  return isTauri() ? API_ORIGIN + path : path;
+}
+
 // OAuth redirect target — three cases, because the return path differs per shell:
 //
 // • Web → the site's own origin. Spotify reloads it with ?code and the SPA

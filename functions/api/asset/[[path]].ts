@@ -18,8 +18,11 @@ interface Env {
 // serve a stale 404 forever — even after the frame lands. So 404/503 carry
 // `no-store`, and the immutable cache lives ONLY on the 200 below (NOT in _headers,
 // which can't condition on status). The object is content-addressed → immutable.
+// CORS: the native shells (iOS app, macOS widget) fetch these from the tauri://
+// origin and read the paint PNG into a canvas for the client-side cutout, which
+// requires Access-Control-Allow-Origin. Public read-only assets — `*` is fine.
 const miss = (msg: string, status: number) =>
-  new Response(msg, { status, headers: { "Cache-Control": "no-store" } });
+  new Response(msg, { status, headers: { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" } });
 
 export const onRequestGet = async (
   ctx: { params: { path: string | string[] }; env: Env }
@@ -40,5 +43,6 @@ export const onRequestGet = async (
   // immutable: skins/<id>/… is content-addressed by a unique id, never overwritten.
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/octet-stream");
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  headers.set("Access-Control-Allow-Origin", "*");
   return new Response(obj.body, { headers });
 };

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { GenerateRequest } from "./api";
-import { postGenerate } from "./api";
+import { postGenerate } from "./postGenerate";
 import { finishCutout } from "./cutoutClient";
+import { apiUrl } from "../platform";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, type LayoutVariant } from "./layouts";
 import type { Region, Rect, Kind, DynamicType } from "../template/schema";
@@ -158,7 +159,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         if (data.status !== "done") { setErr("unexpected pending response"); continue; }
         // The CF Worker defers the alpha cutout to here (CPU ceiling) — cut the raw
         // paint in-browser and upload the finished frame.png back. No-op server-side.
-        let frameUrl = data.frameUrl;
+        let frameUrl = apiUrl(data.frameUrl);
         if (data.needsCutout && data.paintUrl) {
           try { frameUrl = await finishCutout(data.id, data.paintUrl, data.frameUrl); }
           catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }

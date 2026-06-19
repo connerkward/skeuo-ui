@@ -12,5 +12,7 @@
     "strict": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["functions/**/*.ts", "src/generate/**/*.ts"]
+  "include": ["functions/**/*.ts", "src/generate/**/*.ts"],
+  "comment2": "Client-only helpers live under src/generate but use the DOM (canvas, window) — they are NOT part of the Worker. Exclude them so this Worker-types check stays valid.",
+  "exclude": ["src/generate/cutoutClient.ts", "src/generate/postGenerate.ts"]
 }

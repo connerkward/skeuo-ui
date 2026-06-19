@@ -56,9 +56,19 @@ export const onRequestPost = async (
   return json({ id, frameUrl });
 };
 
+// CORS: native shells (iOS app, macOS widget) POST the cut frame here from the
+// tauri:// origin; image/png is a non-simple content type → preflight OPTIONS.
+const CORS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+export const onRequestOptions = (): Response => new Response(null, { status: 204, headers: CORS });
+
 function json(obj: unknown, status = 200): Response {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...CORS },
   });
 }

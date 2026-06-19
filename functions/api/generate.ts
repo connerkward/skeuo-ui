@@ -156,6 +156,17 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
   return json(res, res.status === "error" ? 429 : 200);
 };
 
+// CORS: the native shells (iOS app, macOS widget) POST here from the tauri://
+// origin. application/json is a non-simple content type, so the browser sends a
+// preflight OPTIONS first. Generation is public + spend-capped — `*` is fine.
+const CORS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+export const onRequestOptions = (): Response => new Response(null, { status: 204, headers: CORS });
+
 function json(obj: unknown, status = 200): Response {
-  return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json", ...CORS } });
 }
