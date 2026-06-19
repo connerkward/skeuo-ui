@@ -6,6 +6,7 @@ import type { SpotifyDrive, SpotifyHook } from "../spotify/useSpotify";
 import { useSwipe } from "./useSwipe";
 import { Brand } from "../components/Brand";
 import { MobileSpotify } from "./MobileSpotify";
+import { MobileSkinStrip } from "./MobileSkinStrip";
 
 interface Props {
   template: Template;
@@ -83,21 +84,13 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp,
         </div>
       </div>
 
-      <nav className="m-dots" aria-label="skin position">
-        {skins.map((s, i) => (
-          <button
-            key={s.id}
-            className={`m-dot ${i === sw.index ? "on" : ""}`}
-            onClick={() => sw.goTo(i)}
-            aria-label={s.name}
-          />
-        ))}
-        <button
-          className={`m-dot m-dot-create ${sw.index === createIdx ? "on" : ""}`}
-          onClick={() => sw.goTo(createIdx)}
-          aria-label="Generate your own"
-        />
-      </nav>
+      <MobileSkinStrip
+        template={template}
+        skins={skins}
+        index={sw.index}
+        createIdx={createIdx}
+        onPick={(i) => sw.goTo(i)}
+      />
     </div>
   );
 }
