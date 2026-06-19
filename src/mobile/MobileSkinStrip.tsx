@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { Composite } from "../player/Composite";
-import type { Template } from "../template/schema";
+import { Visualizer } from "../player/Visualizer";
+import { thumbUrl } from "../player/skins";
 import type { SkinAssets } from "../player/skins";
 
-// The bottom tray on mobile: a horizontally-scrolling filmstrip of LIVE mini
-// players (each a real <Composite/>, animating via the same mock visualizer the
-// big one uses) — replaces the old page-dots. Tap a mini to jump to that skin;
-// the active one is ringed and auto-scrolled into view.
+// The bottom tray on mobile: a horizontally-scrolling filmstrip of skin minis —
+// a LOW-RES WebP thumbnail (~16 KB) of each skin with a small animated visualizer
+// over it, so the strip reads as "alive" without loading the 2–5 MB full frames
+// (loading dozens of those is what made the strip crawl). Tap a mini to jump to
+// that skin; the active one is ringed and auto-scrolled into view.
 //
-// Perf: only minis in (or just off) the viewport mount a Composite — an
+// Perf: only minis in (or just off) the viewport mount their image + canvas — an
 // IntersectionObserver tracks visibility so a long skin list doesn't run dozens
-// of canvas loops at once. Off-screen items render an empty same-size slot, so
-// scroll geometry never shifts.
-export function MobileSkinStrip({ template, skins, index, createIdx, onPick }: {
-  template: Template;
+// of canvas loops or image loads at once. Off-screen items render an empty
+// same-size slot, so scroll geometry never shifts.
+export function MobileSkinStrip({ skins, index, createIdx, onPick }: {
   skins: SkinAssets[];
   index: number;       // current page (a skin index, or createIdx for the create page)
   createIdx: number;
@@ -61,7 +61,13 @@ export function MobileSkinStrip({ template, skins, index, createIdx, onPick }: {
           title={s.name}
         >
           <span className="m-strip-mini">
-            {live.has(i) ? <Composite template={template} skinId={s.id} /> : null}
+            {live.has(i) ? (
+              <>
+                <img className="m-mini-img" src={thumbUrl(s.id)} alt="" draggable={false}
+                  loading="lazy" decoding="async" />
+                <span className="m-mini-vis"><Visualizer playing analyser={null} bars={7} /></span>
+              </>
+            ) : null}
           </span>
         </button>
       ))}

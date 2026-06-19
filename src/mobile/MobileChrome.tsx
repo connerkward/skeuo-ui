@@ -85,7 +85,6 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp,
       </div>
 
       <MobileSkinStrip
-        template={template}
         skins={skins}
         index={sw.index}
         createIdx={createIdx}

@@ -310,8 +310,16 @@ body {
   border-radius: 9px; background: #0c0d10; pointer-events: none;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
 }
-/* the live player fills the mini; clip anything past the rounded slot */
-.m-strip-mini .player { width: 100%; height: auto; transform: none; }
+/* low-res thumbnail fills the slot; the small visualizer overlays the bottom */
+.m-mini-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center; display: block;
+}
+.m-mini-vis {
+  position: absolute; left: 12%; right: 12%; bottom: 8%; height: 26%;
+  opacity: .9; pointer-events: none;
+}
+.m-mini-vis canvas { width: 100%; height: 100%; display: block; }
 .m-strip-item.on .m-strip-mini {
   box-shadow: 0 0 0 2px var(--m-accent, #1db954), 0 5px 16px rgba(0,0,0,.55);
 }
