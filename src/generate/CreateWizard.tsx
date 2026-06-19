@@ -439,6 +439,15 @@ function PaintProgress({ progress, elapsed, autoBody }: {
         <span className="wiz-paint-dot" />{phaseLabel}…
         <span className="wiz-paint-steps">{Math.min(phaseIdx + 1, phases.length)}/{phases.length}</span>
       </div>
+      {/* mascot loading animation — the gremlin runs across rolling the knob while
+          the paint cooks. The clip is on pure black; mix-blend:screen on the card
+          (#101622) keys the black out so he floats on the progress card itself. */}
+      <video
+        className="wiz-paint-vid"
+        src="/loading-mascot.mp4"
+        autoPlay loop muted playsInline
+        aria-hidden="true"
+      />
     </div>
   );
 }
