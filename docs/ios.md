@@ -51,7 +51,7 @@ The result is the website's mobile experience, running natively full-screen: the
 swipeable skin carriage, the live player (spectrum / marquee / clock), the
 create-a-skin flow — all shared code, zero fork.
 
-## Spotify — easy connect, loopback OAuth
+## Spotify — easy connect (iOS: HTTPS bounce → deep link)
 
 Audio plays through the user's **active Spotify device** (their phone's Spotify
 app or any Connect target) via the Web API — the in-page Web Playback SDK ("play
@@ -64,29 +64,38 @@ Connecting is a single tap. The top bar carries a green **Connect Spotify** pill
 - linked → tap opens a bottom sheet (mode · playlist · disconnect), reusing the
   same `<SpotifyConnect/>` body the desktop sidebar uses.
 
-The OAuth flow is the **loopback** path shared with the desktop widget
-(`useSpotify.login()` → `oauth_loopback` in `src-tauri/src/lib.rs`):
+The OAuth return path **differs per shell** (`src/platform.ts` `redirectUri()`):
 
-1. App binds a one-shot `http://127.0.0.1:14565/callback` listener (Rust).
-2. `openUrl` opens the **system browser** (Safari) at Spotify `/authorize` (PKCE,
-   no secret).
-3. Spotify redirects Safari to the loopback URL; the listener captures `?code=…`.
-4. The reply page **bounces to `skeuo://connected`** — the app's own scheme (which
-   Spotify never sees) — so iOS pulls focus back to Skeuo. The PKCE exchange runs
-   in the app and the pill flips to linked.
+- **iOS** redirects to an **HTTPS bounce page** (`https://skeuo.fm/callback`,
+  served from `public/callback.html`):
+  1. `login()` opens Safari at Spotify `/authorize` (PKCE), `redirect_uri =
+     https://skeuo.fm/callback`.
+  2. Spotify redirects Safari to that page; it immediately forwards the whole
+     query to **`skeuo://callback?code=…`** (the app's own scheme).
+  3. iOS routes the deep link to the app, re-foregrounding it; the deep-link
+     effect in `useSpotify` runs the PKCE exchange and the pill flips to linked.
+- **macOS widget** keeps the **loopback** path (`oauth_loopback` in `lib.rs`,
+  `http://127.0.0.1:14565/callback`) — see below.
 
-### Why loopback, not a custom scheme
+### Why iOS can't use the loopback (the bug this fixed)
 
-Spotify's redirect rules permit only **HTTPS** and **loopback**
-(`http://127.0.0.1:PORT`); custom schemes like `skeuo://callback` are not in the
-sanctioned list and have hit `INVALID_CLIENT: Insecure redirect URI` regressions
-for PKCE apps since 2025. Loopback is the one type the docs guarantee for native
-apps, so both shells use it. `skeuo://` is still registered on iOS (deep-link
-`mobile` config → `CFBundleURLTypes`) — but only as the return-to-app bounce,
-never as the redirect Spotify validates.
+The desktop loopback works because the system browser and the app **coexist** —
+the app stays alive to answer the `127.0.0.1` listener. On **iOS this is broken**:
+opening Safari backgrounds the app and iOS **suspends** it, freezing the listener,
+so after the user taps *Agree* the redirect hits a dead socket and **Safari hangs
+forever** (confirmed on a real device, 2026-06-18). The Simulator masks it — it
+doesn't suspend aggressively, so the loopback "worked" there.
 
-**Dashboard:** register `http://127.0.0.1:14565/callback` as a redirect URI
-alongside the web origins, and set `VITE_SPOTIFY_CLIENT_ID`.
+The bounce avoids any backgrounded socket: Spotify only ever talks to an HTTPS URL
+(which its rules require — custom schemes like `skeuo://` are rejected by the
+authorize endpoint), and the app is **re-launched/foregrounded** by the deep link
+with the code in hand.
+
+**Dashboard:** register **all three** redirect URIs and set
+`VITE_SPOTIFY_CLIENT_ID`:
+- `https://skeuo.fm/callback` — iOS (HTTPS bounce)
+- `http://127.0.0.1:14565/callback` — macOS widget (loopback)
+- `https://skeuo.fm/` — web
 
 ## Desktop vs iOS — what's gated
 
@@ -105,9 +114,30 @@ both: the deep-link + opener plugins and the `oauth_loopback` command.
   the App ID `run.ward.skeuo` registered and a provisioning profile under the
   Apple Developer account (team `N4YGB5B92K`). Not yet wired — Simulator is the
   verified target so far.
-- **Loopback + app suspension.** When the app opens Safari for OAuth it gets
-  backgrounded; iOS suspends it after ~30 s, which would freeze the loopback
-  listener. The redirect normally lands within that window (Spotify redirects
-  immediately once authorized), but a slow first-time consent could miss it. If
-  it proves flaky on device, the fix is a native `ASWebAuthenticationSession`
-  plugin (keeps auth in-process, no suspension) — a follow-up.
+- **Loopback + app suspension (RESOLVED).** The loopback OAuth return hung on a
+  real device (app suspended behind Safari → dead listener). Fixed by the HTTPS
+  bounce above; iOS no longer uses the loopback. Desktop still does.
+
+## Rebuilding for TestFlight
+
+`tauri ios build` derives the bundle version from **`tauri.conf.json` `version`**
+(it overwrites the iOS Info.plist at build) — so bump the version *there*, not in
+`gen/apple`, for a new TestFlight build number (App Store Connect rejects a
+duplicate). `gen/apple/` is **gitignored** (regenerated by `tauri ios init`), so
+two local fixes there must be **reapplied after any re-init** (then
+`xcodegen generate --spec project.yml`):
+
+1. **`project.yml` → `sources: - path: Externals` gets `buildPhase: none`.**
+   Otherwise xcodegen sweeps the Rust static lib `libapp.a` into a `CpResource`
+   phase — it's already *linked* via the `framework: libapp.a` dependency, so the
+   copy is a duplicate that **fails the archive** and gets **rejected on upload
+   (90171: static lib not permitted in bundle)**. `buildPhase: none` = linked,
+   never copied. (No more manual `rm libapp.a` after archiving.)
+2. **`project.yml` → `info.properties: ITSAppUsesNonExemptEncryption: false`** —
+   skips the manual export-compliance prompt in App Store Connect each build.
+
+Pipeline: `tauri ios build --export-method app-store-connect --archive-only` →
+`xcodebuild -exportArchive … -exportOptionsPlist /tmp/skeuo-export-options.plist`
+→ `xcrun altool --upload-app -f Skeuo.ipa -t ios -u "$APPLE_ID" -p @env:APPLE_PASSWORD`
+(creds in gitignored `.env`). Internal testers with auto-distribution get it once
+processing finishes.
