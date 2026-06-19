@@ -80,11 +80,11 @@ export const skinList: SkinAssets[] = [
   // iterations ✦ — new wild_sculpt bodies on the same themes (sprites/palette
   // resolve through `style` to the theme's donor skin)
   { id: "frog2",    name: "Froggo II ✦",      blurb: "New sculpt on the frog theme", has: ["frame"], live: true, style: "frog",    templateUrl: "/skins/frog2/template.json" },
-  { id: "burger2",  name: "Double Stack ✦",   blurb: "New sculpt on the burger theme", has: ["frame"], live: true, style: "burger",  templateUrl: "/skins/burger2/template.json" },
+  { id: "burger2",  name: "Double Stack ✦",   blurb: "New sculpt on the burger theme", has: ["frame"], live: true, style: "burger",  hidden: true, templateUrl: "/skins/burger2/template.json" },
   { id: "bondi2",   name: "Bondi Grape ✦",    blurb: "New sculpt on the translucent-plastic theme", has: ["frame"], live: true, style: "bondi",   templateUrl: "/skins/bondi2/template.json" },
-  { id: "toilet2",  name: "Porcelain Throne ✦", blurb: "New sculpt on the ceramic theme", has: ["frame"], live: true, style: "toilet",  templateUrl: "/skins/toilet2/template.json" },
-  { id: "biomech2", name: "Brood Queen ✦",    blurb: "New sculpt on the Giger theme", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/biomech2/template.json" },
-  { id: "fiend2",   name: "Chrome Demon ✦",   blurb: "New sculpt on the chrome-predator theme", has: ["frame"], live: true, style: "winamp",  templateUrl: "/skins/fiend2/template.json" },
+  { id: "toilet2",  name: "Porcelain Throne ✦", blurb: "New sculpt on the ceramic theme", has: ["frame"], live: true, style: "toilet",  hidden: true, templateUrl: "/skins/toilet2/template.json" },
+  { id: "biomech2", name: "Brood Queen ✦",    blurb: "New sculpt on the Giger theme", has: ["frame"], live: true, style: "biomech", hidden: true, templateUrl: "/skins/biomech2/template.json" },
+  { id: "fiend2",   name: "Chrome Demon ✦",   blurb: "New sculpt on the chrome-predator theme", has: ["frame"], live: true, style: "winamp",  hidden: true, templateUrl: "/skins/fiend2/template.json" },
 
   // era homages ✦ — layout-first capsule/radial with their own sprite sets
   { id: "wmp",  name: "Media Capsule ✦", blurb: "WMP9 XP capsule: ringed dial pod, gel hardware", has: ["frame"], live: true, sprites: true, molded: true, templateUrl: "/skins/wmp/template.json" },
@@ -92,34 +92,34 @@ export const skinList: SkinAssets[] = [
 
   // radial ✦ — layout-FIRST: the arc template is drawn before the body, and
   // the image model grows the creature around it (circular seek ring)
-  { id: "maw",    name: "Angler Maw ✦",   blurb: "Fanged jaw grown around the dial, seek ring", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/maw/template.json" },
-  { id: "vortex", name: "Chrome Vortex ✦", blurb: "Octopus dome around the dial, seek ring", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/vortex/template.json" },
+  { id: "maw",    name: "Angler Maw ✦",   blurb: "Fanged jaw grown around the dial, seek ring", has: ["frame"], live: true, style: "biomech", hidden: true, templateUrl: "/skins/maw/template.json" },
+  { id: "vortex", name: "Chrome Vortex ✦", blurb: "Octopus dome around the dial, seek ring", has: ["frame"], live: true, style: "winamp", hidden: true, templateUrl: "/skins/vortex/template.json" },
 
   // minimal ✦ — stripped-down "now-playing puck": dial, seek, big play, one knob
   { id: "pebble", name: "Pebble ✦",       blurb: "Minimal frog puck — play / seek / volume only", has: ["frame"], live: true, style: "frog", templateUrl: "/skins/pebble/template.json" },
 
   // shape-diverse ✦ — relaxed silhouette prompt: deliberately NON-blob bodies
-  { id: "obelisk", name: "Bone Totem ✦",  blurb: "Tall vertebral totem, hero-sized play", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/obelisk/template.json" },
-  { id: "slab",   name: "War Slab ✦",     blurb: "Low wide chassis, chrome reference-steered", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/slab/template.json" },
+  { id: "obelisk", name: "Bone Totem ✦",  blurb: "Tall vertebral totem, hero-sized play", has: ["frame"], live: true, style: "biomech", hidden: true, templateUrl: "/skins/obelisk/template.json" },
+  { id: "slab",   name: "War Slab ✦",     blurb: "Low wide chassis, chrome reference-steered", has: ["frame"], live: true, style: "winamp", hidden: true, templateUrl: "/skins/slab/template.json" },
 
   // body horror ✦ — divergent takes on the biomech theme family
-  { id: "flesh",  name: "Flayed One ✦",   blurb: "Wet muscle & sinew, bone-plate hardware", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/flesh/template.json" },
-  { id: "scarab", name: "Scarab ✦",       blurb: "Black iridescent carapace, crimson seams", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/scarab/template.json" },
-  { id: "spore",  name: "Spore Mother ✦", blurb: "Cordyceps growths, gill ridges, amber glow", has: ["frame"], live: true, style: "biomech", templateUrl: "/skins/spore/template.json" },
+  { id: "flesh",  name: "Flayed One ✦",   blurb: "Wet muscle & sinew, bone-plate hardware", has: ["frame"], live: true, style: "biomech", hidden: true, templateUrl: "/skins/flesh/template.json" },
+  { id: "scarab", name: "Scarab ✦",       blurb: "Black iridescent carapace, crimson seams", has: ["frame"], live: true, style: "biomech", hidden: true, templateUrl: "/skins/scarab/template.json" },
+  { id: "spore",  name: "Spore Mother ✦", blurb: "Cordyceps growths, gill ridges, amber glow", has: ["frame"], live: true, style: "biomech", hidden: true, templateUrl: "/skins/spore/template.json" },
 
   // themed ✦ — generated-from-prompt bodies (radial), sprites via a donor style
-  { id: "tomato", name: "Tomato ✦",       blurb: "Cute ripe-tomato pod, leafy stem crown", has: ["frame"], live: true, style: "frog",   templateUrl: "/skins/tomato/template.json" },
-  { id: "mexico", name: "El Tri ✦",       blurb: "Mexico football: tricolor, eagle crest, no humans", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/mexico/template.json" },
+  { id: "tomato", name: "Tomato ✦",       blurb: "Cute ripe-tomato pod, leafy stem crown", has: ["frame"], live: true, style: "frog",   hidden: true, templateUrl: "/skins/tomato/template.json" },
+  { id: "mexico", name: "El Tri ✦",       blurb: "Mexico football: tricolor, eagle crest, no humans", has: ["frame"], live: true, style: "winamp", hidden: true, templateUrl: "/skins/mexico/template.json" },
 
   // requested ✦ — themed bodies; sprites/palette via a donor style
-  { id: "egypt",    name: "Pharaoh ✦",      blurb: "Gold sarcophagus: lapis nemes, Eye of Horus, scarabs", has: ["frame"], live: true, style: "manray", templateUrl: "/skins/egypt/template.json" },
-  { id: "worldcup", name: "World Cup ✦",    blurb: "Gold trophy + football, green-pitch screen", has: ["frame"], live: true, style: "halo",   templateUrl: "/skins/worldcup/template.json" },
-  { id: "poophero", name: "Poop Hero ✦",    blurb: "Poop-emoji superhero: googly swirl, red cape, bolt", has: ["frame"], live: true, style: "burger", templateUrl: "/skins/poophero/template.json" },
-  { id: "fallout",  name: "Pip-Boy ✦",      blurb: "Fallout industrial: olive metal, amber CRT glow", has: ["frame"], live: true, style: "halo",   templateUrl: "/skins/fallout/template.json" },
-  { id: "stonehead",name: "Olmec Head ✦",   blurb: "Colossal basalt stone head, chiselled sockets", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/stonehead/template.json" },
-  { id: "cupcake",  name: "Princess Cake ✦", blurb: "Cupcake: swirl frosting, sprinkles, gold tiara", has: ["frame"], live: true, style: "manray", templateUrl: "/skins/cupcake/template.json" },
-  { id: "chacmool", name: "Chacmool ✦",     blurb: "Reclining Mesoamerican basalt statue (ref-matched)", has: ["frame"], live: true, style: "winamp", templateUrl: "/skins/chacmool/template.json" },
-  { id: "gremlin",  name: "Green Gremlin ✦", blurb: "Glossy green rubber demon: dark horns, red backwards cap, fang grin", has: ["frame"], live: true, style: "frog", templateUrl: "/skins/gremlin/template.json" },
+  { id: "egypt",    name: "Pharaoh ✦",      blurb: "Gold sarcophagus: lapis nemes, Eye of Horus, scarabs", has: ["frame"], live: true, style: "manray", hidden: true, templateUrl: "/skins/egypt/template.json" },
+  { id: "worldcup", name: "World Cup ✦",    blurb: "Gold trophy + football, green-pitch screen", has: ["frame"], live: true, style: "halo",   hidden: true, templateUrl: "/skins/worldcup/template.json" },
+  { id: "poophero", name: "Poop Hero ✦",    blurb: "Poop-emoji superhero: googly swirl, red cape, bolt", has: ["frame"], live: true, style: "burger", hidden: true, templateUrl: "/skins/poophero/template.json" },
+  { id: "fallout",  name: "Pip-Boy ✦",      blurb: "Fallout industrial: olive metal, amber CRT glow", has: ["frame"], live: true, style: "halo",   hidden: true, templateUrl: "/skins/fallout/template.json" },
+  { id: "stonehead",name: "Olmec Head ✦",   blurb: "Colossal basalt stone head, chiselled sockets", has: ["frame"], live: true, style: "winamp", hidden: true, templateUrl: "/skins/stonehead/template.json" },
+  { id: "cupcake",  name: "Princess Cake ✦", blurb: "Cupcake: swirl frosting, sprinkles, gold tiara", has: ["frame"], live: true, style: "manray", hidden: true, templateUrl: "/skins/cupcake/template.json" },
+  { id: "chacmool", name: "Chacmool ✦",     blurb: "Reclining Mesoamerican basalt statue (ref-matched)", has: ["frame"], live: true, style: "winamp", hidden: true, templateUrl: "/skins/chacmool/template.json" },
+  { id: "gremlin",  name: "Green Gremlin ✦", blurb: "Glossy green rubber demon: dark horns, red backwards cap, fang grin", has: ["frame"], live: true, style: "frog", hidden: true, templateUrl: "/skins/gremlin/template.json" },
 ];
 
 export function skinTemplateUrl(id: string): string | undefined {
