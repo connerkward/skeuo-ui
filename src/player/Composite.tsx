@@ -590,28 +590,34 @@ function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
 }
 
 /* ---------- mock CD: album art on a spinning, reflective disc ----------
-   The platter ramps its angular velocity up to a cruise speed when playback
-   starts and eases back to a stop when paused/stopped — a real spin-up /
-   spin-down, driven by rAF on a ref (no per-frame React re-render). The
-   iridescent ring rotates WITH the disc; the specular gloss is fixed (the
-   light source doesn't move), which is what reads as a reflective CD. */
+   The platter eases its angular velocity toward a cruise speed when playback
+   starts and coasts back to a stop when paused/stopped, driven by rAF on a ref
+   (no per-frame React re-render). The velocity follows a frame-rate-independent
+   exponential approach — a short time constant on spin-up reads as a motor
+   catching the disc; a long one on spin-down reads as friction letting it coast
+   to rest. The real photoreal holographic diffraction (a generated CD-underside
+   texture, screen-blended over the art) rotates WITH the disc, so its rainbow
+   sweeps as it spins; the specular gloss is FIXED — the light source doesn't
+   move — which is exactly what reads as a reflection off a spinning disc. */
 function CdDisc({ ps }: { ps: PlayerState }) {
   const platter = useRef<HTMLDivElement>(null);
   const playingRef = useRef(ps.playing);
   playingRef.current = ps.playing;
   useEffect(() => {
     let raf = 0, angle = 0, vel = 0, last = 0;
-    const CRUISE = 190;   // deg/s while playing (~32 rpm — a believable CD-ish spin)
-    const ACCEL = 230;    // deg/s² ramp — ~0.8s to spin up, a touch longer to coast down
-    const COAST = 150;    // deg/s² spin-down (gentler than spin-up)
+    const CRUISE = 165;       // deg/s while playing — slow + hypnotic; fast enough to read the holo sweep, slow enough not to blur
+    const TAU_UP = 0.5;       // s — spin-up time constant (motor catches the disc)
+    const TAU_DOWN = 1.15;    // s — spin-down time constant (long, graceful friction coast)
     const tick = (t: number) => {
       if (!last) last = t;
       const dt = Math.min(0.05, (t - last) / 1000); last = t;
       const target = playingRef.current ? CRUISE : 0;
-      if (vel < target) vel = Math.min(target, vel + ACCEL * dt);
-      else if (vel > target) vel = Math.max(target, vel - COAST * dt);
+      const tau = target > vel ? TAU_UP : TAU_DOWN;
+      // exp approach is dt-independent: same easing at 60 or 120 Hz, no overshoot
+      vel += (target - vel) * (1 - Math.exp(-dt / tau));
+      if (target === 0 && vel < 1.2) vel = 0;   // settle cleanly instead of asymptoting forever
       angle = (angle + vel * dt) % 360;
-      if (platter.current) platter.current.style.transform = `rotate(${angle}deg)`;
+      if (platter.current) platter.current.style.transform = `rotate(${angle.toFixed(3)}deg)`;
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -622,13 +628,14 @@ function CdDisc({ ps }: { ps: PlayerState }) {
     <div className="dyn cd-disc" data-playing={ps.playing}>
       <div className="cd-wrap">
         <div className="cd-platter" ref={platter}>
+          <div className="cd-holo" />
           {cover
-            ? <img className="cd-art" src={cover} alt="" draggable={false} />
-            : <div className="cd-art cd-art-fallback">
+            ? <img className="cd-label" src={cover} alt="" draggable={false} />
+            : <div className="cd-label cd-art-fallback">
                 <span className="cd-fb-title">{ps.track.title}</span>
                 <span className="cd-fb-artist">{ps.track.artist}</span>
               </div>}
-          <div className="cd-iris" />
+          <div className="cd-label-sheen" />
           <div className="cd-hole" />
         </div>
         <div className="cd-gloss" />

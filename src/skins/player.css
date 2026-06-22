@@ -263,22 +263,41 @@
   will-change: transform; backface-visibility: hidden;
   box-shadow: 0 0.6cqw 1.6cqw rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.14);
 }
-.cd-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* the album art is the printed picture-disc LABEL: a centered circle covering the hub,
+   leaving the texture's vivid holographic ring showing around it (a real pressed
+   picture CD). Rotates with the platter. */
+.cd-label {
+  position: absolute; top: 50%; left: 50%; width: 64%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.16), 0 1cqw 2.4cqw rgba(0,0,0,.4);
+}
 .cd-art-fallback {
-  display: grid; place-items: center; align-content: center; gap: 1cqw; text-align: center; padding: 12%;
+  display: grid; place-items: center; align-content: center; gap: 1cqw; text-align: center; padding: 9%;
   background: conic-gradient(from 0deg, #262b35, #3c4453, #262b35, #4a5365, #262b35);
 }
 .cd-fb-title { font-size: 9cqw; font-weight: 700; line-height: 1.05; color: #eef2f8; max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .cd-fb-artist { font-size: 6cqw; color: #aab4c4; }
-/* iridescent data rings — concentric grooves + faint rainbow; rotates WITH the disc */
-.cd-iris {
-  position: absolute; inset: 0; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; opacity: .5;
-  background:
-    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.06) 0 0.4cqw, transparent 0.4cqw 1cqw),
-    conic-gradient(from 0deg, rgba(255,0,128,.18), rgba(0,200,255,.18), rgba(120,255,0,.18), rgba(255,200,0,.18), rgba(255,0,128,.18));
+/* photoreal holographic diffraction — a generated CD-underside texture (full-spectrum
+   opalescent rainbow on black) forms the whole disc surface. The album-art label sits
+   on top covering the hub, so the texture's vivid mid-band rainbow shows as a ring
+   around the label and its darker outer edge reads as the clear plastic rim. The disc
+   (texture + label) rotates together, so the rainbow ring sweeps as it spins. */
+.cd-holo {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: url("/cd-holo.png") center / cover no-repeat;
+  transition: filter .9s ease;
 }
-.cd-disc[data-playing="false"] .cd-iris { opacity: .3; }
+.cd-disc[data-playing="false"] .cd-holo { filter: saturate(.72) brightness(.92); }
+/* faint pearlescent sheen on the printed label (print sitting over a mirror layer) —
+   a soft iridescence + a raking highlight, low-opacity overlay so the album art reads */
+.cd-label-sheen {
+  position: absolute; top: 50%; left: 50%; width: 64%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; pointer-events: none; mix-blend-mode: overlay; opacity: .2;
+  background:
+    radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,.5), rgba(255,255,255,0) 50%),
+    conic-gradient(from 210deg, rgba(255,120,200,.6), rgba(120,200,255,.6), rgba(160,255,180,.6), rgba(255,220,140,.6), rgba(255,120,200,.6));
+}
 /* center spindle hole + clamping ring */
 .cd-hole {
   position: absolute; top: 50%; left: 50%; width: 13%; aspect-ratio: 1; transform: translate(-50%,-50%);
