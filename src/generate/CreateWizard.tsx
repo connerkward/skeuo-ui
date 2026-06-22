@@ -24,18 +24,18 @@ type Step = 0 | 1 | 2 | 3;
 
 // curated skeuomorphic-player prompts for the 🎲 Random button (idea step)
 const RANDOM_PROMPTS = [
-  "a chunky red toy crab with huge claws",
-  "a glossy frog puck on a lilypad",
-  "a brushed-chrome boombox",
-  "a translucent Y2K grape gadget",
-  "an Aztec stone eagle console",
-  "a deep-sea anglerfish jaw",
-  "a melting neon ice-cream pod",
-  "a worn leather hip-flask radio",
-  "a porcelain cat with blinking eyes",
-  "a rusted submarine control panel",
+  "a cute Y2K virtual-pet egg",
+  "a translucent grape jelly gadget",
+  "a baby-blue clamshell flip phone",
+  "a frosted see-through handheld game console",
+  "a glittery butterfly hair clip",
+  "a glossy gummy frog on a lilypad",
+  "a chunky inflatable vinyl chair",
+  "a holographic dolphin sticker pod",
+  "a pastel heart-shaped compact mirror",
+  "a fuzzy big-eyed robot pet",
   "a bubblegum-pink jelly bug",
-  "a carved obsidian beetle deck",
+  "a star-shaped candy boombox",
 ];
 
 const VARIANTS: { id: LayoutVariant; label: string; blurb: string }[] = [
@@ -76,7 +76,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   const [step, setStep] = useState<Step>(0);
 
   // step 1 — idea
-  const [prompt, setPrompt] = useState("a fanged anglerfish jaw");
+  const [prompt, setPrompt] = useState("a cute Y2K virtual-pet egg");
   const [refImage, setRefImage] = useState<string | undefined>();
   const fileRef = useRef<HTMLInputElement>(null);
   // rotating counter (NOT Math.random — banned here) so each 🎲 press advances
@@ -221,7 +221,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                     title="Fill with a random idea">🎲 Random</button>
                 </span>
                 <textarea rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="a fanged anglerfish jaw" />
+                  placeholder="a cute Y2K virtual-pet egg" />
               </label>
               <label className="wiz-field">
                 <span>Reference image (optional — steers palette &amp; material)</span>

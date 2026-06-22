@@ -28,7 +28,7 @@ const fmt$ = (n: number) => `$${n.toFixed(2)}`;
 const modelLabel = (id: ModelId) => MODELS.find((m) => m.id === id)?.label ?? id;
 
 export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void }) {
-  const [prompt, setPrompt] = useState("a fanged anglerfish jaw");
+  const [prompt, setPrompt] = useState("a cute Y2K virtual-pet egg");
   const [refImage, setRefImage] = useState<string | undefined>();
   // selected image models — one OR many; default to nano-banana-pro only.
   const [selected, setSelected] = useState<ModelId[]>([DEFAULT_MODEL]);
@@ -96,7 +96,7 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
       <label className="cp-field">
         <span>Prompt (silhouette)</span>
         <textarea value={prompt} rows={2} onChange={(e) => setPrompt(e.target.value)}
-          placeholder="a fanged anglerfish jaw" />
+          placeholder="a cute Y2K virtual-pet egg" />
       </label>
       <label className="cp-field">
         <span>Reference image (optional)</span>
