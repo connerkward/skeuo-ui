@@ -13,6 +13,40 @@
 import { cutoutAlpha } from "./blueprint";
 import { apiUrl } from "../platform";
 
+// Decode raw image bytes into something drawable, robustly across engines.
+// createImageBitmap is the fast path, but in real WKWebView (the iOS app + macOS
+// widget) it has historically been the flakier decoder — it can reject a blob that
+// an <img> decodes without issue (seen as "The source image could not be decoded"
+// on desktop while the same paint decodes fine on the web and in headless WebKit).
+// So fall back to an <img> element, which sniffs the magic bytes and is the
+// battle-tested decode path. If BOTH fail, throw an error carrying the real state
+// (status, served type, byte length, magic) so an otherwise-opaque failure names
+// its own cause next time instead of just "could not be decoded".
+type Decoded = { src: CanvasImageSource; W: number; H: number; release: () => void };
+async function decodePaint(buf: ArrayBuffer, res: Response): Promise<Decoded> {
+  const bytes = new Uint8Array(buf);
+  const blob = new Blob([buf]); // no forced type — let each decoder sniff the bytes
+  let e1: unknown;
+  try {
+    const bmp = await createImageBitmap(blob);
+    return { src: bmp, W: bmp.width, H: bmp.height, release: () => bmp.close?.() };
+  } catch (e) { e1 = e; }
+  try {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.src = url;
+    await img.decode(); // fully decodes into memory; safe to revoke after drawImage
+    return { src: img, W: img.naturalWidth, H: img.naturalHeight, release: () => URL.revokeObjectURL(url) };
+  } catch (e2) {
+    const magic = Array.from(bytes.slice(0, 8)).map((b) => b.toString(16).padStart(2, "0")).join(" ");
+    const ct = res.headers.get("content-type") ?? "?";
+    throw new Error(
+      `paint undecodable (HTTP ${res.status}, type ${ct}, ${bytes.length}B, magic [${magic || "empty"}]; ` +
+      `createImageBitmap: ${e1 instanceof Error ? e1.message : String(e1)}; ` +
+      `img: ${e2 instanceof Error ? e2.message : String(e2)})`);
+  }
+}
+
 // Fetch the raw paint, key out the near-white background, return a PNG Blob of the
 // cut RGBA frame (white → transparent, largest component kept, holes filled).
 export async function cutoutPaintToFrame(paintUrl: string): Promise<Blob> {
@@ -21,14 +55,13 @@ export async function cutoutPaintToFrame(paintUrl: string): Promise<Blob> {
   // endpoint sends CORS headers so the fetched paint is readable into the canvas.
   const res = await fetch(apiUrl(paintUrl));
   if (!res.ok) throw new Error(`fetch paint → ${res.status}`);
-  const bmp = await createImageBitmap(await res.blob());
-  const W = bmp.width, H = bmp.height;
+  const { src, W, H, release } = await decodePaint(await res.arrayBuffer(), res);
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) { bmp.close?.(); throw new Error("no 2d canvas context"); }
-  ctx.drawImage(bmp, 0, 0);
-  bmp.close?.();
+  if (!ctx) { release(); throw new Error("no 2d canvas context"); }
+  ctx.drawImage(src, 0, 0);
+  release();
 
   const img = ctx.getImageData(0, 0, W, H);
   // a Uint8Array VIEW over the same buffer ImageData owns — read RGBA via the view,
