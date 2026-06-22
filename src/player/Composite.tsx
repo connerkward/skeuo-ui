@@ -607,17 +607,27 @@ function CdDisc({ ps }: { ps: PlayerState }) {
   playingRef.current = ps.playing;
   useEffect(() => {
     let raf = 0, angle = 0, vel = 0, last = 0;
-    const CRUISE = 165;       // deg/s while playing — slow + hypnotic; fast enough to read the holo sweep, slow enough not to blur
-    const TAU_UP = 0.5;       // s — spin-up time constant (motor catches the disc)
-    const TAU_DOWN = 1.15;    // s — spin-down time constant (long, graceful friction coast)
+    // A real CD drive does two distinct things, so we model two distinct regimes
+    // rather than easing toward a target with one curve:
+    const CRUISE = 150;        // deg/s cruise (~25 rpm) — a heavy disc spinning; trackable, not blurry
+    const SPINUP_ACCEL = 200;  // deg/s² motor torque vs. the disc's inertia — sets how snappy 0→cruise feels (~0.9s)
+    const KNEE = 0.82;         // governor: full torque until 82% of cruise, then taper to 0 — settles in without overshoot
+    const FRIC_C = 18;         // deg/s² Coulomb (dry) friction — constant drag that brings it to an EXACT stop, and the gentle end-of-coast decel
+    const FRIC_V = 0.9;        // 1/s viscous friction (∝ vel) — the hard initial slow; with FRIC_C sets the ~2.6s total coast
     const tick = (t: number) => {
       if (!last) last = t;
       const dt = Math.min(0.05, (t - last) / 1000); last = t;
-      const target = playingRef.current ? CRUISE : 0;
-      const tau = target > vel ? TAU_UP : TAU_DOWN;
-      // exp approach is dt-independent: same easing at 60 or 120 Hz, no overshoot
-      vel += (target - vel) * (1 - Math.exp(-dt / tau));
-      if (target === 0 && vel < 1.2) vel = 0;   // settle cleanly instead of asymptoting forever
+      if (playingRef.current) {
+        // motor: torque-limited ramp (near-linear) with a soft governor near cruise.
+        // head = 1 (full torque) until KNEE·cruise, then falls linearly to 0 at cruise.
+        const head = Math.max(0, Math.min(1, (CRUISE - vel) / (CRUISE * (1 - KNEE))));
+        vel = Math.min(CRUISE, vel + SPINUP_ACCEL * head * dt);
+      } else {
+        // motor off: inertial coast. Coulomb + viscous friction — fast slow at speed,
+        // gentle at the end, and the constant term guarantees a finite stop (no asymptote).
+        vel -= (FRIC_C + FRIC_V * vel) * dt;
+        if (vel < 0.4) vel = 0;
+      }
       angle = (angle + vel * dt) % 360;
       if (platter.current) platter.current.style.transform = `rotate(${angle.toFixed(3)}deg)`;
       raf = requestAnimationFrame(tick);
