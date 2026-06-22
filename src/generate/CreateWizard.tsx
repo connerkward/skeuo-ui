@@ -435,29 +435,32 @@ function PaintProgress({ progress, elapsed, autoBody }: {
   const phaseLabel = phases[Math.min(phaseIdx, phases.length - 1)];
 
   return (
-    <div className="wiz-paint" role="status" aria-live="polite">
-      <div className="wiz-paint-head">
-        <span className="wiz-paint-model">
-          {progress.total > 1 && <b>model {progress.idx + 1}/{progress.total} · </b>}
-          {modelLabel(progress.model)}
-        </span>
-        <span className="wiz-paint-elapsed">{elapsed}s</span>
-      </div>
-      <div className="wiz-paint-bar"><div className="wiz-paint-fill" style={{ width: `${fill * 100}%` }} /></div>
-      <div className="wiz-paint-phase">
-        <span className="wiz-paint-dot" />{phaseLabel}…
-        <span className="wiz-paint-steps">{Math.min(phaseIdx + 1, phases.length)}/{phases.length}</span>
+    <>
+      <div className="wiz-paint" role="status" aria-live="polite">
+        <div className="wiz-paint-head">
+          <span className="wiz-paint-model">
+            {progress.total > 1 && <b>model {progress.idx + 1}/{progress.total} · </b>}
+            {modelLabel(progress.model)}
+          </span>
+          <span className="wiz-paint-elapsed">{elapsed}s</span>
+        </div>
+        <div className="wiz-paint-bar"><div className="wiz-paint-fill" style={{ width: `${fill * 100}%` }} /></div>
+        <div className="wiz-paint-phase">
+          <span className="wiz-paint-dot" />{phaseLabel}…
+          <span className="wiz-paint-steps">{Math.min(phaseIdx + 1, phases.length)}/{phases.length}</span>
+        </div>
       </div>
       {/* mascot loading animation — the gremlin runs across rolling the knob while
-          the paint cooks. The clip is on pure black; mix-blend:screen on the card
-          (#101622) keys the black out so he floats on the progress card itself. */}
+          the paint cooks. It sits OUTSIDE the blue progress card, on the wizard's
+          near-black panel (#0d0d10); the clip is on pure black and mix-blend:screen
+          keys that black out so only the gremlin shows, floating on the dark bg. */}
       <video
         className="wiz-paint-vid"
         src="/loading-mascot.mp4"
         autoPlay loop muted playsInline
         aria-hidden="true"
       />
-    </div>
+    </>
   );
 }
 

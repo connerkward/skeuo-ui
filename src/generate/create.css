@@ -200,10 +200,11 @@
 .wiz-paint-dot { width: 7px; height: 7px; border-radius: 50%; background: #4a8aff; box-shadow: 0 0 6px #4a8aff; animation: wiz-paint-pulse 1s ease-in-out infinite; }
 @keyframes wiz-paint-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 .wiz-paint-steps { margin-left: auto; color: #6a82a8; font-variant-numeric: tabular-nums; }
-/* mascot loading clip: pure-black source, screen-blended so the black drops into
-   the card and only the gremlin shows, running across under the bar. */
+/* mascot loading clip: pure-black source, screen-blended so the black drops out
+   and only the gremlin shows. Sits OUTSIDE the blue progress card, on the wizard's
+   near-black panel (#0d0d10), so he floats on the black background, not boxed in. */
 .wiz-paint-vid {
-  width: 100%; display: block; margin-top: 2px; border-radius: 6px;
+  width: 100%; display: block; margin-top: 4px;
   mix-blend-mode: screen; pointer-events: none;
 }
 .wiz-err { font-size: 12px; color: #f4a0a0; background: #2a1414; border: 1px solid #5a2a2a; padding: 8px; border-radius: 6px; }
