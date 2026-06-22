@@ -17,6 +17,27 @@ export class NoActiveDeviceError extends Error {
   }
 }
 
+// 403 "User not registered in the Developer Dashboard" — the Spotify app is in
+// Development mode (≤25 allowlisted testers) and the token belongs to an account
+// that isn't on that list. This is the iOS 403: the phone's Safari/Spotify session
+// is a DIFFERENT account than the allowlisted one the website uses. Fixes: sign in
+// on the phone as the allowlisted account, add this account to User Management, or
+// move the app to Extended Quota mode (any account works). NOT a Premium/code bug.
+export class NotRegisteredError extends Error {
+  constructor() {
+    super("This Spotify account isn't authorized for Skeuo yet (Spotify development mode). Disconnect and sign in with the account you use on the web — or ask to be added to the tester list.");
+    this.name = "NotRegisteredError";
+  }
+}
+
+// 403 with a Premium-required body — playback control needs Spotify Premium.
+export class PremiumRequiredError extends Error {
+  constructor() {
+    super("Spotify Premium is required to control playback.");
+    this.name = "PremiumRequiredError";
+  }
+}
+
 async function call<T>(
   path: string,
   init: RequestInit = {},
@@ -35,6 +56,12 @@ async function call<T>(
   // 404 from a player mutation = "Device not found" / no active device
   if (res.status === 404) throw new NoActiveDeviceError();
   if (res.status === 204) return undefined as T; // No Content (idle / no playback)
+  if (res.status === 403) {
+    const text = await res.text().catch(() => "");
+    if (/not registered/i.test(text)) throw new NotRegisteredError();
+    if (/premium/i.test(text)) throw new PremiumRequiredError();
+    throw new Error(`Spotify API 403 ${path}: ${text}`);
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Spotify API ${res.status} ${path}: ${text}`);

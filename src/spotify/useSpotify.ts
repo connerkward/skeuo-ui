@@ -209,6 +209,12 @@ export function useSpotify() {
   // ---- public actions -----------------------------------------------------
   const login = useCallback(() => {
     setStatus("connecting");
+    setError(null);
+    // Always start a CLEAN auth: drop any stale token so a retry after a
+    // "wrong account" 403 can't silently reuse the previous (non-registered)
+    // account's token. Combined with show_dialog=true on native, the account
+    // chooser appears so the user can pick the allowlisted account.
+    clearTokens();
     if (isTauri() && !isMobileApp()) {
       // macOS widget: open the system browser and catch the code on a 127.0.0.1
       // loopback. Bind the listener BEFORE opening the browser so the redirect
