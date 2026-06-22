@@ -595,10 +595,12 @@ function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
    (no per-frame React re-render). The velocity follows a frame-rate-independent
    exponential approach — a short time constant on spin-up reads as a motor
    catching the disc; a long one on spin-down reads as friction letting it coast
-   to rest. The real photoreal holographic diffraction (a generated CD-underside
-   texture, screen-blended over the art) rotates WITH the disc, so its rainbow
-   sweeps as it spins; the specular gloss is FIXED — the light source doesn't
-   move — which is exactly what reads as a reflection off a spinning disc. */
+   to rest. The disc is a generated photoreal silver CD data-side (no printed
+   art); it rotates WITH the platter so its diffraction sweeps as it spins. An
+   optional blurred album-cover layer tints the silver via mix-blend-mode:color
+   — the metal's luminance kept, the album's hue applied. The specular gloss is
+   FIXED — the light source doesn't move — which reads as a reflection off a
+   spinning disc. */
 function CdDisc({ ps }: { ps: PlayerState }) {
   const platter = useRef<HTMLDivElement>(null);
   const playingRef = useRef(ps.playing);
@@ -628,15 +630,8 @@ function CdDisc({ ps }: { ps: PlayerState }) {
     <div className="dyn cd-disc" data-playing={ps.playing}>
       <div className="cd-wrap">
         <div className="cd-platter" ref={platter}>
-          <div className="cd-holo" />
-          {cover
-            ? <img className="cd-label" src={cover} alt="" draggable={false} />
-            : <div className="cd-label cd-art-fallback">
-                <span className="cd-fb-title">{ps.track.title}</span>
-                <span className="cd-fb-artist">{ps.track.artist}</span>
-              </div>}
-          <div className="cd-label-sheen" />
-          <div className="cd-hole" />
+          <div className="cd-surface" />
+          {cover && <img className="cd-tint" src={cover} alt="" draggable={false} />}
         </div>
         <div className="cd-gloss" />
       </div>
