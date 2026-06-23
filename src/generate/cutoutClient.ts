@@ -20,7 +20,6 @@
 // a data: URL (offline demo, no R2), we key out the white background with the
 // shared pure-JS cutoutAlpha — the original behavior — instead of calling fal.
 import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type SpriteKind } from "./blueprint";
-import { detectSockets, type Socket } from "./spriteSheet";
 import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
 
@@ -38,94 +37,68 @@ async function blobToImageData(blob: Blob): Promise<ImageData> {
   return ctx.getImageData(0, 0, c.width, c.height);
 }
 
-// Snap each button/knob region onto the painted socket nearest its template
-// position. The generated device drifts from the blueprint coords (the model
-// reflows aspect + nudges sockets), so rendering controls at raw template coords
-// misaligns them; detecting the actual dark sockets and re-homing the regions to
-// them is what makes the sprite land in its recess. Returns a corrected template.
-function snapToSockets(template: Template, device: ImageData): Template {
-  const W = device.width, H = device.height;
-  const minDim = Math.min(W, H);
-  // One pass of dark-blob detection feeds BOTH the round control sockets and the
-  // rectangular features (screen, seek groove) below. maxAreaFrac:1 keeps the big
-  // screen blob, which detectSockets otherwise drops (its default 0.06 cap).
-  const blobs = detectSockets({ data: device.data, width: W, height: H }, { maxAreaFrac: 1 });
-  const rectOf = (s: Socket) => ({
-    x: (s.cx - s.bboxW / 2) / W, y: (s.cy - s.bboxH / 2) / H, w: s.bboxW / W, h: s.bboxH / H,
+// Composite a (possibly transparent) PNG blob onto a solid background → data URL,
+// so the VLM sees the device clearly regardless of how light or dark the body is.
+async function compositeOnBg(blob: Blob, bg: string): Promise<string> {
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement("canvas");
+  c.width = bmp.width; c.height = bmp.height;
+  const ctx = c.getContext("2d");
+  if (!ctx) { bmp.close?.(); throw new Error("no 2d canvas context"); }
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(bmp, 0, 0); bmp.close?.();
+  return c.toDataURL("image/png");
+}
+
+// ALIGN via VLM (gpt-4o vision) — THE chosen approach (see docs/skin-pipeline-sota.md
+// + generation/freeform.py). Send the device image + the template's control checklist
+// to /api/extract; gpt-4o returns each control's ACTUAL painted box, matched by its
+// icon/role → identity correct by construction (no nearest-neighbour mis-assignment).
+// Snap each region onto its box; controls the VLM can't locate keep blueprint coords.
+// canvas = device dims so the frame renders 1:1.
+type SnapRect = { x: number; y: number; w: number; h: number };
+interface VlmBox { bind: string; x: number; y: number; w: number; h: number }
+const ALIGN_KINDS = new Set([
+  "button", "toggle", "slider-h", "slider-v", "knob", "slider-arc", "segmented", "xy", "display",
+]);
+
+async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: number): Promise<Template> {
+  const canvas = { w: W, h: H };
+  const align = template.regions.filter((r) => ALIGN_KINDS.has(r.kind));
+  if (!align.length) return { ...template, canvas };
+
+  // checklist: region.id is the unique return key; `label` describes the role so the
+  // VLM can identify the control by its painted icon/shape and report the right id.
+  const controls = align.map((r) => {
+    const role = r.bind || r.kind;
+    const idx = typeof r.index === "number" ? ` #${r.index}` : "";
+    const lbl = r.label ? ` (${r.label})` : "";
+    return { bind: r.id, kind: r.kind, label: `${role}${idx}${lbl}` };
   });
 
-  // --- round control sockets → buttons/knobs (global shortest-edge matching) ---
-  // A control socket is round AND control-sized; reject huge dark blobs (screens,
-  // body interior) here. GLOBAL shortest-edge-first matching, NOT template-order
-  // greedy — in-order greedy let an earlier control claim a socket a later/larger
-  // control needed, so play/knob fell back to blueprint and rendered offset.
-  const sockets = blobs.filter((s) => s.aspect > 0.55 && s.aspect < 1.8 && s.r < 0.16 * minDim);
-  const maxDist = 0.20 * Math.hypot(W, H);
-  const idx = new Map<number, Socket>();
-  const usedSock = new Set<Socket>();
-  const pairs: { i: number; s: Socket; dist: number }[] = [];
-  template.regions.forEach((r, i) => {
-    if (r.kind !== "button" && r.kind !== "knob") return;
-    const px = (r.rect.x + r.rect.w / 2) * W, py = (r.rect.y + r.rect.h / 2) * H;
-    const nominalR = Math.min(r.rect.w * W, r.rect.h * H) / 2;
-    for (const s of sockets) {
-      const dist = Math.hypot(s.cx - px, s.cy - py);
-      const ratio = s.r / nominalR;
-      if (dist > maxDist || ratio < 0.4 || ratio > 2.6) continue;
-      pairs.push({ i, s, dist });
-    }
+  let boxes: VlmBox[];
+  try {
+    const imageDataUrl = await compositeOnBg(frameBlob, "#808080");
+    const resp = await fetch(apiUrl("/api/extract"), {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageDataUrl, controls }),
+    });
+    if (!resp.ok) throw new Error(`/api/extract ${resp.status}`);
+    boxes = ((await resp.json()) as { boxes: VlmBox[] }).boxes ?? [];
+  } catch {
+    return { ...template, canvas };   // VLM unavailable → keep the blueprint layout
+  }
+  if (!boxes.length) return { ...template, canvas };
+
+  const byId = new Map<string, SnapRect>();
+  for (const b of boxes) {
+    if (b && typeof b.bind === "string" && !byId.has(b.bind)) byId.set(b.bind, { x: b.x, y: b.y, w: b.w, h: b.h });
+  }
+  const regions = template.regions.map((r) => {
+    const box = byId.get(r.id);
+    return box ? { ...r, rect: box } : r;   // matched → snap to the VLM box; else keep blueprint
   });
-  pairs.sort((a, b) => a.dist - b.dist);
-  for (const p of pairs) {
-    if (idx.has(p.i) || usedSock.has(p.s)) continue;
-    idx.set(p.i, p.s); usedSock.add(p.s);
-  }
-
-  // --- displays → map the blueprint's screen cluster onto the painted screen ---
-  // The screen is the largest dark region that's far bigger than a control. Mapping
-  // the blueprint's display cluster (visualizer/marquee/time) onto it by relative
-  // layout lands each on the actual glass instead of floating at blueprint coords.
-  const rectFor = new Map<string, { x: number; y: number; w: number; h: number }>();
-  const screen = blobs
-    .filter((s) => !usedSock.has(s) && s.bboxW > 0.3 * W && s.bboxH > 0.1 * H)
-    .sort((a, b) => b.area - a.area)[0];
-  if (screen) {
-    const sc = rectOf(screen);
-    const disp = template.regions.filter((r) => r.kind === "display");
-    if (disp.length) {
-      const minx = Math.min(...disp.map((r) => r.rect.x)), miny = Math.min(...disp.map((r) => r.rect.y));
-      const bw = Math.max(...disp.map((r) => r.rect.x + r.rect.w)) - minx;
-      const bh = Math.max(...disp.map((r) => r.rect.y + r.rect.h)) - miny;
-      for (const r of disp) rectFor.set(r.id, {
-        x: sc.x + ((r.rect.x - minx) / bw) * sc.w, y: sc.y + ((r.rect.y - miny) / bh) * sc.h,
-        w: (r.rect.w / bw) * sc.w, h: (r.rect.h / bh) * sc.h,
-      });
-    }
-  }
-
-  // --- seek slider → the thin wide groove below the screen (if the model painted one) ---
-  const groove = blobs
-    .filter((s) => s !== screen && !usedSock.has(s) && s.aspect > 3 && s.bboxW > 0.4 * W
-      && s.bboxH < 0.06 * H && (!screen || s.cy > screen.cy))
-    .sort((a, b) => a.cy - b.cy)[0];
-  if (groove) {
-    template.regions.filter((r) => r.kind === "slider-h" || r.kind === "slider-v")
-      .forEach((r) => rectFor.set(r.id, rectOf(groove)));
-  }
-
-  const regions = template.regions.map((r, i) => {
-    const sock = idx.get(i);
-    if (sock) {
-      const R = sock.r * 1.06;   // a hair larger than the socket so the cap covers the rim
-      return { ...r, rect: { x: (sock.cx - R) / W, y: (sock.cy - R) / H, w: (2 * R) / W, h: (2 * R) / H } };
-    }
-    const rect = rectFor.get(r.id);
-    if (rect) return { ...r, rect };
-    return r;   // no plausible feature → keep the blueprint rect
-  });
-  // CRITICAL: set the canvas to the DEVICE's real dimensions so the frame renders
-  // 1:1 (no stretch → round sockets stay round, control boxes stay square).
-  return { ...template, canvas: { w: W, h: H }, regions };
+  return { ...template, canvas, regions };
 }
 
 // Decode raw image bytes into something drawable, robustly across engines.
@@ -401,11 +374,15 @@ export async function finishCutoutFull(
   const frameBlob = await serverCutout(deviceCanvas);
   await uploadFrame(id, frameBlob);
 
-  // 1b. snap control regions onto the painted sockets (detection beats raw coords).
+  // 1b. ALIGN: gpt-4o VLM locates each control in the painted device → snap the
+  //     template regions onto their real boxes (the chosen approach). Needs the
+  //     frame's true pixel dims for the canvas; decode the uploaded frame to get them.
   let snapped = template;
   if (template) {
-    try { snapped = snapToSockets(template, await blobToImageData(frameBlob)); }
-    catch { /* keep original template */ }
+    try {
+      const dev = await blobToImageData(frameBlob);
+      snapped = await snapToVLM(template, frameBlob, dev.width, dev.height);
+    } catch { /* VLM unavailable → keep the blueprint template */ }
   }
 
   // 2. each control sprite: geometric cut from its cell, upload. Best-effort per

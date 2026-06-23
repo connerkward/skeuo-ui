@@ -7,7 +7,8 @@ import type { RuntimeDeps } from "./pipeline";
 import { generateSkin, DONOR_STYLES, MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
 import { checkAndReserve, release } from "./ratelimit";
-import { deriveMaterial } from "./director";
+import { deriveMaterial, deriveLayout } from "./director";
+import type { Region } from "../template/schema";
 
 function slug(s: string): string {
   return (s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 24) || "skin");
@@ -60,7 +61,13 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   const modelTag = MODELS.find((m) => m.id === model)?.label ?? "model";
   const id = `${slug(prompt)}-${variant}-${modelTag}-${Date.now().toString(36).slice(-4)}`;
   try {
-    const regions = Array.isArray(body.regions) && body.regions.length ? body.regions : undefined;
+    // Template source, in priority: explicit wizard regions → Director-generated layout
+    // (the prompt drives the control set, varied per theme) → constant variant preset.
+    let regions: Region[] | undefined =
+      Array.isArray(body.regions) && body.regions.length ? (body.regions as Region[]) : undefined;
+    if (!regions && deps.openaiKey) {
+      regions = (await deriveLayout(deps.openaiKey, prompt)) ?? undefined;
+    }
     const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,

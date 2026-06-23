@@ -2,9 +2,16 @@
 // resets on every Worker/process restart and is NOT shared across CF edge
 // locations (each isolate has its own Map). For real production use a durable
 // store (KV/Durable Object/D1). See the stub note in functions/api/generate.ts.
-export const COST_PER_GEN_USD = 0.30;     // observed ~$0.30 fal per 2-pass generation
-export const MAX_PER_IP_PER_DAY = 5;      // hard cap per client IP
-export const MAX_GLOBAL_USD_PER_DAY = 6;  // hard global daily spend ceiling
+// dev-only overrides via env (Node dev server); absent in the CF Worker (no `process`)
+// so prod keeps the hard defaults. Lets local iteration run many gens without the cap.
+const envNum = (name: string, dflt: number): number => {
+  const v = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.[name];
+  const n = v ? Number(v) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : dflt;
+};
+export const COST_PER_GEN_USD = 0.30;                                     // observed ~$0.30 fal per 2-pass generation
+export const MAX_PER_IP_PER_DAY = envNum("SKEUO_MAX_PER_IP", 5);          // hard cap per client IP
+export const MAX_GLOBAL_USD_PER_DAY = envNum("SKEUO_MAX_GLOBAL_USD", 6);  // hard global daily spend ceiling
 
 interface Bucket { day: string; count: number }
 const perIp = new Map<string, Bucket>();

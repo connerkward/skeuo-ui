@@ -12,6 +12,7 @@ import { resolve } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import { handleGenerate } from "../src/generate/handler";
 import { removeBackground, type RuntimeDeps } from "../src/generate/pipeline";
+import { extractSlots, type SlotControl } from "../src/generate/director";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
 // the same precedence used for both FAL_KEY and OPENAI_API_KEY.
@@ -112,6 +113,33 @@ export function devApiPlugin(): Plugin {
             res.setHeader("Content-Type", "image/png");
             res.setHeader("Cache-Control", "no-store");
             res.end(Buffer.from(cut));
+          } catch (e) {
+            res.statusCode = 502;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
+          }
+        });
+      });
+
+      // POST /api/extract — local parity with functions/api/extract.ts. gpt-4o vision
+      // locates each expected control in the device image; OPENAI key server-side.
+      server.middlewares.use("/api/extract", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "POST only" })); return; }
+        if (!openaiKey) { res.statusCode = 500; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "server missing OPENAI_API_KEY (.dev.vars / central/.env)" })); return; }
+        const chunks: Buffer[] = [];
+        req.on("data", (c) => chunks.push(c as Buffer));
+        req.on("end", async () => {
+          try {
+            const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}") as
+              { imageDataUrl?: string; imageUrl?: string; controls?: SlotControl[] };
+            const image = body.imageDataUrl || body.imageUrl;
+            if (!image) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "imageDataUrl required" })); return; }
+            if (!Array.isArray(body.controls) || !body.controls.length) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "controls required" })); return; }
+            const boxes = await extractSlots(openaiKey, image, body.controls);
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.setHeader("Cache-Control", "no-store");
+            res.end(JSON.stringify({ boxes }));
           } catch (e) {
             res.statusCode = 502;
             res.setHeader("Content-Type", "application/json");
