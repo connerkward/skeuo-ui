@@ -26,6 +26,7 @@ type Step = 0 | 1 | 2 | 3;
 const RANDOM_PROMPTS = [
   "a cute Y2K virtual-pet egg",
   "a translucent grape jelly gadget",
+  "a baby-blue clamshell flip phone",
   "a frosted see-through handheld game console",
   "a glittery butterfly hair clip",
   "a glossy gummy frog on a lilypad",
