@@ -2,6 +2,27 @@
 
 ## Open
 
+- [ ] **More generative template heuristics — bake the lookdev studio into the app.**
+      A layout-randomization studio was built (`/tmp/lookdev-layout/index.html`; re-serve with
+      `~/dev/central/scripts/serve /tmp/lookdev-layout --bg`) to ideate graphic-design-informed
+      layout heuristics for the wizard's 🎲 Randomize. It generates **10 archetypes** — stack,
+      dial, split, mini-widget, console, **diagonal/Z, golden-section, Swiss grid, L-corner,
+      arc/fan** — each a complete working player, run through a **repel + min-spacing validity
+      pass** (`resolveOverlaps`) that guarantees 0 overlaps / no too-close controls (verified:
+      400 seeds × every archetype → 0 overlaps, min gap 0.02). Controls carry a `nopush` flag on
+      the dial glass + arc ring so things ride them intentionally.
+      - **Tuned default config the user picked** (mini + arc heavy, full symmetry, sparse,
+        max play-dominance): `{count:24,seed:9999,density:0,symmetry:1,bias:1,jitter:0,
+        hierarchy:1,margin:0.14,gapScale:1.5,gridSnap:0,gridN:16,repel:1,spacing:0.02,
+        wStack:0.4,wDial:0.5,wSplit:0.5,wMini:1,wConsole:0.45,wDiagonal:0.05,wGolden:0.6,
+        wGrid:0.45,wCorner:0.2,wArc:1}` (now the studio's `DEFAULTS`).
+      - **BAKE:** port the studio's archetype generators + `resolveOverlaps` into
+        `src/generate/layouts.ts` (px-on-1024×1536, matching the existing `layout*()` fns) and
+        wire the wizard's 🎲 to `layoutRandom()` drawing from them with these weights. Decide:
+        all 10 in the 🎲 vs a curated subset; whether `gridSnap` is user-facing (only the Swiss
+        grid benefits); lopsided as a frequent default vs gated to mini-widget. Then tear down
+        the `/tmp` studio.
+
 - [ ] **Mascot favicon — revisit (current SVG `public/favicon.svg` stays for now).**
       Want a favicon that keeps the skeuomorphic iOS-original tile + the existing
       chrome-knob + green-pointer/LED, with a *hint* of the mascot worked in. Explored
