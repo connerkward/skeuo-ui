@@ -89,7 +89,7 @@ const LAYOUT_SYS =
   "xy pad (bind \"xy\"); slider-arc ring-seek around a dial (use bind \"seek\" as slider-arc INSTEAD of slider-h for dial-centric designs).\n\n" +
   "RULES: every rect inside 0.04..0.96; controls must NOT overlap each other or the screen; round controls ~square (w≈h); group/align related " +
   "controls; sizes sensible (transport buttons 0.06-0.16 with play biggest, knobs 0.08-0.16, the screen 0.4-0.85 wide). " +
-  "Keep it UNCLUTTERED — about 8 to 13 controls total, with breathing room between them; do NOT cram the face. " +
+  "Keep it UNCLUTTERED — about 6 to 10 controls total, with generous breathing room between them; do NOT cram the face. " +
   "The marquee is WIDE (~0.5-0.65) and the time readout is NARROW (~0.14-0.22) sitting beside it on the same row, NOT stacked full-width. " +
   "If you include EQ faders, use 5-7 bands max. Make it interesting and specific to the theme.\n\n" +
   "Each region: {\"id\":\"snake_case\",\"kind\":\"button|toggle|slider-h|slider-v|knob|slider-arc|segmented|xy|display\",\"bind\":\"<state field>\"," +

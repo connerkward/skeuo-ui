@@ -109,11 +109,43 @@ async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: numb
       default: return true;
     }
   };
+  // local REFINE: re-center+size a round control's VLM box onto the actual painted
+  // socket inside it (gpt-4o is roughly right; the painted recess gives sub-pixel
+  // precision). Bounded to the VLM box + margin, so it can't wander — VLM owns
+  // identity, this owns precision. Smooth bodies with no socket keep the VLM box.
+  const dev = await blobToImageData(frameBlob).catch(() => null as ImageData | null);
+  const refine = (kind: string | undefined, b: SnapRect): SnapRect => {
+    if (!dev || !(kind === "button" || kind === "knob")) return b;
+    const W2 = dev.width, H2 = dev.height, d = dev.data;
+    const mx = b.w * 0.35, my = b.h * 0.35;                       // search the box + 35% margin
+    const x0 = Math.max(0, Math.round((b.x - mx) * W2)), y0 = Math.max(0, Math.round((b.y - my) * H2));
+    const x1 = Math.min(W2, Math.round((b.x + b.w + mx) * W2)), y1 = Math.min(H2, Math.round((b.y + b.h + my) * H2));
+    if (x1 - x0 < 4 || y1 - y0 < 4) return b;
+    let sum = 0, n = 0;
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = (y * W2 + x) * 4; if (d[i + 3] > 128) { sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; } }
+    if (n < 16) return b;
+    const thr = sum / n * 0.72;                                   // socket = clearly darker than local mean
+    let sx = 0, sy = 0, dk = 0, minx = x1, miny = y1, maxx = x0, maxy = y0;
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const i = (y * W2 + x) * 4; if (d[i + 3] <= 128) continue;
+      if (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2] < thr) { sx += x; sy += y; dk++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
+    }
+    const area = (x1 - x0) * (y1 - y0);
+    if (dk < 0.04 * area || dk > 0.85 * area) return b;            // no clear socket (smooth body) → keep VLM box
+    const cx = sx / dk / W2, cy = sy / dk / H2;
+    const bw = (maxx - minx) / W2, bh = (maxy - miny) / H2;
+    // re-center on the socket; size to its extent (clamped near the VLM size so a
+    // mis-detection can't balloon it), keep ~square for round controls
+    const side = Math.min(Math.max(Math.max(bw, bh), b.w * 0.6, b.h * 0.6) * 1.08, Math.max(b.w, b.h) * 1.6);
+    return { x: cx - side / 2, y: cy - side / 2, w: side, h: side };
+  };
+
   const byId = new Map<string, SnapRect>();
   for (const b of boxes) {
     if (!b || typeof b.bind !== "string" || byId.has(b.bind)) continue;
+    const kind = kindOf.get(b.bind);
     const box = { x: b.x, y: b.y, w: b.w, h: b.h };
-    if (plausibleBox(kindOf.get(b.bind), box)) byId.set(b.bind, box);
+    if (plausibleBox(kind, box)) byId.set(b.bind, refine(kind, box));
   }
   const regions = template.regions.map((r) => {
     const box = byId.get(r.id);
