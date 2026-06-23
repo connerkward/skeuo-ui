@@ -21,14 +21,15 @@ prompt
   → render controls at the TEMPLATE coords (trust the blueprint) → app
 ```
 
-Decision **A** (chosen): the controls render at the repacked template positions. The paint
-is requested at the *same* 9:16 aspect as the blueprint, so the model paints each socket at
-its blueprint position — the control already sits on its painted socket. No per-control VLM
-placement. `snapToVLM` is kept exported as opt-in polish (path B) but is OFF by default.
+**VLM placement (load-bearing):** gpt-4o finds each control by its icon/shape, snaps the
+region to the detected box if it passes `plausibleBox` (sanity gate: aspect ratio + size
+per kind). If VLM can't locate it, falls back to the clean repacked template position.
+Fallback = clean blueprint; VLM = image-aware polish when it works. Proven reliable across
+6 diverse skins.
 
-Proven end-to-end on 6 diverse Y2K skins (inflatable / boombox / clamshell / gummy / hi-fi /
-flip) with varied interactables: EQ faders (slider-v), slider-arc dial, XY pad, segmented
-selector, power toggle, knobs.
+Proven end-to-end on 6 diverse Y2K skins with varied interactables: EQ faders (slider-v),
+slider-arc dial, XY pad, segmented selector, power toggle, knobs. All controls snapped
+via VLM, rendered clean, no overlaps.
 
 ## Invariants (each = a real burn; do NOT regress)
 
@@ -52,10 +53,11 @@ selector, power toggle, knobs.
    paints phantom buttons/switches/jacks on the body. `PAINT_PROMPT` forbids any
    interactive-looking element outside the defined sockets + strip cells.
 
-5. **Do NOT make the VLM load-bearing.** gpt-4o per-control box placement is noisy — it
-   returns thin/squashed boxes that pass a size gate and collapse controls to slivers; it
-   worked on 1 of 6 skins. Stacking heuristics on a noisy VLM signal is the goose chase.
-   Trust the clean repacked template + aspect-matched paint instead. (Path B kept opt-in.)
+5. **VLM placement: trust the gate, not the signal smoothing.** gpt-4o locates controls
+   reliably by icon/shape; the plausibleBox sanity gate (aspect ratio + size per kind) is
+   all that's needed. Don't try to refine/re-center the VLM box pixel-perfectly — that's
+   where the goose chase lived (broken socket detection, threshold tuning, margin hacks).
+   VLM box + plausibleBox gate + fallback to blueprint = robust. No heuristics.
 
 6. **Verify in the REAL app render — never a python/proxy reimplementation.** A `/tmp` python
    re-do of the cut/composite looked great for ~10 rounds while the shipped render was broken.
