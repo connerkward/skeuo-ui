@@ -2,6 +2,30 @@
 
 ## Open
 
+- [ ] **Reactive music-player mascot — build the rig + groove layer (animation strategy researched 2026-06-23).**
+      A `mascot` player region (like the `cd`/`visualizer` dynamicTypes) that idles when paused and
+      grooves to the music when playing, blending smoothly + reactive to energy/BPM.
+      - **Research (read first):** [`/tmp/cdtex/anim-pipeline-ideation.md`](file:///tmp/cdtex/anim-pipeline-ideation.md)
+        (substrate landscape) + [`/tmp/cdtex/anim-transitions-research.md`](file:///tmp/cdtex/anim-transitions-research.md)
+        (transition mechanics — web-verified: Bollo inertialization GDC2018, Spine mixDuration/tracks,
+        Mecanim blend-trees + additive layers, Live2D keyform interp, critically-damped springs).
+        Move both into `docs/` if we keep them (currently in /tmp).
+      - **Recommended approach:** generate the gremlin ONCE → BiRefNet matte → cut ~8 parts → a code
+        **cut-out rig** (PixiJS/`pixi-spine` or hand-rolled canvas bones + Verlet jiggle on cap/tail).
+        Drive dance as an **ADDITIVE groove layer** (bounce + head-bob + cap-tilt) scaled by `alpha=energy`
+        — ghost-free by construction (composes transform deltas on one rig; avoids the "blend only similar
+        poses" trap). Spring-smooth `energy` with the CD-spin envelope `v += (target−v)(1−e^(−dt/τ))`;
+        bounce phase from a beat clock softly locked to the track so the downbeat lands on the beat.
+        Reserve **inertialization** for reaction one-shots; keep authored "getting-into-it/settling" clips
+        as accents + the fallback floor.
+      - **Assets already made:** low-res idle/dance sprite frames `/tmp/cdtex/mascotA/frames/` + Desktop
+        `mascot-react-*`; canonical refs `~/Desktop/cc-skeuo/mix-dk-red-a.png`, `/tmp/cdtex/eh0.png`.
+        (Note: the early crossfade-sprite prototype GHOSTED — that's why the rig/additive approach.)
+      - **Decisions to lock before building (my leans in parens):** rig substrate — cut-out 2D rig vs
+        Dead-Cells 3D-render *(2D rig)* · dance depth — additive-bounce-only vs full body re-pose at high
+        energy *(additive-only v1)* · beat-sync — strict live-beat lock vs smoothed BPM clock *(gentle)* ·
+        reactions/inertialization in v1 *(defer)*.
+
 - [ ] **CD album-art visualizer — went missing, investigate + restore (2026-06-23).** A
       visualizer mode that showed the playing track's **album artwork on a spinning CD/disc**
       (in the round screen) is gone — unclear when/why it regressed. The data is still there:
