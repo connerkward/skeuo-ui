@@ -25,19 +25,17 @@ import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
 
 // Decode a PNG blob to ImageData (for socket detection on the masked device).
+// Use createImageBitmap, NOT img.decode() — the latter throws EncodingError on
+// some valid PNGs (the BiRefNet output among them), which silently killed the snap.
 async function blobToImageData(blob: Blob): Promise<ImageData> {
-  const url = URL.createObjectURL(blob);
-  try {
-    const img = new Image();
-    img.src = url;
-    await img.decode();
-    const c = document.createElement("canvas");
-    c.width = img.naturalWidth; c.height = img.naturalHeight;
-    const ctx = c.getContext("2d");
-    if (!ctx) throw new Error("no 2d canvas context");
-    ctx.drawImage(img, 0, 0);
-    return ctx.getImageData(0, 0, c.width, c.height);
-  } finally { URL.revokeObjectURL(url); }
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement("canvas");
+  c.width = bmp.width; c.height = bmp.height;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (!ctx) { bmp.close?.(); throw new Error("no 2d canvas context"); }
+  ctx.drawImage(bmp, 0, 0);
+  bmp.close?.();
+  return ctx.getImageData(0, 0, c.width, c.height);
 }
 
 // Snap each button/knob region onto the painted socket nearest its template
