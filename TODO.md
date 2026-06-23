@@ -2,6 +2,17 @@
 
 ## Open
 
+- [ ] **Float the player as an always-on-top mini-player (Document Picture-in-Picture).**
+      The `documentPictureInPicture.requestWindow()` API (Chrome 111+, verified mature 2026)
+      floats arbitrary DOM in an always-on-top window — a perfect fit for skeuo.fm: a
+      **"pop out"** button on the website that detaches the current skin's `<Composite>`
+      into a floating mini-player the user keeps visible over other tabs/apps while they
+      browse (the in-browser equivalent of the Tauri desktop widget, zero install). Carry
+      the skin's stylesheet into the PiP doc, move the player node in, restore on close;
+      transport keeps driving the same audio engine (local/Spotify). Requires a user
+      gesture to open (browser anti-abuse rule — can't auto-fire on load). Prototyped the
+      mechanics in the Spotify-connect wizard (`/tmp/skeuo-wizard/`, the "⧉ Float" button).
+
 - [ ] **Restore the "Play here" switch** (removed 2026-06-18). The in-page Web
       Playback SDK device (`playHere`/`setPlayHere` in `useSpotify`, `sdk.ts`,
       `initWebPlaybackSDK`) lets a Premium user play audio in the page/tab itself
