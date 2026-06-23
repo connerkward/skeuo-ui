@@ -265,47 +265,42 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
     parts.push(roundRect(bx0, by0, bx1 - bx0, by1 - by0, GEN_W * 0.10, BP_BODY, "none", 0));
   }
 
-  // --- device sockets, each a FIXED ANCHOR with a bright magenta keyline ring. ---
+  // --- device sockets: MINIMAL guide (bright magenta keyline only, NO filled shape).
+  // Don't draw socket shapes — they override the model's painted control shape. The
+  // magenta keyline is just a visual anchor; the model paints inside/around it freely.
   for (const r of regs) {
     const x = r.rect.x * GEN_W, y = r.rect.y * GEN_H;
     const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
+    const ringW = Math.max(4, Math.round(Math.min(w, h) * 0.08));
+    const pad = ringW / 2;
+    // magenta outline ONLY — no filled shape to dictate control form
     const round = r.kind === "knob" || ((r.kind === "button" || r.kind === "display") && r.shape === "ellipse");
-    const ringW = Math.max(6, Math.round(Math.min(w, h) * 0.10));
-    const pad = ringW + 4;
     if (round) {
-      parts.push(ellipse(x, y, w, h, BP_DARK, "none", 0));
       parts.push(ellipse(x - pad, y - pad, w + 2 * pad, h + 2 * pad, "none", BP_RING, ringW));
     } else {
       const rad0 = Math.min(w, h) * 0.3;
-      parts.push(roundRect(x, y, w, h, rad0, BP_DARK, "none", 0));
       parts.push(roundRect(x - pad, y - pad, w + 2 * pad, h + 2 * pad, rad0 + pad, "none", BP_RING, ringW));
     }
   }
 
-  // --- bottom SPRITE STRIP: one labeled placeholder cell per sprite control. ---
+  // --- bottom SPRITE STRIP: minimal guides + labels per control (NO SHAPES).
+  // Just grid lines + labels — let the model paint freely. No filled circles/rects
+  // to lock control form. detectCellContent will find what the model actually painted.
   const n = spriteRegs.length;
   const cellW = n > 0 ? GEN_W / n : GEN_W;
   const cells: BlueprintCell[] = [];
   spriteRegs.forEach((r, i) => {
     const kind = spriteKindOf(r)!;
     const cx = i * cellW + cellW / 2;
-    const cy = GEN_H + stripH * 0.42;
-    // placeholder outline (the model paints a bare finished part inside it)
-    if (kind === "slider") {
-      const s = cellW * 0.5;
-      parts.push(roundRect(cx - s / 2, cy - s * 0.28, s, s * 0.56, 14, "none", BP_DARK, 4));
-    } else {
-      const s = cellW * 0.42;
-      parts.push(ellipse(cx - s / 2, cy - s / 2, s, s, "none", BP_DARK, 4));
-    }
+    // light grid line only (no filled shape)
+    parts.push(`<line x1="${i * cellW}" y1="${GEN_H}" x2="${i * cellW}" y2="${H}" stroke="${BP_DARK}" stroke-width="1" opacity="0.2"/>`);
     // strip label = the human-readable hint for the model (bind/label), NOT the id
-    // key — so a knob still reads "VOL", while the cut sprite is keyed by id.
     const label = (r.label || r.bind || r.id).toUpperCase();
     parts.push(
       `<text x="${cx}" y="${GEN_H + stripH * 0.78}" font-family="Arial, sans-serif" font-weight="bold" ` +
       `font-size="26" fill="${BP_DARK}" text-anchor="middle">${escapeXml(label)}</text>`,
     );
-    // cell crop box (full combined-image normalized) — mirrors A_blueprint cell_rects.
+    // cell crop box (full combined-image normalized) — detectCellContent finds actual content.
     const cw = cellW * 0.92;
     cells.push({
       bind: bindOf(r), kind,
