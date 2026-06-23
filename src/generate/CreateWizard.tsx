@@ -4,7 +4,7 @@ import { postGenerate } from "./postGenerate";
 import { finishCutout } from "./cutoutClient";
 import { apiUrl } from "../platform";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
-import { regionsForVariant, type LayoutVariant } from "./layouts";
+import { regionsForVariant, layoutRandom, type LayoutVariant } from "./layouts";
 import type { Region, Kind, DynamicType } from "../template/schema";
 import type { RuntimeSkin } from "./CreatePanel";
 import { LayoutStage } from "../template/LayoutStage";
@@ -200,7 +200,8 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         ))}
       </ol>
 
-      <div className="wiz-body">
+      {/* on the Layout step the stage becomes the hero (big canvas, panel shrinks) */}
+      <div className={`wiz-body ${step === 1 ? "wiz-body-layout" : ""}`}>
         {/* live layout preview sits beside every step so the artifact is always visible */}
         <div className="wiz-preview">
           <LayoutStage regions={regions} onChange={setRegions} editable={step === 1} />
@@ -242,6 +243,8 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                   </button>
                 ))}
               </div>
+              <button className="wiz-randomize" onClick={() => setRegions(layoutRandom())}
+                title="Heuristically lay out a fresh, complete player">🎲 Randomize layout</button>
               <div className="wiz-palette">
                 <span className="wiz-palette-lbl">Add:</span>
                 {PALETTE.map((p) => (

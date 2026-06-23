@@ -39,43 +39,138 @@ function makeAdder(regs: Region[]) {
   };
 }
 const rad = (deg: number) => (deg * Math.PI) / 180;
+// randomizer helpers (used by layoutRandom — user-triggered, so Math.random is fine)
+const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+const chance = (p: number) => Math.random() < p;
 
-// ---- simple: the friendly default — a big visualizer (left), marquee + seek
-// (top-right), and a prev/play/next transport row (play dominant, bottom-right).
-// ~6 controls, nothing else. This is what a first-time user starts on.
+// ---- simple: the friendly default — a COMPLETE, symmetric "classic rack":
+// wide visualizer up top, marquee + clock row, full-width seek, a centred
+// prev/play/next/stop transport (play dominant), and volume + balance knobs.
+// ~11 controls, balanced on the centre line — what a first-time user starts on.
 export function layoutSimple(): Region[] {
   const regs: Region[] = [];
   const add = makeAdder(regs);
+  const mx = GEN_W * 0.08;                  // side margin
+  const x0 = mx, w = GEN_W - 2 * mx, cx = GEN_W / 2;
 
-  // big round visualizer, left side, vertically centred-ish high
-  const vd = GEN_W * 0.50;                 // visualizer diameter
-  const vx = GEN_W * 0.07, vy = GEN_H * 0.22;
-  add("visualizer", "display", vx, vy, vd, vd,
-    { content: "dynamic", layer: "screen", dynamicType: "visualizer", shape: "ellipse" });
+  // wide visualizer screen up top
+  add("visualizer", "display", x0, GEN_H * 0.12, w, GEN_H * 0.235,
+    { content: "dynamic", layer: "screen", dynamicType: "visualizer" });
 
-  // marquee bar — top-right, beside the visualizer
-  const rx0 = vx + vd + GEN_W * 0.05;      // right column left edge
-  const rw = GEN_W * 0.93 - rx0;           // right column width
-  const my = vy + GEN_H * 0.02;
-  add("marquee", "display", rx0, my, rw, 64,
+  // marquee (left) + clock (right) sharing one row beneath it
+  const my = GEN_H * 0.385, mh = 70, clockW = w * 0.26;
+  add("marquee", "display", x0, my, w - clockW - 20, mh,
     { content: "dynamic", layer: "screen", dynamicType: "marquee" });
+  add("time", "display", x0 + w - clockW, my, clockW, mh,
+    { content: "dynamic", layer: "screen", dynamicType: "time" });
 
-  // seek bar — directly under the marquee
-  add("seek", "slider-h", rx0, my + 92, rw, 30, { bind: "seek", label: "Seek" });
+  // full-width seek bar
+  const sy = my + mh + 26;
+  add("seek", "slider-h", x0, sy, w, 30, { bind: "seek", label: "Seek" });
 
-  // transport row — prev / play / next, play larger, bottom-right under the seek
-  const playD = 124.0, smallD = 80.0, gap = 34.0;
-  const rowW = smallD + gap + playD + gap + smallD;
-  const tx0 = rx0 + (rw - rowW) / 2;       // centre the row in the right column
-  const ty = my + 92 + 30 + GEN_H * 0.06;  // a bit below the seek
-  const cyRow = ty + playD / 2;
-  add("prev", "button", tx0, cyRow - smallD / 2, smallD, smallD,
-    { bind: "prev", label: "prev", shape: "ellipse" });
-  add("play", "button", tx0 + smallD + gap, cyRow - playD / 2, playD, playD,
-    { bind: "play", label: "play", shape: "ellipse" });
-  add("next", "button", tx0 + smallD + gap + playD + gap, cyRow - smallD / 2, smallD, smallD,
-    { bind: "next", label: "next", shape: "ellipse" });
+  // transport row — prev / play / next / stop, play dominant, centred
+  const playD = 150, smallD = 92, stopD = 78, gap = 40;
+  const rowW = smallD + gap + playD + gap + smallD + gap + stopD;
+  const tx = cx - rowW / 2, ty = sy + 60, cyR = ty + playD / 2;
+  add("prev", "button", tx, cyR - smallD / 2, smallD, smallD, { bind: "prev", label: "prev", shape: "ellipse" });
+  add("play", "button", tx + smallD + gap, cyR - playD / 2, playD, playD, { bind: "play", label: "play", shape: "ellipse" });
+  add("next", "button", tx + smallD + gap + playD + gap, cyR - smallD / 2, smallD, smallD, { bind: "next", label: "next", shape: "ellipse" });
+  add("stop", "button", tx + smallD + gap + playD + gap + smallD + gap, cyR - stopD / 2, stopD, stopD, { bind: "stop", label: "stop", shape: "ellipse" });
 
+  // volume + balance knobs, centred under the transport
+  const kd = 116, kgap = 90, kw = kd + kgap + kd, kx = cx - kw / 2, ky = cyR + playD / 2 + 48;
+  add("knob0", "knob", kx, ky, kd, kd, { bind: "volume", label: "VOL" });
+  add("knob1", "knob", kx + kd + kgap, ky, kd, kd, { bind: "balance", label: "BAL" });
+
+  return regs;
+}
+
+// 6-band EQ with shuffle / EQ-on toggles flanking it — shared by the randomizer.
+function addEq(add: ReturnType<typeof makeAdder>, x0: number, y: number, w: number) {
+  const eh = 128, sww = 44;
+  add("sw0", "toggle", x0, y + 6, sww, eh - 12, { bind: "shuffle", label: "SHUF" });
+  add("sw1", "toggle", x0 + w - sww, y + 6, sww, eh - 12, { bind: "eqOn", label: "EQ" });
+  const sx = x0 + sww + w * 0.05, ex = x0 + w - sww - w * 0.05, sw_ = (ex - sx) / 6;
+  for (let i = 0; i < 6; i++)
+    add(`eq${i}`, "slider-v", sx + i * sw_ + sw_ * 0.28, y, sw_ * 0.44, eh,
+      { bind: "eqBand", group: "eq-bands", index: i, label: "" });
+}
+
+// ---- random: a HEURISTIC randomizer. Not chaos — controls drop into vertical
+// zones (or orbit a dial), with randomized sizes / inclusion, so every roll is a
+// plausible, usable, mostly non-overlapping player. Drives the 🎲 button.
+export function layoutRandom(): Region[] {
+  const regs: Region[] = [];
+  const add = makeAdder(regs);
+  const mx = GEN_W * rnd(0.06, 0.11);
+  const x0 = mx, w = GEN_W - 2 * mx, cx = GEN_W / 2;
+
+  if (chance(0.4)) {
+    // dial archetype: round visualizer, buttons orbiting the lower rim, arc seek
+    const cyD = GEN_H * rnd(0.24, 0.30), rg = GEN_W * rnd(0.16, 0.21);
+    add("visualizer", "display", cx - rg, cyD - rg, 2 * rg, 2 * rg,
+      { content: "dynamic", layer: "screen", dynamicType: "visualizer", shape: "ellipse" });
+    const rc = rg + rnd(60, 92);
+    const btns = chance(0.5) ? ["prev", "play", "pause", "next"] : ["prev", "play", "next"];
+    // keep transport in the LOWER arc (centred on 90° = bottom) so it never rides
+    // up into the knob "eyes" at the top of the dial.
+    const spread = rnd(58, 82), start = 90 - spread, stepA = (2 * spread) / (btns.length - 1);
+    let maxBd = 0;
+    btns.forEach((b, i) => {
+      const a = rad(start + i * stepA), bd = 64 * (BSIZE[b] ?? 1);
+      maxBd = Math.max(maxBd, bd);
+      add(b, "button", cx + rc * Math.cos(a) - bd / 2, cyD + rc * Math.sin(a) - bd / 2, bd, bd,
+        { bind: b, label: b, shape: "ellipse" });
+    });
+    const side = 2 * (rc + 18);
+    add("seek", "slider-arc", cx - side / 2, cyD - side / 2, side, side,
+      { bind: "seek", label: "Seek", arc: { start: 200, end: 340 } });
+    if (chance(0.6)) {  // knobs as "eyes" flanking the TOP of the dial (270°)
+      const kd = rnd(64, 86), ka = rad(rnd(248, 262)), ox = rc * Math.cos(ka), oy = rc * Math.sin(ka);
+      add("knob0", "knob", cx + ox - kd / 2, cyD + oy - kd / 2, kd, kd, { bind: "volume", label: "VOL" });
+      add("knob1", "knob", cx - ox - kd / 2, cyD + oy - kd / 2, kd, kd, { bind: "balance", label: "BAL" });
+    }
+    // marquee clears the LOWEST orbiting button (bottom of the ring at 90°), not
+    // just the glass — otherwise a big orbit radius overlaps the marquee.
+    let y = cyD + rc + maxBd / 2 + rnd(34, 64);
+    add("marquee", "display", x0, y, w, rnd(40, 64),
+      { content: "dynamic", layer: "screen", dynamicType: "marquee" });
+    y += 96;
+    if (chance(0.5) && y < GEN_H * 0.6) { addEq(add, x0, y, w); y += 150; }
+    if (chance(0.45) && y < GEN_H * 0.82)
+      add("playlist", "display", x0, y, w, GEN_H * 0.94 - y,
+        { content: "dynamic", layer: "screen", dynamicType: "playlist" });
+    return regs;
+  }
+
+  // stack archetype: a vertical flow of zones
+  let y = GEN_H * rnd(0.09, 0.14);
+  const visH = GEN_H * rnd(0.16, 0.24);
+  if (chance(0.25)) { const d = Math.min(w, visH * 1.3); add("visualizer", "display", cx - d / 2, y, d, d, { content: "dynamic", layer: "screen", dynamicType: "visualizer", shape: "ellipse" }); y += d; }
+  else { add("visualizer", "display", x0, y, w, visH, { content: "dynamic", layer: "screen", dynamicType: "visualizer" }); y += visH; }
+  y += rnd(28, 56);
+
+  const mh = rnd(42, 64);
+  if (chance(0.5)) { const cwc = w * 0.27; add("marquee", "display", x0, y, w - cwc - 20, mh, { content: "dynamic", layer: "screen", dynamicType: "marquee" }); add("time", "display", x0 + w - cwc, y, cwc, mh, { content: "dynamic", layer: "screen", dynamicType: "time" }); }
+  else add("marquee", "display", x0, y, w, mh, { content: "dynamic", layer: "screen", dynamicType: "marquee" });
+  y += mh + rnd(22, 40);
+
+  add("seek", "slider-h", x0, y, w, 30, { bind: "seek", label: "Seek" });
+  y += rnd(58, 84);
+
+  const set = ["play"];
+  if (chance(0.92)) { set.unshift("prev"); set.push("next"); }
+  if (chance(0.3)) set.splice(1, 0, "pause");
+  if (chance(0.4)) set.push("stop");
+  const sizes = set.map((b) => 92 * (BSIZE[b] ?? 1)), gap = rnd(30, 52);
+  const rowW = sizes.reduce((s, d) => s + d, 0) + gap * (set.length - 1), maxD = Math.max(...sizes);
+  let tx = cx - rowW / 2; const cyR = y + maxD / 2;
+  set.forEach((b, i) => { add(b, "button", tx, cyR - sizes[i] / 2, sizes[i], sizes[i], { bind: b, label: b, shape: "ellipse" }); tx += sizes[i] + gap; });
+  y = cyR + maxD / 2 + rnd(36, 60);
+
+  if (chance(0.8)) { const two = chance(0.6), kd = rnd(96, 124), kw = two ? kd * 2 + 90 : kd, kx = cx - kw / 2; add("knob0", "knob", kx, y, kd, kd, { bind: "volume", label: "VOL" }); if (two) add("knob1", "knob", kx + kd + 90, y, kd, kd, { bind: "balance", label: "BAL" }); y += kd + rnd(28, 48); }
+  if (chance(0.4) && y < GEN_H * 0.62) { addEq(add, x0, y, w); y += 150; }
+  if (chance(0.4) && y < GEN_H * 0.8) add("playlist", "display", x0, y, w, GEN_H * 0.93 - y, { content: "dynamic", layer: "screen", dynamicType: "playlist" });
   return regs;
 }
 
