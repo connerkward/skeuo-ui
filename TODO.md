@@ -2,6 +2,16 @@
 
 ## Open
 
+- [ ] **CD album-art visualizer — went missing, investigate + restore (2026-06-23).** A
+      visualizer mode that showed the playing track's **album artwork on a spinning CD/disc**
+      (in the round screen) is gone — unclear when/why it regressed. The data is still there:
+      Spotify exposes `album.images` (`src/spotify/api.ts:86,129`), but nothing in
+      `src/player/Visualizer.tsx` (spectrum-only) or any `display` region renders artwork.
+      NEXT: `git log -p -- src/player/Visualizer.tsx src/player/Composite.tsx` (and search
+      history for `album`/`cover`/`artwork`/`disc`) to find when the CD-art mode existed, then
+      re-add it as a visualizer/screen variant fed by `album.images` (+ a fallback for
+      local/demo mode with no Spotify art).
+
 - [x] **More generative template heuristics — BAKED (2026-06-23).** The 10-archetype engine
       + repel/min-spacing pass is now `layoutRandom()` in `src/generate/layouts.ts`, wired to
       the wizard's 🎲 and verified live (arc + dial rolls, round controls, glass cleared, 0
