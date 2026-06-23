@@ -54,25 +54,38 @@ function snapToSockets(template: Template, device: ImageData): Template {
     .filter((s) => s.aspect > 0.55 && s.aspect < 1.8 && s.r < 0.16 * minDim);
   if (!sockets.length) return template;
   const maxDist = 0.20 * Math.hypot(W, H);   // a control can't teleport across the device
-  const used = new Set<Socket>();
-  const regions = template.regions.map((r) => {
-    if (r.kind !== "button" && r.kind !== "knob") return r;
+
+  // GLOBAL shortest-edge-first matching, NOT template-order greedy. In-order greedy
+  // let an earlier control claim a socket a later (often larger) control needed, so
+  // play/knob fell back to blueprint coords and rendered offset from their wells.
+  // Instead: gather every (control, socket) pair that passes the size/distance gates,
+  // sort by distance, and assign closest pairs first — each control + socket once.
+  const idx = new Map<number, Socket>();   // region index → assigned socket
+  const pairs: { i: number; s: Socket; dist: number }[] = [];
+  template.regions.forEach((r, i) => {
+    if (r.kind !== "button" && r.kind !== "knob") return;
     const px = (r.rect.x + r.rect.w / 2) * W;
     const py = (r.rect.y + r.rect.h / 2) * H;
-    const nominalR = (Math.min(r.rect.w * W, r.rect.h * H)) / 2;   // expected control radius
-    let best: Socket | undefined; let bd = Infinity;
+    const nominalR = Math.min(r.rect.w * W, r.rect.h * H) / 2;   // expected control radius
     for (const s of sockets) {
-      if (used.has(s)) continue;
       const dist = Math.hypot(s.cx - px, s.cy - py);
       const ratio = s.r / nominalR;
-      // only consider sockets that are NEAR the blueprint position AND a plausible
-      // size for THIS control (~0.5x–2x). Else leave it at the blueprint coords —
-      // a wrong snap is worse than no snap.
-      if (dist > maxDist || ratio < 0.5 || ratio > 2.0) continue;
-      if (dist < bd) { bd = dist; best = s; }
+      // socket must be NEAR the blueprint position AND plausibly sized for a control
+      // (the giant-blob pre-filter above handles screens; this just rejects gross
+      // size mismatches). Upper bound generous so genuinely-bigger wells still match.
+      if (dist > maxDist || ratio < 0.4 || ratio > 2.6) continue;
+      pairs.push({ i, s, dist });
     }
+  });
+  pairs.sort((a, b) => a.dist - b.dist);
+  const usedSock = new Set<Socket>();
+  for (const p of pairs) {
+    if (idx.has(p.i) || usedSock.has(p.s)) continue;
+    idx.set(p.i, p.s); usedSock.add(p.s);
+  }
+  const regions = template.regions.map((r, i) => {
+    const best = idx.get(i);
     if (!best) return r;   // no plausible socket → keep the blueprint rect
-    used.add(best);
     const R = best.r * 1.06;   // a hair larger than the socket so the cap covers the rim
     return { ...r, rect: {
       x: (best.cx - R) / W, y: (best.cy - R) / H,
