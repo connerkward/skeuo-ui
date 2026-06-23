@@ -53,9 +53,24 @@ export async function cutoutPaintToFrame(paintUrl: string): Promise<Blob> {
   // apiUrl() makes paths absolute under the native shells (tauri:// origin) so the
   // cross-origin fetch hits skeuo.fm; on the web it stays same-origin. The asset
   // endpoint sends CORS headers so the fetched paint is readable into the canvas.
-  const res = await fetch(apiUrl(paintUrl));
-  if (!res.ok) throw new Error(`fetch paint → ${res.status}`);
-  const { src, W, H, release } = await decodePaint(await res.arrayBuffer(), res);
+  //
+  // Retry fetch+decode: the paint can be momentarily unavailable right after
+  // generation — the two-step write window (Worker stores paint, then we read it),
+  // a CDN edge that hasn't filled, or dev static-serving lag — and come back as a
+  // non-image (a 404 page or the SPA index.html). A few short retries turn that
+  // transient into a success instead of a hard "could not be decoded".
+  let decoded: Decoded | undefined;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3 && !decoded; attempt++) {
+    if (attempt) await new Promise((r) => setTimeout(r, 400 * attempt));
+    try {
+      const res = await fetch(apiUrl(paintUrl), { cache: "no-store" });
+      if (!res.ok) throw new Error(`fetch paint → ${res.status}`);
+      decoded = await decodePaint(await res.arrayBuffer(), res);
+    } catch (e) { lastErr = e; }
+  }
+  if (!decoded) throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+  const { src, W, H, release } = decoded;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
