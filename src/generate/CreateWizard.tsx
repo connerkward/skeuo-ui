@@ -322,7 +322,15 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                 <div className="wiz-total"><strong>{models.length} model{models.length === 1 ? "" : "s"}</strong> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</div>
               </div>
               {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={grows} />}
-              {err && <div className="wiz-err">{err}</div>}
+              {err && (
+                <div className="wiz-err">
+                  <img className="wiz-err-mascot" src="/mascot-error.png" alt="" />
+                  <div className="wiz-err-body">
+                    <span className="wiz-err-title">All tangled up</span>
+                    <span className="wiz-err-msg">{err}</span>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
