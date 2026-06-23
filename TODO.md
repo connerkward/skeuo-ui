@@ -2,7 +2,13 @@
 
 ## Open
 
-- [ ] **More generative template heuristics — bake the lookdev studio into the app.**
+- [x] **More generative template heuristics — BAKED (2026-06-23).** The 10-archetype engine
+      + repel/min-spacing pass is now `layoutRandom()` in `src/generate/layouts.ts`, wired to
+      the wizard's 🎲 and verified live (arc + dial rolls, round controls, glass cleared, 0
+      overlaps). Density varies per roll. Studio kept at `/tmp/lookdev-layout/` for further
+      tuning. Still open below: weight curation / gridSnap exposure / lopsided-default are
+      hardcoded to the dialed-in config — revisit if you want them user-tunable.
+- [ ] **(was) More generative template heuristics — original notes (kept for reference).**
       A layout-randomization studio was built (`/tmp/lookdev-layout/index.html`; re-serve with
       `~/dev/central/scripts/serve /tmp/lookdev-layout --bg`) to ideate graphic-design-informed
       layout heuristics for the wizard's 🎲 Randomize. It generates **10 archetypes** — stack,
