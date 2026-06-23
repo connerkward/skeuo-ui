@@ -11,7 +11,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import { handleGenerate } from "../src/generate/handler";
-import type { RuntimeDeps } from "../src/generate/pipeline";
+import { removeBackground, type RuntimeDeps } from "../src/generate/pipeline";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
 // the same precedence used for both FAL_KEY and OPENAI_API_KEY.
@@ -54,7 +54,7 @@ export function devApiPlugin(): Plugin {
       const genDir = resolve(server.config.root, "public", "generated");
       const store = async (
         id: string,
-        kind: "frame" | "paint" | "template" | "meta",
+        kind: "frame" | "paint" | "template" | "meta" | "layout",
         data: Uint8Array | string,
       ): Promise<string> => {
         mkdirSync(genDir, { recursive: true });
@@ -87,23 +87,78 @@ export function devApiPlugin(): Plugin {
         });
       });
 
-      // POST /api/finalize/<id> — local parity with functions/api/finalize/[id].ts.
-      // The browser cuts the raw paint and uploads the finished frame.png here; we
-      // write it next to the other artifacts so /api/skin + /share work end-to-end.
+      // POST /api/cutout — local parity with functions/api/cutout.ts. BiRefNet
+      // background removal, server-side (FAL_KEY never reaches the browser). The
+      // browser POSTs the cropped device PNG; we return the transparent PNG.
+      server.middlewares.use("/api/cutout", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "POST only" })); return; }
+        if (!falKey) { res.statusCode = 500; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "server missing FAL_KEY (.dev.vars)" })); return; }
+        const chunks: Buffer[] = [];
+        req.on("data", (c) => chunks.push(c as Buffer));
+        req.on("end", async () => {
+          try {
+            const ct = (req.headers["content-type"] ?? "").toString();
+            let png: Uint8Array;
+            if (ct.includes("application/json")) {
+              const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}") as { imageUrl?: string };
+              if (!body.imageUrl) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "imageUrl required" })); return; }
+              const r = await fetch(body.imageUrl);
+              png = new Uint8Array(await r.arrayBuffer());
+            } else {
+              png = new Uint8Array(Buffer.concat(chunks));
+            }
+            const cut = await removeBackground(falKey, png);
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "image/png");
+            res.setHeader("Cache-Control", "no-store");
+            res.end(Buffer.from(cut));
+          } catch (e) {
+            res.statusCode = 502;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
+          }
+        });
+      });
+
+      // POST /api/finalize/<id>            → frame.png
+      // POST /api/finalize/<id>/sprites/<bind> → sprites/<bind>.png
+      // Local parity with functions/api/finalize/[id].ts. The browser uploads the
+      // cut device frame and each per-control sprite here, next to the other
+      // artifacts, so /api/skin + /share + per-skin sprites work end-to-end.
+      const ID_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
+      const BIND_RE = /^[a-z0-9][a-z0-9_-]{0,39}$/i;
       server.middlewares.use("/api/finalize/", (req, res) => {
         res.setHeader("Content-Type", "application/json");
         if (req.method !== "POST") { res.statusCode = 405; res.end(JSON.stringify({ error: "POST only" })); return; }
-        const id = decodeURIComponent((req.url ?? "").replace(/^\/+/, "").split(/[?#]/)[0]);
-        if (!id || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(id)) { res.statusCode = 400; res.end(JSON.stringify({ error: "bad id" })); return; }
+        const pathOnly = (req.url ?? "").replace(/^\/+/, "").split(/[?#]/)[0];
+        const segs = pathOnly.split("/").map((s) => decodeURIComponent(s));
+        const id = segs[0];
+        if (!id || !ID_RE.test(id)) { res.statusCode = 400; res.end(JSON.stringify({ error: "bad id" })); return; }
         if (!existsSync(resolve(genDir, `${id}-template.json`))) { res.statusCode = 404; res.end(JSON.stringify({ error: "unknown skin" })); return; }
+        // sprite upload: /<id>/sprites/<bind>
+        let bind: string | null = null;
+        if (segs.length >= 3 && segs[1] === "sprites") {
+          bind = segs[2];
+          if (!bind || !BIND_RE.test(bind)) { res.statusCode = 400; res.end(JSON.stringify({ error: "bad bind" })); return; }
+        } else if (segs.length !== 1) {
+          res.statusCode = 400; res.end(JSON.stringify({ error: "bad finalize path" })); return;
+        }
         const chunks: Buffer[] = [];
         req.on("data", (c) => chunks.push(c as Buffer));
         req.on("end", () => {
           try {
             mkdirSync(genDir, { recursive: true });
-            writeFileSync(resolve(genDir, `${id}-frame.png`), Buffer.concat(chunks));
-            res.statusCode = 200;
-            res.end(JSON.stringify({ id, frameUrl: `/generated/${id}-frame.png` }));
+            if (bind) {
+              // dev flattens R2's skins/<id>/sprites/<bind>.png into one dir.
+              const file = `${id}-sprite-${bind}.png`;
+              writeFileSync(resolve(genDir, file), Buffer.concat(chunks));
+              res.statusCode = 200;
+              res.end(JSON.stringify({ id, bind, spriteUrl: `/generated/${file}` }));
+            } else {
+              writeFileSync(resolve(genDir, `${id}-frame.png`), Buffer.concat(chunks));
+              res.statusCode = 200;
+              res.end(JSON.stringify({ id, frameUrl: `/generated/${id}-frame.png` }));
+            }
           } catch (e) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));

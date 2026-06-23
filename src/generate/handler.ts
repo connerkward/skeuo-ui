@@ -64,7 +64,7 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,
-      template: r.template, frameUrl: r.frameUrl,
+      template: r.template, frameUrl: r.frameUrl, layout: r.layout, sprites: r.sprites,
       needsCutout: r.needsCutout, paintUrl: r.paintUrl, timingMs: r.timingMs,
     };
   } catch (e) {

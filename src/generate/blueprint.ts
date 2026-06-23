@@ -150,6 +150,173 @@ export function cutoutAlpha(rgba: Uint8Array, W: number, H: number): Uint8Array 
   return alpha;
 }
 
+// ============================================================
+// COMBINED BLUEPRINT (single-pass sprite-sheet pipeline) — a TS port of
+// /tmp/A_blueprint.py. ONE image carries both a DEVICE BODY (top) and a
+// SPRITE STRIP (bottom):
+//   • a faint gray rounded BODY silhouette behind the wells (the model
+//     RESTYLES an existing shape instead of inventing+growing one → less drift);
+//   • each control well drawn as a dark socket, ringed by a bright MAGENTA
+//     ANCHOR RING so it reads as a fixed, non-negotiable anchor;
+//   • a bottom strip of labeled placeholder cells — one per sprite control —
+//     where the model paints the BARE finished control parts.
+// The single paint pass (see pipeline.ts) restyles the whole thing in one shot;
+// there is NO separate envelope pass. The returned `layout` tells the browser
+// (cutoutClient.ts) where to cut the device region and each control sprite.
+// ============================================================
+
+// kinds the SPRITE STRIP carries (interactive parts that get cut + re-seated).
+// displays/screens are device-only (painted in place, never cut as a sprite).
+export type SpriteKind = "button" | "knob" | "toggle" | "slider";
+
+// one control as the browser needs it. rect is normalized to the DEVICE region
+// (0..1 of GEN_W × GEN_H), matching the on-device socket the app re-seats into.
+export interface BlueprintControl {
+  bind: string;
+  kind: SpriteKind;
+  rect: [number, number, number, number];
+}
+// one sprite-strip cell. cellRect is normalized to the FULL combined image
+// (0..1 of GEN_W × (GEN_H+STRIP_H)) — the box the browser crops + masks to get
+// the bare control sprite.
+export interface BlueprintCell {
+  bind: string;
+  kind: SpriteKind;
+  cellRect: [number, number, number, number];
+}
+export interface BlueprintLayout {
+  // device region = the TOP `devFrac` of the combined image height.
+  devFrac: number;
+  controls: BlueprintControl[];
+  cells: BlueprintCell[];
+}
+
+export interface CombinedBlueprint {
+  svg: string;
+  layout: BlueprintLayout;
+  width: number;
+  height: number;
+}
+
+// strip height as a fraction of the device height (matches A_blueprint.py:
+// STRIP_H=460 / DEV_H=1536 ≈ 0.30). The device region keeps GEN_W × GEN_H so the
+// existing region rects (already normalized to GEN_H) map straight through.
+const STRIP_FRAC = 0.30;
+// device region = the TOP fraction of the combined image (the rest is the sprite
+// strip). Exported so the browser can crop the device even without a layout object
+// (the strip fraction is a pipeline constant). devFrac in BlueprintLayout equals this.
+export const DEVICE_FRAC = 1 / (1 + STRIP_FRAC);
+
+const BP_BODY = "rgb(218,218,224)";   // faint gray body silhouette
+const BP_DARK = "rgb(24,24,28)";      // dark socket / cell outline
+const BP_RING = "rgb(255,40,120)";    // bright magenta anchor ring
+
+// map a template Region kind → the sprite kind we cut, or null for non-sprite
+// (displays/decorations stay on the device and are never cut to the strip).
+function spriteKindOf(r: Region): SpriteKind | null {
+  if (r.kind === "knob") return "knob";
+  if (r.kind === "toggle") return "toggle";
+  if (r.kind === "button") return "button";
+  if (r.kind === "slider-h" || r.kind === "slider-v" || r.kind === "slider-arc" || r.kind === "slider-path")
+    return "slider";
+  return null; // display / flourish / segmented / xy — device-only
+}
+// The per-sprite KEY = the region id. It is GUARANTEED unique within a template
+// (bind is NOT — e.g. all six EQ bands share bind:"eqBand"), so it is the only safe
+// token for skins/<id>/sprites/<key>.png (write-once would otherwise collide) and is
+// what the render team resolves back to a template region to size the sprite. For the
+// common transport controls id===bind, so existing lookups keep working.
+const bindOf = (r: Region): string => r.id;
+
+// Build the COMBINED blueprint SVG + its layout. Device region is GEN_W×GEN_H,
+// strip is GEN_W×(GEN_H*STRIP_FRAC) below it. Mirrors A_blueprint.py geometry.
+export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
+  const stripH = Math.round(GEN_H * STRIP_FRAC);
+  const H = GEN_H + stripH;
+  const devFrac = GEN_H / H;
+
+  // sprite controls = interactive parts only, in stable (region) order.
+  const spriteRegs = regs.filter((r) => spriteKindOf(r) !== null);
+
+  const parts: string[] = [];
+  parts.push(`<rect width="${GEN_W}" height="${H}" fill="white"/>`);
+
+  // --- faint gray BODY silhouette: rounded envelope around all DEVICE wells. ---
+  // (mirrors A_blueprint.py: bbox of every well + generous margin, big radius.)
+  let bx0 = GEN_W, by0 = GEN_H, bx1 = 0, by1 = 0;
+  for (const r of regs) {
+    const x0 = r.rect.x * GEN_W, y0 = r.rect.y * GEN_H;
+    const x1 = x0 + r.rect.w * GEN_W, y1 = y0 + r.rect.h * GEN_H;
+    if (x0 < bx0) bx0 = x0; if (y0 < by0) by0 = y0;
+    if (x1 > bx1) bx1 = x1; if (y1 > by1) by1 = y1;
+  }
+  if (regs.length) {
+    const mx = GEN_W * 0.06, my = GEN_H * 0.05;
+    bx0 = Math.max(0, bx0 - mx); by0 = Math.max(0, by0 - my);
+    bx1 = Math.min(GEN_W, bx1 + mx); by1 = Math.min(GEN_H, by1 + my * 1.6);
+    parts.push(roundRect(bx0, by0, bx1 - bx0, by1 - by0, GEN_W * 0.10, BP_BODY, "none", 0));
+  }
+
+  // --- device sockets, each a FIXED ANCHOR with a bright magenta keyline ring. ---
+  for (const r of regs) {
+    const x = r.rect.x * GEN_W, y = r.rect.y * GEN_H;
+    const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
+    const round = r.kind === "knob" || ((r.kind === "button" || r.kind === "display") && r.shape === "ellipse");
+    const ringW = Math.max(6, Math.round(Math.min(w, h) * 0.10));
+    const pad = ringW + 4;
+    if (round) {
+      parts.push(ellipse(x, y, w, h, BP_DARK, "none", 0));
+      parts.push(ellipse(x - pad, y - pad, w + 2 * pad, h + 2 * pad, "none", BP_RING, ringW));
+    } else {
+      const rad0 = Math.min(w, h) * 0.3;
+      parts.push(roundRect(x, y, w, h, rad0, BP_DARK, "none", 0));
+      parts.push(roundRect(x - pad, y - pad, w + 2 * pad, h + 2 * pad, rad0 + pad, "none", BP_RING, ringW));
+    }
+  }
+
+  // --- bottom SPRITE STRIP: one labeled placeholder cell per sprite control. ---
+  const n = spriteRegs.length;
+  const cellW = n > 0 ? GEN_W / n : GEN_W;
+  const cells: BlueprintCell[] = [];
+  spriteRegs.forEach((r, i) => {
+    const kind = spriteKindOf(r)!;
+    const cx = i * cellW + cellW / 2;
+    const cy = GEN_H + stripH * 0.42;
+    // placeholder outline (the model paints a bare finished part inside it)
+    if (kind === "slider") {
+      const s = cellW * 0.5;
+      parts.push(roundRect(cx - s / 2, cy - s * 0.28, s, s * 0.56, 14, "none", BP_DARK, 4));
+    } else {
+      const s = cellW * 0.42;
+      parts.push(ellipse(cx - s / 2, cy - s / 2, s, s, "none", BP_DARK, 4));
+    }
+    // strip label = the human-readable hint for the model (bind/label), NOT the id
+    // key — so a knob still reads "VOL", while the cut sprite is keyed by id.
+    const label = (r.label || r.bind || r.id).toUpperCase();
+    parts.push(
+      `<text x="${cx}" y="${GEN_H + stripH * 0.78}" font-family="Arial, sans-serif" font-weight="bold" ` +
+      `font-size="26" fill="${BP_DARK}" text-anchor="middle">${escapeXml(label)}</text>`,
+    );
+    // cell crop box (full combined-image normalized) — mirrors A_blueprint cell_rects.
+    const cw = cellW * 0.92;
+    cells.push({
+      bind: bindOf(r), kind,
+      cellRect: [(cx - cw / 2) / GEN_W, (GEN_H + stripH * 0.06) / H, cw / GEN_W, (stripH * 0.62) / H],
+    });
+  });
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${GEN_W}" height="${H}" viewBox="0 0 ${GEN_W} ${H}">${parts.join("")}</svg>`;
+  const controls: BlueprintControl[] = spriteRegs.map((r) => ({
+    bind: bindOf(r), kind: spriteKindOf(r)!,
+    rect: [r.rect.x, r.rect.y, r.rect.w, r.rect.h], // normalized to the DEVICE region (GEN_H)
+  }));
+  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H };
+}
+
+function escapeXml(s: string): string {
+  return s.replace(/[<>&]/g, (c) => (c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&amp;"));
+}
+
 export function regionMaskSvg(regs: Region[], dilate = 28): string {
   const shapes = regs.map((r) => {
     const rc = r.rect;

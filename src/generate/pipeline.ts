@@ -22,31 +22,41 @@
 // ============================================================
 import type { Region, Template } from "../template/schema";
 import { GEN_W, GEN_H, regionsForVariant, type LayoutVariant } from "./layouts";
-import { wellsOnlySvg } from "./blueprint";
+import { combinedBlueprint, type BlueprintLayout } from "./blueprint";
 
-// ---- prompts: verbatim from wild_sculpt.py so output matches the Python ----
-export const ENVELOPE_PROMPT =
-  "Keep every dark control socket, round well, ring groove and dark screen EXACTLY where it is, " +
-  "pixel-identical, unchanged. Around and BEHIND them, paint ONE flat solid dark-gray SILHOUETTE " +
-  "shape on the pure white background: the outline of {brief}. The silhouette must fully CONTAIN " +
-  "every socket and screen with generous margin on all sides, and its wild parts — horns, fins, " +
-  "tendrils, legs, jaws — grow outward from that mass. Completely flat dark-gray fill, no interior " +
-  "detail, no shading, no outline strokes. Everything else stays pure white.";
-
-export const STYLE_PROMPT =
-  "Restyle this blueprint into a photoreal, wildly-shaped skeuomorphic MP3-player device. CRITICAL: " +
-  "keep the EXACT silhouette, and keep EVERY dark recessed well and screen EXACTLY where it is, same " +
-  "size and shape — every recessed well stays a DEEP DARK EMPTY socket: a near-black matte cavity " +
-  "with a crisp raised rim, NOTHING mounted inside, NOT glowing, NOT filled with material; and every " +
-  "screen — INCLUDING the thin marquee strip — stays switched-off NEAR-BLACK glass, a CLEAN FLAT " +
-  "RECTANGLE never tinted or overgrown by the body material (no text, no graphics). " +
-  "Between the wells render ONLY the device's surface material, shading and trim — plus optional " +
-  "engraved or printed LABELS, icons and symbols BESIDE the slots. DO NOT paint any buttons, keys, " +
-  "knobs, dials, sliders, switches, joysticks, D-pads, speaker grilles, extra sockets or any other " +
-  "control or raised interactive part ANYWHERE: the ONLY recesses are the marked wells and you must " +
-  "not add new ones. The real controls are mounted into the slots later — you make the empty slots " +
-  "and their labels, NEVER the buttons themselves. Everything outside the silhouette stays pure white. Front-on " +
-  "orthographic, even light, high detail. MATERIAL: ";
+// ---- single-pass paint prompt — ported from /tmp/prompt_egg_v3.txt (the winning
+// prototype prompt), generalized over the chosen material + brief. The blueprint
+// is COMBINED (device body + bottom sprite strip) so ONE paint produces both the
+// device (body grown around fixed sockets) and the bare control parts. CRITICAL
+// rules carried over: sockets are FIXED anchors (never move/resize/add/remove);
+// REMOVE the magenta rings in output; the bottom strip = BARE finished controls
+// (round buttons with icons, knob with notch, SEEK = a SMALL thumb NOT a pill);
+// and — so the masker isn't confused — "no shadows/AO/reflections, pure white
+// background, clean hard edges". {brief} and {material} are filled per request.
+export const PAINT_PROMPT =
+  "You are restyling a fixed UI blueprint into a finished product render. The image has TWO regions: " +
+  "a DEVICE BODY (top) and a STRIP OF CONTROL PARTS (bottom). Repaint everything as a device shaped " +
+  "like {brief}, in this material: {material}\n\n" +
+  "CRITICAL — the blueprint geometry is LOCKED. Output the SAME dimensions and SAME positions for every element.\n\n" +
+  "TOP DEVICE BODY:\n" +
+  "- The faint gray rounded shape is the BODY — restyle ONLY it into the material above; grow detailing " +
+  "only into the gray body and the white margins. Do NOT change the body outline, position, or size.\n" +
+  "- Each dark shape ringed in bright PINK/MAGENTA is a FIXED SOCKET. KEEP every socket at its EXACT " +
+  "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
+  "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place.\n" +
+  "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
+  "- REMOVE the bright pink/magenta rings in your output (guides only); the dark socket they ringed stays exactly where it was.\n\n" +
+  "BOTTOM CONTROL-PARTS STRIP (important — DO paint these):\n" +
+  "- Below the body is a row of outlined placeholder cells, each labeled with its control name on white.\n" +
+  "- Paint a FINISHED glossy control PART centered inside EACH cell, in the SAME material: round push-buttons " +
+  "get the matching transport icon (rewind / play-triangle / fast-forward); a knob/VOL gets a round knob with a " +
+  "pointer notch; a SEEK/slider gets a SMALL slider THUMB / grip only (a small rounded cap), NOT a full-width bar or pill.\n" +
+  "- Each control is a BARE part: NO square plate, card, tile, rounded-rectangle or box behind it, NO frame, NO shadow " +
+  "under it — just the bare glossy part directly on the white. Keep each centered in its cell, not touching neighbors. " +
+  "KEEP the text labels in place.\n\n" +
+  "RENDER: flat front-on product render on a PERFECTLY CLEAN PURE-WHITE background. CRITICAL: NO shadows of any kind " +
+  "anywhere — no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the white. Every element " +
+  "must have clean hard edges against pure white so it can be perfectly masked. No reflections on the ground.";
 
 export const MATERIAL: Record<string, string> = {
   biomech: "H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping " +
@@ -60,7 +70,8 @@ export const DONOR_STYLES = Object.keys(MATERIAL);
 export type DonorStyle = keyof typeof MATERIAL;
 
 // ---- image-model registry: the three selectable edit endpoints ----
-// label  → the fal edit endpoint + an est per-skin cost (2 passes: envelope+paint).
+// label  → the fal edit endpoint + an est per-skin cost (SINGLE paint pass; the
+// envelope pass was removed — costPerSkin is now an upper-bound ceiling estimate).
 export type ModelId =
   | "fal-ai/gemini-3-pro-image-preview/edit"
   | "fal-ai/gemini-3.1-flash-image-preview/edit"
@@ -69,7 +80,7 @@ export type ModelId =
 export interface ModelInfo {
   id: ModelId;
   label: string;
-  costPerSkin: number;   // est $ for the two passes
+  costPerSkin: number;   // est $ upper bound for the single paint pass
   approx?: boolean;      // mark approximate pricing
 }
 
@@ -89,21 +100,13 @@ export interface RuntimeDeps {
   openaiKey?: string;
   // SVG string → PNG bytes (resvg-wasm in CF, resvg-js in Node)
   rasterize: (svg: string) => Promise<Uint8Array>;
-  // paint PNG → RGBA PNG bytes with the near-white background keyed out:
-  // alpha follows the PAINTED silhouette (largest connected component,
-  // internal holes filled so dark control wells stay opaque, light feather).
-  // OPTIONAL: this is ~2s of pure-JS CPU. Runtimes with no CPU ceiling (the Node
-  // dev server) provide it and cut server-side. The CF Pages Function OMITS it —
-  // that CPU trips the Function ceiling (CF 1102) — so the pipeline persists the
-  // RAW paint instead and the browser does the cutout + uploads frame.png back.
-  cutout?: (paintPng: Uint8Array) => Promise<Uint8Array>;
   // optional: persist one artifact for skin <id>, return its public URL. frame/paint
   // are binary PNG (Uint8Array); template/meta are JSON strings. When omitted, the
   // image is returned inline as a data: URL (demo — no R2 needed) and template/meta
   // are simply not persisted. Wiring R2 (env.SKINS) makes EVERY generated skin a
   // shared cloud artifact under skins/<id>/ (frame.png OR paint.png + template.json +
   // meta.json), reconstructable by id via /api/skin/<id>.
-  store?: (id: string, kind: "frame" | "paint" | "template" | "meta", data: Uint8Array | string) => Promise<string>;
+  store?: (id: string, kind: "frame" | "paint" | "template" | "meta" | "layout", data: Uint8Array | string) => Promise<string>;
   log?: (msg: string) => void;
 }
 
@@ -136,9 +139,11 @@ export interface GenerateResult {
   variant: LayoutVariant;
   model: ModelId;
   template: Template;
-  frameUrl: string;       // public URL or data: URL of the CUT frame
-  needsCutout?: boolean;  // true when the cutout was deferred to the browser (CF Worker path)
-  paintUrl?: string;      // raw paint PNG to cut client-side — present when needsCutout
+  frameUrl: string;       // public URL or data: URL of the CUT device frame
+  layout: BlueprintLayout; // devFrac + per-control rects + sprite-strip cells (browser cuts by this)
+  sprites?: boolean;       // true once per-skin control sprites exist at skins/<id>/sprites/<bind>.png
+  needsCutout?: boolean;  // true when the cutout was deferred to the browser (single-pass: always)
+  paintUrl?: string;      // raw combined paint PNG to cut client-side — present when needsCutout
   timingMs: { envelope: number; paint: number; total: number };
 }
 
@@ -194,71 +199,81 @@ async function fetchPng(url: string): Promise<Uint8Array> {
   return new Uint8Array(await r.arrayBuffer());
 }
 
+// ---- BiRefNet background removal (server-side; FAL_KEY never leaves the server) --
+// Upload device-region PNG bytes → fal-ai/birefnet/v2 → transparent PNG bytes.
+// Used by /api/cutout (functions/api/cutout.ts + the dev plugin). BiRefNet input is
+// {image_url}, output is result.image.url. Reuses the same fal queue helpers as the
+// paint pass so there is ONE fal-REST implementation.
+export const BIREFNET_MODEL = "fal-ai/birefnet/v2";
+export async function removeBackground(falKey: string, png: Uint8Array): Promise<Uint8Array> {
+  const imageUrl = await falUpload(falKey, png);
+  const job = await falPost(falKey, `https://queue.fal.run/${BIREFNET_MODEL}`, {
+    image_url: imageUrl,
+    // Light 2K: device frames are ~1024-wide PNGs with hard edges on pure white —
+    // the light model is fast and the clean blueprint render is easy to segment.
+    model: "General Use (Light 2K)",
+    operating_resolution: "2048x2048",
+    output_format: "png",
+  });
+  const t0 = Date.now();
+  for (;;) {
+    const s = (await falGet(falKey, job.status_url)).status;
+    if (s === "COMPLETED") break;
+    if (s === "FAILED" || s === "ERROR") throw new Error("birefnet job failed");
+    if (Date.now() - t0 > 5 * 60_000) throw new Error("birefnet job timeout");
+    await new Promise((res) => setTimeout(res, 2000));
+  }
+  const out = await falGet(falKey, job.response_url);
+  const url = out?.image?.url;
+  if (!url) throw new Error("birefnet returned no image url");
+  return fetchPng(url);
+}
+
 export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Promise<GenerateResult> {
   const log = deps.log ?? (() => {});
   const model = input.model ?? DEFAULT_MODEL;
-  const useEnvelope = input.envelope ?? true;
   // custom layout from the wizard wins; otherwise the constant variant preset.
   const regs: Region[] = input.regions?.length ? input.regions : regionsForVariant(input.variant);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 
-  // 2. wells-only blueprint PNG (envelope input)
-  const wellsPng = await deps.rasterize(wellsOnlySvg(regs));
+  // 1. COMBINED blueprint PNG — device body (faint envelope + magenta-ringed
+  //    sockets) + a bottom sprite strip of labeled control cells. ONE image.
+  const { svg, layout } = combinedBlueprint(regs);
+  const blueprintPng = await deps.rasterize(svg);
 
-  // 3. ENVELOPE pass — grow a flat silhouette around the wells. This is the
-  //    DEFAULT (useEnvelope defaults true): with no uploaded envelope the body
-  //    auto-expands from the prompt instead of freeform-shrinking to the wells.
-  //    Only an uploaded envelopeUrl skips it; explicitly passing envelope:false
-  //    falls back to painting straight from the wells-only blueprint.
-  let paintInputPng = wellsPng;
-  let envMs = 0;
-  if (input.envelopeUrl) {
-    // user-uploaded envelope wins: paint straight from it, skip the AI envelope pass.
-    paintInputPng = await fetchPng(input.envelopeUrl);
-    log(`[${input.id}] using uploaded envelope`);
-  } else if (useEnvelope) {
-    const tEnv = Date.now();
-    const wellsUrl = await falUpload(deps.falKey, wellsPng);
-    const envJob = await falSubmit(deps.falKey, model, [wellsUrl], ENVELOPE_PROMPT.replace("{brief}", input.brief));
-    const envUrl = await falPoll(deps.falKey, envJob, 7 * 60_000);
-    paintInputPng = await fetchPng(envUrl);
-    envMs = Date.now() - tEnv;
-    log(`[${input.id}] envelope (${modelLabel(model)}) ${(envMs / 1000) | 0}s`);
-  }
-
-  // 4. PAINT pass — restyle the ENVELOPE (silhouette + wells) into the material.
-  //    The envelope already carries the wells (pixel-identical) plus the body
-  //    silhouette, so it is the layout authority for the paint, exactly like the
-  //    Python draw_blueprint() output. Reference-style images ride along.
+  // 2. SINGLE PAINT PASS — restyle the whole combined blueprint into the material
+  //    in ONE shot (NO separate envelope pass). The blueprint IS the layout
+  //    authority: the model grows the body around the fixed sockets and paints the
+  //    bare control parts in the strip. Reference-style images ride along.
   const tPaint = Date.now();
-  const paintInputUrl = await falUpload(deps.falKey, paintInputPng);
-  let prompt = STYLE_PROMPT + (input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp);
+  const blueprintUrl = await falUpload(deps.falKey, blueprintPng);
+  let prompt = PAINT_PROMPT
+    .replace(/\{brief\}/g, input.brief)
+    .replace("{material}", input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp);
   const refs = input.refImageUrls ?? [];
   if (refs.length) {
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +
-      "image(s) provided, but DO NOT copy their layout or shape — the silhouette and wells come only from the blueprint.";
+      "image(s) provided, but DO NOT copy their layout or shape — the silhouette, sockets and cells come only from the blueprint.";
   }
-  const paintJob = await falSubmit(deps.falKey, model, [paintInputUrl, ...refs], prompt);
+  const paintJob = await falSubmit(deps.falKey, model, [blueprintUrl, ...refs], prompt);
   const paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
   const paintPng = await fetchPng(paintUrl);
   const paintMs = Date.now() - tPaint;
   log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);
 
-  // 5/6. alpha = the PAINTED silhouette, keyed out of the paint PNG. The paint
-  //    prompt forces "everything outside the silhouette stays pure white", so the
-  //    non-white region IS the real (expanded) outline. cutout() keys white →
-  //    transparent, keeps the largest connected component, and fills internal
-  //    holes so dark control wells inside the body stay opaque. No region-union
-  //    shrink-wrap.
+  // 3. CUTOUT is always deferred to the browser. The combined paint must be
+  //    background-removed (device region) AND each control sprite cut from its
+  //    cell — both are pure-JS CPU that trips the CF Function ceiling (CF 1102),
+  //    so the Worker persists the RAW combined paint and the browser finishes:
+  //    crops the device region (top devFrac), POSTs it to /api/cutout (BiRefNet,
+  //    server-side key) for a transparent device frame, cuts each control sprite
+  //    by cell geometry, and uploads frame.png + sprites/<bind>.png back to R2.
   //
-  //    cutout is ~2s of pure-JS CPU. Two paths:
-  //      • deps.cutout PRESENT (Node dev, no CPU limit): cut server-side, store the
-  //        finished frame.png — the contract's frameUrl is the cut frame, done.
-  //      • deps.cutout ABSENT (CF Pages Function): that CPU trips the Function
-  //        ceiling (CF 1102 exceededCpu), so DEFER it. Persist the RAW paint and
-  //        return needsCutout + paintUrl; the browser cuts and uploads frame.png
-  //        back to skins/<id>/ via /api/finalize/<id> (a no-CPU R2 write).
+  //    deps.cutout (server-side, Node dev with no CPU ceiling) is still honored
+  //    for the device background-removal, but the per-control sprite cut + the
+  //    sprite uploads happen in the browser regardless (they need the cell layout
+  //    + the finalize sprite endpoint), so we always return needsCutout + layout.
   const meta: SkinMeta = {
     prompt: input.brief, model, style: input.style, variant: input.variant,
     createdAt: new Date().toISOString(),
@@ -268,43 +283,32 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
     try {
       await deps.store!(input.id, "template", JSON.stringify(template));
       await deps.store!(input.id, "meta", JSON.stringify(meta));
+      await deps.store!(input.id, "layout", JSON.stringify(layout));
     } catch (e) { log(`[${input.id}] sidecar store failed: ${e instanceof Error ? e.message : e}`); }
   };
 
   let frameUrl: string;
-  let needsCutout: boolean | undefined;
-  let paintOut: string | undefined;   // raw paint URL returned to the client to cut
+  let paintOut: string | undefined;   // raw combined paint URL returned to the client to cut
 
-  if (deps.cutout) {
-    // server-side cutout (no CPU ceiling) — store/inline the finished frame
-    const framePng = await deps.cutout(paintPng);
-    if (deps.store) {
-      frameUrl = await deps.store(input.id, "frame", framePng);
-      await storeSidecars();
-    } else {
-      frameUrl = `data:image/png;base64,${toBase64(framePng)}`;
-    }
+  if (deps.store) {
+    // persist the RAW combined paint; the browser cuts the device + sprites and
+    // uploads frame.png (+ sprites/<bind>.png) back via /api/finalize/<id>.
+    paintOut = await deps.store(input.id, "paint", paintPng);
+    // frame.png is the sibling key the browser will upload to (same skins/<id>/
+    // prefix). Derive it from the paint URL so it tracks ASSETS_BASE_URL.
+    frameUrl = paintOut.replace(/paint\.png(\?.*)?$/, "frame.png");
+    await storeSidecars();
   } else {
-    // deferred cutout (CF Worker) — persist the raw paint; the browser finishes it.
-    needsCutout = true;
-    if (deps.store) {
-      paintOut = await deps.store(input.id, "paint", paintPng);
-      // frame.png is the sibling key the browser will upload to (same skins/<id>/
-      // prefix). Derive it from the paint URL so it tracks ASSETS_BASE_URL.
-      frameUrl = paintOut.replace(/paint\.png(\?.*)?$/, "frame.png");
-      await storeSidecars();
-    } else {
-      // demo (no R2): hand the raw paint to the client inline; it cuts in-memory
-      // and there is no durable frame URL to point at.
-      paintOut = `data:image/png;base64,${toBase64(paintPng)}`;
-      frameUrl = paintOut;
-    }
+    // demo (no R2): hand the raw combined paint to the client inline; it cuts
+    // in-memory and there is no durable frame URL to point at.
+    paintOut = `data:image/png;base64,${toBase64(paintPng)}`;
+    frameUrl = paintOut;
   }
 
   return {
-    id: input.id, style: input.style, variant: input.variant, model, template, frameUrl,
-    needsCutout, paintUrl: paintOut,
-    timingMs: { envelope: envMs, paint: paintMs, total: Date.now() - tAll },
+    id: input.id, style: input.style, variant: input.variant, model, template, frameUrl, layout,
+    needsCutout: true, paintUrl: paintOut,
+    timingMs: { envelope: 0, paint: paintMs, total: Date.now() - tAll },
   };
 }
 

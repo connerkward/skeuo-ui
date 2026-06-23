@@ -6,6 +6,7 @@
 import type { Template, Region } from "../template/schema";
 import type { LayoutVariant } from "./layouts";
 import type { DonorStyle, ModelId } from "./pipeline";
+import type { BlueprintLayout } from "./blueprint";
 
 export interface GenerateRequest {
   prompt: string;             // silhouette brief, e.g. "a fanged anglerfish jaw"
@@ -26,17 +27,27 @@ export interface GenerateDone {
   variant: LayoutVariant;
   model: ModelId;
   template: Template;
-  frameUrl: string;           // public URL or data: URL of the CUT frame (white keyed transparent)
-  // CLIENT-SIDE CUTOUT (CF Worker path): the alpha cutout is ~2s of pure-JS CPU
-  // (UPNG decode/encode + connected-components/flood-fill) that trips the Pages
-  // Function CPU ceiling → CF 1102. So the Worker SKIPS the cutout, persists the
-  // RAW paint, and the browser does the cutout + uploads the finished frame.png
-  // back to R2 (a no-CPU write). When `needsCutout` is set, `frameUrl` points at
-  // where the cut frame WILL live (skins/<id>/frame.png) and `paintUrl` is the raw
-  // paint to cut. Runtimes with no CPU limit (the Node dev server) cut server-side
-  // and leave `needsCutout` falsy. See functions/api/finalize/[id].ts.
+  frameUrl: string;           // public URL or data: URL of the CUT device frame (background removed)
+  // LAYOUT: devFrac (device region = top devFrac of the combined paint) + per-control
+  // rects (normalized to the DEVICE region) + sprite-strip cells. The browser cuts the
+  // device + each control sprite by this; the app sizes each sprite to its OWN template
+  // region rect (so the bigger play region → bigger play button). See blueprint.ts.
+  layout: BlueprintLayout;
+  // SPRITES: true once per-skin control sprites exist at
+  // /api/asset/skins/<id>/sprites/<bind>.png. Set by the browser after it cuts +
+  // uploads them in the finalize step; the render team reads this to decide whether
+  // to use per-skin sprites or fall back to the shared donor sprites.
+  sprites?: boolean;
+  // SINGLE-PASS CUTOUT: the combined paint must be background-removed (device region)
+  // AND each control sprite cut from its cell — pure-JS CPU that trips the Pages
+  // Function CPU ceiling → CF 1102. So the Worker SKIPS the cutout, persists the RAW
+  // combined paint, and the browser does the cutout + uploads frame.png (+ each
+  // sprites/<bind>.png) back to R2 (no-CPU writes). `frameUrl` points at where the cut
+  // device frame WILL live (skins/<id>/frame.png) and `paintUrl` is the raw combined
+  // paint. needsCutout is always set in the single-pass pipeline. See
+  // functions/api/cutout.ts + functions/api/finalize/[id].ts.
   needsCutout?: boolean;
-  paintUrl?: string;          // raw paint PNG (public URL or data: URL) — present when needsCutout
+  paintUrl?: string;          // raw combined paint PNG (public URL or data: URL) — present when needsCutout
   timingMs: { envelope: number; paint: number; total: number };
 }
 export interface GenerateError { status: "error"; error: string }

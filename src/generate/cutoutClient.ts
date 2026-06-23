@@ -1,16 +1,25 @@
-// Browser-side alpha cutout — the second half of the deferred-cutout pipeline.
+// Browser-side cutout — the second half of the single-pass sprite-sheet pipeline.
 //
-// /api/generate (the CF Pages Function) can't run the cutout itself: it is ~2s of
-// pure-JS CPU (UPNG decode/encode + cutoutAlpha connected-components/flood-fill)
-// and trips the Function CPU ceiling → CF 1102. So the Worker returns the RAW
-// paint (needsCutout + paintUrl); here we key out the white background using the
-// SAME shared cutoutAlpha, then upload the finished frame.png back to R2 via
-// /api/finalize/<id>. The browser has no CPU limit, so the 2s is harmless.
+// /api/generate (the CF Pages Function) can't run the cutout itself: background
+// removal + per-control sprite cutting is pure-JS/CPU that trips the Function CPU
+// ceiling → CF 1102. So the Worker returns the RAW COMBINED paint (device body on
+// top + a sprite strip of bare controls below) plus a `layout` (needsCutout +
+// paintUrl + layout). Here we:
+//   1. decode the combined paint to a canvas;
+//   2. crop the DEVICE region (top `devFrac`) and POST it to /api/cutout, which
+//      runs fal BiRefNet SERVER-SIDE (FAL_KEY never reaches the browser) and
+//      returns the transparent device PNG → upload as frame.png;
+//   3. cut each control sprite from its strip cell by geometry (ellipse for
+//      button/knob/toggle, rounded-rect for slider, slightly inset to avoid the
+//      white halo) → upload each as sprites/<bind>.png.
+// The app then sizes each control sprite to its OWN template region rect, so the
+// bigger play region gets the bigger play button (placement is NOT baked in; we
+// only cut clean per-control sprites).
 //
-// CORS: paintUrl is same-origin (/api/asset/…) or a data: URL, so drawing it to a
-// canvas never taints it and getImageData works. (A cross-origin fal URL WOULD
-// taint the canvas — that's why /api/generate routes the paint through our own R2.)
-import { cutoutAlpha } from "./blueprint";
+// LEGACY/DEMO FALLBACK: when no `layout` is provided (old callers) or the paint is
+// a data: URL (offline demo, no R2), we key out the white background with the
+// shared pure-JS cutoutAlpha — the original behavior — instead of calling fal.
+import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type SpriteKind } from "./blueprint";
 import { apiUrl } from "../platform";
 
 // Decode raw image bytes into something drawable, robustly across engines.
@@ -47,18 +56,12 @@ async function decodePaint(buf: ArrayBuffer, res: Response): Promise<Decoded> {
   }
 }
 
-// Fetch the raw paint, key out the near-white background, return a PNG Blob of the
-// cut RGBA frame (white → transparent, largest component kept, holes filled).
-export async function cutoutPaintToFrame(paintUrl: string): Promise<Blob> {
-  // apiUrl() makes paths absolute under the native shells (tauri:// origin) so the
-  // cross-origin fetch hits skeuo.fm; on the web it stays same-origin. The asset
-  // endpoint sends CORS headers so the fetched paint is readable into the canvas.
-  //
-  // Retry fetch+decode: the paint can be momentarily unavailable right after
-  // generation — the two-step write window (Worker stores paint, then we read it),
-  // a CDN edge that hasn't filled, or dev static-serving lag — and come back as a
-  // non-image (a 404 page or the SPA index.html). A few short retries turn that
-  // transient into a success instead of a hard "could not be decoded".
+// Fetch + decode the combined paint to a full-size canvas, with retries. The paint
+// can be momentarily unavailable right after generation (the two-step write window,
+// a CDN edge that hasn't filled, or dev static-serving lag) and come back as a
+// non-image (a 404 page or the SPA index.html); a few short retries turn that
+// transient into a success instead of a hard "could not be decoded".
+async function fetchPaintCanvas(paintUrl: string): Promise<HTMLCanvasElement> {
   let decoded: Decoded | undefined;
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3 && !decoded; attempt++) {
@@ -77,21 +80,101 @@ export async function cutoutPaintToFrame(paintUrl: string): Promise<Blob> {
   if (!ctx) { release(); throw new Error("no 2d canvas context"); }
   ctx.drawImage(src, 0, 0);
   release();
+  return canvas;
+}
 
+function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas.toBlob failed"))), "image/png"));
+}
+
+// ---- LEGACY/DEMO: pure-JS white-key cutout of the whole paint (no fal) ----------
+// Key out the near-white background of the (already cropped) device, keeping the
+// largest connected component with internal holes filled. Used only when there is
+// no layout (old caller) or no server to call (data: URL demo).
+function whiteKeyCanvas(canvas: HTMLCanvasElement): Blob | Promise<Blob> {
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("no 2d canvas context");
   const img = ctx.getImageData(0, 0, W, H);
-  // a Uint8Array VIEW over the same buffer ImageData owns — read RGBA via the view,
-  // write the computed alpha straight back into img.data (no copy).
   const rgba = new Uint8Array(img.data.buffer, img.data.byteOffset, img.data.byteLength);
   const alpha = cutoutAlpha(rgba, W, H);
   for (let i = 0; i < W * H; i++) img.data[i * 4 + 3] = alpha[i];
   ctx.putImageData(img, 0, 0);
-
-  return await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas.toBlob failed"))), "image/png"));
+  return canvasToBlob(canvas);
 }
 
-// Upload the cut frame to R2 so the skin is durable + shareable. Returns the public
-// frame URL on success. /api/finalize is write-once and gated on a prior generation.
+// ---- device region crop --------------------------------------------------------
+// The device is the TOP `devFrac` of the combined paint. Returns a fresh canvas.
+function cropDevice(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElement {
+  const W = paint.width;
+  const devH = Math.max(1, Math.round(paint.height * devFrac));
+  const out = document.createElement("canvas");
+  out.width = W; out.height = devH;
+  const ctx = out.getContext("2d");
+  if (!ctx) throw new Error("no 2d canvas context");
+  ctx.drawImage(paint, 0, 0, W, devH, 0, 0, W, devH);
+  return out;
+}
+
+// ---- per-control sprite cut (port of /tmp/A_post_v3.py cut()) -------------------
+// Crop the cell from the combined paint, then mask to the control's shape (ellipse
+// for button/knob/toggle, rounded-rect for slider), slightly inset (1px) to avoid
+// the white edge halo. cellRect is normalized to the FULL combined image.
+function cutSprite(
+  paint: HTMLCanvasElement,
+  cellRect: [number, number, number, number],
+  kind: SpriteKind,
+): HTMLCanvasElement {
+  const W = paint.width, H = paint.height;
+  const [nx, ny, nw, nh] = cellRect;
+  const x0 = Math.round(nx * W), y0 = Math.round(ny * H);
+  const cw = Math.max(1, Math.round(nw * W)), ch = Math.max(1, Math.round(nh * H));
+
+  const out = document.createElement("canvas");
+  out.width = cw; out.height = ch;
+  const ctx = out.getContext("2d");
+  if (!ctx) throw new Error("no 2d canvas context");
+
+  // clip to the control shape (inset 1px), then draw the cell crop through it.
+  ctx.beginPath();
+  if (kind === "slider") {
+    roundRectPath(ctx, 1, 1, cw - 2, ch - 2, Math.min((cw - 2) / 2, (ch - 2) / 2));
+  } else {
+    // inscribed ellipse, inset 1px
+    ctx.ellipse((cw) / 2, (ch) / 2, Math.max(0, cw / 2 - 1), Math.max(0, ch / 2 - 1), 0, 0, Math.PI * 2);
+  }
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(paint, x0, y0, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+
+function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  const rr = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+}
+
+// ---- /api/cutout — server-side BiRefNet on the device crop ----------------------
+async function serverCutout(deviceCanvas: HTMLCanvasElement): Promise<Blob> {
+  const png = await canvasToBlob(deviceCanvas);
+  const r = await fetch(apiUrl("/api/cutout"), {
+    method: "POST", headers: { "Content-Type": "image/png" }, body: png,
+  });
+  if (!r.ok) {
+    const err = (await r.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(err?.error ?? `cutout → ${r.status}`);
+  }
+  return r.blob();
+}
+
+// ---- finalize uploads ----------------------------------------------------------
+// Upload the cut device frame. /api/finalize/<id> is write-once + gated on a prior
+// generation. Returns the public frame URL.
 export async function uploadFrame(id: string, frame: Blob): Promise<string> {
   const r = await fetch(apiUrl(`/api/finalize/${encodeURIComponent(id)}`), {
     method: "POST", headers: { "Content-Type": "image/png" }, body: frame,
@@ -101,13 +184,92 @@ export async function uploadFrame(id: string, frame: Blob): Promise<string> {
   return out.frameUrl;
 }
 
-// Full client half of a generation when the server deferred the cutout. Returns the
-// frameUrl to USE/PERSIST: the durable (absolute-on-native) R2 URL after upload, or
-// — in the demo path (paintUrl is a data: URL, no R2) — an in-memory object URL of
-// the cut frame. apiUrl() keeps the persisted URL reachable from the native shell.
-export async function finishCutout(id: string, paintUrl: string, durableFrameUrl: string): Promise<string> {
-  const frame = await cutoutPaintToFrame(paintUrl);
-  if (paintUrl.startsWith("data:")) return URL.createObjectURL(frame); // demo: no R2 to upload to
-  await uploadFrame(id, frame);
-  return apiUrl(durableFrameUrl);
+// Upload one per-control sprite. /api/finalize/<id>/sprites/<bind> is write-once.
+export async function uploadSprite(id: string, bind: string, sprite: Blob): Promise<string> {
+  const r = await fetch(
+    apiUrl(`/api/finalize/${encodeURIComponent(id)}/sprites/${encodeURIComponent(bind)}`),
+    { method: "POST", headers: { "Content-Type": "image/png" }, body: sprite },
+  );
+  const out = (await r.json().catch(() => null)) as { spriteUrl?: string; error?: string } | null;
+  if (!r.ok || !out?.spriteUrl) throw new Error(out?.error ?? `finalize sprite → ${r.status}`);
+  return out.spriteUrl;
+}
+
+export interface FinishResult {
+  frameUrl: string;        // public (absolute on native) device frame URL
+  sprites: boolean;        // true once per-skin sprites were cut + uploaded
+  spriteUrls: Record<string, string>; // bind → public sprite URL
+}
+
+// Full client half of a single-pass generation, returning the rich FinishResult
+// (frameUrl + which per-skin sprites now exist). `finishCutout` below wraps this to
+// the legacy `Promise<string>` shape the existing callers consume; new callers that
+// want the sprite info should call this directly.
+//
+// Crops + background-removes the device (top devFrac, via /api/cutout → BiRefNet),
+// cuts each control sprite from its cell by geometry, uploads frame.png + each
+// sprites/<bind>.png. `layout` carries devFrac + the strip cells. When omitted (old
+// caller) or the paint is a data: URL (offline demo, no server), falls back to the
+// LEGACY pure-JS white-key cutout of the whole paint — no device/sprite split.
+export async function finishCutoutFull(
+  id: string,
+  paintUrl: string,
+  durableFrameUrl: string,
+  layout?: BlueprintLayout,
+): Promise<FinishResult> {
+  const paint = await fetchPaintCanvas(paintUrl);
+  const isData = paintUrl.startsWith("data:");
+
+  // LEGACY / DEMO: no layout, or a data: URL with no server to call → crop the
+  // device region (top devFrac — DEVICE_FRAC when no layout) and white-key it in
+  // pure JS (original behavior, sans the fal call). No sprite split. We still crop
+  // the device off the combined paint so the strip controls don't bleed into frame.
+  if (!layout || isData) {
+    const devFrac = layout?.devFrac ?? DEVICE_FRAC;
+    const deviceCanvas = cropDevice(paint, devFrac);
+    const frame = await whiteKeyCanvas(deviceCanvas);
+    if (isData) return { frameUrl: URL.createObjectURL(frame), sprites: false, spriteUrls: {} };
+    await uploadFrame(id, frame);
+    return { frameUrl: apiUrl(durableFrameUrl), sprites: false, spriteUrls: {} };
+  }
+
+  // 1. device frame: crop the top devFrac, BiRefNet via /api/cutout, upload.
+  const deviceCanvas = cropDevice(paint, layout.devFrac);
+  const frameBlob = await serverCutout(deviceCanvas);
+  await uploadFrame(id, frameBlob);
+
+  // 2. each control sprite: geometric cut from its cell, upload. Best-effort per
+  //    sprite — a single failed sprite shouldn't sink the whole skin (the app
+  //    falls back to the donor sprite for any bind that is missing).
+  const spriteUrls: Record<string, string> = {};
+  for (const cell of layout.cells) {
+    try {
+      const spriteCanvas = cutSprite(paint, cell.cellRect, cell.kind);
+      const blob = await canvasToBlob(spriteCanvas);
+      spriteUrls[cell.bind] = await uploadSprite(id, cell.bind, blob);
+    } catch { /* skip this sprite; app falls back to donor for this bind */ }
+  }
+
+  return {
+    frameUrl: apiUrl(durableFrameUrl),
+    sprites: Object.keys(spriteUrls).length > 0,
+    spriteUrls,
+  };
+}
+
+// Back-compat wrapper: the existing Create panel/wizard call
+// `finishCutout(id, paintUrl, frameUrl)` and use the returned frameUrl string.
+// Keep that exact signature + return type so those (other-team) files compile and
+// run unchanged; the optional 4th `layout` arg opts into the device+sprite split.
+// When a caller passes the layout (from GenerateDone.layout), the per-skin sprites
+// are cut + uploaded as a side effect and discoverable at
+// /api/asset/skins/<id>/sprites/<bind>.png (GenerateDone.sprites).
+export async function finishCutout(
+  id: string,
+  paintUrl: string,
+  durableFrameUrl: string,
+  layout?: BlueprintLayout,
+): Promise<string> {
+  const out = await finishCutoutFull(id, paintUrl, durableFrameUrl, layout);
+  return out.frameUrl;
 }
