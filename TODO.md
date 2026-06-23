@@ -2,6 +2,35 @@
 
 ## Open
 
+- [ ] **Spotify BYO-Client-ID onboarding wizard — RESUME after the 24h Spotify
+      app-creation cooldown (~2026-06-23).** Prototype built + verified, NOT yet wired
+      into the React app. Goal: let any Premium user connect their OWN Spotify dev app,
+      sidestepping the ≤5-user allowlist on skeuo's shared app.
+      - **Prototype:** `docs/spotify-byo-wizard-prototype.html` (re-serve:
+        `~/dev/central/scripts/serve docs --bg`, open the printed URL).
+      - **Flow:** click "⧉ Float the setup helper" → an always-on-top Document-PiP helper
+        opens (one window per gesture — you CANNOT open the dashboard tab + PiP from one
+        click, hard browser limit, so the **"Open Spotify dashboard" button lives inside
+        the float**) → copy app-name/description/redirect-URIs into Spotify's form → paste
+        Client ID → the green **"Back to skeuo & connect"** handhold button closes the float
+        and lands on Connect. Verified end-to-end in headless Playwright (PiP opens, copy
+        works in-float, no scroll, handhold returns helper + advances, 0 console errors).
+      - **NEXT (after cooldown):** test live with the EXISTING app `testapp` (Client ID
+        `98e0d056151a4f84b42fefef4b9441e8`) via the wizard's **"I already have one"** mode —
+        do NOT create a new app (Spotify now caps **one** Development-Mode app per person AND
+        rate-limits creation). Add redirect URIs `https://skeuo.fm/callback` + `https://skeuo.fm/`
+        (**https only** — Spotify rejects `skeuo://` custom schemes).
+      - **Then the fork:** (a) wire the wizard into the app — a `CLIENT_ID` override in
+        `src/spotify/auth.ts` read from localStorage + a React port of the wizard; vs
+        (b) build a **zero-setup default engine** (local files / Audius/Jamendo) for casual
+        visitors, with BYO-Spotify as the advanced path.
+      - **Hard constraints learned (2026-06-22):** Spotify dev mode (Feb/Mar 2026) = 5 users
+        max, owner must be Premium, one app per person; Extended Quota needs a registered
+        business + ~250k MAU (unavailable to an indie) → public skeuo CANNOT control arbitrary
+        users' Spotify. YouTube ripping AND hidden-player embed both violate ToS (App-Store
+        rejection risk). Legal zero-setup catalog = local files + Audius (Open Audio Protocol)
+        / Jamendo / Internet Archive.
+
 - [ ] **Restore the "Play here" switch** (removed 2026-06-18). The in-page Web
       Playback SDK device (`playHere`/`setPlayHere` in `useSpotify`, `sdk.ts`,
       `initWebPlaybackSDK`) lets a Premium user play audio in the page/tab itself

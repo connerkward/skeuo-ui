@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Connect your Spotify · skeuo</title>
+<style>
+  :root{
+    --bg:#0b0d12; --panel:#161a22; --panel-hi:#1d222c; --line:#262c38;
+    --ink:#e8ecf3; --ink-dim:#9aa3b2; --ink-faint:#6b7384;
+    --grn:#1ed760; --grn-deep:#1aa34a; --accent:#5b8cff;
+    --ok:#2ec27e; --warn:#e0a536; --err:#e5604d;
+    --r:16px; --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 -1px 0 rgba(0,0,0,.5) inset,0 18px 40px -20px rgba(0,0,0,.8);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(120% 80% at 50% -10%, #1a2030 0%, var(--bg) 60%);
+     color:var(--ink);font:15px/1.5 ui-sans-serif,-apple-system,"SF Pro Text",Inter,system-ui,sans-serif;
+     min-height:100%;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent)}
+  .wrap{max-width:560px;margin:0 auto;padding:clamp(16px,4vw,40px) clamp(14px,4vw,24px) 64px}
+
+  .brand{display:flex;align-items:center;gap:10px;margin:0 0 6px;color:var(--ink-dim);font-weight:600;letter-spacing:.02em}
+  .brand .knob{width:22px;height:22px;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#3a4150,#11151c 70%);
+    box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 -2px 4px rgba(0,0,0,.6) inset,0 0 0 2px #0a0d12}
+  h1{font-size:clamp(22px,5vw,28px);margin:.1em 0 .15em;letter-spacing:-.01em}
+  .sub{color:var(--ink-dim);margin:0 0 22px;max-width:48ch}
+
+  .steps{display:flex;gap:6px;margin:0 0 22px}
+  .steps .s{flex:1;height:6px;border-radius:99px;background:#222836;position:relative;overflow:hidden}
+  .steps .s.done{background:linear-gradient(90deg,var(--grn),var(--grn-deep))}
+  .steps .s.cur::after{content:"";position:absolute;inset:0;width:55%;
+    background:linear-gradient(90deg,var(--grn),var(--grn-deep));border-radius:99px;
+    animation:fill 1.1s ease-in-out infinite alternate}
+  @keyframes fill{from{transform:translateX(-30%)}to{transform:translateX(10%)}}
+
+  .card{background:linear-gradient(180deg,var(--panel-hi),var(--panel));
+    border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);
+    padding:clamp(16px,4vw,24px);margin:0 0 16px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px}
+  .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;
+    background:#0e1218;border:1px solid var(--line);color:var(--grn);font-size:12px;font-weight:800}
+  .card h2{font-size:18px;margin:.1em 0 .35em;letter-spacing:-.01em}
+  .card p{color:var(--ink-dim);margin:.2em 0 1em}
+
+  /* segmented toggle (create vs reuse) */
+  .seg{display:flex;gap:4px;background:#0d1118;border:1px solid var(--line);border-radius:11px;padding:4px;margin:0 0 14px}
+  .seg button{flex:1;border:0;background:transparent;color:var(--ink-dim);font-weight:700;font-size:13px;
+    padding:9px 8px;border-radius:8px;cursor:pointer;transition:.15s}
+  .seg button[aria-selected="true"]{background:linear-gradient(180deg,#28303d,#1e252f);color:#fff;
+    box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+
+  .field{margin:10px 0}
+  .label{font-size:12px;font-weight:700;color:var(--ink-faint);letter-spacing:.04em;margin:0 0 5px;
+    display:flex;align-items:center;gap:7px}
+  .label .req{color:var(--grn)}
+  .copy{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:11px;overflow:hidden;
+    background:#0c1016;box-shadow:0 2px 6px rgba(0,0,0,.35) inset}
+  .copy code{flex:1;min-width:0;padding:11px 13px;font:13px/1.4 ui-monospace,"SF Mono",Menlo,monospace;
+    color:var(--ink);white-space:nowrap;overflow:auto;scrollbar-width:none}
+  .copy code::-webkit-scrollbar{display:none}
+  .copy button{flex:none;border:0;border-left:1px solid var(--line);padding:0 15px;
+    background:linear-gradient(180deg,#222a37,#1a212c);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
+  .copy button:hover{background:linear-gradient(180deg,#2a3342,#222a37);color:#fff}
+  .copy button:active{transform:translateY(1px)}
+  .copy button.ok{background:linear-gradient(180deg,var(--grn),var(--grn-deep));color:#08120a}
+
+  .mock{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin:8px 0 4px;background:#0d1118}
+  .mock .ml{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #1a202b;font-size:13px}
+  .mock .ml:last-child{border-bottom:0}
+  .mock .mk{color:var(--ink-faint)} .mock .mv{color:var(--ink);font-size:12px;text-align:right}
+  .mock .chk{color:var(--ok);font-weight:700}
+
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-weight:800;font-size:15px;cursor:pointer;width:100%;transition:.15s}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:linear-gradient(180deg,var(--grn),var(--grn-deep));color:#06140a;
+    box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 10px 22px -10px var(--grn-deep)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.ghost{background:#1b212c;color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{background:#212835}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.4)}
+  .row{display:flex;gap:10px;margin-top:14px}
+  .back{background:none;border:0;color:var(--ink-faint);font-weight:600;cursor:pointer;padding:6px 0;font-size:13px}
+  .back:hover{color:var(--ink-dim)}
+
+  .popbar{display:flex;gap:10px;align-items:center;margin:4px 0 14px;flex-wrap:wrap}
+  .popbtn{flex:1;min-width:200px;display:flex;align-items:center;justify-content:center;gap:9px;
+    border:1px solid rgba(91,140,255,.4);background:linear-gradient(180deg,rgba(91,140,255,.16),rgba(91,140,255,.06));
+    color:#cdd9ff;font-weight:800;border-radius:12px;padding:12px 14px;cursor:pointer;transition:.15s;font-size:14px}
+  .popbtn:hover{background:linear-gradient(180deg,rgba(91,140,255,.26),rgba(91,140,255,.1));color:#fff}
+  .splittip{font-size:12.5px;color:var(--ink-faint);flex:1;min-width:180px}
+  .splittip b{color:var(--ink-dim)}
+
+  .cid{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0c1016;
+    box-shadow:0 2px 6px rgba(0,0,0,.35) inset}
+  .cid input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);
+    padding:13px 14px;font:14px/1.4 ui-monospace,Menlo,monospace;outline:none;letter-spacing:.02em}
+  .cid input::placeholder{color:var(--ink-faint)}
+  .cid button{flex:none;border:0;border-left:1px solid var(--line);padding:0 15px;background:#1a212c;color:var(--ink-dim);font-weight:700;cursor:pointer}
+  .valid{font-size:12.5px;margin:8px 2px 0;min-height:18px;display:flex;align-items:center;gap:7px;color:var(--ink-faint)}
+  .valid.good{color:var(--ok)} .valid.bad{color:var(--warn)}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+
+  .footnote{font-size:12.5px;color:var(--ink-faint);margin:18px 2px 0;line-height:1.6}
+  .footnote b{color:var(--ink-dim)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;color:var(--grn);background:rgba(30,215,96,.1);
+    border:1px solid rgba(30,215,96,.25);padding:2px 8px;border-radius:99px;margin-left:8px;vertical-align:middle}
+  .hide{display:none}
+  .fade{animation:fade .35s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .center{text-align:center}
+  .done-mark{width:54px;height:54px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;
+    background:radial-gradient(circle at 40% 35%,#27e06a,#159a45);color:#06140a;font-size:26px;font-weight:900;
+    box-shadow:0 0 0 6px rgba(30,215,96,.12),0 10px 26px -10px var(--grn-deep)}
+
+  /* floating-helper (Document PiP) body — compact so it never needs scrolling */
+  body.pip{background:var(--panel);padding:12px;overflow:hidden}
+  body.pip .pip-title{font-weight:800;font-size:12px;color:var(--ink-dim);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  body.pip .pip-title .knob{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#3a4150,#11151c 70%)}
+  body.pip #openDashInner{padding:10px;margin:0 0 10px!important;font-size:14px}
+  body.pip .seg{margin:0 0 8px;padding:3px}
+  body.pip .seg button{padding:7px 6px;font-size:12px}
+  body.pip #modeHelp{font-size:11.5px;line-height:1.45;margin:0 0 9px!important}
+  body.pip .field{margin:7px 0}
+  body.pip .label{margin-bottom:3px;font-size:11px}
+  body.pip .copy code{padding:8px 10px;font-size:12px}
+  body.pip .copy button{padding:0 12px;font-size:12px}
+  body.pip .cid input{padding:10px 11px;font-size:13px}
+  body.pip .valid{margin-top:5px;font-size:11.5px}
+  body.pip .field[style*="margin-top:16px"]{margin-top:9px!important}
+  .helper-placeholder{border:1px dashed rgba(91,140,255,.4);border-radius:12px;padding:18px;text-align:center;color:#aebfff;background:rgba(91,140,255,.05)}
+</style>
+</head>
+<body>
+<div class="wrap" id="root">
+  <div class="brand"><span class="knob"></span> skeuo</div>
+  <h1>Connect your Spotify</h1>
+  <p class="sub">A one-time, ~90-second setup so your skins can control your <b>real</b> Spotify. You make your own free Spotify “app” — skeuo never sees your password.</p>
+
+  <div class="steps" id="stepper"><div class="s"></div><div class="s"></div><div class="s"></div></div>
+
+  <!-- STEP 1 -->
+  <section class="card fade" data-step="0">
+    <span class="eyebrow"><span class="num">1</span> Float the helper</span>
+    <h2>Pop out an always-on-top setup helper</h2>
+    <p>It floats a small window with everything to copy — and an <b>“Open Spotify dashboard”</b> button inside it. Open the dashboard from there and the helper stays on top of it, so you copy → paste without ever switching tabs. (Browsers only allow one new window per click, so we float first, then open the dashboard from the float.)</p>
+    <button class="btn primary" id="openDash">⧉ Float the setup helper</button>
+    <button class="back hide" id="skip1" style="display:block;margin:10px auto 0">Continue without floating →</button>
+    <p id="floatMsg" style="display:none;font-size:12.5px;color:var(--warn);margin:10px 2px 0;text-align:center"></p>
+    <p class="footnote">Why: Spotify caps any one app at ~5 users, so skeuo can’t connect you on its shared app. Your <b>own</b> app makes you the owner — no waitlist, unlimited skins.</p>
+  </section>
+
+  <!-- STEP 2 — workbench (poppable) -->
+  <section class="card fade hide" data-step="1">
+    <span class="eyebrow"><span class="num">2</span> Set up the app</span>
+
+    <!-- the part that floats (carries the dashboard button so one window opens per click) -->
+    <div id="helperHome">
+      <div id="helper" class="helper">
+        <div class="pip-title hide" id="pipTitle"><span class="knob"></span> skeuo · setup helper</div>
+
+        <a class="btn primary" id="openDashInner" href="https://developer.spotify.com/dashboard/create" target="_blank" rel="noopener" role="button" style="display:block;text-align:center;text-decoration:none;margin:0 0 14px">Open Spotify dashboard ↗</a>
+
+        <div class="seg" role="tablist" aria-label="App mode">
+          <button id="modeNew" role="tab" aria-selected="true">Create a new app</button>
+          <button id="modeReuse" role="tab" aria-selected="false">I already have one</button>
+        </div>
+        <p id="modeHelp" style="margin:2px 0 12px;color:var(--ink-dim);font-size:13.5px">Click <b>“Create app”</b> on the dashboard and paste these in. The <b>Redirect URIs</b> are the part people get wrong — copy them exactly.</p>
+
+        <div class="field" id="fName">
+          <div class="label">App name</div>
+          <div class="copy"><code id="v-name">Skeuo Player</code><button data-copy="v-name">Copy</button></div>
+        </div>
+        <div class="field" id="fDesc">
+          <div class="label">Description <span class="req">· required by Spotify</span></div>
+          <div class="copy"><code id="v-desc">Personal skeuomorphic player that controls my own Spotify playback.</code><button data-copy="v-desc">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="label">Redirect URI <span class="req">· add both</span></div>
+          <div class="copy"><code id="v-r1">https://skeuo.fm/callback</code><button data-copy="v-r1">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="copy"><code id="v-r2">https://skeuo.fm/</code><button data-copy="v-r2">Copy</button></div>
+          <div class="label" style="margin:5px 0 0;font-weight:400">Both are <b>https</b> — Spotify rejects custom schemes like <code style="font-family:ui-monospace,Menlo,monospace">skeuo://</code>.</div>
+        </div>
+
+        <div class="field" style="margin-top:16px">
+          <div class="label">Then paste your Client ID here</div>
+          <div class="cid">
+            <input id="cid" inputmode="latin" autocomplete="off" spellcheck="false"
+                   placeholder="App → Settings → 32-char Client ID" maxlength="40" />
+            <button id="paste">Paste</button>
+          </div>
+          <div class="valid" id="valid"><span class="dot"></span><span id="validTxt">Waiting for a 32-character Client ID…</span></div>
+          <button class="btn primary" id="doneFloat" disabled style="margin-top:12px">Paste your Client ID to continue</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mock" id="mockNew">
+      <div class="ml"><span class="mk">Which API/SDKs?</span><span class="mv chk">☑ Web API &nbsp; ☑ Web Playback SDK</span></div>
+      <div class="ml"><span class="mk">Terms of service</span><span class="mv chk">☑ you check this</span></div>
+      <div class="ml"><span class="mk">Then</span><span class="mv">→ Save</span></div>
+    </div>
+
+    <div class="popbar">
+      <button class="popbtn" id="popout">⧉ Float this over the Spotify tab</button>
+      <span class="splittip" id="splittip"></span>
+    </div>
+
+    <div class="row">
+      <button class="back" id="back2">← Back</button>
+    </div>
+    <p class="footnote">The Client ID is <b>not</b> a secret — safe to paste. skeuo uses the secure PKCE flow; no password or secret leaves your device. Stored only in this browser.</p>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="card fade hide center" data-step="2">
+    <div class="done-mark">✓</div>
+    <h2 style="text-align:center">You’re set — <span style="white-space:nowrap">last step</span></h2>
+    <p style="text-align:center">Tap connect to authorize on Spotify and hand the controls to your skin.</p>
+    <button class="btn primary" id="connect">Connect &amp; authorize on Spotify ↗</button>
+    <button class="back" id="back3" style="display:block;margin:10px auto 0">← change Client ID</button>
+    <p class="footnote" style="text-align:left">Stored Client ID: <b id="cidEcho" style="font-family:ui-monospace,Menlo,monospace"></b><span class="pill">remembered</span><br>
+    Next time you open skeuo it reconnects automatically — this whole wizard is one-time.</p>
+  </section>
+
+  <p class="footnote" style="opacity:.7">Prototype · BYO-Client-ID flow. On skeuo.fm the redirect is <code>https://skeuo.fm/callback</code>; here Connect builds the real Spotify authorize URL from your pasted Client ID.</p>
+</div>
+
+<script>
+const SCOPES="user-read-playback-state user-modify-playback-state user-read-currently-playing streaming playlist-read-private";
+const LS="skeuo_byo_client_id";
+let step=0, pipWin=null;
+const cards=[...document.querySelectorAll('[data-step]')], sBars=[...document.querySelectorAll('#stepper .s')];
+
+function render(){
+  cards.forEach((c,i)=>{ c.classList.toggle('hide',i!==step); if(i===step){c.classList.remove('fade');void c.offsetWidth;c.classList.add('fade');} });
+  sBars.forEach((b,i)=>{ b.className='s'+(i<step?' done':i===step?' cur':''); });
+  if(!pipWin) window.scrollTo({top:0,behavior:'smooth'});
+}
+const go=n=>{ step=Math.max(0,Math.min(2,n)); render(); };
+
+// step 1
+document.getElementById('openDash').onclick=()=>{
+  // float the helper FIRST (one window per gesture); its own button opens the dashboard underneath
+  floatHelper(false);
+  document.getElementById('skip1').classList.remove('hide'); setTimeout(()=>go(1),350); };
+document.getElementById('skip1').onclick=()=>go(1);
+
+// create vs reuse (one-app-limit aware)
+const modeNew=document.getElementById('modeNew'), modeReuse=document.getElementById('modeReuse');
+const modeHelp=document.getElementById('modeHelp'), mockNew=document.getElementById('mockNew');
+function setMode(reuse){
+  modeNew.setAttribute('aria-selected',String(!reuse)); modeReuse.setAttribute('aria-selected',String(reuse));
+  mockNew.style.display=reuse?'none':'';
+  document.getElementById('fName').style.display=reuse?'none':'';
+  document.getElementById('fDesc').style.display=reuse?'none':'';
+  modeHelp.innerHTML = reuse
+    ? 'Spotify now allows only <b>one app per account</b>. Open your existing app → <b>Settings → Edit</b>, and just <b>add the two Redirect URIs</b> below (leave everything else). No need to make a new one.'
+    : 'Click <b>“Create app”</b> on the dashboard and paste these in. The <b>Redirect URIs</b> are the part people get wrong — copy them exactly.';
+}
+modeNew.onclick=()=>setMode(false); modeReuse.onclick=()=>setMode(true);
+
+// copy buttons — DIRECT listeners (they travel with the node into the PiP doc).
+// Read the value relatively (the sibling <code>) and copy via the BUTTON's OWN
+// window/document, so it works whether the button is in the main page or the PiP.
+async function copyFrom(btn){
+  const code = btn.parentElement.querySelector('code');
+  const txt = (code ? code.textContent : '').trim();
+  const doc = btn.ownerDocument, win = doc.defaultView;
+  let ok=false;
+  try{ await win.navigator.clipboard.writeText(txt); ok=true; }catch(_){}
+  if(!ok){ try{ const ta=doc.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    doc.body.appendChild(ta); ta.focus(); ta.select(); doc.execCommand('copy'); ta.remove(); ok=true; }catch(_){} }
+  const old=btn.textContent; btn.textContent= ok?'Copied ✓':'Press ⌘C'; btn.classList.toggle('ok',ok);
+  setTimeout(()=>{btn.textContent=old;btn.classList.remove('ok');},1300);
+}
+document.querySelectorAll('[data-copy]').forEach(btn=> btn.addEventListener('click',()=>copyFrom(btn)));
+
+// client id validate + auto-advance
+const cid=document.getElementById('cid'),valid=document.getElementById('valid'),validTxt=document.getElementById('validTxt');
+const RE=/^[0-9a-fA-F]{32}$/;
+const doneFloat=document.getElementById('doneFloat');
+function checkCid(){
+  const v=cid.value.trim();
+  if(!v){ valid.className='valid'; validTxt.textContent='Waiting for a 32-character Client ID…';
+    doneFloat.disabled=true; doneFloat.textContent='Paste your Client ID to continue'; return; }
+  if(RE.test(v)){
+    valid.className='valid good';
+    localStorage.setItem(LS,v.toLowerCase()); document.getElementById('cidEcho').textContent=v.toLowerCase();
+    validTxt.textContent = pipWin ? 'Saved ✓ — tap the button below to finish.' : 'Looks valid — saved ✓';
+    doneFloat.disabled=false;
+    doneFloat.textContent = pipWin ? '✓ Back to skeuo & connect →' : '✓ Continue to connect →';
+  }else{ valid.className='valid bad';
+    doneFloat.disabled=true; doneFloat.textContent='Paste your Client ID to continue';
+    validTxt.textContent=v.length<32?`${v.length}/32 characters…`:'Need 32 hex characters — that doesn’t look like a Client ID.'; }
+}
+// the handhold: closes the float (focus returns to the skeuo tab) and lands on Connect;
+// inline, just advances. pagehide on close runs go(2) when a Client ID is saved.
+doneFloat.onclick=()=>{ if(pipWin) pipWin.close(); else go(2); };
+cid.addEventListener('input',checkCid);
+document.getElementById('paste').onclick=async()=>{ const win=cid.ownerDocument.defaultView; try{ cid.value=(await win.navigator.clipboard.readText()).trim();checkCid();cid.focus(); }
+  catch(_){ cid.focus();validTxt.textContent='Paste blocked — tap the field and ⌘V.'; } };
+document.getElementById('back2').onclick=()=>go(0);
+
+// ---- Document Picture-in-Picture: float the helper over the Spotify tab ----
+const splittip=document.getElementById('splittip'), popout=document.getElementById('popout'), pipTitle=document.getElementById('pipTitle');
+const supportsPip = ('documentPictureInPicture' in window);
+splittip.innerHTML = supportsPip
+  ? 'Floats on top of the Spotify tab so you copy → paste without switching tabs.'
+  : 'Tip: in Chrome 145+ use <b>Split View</b> (right-click this tab → <b>Split tab</b>) to see this beside the dashboard.';
+if(!supportsPip) popout.textContent='⧉ Pop-out unavailable — use Chrome Split View';
+
+// floatHelper(silent): pop the helper into an always-on-top PiP window. Must be
+// called from a user gesture (browser rule). silent=true suppresses the
+// unsupported/blocked alert when riding the dashboard-open click.
+function floatMsg(t){ const m=document.getElementById('floatMsg'); if(m){ m.textContent=t||''; m.style.display=t?'block':'none'; } }
+async function floatHelper(silent){
+  if(!supportsPip){ floatMsg('Your browser can’t float a window — in Chrome 145+ use Split View (right-click the tab → Split tab). Continuing inline.'); document.getElementById('skip1')?.classList.remove('hide'); return; }
+  if(pipWin){ pipWin.close(); return; }
+  try{ pipWin=await documentPictureInPicture.requestWindow({width:400,height:640}); }
+  catch(_){ floatMsg('Floating was blocked — make sure you clicked the button directly, then try again. You can also continue inline.'); document.getElementById('skip1')?.classList.remove('hide'); return; }
+  floatMsg('');
+  for(const ss of document.styleSheets){
+    try{ const s=pipWin.document.createElement('style'); s.textContent=[...ss.cssRules].map(r=>r.cssText).join(''); pipWin.document.head.appendChild(s); }
+    catch(_){ if(ss.href){ const l=pipWin.document.createElement('link'); l.rel='stylesheet'; l.href=ss.href; pipWin.document.head.appendChild(l); } }
+  }
+  pipWin.document.body.classList.add('pip');
+  pipTitle.classList.remove('hide');
+  pipWin.document.body.appendChild(document.getElementById('helper'));
+  const ph=document.createElement('div'); ph.className='helper-placeholder'; ph.id='ph';
+  ph.innerHTML='⧉ Helper is floating over your Spotify tab.<br><button class="back" id="bringback" style="color:#aebfff">Bring it back</button>';
+  document.getElementById('helperHome').appendChild(ph);
+  ph.querySelector('#bringback').onclick=()=>pipWin.close();
+  popout.textContent='⧉ Floating — click to bring back';
+  pipWin.addEventListener('pagehide',()=>{
+    // the helper lives in the PiP doc now — pull it from THERE (not the main doc) before
+    // the PiP is torn down, or the node is destroyed with the window.
+    const h = (pipWin && pipWin.document.getElementById('helper')) || document.getElementById('helper');
+    if(h) document.getElementById('helperHome').appendChild(h);
+    pipTitle.classList.add('hide'); document.getElementById('ph')?.remove();
+    popout.textContent='⧉ Float this over the Spotify tab'; pipWin=null;
+    if(localStorage.getItem(LS)) go(2);
+  });
+}
+popout.onclick=()=>floatHelper(false);
+
+// ---- step 3: real authorize redirect ----
+function b64url(b){return btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+const sha256=s=>crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+const rand=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);const c="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";return[...a].map(b=>c[b%c.length]).join('');};
+document.getElementById('connect').onclick=async()=>{
+  const clientId=localStorage.getItem(LS); if(!clientId){go(1);return;}
+  const verifier=rand(64);sessionStorage.setItem('skeuo_pkce',verifier);
+  const p=new URLSearchParams({client_id:clientId,response_type:'code',redirect_uri:location.origin+'/',
+    code_challenge_method:'S256',code_challenge:b64url(await sha256(verifier)),scope:SCOPES,show_dialog:'true'});
+  window.open('https://accounts.spotify.com/authorize?'+p.toString(),'_blank','noopener');
+};
+document.getElementById('back3').onclick=()=>{ cid.value='';valid.className='valid';validTxt.textContent='Waiting for a 32-character Client ID…';go(1); };
+
+const saved=localStorage.getItem(LS); if(saved){ document.getElementById('cidEcho').textContent=saved; cid.value=saved; }
+render();
+</script>
+</body>
+</html>
