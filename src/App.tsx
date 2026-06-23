@@ -103,6 +103,8 @@ export default function App() {
   // player — the same instance keeps driving Spotify.
   const pip = useDocumentPip();
   const [pipHost, setPipHost] = useState<HTMLElement | null>(null);
+  // top-bar popovers (Connect / Desktop) — only one open at a time
+  const [panel, setPanel] = useState<null | "connect" | "desktop">(null);
 
   // load the selected registry skin's actual template.json so the editor edits
   // the real on-disk layout (runtime skins carry their template inline)
@@ -174,80 +176,81 @@ export default function App() {
   }
 
   // ── desktop ──────────────────────────────────────────────────────────────────
+  // A three-row shell: a top app-bar (brand + every action), a full-width stage
+  // that gives the player the whole canvas, and a bottom skin dock (horizontal
+  // gallery). No sidebar — the player is the hero, controls frame it.
+  const closePanel = () => setPanel(null);
   return (
-    <div className="page">
-      <aside className="sidebar">
-        {/* ── header: brand · what-it-is · primary action ── */}
-        <div className="sb-header">
-          <Brand className="sidebar-brand" />
-          <p className="sb-tagline">
-            One sentence becomes a <b>real, working</b> skeuomorphic player that
-            drives your music. Pick a skin below, or make your own.
-          </p>
-          <button className={`sb-cta ${showCreate ? "open" : ""}`} onClick={() => setShowCreate((v) => !v)}>
-            {showCreate
-              ? <>× Close create</>
-              : <><span className="sb-cta-plus">+</span> Create a skin</>}
+    <div className="app">
+      <header className="topbar">
+        <Brand className="topbar-brand" />
+        <p className="topbar-tag">
+          One sentence → a <b>real, working</b> skeuomorphic player that drives your music.
+        </p>
+        <a className="topbar-how" href="/process/" target="_blank" rel="noopener">
+          How it works <span className="arr">→</span>
+        </a>
+
+        <div className="topbar-actions">
+          <button className={`tb-btn ${wire ? "active" : ""}`} onClick={() => setWire((v) => !v)}
+            title="Toggle the control wireframe overlay">
+            <WireIcon /> Wireframe
           </button>
-          <a className="sb-howlink" href="/process/" target="_blank" rel="noopener">
-            How does it work? <span className="arr">→</span>
-          </a>
-        </div>
+          <button className="tb-btn" onClick={() => { setEdited(null); setEditing(true); }}
+            title="Edit this skin's template">
+            ✎ Edit
+          </button>
 
-        {/* ── scrolling body: ONLY the skin gallery scrolls ── */}
-        <div className="sb-body">
-          <div className="sb-skins">
-          <p className="sb-label">Skins</p>
-          {visible.map((s) => (
-            <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
-              onClick={() => { setSkinId(s.id); setEdited(null); }}>
-              <img className="thumb" loading="lazy" alt=""
-                src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-              <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
+          {/* Connect (Spotify) — opens the connect panel as a popover */}
+          <div className="tb-popwrap">
+            <button className={`tb-btn ${panel === "connect" ? "active" : ""}`}
+              data-status={sp.status}
+              onClick={() => setPanel((p) => (p === "connect" ? null : "connect"))}>
+              <span className="tb-dot" data-status={sp.status} />
+              {sp.status === "connected" ? "Spotify ✓" : "Connect"} <span className="caret">▾</span>
             </button>
-          ))}
-          {runtimeSkins.length > 0 && <p className="sb-label" style={{ marginTop: 4 }}>Your skins</p>}
-          {runtimeSkins.map((s) => (
-            <button key={s.id} className={`style-btn ${s.id === skinId ? "active" : ""}`}
-              onClick={() => { setSkinId(s.id); setEdited(null); }}>
-              <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-              <span className="meta"><span className="name">{s.name}</span><span className="blurb">{s.blurb}</span></span>
-            </button>
-          ))}
-          </div>
-        </div>
-
-        {/* ── pinned footer: customize · connect · desktop — always reachable
-            without scrolling; only the gallery above scrolls ── */}
-        <div className="sb-footer">
-          <div className="sb-group">
-            <p className="sb-label">Customize</p>
-            <button className="feature-btn" onClick={() => { setEdited(null); setEditing(true); }}>
-              ✎ Edit template
-            </button>
-            <label className="wire-toggle-row">
-              <input type="checkbox" checked={wire} onChange={(e) => setWire(e.target.checked)} />
-              <span>Show wireframe</span>
-            </label>
-          </div>
-          <div className="sb-group">
-            <p className="sb-label">Connect</p>
-            <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />
-            <DesktopHandoff skinId={skinId} skinName={activeMeta?.name ?? skinId} />
-            {FLOAT_ENABLED && pip.supported && (
-              <button
-                className="feature-btn pip-float-btn"
-                onClick={() => (pip.pipWindow ? pip.close() : pip.open())}
-                title="Pop the player into an always-on-top window — no install"
-              >
-                {pip.pipWindow ? "⧉ Bring player back" : "⧉ Float player — no install"}
-              </button>
+            {panel === "connect" && (
+              <div className="tb-pop">
+                <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />
+              </div>
             )}
           </div>
+
+          {/* Desktop handoff — popover */}
+          <div className="tb-popwrap">
+            <button className={`tb-btn ${panel === "desktop" ? "active" : ""}`}
+              onClick={() => setPanel((p) => (p === "desktop" ? null : "desktop"))}>
+              ⤓ Desktop <span className="caret">▾</span>
+            </button>
+            {panel === "desktop" && (
+              <div className="tb-pop">
+                <DesktopHandoff skinId={skinId} skinName={activeMeta?.name ?? skinId} />
+                {FLOAT_ENABLED && pip.supported && (
+                  <button className="feature-btn pip-float-btn"
+                    onClick={() => (pip.pipWindow ? pip.close() : pip.open())}>
+                    {pip.pipWindow ? "⧉ Bring player back" : "⧉ Float player — no install"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <ExportGifButton
+            skinId={skinId}
+            template={playerTemplate}
+            runtime={runtimeView}
+            spotifyDrive={spotifyDrive}
+          />
+
+          <button className={`tb-cta ${showCreate ? "open" : ""}`} onClick={() => setShowCreate((v) => !v)}>
+            {showCreate ? <>× Close</> : <><span className="tb-cta-plus">+</span> Create a skin</>}
+          </button>
         </div>
-      </aside>
+      </header>
+
+      {/* click-away scrim for the open popover */}
+      {panel && <div className="tb-scrim" onPointerDown={closePanel} />}
+
       <main className="stage">
         <div className="stage-inner">
           {/* portal target when docked; empty while the player is floating */}
@@ -266,6 +269,33 @@ export default function App() {
         </div>
       </main>
 
+      {/* bottom dock — the skin gallery as a horizontal rail */}
+      <footer className="dock">
+        <span className="dock-label">Skins</span>
+        {visible.map((s) => (
+          <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
+            onClick={() => { setSkinId(s.id); setEdited(null); }} title={`${s.name} — ${s.blurb}`}>
+            <img className="thumb" loading="lazy" alt=""
+              src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+            <span className="name">{s.name}</span>
+          </button>
+        ))}
+        {runtimeSkins.length > 0 && <span className="dock-sep" />}
+        {runtimeSkins.map((s) => (
+          <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
+            onClick={() => { setSkinId(s.id); setEdited(null); }} title={s.name}>
+            <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+            <span className="name">{s.name}</span>
+          </button>
+        ))}
+        <button className="skin-tile create" onClick={() => setShowCreate(true)} title="Create a new skin">
+          <span className="plus">+</span>
+          <span className="name">Create</span>
+        </button>
+      </footer>
+
       {showCreate && (
         <div className="wiz-modal" onPointerDown={(e) => e.target === e.currentTarget && setShowCreate(false)}>
           <button className="create-close" onClick={() => setShowCreate(false)} aria-label="Close create">×</button>
@@ -280,12 +310,6 @@ export default function App() {
           onClose={() => { setEditing(false); setEdited(null); }}
         />
       )}
-      <ExportGifButton
-        skinId={skinId}
-        template={playerTemplate}
-        runtime={runtimeView}
-        spotifyDrive={spotifyDrive}
-      />
 
       {/* ONE portal, container toggles dock ⇄ float so the player never remounts */}
       {pipHost && createPortal(
@@ -302,5 +326,15 @@ export default function App() {
         pip.pipWindow ? pip.pipWindow.document.body : pipHost,
       )}
     </div>
+  );
+}
+
+function WireIcon() {
+  return (
+    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.8" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 10h18M9 10v9" />
+    </svg>
   );
 }
