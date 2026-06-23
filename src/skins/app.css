@@ -227,12 +227,24 @@ body {
 .stage-inner {
   position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 16px;
+  gap: 18px;
 }
+.stage-meta { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .stage .player {
-  /* stage spans from the top bar to the bottom (no dock now); budget for the
-     bar + padding + caption + the on-skin action row so it never clips */
-  --w: min(560px, calc((100dvh - 264px) * 0.686));
+  /* narrow: player + meta stacked, budget the bar + padding + caption + actions */
+  --w: min(600px, calc((100dvh - 252px) * 0.686));
+}
+
+/* WIDE screens: lay the meta panel BESIDE the player so the stage isn't a small
+   portrait player marooned in a huge empty void — and the player gets the full
+   height (no stacked meta), so it's bigger too. */
+@media (min-width: 1240px) {
+  .stage-inner { flex-direction: row; flex-wrap: wrap; gap: 56px; }
+  .stage-meta { align-items: flex-start; text-align: left; max-width: 340px; }
+  .stage-caption { align-items: flex-start; text-align: left; }
+  .stage-caption .cap-name { font-size: 30px; }
+  .stage-caption .cap-blurb { font-size: 13.5px; max-width: 100%; }
+  .stage .player { --w: min(660px, calc((100dvh - 156px) * 0.686)); }
 }
 /* contact shadow — a dark ellipse hugging the player's base so it sits ON the
    floor instead of hanging in black. z-index 0 keeps it above the stage wash

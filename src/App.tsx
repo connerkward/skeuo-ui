@@ -236,19 +236,21 @@ export default function App() {
               <button className="pop-back" onClick={pip.close}>Bring it back</button>
             </div>
           )}
-          <figcaption className="stage-caption">
-            <span className="cap-name">{activeMeta?.name ?? skinId}</span>
-            {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
-          </figcaption>
-
-          {/* the action ON the skin — Share (Connect/Template moved to the bar) */}
-          <div className="skin-actions">
-            <ExportGifButton
-              skinId={skinId}
-              template={playerTemplate}
-              runtime={runtimeView}
-              spotifyDrive={spotifyDrive}
-            />
+          {/* meta panel — beside the player on wide screens, below it on narrow */}
+          <div className="stage-meta">
+            <figcaption className="stage-caption">
+              <span className="cap-name">{activeMeta?.name ?? skinId}</span>
+              {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
+            </figcaption>
+            {/* the action ON the skin — Share (Connect/Template moved to the bar) */}
+            <div className="skin-actions">
+              <ExportGifButton
+                skinId={skinId}
+                template={playerTemplate}
+                runtime={runtimeView}
+                spotifyDrive={spotifyDrive}
+              />
+            </div>
           </div>
         </div>
       </main>
