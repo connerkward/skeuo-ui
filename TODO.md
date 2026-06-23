@@ -26,15 +26,21 @@
         energy *(additive-only v1)* · beat-sync — strict live-beat lock vs smoothed BPM clock *(gentle)* ·
         reactions/inertialization in v1 *(defer)*.
 
-- [ ] **CD album-art visualizer — went missing, investigate + restore (2026-06-23).** A
-      visualizer mode that showed the playing track's **album artwork on a spinning CD/disc**
-      (in the round screen) is gone — unclear when/why it regressed. The data is still there:
-      Spotify exposes `album.images` (`src/spotify/api.ts:86,129`), but nothing in
-      `src/player/Visualizer.tsx` (spectrum-only) or any `display` region renders artwork.
-      NEXT: `git log -p -- src/player/Visualizer.tsx src/player/Composite.tsx` (and search
-      history for `album`/`cover`/`artwork`/`disc`) to find when the CD-art mode existed, then
-      re-add it as a visualizer/screen variant fed by `album.images` (+ a fallback for
-      local/demo mode with no Spotify art).
+- [ ] **CD album-art visualizer — MERGE the `cd-visualizer` branch to main (2026-06-23).**
+      It didn't regress and doesn't need git archaeology — it was **built this session on a
+      branch and never merged**. The full feature lives on branch **`cd-visualizer`** (worktree
+      at **`../skeuo-ui-cd-visualizer`**), 6 commits ahead of main:
+      - `3bce622` player: add `cd` + `albumart` dynamicTypes (spinning mock-CD + bare album-art
+        element), `Track.cover` plumbed from Spotify `album.images` in `useSpotify`, authorable
+        in the wizard (screen palette cycles visualizer→cd→albumart→…).
+      - `c874865`→`ad11bab`→`7c34add`→`9b060b4`→`1a6bdc0`: the disc look + motion — settled on a
+        **silver data-side disc** (generated texture, recentred so it doesn't wobble) with an
+        album-color tint, and a **physically-grounded spin-up / inertial coast-down** at
+        full-speed cruise with speed-proportional motion blur. Verified live on the pebble skin.
+      - **NEXT:** merge `cd-visualizer` → `main` (check it doesn't collide with the worker-cutout
+        changes that landed on main since the branch forked; rebase if needed), `git worktree
+        remove ../skeuo-ui-cd-visualizer`, then deploy. The `albumart` element gives the no-disc
+        fallback for local/demo mode with no Spotify art.
 
 - [x] **More generative template heuristics — BAKED (2026-06-23).** The 10-archetype engine
       + repel/min-spacing pass is now `layoutRandom()` in `src/generate/layouts.ts`, wired to
