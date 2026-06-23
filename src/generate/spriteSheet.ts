@@ -227,7 +227,7 @@ export function cutSprites(
  */
 export function detectSockets(
   device: RGBAImage,
-  opts: { darkThreshold?: number; minAreaFrac?: number } = {},
+  opts: { darkThreshold?: number; minAreaFrac?: number; maxAreaFrac?: number } = {},
 ): Socket[] {
   const { width: W, height: H, data } = device;
   const darkT = opts.darkThreshold ?? 80;
@@ -313,7 +313,7 @@ export function detectSockets(
   // (marquee, spare screens) are simply never seated. This keeps the slider
   // socket alive instead of throwing it away with the marquee.
   const devArea = W * H;
-  const screenAreaFrac = 0.06;
+  const screenAreaFrac = opts.maxAreaFrac ?? 0.06;
   return sockets.filter((s) => s.area <= screenAreaFrac * devArea);
 }
 

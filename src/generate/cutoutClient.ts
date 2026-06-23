@@ -47,8 +47,9 @@ function snapToSockets(template: Template, device: ImageData): Template {
   const W = device.width, H = device.height;
   const minDim = Math.min(W, H);
   // One pass of dark-blob detection feeds BOTH the round control sockets and the
-  // rectangular features (screen, seek groove) below.
-  const blobs = detectSockets({ data: device.data, width: W, height: H });
+  // rectangular features (screen, seek groove) below. maxAreaFrac:1 keeps the big
+  // screen blob, which detectSockets otherwise drops (its default 0.06 cap).
+  const blobs = detectSockets({ data: device.data, width: W, height: H }, { maxAreaFrac: 1 });
   const rectOf = (s: Socket) => ({
     x: (s.cx - s.bboxW / 2) / W, y: (s.cy - s.bboxH / 2) / H, w: s.bboxW / W, h: s.bboxH / H,
   });
