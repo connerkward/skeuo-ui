@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Composite } from "./player/Composite";
 import { SkinThumb } from "./player/SkinThumb";
+import { skinFont, skinFontStyle } from "./player/skinFonts";
 import { useDocumentPip } from "./player/useDocumentPip";
 import { playerTemplate } from "./template/winamp-layout";
 import { skinList, thumbUrl } from "./player/skins";
@@ -238,11 +239,14 @@ export default function App() {
         </div>
       </main>
 
-      {/* meta zone — its own column on wide screens, a strip under the player
-          on narrower ones (the grid handles the placement) */}
+      {/* meta zone — a cinematic title card: the skin NAME set in its own logomark
+          font, the description beneath, then Share. Its own column on wide screens,
+          a centered strip under the player on narrower ones (grid handles which). */}
       <section className="meta">
         <figcaption className="stage-caption">
-          <span className="cap-name">{activeMeta?.name ?? skinId}</span>
+          <span className="cap-name" style={skinFontStyle(skinFont(skinId, activeRuntime?.font))}>
+            {(activeMeta?.name ?? skinId).replace(/\s*✦\s*$/, "")}
+          </span>
           {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
         </figcaption>
         <div className="skin-actions">

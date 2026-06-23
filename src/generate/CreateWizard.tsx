@@ -171,6 +171,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
           style: data.style,
           frameUrl,
           template: data.template,
+          font: data.font,
         });
       }
     } catch (e) {

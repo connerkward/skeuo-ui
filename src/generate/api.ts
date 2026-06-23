@@ -25,6 +25,7 @@ export interface GenerateDone {
   style: DonorStyle;
   variant: LayoutVariant;
   model: ModelId;
+  font?: string;              // logomark title font (Director pick; one of LOGO_FONTS)
   template: Template;
   frameUrl: string;           // public URL or data: URL of the CUT frame (white keyed transparent)
   // CLIENT-SIDE CUTOUT (CF Worker path): the alpha cutout is ~2s of pure-JS CPU

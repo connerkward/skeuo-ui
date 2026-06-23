@@ -34,10 +34,11 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   // from the prompt; with no OpenAI key, default to winamp so it never hard-errors.
   let style: DonorStyle;
   let materialPrompt: string | undefined;
+  let font = "Cinzel";                       // logomark title font (Director pick)
   if (reqStyle && DONOR_STYLES.includes(reqStyle)) {
     style = reqStyle;
   } else if (deps.openaiKey) {
-    ({ style, materialPrompt } = await deriveMaterial(deps.openaiKey, prompt));
+    ({ style, materialPrompt, font } = await deriveMaterial(deps.openaiKey, prompt));
   } else {
     style = "winamp" as DonorStyle;
   }
@@ -63,7 +64,7 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     const regions = Array.isArray(body.regions) && body.regions.length ? body.regions : undefined;
     const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
     return {
-      status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,
+      status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font,
       template: r.template, frameUrl: r.frameUrl,
       needsCutout: r.needsCutout, paintUrl: r.paintUrl, timingMs: r.timingMs,
     };

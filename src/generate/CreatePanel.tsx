@@ -16,6 +16,7 @@ export interface RuntimeSkin {
   style: DonorStyle;    // donor for sprites/palette (resolves via [data-skin])
   frameUrl: string;
   template: Template;
+  font?: string;        // logomark display font (Director pick); falls back to Cinzel
 }
 
 // Style + layout-variant pickers were removed from the UI for now — the panel is
@@ -81,6 +82,7 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
           style: data.style,
           frameUrl,
           template: data.template,
+          font: data.font,
         });
       }
     } catch (e) {

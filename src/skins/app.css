@@ -15,9 +15,10 @@ body {
   width: 100%; height: 100%;
   display: grid;
   /* WIDE: gallery | player | meta — three columns, the player centered between
-     a substantial gallery and the title/share panel. minmax(0,1fr) on the stage
-     keeps it from overflowing the viewport. */
-  grid-template-columns: 300px minmax(0, 1fr) 320px;
+     a substantial gallery and the title/share panel. The side columns are FLUID
+     (clamp scales them with the viewport); minmax(0,1fr) on the stage keeps it
+     from overflowing. */
+  grid-template-columns: clamp(238px, 20vw, 360px) minmax(0, 1fr) clamp(256px, 21vw, 400px);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     "topbar  topbar topbar"
@@ -35,7 +36,7 @@ body {
    title + share as a compact strip beneath it. Single coordinated breakpoint. */
 @media (max-width: 1199px) {
   .app {
-    grid-template-columns: 264px minmax(0, 1fr);
+    grid-template-columns: clamp(220px, 26vw, 300px) minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
       "topbar  topbar"
@@ -263,27 +264,34 @@ body {
   .stage .player { --w: min(560px, calc((100dvh - 224px) * 0.686)); }
 }
 
-/* ---------- meta zone — title + blurb + Share ---------- */
+/* ---------- meta zone — a cinematic title card (CENTERED) ---------- */
 .meta {
   min-width: 0;
-  display: flex; flex-direction: column; justify-content: center;
-  gap: 18px; padding: 32px 30px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: 32px 24px; text-align: center;
 }
-.meta .stage-caption { align-items: flex-start; text-align: left; }
-.meta .cap-name { font-size: 30px; line-height: 1.14; }
-.meta .cap-blurb { font-size: 14px; max-width: 32ch; line-height: 1.5; }
-.meta .skin-actions { justify-content: flex-start; }   /* Share aligns under the title, not floating */
+.meta .stage-caption { align-items: center; text-align: center; gap: 10px; }
+/* the logomark: the skin's name in its own display font, large + white, no box */
+.meta .cap-name {
+  font-size: clamp(26px, 2.6vw, 40px); line-height: 1.06; color: #fff;
+  text-shadow: 0 2px 18px rgba(0,0,0,.55);
+}
+.meta .cap-blurb { font-size: 13.5px; max-width: 30ch; line-height: 1.5; color: #9498a2; }
+
+/* Share — a clean cinematic ghost button, not a heavy gradient box */
+.meta .skin-actions { justify-content: center; }
+.meta .export-gif-btn {
+  background: transparent; border: 1px solid #3a3a42; box-shadow: none;
+  color: #d6d6dc; padding: 9px 18px; border-radius: 999px;
+  font-size: 12.5px; letter-spacing: .04em;
+}
+.meta .export-gif-btn:hover { background: rgba(255,255,255,.06); border-color: #5a5a64; color: #fff; }
 
 @media (max-width: 1199px) {
-  /* a compact centered strip beneath the player */
-  .meta {
-    flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center;
-    gap: 8px 18px; padding: 6px 20px 16px;
-  }
-  .meta .stage-caption { align-items: center; text-align: center; }
-  .meta .cap-name { font-size: 20px; }
-  .meta .cap-blurb { display: none; }                    /* the blurb already shows in the gallery row */
-  .meta .skin-actions { justify-content: center; }
+  /* a compact centered strip beneath the player — still the title card, smaller */
+  .meta { padding: 4px 20px 16px; gap: 10px; }
+  .meta .cap-name { font-size: clamp(20px, 4.5vw, 28px); }
+  .meta .cap-blurb { font-size: 12.5px; max-width: 46ch; }
 }
 /* contact shadow — a dark ellipse hugging the player's base so it sits ON the
    floor instead of hanging in black. z-index 0 keeps it above the stage wash
