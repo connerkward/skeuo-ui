@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import {
   fetchPaintCanvas, cropDevice, cropStrip, serverCutout, blobToCanvas, cutFromTransparentStrip,
+  segmentStripByComponents,
 } from "../generate/cutoutClient";
 import { combinedBlueprint, type BlueprintLayout } from "../generate/blueprint";
 import { apiUrl } from "../platform";
@@ -17,7 +18,7 @@ const CHECKER = "conic-gradient(#3a3a3a 90deg,#2a2a2a 0 180deg,#3a3a3a 0 270deg,
 
 const dataUrl = (c: Cv) => c.toDataURL("image/png");
 
-interface SpriteCut { bind: string; kind: string; light: string; heavy: string; lw: number; lh: number }
+interface SpriteCut { bind: string; kind: string; cc: string; grid: string; w: number; h: number; fell: boolean }
 interface Box { bind: string; x: number; y: number; w: number; h: number; conf?: number }
 
 export default function Pipeline() {
@@ -95,7 +96,12 @@ export default function Pipeline() {
     try { tHeavy = await blobToCanvas(await serverCutout(strip, "General Use (Heavy)")); setStripHeavyUrl(dataUrl(tHeavy)); } catch { /* */ }
     set("strip", tLight || tHeavy ? "done" : "error");
 
-    // 5. SPRITE ISOLATION — branched (light vs heavy), real cutFromTransparentStrip
+    // chosen sprite per control (CC primary, grid fallback) — reused by the final composite
+    const finalSprites: Record<string, Cv | null> = {};
+
+    // 5. SPRITE ISOLATION — the SHIPPING method: connected-component segmentation of the
+    // whole matted strip (segmentStripByComponents), with the old per-cell grid crop shown
+    // alongside for comparison + used as the fallback when a cell captures no component.
     set("isolation", "loading");
     const cutFrom = (ts: Cv | null, cr: [number, number, number, number]): Cv | null => {
       if (!ts) return null;
@@ -103,10 +109,14 @@ export default function Pipeline() {
       const [nx, ny, nw, nh] = cr;
       return cutFromTransparentStrip(ts, nx * W * fx, (ny * H - syOrig) * fy, nw * W * fx, nh * H * fy);
     };
+    const seg = tHeavy ? segmentStripByComponents(tHeavy, layout.cells) : {};
     const out: SpriteCut[] = [];
     for (const cell of layout.cells) {
-      const l = cutFrom(tLight, cell.cellRect), h = cutFrom(tHeavy, cell.cellRect);
-      out.push({ bind: cell.bind, kind: cell.kind, light: l ? dataUrl(l) : "", heavy: h ? dataUrl(h) : "", lw: l?.width ?? 0, lh: l?.height ?? 0 });
+      const ccCv = (seg[cell.bind] ?? null) as Cv | null;
+      const gridCv = cutFrom(tHeavy, cell.cellRect);
+      const chosen = ccCv ?? gridCv;            // ship logic: CC primary, grid fallback
+      finalSprites[cell.bind] = chosen;
+      out.push({ bind: cell.bind, kind: cell.kind, cc: ccCv ? dataUrl(ccCv) : "", grid: gridCv ? dataUrl(gridCv) : "", w: chosen?.width ?? 0, h: chosen?.height ?? 0, fell: !ccCv });
       setCuts([...out]);
     }
     set("isolation", "done");
@@ -142,7 +152,7 @@ export default function Pipeline() {
       const fin = document.createElement("canvas"); fin.width = frame.width; fin.height = frame.height;
       const fc = fin.getContext("2d")!; fc.drawImage(frame, 0, 0);
       for (const cell of layout.cells) {
-        const sprite = cutFrom(tLight, cell.cellRect); if (!sprite) continue;
+        const sprite = finalSprites[cell.bind]; if (!sprite) continue;
         const r = template.regions.find((x) => x.id === cell.bind) as Region | undefined;
         if (!r) continue;
         const rect = r.rect;
@@ -182,18 +192,19 @@ export default function Pipeline() {
           <div><div style={{ opacity: 0.55, fontSize: 11 }}>heavy (low-contrast tune)</div>{stripHeavyUrl && <img src={stripHeavyUrl} style={{ maxWidth: 520, width: "100%", borderRadius: 6, background: CHECKER }} />}</div>
         </div>
       </Stage>
-      <Stage n={7} title="Sprite isolation — per control, BRANCHED (light vs heavy)" status={st.isolation}>
+      <Stage n={7} title="Sprite isolation — connected components (SHIP) vs grid (fallback)" status={st.isolation}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>
           {cuts.map((c) => (
-            <figure key={c.bind} style={{ margin: 0, border: "1px solid #2a2c30", borderRadius: 6, overflow: "hidden", background: "#16181b" }}>
+            <figure key={c.bind} style={{ margin: 0, border: `1px solid ${c.fell ? "#5a4a1f" : "#2a2c30"}`, borderRadius: 6, overflow: "hidden", background: "#16181b" }}>
               <div style={{ display: "flex" }}>
-                {(["light", "heavy"] as const).map((k) => (
-                  <div key={k} style={{ flex: 1, height: 100, display: "grid", placeItems: "center", background: CHECKER, borderRight: k === "light" ? "1px solid #000" : "none" }}>
+                {(["cc", "grid"] as const).map((k) => (
+                  <div key={k} style={{ flex: 1, position: "relative", height: 100, display: "grid", placeItems: "center", background: CHECKER, borderRight: k === "cc" ? "1px solid #000" : "none" }}>
+                    <span style={{ position: "absolute", top: 2, left: 3, fontSize: 8, opacity: 0.7, color: k === "cc" ? "#7CFF4F" : "#ffd27a" }}>{k === "cc" ? "CC (ship)" : "grid"}</span>
                     {c[k] ? <img src={c[k]} style={{ maxWidth: "88%", maxHeight: "88%" }} /> : <span style={{ color: "#ff6b6b", fontSize: 9 }}>—</span>}
                   </div>
                 ))}
               </div>
-              <figcaption style={{ padding: "5px 7px", fontSize: 11 }}><b>{c.bind}</b> · {c.kind}<br /><span style={{ opacity: 0.5 }}>light {c.lw}×{c.lh} · heavy</span></figcaption>
+              <figcaption style={{ padding: "5px 7px", fontSize: 11 }}><b>{c.bind}</b> · {c.kind}<br /><span style={{ opacity: 0.5 }}>{c.w}×{c.h} · {c.fell ? "grid fallback" : "connected-component"}</span></figcaption>
             </figure>
           ))}
         </div>
