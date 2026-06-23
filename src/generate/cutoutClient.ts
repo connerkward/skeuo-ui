@@ -63,9 +63,9 @@ const ALIGN_KINDS = new Set([
   "button", "toggle", "slider-h", "slider-v", "knob", "slider-arc", "segmented", "xy", "display",
 ]);
 
-// Opt-in VLM ALIGN (path B). NOT used by default — finishCutoutFull trusts the repacked
-// template (path A). Exported so it stays available without an unused-symbol error.
-export async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: number): Promise<Template> {
+// ALIGN via gpt-4o VLM (load-bearing). Snap controls to their painted locations,
+// identified by icon; plausibleBox gates noisy/garbage boxes.
+async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: number): Promise<Template> {
   const canvas = { w: W, h: H };
   const align = template.regions.filter((r) => ALIGN_KINDS.has(r.kind));
   if (!align.length) return { ...template, canvas };
@@ -111,43 +111,13 @@ export async function snapToVLM(template: Template, frameBlob: Blob, W: number, 
       default: return true;
     }
   };
-  // local REFINE: re-center+size a round control's VLM box onto the actual painted
-  // socket inside it (gpt-4o is roughly right; the painted recess gives sub-pixel
-  // precision). Bounded to the VLM box + margin, so it can't wander — VLM owns
-  // identity, this owns precision. Smooth bodies with no socket keep the VLM box.
-  const dev = await blobToImageData(frameBlob).catch(() => null as ImageData | null);
-  const refine = (kind: string | undefined, b: SnapRect): SnapRect => {
-    if (!dev || !(kind === "button" || kind === "knob")) return b;
-    const W2 = dev.width, H2 = dev.height, d = dev.data;
-    const mx = b.w * 0.35, my = b.h * 0.35;                       // search the box + 35% margin
-    const x0 = Math.max(0, Math.round((b.x - mx) * W2)), y0 = Math.max(0, Math.round((b.y - my) * H2));
-    const x1 = Math.min(W2, Math.round((b.x + b.w + mx) * W2)), y1 = Math.min(H2, Math.round((b.y + b.h + my) * H2));
-    if (x1 - x0 < 4 || y1 - y0 < 4) return b;
-    let sum = 0, n = 0;
-    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = (y * W2 + x) * 4; if (d[i + 3] > 128) { sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; } }
-    if (n < 16) return b;
-    const thr = sum / n * 0.72;                                   // socket = clearly darker than local mean
-    let sx = 0, sy = 0, dk = 0, minx = x1, miny = y1, maxx = x0, maxy = y0;
-    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-      const i = (y * W2 + x) * 4; if (d[i + 3] <= 128) continue;
-      if (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2] < thr) { sx += x; sy += y; dk++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
-    }
-    const area = (x1 - x0) * (y1 - y0);
-    if (dk < 0.04 * area || dk > 0.85 * area) return b;            // no clear socket (smooth body) → keep VLM box
-    const cx = sx / dk / W2, cy = sy / dk / H2;
-    const bw = (maxx - minx) / W2, bh = (maxy - miny) / H2;
-    // re-center on the socket; size to its extent (clamped near the VLM size so a
-    // mis-detection can't balloon it), keep ~square for round controls
-    const side = Math.min(Math.max(Math.max(bw, bh), b.w * 0.6, b.h * 0.6) * 1.08, Math.max(b.w, b.h) * 1.6);
-    return { x: cx - side / 2, y: cy - side / 2, w: side, h: side };
-  };
-
+  // VLM finds the control; plausibleBox gates junk; snap directly to the VLM box
   const byId = new Map<string, SnapRect>();
   for (const b of boxes) {
     if (!b || typeof b.bind !== "string" || byId.has(b.bind)) continue;
     const kind = kindOf.get(b.bind);
     const box = { x: b.x, y: b.y, w: b.w, h: b.h };
-    if (plausibleBox(kind, box)) byId.set(b.bind, refine(kind, box));
+    if (plausibleBox(kind, box)) byId.set(b.bind, box);
   }
   const regions = template.regions.map((r) => {
     const box = byId.get(r.id);
@@ -434,19 +404,15 @@ export async function finishCutoutFull(
   const frameBlob = await serverCutout(deviceCanvas);
   await uploadFrame(id, frameBlob);
 
-  // 1b. ALIGN — approach A: TRUST THE BLUEPRINT. The template is already repacked
-  //     (clean, non-overlapping, sane sizes) and the paint is requested at the SAME
-  //     9:16 aspect, so the model paints each socket at its blueprint position → the
-  //     control already sits on its painted socket. We just set the canvas to the
-  //     device frame's true dims so it renders 1:1. (The gpt-4o VLM per-control
-  //     placement was removed — it was the unreliable step: noisy boxes squashed
-  //     controls to slivers. snapToVLM stays in the file as opt-in polish, OFF here.)
+  // 1b. ALIGN via gpt-4o VLM (load-bearing). Snap each control's VLM-detected box to
+  //     its template position; VLM identifies by icon, plausibleBox gates trash, we trust
+  //     the painted location. Fallback: blueprint coords for controls the VLM can't locate.
   let snapped = template;
   if (template) {
     try {
       const dev = await blobToImageData(frameBlob);
-      snapped = { ...template, canvas: { w: dev.width, h: dev.height } };
-    } catch { /* keep the blueprint template */ }
+      snapped = await snapToVLM(template, frameBlob, dev.width, dev.height);
+    } catch { /* VLM unavailable → keep the blueprint template */ }
   }
 
   // 2. each control sprite: geometric cut from its cell, upload. Best-effort per
