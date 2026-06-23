@@ -432,15 +432,19 @@ export async function finishCutoutFull(
   const frameBlob = await serverCutout(deviceCanvas);
   await uploadFrame(id, frameBlob);
 
-  // 1b. ALIGN: gpt-4o VLM locates each control in the painted device → snap the
-  //     template regions onto their real boxes (the chosen approach). Needs the
-  //     frame's true pixel dims for the canvas; decode the uploaded frame to get them.
+  // 1b. ALIGN — approach A: TRUST THE BLUEPRINT. The template is already repacked
+  //     (clean, non-overlapping, sane sizes) and the paint is requested at the SAME
+  //     9:16 aspect, so the model paints each socket at its blueprint position → the
+  //     control already sits on its painted socket. We just set the canvas to the
+  //     device frame's true dims so it renders 1:1. (The gpt-4o VLM per-control
+  //     placement was removed — it was the unreliable step: noisy boxes squashed
+  //     controls to slivers. snapToVLM stays in the file as opt-in polish, OFF here.)
   let snapped = template;
   if (template) {
     try {
       const dev = await blobToImageData(frameBlob);
-      snapped = await snapToVLM(template, frameBlob, dev.width, dev.height);
-    } catch { /* VLM unavailable → keep the blueprint template */ }
+      snapped = { ...template, canvas: { w: dev.width, h: dev.height } };
+    } catch { /* keep the blueprint template */ }
   }
 
   // 2. each control sprite: geometric cut from its cell, upload. Best-effort per
