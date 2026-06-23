@@ -3,6 +3,7 @@
 ## Open
 
 - [ ] **★ #1 PRIORITY — Merge `spritesheet-pipeline` → main: single-pass skin generation + sprite-sheet (decision A locked 2026-06-23).**
+      **→ Full design + decisions + rejected approaches: [`docs/skin-pipeline-sota.md`](docs/skin-pipeline-sota.md) (READ FIRST).**
       ONE generative paint pass renders the device body + all button/knob/slider parts together
       (combined blueprint); then non-generative BiRefNet mask + local cut + heuristic snap. Generated
       skins render their OWN per-skin cut sprites (A). This is the top thing to land next session.
@@ -22,14 +23,16 @@
         — NOT main's donor path. The 3 create-flow conflicts resolve by keeping BOTH: main's newer
         Director title/blurb/font + delete AND the branch's `finishCutoutFull` cutout/sprite wiring.
         The remaining real work is the **alignment** below (heuristic tuning, NOT SAM).
-      - **Alignment is the hard part (still imperfect):** branch aligns generated controls to the
-        painted device via a heuristic — detect dark wells → global shortest-edge match → snap
-        displays(screen cluster)/seek/buttons/knobs (`cutoutClient.snapToSockets`). Produces clean
-        results on good gens (`j4v9`/`xqeg`) but varies per generation. The documented Align design
-        (`generation/sam_snap.py` SAM box-prompt + snap/warp) was tried this session and came out
-        WORSE (SAM merges/misses controls on AI-painted devices) — reverted. The offline
-        `snap_controls.py`+`detect_wells.py` (same heuristic family) is what aligns the BUILT-IN
-        skins. If pursuing (a), the runtime heuristic needs more tuning, not SAM.
+      - **Alignment = VLM, NOT heuristic/SAM (decided 2026-06-23).** The landed approach is a VLM
+        (gpt-4o vision) — already implemented in `generation/freeform.py` `extract()`: send the
+        device image + the template's control checklist, get back STRICT JSON of each control's box
+        `{kind,x,y,w,h}` (center + size), then snap each cut sprite onto its box. Semantic → reads
+        the painted ►/VOL icons so identity is correct by construction (no nearest-neighbor mishaps),
+        one cheap call, returns centers AND sizes. Port `freeform.py extract()` into the runtime
+        (a server `/api/extract` like `/api/sam`, FAL/OpenAI key server-side) and replace
+        `cutoutClient.snapToSockets`. Dead-ends NOT to repeat: the dark-well heuristic (flaky per
+        gen) and `sam_snap.py` SAM box-prompt (merges/misses on AI-painted devices — tried + reverted
+        this session; the comfyui seg bake-off had already concluded zero-shot seg fails here).
 
 - [ ] **Website redesign — follow-ups (2026-06-23).** The desktop + mobile shell was
       reworked + shipped to skeuo.fm this session (see Done below). Loose ends:
