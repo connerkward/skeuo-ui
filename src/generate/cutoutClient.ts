@@ -20,6 +20,7 @@
 // a data: URL (offline demo, no R2), we key out the white background with the
 // shared pure-JS cutoutAlpha — the original behavior — instead of calling fal.
 import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type SpriteKind } from "./blueprint";
+import { resolveOverlaps } from "./layouts";
 import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
 
@@ -98,7 +99,8 @@ async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: numb
     const box = byId.get(r.id);
     return box ? { ...r, rect: box } : r;   // matched → snap to the VLM box; else keep blueprint
   });
-  return { ...template, canvas, regions };
+  // the snapped render template must ALSO have no overlapping interactables
+  return { ...template, canvas, regions: resolveOverlaps(regions) };
 }
 
 // Decode raw image bytes into something drawable, robustly across engines.

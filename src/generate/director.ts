@@ -88,28 +88,39 @@ const LAYOUT_SYS =
   "\"eqBand\", group \"eq\", index 0..n); toggle (bind shuffle/repeat/eqOn/power); segmented (bind \"mode\", options like [\"FM\",\"CD\",\"TAPE\"]); " +
   "xy pad (bind \"xy\"); slider-arc ring-seek around a dial (use bind \"seek\" as slider-arc INSTEAD of slider-h for dial-centric designs).\n\n" +
   "RULES: every rect inside 0.04..0.96; controls must NOT overlap each other or the screen; round controls ~square (w≈h); group/align related " +
-  "controls; sizes sensible (transport buttons 0.06-0.16 with play biggest, knobs 0.08-0.16, the screen 0.4-0.85 wide). Make it interesting and " +
-  "specific to the theme.\n\n" +
+  "controls; sizes sensible (transport buttons 0.06-0.16 with play biggest, knobs 0.08-0.16, the screen 0.4-0.85 wide). " +
+  "Keep it UNCLUTTERED — about 8 to 13 controls total, with breathing room between them; do NOT cram the face. " +
+  "The marquee is WIDE (~0.5-0.65) and the time readout is NARROW (~0.14-0.22) sitting beside it on the same row, NOT stacked full-width. " +
+  "If you include EQ faders, use 5-7 bands max. Make it interesting and specific to the theme.\n\n" +
   "Each region: {\"id\":\"snake_case\",\"kind\":\"button|toggle|slider-h|slider-v|knob|slider-arc|segmented|xy|display\",\"bind\":\"<state field>\"," +
   "\"label\":\"<short>\",\"x\":0,\"y\":0,\"w\":0,\"h\":0,\"shape\":\"ellipse\"(round only),\"options\":[...](segmented),\"group\":\"eq\",\"index\":0}. " +
   "Return ONLY the JSON object.";
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
-// normalize one raw LLM region into a schema Region, or null if unusable.
+// display ROLES the model sometimes puts in `kind` (or `id`/`bind`) instead of "display".
+const DISPLAY_ROLES = new Set(["visualizer", "marquee", "time", "screen", "lcd", "playlist", "display", "track_info"]);
+
+// normalize one raw LLM region into a schema Region, or null if unusable. Robust to
+// the model using a display ROLE as the kind (kind:"visualizer" → kind:"display").
 function normRegion(r: Record<string, unknown>, i: number): Region | null {
-  const kind = r.kind as Kind;
-  if (!VALID_KINDS.has(kind)) return null;
+  let kind = String(r.kind ?? "");
+  const id = (typeof r.id === "string" && r.id) || `r${i}`;
+  const bindRaw = typeof r.bind === "string" ? r.bind : undefined;
+  // figure out if this is a display, even if the model mislabeled the kind
+  const isDisplay = kind === "display" || DISPLAY_ROLES.has(kind) || DISPLAY_ROLES.has(bindRaw ?? "") ||
+    (!VALID_KINDS.has(kind as Kind) && DISPLAY_ROLES.has(id));
+  if (isDisplay) kind = "display";
+  if (!VALID_KINDS.has(kind as Kind)) return null;
   const x = Number(r.x), y = Number(r.y), w = Number(r.w), h = Number(r.h);
   if (![x, y, w, h].every((n) => Number.isFinite(n)) || w <= 0 || h <= 0) return null;
   // clamp into bounds (keep within 0.02..0.98)
   const cw = Math.min(w, 0.96), ch = Math.min(h, 0.96);
   const cx = Math.max(0.02, Math.min(x, 0.98 - cw)), cy = Math.max(0.02, Math.min(y, 0.98 - ch));
-  const isDisplay = kind === "display";
-  const bind = typeof r.bind === "string" ? r.bind : undefined;
+  const bind = isDisplay ? undefined : bindRaw;
   const reg: Region = {
-    id: (typeof r.id === "string" && r.id) || `r${i}`,
-    kind,
+    id,
+    kind: kind as Kind,
     content: isDisplay ? "dynamic" : "sprite",
     layer: isDisplay ? "screen" : "components",
     rect: { x: cx, y: cy, w: cw, h: ch },
@@ -121,10 +132,12 @@ function normRegion(r: Record<string, unknown>, i: number): Region | null {
     ...(typeof r.index === "number" ? { index: r.index } : {}),
   };
   if (isDisplay) {
-    if (bind === "visualizer") reg.dynamicType = "visualizer";
-    else if (bind === "marquee") reg.dynamicType = "marquee";
-    else if (bind === "time") reg.dynamicType = "time";
-    else reg.dynamicType = "marquee";
+    // dynamicType from whichever field carried the role
+    const role = [String(r.kind ?? ""), bindRaw ?? "", id].find((v) => v === "visualizer" || v === "marquee" || v === "time")
+      ?? (DISPLAY_ROLES.has(id) ? id : "marquee");
+    reg.dynamicType = role === "visualizer" ? "visualizer" : role === "time" ? "time" : "marquee";
+    // keep a bind for the VLM checklist identity (visualizer/marquee/time)
+    reg.bind = reg.dynamicType;
   }
   return reg;
 }
@@ -139,24 +152,28 @@ export async function deriveLayout(openaiKey: string, prompt: string): Promise<R
         model: LAYOUT_MODEL,
         response_format: { type: "json_object" },
         temperature: 0.9,   // variety across skins
-        max_tokens: 2000,
+        max_tokens: 4000,
         messages: [
           { role: "system", content: LAYOUT_SYS },
           { role: "user", content: `Theme: ${prompt}` },
         ],
       }),
     });
-    if (!r.ok) throw new Error(`openai ${r.status}`);
-    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}") as { regions?: Record<string, unknown>[] };
+    if (!r.ok) throw new Error(`openai ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
+    const content = data.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(content) as { regions?: Record<string, unknown>[] };
     const raw = Array.isArray(parsed.regions) ? parsed.regions : [];
     const regions = raw.map(normRegion).filter((x): x is Region => x !== null);
-    // sanity: need a screen + a play button to be a usable player, else fall back
     const hasViz = regions.some((g) => g.kind === "display");
-    const hasPlay = regions.some((g) => g.kind === "button" && (g.bind === "play"));
+    const hasPlay = regions.some((g) => g.kind === "button" && g.bind === "play");
+    // eslint-disable-next-line no-console
+    console.warn(`[deriveLayout] finish=${data.choices?.[0]?.finish_reason} raw=${raw.length} valid=${regions.length} viz=${hasViz} play=${hasPlay}`);
     if (!hasViz || !hasPlay || regions.length < 4) throw new Error("layout missing required controls");
     return regions;
-  } catch {
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn(`[deriveLayout] FELL BACK: ${e instanceof Error ? e.message : String(e)}`);
     return null;   // caller falls back to the constant variant preset
   }
 }

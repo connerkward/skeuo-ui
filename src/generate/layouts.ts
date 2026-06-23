@@ -296,3 +296,75 @@ export function regionsForVariant(v: LayoutVariant): Region[] {
 export function templateForVariant(id: string, v: LayoutVariant): Template {
   return { id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regionsForVariant(v) };
 }
+
+// ---------------------------------------------------------------------------
+// resolveOverlaps — GUARANTEE no two INTERACTABLE controls overlap (and no
+// control overlaps a display). A template with overlapping interactables must
+// NEVER reach the painter or the renderer. Displays are treated as fixed
+// obstacles (they're layered content); controls repel off each other + off
+// displays, then a final shrink pass removes any residual overlap so the
+// guarantee is hard, not best-effort. All math in normalized 0..1 coords.
+// ---------------------------------------------------------------------------
+type Box = { x: number; y: number; w: number; h: number };
+const ov = (a: Box, b: Box): { ox: number; oy: number } | null => {
+  const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+  const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+  return ox > 0 && oy > 0 ? { ox, oy } : null;
+};
+const clampBox = (r: Box) => {
+  r.w = Math.min(r.w, 0.94); r.h = Math.min(r.h, 0.94);
+  r.x = Math.max(0.02, Math.min(r.x, 0.98 - r.w));
+  r.y = Math.max(0.02, Math.min(r.y, 0.98 - r.h));
+};
+
+export function resolveOverlaps(regions: Region[]): Region[] {
+  const items = regions.map((r) => ({ reg: r, rect: { ...r.rect }, fixed: r.kind === "display" }));
+  // iterative separation: push overlapping pairs apart along the axis of LEAST overlap
+  for (let iter = 0; iter < 60; iter++) {
+    let any = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const A = items[i], B = items[j];
+        if (A.fixed && B.fixed) continue;          // two displays may layer
+        const o = ov(A.rect, B.rect);
+        if (!o) continue;
+        any = true;
+        const a = A.rect, b = B.rect;
+        // weights: a fixed box doesn't move; the movable one takes the full push
+        const wa = A.fixed ? 0 : (B.fixed ? 1 : 0.5);
+        const wb = B.fixed ? 0 : (A.fixed ? 1 : 0.5);
+        if (o.ox < o.oy) {
+          const d = o.ox + 0.004; const ac = a.x + a.w / 2, bc = b.x + b.w / 2;
+          if (ac <= bc) { a.x -= d * wa; b.x += d * wb; } else { a.x += d * wa; b.x -= d * wb; }
+        } else {
+          const d = o.oy + 0.004; const ac = a.y + a.h / 2, bc = b.y + b.h / 2;
+          if (ac <= bc) { a.y -= d * wa; b.y += d * wb; } else { a.y += d * wa; b.y -= d * wb; }
+        }
+        if (!A.fixed) clampBox(a);
+        if (!B.fixed) clampBox(b);
+      }
+    }
+    if (!any) break;
+  }
+  // HARD guarantee: shrink any residual control-control overlap (smaller box yields)
+  for (let pass = 0; pass < 8; pass++) {
+    let any = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const A = items[i], B = items[j];
+        if (A.fixed && B.fixed) continue;
+        const o = ov(A.rect, B.rect);
+        if (!o) continue;
+        any = true;
+        // shrink the movable (or smaller) box on the least-overlap axis
+        const target = A.fixed ? B : B.fixed ? A : (A.rect.w * A.rect.h <= B.rect.w * B.rect.h ? A : B);
+        const r = target.rect;
+        if (o.ox < o.oy) { r.x += o.ox / 2 + 0.004 * (r.x < (A === target ? B : A).rect.x ? -1 : 1); r.w = Math.max(0.03, r.w - o.ox - 0.008); }
+        else { r.h = Math.max(0.03, r.h - o.oy - 0.008); }
+        clampBox(r);
+      }
+    }
+    if (!any) break;
+  }
+  return items.map((it) => ({ ...it.reg, rect: it.rect }));
+}

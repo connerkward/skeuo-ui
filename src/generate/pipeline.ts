@@ -21,7 +21,7 @@
 // resvg-wasm in a CF Worker or resvg-js + UPNG in Node.
 // ============================================================
 import type { Region, Template } from "../template/schema";
-import { GEN_W, GEN_H, regionsForVariant, type LayoutVariant } from "./layouts";
+import { GEN_W, GEN_H, regionsForVariant, resolveOverlaps, type LayoutVariant } from "./layouts";
 import { combinedBlueprint, type BlueprintLayout } from "./blueprint";
 
 // ---- single-pass paint prompt — ported from /tmp/prompt_egg_v3.txt (the winning
@@ -233,7 +233,9 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const log = deps.log ?? (() => {});
   const model = input.model ?? DEFAULT_MODEL;
   // custom layout from the wizard wins; otherwise the constant variant preset.
-  const regs: Region[] = input.regions?.length ? input.regions : regionsForVariant(input.variant);
+  // GUARANTEE: a template with overlapping interactables must NEVER reach the
+  // painter — de-overlap before the blueprint (no exceptions).
+  const regs: Region[] = resolveOverlaps(input.regions?.length ? input.regions : regionsForVariant(input.variant));
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 
