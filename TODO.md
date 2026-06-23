@@ -2,6 +2,17 @@
 
 ## Open
 
+- [ ] **Mascot favicon — revisit (current SVG `public/favicon.svg` stays for now).**
+      Want a favicon that keeps the skeuomorphic iOS-original tile + the existing
+      chrome-knob + green-pointer/LED, with a *hint* of the mascot worked in. Explored
+      (2026-06-22) and rejected: gremlin horns added to the knob; "horns-as-the-knob's-
+      tick-marks" on a glossy bright-green tile with a dark knob (dark-on-green reads well
+      at distance, but the execution was ugly). Variant generator + sized/16px lookdev:
+      `/tmp/cdtex/fav/` (`gen.py`, `gen2.py`, `index.html`). Reactive-mascot / error-mascot
+      art lives in `~/Desktop/cc-skeuo/` (`mascot-*`); error picks are matted to alpha
+      (`mascot-error-*-cutout.png`). Direction still open — the hint just needs a better
+      idea than horns/tick-marks.
+
 - [ ] **Spotify BYO-Client-ID onboarding wizard — RESUME after the 24h Spotify
       app-creation cooldown (~2026-06-23).** Prototype built + verified, NOT yet wired
       into the React app. Goal: let any Premium user connect their OWN Spotify dev app,
