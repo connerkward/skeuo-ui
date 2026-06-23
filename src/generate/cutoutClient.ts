@@ -46,58 +46,85 @@ async function blobToImageData(blob: Blob): Promise<ImageData> {
 function snapToSockets(template: Template, device: ImageData): Template {
   const W = device.width, H = device.height;
   const minDim = Math.min(W, H);
-  // A control socket is round AND control-sized. Reject huge dark blobs (screens,
-  // the body interior, merged regions) up front — those are what made `stop` snap
-  // to a socket 64% of the device wide. No real control socket exceeds ~16% of the
-  // short side.
-  const sockets = detectSockets({ data: device.data, width: W, height: H })
-    .filter((s) => s.aspect > 0.55 && s.aspect < 1.8 && s.r < 0.16 * minDim);
-  if (!sockets.length) return template;
-  const maxDist = 0.20 * Math.hypot(W, H);   // a control can't teleport across the device
+  // One pass of dark-blob detection feeds BOTH the round control sockets and the
+  // rectangular features (screen, seek groove) below.
+  const blobs = detectSockets({ data: device.data, width: W, height: H });
+  const rectOf = (s: Socket) => ({
+    x: (s.cx - s.bboxW / 2) / W, y: (s.cy - s.bboxH / 2) / H, w: s.bboxW / W, h: s.bboxH / H,
+  });
 
-  // GLOBAL shortest-edge-first matching, NOT template-order greedy. In-order greedy
-  // let an earlier control claim a socket a later (often larger) control needed, so
-  // play/knob fell back to blueprint coords and rendered offset from their wells.
-  // Instead: gather every (control, socket) pair that passes the size/distance gates,
-  // sort by distance, and assign closest pairs first — each control + socket once.
-  const idx = new Map<number, Socket>();   // region index → assigned socket
+  // --- round control sockets → buttons/knobs (global shortest-edge matching) ---
+  // A control socket is round AND control-sized; reject huge dark blobs (screens,
+  // body interior) here. GLOBAL shortest-edge-first matching, NOT template-order
+  // greedy — in-order greedy let an earlier control claim a socket a later/larger
+  // control needed, so play/knob fell back to blueprint and rendered offset.
+  const sockets = blobs.filter((s) => s.aspect > 0.55 && s.aspect < 1.8 && s.r < 0.16 * minDim);
+  const maxDist = 0.20 * Math.hypot(W, H);
+  const idx = new Map<number, Socket>();
+  const usedSock = new Set<Socket>();
   const pairs: { i: number; s: Socket; dist: number }[] = [];
   template.regions.forEach((r, i) => {
     if (r.kind !== "button" && r.kind !== "knob") return;
-    const px = (r.rect.x + r.rect.w / 2) * W;
-    const py = (r.rect.y + r.rect.h / 2) * H;
-    const nominalR = Math.min(r.rect.w * W, r.rect.h * H) / 2;   // expected control radius
+    const px = (r.rect.x + r.rect.w / 2) * W, py = (r.rect.y + r.rect.h / 2) * H;
+    const nominalR = Math.min(r.rect.w * W, r.rect.h * H) / 2;
     for (const s of sockets) {
       const dist = Math.hypot(s.cx - px, s.cy - py);
       const ratio = s.r / nominalR;
-      // socket must be NEAR the blueprint position AND plausibly sized for a control
-      // (the giant-blob pre-filter above handles screens; this just rejects gross
-      // size mismatches). Upper bound generous so genuinely-bigger wells still match.
       if (dist > maxDist || ratio < 0.4 || ratio > 2.6) continue;
       pairs.push({ i, s, dist });
     }
   });
   pairs.sort((a, b) => a.dist - b.dist);
-  const usedSock = new Set<Socket>();
   for (const p of pairs) {
     if (idx.has(p.i) || usedSock.has(p.s)) continue;
     idx.set(p.i, p.s); usedSock.add(p.s);
   }
+
+  // --- displays → map the blueprint's screen cluster onto the painted screen ---
+  // The screen is the largest dark region that's far bigger than a control. Mapping
+  // the blueprint's display cluster (visualizer/marquee/time) onto it by relative
+  // layout lands each on the actual glass instead of floating at blueprint coords.
+  const rectFor = new Map<string, { x: number; y: number; w: number; h: number }>();
+  const screen = blobs
+    .filter((s) => !usedSock.has(s) && s.bboxW > 0.3 * W && s.bboxH > 0.1 * H)
+    .sort((a, b) => b.area - a.area)[0];
+  if (screen) {
+    const sc = rectOf(screen);
+    const disp = template.regions.filter((r) => r.kind === "display");
+    if (disp.length) {
+      const minx = Math.min(...disp.map((r) => r.rect.x)), miny = Math.min(...disp.map((r) => r.rect.y));
+      const bw = Math.max(...disp.map((r) => r.rect.x + r.rect.w)) - minx;
+      const bh = Math.max(...disp.map((r) => r.rect.y + r.rect.h)) - miny;
+      for (const r of disp) rectFor.set(r.id, {
+        x: sc.x + ((r.rect.x - minx) / bw) * sc.w, y: sc.y + ((r.rect.y - miny) / bh) * sc.h,
+        w: (r.rect.w / bw) * sc.w, h: (r.rect.h / bh) * sc.h,
+      });
+    }
+  }
+
+  // --- seek slider → the thin wide groove below the screen (if the model painted one) ---
+  const groove = blobs
+    .filter((s) => s !== screen && !usedSock.has(s) && s.aspect > 3 && s.bboxW > 0.4 * W
+      && s.bboxH < 0.06 * H && (!screen || s.cy > screen.cy))
+    .sort((a, b) => a.cy - b.cy)[0];
+  if (groove) {
+    template.regions.filter((r) => r.kind === "slider-h" || r.kind === "slider-v")
+      .forEach((r) => rectFor.set(r.id, rectOf(groove)));
+  }
+
   const regions = template.regions.map((r, i) => {
-    const best = idx.get(i);
-    if (!best) return r;   // no plausible socket → keep the blueprint rect
-    const R = best.r * 1.06;   // a hair larger than the socket so the cap covers the rim
-    return { ...r, rect: {
-      x: (best.cx - R) / W, y: (best.cy - R) / H,
-      w: (2 * R) / W, h: (2 * R) / H,
-    } };
+    const sock = idx.get(i);
+    if (sock) {
+      const R = sock.r * 1.06;   // a hair larger than the socket so the cap covers the rim
+      return { ...r, rect: { x: (sock.cx - R) / W, y: (sock.cy - R) / H, w: (2 * R) / W, h: (2 * R) / H } };
+    }
+    const rect = rectFor.get(r.id);
+    if (rect) return { ...r, rect };
+    return r;   // no plausible feature → keep the blueprint rect
   });
-  // CRITICAL: set the canvas to the DEVICE's real dimensions. The blueprint canvas
-  // is 2:3, but the generated device frame has a different aspect — if the player
-  // renders regions on a 2:3 box while the frame is e.g. 0.87:1, the frame stretches
-  // and round sockets become vertical ellipses + control boxes go non-square (square
-  // sprites squish to ovals). Matching the canvas to the frame keeps everything 1:1.
-  return { ...template, canvas: { w: device.width, h: device.height }, regions };
+  // CRITICAL: set the canvas to the DEVICE's real dimensions so the frame renders
+  // 1:1 (no stretch → round sockets stay round, control boxes stay square).
+  return { ...template, canvas: { w: W, h: H }, regions };
 }
 
 // Decode raw image bytes into something drawable, robustly across engines.
