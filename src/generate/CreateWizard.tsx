@@ -429,6 +429,24 @@ const PAINT_PHASES = [
 // cumulative fraction of the (expected) duration each phase ends at
 const PHASE_ENDS = [0.06, 0.18, 0.42, 0.86, 1.0];
 
+// process previews — the example pipeline's REAL artifacts (the Pebble skin),
+// cross-faded in the loading area as the bar walks its phases so the wait shows
+// what each step actually produces. See /process for the full how-it-works page.
+const PROC_PREVIEWS = [
+  "/loading/blueprint.webp",   // wells-only layout
+  "/loading/envelope.webp",    // body grown around the wells
+  "/loading/paint.webp",       // material painted on
+  "/loading/composite.webp",   // cut out → final transparent frame
+] as const;
+// phase label → which artifact to show ("Reading your prompt" shares the blueprint)
+const PHASE_PREVIEW: Record<string, string> = {
+  "Reading your prompt": "/loading/blueprint.webp",
+  "Drawing the blueprint": "/loading/blueprint.webp",
+  "Growing the body": "/loading/envelope.webp",
+  "Painting the material": "/loading/paint.webp",
+  "Cutting it out": "/loading/composite.webp",
+};
+
 function PaintProgress({ progress, elapsed, autoBody }: {
   progress: GenProgress; elapsed: number; autoBody: boolean;
 }) {
@@ -445,10 +463,19 @@ function PaintProgress({ progress, elapsed, autoBody }: {
   // an uploaded body skips the grow phase — collapse that label so it stays honest
   const phases = autoBody ? PAINT_PHASES : PAINT_PHASES.filter((p) => p !== "Growing the body");
   const phaseLabel = phases[Math.min(phaseIdx, phases.length - 1)];
+  const activePreview = PHASE_PREVIEW[phaseLabel] ?? PROC_PREVIEWS[0];
 
   return (
     <>
       <div className="wiz-paint" role="status" aria-live="polite">
+        {/* process preview: the real pipeline artifacts cross-fading with the phase */}
+        <div className="wiz-proc" aria-hidden="true">
+          {PROC_PREVIEWS.map((src) => (
+            <img key={src} src={src} alt="" loading="eager"
+              className={`wiz-proc-img ${src === activePreview ? "on" : ""}`} />
+          ))}
+          <span className="wiz-proc-tag">how it’s made</span>
+        </div>
         <div className="wiz-paint-head">
           <span className="wiz-paint-model">
             {progress.total > 1 && <b>model {progress.idx + 1}/{progress.total} · </b>}

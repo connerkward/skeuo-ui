@@ -177,6 +177,28 @@
   background: #101622; border: 1px solid #243a5a; border-radius: 8px;
   padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
 }
+/* process preview: the example pipeline's real artifacts (blueprint → body →
+   paint → cutout) cross-fading as the bar walks its phases, so the wait shows
+   what each step actually produces. The active image fades in over the others. */
+.wiz-proc {
+  position: relative; align-self: center;
+  width: 150px; aspect-ratio: 3 / 4; margin: 2px 0 2px;
+  border-radius: 9px; overflow: hidden;
+  background: radial-gradient(120% 120% at 50% 18%, #131c2c, #0a0e16 72%);
+  border: 1px solid #243a5a;
+}
+.wiz-proc-img {
+  position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px);
+  object-fit: contain; opacity: 0; transition: opacity .65s ease;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.45));
+}
+.wiz-proc-img.on { opacity: 1; }
+.wiz-proc-tag {
+  position: absolute; left: 7px; bottom: 6px; z-index: 2;
+  font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: #9fb6d8; background: rgba(8,12,20,.7); border: 1px solid #243a5a;
+  padding: 2px 6px; border-radius: 999px; backdrop-filter: blur(2px);
+}
 .wiz-paint-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12px; }
 .wiz-paint-model { color: #cfe2ff; }
 .wiz-paint-model b { color: #fff; font-weight: 700; }
