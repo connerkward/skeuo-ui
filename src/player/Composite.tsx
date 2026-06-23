@@ -609,11 +609,12 @@ function CdDisc({ ps }: { ps: PlayerState }) {
     let raf = 0, angle = 0, vel = 0, last = 0;
     // A real CD drive does two distinct things, so we model two distinct regimes
     // rather than easing toward a target with one curve:
-    const CRUISE = 150;        // deg/s cruise (~25 rpm) — a heavy disc spinning; trackable, not blurry
-    const SPINUP_ACCEL = 200;  // deg/s² motor torque vs. the disc's inertia — sets how snappy 0→cruise feels (~0.9s)
+    const CRUISE = 1000;       // deg/s cruise (~2.8 rev/s) — a CD spinning at FULL SPEED, not a slow platter
+    const SPINUP_ACCEL = 1300; // deg/s² motor torque vs. the disc's inertia — sets how snappy 0→cruise feels (~1.0s)
     const KNEE = 0.82;         // governor: full torque until 82% of cruise, then taper to 0 — settles in without overshoot
     const FRIC_C = 18;         // deg/s² Coulomb (dry) friction — constant drag that brings it to an EXACT stop, and the gentle end-of-coast decel
-    const FRIC_V = 0.9;        // 1/s viscous friction (∝ vel) — the hard initial slow; with FRIC_C sets the ~2.6s total coast
+    const FRIC_V = 1.4;        // 1/s viscous friction (∝ vel) — the hard initial slow; with FRIC_C sets the ~3s total coast
+    const MAX_BLUR = 1.9;      // px of motion smear at full speed — sells "spinning fast" (a real CD blurs to a sheen) + masks 60Hz strobe
     const tick = (t: number) => {
       if (!last) last = t;
       const dt = Math.min(0.05, (t - last) / 1000); last = t;
@@ -629,7 +630,13 @@ function CdDisc({ ps }: { ps: PlayerState }) {
         if (vel < 0.4) vel = 0;
       }
       angle = (angle + vel * dt) % 360;
-      if (platter.current) platter.current.style.transform = `rotate(${angle.toFixed(3)}deg)`;
+      const p = platter.current;
+      if (p) {
+        // motion blur ramps with speed so the disc smears into a spinning sheen at cruise
+        const blur = (vel / CRUISE) * MAX_BLUR;
+        p.style.transform = `rotate(${angle.toFixed(2)}deg)`;
+        p.style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : "";
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
