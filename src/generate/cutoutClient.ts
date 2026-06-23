@@ -44,26 +44,39 @@ async function blobToImageData(blob: Blob): Promise<ImageData> {
 // misaligns them; detecting the actual dark sockets and re-homing the regions to
 // them is what makes the sprite land in its recess. Returns a corrected template.
 function snapToSockets(template: Template, device: ImageData): Template {
-  const sockets = detectSockets({ data: device.data, width: device.width, height: device.height })
-    .filter((s) => s.aspect > 0.55 && s.aspect < 1.8);   // round sockets only
+  const W = device.width, H = device.height;
+  const minDim = Math.min(W, H);
+  // A control socket is round AND control-sized. Reject huge dark blobs (screens,
+  // the body interior, merged regions) up front — those are what made `stop` snap
+  // to a socket 64% of the device wide. No real control socket exceeds ~16% of the
+  // short side.
+  const sockets = detectSockets({ data: device.data, width: W, height: H })
+    .filter((s) => s.aspect > 0.55 && s.aspect < 1.8 && s.r < 0.16 * minDim);
   if (!sockets.length) return template;
+  const maxDist = 0.20 * Math.hypot(W, H);   // a control can't teleport across the device
   const used = new Set<Socket>();
   const regions = template.regions.map((r) => {
     if (r.kind !== "button" && r.kind !== "knob") return r;
-    const px = (r.rect.x + r.rect.w / 2) * device.width;
-    const py = (r.rect.y + r.rect.h / 2) * device.height;
+    const px = (r.rect.x + r.rect.w / 2) * W;
+    const py = (r.rect.y + r.rect.h / 2) * H;
+    const nominalR = (Math.min(r.rect.w * W, r.rect.h * H)) / 2;   // expected control radius
     let best: Socket | undefined; let bd = Infinity;
     for (const s of sockets) {
       if (used.has(s)) continue;
-      const d = (s.cx - px) ** 2 + (s.cy - py) ** 2;
-      if (d < bd) { bd = d; best = s; }
+      const dist = Math.hypot(s.cx - px, s.cy - py);
+      const ratio = s.r / nominalR;
+      // only consider sockets that are NEAR the blueprint position AND a plausible
+      // size for THIS control (~0.5x–2x). Else leave it at the blueprint coords —
+      // a wrong snap is worse than no snap.
+      if (dist > maxDist || ratio < 0.5 || ratio > 2.0) continue;
+      if (dist < bd) { bd = dist; best = s; }
     }
-    if (!best) return r;
+    if (!best) return r;   // no plausible socket → keep the blueprint rect
     used.add(best);
     const R = best.r * 1.06;   // a hair larger than the socket so the cap covers the rim
     return { ...r, rect: {
-      x: (best.cx - R) / device.width, y: (best.cy - R) / device.height,
-      w: (2 * R) / device.width, h: (2 * R) / device.height,
+      x: (best.cx - R) / W, y: (best.cy - R) / H,
+      w: (2 * R) / W, h: (2 * R) / H,
     } };
   });
   // CRITICAL: set the canvas to the DEVICE's real dimensions. The blueprint canvas
