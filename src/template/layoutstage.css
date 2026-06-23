@@ -1,0 +1,92 @@
+/* LayoutStage — shared region-editing stage (wizard Step 2 + template editor).
+   Class prefix: ls-. Sizing is driven by the consumer's wrapper:
+     · default  → width:100%, height from aspect-ratio (wizard preview column)
+     · .tall    → height-driven, width from aspect-ratio (editor fullscreen modal) */
+
+.ls-stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  background: radial-gradient(120% 120% at 50% 0%, #181a1e, #111214);
+  border: 1px solid #2c2d33; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .4);
+  user-select: none; touch-action: none;
+}
+.ls-stage.tall { width: auto; height: min(82vh, 1000px); }
+.ls-stage.edit { border-color: #3a4a6a; }
+
+.ls-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: .88; }
+
+/* fine quarter grid + a slightly stronger center cross */
+.ls-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px);
+  background-size: 10% 10%;
+}
+.ls-grid::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .07) 1px, transparent 1px);
+  background-position: 0 50%, 50% 0;
+  background-size: 100% 50%, 50% 100%;
+}
+
+/* ── regions ── */
+.ls-region {
+  position: absolute; box-sizing: border-box;
+  border: 2px solid; display: grid; place-items: center;
+  transition: box-shadow .08s ease, filter .08s ease;
+  touch-action: none;
+}
+.ls-stage.edit .ls-region:hover { box-shadow: 0 0 0 2px rgba(255, 255, 255, .18); filter: brightness(1.2); }
+.ls-region.sel { box-shadow: 0 0 0 2px rgba(255, 255, 255, .55), 0 0 10px rgba(120, 210, 255, .35); z-index: 2; }
+.ls-region.sel:hover { box-shadow: 0 0 0 2px rgba(255, 255, 255, .65), 0 0 12px rgba(120, 210, 255, .45); }
+.ls-region.multi { border-style: dashed; }
+
+.ls-tag {
+  font-size: 9.5px; font-weight: 700; pointer-events: none;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+  white-space: nowrap; overflow: hidden; max-width: 100%; padding: 0 2px;
+}
+
+/* resize handles */
+.ls-handle {
+  position: absolute; width: 12px; height: 12px;
+  background: #0d0d10; border: 2px solid; border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5); z-index: 4;
+}
+.ls-handle:hover { background: #1a2030; }
+.h-n { top: -7px; left: calc(50% - 6px); cursor: ns-resize; }
+.h-s { bottom: -7px; left: calc(50% - 6px); cursor: ns-resize; }
+.h-e { right: -7px; top: calc(50% - 6px); cursor: ew-resize; }
+.h-w { left: -7px; top: calc(50% - 6px); cursor: ew-resize; }
+.h-ne { top: -7px; right: -7px; cursor: nesw-resize; }
+.h-nw { top: -7px; left: -7px; cursor: nwse-resize; }
+.h-se { bottom: -7px; right: -7px; cursor: nwse-resize; }
+.h-sw { bottom: -7px; left: -7px; cursor: nesw-resize; }
+
+/* per-region quick delete */
+.ls-del {
+  position: absolute; top: -11px; right: -11px; width: 20px; height: 20px;
+  border-radius: 50%; background: #2a1414; color: #f4a0a0; border: 1px solid #5a2a2a;
+  font-size: 13px; line-height: 1; cursor: pointer; z-index: 5;
+}
+.ls-del:hover { background: #3a1a1a; color: #ffb4b4; }
+
+/* alignment guides — cyan; symmetry guides — magenta dashed */
+.ls-guide { position: absolute; pointer-events: none; z-index: 6; }
+.ls-guide.v { top: 0; bottom: 0; width: 1px; background: #2ee6e6; box-shadow: 0 0 4px rgba(46, 230, 230, .9); transform: translateX(-.5px); }
+.ls-guide.h { left: 0; right: 0; height: 1px; background: #2ee6e6; box-shadow: 0 0 4px rgba(46, 230, 230, .9); transform: translateY(-.5px); }
+.ls-guide.sym.v, .ls-guide.sym.h { background: #ff5ad0; box-shadow: 0 0 5px rgba(255, 90, 208, .9); border-left: 0; }
+.ls-guide.sym.v { background: repeating-linear-gradient(to bottom, #ff5ad0 0 5px, transparent 5px 10px); }
+.ls-guide.sym.h { background: repeating-linear-gradient(to right, #ff5ad0 0 5px, transparent 5px 10px); }
+
+/* rubber-band selection rectangle */
+.ls-band {
+  position: absolute; pointer-events: none; z-index: 6;
+  border: 1px dashed rgba(120, 210, 255, .9); background: rgba(120, 210, 255, .1);
+  border-radius: 2px;
+}

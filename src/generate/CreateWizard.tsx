@@ -5,8 +5,9 @@ import { finishCutout } from "./cutoutClient";
 import { apiUrl } from "../platform";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, type LayoutVariant } from "./layouts";
-import type { Region, Rect, Kind, DynamicType } from "../template/schema";
+import type { Region, Kind, DynamicType } from "../template/schema";
 import type { RuntimeSkin } from "./CreatePanel";
+import { LayoutStage } from "../template/LayoutStage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CreateWizard — ONE guided flow that replaces the old create drawer + standalone
@@ -70,7 +71,6 @@ const colorFor = (k: string) => KIND_COLOR[k] ?? "#c8c8c8";
 
 const fmt$ = (n: number) => `$${n.toFixed(2)}`;
 const modelLabel = (id: ModelId) => MODELS.find((m) => m.id === id)?.label ?? id;
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => void }) {
   const [step, setStep] = useState<Step>(0);
@@ -205,7 +205,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         <div className="wiz-preview">
           <LayoutStage regions={regions} onChange={setRegions} editable={step === 1} />
           <div className="wiz-preview-cap">
-            {step === 1 ? "drag to move (snaps to align) · corner handles resize · drag empty space to box-select · shift+click to multi-select · ⌫ deletes"
+            {step === 1 ? "drag to move (snaps to align · magenta = symmetry · hold Alt to disable) · 8 handles resize · drag empty space to box-select · shift-click multi-select · arrows nudge · ⌫ deletes"
               : `${regions.length} controls · ${variant} layout`}
           </div>
         </div>
@@ -461,271 +461,5 @@ function PaintProgress({ progress, elapsed, autoBody }: {
         aria-hidden="true"
       />
     </>
-  );
-}
-
-// ── draggable layout stage (move + corner resize + snap + multi-select), 2:3 ────
-type Dir = "move" | "se" | "sw" | "ne" | "nw";
-const SNAP = 0.008; // ~8px on a 1024-wide canvas
-
-type Band = { x0: number; y0: number; x1: number; y1: number };
-// reference lines collected from every OTHER region + canvas, for alignment snapping
-function refsFor(regions: Region[], exclude: Set<string>) {
-  const vx: number[] = [0, 0.5, 1]; // canvas left/center/right
-  const hy: number[] = [0, 0.5, 1]; // canvas top/center/bottom
-  for (const r of regions) {
-    if (exclude.has(r.id)) continue;
-    const { x, y, w, h } = r.rect;
-    vx.push(x, x + w, x + w / 2);
-    hy.push(y, y + h, y + h / 2);
-  }
-  return { vx, hy };
-}
-// snap a list of candidate positions to the nearest reference within threshold.
-// returns the chosen delta to apply + the snapped reference line (for the guide).
-function snapAxis(candidates: number[], refs: number[]): { delta: number; guide: number | null } {
-  let best: { delta: number; guide: number; dist: number } | null = null;
-  for (const cand of candidates) {
-    for (const ref of refs) {
-      const dist = Math.abs(cand - ref);
-      if (dist <= SNAP && (!best || dist < best.dist)) best = { delta: ref - cand, guide: ref, dist };
-    }
-  }
-  return best ? { delta: best.delta, guide: best.guide } : { delta: 0, guide: null };
-}
-
-function LayoutStage({ regions, onChange, editable }: {
-  regions: Region[]; onChange: (r: Region[]) => void; editable: boolean;
-}) {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const [sel, setSel] = useState<Set<string>>(new Set());
-  const [guides, setGuides] = useState<{ vx: number[]; hy: number[] }>({ vx: [], hy: [] });
-  const [band, setBand] = useState<Band | null>(null);
-  // drag.rects holds the START rect of every region being moved (keyed by id) so a
-  // group move applies the same dx/dy to all; single resize only touches `id`.
-  const drag = useRef<{ id: string; dir: Dir; px: number; py: number; rects: Record<string, Rect> } | null>(null);
-  // live rubber-band coords in a ref (px/py = start, ex/ey = current end) so the
-  // pointerup handler reads them directly, independent of React's render timing.
-  const select = useRef<{ px: number; py: number; ex: number; ey: number } | null>(null);
-  // keep latest regions/sel for the window-level pointer handlers without re-binding.
-  // updated in an effect (not during render) so React's ref-safety lint stays happy;
-  // the handlers only fire after a render has committed, so .current is current.
-  const regionsRef = useRef(regions);
-  const selRef = useRef(sel);
-  useEffect(() => { regionsRef.current = regions; selRef.current = sel; });
-
-  useEffect(() => {
-    const norm = (e: PointerEvent) => {
-      const st = stageRef.current!; const box = st.getBoundingClientRect();
-      return { nx: (e.clientX - box.left) / box.width, ny: (e.clientY - box.top) / box.height, box };
-    };
-
-    const move = (e: PointerEvent) => {
-      const st = stageRef.current; if (!st) return;
-
-      // rubber-band selection in progress
-      if (select.current) {
-        const { nx, ny } = norm(e);
-        select.current.ex = clamp(nx, 0, 1); select.current.ey = clamp(ny, 0, 1);
-        setBand({ x0: select.current.px, y0: select.current.py, x1: select.current.ex, y1: select.current.ey });
-        return;
-      }
-
-      const d = drag.current; if (!d) return;
-      const box = st.getBoundingClientRect();
-      const dx = (e.clientX - d.px) / box.width, dy = (e.clientY - d.py) / box.height;
-      const min = 0.02;
-      const guideVx: number[] = [], guideHy: number[] = [];
-
-      if (d.dir === "move") {
-        const movingIds = new Set(Object.keys(d.rects));
-        const primary = d.rects[d.id];
-        // raw target for the primary region
-        let tx = primary.x + dx, ty = primary.y + dy;
-        // snap the primary box's left/centerX/right & top/centerY/bottom to refs
-        const { vx, hy } = refsFor(regionsRef.current, movingIds);
-        const sx = snapAxis([tx, tx + primary.w / 2, tx + primary.w], vx);
-        const sy = snapAxis([ty, ty + primary.h / 2, ty + primary.h], hy);
-        tx += sx.delta; ty += sy.delta;
-        if (sx.guide != null) guideVx.push(sx.guide);
-        if (sy.guide != null) guideHy.push(sy.guide);
-        // resolve the actual applied delta from the (snapped) primary, then clamp the
-        // whole group so no member leaves [0,1]; shrink the delta to keep rigidity.
-        let gdx = tx - primary.x, gdy = ty - primary.y;
-        for (const id of movingIds) {
-          const r = d.rects[id];
-          gdx = clamp(r.x + gdx, 0, 1 - r.w) - r.x;
-          gdy = clamp(r.y + gdy, 0, 1 - r.h) - r.y;
-        }
-        onChange(regionsRef.current.map((r) =>
-          movingIds.has(r.id) ? { ...r, rect: { ...r.rect, x: d.rects[r.id].x + gdx, y: d.rects[r.id].y + gdy } } : r));
-      } else {
-        const base = d.rects[d.id];
-        let { x, y, w, h } = base;
-        const { vx, hy } = refsFor(regionsRef.current, new Set([d.id]));
-        if (d.dir.includes("e")) {
-          let right = clamp(base.x + base.w + dx, base.x + min, 1);
-          const s = snapAxis([right], vx); right += s.delta; if (s.guide != null) guideVx.push(s.guide);
-          w = right - base.x;
-        }
-        if (d.dir.includes("s")) {
-          let bot = clamp(base.y + base.h + dy, base.y + min, 1);
-          const s = snapAxis([bot], hy); bot += s.delta; if (s.guide != null) guideHy.push(s.guide);
-          h = bot - base.y;
-        }
-        if (d.dir.includes("w")) {
-          let nx = clamp(base.x + dx, 0, base.x + base.w - min);
-          const s = snapAxis([nx], vx); nx += s.delta; if (s.guide != null) guideVx.push(s.guide);
-          nx = clamp(nx, 0, base.x + base.w - min); w = base.w + (base.x - nx); x = nx;
-        }
-        if (d.dir.includes("n")) {
-          let ny = clamp(base.y + dy, 0, base.y + base.h - min);
-          const s = snapAxis([ny], hy); ny += s.delta; if (s.guide != null) guideHy.push(s.guide);
-          ny = clamp(ny, 0, base.y + base.h - min); h = base.h + (base.y - ny); y = ny;
-        }
-        onChange(regionsRef.current.map((r) => (r.id === d.id ? { ...r, rect: { x, y, w, h } } : r)));
-      }
-      setGuides({ vx: guideVx, hy: guideHy });
-    };
-
-    const up = () => {
-      // finish rubber-band: select everything intersecting the band
-      if (select.current) {
-        const b = select.current;
-        const lo = { x: Math.min(b.px, b.ex), y: Math.min(b.py, b.ey) };
-        const hi = { x: Math.max(b.px, b.ex), y: Math.max(b.py, b.ey) };
-        const dragged = Math.abs(b.ex - b.px) > 0.005 || Math.abs(b.ey - b.py) > 0.005;
-        if (dragged) {
-          const hit = new Set<string>();
-          for (const r of regionsRef.current) {
-            const { x, y, w, h } = r.rect;
-            if (x < hi.x && x + w > lo.x && y < hi.y && y + h > lo.y) hit.add(r.id);
-          }
-          setSel(hit);
-        } else {
-          setSel(new Set()); // a click on empty space (no drag) clears
-        }
-        select.current = null; setBand(null);
-      }
-      drag.current = null;
-      setGuides({ vx: [], hy: [] });
-    };
-
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
-  }, [onChange]);
-
-  const start = (e: React.PointerEvent, id: string, dir: Dir) => {
-    if (!editable) return;
-    e.stopPropagation();
-    // figure out which set to move: a drag on a non-selected region selects just it,
-    // unless shift is held (toggle). resize always operates on the single selection.
-    let active = sel;
-    if (dir === "move") {
-      if (e.shiftKey) {
-        active = new Set(sel);
-        if (active.has(id)) active.delete(id); else active.add(id);
-        setSel(active);
-        return; // shift+click toggles selection without starting a drag
-      }
-      if (!sel.has(id)) { active = new Set([id]); setSel(active); }
-    } else {
-      active = new Set([id]);
-    }
-    const rects: Record<string, Rect> = {};
-    const moveSet = dir === "move" ? active : new Set([id]);
-    for (const r of regions) if (moveSet.has(r.id)) rects[r.id] = { ...r.rect }; // prop is current at press time
-    drag.current = { id, dir, px: e.clientX, py: e.clientY, rects };
-  };
-
-  const onStagePointerDown = (e: React.PointerEvent) => {
-    if (!editable) return;
-    // empty-area press starts a rubber band (and tentatively clears on a no-drag click)
-    const st = stageRef.current; if (!st) return;
-    const box = st.getBoundingClientRect();
-    const nx = clamp((e.clientX - box.left) / box.width, 0, 1);
-    const ny = clamp((e.clientY - box.top) / box.height, 0, 1);
-    select.current = { px: nx, py: ny, ex: nx, ey: ny };
-    setBand({ x0: nx, y0: ny, x1: nx, y1: ny });
-  };
-
-  // delete from a given source list (the keyboard path passes the ref's latest;
-  // the render path passes the live `regions` prop so no ref is read during render).
-  const delFrom = (src: Region[], ids: Set<string>) => {
-    onChange(src.filter((r) => !ids.has(r.id)));
-    setSel(new Set());
-  };
-
-  // delete / backspace removes all selected; arrows nudge — but never when typing.
-  useEffect(() => {
-    if (!editable) return;
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      const cur = selRef.current; if (!cur.size) return;
-      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); delFrom(regionsRef.current, cur); return; }
-      const step = 0.005;
-      let dx = 0, dy = 0;
-      if (e.key === "ArrowLeft") dx = -step; else if (e.key === "ArrowRight") dx = step;
-      else if (e.key === "ArrowUp") dy = -step; else if (e.key === "ArrowDown") dy = step; else return;
-      e.preventDefault();
-      onChange(regionsRef.current.map((r) => cur.has(r.id)
-        ? { ...r, rect: { ...r.rect, x: clamp(r.rect.x + dx, 0, 1 - r.rect.w), y: clamp(r.rect.y + dy, 0, 1 - r.rect.h) } }
-        : r));
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [editable, onChange]);
-
-  const single = sel.size === 1 ? [...sel][0] : null;
-
-  return (
-    <div ref={stageRef} className={`wiz-stage ${editable ? "edit" : ""}`} onPointerDown={onStagePointerDown}>
-      {regions.map((r) => {
-        const c = colorFor(r.kind), ell = r.shape === "ellipse" || r.kind === "knob";
-        // arc/path seeks fill the whole dial bbox — draw them as a faint dashed ring
-        // so they read as "thumb rides this area", not a solid control slab.
-        const arc = r.kind === "slider-arc" || r.kind === "slider-path";
-        const on = sel.has(r.id);
-        const isSingle = single === r.id;
-        return (
-          <div key={r.id}
-            className={`wiz-region ${on ? "sel" : ""}`}
-            style={{
-              left: `${r.rect.x * 100}%`, top: `${r.rect.y * 100}%`,
-              width: `${r.rect.w * 100}%`, height: `${r.rect.h * 100}%`,
-              borderColor: c, background: arc ? "transparent" : `${c}22`,
-              borderStyle: arc ? "dashed" : "solid", opacity: arc ? 0.55 : 1,
-              borderRadius: ell || arc ? "50%" : "4px",
-              alignItems: arc ? "flex-start" : "center",
-              cursor: editable ? "move" : "default",
-            }}
-            onPointerDown={(e) => start(e, r.id, "move")}>
-            <span className="wiz-region-tag" style={{ color: c }}>{r.bind || r.dynamicType || r.label || r.kind}</span>
-            {isSingle && editable && (["nw", "ne", "sw", "se"] as Dir[]).map((d) => (
-              <span key={d} className={`wiz-h h-${d}`} style={{ borderColor: c }} onPointerDown={(e) => start(e, r.id, d)} />
-            ))}
-            {isSingle && editable && <button className="wiz-region-del" onClick={(e) => { e.stopPropagation(); delFrom(regions, new Set([r.id])); }}>×</button>}
-          </div>
-        );
-      })}
-
-      {/* alignment guide lines (only while a snap is active) */}
-      {editable && guides.vx.map((x, i) => (
-        <div key={`gv${i}`} className="wiz-guide v" style={{ left: `${x * 100}%` }} />
-      ))}
-      {editable && guides.hy.map((y, i) => (
-        <div key={`gh${i}`} className="wiz-guide h" style={{ top: `${y * 100}%` }} />
-      ))}
-
-      {/* rubber-band selection rectangle */}
-      {editable && band && (
-        <div className="wiz-band" style={{
-          left: `${Math.min(band.x0, band.x1) * 100}%`, top: `${Math.min(band.y0, band.y1) * 100}%`,
-          width: `${Math.abs(band.x1 - band.x0) * 100}%`, height: `${Math.abs(band.y1 - band.y0) * 100}%`,
-        }} />
-      )}
-    </div>
   );
 }

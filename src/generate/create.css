@@ -98,31 +98,8 @@
 }
 .wiz-ref { max-width: 100%; max-height: 100px; border-radius: 6px; border: 1px solid #333; }
 
-/* layout stage — 2:3, scales to its column width */
-.wiz-stage {
-  position: relative; width: 100%; aspect-ratio: 1024 / 1536; border-radius: 10px;
-  background: repeating-linear-gradient(45deg, #131316 0 10px, #161619 10px 20px);
-  border: 1px solid #2a2a30; overflow: hidden; touch-action: none;
-}
-.wiz-stage.edit { border-color: #3a4a6a; }
-.wiz-region { position: absolute; border: 2px solid; box-sizing: border-box; display: grid; place-items: center; transition: box-shadow .08s ease, filter .08s ease; }
-.wiz-stage.edit .wiz-region:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.18); filter: brightness(1.25); }
-.wiz-region.sel { box-shadow: 0 0 0 2px rgba(255,255,255,.5), 0 0 10px rgba(120,210,255,.35); z-index: 2; }
-.wiz-region.sel:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 0 12px rgba(120,210,255,.45); }
-.wiz-region-tag { font-size: 9px; font-weight: 700; pointer-events: none; text-shadow: 0 1px 2px #000; white-space: nowrap; overflow: hidden; }
-/* bigger, easier-to-grab corner handles with a hit-pad larger than the dot */
-.wiz-h { position: absolute; width: 16px; height: 16px; background: #0d0d10; border: 2px solid; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,.5); z-index: 4; }
-.wiz-h:hover { background: #1a2030; }
-.wiz-h.h-nw { left: -9px; top: -9px; cursor: nwse-resize; } .wiz-h.h-se { right: -9px; bottom: -9px; cursor: nwse-resize; }
-.wiz-h.h-ne { right: -9px; top: -9px; cursor: nesw-resize; } .wiz-h.h-sw { left: -9px; bottom: -9px; cursor: nesw-resize; }
-.wiz-region-del { position: absolute; top: -11px; right: -11px; width: 20px; height: 20px; border-radius: 50%; background: #2a1414; color: #f4a0a0; border: 1px solid #5a2a2a; font-size: 13px; line-height: 1; cursor: pointer; z-index: 5; }
-.wiz-region-del:hover { background: #3a1a1a; color: #ffb4b4; }
-/* alignment guide lines (cyan), shown only while a snap is active */
-.wiz-guide { position: absolute; background: rgba(120,210,255,.9); pointer-events: none; z-index: 6; }
-.wiz-guide.v { top: 0; bottom: 0; width: 1px; transform: translateX(-0.5px); }
-.wiz-guide.h { left: 0; right: 0; height: 1px; transform: translateY(-0.5px); }
-/* rubber-band drag-to-select rectangle */
-.wiz-band { position: absolute; border: 1px dashed rgba(120,210,255,.9); background: rgba(120,210,255,.1); pointer-events: none; z-index: 6; }
+/* the draggable layout stage is the shared <LayoutStage> (.ls-* rules in
+   template/layoutstage.css); it fills .wiz-preview at 2:3 automatically. */
 
 .wiz-presets { display: flex; flex-direction: column; gap: 6px; }
 .wiz-preset { display: flex; flex-direction: column; gap: 2px; text-align: left; background: #141418; border: 1px solid #2c2c34; border-radius: 7px; padding: 8px 10px; cursor: pointer; color: #ccc; }
