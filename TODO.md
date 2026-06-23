@@ -5,11 +5,11 @@
 - [ ] **Reactive music-player mascot — build the rig + groove layer (animation strategy researched 2026-06-23).**
       A `mascot` player region (like the `cd`/`visualizer` dynamicTypes) that idles when paused and
       grooves to the music when playing, blending smoothly + reactive to energy/BPM.
-      - **Research (read first):** [`/tmp/cdtex/anim-pipeline-ideation.md`](file:///tmp/cdtex/anim-pipeline-ideation.md)
-        (substrate landscape) + [`/tmp/cdtex/anim-transitions-research.md`](file:///tmp/cdtex/anim-transitions-research.md)
+      - **Research (read first):** `docs/anim-pipeline-ideation.md`
+        (substrate landscape) + `docs/anim-transitions-research.md`
         (transition mechanics — web-verified: Bollo inertialization GDC2018, Spine mixDuration/tracks,
         Mecanim blend-trees + additive layers, Live2D keyform interp, critically-damped springs).
-        Move both into `docs/` if we keep them (currently in /tmp).
+        (both now in docs/.)
       - **Recommended approach:** generate the gremlin ONCE → BiRefNet matte → cut ~8 parts → a code
         **cut-out rig** (PixiJS/`pixi-spine` or hand-rolled canvas bones + Verlet jiggle on cap/tail).
         Drive dance as an **ADDITIVE groove layer** (bounce + head-bob + cap-tilt) scaled by `alpha=energy`
