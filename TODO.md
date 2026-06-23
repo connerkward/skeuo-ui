@@ -2,17 +2,6 @@
 
 ## Open
 
-- [ ] **Float the player as an always-on-top mini-player (Document Picture-in-Picture).**
-      The `documentPictureInPicture.requestWindow()` API (Chrome 111+, verified mature 2026)
-      floats arbitrary DOM in an always-on-top window — a perfect fit for skeuo.fm: a
-      **"pop out"** button on the website that detaches the current skin's `<Composite>`
-      into a floating mini-player the user keeps visible over other tabs/apps while they
-      browse (the in-browser equivalent of the Tauri desktop widget, zero install). Carry
-      the skin's stylesheet into the PiP doc, move the player node in, restore on close;
-      transport keeps driving the same audio engine (local/Spotify). Requires a user
-      gesture to open (browser anti-abuse rule — can't auto-fire on load). Prototyped the
-      mechanics in the Spotify-connect wizard (`/tmp/skeuo-wizard/`, the "⧉ Float" button).
-
 - [ ] **Restore the "Play here" switch** (removed 2026-06-18). The in-page Web
       Playback SDK device (`playHere`/`setPlayHere` in `useSpotify`, `sdk.ts`,
       `initWebPlaybackSDK`) lets a Premium user play audio in the page/tab itself
@@ -21,6 +10,21 @@
       unused). Re-add the `<label className="sp-toggle">` checkbox (desktop/web
       only — gate with `!isMobileApp()`, since iOS WKWebView lacks EME/Widevine)
       when we revisit in-page playback.
+
+## Done (2026-06-22) — Float the player in the browser (Document Picture-in-Picture)
+- [x] **"⧉ Float player — no install"** button (desktop, sidebar Connect group). Pops the
+      running skin into an always-on-top OS window via `documentPictureInPicture.requestWindow()`
+      — the in-browser equivalent of the Tauri widget, zero install. Implemented in
+      `src/player/useDocumentPip.ts` (open/close + carry every same-origin stylesheet into the
+      PiP doc) + `src/App.tsx`. The live `<Composite>` is rendered through a SINGLE
+      `createPortal` whose container toggles between an in-page `.player-host` and the PiP
+      window body, so floating/restoring never remounts the player — the same instance keeps
+      driving Spotify; transport state is preserved. Stage shows a "floating…/Bring it back"
+      placeholder while popped; `pagehide` (OS-close or our close) snaps it home. Gated on
+      `'documentPictureInPicture' in window` (Chrome/Edge 111+; hidden on Safari/iOS). CSS in
+      `app.css` (`.pip-body`/`.pip-stage`/`.stage-popped`). Verified end-to-end in headless
+      Chromium: float → player in PiP doc (frame + regions render, 20 sheets carried), host
+      empties, placeholder shows; bring-back → player returns, window closes, 0 console errors.
 
 ## Done (2026-06-13) — Tauri desktop widget + web→desktop handoff
 - [x] **Tauri macOS app** (`src-tauri/`) reusing the same React bundle — `isWidget()`

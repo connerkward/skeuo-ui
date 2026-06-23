@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Composite } from "./player/Composite";
+import { useDocumentPip } from "./player/useDocumentPip";
 import { playerTemplate } from "./template/winamp-layout";
 import { skinList, skinTemplateUrl } from "./player/skins";
 import type { Template } from "./template/schema";
@@ -87,6 +89,13 @@ export default function App() {
     mq.addEventListener("change", on);
     return () => mq.removeEventListener("change", on);
   }, []);
+
+  // Float the running skin into an always-on-top Document-PiP window (desktop
+  // Chrome/Edge). `host` is the in-page portal target; the live <Composite> is
+  // portaled into either it or the PiP window, so floating never remounts the
+  // player — the same instance keeps driving Spotify.
+  const pip = useDocumentPip();
+  const [pipHost, setPipHost] = useState<HTMLElement | null>(null);
 
   // load the selected registry skin's actual template.json so the editor edits
   // the real on-disk layout (runtime skins carry their template inline)
@@ -221,6 +230,15 @@ export default function App() {
               skinId={skinId}
               skinName={[...visible, ...runtimeSkins].find((s) => s.id === skinId)?.name ?? skinId}
             />
+            {pip.supported && (
+              <button
+                className="feature-btn pip-float-btn"
+                onClick={() => (pip.pipWindow ? pip.close() : pip.open())}
+                title="Pop the player into an always-on-top window — no install"
+              >
+                {pip.pipWindow ? "⧉ Bring player back" : "⧉ Float player — no install"}
+              </button>
+            )}
           </div>
           <div className="hint">
             One template → many skins. Buttons / sliders are baked sprites;
@@ -231,14 +249,15 @@ export default function App() {
       </aside>
       <main className="stage">
         <div className="stage-inner">
-          <Composite
-            template={playerTemplate}
-            skinId={skinId}
-            showWireframe={wire}
-            runtime={runtimeView}
-            templateOverride={edited ?? undefined}
-            spotifyDrive={spotifyDrive}
-          />
+          {/* portal target when docked; empty while the player is floating */}
+          <div className="player-host" ref={setPipHost} />
+          {pip.pipWindow && (
+            <div className="stage-popped">
+              <span className="pop-ico">⧉</span>
+              <p>Player is floating in its own window.</p>
+              <button className="pop-back" onClick={pip.close}>Bring it back</button>
+            </div>
+          )}
         </div>
       </main>
 
@@ -262,6 +281,21 @@ export default function App() {
         runtime={runtimeView}
         spotifyDrive={spotifyDrive}
       />
+
+      {/* ONE portal, container toggles dock ⇄ float so the player never remounts */}
+      {pipHost && createPortal(
+        <div className="pip-stage">
+          <Composite
+            template={playerTemplate}
+            skinId={skinId}
+            showWireframe={wire}
+            runtime={runtimeView}
+            templateOverride={edited ?? undefined}
+            spotifyDrive={spotifyDrive}
+          />
+        </div>,
+        pip.pipWindow ? pip.pipWindow.document.body : pipHost,
+      )}
     </div>
   );
 }
