@@ -56,9 +56,13 @@ export const PAINT_PROMPT =
   "FLAT PURE-WHITE sweep:\n" +
   "- This strip is NOT a diagram, NOT a UI mockup, NOT a labeled parts catalog, NOT an instruction sheet. It is simply " +
   "individual finished hardware parts laid out on an empty white surface, like loose components on a clean studio table.\n" +
-  "- The bottom band has evenly-spaced slots left-to-right. Paint ONE finished, glossy control PART centered in each slot, " +
-  "in the SAME material as the body, in this EXACT left-to-right order:\n" +
+  "- The bottom band has evenly-spaced slots left-to-right, EACH outlined by a bright PINK/MAGENTA KEYLINE. Paint ONE finished, " +
+  "glossy control PART filling each magenta slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
+  "exactly ONE part per magenta slot: paint a part in EVERY slot, fill ALL of them, do NOT leave a slot empty, do NOT merge two " +
+  "parts into one slot, and do NOT omit or add any. Count the magenta slots and match them one-to-one with the list below:\n" +
   "    {strip}\n" +
+  "- REMOVE the magenta keyline outlines in your output (guides ONLY, exactly like the device sockets' rings) — only the finished " +
+  "part remains, on flat pure-white; the magenta must be completely gone.\n" +
   "- THE STRIP BACKGROUND MUST BE A SINGLE FLAT PURE WHITE (#FFFFFF), perfectly uniform across the whole band: NO gradient, " +
   "NO texture, NO vignette, NO panel, NO tray, NO surface markings, NO grid, NO shading — just flat pure white #FFFFFF behind " +
   "and between every part. This is REQUIRED so each control can be cleanly isolated and cut out. (The device body above keeps " +

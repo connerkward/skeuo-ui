@@ -314,12 +314,15 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
     }
   }
 
-  // --- bottom SPRITE STRIP: NOTHING is drawn here (no shapes, NO TEXT, no lines).
-  // The strip is left blank white; the painter is told via the prompt (stripDesc) exactly
-  // which control to paint in each evenly-spaced slot, left to right. This guarantees the
-  // sprite sheet contains ONLY bare controls — no labels/dividers to get cut in.
-  // TOGGLES collapse to a shared OFF/ON pair keyed "switch-off"/"switch-on" (the names the
-  // renderer's FlipSwitch loads), so a switch gets its two required states.
+  // --- bottom SPRITE STRIP: each slot gets a faint MAGENTA KEYLINE anchor (outline only,
+  // NO fill, NO text) — the SAME guide mechanism as the device sockets. It makes the slot
+  // COUNT and POSITION deterministic: the painter fills exactly one finished control per
+  // visible anchor and removes the magenta (guides only), so the model can't drop, merge, or
+  // miscount a control (the sx7a "painted 3 of 4 transport buttons" failure). The keyline is
+  // an OUTLINE, not a filled tile, so it does not dictate the control's painted form, and it
+  // is removed in the output, so nothing extra is cut into the sprite. Round anchor for
+  // buttons/knobs, rounded-rect for toggles — matching the on-device socket shape so the cut
+  // sprite fits its socket. TOGGLES collapse to a shared OFF/ON pair keyed switch-off/on.
   interface StripItem { bind: string; kind: SpriteKind; desc: string }
   const items: StripItem[] = [];
   for (const r of spriteRegs) {
@@ -339,12 +342,25 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
   items.forEach((it, i) => {
     const cx = i * cellW + cellW / 2;
     const cw = cellW * 0.92;
-    // LABEL-LESS strip: nothing is drawn — no shape, no line, no text. Control identity
-    // comes ONLY from the paint prompt's slot enumeration (stripDesc) + even spacing.
-    // The cut crop is the control band (top ~63% of the slot); tightAlpha trims the rest.
+    const sx0 = cx - cw / 2;
+    const sy0 = GEN_H + stripH * 0.02;
+    const shh = stripH * 0.66;
+    // faint magenta keyline anchor (guide only; the painter fills it + removes the magenta)
+    const ringW = Math.max(4, Math.round(Math.min(cw, shh) * 0.05));
+    const inset = ringW / 2;
+    const round = it.kind === "button" || it.kind === "knob";
+    if (round) {
+      const d = Math.min(cw, shh);
+      const acx = sx0 + cw / 2, acy = sy0 + shh / 2;
+      const rr = Math.max(0, d / 2 - inset);
+      parts.push(`<circle cx="${acx}" cy="${acy}" r="${rr}" fill="none" stroke="${BP_RING}" stroke-width="${ringW}"/>`);
+    } else {
+      const rad = Math.min(cw, shh) * 0.25;
+      parts.push(roundRect(sx0 + inset, sy0 + inset, cw - 2 * inset, shh - 2 * inset, Math.max(0, rad - inset), "none", BP_RING, ringW));
+    }
     cells.push({
       bind: it.bind, kind: it.kind,
-      cellRect: [(cx - cw / 2) / GEN_W, (GEN_H + stripH * 0.02) / H, cw / GEN_W, (stripH * 0.66) / H],
+      cellRect: [sx0 / GEN_W, sy0 / H, cw / GEN_W, shh / H],
     });
   });
   const stripDesc = items.map((it, i) => `slot ${i + 1}: ${it.desc}`).join("; ");
