@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { GenerateRequest } from "./api";
 import { postGenerate } from "./postGenerate";
-import { finishCutout } from "./cutoutClient";
+import { finishCutoutFull } from "./cutoutClient";
 import { apiUrl } from "../platform";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, layoutRandom, type LayoutVariant } from "./layouts";
@@ -160,9 +160,12 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         // The CF Worker defers the alpha cutout to here (CPU ceiling) — cut the raw
         // paint in-browser and upload the finished frame.png back. No-op server-side.
         let frameUrl = apiUrl(data.frameUrl);
+        let hasSprites = false;
         if (data.needsCutout && data.paintUrl) {
-          try { frameUrl = await finishCutout(data.id, data.paintUrl, data.frameUrl); }
-          catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
+          try {
+            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout);
+            frameUrl = r.frameUrl; hasSprites = r.sprites;
+          } catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
         }
         onCreated({
           id: data.id,
@@ -171,6 +174,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
           style: data.style,
           frameUrl,
           template: data.template,
+          sprites: hasSprites,
         });
       }
     } catch (e) {

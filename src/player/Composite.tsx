@@ -255,14 +255,20 @@ function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: bo
     const bindId = isPlayPause && ps.playing ? "pause" : rawBind;
     const onClick = isPlayPause ? (ps.playing ? ps.pause : ps.play) : btnHandler(r, ps);
     const molded = sp && skinMolded(skinId, rtSprites) && ["prev", "play", "pause", "stop", "next"].includes(bindId);
-    const face: React.CSSProperties = molded
+    // RUNTIME (generated) skins: each control has its OWN per-region sprite
+    // (sprites/<region-id>.png) with the icon baked in by the model — use it as
+    // the full face, sized by the region rect (so a bigger play region = bigger
+    // play button). Built-in skins keep the donor molded/generic-sprite path.
+    const face: React.CSSProperties = rtSprites
+      ? { backgroundImage: `url(${spriteUrl(skinId, r.id, true)})`, backgroundPosition: "center", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundColor: "transparent", boxShadow: "none", border: 0 }
+      : molded
       ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`, rtSprites)})`, backgroundPosition: "center", backgroundSize: "118% 118%", backgroundRepeat: "no-repeat" }
       : sp
         ? round
           ? { backgroundImage: `url(${spriteUrl(skinId, "knob", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", border: 0 }
           : { borderImage: `url(${spriteUrl(skinId, "button", rtSprites)}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
         : {};
-    const g = molded ? null : glyph(r, bindId);
+    const g = rtSprites || molded ? null : glyph(r, bindId);
     if (typeof g === "string" && g.length > 2) face.fontSize = "1.7cqw";   // text labels fit the face
     return (
       <button className={`tbtn ${molded ? "molded" : ""} ${round ? "round" : ""} ${sp ? "sp-btn" : ""}`} style={face} onClick={onClick} title={r.label ?? r.id}>
@@ -401,7 +407,7 @@ function Knob({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId
     return (
       <div className="knob sp-knob" title={`${r.label}: ${(value * 100) | 0}%`}
         onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
-        <img className="sp-knob-img" src={spriteUrl(skinId, "knob", rtSprites)} alt="" draggable={false} />
+        <img className="sp-knob-img" src={spriteUrl(skinId, rtSprites ? r.id : "knob", rtSprites)} alt="" draggable={false} />
         <div className="sp-knob-ptr" style={{ transform: `rotate(${angle}deg)` }} />
         <span className="knob-label">{r.label}</span>
       </div>
@@ -531,7 +537,7 @@ function SliderPath({ r, ps }: { r: Region; ps: PlayerState }) {
 /* ---------- sliders ---------- */
 function SliderH({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId: string; rtSprites: boolean }) {
   const thumbSprite: React.CSSProperties = skinSprites(skinId, rtSprites)
-    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+    ? { backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "thumb", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
     : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
@@ -562,7 +568,7 @@ function SliderH({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; ski
 
 function SliderV({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId: string; rtSprites: boolean }) {
   const thumbSprite: React.CSSProperties = skinSprites(skinId, rtSprites)
-    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+    ? { backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "thumb", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
     : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);

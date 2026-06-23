@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { GenerateRequest } from "./api";
 import { postGenerate } from "./postGenerate";
-import { finishCutout } from "./cutoutClient";
+import { finishCutoutFull } from "./cutoutClient";
 import { apiUrl } from "../platform";
 import { MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import type { LayoutVariant } from "./layouts";
@@ -75,9 +75,14 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
         // CF Worker defers the alpha cutout to the browser (CPU ceiling) — cut the
         // raw paint here and upload the finished frame.png back. No-op server-side.
         let frameUrl = apiUrl(data.frameUrl);
+        let hasSprites = false;
         if (data.needsCutout && data.paintUrl) {
-          try { frameUrl = await finishCutout(data.id, data.paintUrl, data.frameUrl); }
-          catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
+          // FULL path: BiRefNet the device + cut each control sprite from the strip
+          // and upload them per-skin. data.layout carries the strip cells.
+          try {
+            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout);
+            frameUrl = r.frameUrl; hasSprites = r.sprites;
+          } catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
         }
         onCreated({
           id: data.id,
@@ -86,10 +91,7 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
           style: data.style,
           frameUrl,
           template: data.template,
-          // the pipeline flags per-skin sprites on the response (api.ts is owned
-          // by the pipeline team and doesn't type this yet) — forward it so the
-          // player renders THIS skin's own sprites the moment they're produced.
-          sprites: (data as { sprites?: boolean }).sprites,
+          sprites: hasSprites,   // render THIS skin's own per-control sprites
         });
       }
     } catch (e) {
