@@ -186,6 +186,35 @@ function cropDevice(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElemen
 // Crop the cell from the combined paint, then mask to the control's shape (ellipse
 // for button/knob/toggle, rounded-rect for slider), slightly inset (1px) to avoid
 // the white edge halo. cellRect is normalized to the FULL combined image.
+// Bounding box of the painted control inside a strip cell: the largest run of
+// non-white, non-transparent pixels. Background in the strip is white; the control
+// is the colored content. Returns paint-pixel coords, or null if the cell looks empty.
+function detectCellContent(
+  paint: HTMLCanvasElement, cx: number, cy: number, cw: number, ch: number,
+): { x: number; y: number; w: number; h: number } | null {
+  const ctx = paint.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  const ix = Math.max(0, Math.round(cx)), iy = Math.max(0, Math.round(cy));
+  const iw = Math.min(paint.width - ix, Math.round(cw)), ih = Math.min(paint.height - iy, Math.round(ch));
+  if (iw < 3 || ih < 3) return null;
+  let d: Uint8ClampedArray;
+  try { d = ctx.getImageData(ix, iy, iw, ih).data; } catch { return null; }
+  let minx = iw, miny = ih, maxx = -1, maxy = -1, n = 0;
+  for (let y = 0; y < ih; y++) {
+    for (let x = 0; x < iw; x++) {
+      const i = (y * iw + x) * 4;
+      if (d[i + 3] < 24) continue;                       // transparent → background
+      if (d[i] > 234 && d[i + 1] > 234 && d[i + 2] > 234) continue;  // near-white → background
+      n++;
+      if (x < minx) minx = x; if (x > maxx) maxx = x;
+      if (y < miny) miny = y; if (y > maxy) maxy = y;
+    }
+  }
+  // need a real blob (not a few stray pixels) covering a sane fraction of the cell
+  if (maxx <= minx || maxy <= miny || n < 0.02 * iw * ih) return null;
+  return { x: ix + minx, y: iy + miny, w: maxx - minx + 1, h: maxy - miny + 1 };
+}
+
 function cutSprite(
   paint: HTMLCanvasElement,
   cellRect: [number, number, number, number],
@@ -194,13 +223,33 @@ function cutSprite(
   const W = paint.width, H = paint.height;
   const [nx, ny, nw, nh] = cellRect;
   const cx = nx * W, cy = ny * H, cw = nw * W, ch = nh * H;
-  // The painted control sits CENTERED in its cell. Crop a centered SQUARE (round
-  // controls) or a centered thin band (slider) — NOT the full (tall) cell, or the
-  // inscribed ellipse becomes a stretched oval and the round button looks crushed.
-  let sw: number, sh: number;
-  if (kind === "slider") { sw = cw * 0.92; sh = Math.min(ch, cw * 0.34); }
-  else { sw = sh = Math.min(cw, ch) * 0.92; }
-  const sx = Math.round(cx + (cw - sw) / 2), sy = Math.round(cy + (ch - sh) / 2);
+
+  // DETECT the control inside its cell rather than assuming it's centered. The model
+  // doesn't reliably center each control in its blueprint cell — it often paints it
+  // left/offset on the white strip gap, so a fixed centered crop grabbed control +
+  // white → a white crescent. Find the bbox of non-white content in the cell and
+  // center the crop on THAT. Falls back to the centered cell crop if nothing found
+  // (e.g. a white/silver control whose pixels read as background).
+  const bbox = detectCellContent(paint, cx, cy, cw, ch);
+
+  let sw: number, sh: number, sx: number, sy: number;
+  if (kind === "slider") {
+    const bx = bbox ? bbox.x : cx + cw * 0.04;
+    const bw = bbox ? bbox.w : cw * 0.92;
+    const bcy = bbox ? bbox.y + bbox.h / 2 : cy + ch / 2;
+    sw = bw; sh = Math.min(bbox ? bbox.h : ch, bw * 0.34);
+    sx = Math.round(bx); sy = Math.round(bcy - sh / 2);
+  } else if (bbox) {
+    // round control: square centered on the detected control, sized to its larger
+    // extent (+10% margin) so the circle clip contains the whole control — no white gap.
+    const side = Math.max(bbox.w, bbox.h) * 1.1;
+    sw = sh = side;
+    sx = Math.round(bbox.x + bbox.w / 2 - side / 2);
+    sy = Math.round(bbox.y + bbox.h / 2 - side / 2);
+  } else {
+    sw = sh = Math.min(cw, ch) * 0.92;
+    sx = Math.round(cx + (cw - sw) / 2); sy = Math.round(cy + (ch - sh) / 2);
+  }
   const ow = Math.max(1, Math.round(sw)), oh = Math.max(1, Math.round(sh));
 
   const out = document.createElement("canvas");
