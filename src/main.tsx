@@ -24,6 +24,11 @@ async function boot() {
     root.render(<StrictMode><Recut /></StrictMode>)
     return
   }
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('segcheck')) {
+    const { default: SegCheck } = await import('./debug/SegCheck')
+    root.render(<StrictMode><SegCheck /></StrictMode>)
+    return
+  }
   if (isWidget()) {
     document.documentElement.classList.add('widget') // transparent-bg hook (widget.css)
     const { default: WidgetApp } = await import('./widget/WidgetApp')

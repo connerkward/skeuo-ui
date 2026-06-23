@@ -19,7 +19,7 @@
 // LEGACY/DEMO FALLBACK: when no `layout` is provided (old callers) or the paint is
 // a data: URL (offline demo, no R2), we key out the white background with the
 // shared pure-JS cutoutAlpha — the original behavior — instead of calling fal.
-import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type SpriteKind } from "./blueprint";
+import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type BlueprintCell, type SpriteKind } from "./blueprint";
 import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
 
@@ -208,6 +208,90 @@ export function cutFromTransparentStrip(
   const out = document.createElement("canvas");
   out.width = ow; out.height = oh;
   out.getContext("2d")!.drawImage(cell, minx, miny, ow, oh, 0, 0, ow, oh);
+  return out;
+}
+
+// PER-SPRITE SEGMENTATION (primary path): instead of slicing fixed grid cells, label ALL
+// connected alpha components on the WHOLE BiRefNet-matted strip and assign each to the
+// nearest expected control cell by centroid-x. Each control sprite = the union of the
+// component(s) nearest its cell, cropped tight to those components' pixels only. This uses
+// where controls ACTUALLY landed (robust to off-centre paint) and unions a multi-part
+// control (knob + pointer dot); a cell that captures no component returns null so the
+// caller falls back to the grid crop. `strip` is the matted bottom strip; cellRect is
+// normalized to the FULL combined image, so a cell's centre-x in strip pixels is
+// (cellRect.x + cellRect.w/2) * strip.width.
+export function segmentStripByComponents(
+  strip: HTMLCanvasElement,
+  cells: BlueprintCell[],
+): Record<string, HTMLCanvasElement | null> {
+  const out: Record<string, HTMLCanvasElement | null> = {};
+  for (const c of cells) out[c.bind] = null;
+  const W = strip.width, H = strip.height, N = W * H;
+  const ctx = strip.getContext("2d", { willReadFrequently: true });
+  if (!ctx || N < 4 || !cells.length) return out;
+  const d = ctx.getImageData(0, 0, W, H).data;
+  const op = (i: number) => d[i * 4 + 3] > 40;
+  // 1. label connected components (4-connectivity BFS) with bbox + centroid-x
+  const label = new Int32Array(N).fill(-1), stack = new Int32Array(N);
+  const comps: { id: number; size: number; cx: number; minx: number; miny: number; maxx: number; maxy: number }[] = [];
+  for (let s = 0; s < N; s++) {
+    if (!op(s) || label[s] !== -1) continue;
+    const id = comps.length; let head = 0, tail = 0, size = 0, sx = 0;
+    let minx = W, miny = H, maxx = 0, maxy = 0;
+    stack[tail++] = s; label[s] = id;
+    while (head < tail) {
+      const p = stack[head++]; size++; const x = p % W, y = (p / W) | 0; sx += x;
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      if (x > 0 && op(p - 1) && label[p - 1] === -1) { label[p - 1] = id; stack[tail++] = p - 1; }
+      if (x < W - 1 && op(p + 1) && label[p + 1] === -1) { label[p + 1] = id; stack[tail++] = p + 1; }
+      if (y > 0 && op(p - W) && label[p - W] === -1) { label[p - W] = id; stack[tail++] = p - W; }
+      if (y < H - 1 && op(p + W) && label[p + W] === -1) { label[p + W] = id; stack[tail++] = p + W; }
+    }
+    comps.push({ id, size, cx: sx / size, minx, miny, maxx, maxy });
+  }
+  // 2. drop specks (<0.3% of strip area) — stray glyph bits / matte noise
+  const real = comps.filter((c) => c.size >= N * 0.003);
+  if (!real.length) return out;
+  // 3. assign each surviving component to the nearest cell by centre-x
+  const cellCx = cells.map((c) => (c.cellRect[0] + c.cellRect[2] / 2) * W);
+  const assigned: number[][] = cells.map(() => []);
+  for (const c of real) {
+    let best = 0, bestD = Infinity;
+    for (let j = 0; j < cellCx.length; j++) {
+      const dd = Math.abs(c.cx - cellCx[j]);
+      if (dd < bestD) { bestD = dd; best = j; }
+    }
+    assigned[best].push(c.id);
+  }
+  // 4. per cell: union the assigned components' bbox, copy ONLY their pixels → tight sprite
+  for (let j = 0; j < cells.length; j++) {
+    const ids = assigned[j];
+    if (!ids.length) continue;                 // null → caller falls back to grid crop
+    const idset = new Set(ids);
+    let minx = W, miny = H, maxx = 0, maxy = 0;
+    for (const id of ids) {
+      const c = real[real.findIndex((r) => r.id === id)];
+      if (c.minx < minx) minx = c.minx; if (c.maxx > maxx) maxx = c.maxx;
+      if (c.miny < miny) miny = c.miny; if (c.maxy > maxy) maxy = c.maxy;
+    }
+    const ow = maxx - minx + 1, oh = maxy - miny + 1;
+    if (ow < 2 || oh < 2) continue;
+    const o = document.createElement("canvas"); o.width = ow; o.height = oh;
+    const octx = o.getContext("2d"); if (!octx) continue;
+    const od = octx.createImageData(ow, oh);
+    for (let y = 0; y < oh; y++) {
+      for (let x = 0; x < ow; x++) {
+        const si = (miny + y) * W + (minx + x);
+        if (idset.has(label[si])) {
+          const di = (y * ow + x) * 4;
+          od.data[di] = d[si * 4]; od.data[di + 1] = d[si * 4 + 1];
+          od.data[di + 2] = d[si * 4 + 2]; od.data[di + 3] = d[si * 4 + 3];
+        }
+      }
+    }
+    octx.putImageData(od, 0, 0);
+    out[cells[j].bind] = o;
+  }
   return out;
 }
 
@@ -431,14 +515,17 @@ export async function finishCutoutFull(
   // light-first pass. (Per request: heavy every time, even before any contrast tune.)
   let tstrip: HTMLCanvasElement | null = null;
   try { tstrip = await blobToCanvas(await serverCutout(strip, "General Use (Heavy)")); } catch { tstrip = null; }
-  const sprites: Record<string, HTMLCanvasElement | null> = {};
-  for (const cell of layout.cells) {
-    sprites[cell.bind] = tstrip ? cutFrom(tstrip, cell.cellRect) : null;
-  }
-  // Upload: prefer the BiRefNet sprite; fall back to the geometric cut if a control failed.
+  // PRIMARY: connected-component segmentation of the whole matted strip (assign each blob
+  // to the nearest control cell, union per cell). Robust to off-centre paint + multi-part
+  // controls; uses where controls actually landed, not an assumed grid.
+  const sprites: Record<string, HTMLCanvasElement | null> =
+    tstrip ? segmentStripByComponents(tstrip, layout.cells) : {};
+  // Upload: prefer the component-segmented sprite; fall back to the per-cell grid crop, then
+  // the geometric cut, if a control captured no component / looks failed.
   for (const cell of layout.cells) {
     try {
-      let sprite = sprites[cell.bind];
+      let sprite = sprites[cell.bind] ?? null;
+      if (cutLooksFailed(sprite)) sprite = tstrip ? cutFrom(tstrip, cell.cellRect) : null;
       if (cutLooksFailed(sprite)) sprite = cutSprite(paint, cell.cellRect, cell.kind);
       if (!sprite) continue;
       spriteUrls[cell.bind] = await uploadSprite(id, cell.bind, await canvasToBlob(sprite));

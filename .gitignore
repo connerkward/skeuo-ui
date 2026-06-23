@@ -58,3 +58,6 @@ scripts/.lookdev*
 
 # generated skin frames (paid output; persisted locally, not committed)
 public/generated/
+
+# agent: cached BiRefNet mattes for segmentation validation (not source)
+public/seg-cache/
