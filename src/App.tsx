@@ -197,25 +197,24 @@ export default function App() {
         </div>
       </header>
 
-      {/* left gallery — scrolling skin list with animated thumbnails + names */}
+      {/* left gallery — one scrolling list: built-in skins + your generated ones */}
       <aside className="gallery">
         <div className="gallery-list">
           <p className="gallery-label">Skins</p>
-          {visible.map((s) => (
+          {runtimeSkins.map((s) => (
             <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
-              onClick={() => setSkinId(s.id)} title={`${s.name} — ${s.blurb}`}>
-              <SkinThumb skinId={s.id} imgSrc={thumbUrl(s.id)} />
+              onClick={() => setSkinId(s.id)} title={s.name}>
+              <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
               <span className="skin-row-meta">
                 <span className="skin-row-name">{s.name}</span>
                 <span className="skin-row-blurb">{s.blurb}</span>
               </span>
             </button>
           ))}
-          {runtimeSkins.length > 0 && <p className="gallery-label sub">Your skins</p>}
-          {runtimeSkins.map((s) => (
+          {visible.map((s) => (
             <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
-              onClick={() => setSkinId(s.id)} title={s.name}>
-              <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
+              onClick={() => setSkinId(s.id)} title={`${s.name} — ${s.blurb}`}>
+              <SkinThumb skinId={s.id} imgSrc={thumbUrl(s.id)} />
               <span className="skin-row-meta">
                 <span className="skin-row-name">{s.name}</span>
                 <span className="skin-row-blurb">{s.blurb}</span>
@@ -236,24 +235,25 @@ export default function App() {
               <button className="pop-back" onClick={pip.close}>Bring it back</button>
             </div>
           )}
-          {/* meta panel — beside the player on wide screens, below it on narrow */}
-          <div className="stage-meta">
-            <figcaption className="stage-caption">
-              <span className="cap-name">{activeMeta?.name ?? skinId}</span>
-              {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
-            </figcaption>
-            {/* the action ON the skin — Share (Connect/Template moved to the bar) */}
-            <div className="skin-actions">
-              <ExportGifButton
-                skinId={skinId}
-                template={playerTemplate}
-                runtime={runtimeView}
-                spotifyDrive={spotifyDrive}
-              />
-            </div>
-          </div>
         </div>
       </main>
+
+      {/* meta zone — its own column on wide screens, a strip under the player
+          on narrower ones (the grid handles the placement) */}
+      <section className="meta">
+        <figcaption className="stage-caption">
+          <span className="cap-name">{activeMeta?.name ?? skinId}</span>
+          {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
+        </figcaption>
+        <div className="skin-actions">
+          <ExportGifButton
+            skinId={skinId}
+            template={playerTemplate}
+            runtime={runtimeView}
+            spotifyDrive={spotifyDrive}
+          />
+        </div>
+      </section>
 
       {/* Connect / Desktop open as centered panels */}
       {panel && (

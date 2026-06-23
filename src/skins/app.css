@@ -6,23 +6,43 @@ body {
 }
 
 /* ======================================================================== */
-/* APP SHELL — top app-bar · full-width stage · bottom skin dock.            */
-/* No sidebar: the player is the hero; controls frame it from top & bottom.  */
+/* APP SHELL — full-width top bar over three balanced zones:                 */
+/*   gallery (scrolling skins) · stage (the player) · meta (title + share).  */
+/* ONE breakpoint (1200px) flips the whole desktop layout, so nothing breaks */
+/* at an in-between width.                                                    */
 /* ======================================================================== */
 .app {
   width: 100%; height: 100%;
   display: grid;
-  /* full-width top bar; below it a scrolling skin sidebar (left) + the stage.
-     minmax(0,1fr) keeps the stage column from blowing past the viewport. */
-  grid-template-columns: 268px minmax(0, 1fr);
+  /* WIDE: gallery | player | meta — three columns, the player centered between
+     a substantial gallery and the title/share panel. minmax(0,1fr) on the stage
+     keeps it from overflowing the viewport. */
+  grid-template-columns: 300px minmax(0, 1fr) 320px;
   grid-template-rows: auto minmax(0, 1fr);
-  grid-template-areas: "topbar topbar" "gallery stage";
-  background: radial-gradient(circle at 62% 8%, #1a1a1e, #060607 72%);
+  grid-template-areas:
+    "topbar  topbar topbar"
+    "gallery stage  meta";
+  background: radial-gradient(circle at 60% 8%, #1a1a1e, #060607 72%);
   min-height: 0;
 }
 .topbar { grid-area: topbar; }
 .gallery { grid-area: gallery; }
 .stage { grid-area: stage; }
+.meta { grid-area: meta; }
+
+/* NARROW desktop (>820 mobile shell, ≤1199): drop the meta side column — the
+   gallery spans the full height on the left, the player sits top-right with the
+   title + share as a compact strip beneath it. Single coordinated breakpoint. */
+@media (max-width: 1199px) {
+  .app {
+    grid-template-columns: 264px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "topbar  topbar"
+      "gallery stage"
+      "gallery meta";
+  }
+}
 
 /* ---------- top app-bar ---------- */
 .topbar {
@@ -53,10 +73,11 @@ body {
 
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
-/* keep the bar a single row on narrower desktops by shedding decorative bits
-   (the action buttons are what matter) so the stage height stays stable */
-@media (max-width: 1180px) { .topbar-tag { display: none; } }
-@media (max-width: 1000px) { .topbar-how { display: none; } }
+/* shed decorative bits as the bar tightens — the tag drops at the SAME 1200px
+   the layout flips to narrow, so the whole UI changes at one width (no awkward
+   in-between state); the how-link drops a bit further down. */
+@media (max-width: 1199px) { .topbar-tag { display: none; } }
+@media (max-width: 1040px) { .topbar-how { display: none; } }
 
 /* neutral top-bar pills — Connect / Desktop (secondary to the green CTA) */
 .tb-btn {
@@ -226,25 +247,43 @@ body {
 }
 .stage-inner {
   position: relative; z-index: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px;
+  display: flex; align-items: center; justify-content: center;
 }
-.stage-meta { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .stage .player {
-  /* narrow: player + meta stacked, budget the bar + padding + caption + actions */
-  --w: min(600px, calc((100dvh - 252px) * 0.686));
+  /* WIDE: the stage is its own column (meta is separate), so the player gets the
+     full height under the bar — budget only the bar + padding. max-width caps it
+     to the stage COLUMN so it never overflows when the column is narrower than
+     the height budget (e.g. just past the 1200px breakpoint). */
+  --w: min(680px, calc((100dvh - 132px) * 0.686));
+  max-width: 100%;
+}
+@media (max-width: 1199px) {
+  /* NARROW: the meta strip sits under the player in its own grid row, so budget
+     for the bar + that strip + padding. */
+  .stage .player { --w: min(560px, calc((100dvh - 224px) * 0.686)); }
 }
 
-/* WIDE screens: lay the meta panel BESIDE the player so the stage isn't a small
-   portrait player marooned in a huge empty void — and the player gets the full
-   height (no stacked meta), so it's bigger too. */
-@media (min-width: 1240px) {
-  .stage-inner { flex-direction: row; flex-wrap: wrap; gap: 56px; }
-  .stage-meta { align-items: flex-start; text-align: left; max-width: 340px; }
-  .stage-caption { align-items: flex-start; text-align: left; }
-  .stage-caption .cap-name { font-size: 30px; }
-  .stage-caption .cap-blurb { font-size: 13.5px; max-width: 100%; }
-  .stage .player { --w: min(660px, calc((100dvh - 156px) * 0.686)); }
+/* ---------- meta zone — title + blurb + Share ---------- */
+.meta {
+  min-width: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: 18px; padding: 32px 30px;
+}
+.meta .stage-caption { align-items: flex-start; text-align: left; }
+.meta .cap-name { font-size: 30px; line-height: 1.14; }
+.meta .cap-blurb { font-size: 14px; max-width: 32ch; line-height: 1.5; }
+.meta .skin-actions { justify-content: flex-start; }   /* Share aligns under the title, not floating */
+
+@media (max-width: 1199px) {
+  /* a compact centered strip beneath the player */
+  .meta {
+    flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 8px 18px; padding: 6px 20px 16px;
+  }
+  .meta .stage-caption { align-items: center; text-align: center; }
+  .meta .cap-name { font-size: 20px; }
+  .meta .cap-blurb { display: none; }                    /* the blurb already shows in the gallery row */
+  .meta .skin-actions { justify-content: center; }
 }
 /* contact shadow — a dark ellipse hugging the player's base so it sits ON the
    floor instead of hanging in black. z-index 0 keeps it above the stage wash
