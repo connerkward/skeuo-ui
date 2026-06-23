@@ -21,6 +21,20 @@ export default defineConfig({
         // standalone per-skin share page (skeuo.fm/share?id=<id>)
         share: resolve(__dirname, 'share.html'),
       },
+      // Emit hashed assets under /assets/app/ (was /assets/). This is a deliberate
+      // one-time path change to BUST a poisoned Cloudflare edge-cache entry: during
+      // a deploy-propagation race, missing /assets/*.js were served as 200 text/html
+      // (the SPA fallback) and frozen by the `immutable` Cache-Control, so browsers
+      // got HTML for a JS module → app never mounted. We can't purge the edge cache
+      // (token lacks the perm), so renaming the asset paths makes browsers request
+      // never-poisoned URLs. The `_redirects` 404 rule (see public/_redirects)
+      // prevents the fallback-as-JS poisoning from recurring. /assets/* _headers
+      // immutable rule still matches the nested path.
+      output: {
+        entryFileNames: 'assets/app/[name]-[hash].js',
+        chunkFileNames: 'assets/app/[name]-[hash].js',
+        assetFileNames: 'assets/app/[name]-[hash][extname]',
+      },
     },
   },
   // Pre-bundle the Tauri packages so the widget's lazy import()s resolve in dev

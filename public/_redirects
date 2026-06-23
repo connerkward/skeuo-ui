@@ -1,0 +1,12 @@
+# Cloudflare Pages redirects.
+#
+# HARDENING: a MISSING /assets/* must return 404 — NOT the SPA fallback (200
+# index.html). Without this, the project's single-page not_found_handling serves
+# index.html (text/html, 200) for any not-yet-present hashed chunk. During a
+# deploy-propagation race that 200 text/html gets cached under the asset URL and
+# frozen by the `immutable` Cache-Control in _headers, so browsers receive HTML
+# for a JS module → "Expected a JavaScript module … MIME type text/html" → the
+# app never mounts. A 404 can't masquerade as a module and isn't cached as an
+# immutable success, so the poisoning can't recur. Real assets are static-matched
+# and served before this rule ever applies.
+/assets/*  /404.html  404
