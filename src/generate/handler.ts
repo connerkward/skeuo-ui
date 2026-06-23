@@ -42,7 +42,7 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   if (reqStyle && DONOR_STYLES.includes(reqStyle)) {
     style = reqStyle;
   } else if (deps.openaiKey) {
-    ({ style, materialPrompt, font, name, blurb } = await deriveMaterial(deps.openaiKey, prompt));
+    ({ style, materialPrompt, font, name, blurb } = await deriveMaterial(deps.openaiKey, prompt, body.avoidFonts));
   } else {
     style = "winamp" as DonorStyle;
   }

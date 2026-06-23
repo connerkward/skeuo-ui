@@ -16,6 +16,7 @@ export interface GenerateRequest {
   envelope?: boolean;         // run the AI envelope pass first (default true)
   envelopeImage?: string;     // optional user-uploaded body envelope PNG as a data: URL (skips the AI envelope pass)
   regions?: Region[];         // custom layout authored in the wizard (else the variant preset)
+  avoidFonts?: string[];      // recently-used logomark fonts the Director should NOT reuse (diversity)
 }
 
 export interface GeneratePending { status: "pending"; jobId: string }

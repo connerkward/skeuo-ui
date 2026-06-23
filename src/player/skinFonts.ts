@@ -60,7 +60,19 @@ export function ensureGoogleFont(f: SkinFont): void {
   const link = document.createElement("link");
   link.rel = "stylesheet";
   link.href = `https://fonts.googleapis.com/css2?family=${fam}${axis}&display=swap`;
+  // A stylesheet <link> only downloads the CSS — the browser lazy-loads the woff2
+  // binary on first glyph render, which IS the pop-in. Once the @font-face rules
+  // register (link load), force the binary to download NOW via FontFaceSet.load()
+  // so the title paints instantly when this skin becomes active.
+  link.addEventListener("load", () => forceFontDownload(f));
   document.head.appendChild(link);
+}
+
+// Trigger the actual font-file fetch (not just the CSS). Safe to call repeatedly.
+function forceFontDownload(f: SkinFont): void {
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+  if (!fonts?.load) return;
+  try { void fonts.load(`${f.weight} 24px '${f.family}'`); } catch { /* ignore */ }
 }
 
 // is this font already downloaded? (so the title can show instantly, no fade)
