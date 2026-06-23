@@ -2,6 +2,33 @@
 
 ## Open
 
+- [ ] **Merge `spritesheet-pipeline` → main — single-pass skin generation + sprite-sheet (2026-06-23).**
+      The `spritesheet-pipeline` branch (worktree `../skeuo-ui-spritesheet`, tip `d88a4cc`, pushed)
+      has the single-pass generation: ONE paint call renders the device body (grown around fixed
+      sockets) + a bottom strip of bare control parts (`combinedBlueprint` in `blueprint.ts`,
+      `PAINT_PROMPT` in `pipeline.ts`), BiRefNet device cutout (`functions/api/cutout.ts`), and
+      per-skin control sprites cut from the strip + uploaded (`finalize` + `cutoutClient.ts`).
+      **Keep this generation + spritesheet approach.**
+      - **Merge state:** branch is 13 ahead / 26 behind main. Clean except **3 conflicts**:
+        `src/generate/CreatePanel.tsx`, `CreateWizard.tsx`, `handler.ts` (main added the Director
+        title/blurb/font + delete; branch changed the cutout wiring — reconcile, keep BOTH).
+        Also overlapping: `src/App.tsx`, `src/generate/api.ts`.
+      - **UNRESOLVED — needs Conner's call (the button-asset question):** "use whatever is active in
+        main for what to do with button assets afterwards" can't be done mechanically — the
+        spritesheet approach is COUPLED to its own button-asset handling (`cutoutClient.ts` cut+snap,
+        `Composite.tsx` per-skin sprite render, `skins.ts`). main's button handling is the older
+        donor-sprite path that ignores generated sprites. Decide: (a) generated skins render their
+        OWN cut sprites (the branch's approach, needs the alignment below), or (b) keep main's donor
+        rendering and drop per-skin sprites. Can't have spritesheet-gen + donor-rendering both.
+      - **Alignment is the hard part (still imperfect):** branch aligns generated controls to the
+        painted device via a heuristic — detect dark wells → global shortest-edge match → snap
+        displays(screen cluster)/seek/buttons/knobs (`cutoutClient.snapToSockets`). Produces clean
+        results on good gens (`j4v9`/`xqeg`) but varies per generation. The documented Align design
+        (`generation/sam_snap.py` SAM box-prompt + snap/warp) was tried this session and came out
+        WORSE (SAM merges/misses controls on AI-painted devices) — reverted. The offline
+        `snap_controls.py`+`detect_wells.py` (same heuristic family) is what aligns the BUILT-IN
+        skins. If pursuing (a), the runtime heuristic needs more tuning, not SAM.
+
 - [ ] **Website redesign — follow-ups (2026-06-23).** The desktop + mobile shell was
       reworked + shipped to skeuo.fm this session (see Done below). Loose ends:
       - **Spotify still hidden + non-functional** — `CONNECT_ENABLED = false` in `App.tsx`
