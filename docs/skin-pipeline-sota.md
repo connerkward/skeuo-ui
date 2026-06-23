@@ -59,7 +59,13 @@ via VLM, rendered clean, no overlaps.
    where the goose chase lived (broken socket detection, threshold tuning, margin hacks).
    VLM box + plausibleBox gate + fallback to blueprint = robust. No heuristics.
 
-6. **Verify in the REAL app render — never a python/proxy reimplementation.** A `/tmp` python
+6. **Template must NOT dictate control shape.** Filled circles for buttons, filled rects for
+   sliders, outlined controls with magenta rings in the device — these all teach the model to
+   paint controls in those exact forms, locking it into prescribed shapes. Result: "circle
+   inside the square" artifacts, oval buttons, etc. Invariant: minimal template (keyline outlines
+   + labels ONLY). Model paints freely; detectCellContent finds what was actually painted.
+
+7. **Verify in the REAL app render — never a python/proxy reimplementation.** A `/tmp` python
    re-do of the cut/composite looked great for ~10 rounds while the shipped render was broken.
    Drive the actual client (`finishCutoutFull` in the browser via Playwright) and look at the
    app render. See the repo-root `CLAUDE.md` verify-outputs rule.
