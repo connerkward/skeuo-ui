@@ -30,6 +30,12 @@ import { initialSkinParam, isMobileApp } from "./platform";
 
 const skinHasFrame = (id: string) => !!skinList.find((s) => s.id === id)?.has.includes("frame");
 
+// Document-PiP "Float player" button is hidden for now — the PiP window's
+// browser-owned chrome (title bar, opaque rectangular frame) can't be removed,
+// so it doesn't match the transparent Tauri widget. The hook + portal stay
+// wired (the docked player renders through the same portal); flip to re-enable.
+const FLOAT_ENABLED = false;
+
 export default function App() {
   const visible = skinList.filter((s) => !s.hidden);
   // honor a shared ?skin=<id> link (skeuo.fm/?skin=…) when it names a known skin
@@ -230,7 +236,7 @@ export default function App() {
               skinId={skinId}
               skinName={[...visible, ...runtimeSkins].find((s) => s.id === skinId)?.name ?? skinId}
             />
-            {pip.supported && (
+            {FLOAT_ENABLED && pip.supported && (
               <button
                 className="feature-btn pip-float-btn"
                 onClick={() => (pip.pipWindow ? pip.close() : pip.open())}
