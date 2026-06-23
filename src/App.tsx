@@ -127,7 +127,7 @@ export default function App() {
             <button className="m-menu" onClick={() => setSkinId(visible[0].id)} aria-label="Back to skins">← skins</button>
             <h1 className="m-title">{activeRuntime.name}</h1>
             <div className="m-topbar-actions">
-              <MobileSpotify sp={sp} mode={mode} setMode={setMode} />
+              {CONNECT_ENABLED && <MobileSpotify sp={sp} mode={mode} setMode={setMode} />}
             </div>
           </header>
           <div className="m-stage">
@@ -150,6 +150,17 @@ export default function App() {
           mode={mode}
           setMode={setMode}
           spotifyDrive={spotifyDrive}
+          connectEnabled={CONNECT_ENABLED}
+          wire={wire}
+          onToggleWire={() => setWire((v) => !v)}
+          share={
+            <ExportGifButton
+              skinId={skinId}
+              template={playerTemplate}
+              runtime={runtimeView}
+              spotifyDrive={spotifyDrive}
+            />
+          }
         />
         {showCreate && (
           <div className="wiz-modal" onPointerDown={(e) => e.target === e.currentTarget && setShowCreate(false)}>
