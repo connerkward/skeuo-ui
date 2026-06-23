@@ -215,7 +215,7 @@ export default function App() {
       <aside className="gallery">
         <div className="gallery-list">
           <p className="gallery-label">Skins</p>
-          {runtimeSkins.map((s) => (
+          {runtimeSkins.filter((s) => !s.hidden).map((s) => (
             <div key={s.id} className="skin-row-wrap">
               <button className={`skin-row ${s.id === skinId ? "active" : ""}`}
                 onClick={() => setSkinId(s.id)} title={s.name}>
@@ -225,9 +225,11 @@ export default function App() {
                   <span className="skin-row-blurb">{s.blurb}</span>
                 </span>
               </button>
-              <button className="skin-row-del" aria-label={`Delete ${s.name}`} title="Delete this skin"
+              {/* "delete" = HIDE: drop it from the gallery but keep the raw skin in
+                  storage for future processing (never destroyed) */}
+              <button className="skin-row-del" aria-label={`Hide ${s.name}`} title="Hide this skin (kept in storage)"
                 onClick={() => {
-                  setRuntimeSkins((rs) => rs.filter((x) => x.id !== s.id));
+                  setRuntimeSkins((rs) => rs.map((x) => (x.id === s.id ? { ...x, hidden: true } : x)));
                   if (skinId === s.id) setSkinId(visible[0].id);
                 }}>×</button>
             </div>

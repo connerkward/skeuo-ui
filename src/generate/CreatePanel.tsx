@@ -17,6 +17,8 @@ export interface RuntimeSkin {
   frameUrl: string;
   template: Template;
   font?: string;        // logomark display font (Director pick); falls back to Cinzel
+  hidden?: boolean;     // hidden from the gallery, but KEPT in storage (raw materials
+                        // are never destroyed — "delete" = hide for future processing)
 }
 
 // Style + layout-variant pickers were removed from the UI for now — the panel is
