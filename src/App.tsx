@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 import { Composite } from "./player/Composite";
 import { SkinThumb } from "./player/SkinThumb";
-import { skinFont, skinFontStyle, ensureGoogleFont } from "./player/skinFonts";
+import { skinFont, skinFontStyle, ensureGoogleFont, isFontReady, preloadSkinFonts } from "./player/skinFonts";
 import { useDocumentPip } from "./player/useDocumentPip";
 import { playerTemplate } from "./template/winamp-layout";
 import { skinList, thumbUrl } from "./player/skins";
@@ -102,6 +102,8 @@ export default function App() {
   // player — the same instance keeps driving Spotify.
   const pip = useDocumentPip();
   const [pipHost, setPipHost] = useState<HTMLElement | null>(null);
+  // preload every skin's logomark font up front so switching never pops in
+  useEffect(() => { preloadSkinFonts(); }, []);
   // top-bar popovers (Connect / Desktop) — only one open at a time
   const [panel, setPanel] = useState<null | "connect" | "desktop">(null);
 
@@ -312,12 +314,14 @@ export default function App() {
 // line inside its area — no wrapping, words always finish. Refits on resize.
 function CinemaTitle({ text, font }: { text: string; font: ReturnType<typeof skinFont> }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [ready, setReady] = useState(false);
+  // start visible if the font is already cached (preloaded) → no pop-in/fade
+  const [ready, setReady] = useState(() => isFontReady(font));
 
   useEffect(() => {
-    let alive = true;
-    setReady(false);
     ensureGoogleFont(font);
+    if (isFontReady(font)) { setReady(true); return; }   // cached → show instantly
+    setReady(false);
+    let alive = true;
     const spec = `${font.weight} 48px '${font.family}'`;
     const done = () => { if (alive) setReady(true); };
     const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;

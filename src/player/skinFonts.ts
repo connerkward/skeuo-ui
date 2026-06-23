@@ -62,3 +62,16 @@ export function ensureGoogleFont(f: SkinFont): void {
   link.href = `https://fonts.googleapis.com/css2?family=${fam}${axis}&display=swap`;
   document.head.appendChild(link);
 }
+
+// is this font already downloaded? (so the title can show instantly, no fade)
+export function isFontReady(f: SkinFont): boolean {
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+  if (typeof document === "undefined" || !fonts?.check) return false;
+  try { return fonts.check(`${f.weight} 24px '${f.family}'`); } catch { return false; }
+}
+
+// kick off loading EVERY curated skin font up front (on app mount) so switching
+// skins shows the new title instantly instead of popping in each time.
+export function preloadSkinFonts(): void {
+  for (const id in SKIN_FONTS) ensureGoogleFont(SKIN_FONTS[id]);
+}

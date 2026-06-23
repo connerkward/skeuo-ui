@@ -29,8 +29,8 @@ body {
 .topbar { grid-area: topbar; }
 .gallery { grid-area: gallery; }
 .main { grid-area: main; display: flex; align-items: stretch; min-width: 0; min-height: 0; }
-.stage { flex: 0 1 auto; max-width: 62%; }  /* the skin, sized to content (capped so text keeps room) */
-.meta { flex: 1 1 0; min-width: 0; }        /* fills the gap to the frame edge, text centered */
+.stage { flex: 0 1 auto; min-width: 0; overflow: hidden; }  /* sized to the skin (which is vw-bounded) */
+.meta { flex: 1 1 0; min-width: 0; }                        /* fills the gap to the frame edge, text centered */
 
 /* ---------- top app-bar ---------- */
 .topbar {
@@ -237,9 +237,11 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .stage .player {
-  /* FULL height — the skin is the hero, as tall as possible; budget only the bar
-     + a little padding. max-width caps it to its (wide) column so it never overflows. */
-  --w: min(840px, calc((100dvh - 96px) * 0.686));
+  /* FULL height — the skin is the hero, as tall as possible. Bounded by BOTH the
+     available height AND ~46vw of width, so on a tall/narrow window it can't grow
+     so wide that it overflows the stage and clips (the top + marquee getting cut
+     off). max-width:100% is the final guard against its flex column. */
+  --w: min(880px, calc((100dvh - 96px) * 0.686), 46vw);
   max-width: 100%;
 }
 
@@ -251,12 +253,14 @@ body {
   gap: 16px; padding: 28px 22px; text-align: center;
 }
 .meta .stage-caption { width: 100%; align-items: center; text-align: center; gap: 12px; }
-/* the logomark: the skin's NAME in its own display font, auto-FIT to the area on
-   ONE line (CinemaTitle shrinks from this max). 3-class selector beats the base
+/* the logomark: the skin's NAME in its own display font. It WRAPS to multiple
+   lines (whole words — never mid-word, never offscreen); CinemaTitle only shrinks
+   the size if a single word is still too wide. 3-class selector beats the base
    `.stage-caption .cap-name` rule that sits later in the file. */
 .meta .stage-caption .cap-name {
-  display: block; max-width: 100%; white-space: nowrap;
-  font-size: clamp(44px, 9vw, 132px); line-height: 1; color: #fff;
+  display: block; max-width: 100%;
+  white-space: normal; overflow-wrap: normal; word-break: normal; text-wrap: balance;
+  font-size: clamp(34px, 5vw, 84px); line-height: 1.02; color: #fff;
   text-shadow: 0 3px 30px rgba(0,0,0,.6);
 }
 .meta .stage-caption .cap-blurb { font-size: 14px; max-width: 42ch; line-height: 1.55; color: #9aa0aa; }
