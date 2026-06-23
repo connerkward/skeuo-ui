@@ -166,7 +166,7 @@ async function decodePaint(buf: ArrayBuffer, res: Response): Promise<Decoded> {
 // a CDN edge that hasn't filled, or dev static-serving lag) and come back as a
 // non-image (a 404 page or the SPA index.html); a few short retries turn that
 // transient into a success instead of a hard "could not be decoded".
-async function fetchPaintCanvas(paintUrl: string): Promise<HTMLCanvasElement> {
+export async function fetchPaintCanvas(paintUrl: string): Promise<HTMLCanvasElement> {
   let decoded: Decoded | undefined;
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3 && !decoded; attempt++) {
@@ -222,6 +222,54 @@ function cropDevice(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElemen
   return out;
 }
 
+// The control STRIP is the BOTTOM (1 - devFrac) of the combined paint.
+function cropStrip(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElement {
+  const W = paint.width, H = paint.height;
+  const sy = Math.round(H * devFrac), sh = Math.max(1, H - sy);
+  const out = document.createElement("canvas");
+  out.width = W; out.height = sh;
+  const ctx = out.getContext("2d");
+  if (!ctx) throw new Error("no 2d canvas context");
+  ctx.drawImage(paint, 0, sy, W, sh, 0, 0, W, sh);
+  return out;
+}
+
+async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement("canvas");
+  c.width = bmp.width; c.height = bmp.height;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (!ctx) { bmp.close?.(); throw new Error("no 2d canvas context"); }
+  ctx.drawImage(bmp, 0, 0); bmp.close?.();
+  return c;
+}
+
+// Cut one control from the BiRefNet-isolated (transparent-background) strip: crop the
+// cell sub-rect, then trim to its non-transparent bounds → tight true-shape sprite.
+function cutFromTransparentStrip(
+  strip: HTMLCanvasElement, sx: number, sy: number, sw: number, sh: number,
+): HTMLCanvasElement | null {
+  const W = strip.width, H = strip.height;
+  const ix = Math.max(0, Math.round(sx)), iy = Math.max(0, Math.round(sy));
+  const iw = Math.min(W - ix, Math.round(sw)), ih = Math.min(H - iy, Math.round(sh));
+  if (iw < 2 || ih < 2) return null;
+  const ctx = strip.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  const d = ctx.getImageData(ix, iy, iw, ih).data;
+  let minx = iw, miny = ih, maxx = -1, maxy = -1;
+  for (let y = 0; y < ih; y++) for (let x = 0; x < iw; x++) {
+    if (d[(y * iw + x) * 4 + 3] > 16) { if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
+  }
+  if (maxx < minx || maxy < miny) return null;
+  const ow = maxx - minx + 1, oh = maxy - miny + 1;
+  const out = document.createElement("canvas");
+  out.width = ow; out.height = oh;
+  const octx = out.getContext("2d");
+  if (!octx) return null;
+  octx.drawImage(strip, ix + minx, iy + miny, ow, oh, 0, 0, ow, oh);
+  return out;
+}
+
 // ---- per-control sprite cut (port of /tmp/A_post_v3.py cut()) -------------------
 // Crop the cell from the combined paint, then mask to the control's shape (ellipse
 // for button/knob/toggle, rounded-rect for slider), slightly inset (1px) to avoid
@@ -229,7 +277,7 @@ function cropDevice(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElemen
 // Bounding box of the painted control inside a strip cell: the largest run of
 // non-white, non-transparent pixels. Background in the strip is white; the control
 // is the colored content. Returns paint-pixel coords, or null if the cell looks empty.
-function detectCellContent(
+export function detectCellContent(
   paint: HTMLCanvasElement, cx: number, cy: number, cw: number, ch: number,
 ): { x: number; y: number; w: number; h: number } | null {
   const ctx = paint.getContext("2d", { willReadFrequently: true });
@@ -255,7 +303,7 @@ function detectCellContent(
   return { x: ix + minx, y: iy + miny, w: maxx - minx + 1, h: maxy - miny + 1 };
 }
 
-function cutSprite(
+export function cutSprite(
   paint: HTMLCanvasElement,
   cellRect: [number, number, number, number],
   kind: SpriteKind,
@@ -415,13 +463,30 @@ export async function finishCutoutFull(
     } catch { /* VLM unavailable → keep the blueprint template */ }
   }
 
-  // 2. each control sprite: geometric cut from its cell, upload. Best-effort per
-  //    sprite — a single failed sprite shouldn't sink the whole skin (the app
-  //    falls back to the donor sprite for any bind that is missing).
+  // 2. control sprites: BiRefNet-isolate the WHOLE strip ONCE (the same rembg model used
+  //    for the device), giving a transparent-background strip, then cut each control by
+  //    its cell + trim to alpha. This yields true-shape sprites with no halo, no imposed
+  //    ellipse, and no text/divider bleed — background-agnostic (any strip colour). Falls
+  //    back to the geometric cut if the BiRefNet strip pass fails.
   const spriteUrls: Record<string, string> = {};
+  const W = paint.width, H = paint.height;
+  const syOrig = Math.round(H * layout.devFrac), stripHOrig = Math.max(1, H - syOrig);
+  let tstrip: HTMLCanvasElement | null = null;
+  try {
+    const transpBlob = await serverCutout(cropStrip(paint, layout.devFrac));
+    tstrip = await blobToCanvas(transpBlob);
+  } catch { tstrip = null; }
   for (const cell of layout.cells) {
     try {
-      const spriteCanvas = cutSprite(paint, cell.cellRect, cell.kind);
+      let spriteCanvas: HTMLCanvasElement | null = null;
+      if (tstrip) {
+        const fx = tstrip.width / W, fy = tstrip.height / stripHOrig;
+        const [nx, ny, nw, nh] = cell.cellRect;
+        spriteCanvas = cutFromTransparentStrip(
+          tstrip, nx * W * fx, (ny * H - syOrig) * fy, nw * W * fx, nh * H * fy,
+        );
+      }
+      if (!spriteCanvas) spriteCanvas = cutSprite(paint, cell.cellRect, cell.kind); // fallback
       const blob = await canvasToBlob(spriteCanvas);
       spriteUrls[cell.bind] = await uploadSprite(id, cell.bind, blob);
     } catch { /* skip this sprite; app falls back to donor for this bind */ }

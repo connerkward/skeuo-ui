@@ -8,6 +8,17 @@ import { isWidget } from './platform'
 // Lazy-import so neither path pulls in the other's components needlessly.
 async function boot() {
   const root = createRoot(document.getElementById('root')!)
+  // DEV-ONLY harnesses: ?cutcheck (real cutSprite on saved paints), ?cutcompare (VLM vs SAM masking).
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('cutcheck')) {
+    const { default: CutCheck } = await import('./debug/CutCheck')
+    root.render(<StrictMode><CutCheck /></StrictMode>)
+    return
+  }
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('cutcompare')) {
+    const { default: CutCompare } = await import('./debug/CutCompare')
+    root.render(<StrictMode><CutCompare /></StrictMode>)
+    return
+  }
   if (isWidget()) {
     document.documentElement.classList.add('widget') // transparent-bg hook (widget.css)
     const { default: WidgetApp } = await import('./widget/WidgetApp')

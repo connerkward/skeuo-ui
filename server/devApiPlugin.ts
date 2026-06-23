@@ -7,12 +7,12 @@
 // dev convenience on this machine, central/.env. It is never bundled into client
 // code and never returned to the browser.
 import type { Plugin, ViteDevServer } from "vite";
-import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import { handleGenerate } from "../src/generate/handler";
-import { removeBackground, type RuntimeDeps } from "../src/generate/pipeline";
-import { extractSlots, type SlotControl } from "../src/generate/director";
+import { removeBackground, segmentControls, type RuntimeDeps, type SamBoxPx } from "../src/generate/pipeline";
+import { extractSlots, extractMasks, type SlotControl } from "../src/generate/director";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
 // the same precedence used for both FAL_KEY and OPENAI_API_KEY.
@@ -121,6 +121,40 @@ export function devApiPlugin(): Plugin {
         });
       });
 
+      // POST /api/segment — SAM-3.1 per-control masks (server-side FAL_KEY). Body:
+      // { imageUrl?|imageDataUrl?, boxes:[{x_min,y_min,x_max,y_max}] } in pixel coords
+      // of the posted image. Returns { masks:[{maskUrl,box,score}] } aligned to input.
+      server.middlewares.use("/api/segment", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "POST only" })); return; }
+        if (!falKey) { res.statusCode = 500; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "server missing FAL_KEY (.dev.vars)" })); return; }
+        const chunks: Buffer[] = [];
+        req.on("data", (c) => chunks.push(c as Buffer));
+        req.on("end", async () => {
+          try {
+            const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}") as
+              { imageUrl?: string; imageDataUrl?: string; boxes?: SamBoxPx[] };
+            const boxes = body.boxes ?? [];
+            if (!boxes.length) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "boxes required" })); return; }
+            let png: Uint8Array;
+            if (body.imageDataUrl?.startsWith("data:")) {
+              png = new Uint8Array(Buffer.from(body.imageDataUrl.split(",")[1], "base64"));
+            } else if (body.imageUrl) {
+              const r = await fetch(body.imageUrl.startsWith("http") ? body.imageUrl : `http://localhost:${(server.config.server.port ?? 5180)}${body.imageUrl}`);
+              png = new Uint8Array(await r.arrayBuffer());
+            } else { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "imageUrl or imageDataUrl required" })); return; }
+            const masks = await segmentControls(falKey, png, boxes);
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.setHeader("Cache-Control", "no-store");
+            res.end(JSON.stringify({ masks }));
+          } catch (e) {
+            res.statusCode = 502;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
+          }
+        });
+      });
+
       // POST /api/extract — local parity with functions/api/extract.ts. gpt-4o vision
       // locates each expected control in the device image; OPENAI key server-side.
       server.middlewares.use("/api/extract", (req, res) => {
@@ -140,6 +174,33 @@ export function devApiPlugin(): Plugin {
             res.setHeader("Content-Type", "application/json");
             res.setHeader("Cache-Control", "no-store");
             res.end(JSON.stringify({ boxes }));
+          } catch (e) {
+            res.statusCode = 502;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
+          }
+        });
+      });
+
+      // POST /api/maskvlm — VLM-masking arm (head-to-head vs SAM). gpt-4o returns a
+      // tight silhouette POLYGON per control. Body { imageDataUrl|imageUrl, controls }.
+      server.middlewares.use("/api/maskvlm", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "POST only" })); return; }
+        if (!openaiKey) { res.statusCode = 500; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "server missing OPENAI_API_KEY" })); return; }
+        const chunks: Buffer[] = [];
+        req.on("data", (c) => chunks.push(c as Buffer));
+        req.on("end", async () => {
+          try {
+            const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}") as
+              { imageDataUrl?: string; imageUrl?: string; controls?: SlotControl[] };
+            const image = body.imageDataUrl || body.imageUrl;
+            if (!image) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "imageDataUrl required" })); return; }
+            if (!Array.isArray(body.controls) || !body.controls.length) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "controls required" })); return; }
+            const polys = await extractMasks(openaiKey, image, body.controls);
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.setHeader("Cache-Control", "no-store");
+            res.end(JSON.stringify({ polys }));
           } catch (e) {
             res.statusCode = 502;
             res.setHeader("Content-Type", "application/json");
@@ -233,6 +294,34 @@ export function devApiPlugin(): Plugin {
         if (!existsSync(path)) { res.statusCode = 404; res.setHeader("Cache-Control", "no-store"); res.end("not found"); return; }
         res.setHeader("Content-Type", file.endsWith(".json") ? "application/json" : "image/png");
         res.end(readFileSync(path));
+      });
+
+      // GET /api/dev/gens — DEV-ONLY: list generations that have paint + layout +
+      // template sidecars on disk, so the cut-inspection harness (?cutcheck) can
+      // re-run the REAL cutSprite against fixed paints. Newest first.
+      server.middlewares.use("/api/dev/gens", (_req, res) => {
+        let ids: { id: string; mtime: number }[] = [];
+        try {
+          const files = readdirSync(genDir);
+          const seen = new Set<string>();
+          for (const f of files) {
+            const m = f.match(/^(.+)-paint\.png$/);
+            if (!m) continue;
+            const id = m[1];
+            if (seen.has(id)) continue;
+            const hasLayout = existsSync(resolve(genDir, `${id}-layout.json`));
+            const hasTemplate = existsSync(resolve(genDir, `${id}-template.json`));
+            if (!hasLayout || !hasTemplate) continue;
+            seen.add(id);
+            let mtime = 0;
+            try { mtime = statSync(resolve(genDir, `${id}-paint.png`)).mtimeMs; } catch { /* ignore */ }
+            ids.push({ id, mtime });
+          }
+        } catch { /* genDir may not exist yet */ }
+        ids.sort((a, b) => b.mtime - a.mtime); // newest first
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-store");
+        res.end(JSON.stringify({ ids: ids.map((x) => x.id) }));
       });
 
       // GET /api/budget — local stub of the lifetime spend ledger. There is no KV

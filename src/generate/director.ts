@@ -262,3 +262,62 @@ export async function extractSlots(
     return [];
   }
 }
+
+// ---- VLM MASKING arm (head-to-head vs SAM) -------------------------------------
+// Ask gpt-4o to return a TIGHT POLYGON outline per control (the "add masking to the
+// VLM/slot pass" approach). This is the literal VLM-does-the-masking contender; it
+// tests whether a VLM can produce a usable silhouette vs SAM's per-pixel mask.
+export interface SlotPoly { bind: string; points: [number, number][] }
+const MASK_SYS =
+  "You are a precise UI control SILHOUETTE tracer for skeuomorphic music-player images. Given the image " +
+  "and a list of EXPECTED controls (bind + kind), return STRICT JSON " +
+  "{\"polys\":[{\"bind\":\"<bind>\",\"points\":[[x,y],...]}]}. Each polygon is the TIGHT outline of that " +
+  "control's visible silhouette, 8-20 points, NORMALIZED 0..1 of the WHOLE image, clockwise. Trace the actual " +
+  "painted shape (a round knob/button = a circle of points; a vertical fader/toggle = its stick+cap outline; a " +
+  "horizontal slider = its groove rectangle). Identify by icon: play ▶, prev ◀◀, next ▶▶, stop ■, knob = round " +
+  "dial, slider-v = vertical fader, toggle = small switch. OMIT controls you cannot find. Return ONLY the JSON.";
+export async function extractMasks(
+  openaiKey: string,
+  image: string,
+  controls: SlotControl[],
+): Promise<SlotPoly[]> {
+  if (!openaiKey || !controls.length) return [];
+  const list = controls.map((c) => `${c.bind} (${c.kind}${c.label ? `, "${c.label}"` : ""})`).join("; ");
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: MODEL,
+        response_format: { type: "json_object" },
+        max_tokens: 4000,
+        messages: [
+          { role: "system", content: MASK_SYS },
+          { role: "user", content: [
+            { type: "text", text: `Trace tight silhouette polygons for these controls: ${list}` },
+            { type: "image_url", image_url: { url: image, detail: "high" } },
+          ] },
+        ],
+      }),
+    });
+    if (!r.ok) throw new Error(`openai ${r.status}`);
+    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}") as { polys?: Record<string, unknown>[] };
+    const raw = Array.isArray(parsed.polys) ? parsed.polys : [];
+    const out: SlotPoly[] = [];
+    for (const p of raw) {
+      const bind = typeof p.bind === "string" ? p.bind : "";
+      const pts = Array.isArray(p.points) ? p.points : [];
+      const points: [number, number][] = [];
+      for (const pt of pts) {
+        if (Array.isArray(pt) && pt.length >= 2 && Number.isFinite(Number(pt[0])) && Number.isFinite(Number(pt[1])))
+          points.push([clamp01(Number(pt[0])), clamp01(Number(pt[1]))]);
+      }
+      if (bind && points.length >= 3) out.push({ bind, points });
+    }
+    return out;
+  } catch (e) {
+    console.error("[extractMasks] failed:", e instanceof Error ? e.message : e);
+    return [];
+  }
+}

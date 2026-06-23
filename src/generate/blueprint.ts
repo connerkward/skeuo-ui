@@ -196,6 +196,24 @@ export interface CombinedBlueprint {
   layout: BlueprintLayout;
   width: number;
   height: number;
+  stripDesc: string;   // enumerated control list for the paint prompt (no text drawn in-image)
+}
+
+// Human description of a control for the paint prompt (so we can convey identity
+// WITHOUT drawing any text/labels into the strip).
+function controlDesc(r: Region, kind: SpriteKind): string {
+  const b = (r.bind || r.id || "").toLowerCase();
+  if (kind === "button") {
+    if (b.includes("prev") || b.includes("rew")) return "a round push-button with a rewind ◀◀ icon";
+    if (b.includes("play")) return "a round push-button with a play ▶ triangle icon";
+    if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return "a round push-button with a fast-forward ▶▶ icon";
+    if (b.includes("stop")) return "a round push-button with a stop ■ square icon";
+    if (b.includes("pause")) return "a round push-button with a pause ⏸ icon";
+    return "a round push-button";
+  }
+  if (kind === "knob") return `a round rotary knob with a pointer notch${r.label ? ` (${r.label})` : ""}`;
+  if (kind === "slider") return "a small slider thumb / grip cap (just the small cap, NOT a full track)";
+  return "a control part";
 }
 
 // REPACK to the paint aspect. The combined image (device + strip) MUST be the exact
@@ -215,7 +233,6 @@ const STRIP_H = COMBINED_H - DEVICE_H;
 export const DEVICE_FRAC = DEVICE_H / COMBINED_H;
 
 const BP_BODY = "rgb(218,218,224)";   // faint gray body silhouette
-const BP_DARK = "rgb(24,24,28)";      // dark socket / cell outline
 const BP_RING = "rgb(255,40,120)";    // bright magenta anchor ring
 
 // map a template Region kind → the sprite kind we cut, or null for non-sprite
@@ -283,42 +300,45 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
     }
   }
 
-  // --- bottom SPRITE STRIP: minimal guides + labels per control (NO SHAPES).
-  // Just grid lines + labels — let the model paint freely. No filled circles/rects
-  // to lock control form. detectCellContent will find what the model actually painted.
-  const n = spriteRegs.length;
+  // --- bottom SPRITE STRIP: NOTHING is drawn here (no shapes, NO TEXT, no lines).
+  // The strip is left blank white; the painter is told via the prompt (stripDesc) exactly
+  // which control to paint in each evenly-spaced slot, left to right. This guarantees the
+  // sprite sheet contains ONLY bare controls — no labels/dividers to get cut in.
+  // TOGGLES collapse to a shared OFF/ON pair keyed "switch-off"/"switch-on" (the names the
+  // renderer's FlipSwitch loads), so a switch gets its two required states.
+  interface StripItem { bind: string; kind: SpriteKind; desc: string }
+  const items: StripItem[] = [];
+  for (const r of spriteRegs) {
+    const kind = spriteKindOf(r)!;
+    if (kind === "toggle") continue; // toggles handled as an off/on pair below
+    items.push({ bind: bindOf(r), kind, desc: controlDesc(r, kind) });
+  }
+  const hasToggle = spriteRegs.some((r) => spriteKindOf(r) === "toggle");
+  if (hasToggle) {
+    items.push({ bind: "switch-off", kind: "toggle", desc: "a toggle switch shown in its OFF position (lever/rocker down)" });
+    items.push({ bind: "switch-on", kind: "toggle", desc: "the SAME toggle switch shown in its ON position (lever/rocker up)" });
+  }
+  const n = items.length;
   const cellW = n > 0 ? GEN_W / n : GEN_W;
   const cells: BlueprintCell[] = [];
-  spriteRegs.forEach((r, i) => {
-    const kind = spriteKindOf(r)!;
+  items.forEach((it, i) => {
     const cx = i * cellW + cellW / 2;
-    // light grid line only (no filled shape)
-    parts.push(`<line x1="${i * cellW}" y1="${GEN_H}" x2="${i * cellW}" y2="${H}" stroke="${BP_DARK}" stroke-width="1" opacity="0.2"/>`);
-    // strip label = the human-readable hint for the model (bind/label), NOT the id
-    const label = (r.label || r.bind || r.id).toUpperCase();
-    parts.push(
-      `<text x="${cx}" y="${GEN_H + stripH * 0.78}" font-family="Arial, sans-serif" font-weight="bold" ` +
-      `font-size="26" fill="${BP_DARK}" text-anchor="middle">${escapeXml(label)}</text>`,
-    );
-    // cell crop box (full combined-image normalized) — detectCellContent finds actual content.
     const cw = cellW * 0.92;
     cells.push({
-      bind: bindOf(r), kind,
-      cellRect: [(cx - cw / 2) / GEN_W, (GEN_H + stripH * 0.06) / H, cw / GEN_W, (stripH * 0.62) / H],
+      bind: it.bind, kind: it.kind,
+      cellRect: [(cx - cw / 2) / GEN_W, (GEN_H + stripH * 0.04) / H, cw / GEN_W, (stripH * 0.78) / H],
     });
   });
+  const stripDesc = items.map((it, i) => `slot ${i + 1}: ${it.desc}`).join("; ");
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${GEN_W}" height="${H}" viewBox="0 0 ${GEN_W} ${H}">${parts.join("")}</svg>`;
   const controls: BlueprintControl[] = spriteRegs.map((r) => ({
     bind: bindOf(r), kind: spriteKindOf(r)!,
     rect: [r.rect.x, r.rect.y, r.rect.w, r.rect.h], // normalized to the DEVICE region (GEN_H)
   }));
-  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H };
+  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H, stripDesc };
 }
 
-function escapeXml(s: string): string {
-  return s.replace(/[<>&]/g, (c) => (c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&amp;"));
-}
 
 export function regionMaskSvg(regs: Region[], dilate = 28): string {
   const shapes = regs.map((r) => {

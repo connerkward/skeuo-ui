@@ -50,14 +50,15 @@ export const PAINT_PROMPT =
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
   "looks pressable/turnable is NOT). Only the sockets (top) and the strip parts (bottom) may look interactive.\n\n" +
-  "BOTTOM CONTROL-PARTS STRIP (important — DO paint these):\n" +
-  "- Below the body is a row of outlined placeholder cells, each labeled with its control name on white.\n" +
-  "- Paint a FINISHED glossy control PART centered inside EACH cell, in the SAME material: round push-buttons " +
-  "get the matching transport icon (rewind / play-triangle / fast-forward); a knob/VOL gets a round knob with a " +
-  "pointer notch; a SEEK/slider gets a SMALL slider THUMB / grip only (a small rounded cap), NOT a full-width bar or pill.\n" +
+  "BOTTOM CONTROL-PARTS STRIP (a BLANK white band — DO paint controls into it):\n" +
+  "- The bottom band is blank white, split into evenly-spaced slots left-to-right. Paint ONE finished, glossy control " +
+  "PART centered in each slot, in the SAME material as the body, in this EXACT left-to-right order:\n" +
+  "    {strip}\n" +
   "- Each control is a BARE part: NO square plate, card, tile, rounded-rectangle or box behind it, NO frame, NO shadow " +
-  "under it — just the bare glossy part directly on the white. Keep each centered in its cell, not touching neighbors. " +
-  "KEEP the text labels in place.\n\n" +
+  "under it — just the bare glossy part directly on the white. Center each in its slot, evenly spaced, not touching neighbours.\n" +
+  "- ABSOLUTELY NO TEXT AND NO LINES anywhere in the strip: do NOT draw any letter, word, number, label, caption, cell " +
+  "outline, border, or divider/grid line. The strip must contain ONLY the bare control parts on clean white — nothing " +
+  "else. (Any text or line left in the strip gets cut into the sprite and ruins it.)\n\n" +
   "RENDER: flat front-on product render on a PERFECTLY CLEAN PURE-WHITE background. CRITICAL: NO shadows of any kind " +
   "anywhere — no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the white. Every element " +
   "must have clean hard edges against pure white so it can be perfectly masked. No reflections on the ground.";
@@ -244,6 +245,53 @@ export async function removeBackground(falKey: string, png: Uint8Array): Promise
   return fetchPng(url);
 }
 
+// ---- SAM-3.1 per-control segmentation (server-side; FAL_KEY never leaves) -------
+// Box-prompt fal-ai/sam-3-1 with each control's box (pixel coords in the uploaded
+// image) → precise per-pixel masks. Mirrors generation/sam_snap.py. Returns, aligned
+// to the input box order, each control's mask PNG URL + normalized box + score. The
+// browser applies each mask as alpha and tight-crops → true-shape transparent sprite
+// (no imposed ellipse, no halo, no neighbour bleed). One call for all boxes.
+export const SAM_MODEL = "fal-ai/sam-3-1/image";
+export interface SamBoxPx { x_min: number; y_min: number; x_max: number; y_max: number }
+export interface SamMask { maskUrl: string | null; box: [number, number, number, number] | null; score: number }
+const urlOf = (m: unknown): string | null =>
+  typeof m === "string" ? m : (m && typeof m === "object" && "url" in m ? String((m as { url: unknown }).url) : null);
+
+// ONE SAM call per control (single box). Multi-box-in-one-call mis-aligns masks to
+// boxes (return_multiple_masks yields ambiguous/duplicated masks); per-control single
+// box is exact. The image is uploaded ONCE and reused across all box calls (parallel).
+async function segmentOne(falKey: string, imageUrl: string, b: SamBoxPx): Promise<SamMask> {
+  const box = { x_min: Math.round(b.x_min), y_min: Math.round(b.y_min), x_max: Math.round(b.x_max), y_max: Math.round(b.y_max) };
+  const job = await falPost(falKey, `https://queue.fal.run/${SAM_MODEL}`, {
+    image_url: imageUrl, box_prompts: [box],
+    include_boxes: true, include_scores: true, apply_mask: false, output_format: "png",
+  });
+  const t0 = Date.now();
+  for (;;) {
+    const s = (await falGet(falKey, job.status_url)).status;
+    if (s === "COMPLETED") break;
+    if (s === "FAILED" || s === "ERROR") throw new Error("sam job failed");
+    if (Date.now() - t0 > 90_000) throw new Error("sam job timeout");
+    await new Promise((res) => setTimeout(res, 1200));
+  }
+  const out = await falGet(falKey, job.response_url);
+  const masks: unknown[] = Array.isArray(out?.masks) ? out.masks : [];
+  const meta: Array<{ box?: number[]; score?: number }> = Array.isArray(out?.metadata) ? out.metadata : [];
+  const m0 = meta[0];
+  return {
+    maskUrl: urlOf(masks[0]),
+    box: (m0?.box && m0.box.length === 4 ? [m0.box[0], m0.box[1], m0.box[2], m0.box[3]] : null),
+    score: m0?.score ?? (Array.isArray(out?.scores) ? out.scores[0] : 0) ?? 0,
+  };
+}
+export async function segmentControls(
+  falKey: string, png: Uint8Array, boxes: SamBoxPx[],
+): Promise<SamMask[]> {
+  if (!boxes.length) return [];
+  const imageUrl = await falUpload(falKey, png);
+  return Promise.all(boxes.map((b) => segmentOne(falKey, imageUrl, b).catch(() => ({ maskUrl: null, box: null, score: 0 }))));
+}
+
 export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Promise<GenerateResult> {
   const log = deps.log ?? (() => {});
   const model = input.model ?? DEFAULT_MODEL;
@@ -257,7 +305,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   // 1. COMBINED blueprint PNG — device body (faint envelope + magenta-ringed
   //    sockets) + a bottom sprite strip of labeled control cells. ONE image.
-  const { svg, layout, width: bpW, height: bpH } = combinedBlueprint(regs);
+  const { svg, layout, width: bpW, height: bpH, stripDesc } = combinedBlueprint(regs);
   // CHECK (pre-paint): the blueprint/template MUST be a model-reproducible aspect so
   // the paint returns near 1:1 — otherwise the normalized strip cells + device sockets
   // map to the wrong place on a reshaped output (mis-cut sprites). It's built to 9:16;
@@ -276,7 +324,8 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const blueprintUrl = await falUpload(deps.falKey, blueprintPng);
   let prompt = PAINT_PROMPT
     .replace(/\{brief\}/g, input.brief)
-    .replace("{material}", input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp);
+    .replace("{material}", input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp)
+    .replace("{strip}", stripDesc);
   const refs = input.refImageUrls ?? [];
   if (refs.length) {
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +
