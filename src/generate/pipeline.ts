@@ -39,7 +39,13 @@ export const STYLE_PROMPT =
   "size and shape — every recessed well stays a DEEP DARK EMPTY socket: a near-black matte cavity " +
   "with a crisp raised rim, NOTHING mounted inside, NOT glowing, NOT filled with material; and every " +
   "screen — INCLUDING the thin marquee strip — stays switched-off NEAR-BLACK glass, a CLEAN FLAT " +
-  "RECTANGLE never tinted or overgrown by the body material (no text, no graphics). Make the body rich and detailed BETWEEN the wells. Everything outside the silhouette stays pure white. Front-on " +
+  "RECTANGLE never tinted or overgrown by the body material (no text, no graphics). " +
+  "Between the wells render ONLY the device's surface material, shading and trim — plus optional " +
+  "engraved or printed LABELS, icons and symbols BESIDE the slots. DO NOT paint any buttons, keys, " +
+  "knobs, dials, sliders, switches, joysticks, D-pads, speaker grilles, extra sockets or any other " +
+  "control or raised interactive part ANYWHERE: the ONLY recesses are the marked wells and you must " +
+  "not add new ones. The real controls are mounted into the slots later — you make the empty slots " +
+  "and their labels, NEVER the buttons themselves. Everything outside the silhouette stays pure white. Front-on " +
   "orthographic, even light, high detail. MATERIAL: ";
 
 export const MATERIAL: Record<string, string> = {
