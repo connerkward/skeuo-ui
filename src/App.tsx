@@ -37,7 +37,11 @@ const FLOAT_ENABLED = false;
 const CONNECT_ENABLED = false;
 
 export default function App() {
-  const visible = skinList.filter((s) => !s.hidden);
+  // ?all reveals the normally-hidden catalog bodies (themed/iteration skins +
+  // donors) in the gallery — a dev/review affordance for seeing every skin (and
+  // its logomark font) at once. Default gallery still hides them.
+  const showAll = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("all");
+  const visible = skinList.filter((s) => showAll || !s.hidden);
   // honor a shared ?skin=<id> link (skeuo.fm/?skin=…) when it names a known skin
   // (built-in or a persisted generated one); otherwise the first skin.
   const [skinId, setSkinId] = useState(() => {
@@ -103,8 +107,11 @@ export default function App() {
   const pip = useDocumentPip();
   const [pipHost, setPipHost] = useState<HTMLElement | null>(null);
   // preload the visible roster's logomark fonts up front so switching never pops in
-  // (skinList is a stable module import, so the visible set is constant → run once)
-  useEffect(() => { preloadSkinFonts(skinList.filter((s) => !s.hidden).map((s) => s.id)); }, []);
+  // (skinList is a stable module import, so the visible set is constant → run once).
+  // With ?all, preload the WHOLE catalog so the revealed bodies don't pop in either.
+  useEffect(() => {
+    preloadSkinFonts(showAll ? undefined : skinList.filter((s) => !s.hidden).map((s) => s.id));
+  }, [showAll]);
   // top-bar popovers (Connect / Desktop) — only one open at a time
   const [panel, setPanel] = useState<null | "connect" | "desktop">(null);
 
