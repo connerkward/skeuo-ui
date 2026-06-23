@@ -176,9 +176,12 @@ export default function App() {
   }
 
   // ── desktop ──────────────────────────────────────────────────────────────────
-  // A three-row shell: a top app-bar (brand + every action), a full-width stage
-  // that gives the player the whole canvas, and a bottom skin dock (horizontal
-  // gallery). No sidebar — the player is the hero, controls frame it.
+  // Layout follows the intended user flow:
+  //   1. BROWSE the gallery (the bottom rail — the thing you do first)
+  //   2. CREATE your own skin (the single, loud call-to-action)
+  //   3. take it further — Share / Connect / Desktop (quiet end-of-flow actions
+  //      attached to the player, i.e. "leaving with" the skin)
+  // Edit / Wireframe are power-user utilities, kept out of the funnel in the dock.
   const closePanel = () => setPanel(null);
   return (
     <div className="app">
@@ -190,66 +193,11 @@ export default function App() {
         <a className="topbar-how" href="/process/" target="_blank" rel="noopener">
           How it works <span className="arr">→</span>
         </a>
-
-        <div className="topbar-actions">
-          <button className={`tb-btn ${wire ? "active" : ""}`} onClick={() => setWire((v) => !v)}
-            title="Toggle the control wireframe overlay">
-            <WireIcon /> Wireframe
-          </button>
-          <button className="tb-btn" onClick={() => { setEdited(null); setEditing(true); }}
-            title="Edit this skin's template">
-            ✎ Edit
-          </button>
-
-          {/* Connect (Spotify) — opens the connect panel as a popover */}
-          <div className="tb-popwrap">
-            <button className={`tb-btn ${panel === "connect" ? "active" : ""}`}
-              data-status={sp.status}
-              onClick={() => setPanel((p) => (p === "connect" ? null : "connect"))}>
-              <span className="tb-dot" data-status={sp.status} />
-              {sp.status === "connected" ? "Spotify ✓" : "Connect"} <span className="caret">▾</span>
-            </button>
-            {panel === "connect" && (
-              <div className="tb-pop">
-                <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />
-              </div>
-            )}
-          </div>
-
-          {/* Desktop handoff — popover */}
-          <div className="tb-popwrap">
-            <button className={`tb-btn ${panel === "desktop" ? "active" : ""}`}
-              onClick={() => setPanel((p) => (p === "desktop" ? null : "desktop"))}>
-              ⤓ Desktop <span className="caret">▾</span>
-            </button>
-            {panel === "desktop" && (
-              <div className="tb-pop">
-                <DesktopHandoff skinId={skinId} skinName={activeMeta?.name ?? skinId} />
-                {FLOAT_ENABLED && pip.supported && (
-                  <button className="feature-btn pip-float-btn"
-                    onClick={() => (pip.pipWindow ? pip.close() : pip.open())}>
-                    {pip.pipWindow ? "⧉ Bring player back" : "⧉ Float player — no install"}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          <ExportGifButton
-            skinId={skinId}
-            template={playerTemplate}
-            runtime={runtimeView}
-            spotifyDrive={spotifyDrive}
-          />
-
-          <button className={`tb-cta ${showCreate ? "open" : ""}`} onClick={() => setShowCreate((v) => !v)}>
-            {showCreate ? <>× Close</> : <><span className="tb-cta-plus">+</span> Create a skin</>}
-          </button>
-        </div>
+        {/* the ONE call-to-action — everything else is subordinate to this */}
+        <button className={`tb-cta ${showCreate ? "open" : ""}`} onClick={() => setShowCreate((v) => !v)}>
+          {showCreate ? <>× Close</> : <><span className="tb-cta-plus">✦</span> Create your own skin</>}
+        </button>
       </header>
-
-      {/* click-away scrim for the open popover */}
-      {panel && <div className="tb-scrim" onPointerDown={closePanel} />}
 
       <main className="stage">
         <div className="stage-inner">
@@ -266,35 +214,88 @@ export default function App() {
             <span className="cap-name">{activeMeta?.name ?? skinId}</span>
             {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
           </figcaption>
+
+          {/* quiet "take it further" row — end-of-flow actions on the artifact */}
+          <div className="skin-actions">
+            <ExportGifButton
+              skinId={skinId}
+              template={playerTemplate}
+              runtime={runtimeView}
+              spotifyDrive={spotifyDrive}
+            />
+            <button className={`skin-act ${sp.status === "connected" ? "on" : ""}`}
+              onClick={() => setPanel("connect")} title="Drive this player with your Spotify">
+              <span className="tb-dot" data-status={sp.status} />
+              {sp.status === "connected" ? "Spotify connected" : "Connect Spotify"}
+            </button>
+            <button className="skin-act" onClick={() => setPanel("desktop")}
+              title="Run this skin as a desktop widget">
+              ⤓ Open on desktop
+            </button>
+          </div>
         </div>
       </main>
 
-      {/* bottom dock — the skin gallery as a horizontal rail */}
+      {/* bottom dock — BROWSE the gallery (step 1), plus quiet power tools */}
       <footer className="dock">
-        <span className="dock-label">Skins</span>
-        {visible.map((s) => (
-          <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
-            onClick={() => { setSkinId(s.id); setEdited(null); }} title={`${s.name} — ${s.blurb}`}>
-            <img className="thumb" loading="lazy" alt=""
-              src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-            <span className="name">{s.name}</span>
+        <span className="dock-label">Browse</span>
+        <div className="dock-rail">
+          {visible.map((s) => (
+            <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
+              onClick={() => { setSkinId(s.id); setEdited(null); }} title={`${s.name} — ${s.blurb}`}>
+              <img className="thumb" loading="lazy" alt=""
+                src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+              <span className="name">{s.name}</span>
+            </button>
+          ))}
+          {runtimeSkins.length > 0 && <span className="dock-sep" />}
+          {runtimeSkins.map((s) => (
+            <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
+              onClick={() => { setSkinId(s.id); setEdited(null); }} title={s.name}>
+              <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
+              <span className="name">{s.name}</span>
+            </button>
+          ))}
+          <button className="skin-tile create" onClick={() => setShowCreate(true)} title="Create your own skin">
+            <span className="plus">+</span>
+            <span className="name">Create</span>
           </button>
-        ))}
-        {runtimeSkins.length > 0 && <span className="dock-sep" />}
-        {runtimeSkins.map((s) => (
-          <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
-            onClick={() => { setSkinId(s.id); setEdited(null); }} title={s.name}>
-            <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-            <span className="name">{s.name}</span>
+        </div>
+        <div className="dock-tools">
+          <button className={`dock-tool ${wire ? "active" : ""}`} onClick={() => setWire((v) => !v)}
+            title="Toggle the control wireframe">
+            <WireIcon />
           </button>
-        ))}
-        <button className="skin-tile create" onClick={() => setShowCreate(true)} title="Create a new skin">
-          <span className="plus">+</span>
-          <span className="name">Create</span>
-        </button>
+          <button className="dock-tool" onClick={() => { setEdited(null); setEditing(true); }}
+            title="Edit this skin's template">
+            ✎
+          </button>
+        </div>
       </footer>
+
+      {/* Connect / Desktop open as centered panels (the stage clips, so anchored
+          popovers there would be cut off) */}
+      {panel && (
+        <div className="panel-scrim" onPointerDown={(e) => e.target === e.currentTarget && closePanel()}>
+          <div className="panel-card">
+            <button className="panel-close" onClick={closePanel} aria-label="Close">×</button>
+            {panel === "connect" && <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />}
+            {panel === "desktop" && (
+              <>
+                <DesktopHandoff skinId={skinId} skinName={activeMeta?.name ?? skinId} />
+                {FLOAT_ENABLED && pip.supported && (
+                  <button className="feature-btn pip-float-btn"
+                    onClick={() => (pip.pipWindow ? pip.close() : pip.open())}>
+                    {pip.pipWindow ? "⧉ Bring player back" : "⧉ Float player — no install"}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {showCreate && (
         <div className="wiz-modal" onPointerDown={(e) => e.target === e.currentTarget && setShowCreate(false)}>

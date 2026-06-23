@@ -12,6 +12,10 @@ body {
 .app {
   width: 100%; height: 100%;
   display: grid; grid-template-rows: auto 1fr auto;
+  /* constrain the single column to the viewport — without this the implicit grid
+     column sizes to max-content (the dock rail's full width), overflowing the
+     viewport and clipping the top-bar CTA off the right edge */
+  grid-template-columns: minmax(0, 1fr);
   background: radial-gradient(circle at 50% 8%, #1a1a1e, #060607 70%);
   min-height: 0;
 }
@@ -50,80 +54,107 @@ body {
 @media (max-width: 1180px) { .topbar-tag { display: none; } }
 @media (max-width: 1000px) { .topbar-how { display: none; } }
 
-/* neutral pill button used across the bar (incl. the overridden Share button) */
-.tb-btn, .topbar-actions .export-gif-btn {
+/* THE call-to-action — the loudest thing on the page, pushed to the right end of
+   the bar. Everything else (browse, share, connect) is visually subordinate. */
+.tb-cta {
+  margin-left: auto; flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; font: inherit; font-size: 14px; font-weight: 700;
+  color: #052b14; border: 1px solid #2dff6e; border-radius: 9px; cursor: pointer;
+  background: linear-gradient(180deg, #54ff8d, #1fe06a);
+  box-shadow: 0 3px 14px rgba(45,255,110,.3), inset 0 1px 0 rgba(255,255,255,.45);
+  transition: filter .15s, transform .08s, box-shadow .15s;
+}
+.tb-cta:hover { filter: brightness(1.07); box-shadow: 0 4px 20px rgba(45,255,110,.42), inset 0 1px 0 rgba(255,255,255,.5); }
+.tb-cta:active { transform: translateY(1px); }
+.tb-cta.open {
+  color: #cfcfd6; background: #141416; border-color: #34343a; box-shadow: none; filter: none;
+}
+.tb-cta-plus { font-size: 15px; line-height: 1; }
+
+/* ---------- "take it further" row under the player (quiet, end-of-flow) ----- */
+/* Share / Connect / Desktop — deliberately low-contrast so they never compete
+   with the green Create CTA. They're what you do AFTER you've found a skin. */
+.skin-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.skin-act, .skin-actions .export-gif-btn {
   display: inline-flex; align-items: center; gap: 7px;
-  padding: 8px 13px; font: inherit; font-size: 13px; font-weight: 600;
-  color: #d4d4da; background: #161619; border: 1px solid #2c2c31;
+  padding: 7px 13px; font: inherit; font-size: 12.5px; font-weight: 600;
+  color: #b6b6bd; background: rgba(22,22,26,.7); border: 1px solid #2a2a30;
   border-radius: 8px; cursor: pointer; white-space: nowrap;
   transition: background .14s, border-color .14s, color .14s, transform .08s;
 }
-.tb-btn:hover, .topbar-actions .export-gif-btn:hover { background: #1f1f24; border-color: #45454d; color: #fff; }
-.tb-btn.active { background: #1f261f; border-color: rgba(45,255,110,.4); color: #d6ffe2; }
-.tb-btn .ic { width: 15px; height: 15px; }
-.tb-btn .caret { font-size: 10px; opacity: .7; margin-left: -2px; }
-.tb-btn .tb-dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
-.tb-btn .tb-dot[data-status="connected"] { background: #1db954; }
-.tb-btn .tb-dot[data-status="connecting"] { background: #e6b800; }
-.tb-btn .tb-dot[data-status="error"] { background: #e0533d; }
+.skin-act:hover, .skin-actions .export-gif-btn:hover { background: #1f1f24; border-color: #45454d; color: #ededf2; }
+.skin-act.on { color: #6fe6a0; border-color: rgba(29,185,84,.45); }
+/* neutralize the Share button's fixed positioning so it sits inline in the row */
+.skin-actions .export-gif-btn { position: static; right: auto; bottom: auto; z-index: auto; box-shadow: none; }
+.skin-act .tb-dot { width: 7px; height: 7px; border-radius: 50%; background: #666; }
+.skin-act .tb-dot[data-status="connected"] { background: #1db954; }
+.skin-act .tb-dot[data-status="connecting"] { background: #e6b800; }
+.skin-act .tb-dot[data-status="error"] { background: #e0533d; }
 
-/* neutralize the Share button's fixed positioning so it sits inline in the bar */
-.topbar-actions .export-gif-btn {
-  position: static; right: auto; bottom: auto; z-index: auto; box-shadow: none;
+/* ---------- centered panel modal (Connect / Desktop) ---------- */
+.panel-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0,0,0,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
 }
-
-/* primary CTA — green, the obvious first action */
-.tb-cta {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 8px 16px; font: inherit; font-size: 13.5px; font-weight: 700;
-  color: #052b14; border: 1px solid #2dff6e; border-radius: 8px; cursor: pointer;
-  background: linear-gradient(180deg, #54ff8d, #1fe06a);
-  box-shadow: 0 2px 10px rgba(45,255,110,.22), inset 0 1px 0 rgba(255,255,255,.45);
-  transition: filter .15s, transform .08s;
-}
-.tb-cta:hover { filter: brightness(1.07); }
-.tb-cta:active { transform: translateY(1px); }
-.tb-cta.open { color: #cfcfd6; background: #141416; border-color: #34343a; box-shadow: none; }
-.tb-cta-plus { font-size: 16px; line-height: 1; font-weight: 400; margin-top: -1px; }
-
-/* ---------- top-bar popovers (Connect / Desktop) ---------- */
-.tb-popwrap { position: relative; }
-.tb-pop {
-  position: absolute; top: calc(100% + 9px); right: 0; z-index: 40;
-  width: 308px; max-width: 86vw;
-  background: #0d0d10; border: 1px solid #2a2a30; border-radius: 12px;
-  box-shadow: 0 20px 54px rgba(0,0,0,.62);
-  padding: 14px;
+.panel-card {
+  position: relative; width: 340px; max-width: 92vw; max-height: 86vh; overflow-y: auto;
+  background: #0d0d10; border: 1px solid #2a2a30; border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.66); padding: 18px;
   display: flex; flex-direction: column; gap: 12px;
 }
-.tb-pop .feature-btn {
+.panel-card .feature-btn {
   background: #141416; color: #cfcfd4; border: 1px solid #2a2a2e;
   font-size: 12.5px; padding: 9px 12px; border-radius: 7px;
   display: flex; align-items: center; gap: 8px;
   transition: background .15s, border-color .15s;
 }
-.tb-pop .feature-btn:hover { background: #1c1c20; border-color: #45454a; }
-.tb-scrim { position: fixed; inset: 0; z-index: 25; }
+.panel-card .feature-btn:hover { background: #1c1c20; border-color: #45454a; }
+.panel-close {
+  position: absolute; top: 8px; right: 10px;
+  width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+  background: transparent; border: 0; color: #8a8a93; font-size: 19px; line-height: 1;
+}
+.panel-close:hover { color: #fff; background: #1c1c20; }
 
-/* ---------- bottom skin dock — the gallery as a horizontal rail ---------- */
+/* ---------- bottom skin dock — BROWSE (the gallery rail) + pinned tools ---- */
 .dock {
-  display: flex; align-items: stretch; gap: 8px;
+  display: flex; align-items: center; gap: 12px;
   padding: 11px 16px;
   background: rgba(9,9,11,.78);
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   border-top: 1px solid #1c1c1f;
-  overflow-x: auto; overflow-y: hidden;
-  scrollbar-width: thin; scrollbar-color: #34343a transparent;
   position: relative; z-index: 20;
 }
-.dock::-webkit-scrollbar { height: 8px; }
-.dock::-webkit-scrollbar-thumb { background: #2c2c31; border-radius: 4px; }
 .dock-label {
-  flex: 0 0 auto; align-self: center;
+  flex: 0 0 auto;
   font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: #6f6f76; font-weight: 700; padding-right: 4px;
+  color: #7a7a82; font-weight: 700;
 }
+/* the gallery itself — the only horizontally-scrolling part */
+.dock-rail {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; align-items: stretch; gap: 8px;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin; scrollbar-color: #34343a transparent;
+  padding-bottom: 2px;
+}
+.dock-rail::-webkit-scrollbar { height: 8px; }
+.dock-rail::-webkit-scrollbar-thumb { background: #2c2c31; border-radius: 4px; }
 .dock-sep { flex: 0 0 auto; width: 1px; align-self: center; height: 56px; background: #232327; margin: 0 4px; }
+
+/* power-user utilities (edit / wireframe) — pinned, quiet, out of the funnel */
+.dock-tools { flex: 0 0 auto; display: flex; gap: 6px; padding-left: 12px; border-left: 1px solid #232327; }
+.dock-tool {
+  width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
+  background: #161619; border: 1px solid #2a2a30; border-radius: 8px; cursor: pointer;
+  color: #9a9aa2; font-size: 15px;
+  transition: background .14s, border-color .14s, color .14s;
+}
+.dock-tool:hover { background: #1f1f24; border-color: #45454d; color: #e6e6ea; }
+.dock-tool.active { background: #1f261f; border-color: rgba(45,255,110,.45); color: #8df0ad; }
+.dock-tool .ic { width: 17px; height: 17px; }
 
 .skin-tile {
   flex: 0 0 auto; width: 78px; cursor: pointer;
@@ -178,12 +209,13 @@ body {
 .stage-inner {
   position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 22px;
+  gap: 16px;
 }
 .stage .player {
-  /* the stage now sits between the top bar (~54px) and the dock (~98px); budget
-     for those + padding + caption so the player fills the remaining height */
-  --w: min(560px, calc((100dvh - 340px) * 0.686));
+  /* the stage sits between the top bar (~57px) and the dock (~92px), and the
+     stack also carries the caption + the "take it further" action row — budget
+     for all of it so the player fills the remaining height without clipping */
+  --w: min(540px, calc((100dvh - 372px) * 0.686));
 }
 /* contact shadow — a dark ellipse hugging the player's base so it sits ON the
    floor instead of hanging in black. z-index 0 keeps it above the stage wash
