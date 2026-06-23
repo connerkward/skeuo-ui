@@ -128,25 +128,31 @@ function cutSprite(
 ): HTMLCanvasElement {
   const W = paint.width, H = paint.height;
   const [nx, ny, nw, nh] = cellRect;
-  const x0 = Math.round(nx * W), y0 = Math.round(ny * H);
-  const cw = Math.max(1, Math.round(nw * W)), ch = Math.max(1, Math.round(nh * H));
+  const cx = nx * W, cy = ny * H, cw = nw * W, ch = nh * H;
+  // The painted control sits CENTERED in its cell. Crop a centered SQUARE (round
+  // controls) or a centered thin band (slider) — NOT the full (tall) cell, or the
+  // inscribed ellipse becomes a stretched oval and the round button looks crushed.
+  let sw: number, sh: number;
+  if (kind === "slider") { sw = cw * 0.92; sh = Math.min(ch, cw * 0.34); }
+  else { sw = sh = Math.min(cw, ch) * 0.92; }
+  const sx = Math.round(cx + (cw - sw) / 2), sy = Math.round(cy + (ch - sh) / 2);
+  const ow = Math.max(1, Math.round(sw)), oh = Math.max(1, Math.round(sh));
 
   const out = document.createElement("canvas");
-  out.width = cw; out.height = ch;
+  out.width = ow; out.height = oh;
   const ctx = out.getContext("2d");
   if (!ctx) throw new Error("no 2d canvas context");
 
-  // clip to the control shape (inset 1px), then draw the cell crop through it.
+  // clip to the control shape (inset 1px), then draw the centered crop through it.
   ctx.beginPath();
   if (kind === "slider") {
-    roundRectPath(ctx, 1, 1, cw - 2, ch - 2, Math.min((cw - 2) / 2, (ch - 2) / 2));
+    roundRectPath(ctx, 1, 1, ow - 2, oh - 2, Math.min((ow - 2) / 2, (oh - 2) / 2));
   } else {
-    // inscribed ellipse, inset 1px
-    ctx.ellipse((cw) / 2, (ch) / 2, Math.max(0, cw / 2 - 1), Math.max(0, ch / 2 - 1), 0, 0, Math.PI * 2);
+    ctx.ellipse(ow / 2, oh / 2, Math.max(0, ow / 2 - 1), Math.max(0, oh / 2 - 1), 0, 0, Math.PI * 2);
   }
   ctx.closePath();
   ctx.clip();
-  ctx.drawImage(paint, x0, y0, cw, ch, 0, 0, cw, ch);
+  ctx.drawImage(paint, sx, sy, ow, oh, 0, 0, ow, oh);
   return out;
 }
 
