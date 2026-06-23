@@ -227,37 +227,39 @@ export default function App() {
         </div>
       </aside>
 
-      <main className="stage">
-        <div className="stage-inner">
-          {/* portal target when docked; empty while the player is floating */}
-          <div className="player-host" ref={setPipHost} />
-          {pip.pipWindow && (
-            <div className="stage-popped">
-              <span className="pop-ico">⧉</span>
-              <p>Player is floating in its own window.</p>
-              <button className="pop-back" onClick={pip.close}>Bring it back</button>
-            </div>
-          )}
-        </div>
-      </main>
+      {/* main area: the full-height skin sized to its content, then the title card
+          which FILLS the rest of the width and centers its text — so the text sits
+          squarely between the skin's right edge and the frame's right edge. */}
+      <div className="main">
+        <main className="stage">
+          <div className="stage-inner">
+            {/* portal target when docked; empty while the player is floating */}
+            <div className="player-host" ref={setPipHost} />
+            {pip.pipWindow && (
+              <div className="stage-popped">
+                <span className="pop-ico">⧉</span>
+                <p>Player is floating in its own window.</p>
+                <button className="pop-back" onClick={pip.close}>Bring it back</button>
+              </div>
+            )}
+          </div>
+        </main>
 
-      {/* meta zone — a cinematic title card: the skin NAME set in its own logomark
-          font, the description beneath, then Share. Its own column on wide screens,
-          a centered strip under the player on narrower ones (grid handles which). */}
-      <section className="meta">
-        <figcaption className="stage-caption">
-          <CinemaTitle text={(activeMeta?.name ?? skinId).replace(/\s*✦\s*$/, "")} font={titleFont} />
-          {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
-        </figcaption>
-        <div className="skin-actions">
-          <ExportGifButton
-            skinId={skinId}
-            template={playerTemplate}
-            runtime={runtimeView}
-            spotifyDrive={spotifyDrive}
-          />
-        </div>
-      </section>
+        <section className="meta">
+          <figcaption className="stage-caption">
+            <CinemaTitle text={(activeMeta?.name ?? skinId).replace(/\s*✦\s*$/, "")} font={titleFont} />
+            {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
+          </figcaption>
+          <div className="skin-actions">
+            <ExportGifButton
+              skinId={skinId}
+              template={playerTemplate}
+              runtime={runtimeView}
+              spotifyDrive={spotifyDrive}
+            />
+          </div>
+        </section>
+      </div>
 
       {/* Connect / Desktop open as centered panels */}
       {panel && (
