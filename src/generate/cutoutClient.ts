@@ -302,11 +302,15 @@ function cutSprite(
 
   let sw: number, sh: number, sx: number, sy: number;
   if (kind === "slider") {
-    const bx = bbox ? bbox.x : cx + cw * 0.04;
-    const bw = bbox ? bbox.w : cw * 0.92;
-    const bcy = bbox ? bbox.y + bbox.h / 2 : cy + ch / 2;
-    sw = bw; sh = Math.min(bbox ? bbox.h : ch, bw * 0.34);
-    sx = Math.round(bx); sy = Math.round(bcy - sh / 2);
+    // crop TIGHT around the painted thumb/grip (the content bbox + 12%), NOT a wide
+    // band — the strip part is the small slider thumb the renderer rides on the track.
+    if (bbox) {
+      sw = bbox.w * 1.12; sh = bbox.h * 1.12;
+      sx = Math.round(bbox.x + bbox.w / 2 - sw / 2); sy = Math.round(bbox.y + bbox.h / 2 - sh / 2);
+    } else {
+      sw = cw * 0.5; sh = ch * 0.4;
+      sx = Math.round(cx + (cw - sw) / 2); sy = Math.round(cy + (ch - sh) / 2);
+    }
   } else if (bbox) {
     // round control: square centered on the detected control, sized to its larger
     // extent (+10% margin) so the circle clip contains the whole control — no white gap.
