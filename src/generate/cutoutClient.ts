@@ -20,7 +20,56 @@
 // a data: URL (offline demo, no R2), we key out the white background with the
 // shared pure-JS cutoutAlpha — the original behavior — instead of calling fal.
 import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type SpriteKind } from "./blueprint";
+import { detectSockets, type Socket } from "./spriteSheet";
+import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
+
+// Decode a PNG blob to ImageData (for socket detection on the masked device).
+async function blobToImageData(blob: Blob): Promise<ImageData> {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const ctx = c.getContext("2d");
+    if (!ctx) throw new Error("no 2d canvas context");
+    ctx.drawImage(img, 0, 0);
+    return ctx.getImageData(0, 0, c.width, c.height);
+  } finally { URL.revokeObjectURL(url); }
+}
+
+// Snap each button/knob region onto the painted socket nearest its template
+// position. The generated device drifts from the blueprint coords (the model
+// reflows aspect + nudges sockets), so rendering controls at raw template coords
+// misaligns them; detecting the actual dark sockets and re-homing the regions to
+// them is what makes the sprite land in its recess. Returns a corrected template.
+function snapToSockets(template: Template, device: ImageData): Template {
+  const sockets = detectSockets({ data: device.data, width: device.width, height: device.height })
+    .filter((s) => s.aspect > 0.55 && s.aspect < 1.8);   // round sockets only
+  if (!sockets.length) return template;
+  const used = new Set<Socket>();
+  const regions = template.regions.map((r) => {
+    if (r.kind !== "button" && r.kind !== "knob") return r;
+    const px = (r.rect.x + r.rect.w / 2) * device.width;
+    const py = (r.rect.y + r.rect.h / 2) * device.height;
+    let best: Socket | undefined; let bd = Infinity;
+    for (const s of sockets) {
+      if (used.has(s)) continue;
+      const d = (s.cx - px) ** 2 + (s.cy - py) ** 2;
+      if (d < bd) { bd = d; best = s; }
+    }
+    if (!best) return r;
+    used.add(best);
+    const R = best.r * 1.06;   // a hair larger than the socket so the cap covers the rim
+    return { ...r, rect: {
+      x: (best.cx - R) / device.width, y: (best.cy - R) / device.height,
+      w: (2 * R) / device.width, h: (2 * R) / device.height,
+    } };
+  });
+  return { ...template, regions };
+}
 
 // Decode raw image bytes into something drawable, robustly across engines.
 // createImageBitmap is the fast path, but in real WKWebView (the iOS app + macOS
@@ -205,6 +254,7 @@ export interface FinishResult {
   frameUrl: string;        // public (absolute on native) device frame URL
   sprites: boolean;        // true once per-skin sprites were cut + uploaded
   spriteUrls: Record<string, string>; // bind → public sprite URL
+  template?: Template;     // template with control regions snapped onto the painted sockets
 }
 
 // Full client half of a single-pass generation, returning the rich FinishResult
@@ -222,6 +272,7 @@ export async function finishCutoutFull(
   paintUrl: string,
   durableFrameUrl: string,
   layout?: BlueprintLayout,
+  template?: Template,
 ): Promise<FinishResult> {
   const paint = await fetchPaintCanvas(paintUrl);
   const isData = paintUrl.startsWith("data:");
@@ -244,6 +295,13 @@ export async function finishCutoutFull(
   const frameBlob = await serverCutout(deviceCanvas);
   await uploadFrame(id, frameBlob);
 
+  // 1b. snap control regions onto the painted sockets (detection beats raw coords).
+  let snapped = template;
+  if (template) {
+    try { snapped = snapToSockets(template, await blobToImageData(frameBlob)); }
+    catch { /* keep original template */ }
+  }
+
   // 2. each control sprite: geometric cut from its cell, upload. Best-effort per
   //    sprite — a single failed sprite shouldn't sink the whole skin (the app
   //    falls back to the donor sprite for any bind that is missing).
@@ -260,6 +318,7 @@ export async function finishCutoutFull(
     frameUrl: apiUrl(durableFrameUrl),
     sprites: Object.keys(spriteUrls).length > 0,
     spriteUrls,
+    template: snapped,
   };
 }
 

@@ -76,12 +76,13 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
         // raw paint here and upload the finished frame.png back. No-op server-side.
         let frameUrl = apiUrl(data.frameUrl);
         let hasSprites = false;
+        let template = data.template;
         if (data.needsCutout && data.paintUrl) {
-          // FULL path: BiRefNet the device + cut each control sprite from the strip
-          // and upload them per-skin. data.layout carries the strip cells.
+          // FULL path: BiRefNet the device, cut each control sprite, AND snap the
+          // control regions onto the painted sockets (returns a corrected template).
           try {
-            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout);
-            frameUrl = r.frameUrl; hasSprites = r.sprites;
+            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template);
+            frameUrl = r.frameUrl; hasSprites = r.sprites; template = r.template ?? data.template;
           } catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
         }
         onCreated({
@@ -90,7 +91,7 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
           blurb: `generated · ${modelLabel(data.model)}`,
           style: data.style,
           frameUrl,
-          template: data.template,
+          template,
           sprites: hasSprites,   // render THIS skin's own per-control sprites
         });
       }
