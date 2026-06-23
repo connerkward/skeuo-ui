@@ -244,7 +244,7 @@ export const BIREFNET_MODEL = "fal-ai/birefnet/v2";
 // segments low-contrast (e.g. white-on-white controls) better; Matting gives finer edges.
 export type BiRefNetModel = "General Use (Light 2K)" | "General Use (Heavy)" | "Matting";
 export async function removeBackground(
-  falKey: string, png: Uint8Array, model: BiRefNetModel = "General Use (Light 2K)",
+  falKey: string, png: Uint8Array, model: BiRefNetModel = "General Use (Heavy)",
 ): Promise<Uint8Array> {
   const imageUrl = await falUpload(falKey, png);
   const job = await falPost(falKey, `https://queue.fal.run/${BIREFNET_MODEL}`, {

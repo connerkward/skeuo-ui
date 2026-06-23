@@ -493,9 +493,10 @@ export async function finishCutoutFull(
     return { frameUrl: apiUrl(durableFrameUrl), sprites: false, spriteUrls: {} };
   }
 
-  // 1. device frame: crop the top devFrac, BiRefNet via /api/cutout, upload.
+  // 1. device frame: crop the top devFrac, BiRefNet via /api/cutout, upload. HEAVY model
+  // (same as the strip) — no light pass anywhere; heavy handles low-contrast bodies too.
   const deviceCanvas = cropDevice(paint, layout.devFrac);
-  const frameBlob = await serverCutout(deviceCanvas);
+  const frameBlob = await serverCutout(deviceCanvas, "General Use (Heavy)");
   await uploadFrame(id, frameBlob);
 
   // 1b. PLACEMENT = the blueprint/socket positions, AS-IS. The deterministic template

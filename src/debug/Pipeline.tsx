@@ -29,7 +29,6 @@ export default function Pipeline() {
   const [blueprintUrl, setBlueprintUrl] = useState("");
   const [paintUrl, setPaintUrl] = useState("");
   const [frameUrl, setFrameUrl] = useState("");
-  const [stripLightUrl, setStripLightUrl] = useState("");
   const [stripHeavyUrl, setStripHeavyUrl] = useState("");
   const [cuts, setCuts] = useState<SpriteCut[]>([]);
   const [vlmUrl, setVlmUrl] = useState("");        // device + boxes overlay
@@ -85,16 +84,15 @@ export default function Pipeline() {
     // 3. BiRefNet — device frame
     set("frame", "loading");
     let frame: Cv | null = null;
-    try { frame = await blobToCanvas(await serverCutout(cropDevice(paint, layout.devFrac))); setFrameUrl(dataUrl(frame)); set("frame", "done"); }
+    try { frame = await blobToCanvas(await serverCutout(cropDevice(paint, layout.devFrac), "General Use (Heavy)")); setFrameUrl(dataUrl(frame)); set("frame", "done"); }
     catch { set("frame", "error"); }
 
-    // 4. BiRefNet — whole strip (light + heavy branches)
+    // 4. BiRefNet — whole strip, HEAVY model only (no light pass anywhere)
     set("strip", "loading");
     const strip = cropStrip(paint, layout.devFrac);
-    let tLight: Cv | null = null, tHeavy: Cv | null = null;
-    try { tLight = await blobToCanvas(await serverCutout(strip)); setStripLightUrl(dataUrl(tLight)); } catch { /* */ }
+    let tHeavy: Cv | null = null;
     try { tHeavy = await blobToCanvas(await serverCutout(strip, "General Use (Heavy)")); setStripHeavyUrl(dataUrl(tHeavy)); } catch { /* */ }
-    set("strip", tLight || tHeavy ? "done" : "error");
+    set("strip", tHeavy ? "done" : "error");
 
     // chosen sprite per control (CC primary, grid fallback) — reused by the final composite
     const finalSprites: Record<string, Cv | null> = {};
@@ -187,10 +185,7 @@ export default function Pipeline() {
         {frameUrl && <img src={frameUrl} style={{ maxWidth: 360, width: "100%", borderRadius: 6, background: CHECKER }} />}
       </Stage>
       <Stage n={6} title="BiRefNet — whole strip isolated (heavy model)" status={st.strip}>
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <div><div style={{ opacity: 0.55, fontSize: 11 }}>light (default)</div>{stripLightUrl && <img src={stripLightUrl} style={{ maxWidth: 520, width: "100%", borderRadius: 6, background: CHECKER }} />}</div>
-          <div><div style={{ opacity: 0.55, fontSize: 11 }}>heavy (low-contrast tune)</div>{stripHeavyUrl && <img src={stripHeavyUrl} style={{ maxWidth: 520, width: "100%", borderRadius: 6, background: CHECKER }} />}</div>
-        </div>
+        {stripHeavyUrl && <img src={stripHeavyUrl} style={{ maxWidth: 520, width: "100%", borderRadius: 6, background: CHECKER }} />}
       </Stage>
       <Stage n={7} title="Sprite isolation — connected components (SHIP) vs grid (fallback)" status={st.isolation}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>
