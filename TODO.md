@@ -8,6 +8,12 @@
       overlaps). Density varies per roll. Studio kept at `/tmp/lookdev-layout/` for further
       tuning. Still open below: weight curation / gridSnap exposure / lopsided-default are
       hardcoded to the dialed-in config — revisit if you want them user-tunable.
+- [ ] **Wizard-randomizer polish (autonomous, low-stakes).** The 🎲 config is hardcoded in
+      `layoutRandom()` (`src/generate/layouts.ts`). Optional next passes: expose `gridSnap` /
+      archetype-weight / lopsided as user controls in the wizard; and/or auto-pick the archetype
+      from the prompt/silhouette aspect (wide→console/split, tall→stack/dial) instead of pure
+      weighted-random. Studio for tuning: `~/dev/central/scripts/serve /tmp/lookdev-layout --bg`.
+
 - [ ] **(was) More generative template heuristics — original notes (kept for reference).**
       A layout-randomization studio was built (`/tmp/lookdev-layout/index.html`; re-serve with
       `~/dev/central/scripts/serve /tmp/lookdev-layout --bg`) to ideate graphic-design-informed
