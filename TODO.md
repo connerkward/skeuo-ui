@@ -2,7 +2,10 @@
 
 ## Open
 
-- [ ] **Merge `spritesheet-pipeline` → main — single-pass skin generation + sprite-sheet (2026-06-23).**
+- [ ] **★ #1 PRIORITY — Merge `spritesheet-pipeline` → main: single-pass skin generation + sprite-sheet (decision A locked 2026-06-23).**
+      ONE generative paint pass renders the device body + all button/knob/slider parts together
+      (combined blueprint); then non-generative BiRefNet mask + local cut + heuristic snap. Generated
+      skins render their OWN per-skin cut sprites (A). This is the top thing to land next session.
       The `spritesheet-pipeline` branch (worktree `../skeuo-ui-spritesheet`, tip `d88a4cc`, pushed)
       has the single-pass generation: ONE paint call renders the device body (grown around fixed
       sockets) + a bottom strip of bare control parts (`combinedBlueprint` in `blueprint.ts`,
