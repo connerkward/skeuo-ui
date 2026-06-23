@@ -32,6 +32,8 @@ import { initialSkinParam, isMobileApp } from "./platform";
 // so it doesn't match the transparent Tauri widget. The hook + portal stay
 // wired (the docked player renders through the same portal); flip to re-enable.
 const FLOAT_ENABLED = false;
+// Spotify "Connect" is hidden until the playback issue is fixed; flip to re-enable.
+const CONNECT_ENABLED = false;
 
 export default function App() {
   const visible = skinList.filter((s) => !s.hidden);
@@ -173,11 +175,17 @@ export default function App() {
           How it works <span className="arr">→</span>
         </a>
         <div className="topbar-right">
-          <button className={`tb-btn ${sp.status === "connected" ? "on" : ""}`}
-            onClick={() => setPanel("connect")} title="Drive the player with your Spotify">
-            <span className="tb-dot" data-status={sp.status} />
-            {sp.status === "connected" ? "Spotify" : "Connect"}
+          <button className={`tb-btn ${wire ? "on" : ""}`} onClick={() => setWire((v) => !v)}
+            title="Show the control template (wireframe) over the skin">
+            <WireIcon /> Template view
           </button>
+          {CONNECT_ENABLED && (
+            <button className={`tb-btn ${sp.status === "connected" ? "on" : ""}`}
+              onClick={() => setPanel("connect")} title="Drive the player with your Spotify">
+              <span className="tb-dot" data-status={sp.status} />
+              {sp.status === "connected" ? "Spotify" : "Connect"}
+            </button>
+          )}
           <button className="tb-btn" onClick={() => setPanel("desktop")}
             title="Run this skin as a desktop widget">
             ⤓ Desktop
@@ -233,7 +241,7 @@ export default function App() {
             {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
           </figcaption>
 
-          {/* actions ON the skin — Share, and the template (wireframe) view */}
+          {/* the action ON the skin — Share (Connect/Template moved to the bar) */}
           <div className="skin-actions">
             <ExportGifButton
               skinId={skinId}
@@ -241,10 +249,6 @@ export default function App() {
               runtime={runtimeView}
               spotifyDrive={spotifyDrive}
             />
-            <button className={`skin-act ${wire ? "on" : ""}`} onClick={() => setWire((v) => !v)}
-              title="Show the control template over the skin">
-              <WireIcon /> Template view
-            </button>
           </div>
         </div>
       </main>
