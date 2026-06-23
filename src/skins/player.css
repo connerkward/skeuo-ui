@@ -263,10 +263,12 @@
   will-change: transform; backface-visibility: hidden;
   box-shadow: 0 0.6cqw 1.6cqw rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.14);
 }
-/* the silver CD data-side texture forms the whole disc surface */
+/* the silver CD data-side texture forms the whole disc surface. The texture's hub is
+   recentred to the exact middle so it doesn't orbit when spinning; background-size is
+   overscanned a touch (104%) so the recenter's edge never shows a black sliver. */
 .cd-surface {
   position: absolute; inset: 0; border-radius: 50%;
-  background: url("/cd-disc.png") center / cover no-repeat;
+  background: url("/cd-disc.png") center / 104% 104% no-repeat;
 }
 /* optional album-color tint: the cover, oversized + heavily blurred to a soft colour
    field, blended with mix-blend-mode:color so it recolours the silver to the album's
