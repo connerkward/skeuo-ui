@@ -328,7 +328,8 @@ export function layoutRandom(): Region[] {
   };
   const raw = ARCH_FNS[pickArch(P)](P);
   resolveOverlaps(raw, P);
-  return raw.map(({ nopush, ...r }) => r as Region);
+  raw.forEach((r) => delete r.nopush);   // strip the transient repel flag
+  return raw as Region[];
 }
 
 // ---- radial: round dial, buttons orbiting lower rim, knobs as eyes, seek ring
