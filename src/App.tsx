@@ -102,8 +102,9 @@ export default function App() {
   // player — the same instance keeps driving Spotify.
   const pip = useDocumentPip();
   const [pipHost, setPipHost] = useState<HTMLElement | null>(null);
-  // preload every skin's logomark font up front so switching never pops in
-  useEffect(() => { preloadSkinFonts(); }, []);
+  // preload the visible roster's logomark fonts up front so switching never pops in
+  // (skinList is a stable module import, so the visible set is constant → run once)
+  useEffect(() => { preloadSkinFonts(skinList.filter((s) => !s.hidden).map((s) => s.id)); }, []);
   // top-bar popovers (Connect / Desktop) — only one open at a time
   const [panel, setPanel] = useState<null | "connect" | "desktop">(null);
 
