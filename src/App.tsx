@@ -151,8 +151,6 @@ export default function App() {
           setMode={setMode}
           spotifyDrive={spotifyDrive}
           connectEnabled={CONNECT_ENABLED}
-          wire={wire}
-          onToggleWire={() => setWire((v) => !v)}
           share={
             <ExportGifButton
               skinId={skinId}

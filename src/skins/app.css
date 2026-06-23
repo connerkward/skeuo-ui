@@ -385,24 +385,29 @@ body {
 /* top-bar action cluster: Spotify pill + "＋ skin" */
 .m-topbar-actions { display: inline-flex; align-items: center; gap: 8px; }
 
-/* compact top-bar buttons matching the desktop bar treatment (Template view +
-   Share, with Connect hidden while Spotify is broken). Icon-only to fit the bar. */
-.m-act {
-  background: #1a1a1d; color: #cfcfd4; border: 1px solid #34343a;
-  border-radius: 999px; min-height: 44px; min-width: 44px; padding: 0 10px;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 18px; line-height: 1; cursor: pointer;
-  transition: background .15s, border-color .15s, color .15s;
-}
-.m-act.on { background: #1f261f; border-color: rgba(45,255,110,.45); color: #8df0ad; }
-/* the Share button (ExportGifButton) — neutralize its fixed positioning + show
-   just the glyph in the bar */
+/* the Share button (ExportGifButton) — neutralize its fixed positioning; a
+   prominent LABELLED pill (glyph + "Share") in the bar */
 .m-topbar-actions .export-gif-btn {
   position: static; right: auto; bottom: auto; z-index: auto; box-shadow: none;
-  background: #1a1a1d; border: 1px solid #34343a; color: #cfcfd4;
-  min-height: 44px; min-width: 44px; padding: 0 10px; border-radius: 999px; gap: 0;
+  background: #1a1a1d; border: 1px solid #3c3c44; color: #e9e9ee;
+  min-height: 44px; padding: 0 16px; border-radius: 999px; gap: 7px;
+  font-size: 13.5px; font-weight: 650;
 }
-.m-topbar-actions .export-gif-btn span { display: none; }   /* glyph only, no "Share" text */
+.m-topbar-actions .export-gif-btn:active { background: #232328; }
+
+/* green "Create" CTA — the appealing primary action, matching the desktop bar */
+.m-cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: .2px;
+  color: #052b14; border: 1px solid #2dff6e;
+  background: linear-gradient(180deg, #54ff8d, #1fe06a);
+  box-shadow: 0 2px 12px rgba(45,255,110,.32), inset 0 1px 0 rgba(255,255,255,.45);
+  transition: filter .15s, transform .08s;
+}
+.m-cta:hover { filter: brightness(1.06); }
+.m-cta:active { transform: translateY(1px); }
+.m-cta-mark { font-size: 14px; line-height: 1; }
 
 /* ── Spotify connect pill (the easy one-tap connect on mobile / iOS) ────────── */
 .m-sp-pill {

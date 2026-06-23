@@ -23,15 +23,13 @@ interface Props {
   spotifyDrive: SpotifyDrive | null;
   // top-bar treatment matching the desktop bar:
   connectEnabled?: boolean;      // show the Spotify connect pill (hidden while broken)
-  wire?: boolean;                // template (wireframe) overlay state
-  onToggleWire?: () => void;     // Template-view toggle
   share?: React.ReactNode;       // the Share button (rendered by App)
 }
 
 // Mobile shell (<820px): a compact top bar + a swipeable carriage of skins,
 // with a trailing "+ Generate your own" page. Desktop never mounts this.
 export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp, mode, setMode, spotifyDrive,
-  connectEnabled, wire, onToggleWire, share }: Props) {
+  connectEnabled, share }: Props) {
   // pages = every visible skin, plus one trailing "create" page
   const createIdx = skins.length;
   const startIdx = Math.max(0, skins.findIndex((s) => s.id === skinId));
@@ -52,14 +50,10 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp,
       <header className="m-topbar">
         <Brand size="sm" className="m-title" />
         <div className="m-topbar-actions">
-          {onToggleWire && (
-            <button className={`m-act ${wire ? "on" : ""}`} onClick={onToggleWire}
-              aria-label="Template view" title="Template view">◳</button>
-          )}
           {share}
           {connectEnabled && <MobileSpotify sp={sp} mode={mode} setMode={setMode} />}
-          <button className="m-menu" onClick={() => sw.goTo(createIdx)} aria-label="Create your own skin">
-            + skin
+          <button className="m-cta" onClick={fire} aria-label="Create your own skin">
+            <span className="m-cta-mark">✦</span> Create
           </button>
         </div>
       </header>
@@ -89,7 +83,7 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp,
               {Math.abs(i - sw.index) <= 1 ? (
                 // drive the CURRENT page from real Spotify when connected; the
                 // neighbors stay on the local demo (off-screen, about to mount)
-                <Composite template={template} skinId={s.id} showWireframe={wire}
+                <Composite template={template} skinId={s.id}
                   spotifyDrive={i === sw.index ? spotifyDrive : null} />
               ) : (
                 <div className="m-placeholder" />
