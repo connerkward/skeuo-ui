@@ -18,12 +18,13 @@ body {
      a substantial gallery and the title/share panel. The side columns are FLUID
      (clamp scales them with the viewport); minmax(0,1fr) on the stage keeps it
      from overflowing. */
-  grid-template-columns: clamp(238px, 20vw, 360px) minmax(0, 1fr) clamp(256px, 21vw, 400px);
+  grid-template-columns: clamp(238px, 20vw, 360px) minmax(0, 1fr) clamp(300px, 26vw, 520px);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     "topbar  topbar topbar"
     "gallery stage  meta";
-  background: radial-gradient(circle at 60% 8%, #1a1a1e, #060607 72%);
+  /* FLAT near-black — no radial gradient pooling behind the title text */
+  background: #08080a;
   min-height: 0;
 }
 .topbar { grid-area: topbar; }
@@ -264,34 +265,36 @@ body {
   .stage .player { --w: min(560px, calc((100dvh - 224px) * 0.686)); }
 }
 
-/* ---------- meta zone — a cinematic title card (CENTERED) ---------- */
+/* ---------- meta zone — a cinematic title card (CENTERED, BIG) ---------- */
 .meta {
   min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px; padding: 32px 24px; text-align: center;
+  gap: 22px; padding: 32px 26px; text-align: center;
 }
-.meta .stage-caption { align-items: center; text-align: center; gap: 10px; }
-/* the logomark: the skin's name in its own display font, large + white, no box */
-.meta .cap-name {
-  font-size: clamp(26px, 2.6vw, 40px); line-height: 1.06; color: #fff;
-  text-shadow: 0 2px 18px rgba(0,0,0,.55);
+.meta .stage-caption { align-items: center; text-align: center; gap: 14px; }
+/* the logomark: the skin's NAME in its own display font — large + white, no box,
+   wraps across lines like a film title card. (3-class selector so it beats the
+   base `.stage-caption .cap-name` rule, which is later in the file.) */
+.meta .stage-caption .cap-name {
+  font-size: clamp(40px, 4.6vw, 76px); line-height: 0.96; color: #fff; font-weight: inherit;
+  text-shadow: 0 3px 28px rgba(0,0,0,.6); overflow-wrap: anywhere;
 }
-.meta .cap-blurb { font-size: 13.5px; max-width: 30ch; line-height: 1.5; color: #9498a2; }
+.meta .stage-caption .cap-blurb { font-size: 14px; max-width: 26ch; line-height: 1.55; color: #9aa0aa; }
 
 /* Share — a clean cinematic ghost button, not a heavy gradient box */
 .meta .skin-actions { justify-content: center; }
 .meta .export-gif-btn {
   background: transparent; border: 1px solid #3a3a42; box-shadow: none;
-  color: #d6d6dc; padding: 9px 18px; border-radius: 999px;
-  font-size: 12.5px; letter-spacing: .04em;
+  color: #d6d6dc; padding: 10px 20px; border-radius: 999px;
+  font-size: 12.5px; letter-spacing: .05em;
 }
 .meta .export-gif-btn:hover { background: rgba(255,255,255,.06); border-color: #5a5a64; color: #fff; }
 
 @media (max-width: 1199px) {
-  /* a compact centered strip beneath the player — still the title card, smaller */
-  .meta { padding: 4px 20px 16px; gap: 10px; }
-  .meta .cap-name { font-size: clamp(20px, 4.5vw, 28px); }
-  .meta .cap-blurb { font-size: 12.5px; max-width: 46ch; }
+  /* a centered strip beneath the player — still a big title card, a touch smaller */
+  .meta { padding: 6px 20px 18px; gap: 12px; }
+  .meta .stage-caption .cap-name { font-size: clamp(30px, 6vw, 52px); }
+  .meta .stage-caption .cap-blurb { font-size: 12.5px; max-width: 50ch; }
 }
 /* contact shadow — a dark ellipse hugging the player's base so it sits ON the
    floor instead of hanging in black. z-index 0 keeps it above the stage wash

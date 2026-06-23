@@ -8,17 +8,19 @@ import { DONOR_STYLES, type DonorStyle } from "./pipeline";
 
 const MODEL = "gpt-4o";
 
-// Logomark fonts the Director may choose from — EXACTLY the families pre-loaded
-// via the Google Fonts <link> in index.html, so a generated skin's title is
-// always renderable with no runtime font injection. Keep in sync with index.html.
-export const LOGO_FONTS = [
-  "Cinzel", "Orbitron", "Audiowide", "Bungee", "Lobster", "Bigshot One",
-  "Metamorphous", "Fredoka", "Saira Condensed", "VT323", "Share Tech Mono",
-] as const;
+// Punchy, cinematic Google-Fonts families SUGGESTED to the Director — these are
+// examples, NOT a hard allow-list: the chosen font is loaded dynamically at render
+// (ensureGoogleFont), so the LLM may return any real Google family that fits.
+const FONT_SUGGESTIONS = [
+  "Anton", "Bebas Neue", "Bungee", "Titan One", "Luckiest Guy", "Bangers",
+  "Black Ops One", "Orbitron", "Audiowide", "Michroma", "Monoton", "Nosifer",
+  "Pirata One", "Rubik Mono One", "Baloo 2", "Fredoka", "Lobster", "Lilita One",
+  "Cinzel Decorative", "Press Start 2P", "Faster One", "Bowlby One",
+];
 // donor style → a sensible default logomark font (used by the no-LLM heuristic)
 const STYLE_FONT: Record<DonorStyle, string> = {
-  frog: "Fredoka", biomech: "Metamorphous", halo: "Saira Condensed",
-  wmp: "Audiowide", winamp: "Orbitron",
+  frog: "Luckiest Guy", biomech: "Nosifer", halo: "Black Ops One",
+  wmp: "Michroma", winamp: "Anton",
 };
 
 // keyword → donor, scanned in order; first hit wins. Generic fallback: winamp.
@@ -61,10 +63,12 @@ export async function deriveMaterial(
               "You art-direct skeuomorphic MP3-player skins. Given a silhouette idea, reply with JSON " +
               `{"style": <one of ${DONOR_STYLES.join("|")}>, "materialPrompt": <1-2 sentence rich custom ` +
               "material/finish description derived from the idea: surface, color, sheen, hardware accents>, " +
-              `"font": <one of ${LOGO_FONTS.join("|")}>}. ` +
+              `"font": <a Google Fonts family name>}. ` +
               "style is the closest-fitting donor for palette/sprite reuse and MUST be exactly one of the listed values. " +
-              "font is the display typeface for this skin's TITLE LOGOMARK (like a film's title card) — pick the listed " +
-              "family whose character best matches the skin's vibe; it MUST be exactly one of the listed values.",
+              "font is the display typeface for this skin's TITLE LOGOMARK (like a film's title card): pick the real, " +
+              "currently-available Google Fonts family whose character best matches the skin's vibe — favour PUNCHY, " +
+              `bold, cinematic display faces (e.g. ${FONT_SUGGESTIONS.slice(0, 12).join(", ")}, or another that fits ` +
+              "better). Return the exact family name as it appears on Google Fonts.",
           },
           { role: "user", content: prompt },
         ],
@@ -76,8 +80,10 @@ export async function deriveMaterial(
     const style = parsed.style as DonorStyle;
     const materialPrompt = (parsed.materialPrompt ?? "").trim();
     if (!DONOR_STYLES.includes(style) || !materialPrompt) throw new Error("invalid director output");
-    // font is best-effort: validate against the allow-list, else default by style
-    const font = LOGO_FONTS.includes(parsed.font) ? (parsed.font as string) : (STYLE_FONT[style] ?? "Cinzel");
+    // font is best-effort + loaded dynamically, so accept any plausible family
+    // name (letters/spaces/digits), else default by style. No hard allow-list.
+    const raw = typeof parsed.font === "string" ? parsed.font.trim() : "";
+    const font = /^[\w][\w '-]{1,40}$/.test(raw) ? raw : (STYLE_FONT[style] ?? "Anton");
     return { style, materialPrompt, font };
   } catch {
     return heuristic(prompt);

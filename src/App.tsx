@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Composite } from "./player/Composite";
 import { SkinThumb } from "./player/SkinThumb";
-import { skinFont, skinFontStyle } from "./player/skinFonts";
+import { skinFont, skinFontStyle, ensureGoogleFont } from "./player/skinFonts";
 import { useDocumentPip } from "./player/useDocumentPip";
 import { playerTemplate } from "./template/winamp-layout";
 import { skinList, thumbUrl } from "./player/skins";
@@ -72,6 +72,9 @@ export default function App() {
   const [showCreate, setShowCreate] = useState(false);
   const activeRuntime = runtimeSkins.find((s) => s.id === skinId);
   const activeMeta = [...visible, ...runtimeSkins].find((s) => s.id === skinId);
+  // the skin's logomark title font — loaded from Google Fonts on demand
+  const titleFont = skinFont(skinId, activeRuntime?.font);
+  useEffect(() => { ensureGoogleFont(titleFont); }, [titleFont.family, titleFont.weight]);
 
   // Spotify: drive the skin from real playback only in spotify mode
   const sp = useSpotify();
@@ -244,7 +247,7 @@ export default function App() {
           a centered strip under the player on narrower ones (grid handles which). */}
       <section className="meta">
         <figcaption className="stage-caption">
-          <span className="cap-name" style={skinFontStyle(skinFont(skinId, activeRuntime?.font))}>
+          <span className="cap-name" style={skinFontStyle(titleFont)}>
             {(activeMeta?.name ?? skinId).replace(/\s*✦\s*$/, "")}
           </span>
           {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
