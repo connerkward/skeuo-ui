@@ -1,0 +1,117 @@
+{
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "skeuo_paint_combined.png" },
+    "_meta": { "title": "STAGE 1+2 INPUT - combined PAINT (device 2:3 on top + control strip below, 1024x1820 9:16). See notes: stages 1 (SVG blueprint) and 2 (restyle) are not native ComfyUI; this loads their result." }
+  },
+  "20": {
+    "class_type": "LoadRembgByBiRefNetModel",
+    "inputs": { "model": "General.safetensors", "device": "AUTO", "use_weight": false, "dtype": "float32" },
+    "_meta": { "title": "BiRefNet model (General.safetensors) - shared by device + strip rembg, LOCAL + FREE" }
+  },
+  "30": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["10", 0], "width": 1024, "height": 1536, "x": 0, "y": 0 },
+    "_meta": { "title": "STAGE 3a - crop DEVICE region (top devFrac, 1024x1536 = 2:3)" }
+  },
+  "31": {
+    "class_type": "RembgByBiRefNet",
+    "inputs": { "model": ["20", 0], "images": ["30", 0] },
+    "_meta": { "title": "STAGE 3b - BiRefNet device cutout -> transparent device (= fal removeBackground)" }
+  },
+  "32": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["31", 0], "filename_prefix": "skeuo/frame" },
+    "_meta": { "title": "OUTPUT frame.png (transparent device)" }
+  },
+  "40": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["10", 0], "width": 1024, "height": 284, "x": 0, "y": 1536 },
+    "_meta": { "title": "STAGE 4a - crop control STRIP (bottom 1024x284)" }
+  },
+  "41": {
+    "class_type": "RembgByBiRefNet",
+    "inputs": { "model": ["20", 0], "images": ["40", 0] },
+    "_meta": { "title": "STAGE 4b - BiRefNet the WHOLE strip ONCE -> transparent-bg strip (= cutFromTransparentStrip source)" }
+  },
+  "50": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 5, "y": 11 },
+    "_meta": { "title": "cell 1: prev button" }
+  },
+  "51": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["50", 0], "filename_prefix": "skeuo/sprites/prev" },
+    "_meta": { "title": "sprite prev.png" }
+  },
+  "52": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 133, "y": 11 },
+    "_meta": { "title": "cell 2: play button" }
+  },
+  "53": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["52", 0], "filename_prefix": "skeuo/sprites/play" },
+    "_meta": { "title": "sprite play.png" }
+  },
+  "54": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 261, "y": 11 },
+    "_meta": { "title": "cell 3: next button" }
+  },
+  "55": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["54", 0], "filename_prefix": "skeuo/sprites/next" },
+    "_meta": { "title": "sprite next.png" }
+  },
+  "56": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 389, "y": 11 },
+    "_meta": { "title": "cell 4: stop button" }
+  },
+  "57": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["56", 0], "filename_prefix": "skeuo/sprites/stop" },
+    "_meta": { "title": "sprite stop.png" }
+  },
+  "58": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 517, "y": 11 },
+    "_meta": { "title": "cell 5: vol knob" }
+  },
+  "59": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["58", 0], "filename_prefix": "skeuo/sprites/vol" },
+    "_meta": { "title": "sprite vol.png" }
+  },
+  "60": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 645, "y": 11 },
+    "_meta": { "title": "cell 6: seek slider thumb" }
+  },
+  "61": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["60", 0], "filename_prefix": "skeuo/sprites/seek" },
+    "_meta": { "title": "sprite seek.png" }
+  },
+  "62": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 773, "y": 11 },
+    "_meta": { "title": "cell 7: toggle OFF" }
+  },
+  "63": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["62", 0], "filename_prefix": "skeuo/sprites/switch-off" },
+    "_meta": { "title": "sprite switch-off.png" }
+  },
+  "64": {
+    "class_type": "ImageCrop",
+    "inputs": { "image": ["41", 0], "width": 118, "height": 222, "x": 901, "y": 11 },
+    "_meta": { "title": "cell 8: toggle ON" }
+  },
+  "65": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["64", 0], "filename_prefix": "skeuo/sprites/switch-on" },
+    "_meta": { "title": "sprite switch-on.png" }
+  }
+}
