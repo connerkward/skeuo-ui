@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Composite } from "./player/Composite";
+import { SkinThumb } from "./player/SkinThumb";
 import { useDocumentPip } from "./player/useDocumentPip";
 import { playerTemplate } from "./template/winamp-layout";
-import { skinList, skinTemplateUrl } from "./player/skins";
-import type { Template } from "./template/schema";
+import { skinList, thumbUrl } from "./player/skins";
 import "./skins/all"; // app.css + player.css + every skin palette (shared with the widget)
-// ── feature: template editor + generate-from-prompt ──────────────────────────
+// ── feature: generate-from-prompt ────────────────────────────────────────────
 import { type RuntimeSkin } from "./generate/CreatePanel";
 import { CreateWizard } from "./generate/CreateWizard";
-import { TemplateEditor } from "./editor/TemplateEditor";
 import "./generate/create.css";
 // ── feature: Spotify connect & control ───────────────────────────────────────
 import { useSpotify } from "./spotify/useSpotify";
@@ -27,8 +26,6 @@ import { initialSkinParam, isMobileApp } from "./platform";
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;
-
-const skinHasFrame = (id: string) => !!skinList.find((s) => s.id === id)?.has.includes("frame");
 
 // Document-PiP "Float player" button is hidden for now — the PiP window's
 // browser-owned chrome (title bar, opaque rectangular frame) can't be removed,
@@ -70,9 +67,6 @@ export default function App() {
     } catch { /* ignore */ }
   }, [skinId]);
   const [showCreate, setShowCreate] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [edited, setEdited] = useState<Template | null>(null);          // live editor override
-  const [diskTemplate, setDiskTemplate] = useState<Template | null>(null); // registry skin's real template.json
   const activeRuntime = runtimeSkins.find((s) => s.id === skinId);
   const activeMeta = [...visible, ...runtimeSkins].find((s) => s.id === skinId);
 
@@ -106,26 +100,11 @@ export default function App() {
   // top-bar popovers (Connect / Desktop) — only one open at a time
   const [panel, setPanel] = useState<null | "connect" | "desktop">(null);
 
-  // load the selected registry skin's actual template.json so the editor edits
-  // the real on-disk layout (runtime skins carry their template inline)
-  const diskUrl = activeRuntime ? undefined : skinTemplateUrl(skinId);
-  useEffect(() => {
-    if (!diskUrl) { setDiskTemplate(null); return; }
-    let live = true;
-    fetch(diskUrl).then((r) => r.json()).then((t) => { if (live) setDiskTemplate(t); }).catch(() => {});
-    return () => { live = false; };
-  }, [diskUrl]);
-
   const onCreated = useCallback((s: RuntimeSkin) => {
     setRuntimeSkins((rs) => [...rs, s]);
     setSkinId(s.id);
     setShowCreate(false);
-    setEdited(null);
   }, []);
-
-  const editorTemplate: Template = activeRuntime ? activeRuntime.template : diskTemplate ?? playerTemplate;
-  const editorFrame = activeRuntime?.frameUrl
-    ?? (skinHasFrame(skinId) ? `/skins/${skinId}/frame.png` : undefined);
 
   const runtimeView = activeRuntime
     ? { frameUrl: activeRuntime.frameUrl, template: activeRuntime.template, style: activeRuntime.style }
@@ -176,12 +155,12 @@ export default function App() {
   }
 
   // ── desktop ──────────────────────────────────────────────────────────────────
-  // Layout follows the intended user flow:
-  //   1. BROWSE the gallery (the bottom rail — the thing you do first)
-  //   2. CREATE your own skin (the single, loud call-to-action)
-  //   3. take it further — Share / Connect / Desktop (quiet end-of-flow actions
-  //      attached to the player, i.e. "leaving with" the skin)
-  // Edit / Wireframe are power-user utilities, kept out of the funnel in the dock.
+  // Layout by the user's flow:
+  //   • BROWSE — a scrolling left sidebar of skins (animated thumbnail + name)
+  //   • the selected skin shown large in the stage
+  //   • CREATE your own — the loud green top-bar CTA
+  //   • Connect / Desktop live in the top bar; Share + Template-view sit next to
+  //     the skin (the artifact). Edit was removed.
   const closePanel = () => setPanel(null);
   return (
     <div className="app">
@@ -193,11 +172,50 @@ export default function App() {
         <a className="topbar-how" href="/process/" target="_blank" rel="noopener">
           How it works <span className="arr">→</span>
         </a>
-        {/* the ONE call-to-action — everything else is subordinate to this */}
-        <button className={`tb-cta ${showCreate ? "open" : ""}`} onClick={() => setShowCreate((v) => !v)}>
-          {showCreate ? <>× Close</> : <><span className="tb-cta-plus">✦</span> Create your own skin</>}
-        </button>
+        <div className="topbar-right">
+          <button className={`tb-btn ${sp.status === "connected" ? "on" : ""}`}
+            onClick={() => setPanel("connect")} title="Drive the player with your Spotify">
+            <span className="tb-dot" data-status={sp.status} />
+            {sp.status === "connected" ? "Spotify" : "Connect"}
+          </button>
+          <button className="tb-btn" onClick={() => setPanel("desktop")}
+            title="Run this skin as a desktop widget">
+            ⤓ Desktop
+          </button>
+          {/* the ONE call-to-action — everything else is subordinate to this */}
+          <button className={`tb-cta ${showCreate ? "open" : ""}`} onClick={() => setShowCreate((v) => !v)}>
+            {showCreate ? <>× Close</> : <><span className="tb-cta-plus">✦</span> Create your own skin</>}
+          </button>
+        </div>
       </header>
+
+      {/* left gallery — scrolling skin list with animated thumbnails + names */}
+      <aside className="gallery">
+        <div className="gallery-list">
+          <p className="gallery-label">Skins</p>
+          {visible.map((s) => (
+            <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
+              onClick={() => setSkinId(s.id)} title={`${s.name} — ${s.blurb}`}>
+              <SkinThumb skinId={s.id} imgSrc={thumbUrl(s.id)} />
+              <span className="skin-row-meta">
+                <span className="skin-row-name">{s.name}</span>
+                <span className="skin-row-blurb">{s.blurb}</span>
+              </span>
+            </button>
+          ))}
+          {runtimeSkins.length > 0 && <p className="gallery-label sub">Your skins</p>}
+          {runtimeSkins.map((s) => (
+            <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
+              onClick={() => setSkinId(s.id)} title={s.name}>
+              <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
+              <span className="skin-row-meta">
+                <span className="skin-row-name">{s.name}</span>
+                <span className="skin-row-blurb">{s.blurb}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </aside>
 
       <main className="stage">
         <div className="stage-inner">
@@ -215,7 +233,7 @@ export default function App() {
             {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
           </figcaption>
 
-          {/* quiet "take it further" row — end-of-flow actions on the artifact */}
+          {/* actions ON the skin — Share, and the template (wireframe) view */}
           <div className="skin-actions">
             <ExportGifButton
               skinId={skinId}
@@ -223,60 +241,15 @@ export default function App() {
               runtime={runtimeView}
               spotifyDrive={spotifyDrive}
             />
-            <button className={`skin-act ${sp.status === "connected" ? "on" : ""}`}
-              onClick={() => setPanel("connect")} title="Drive this player with your Spotify">
-              <span className="tb-dot" data-status={sp.status} />
-              {sp.status === "connected" ? "Spotify connected" : "Connect Spotify"}
-            </button>
-            <button className="skin-act" onClick={() => setPanel("desktop")}
-              title="Run this skin as a desktop widget">
-              ⤓ Open on desktop
+            <button className={`skin-act ${wire ? "on" : ""}`} onClick={() => setWire((v) => !v)}
+              title="Show the control template over the skin">
+              <WireIcon /> Template view
             </button>
           </div>
         </div>
       </main>
 
-      {/* bottom dock — BROWSE the gallery (step 1), plus quiet power tools */}
-      <footer className="dock">
-        <span className="dock-label">Browse</span>
-        <div className="dock-rail">
-          {visible.map((s) => (
-            <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
-              onClick={() => { setSkinId(s.id); setEdited(null); }} title={`${s.name} — ${s.blurb}`}>
-              <img className="thumb" loading="lazy" alt=""
-                src={skinHasFrame(s.id) ? `/skins/${s.id}/frame.png` : "/favicon.svg"}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-              <span className="name">{s.name}</span>
-            </button>
-          ))}
-          {runtimeSkins.length > 0 && <span className="dock-sep" />}
-          {runtimeSkins.map((s) => (
-            <button key={s.id} className={`skin-tile ${s.id === skinId ? "active" : ""}`}
-              onClick={() => { setSkinId(s.id); setEdited(null); }} title={s.name}>
-              <img className="thumb" loading="lazy" alt="" src={s.frameUrl}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/favicon.svg"; }} />
-              <span className="name">{s.name}</span>
-            </button>
-          ))}
-          <button className="skin-tile create" onClick={() => setShowCreate(true)} title="Create your own skin">
-            <span className="plus">+</span>
-            <span className="name">Create</span>
-          </button>
-        </div>
-        <div className="dock-tools">
-          <button className={`dock-tool ${wire ? "active" : ""}`} onClick={() => setWire((v) => !v)}
-            title="Toggle the control wireframe">
-            <WireIcon />
-          </button>
-          <button className="dock-tool" onClick={() => { setEdited(null); setEditing(true); }}
-            title="Edit this skin's template">
-            ✎
-          </button>
-        </div>
-      </footer>
-
-      {/* Connect / Desktop open as centered panels (the stage clips, so anchored
-          popovers there would be cut off) */}
+      {/* Connect / Desktop open as centered panels */}
       {panel && (
         <div className="panel-scrim" onPointerDown={(e) => e.target === e.currentTarget && closePanel()}>
           <div className="panel-card">
@@ -303,14 +276,6 @@ export default function App() {
           <CreateWizard onCreated={onCreated} />
         </div>
       )}
-      {editing && (
-        <TemplateEditor
-          template={editorTemplate}
-          frameUrl={editorFrame}
-          onApply={setEdited}
-          onClose={() => { setEditing(false); setEdited(null); }}
-        />
-      )}
 
       {/* ONE portal, container toggles dock ⇄ float so the player never remounts */}
       {pipHost && createPortal(
@@ -320,7 +285,6 @@ export default function App() {
             skinId={skinId}
             showWireframe={wire}
             runtime={runtimeView}
-            templateOverride={edited ?? undefined}
             spotifyDrive={spotifyDrive}
           />
         </div>,
