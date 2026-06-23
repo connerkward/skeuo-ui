@@ -306,27 +306,46 @@ export function templateForVariant(id: string, v: LayoutVariant): Template {
 // guarantee is hard, not best-effort. All math in normalized 0..1 coords.
 // ---------------------------------------------------------------------------
 type Box = { x: number; y: number; w: number; h: number };
-const ov = (a: Box, b: Box): { ox: number; oy: number } | null => {
-  const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
-  const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
-  return ox > 0 && oy > 0 ? { ox, oy } : null;
-};
 const clampBox = (r: Box) => {
   r.w = Math.min(r.w, 0.94); r.h = Math.min(r.h, 0.94);
   r.x = Math.max(0.02, Math.min(r.x, 0.98 - r.w));
   r.y = Math.max(0.02, Math.min(r.y, 0.98 - r.h));
 };
 
+// GEN_W×GEN_H is taller than wide (1024×1536), so a normalized "square" (w==h) is a
+// PIXEL OVAL. PX_SQUARE is the height factor that makes a control PIXEL-square: a rect
+// with h = w * PX_SQUARE has equal pixel width and height → renders a TRUE CIRCLE.
+const PX_SQUARE = GEN_W / GEN_H;             // ≈0.6667
+// round controls whose socket must stay a TRUE CIRCLE (pixel-square) end to end —
+// repack keeps them pixel-square and resolveOverlaps moves (never one-axis-squishes) them.
+const isRoundReg = (r: Region): boolean =>
+  r.kind === "knob" || (r.kind === "button" && r.shape === "ellipse");
+
+// Minimum clear space (normalized) the separation must leave BETWEEN any two
+// control rects. The blueprint inset-strokes the magenta ring on the rect edge, so
+// a positive gap here guarantees the rings of adjacent sockets never touch/overlap.
+const MIN_GAP = 0.012;
+// overlap WITH a min-gap: treats boxes as if grown by MIN_GAP/2 on every side, so
+// "touching within MIN_GAP" counts as an overlap to resolve.
+const ovGap = (a: Box, b: Box): { ox: number; oy: number } | null => {
+  const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) + MIN_GAP;
+  const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) + MIN_GAP;
+  return ox > 0 && oy > 0 ? { ox, oy } : null;
+};
+
 export function resolveOverlaps(regions: Region[]): Region[] {
-  const items = regions.map((r) => ({ reg: r, rect: { ...r.rect }, fixed: r.kind === "display" }));
-  // iterative separation: push overlapping pairs apart along the axis of LEAST overlap
+  const items = regions.map((r) => ({
+    reg: r, rect: { ...r.rect }, fixed: r.kind === "display", round: isRoundReg(r),
+  }));
+  // iterative separation: push overlapping (or sub-MIN_GAP) pairs apart along the
+  // axis of LEAST overlap. MOVING only — never resizes, so round sockets stay circular.
   for (let iter = 0; iter < 60; iter++) {
     let any = false;
     for (let i = 0; i < items.length; i++) {
       for (let j = i + 1; j < items.length; j++) {
         const A = items[i], B = items[j];
         if (A.fixed && B.fixed) continue;          // two displays may layer
-        const o = ov(A.rect, B.rect);
+        const o = ovGap(A.rect, B.rect);
         if (!o) continue;
         any = true;
         const a = A.rect, b = B.rect;
@@ -346,22 +365,35 @@ export function resolveOverlaps(regions: Region[]): Region[] {
     }
     if (!any) break;
   }
-  // HARD guarantee: shrink any residual control-control overlap (smaller box yields)
+  // HARD guarantee: shrink any residual control-control overlap (smaller box yields).
+  // Round sockets shrink UNIFORMLY (both axes by the same px-square ratio) so they
+  // NEVER become ovals; non-round boxes shrink on the least-overlap axis as before.
   for (let pass = 0; pass < 8; pass++) {
     let any = false;
     for (let i = 0; i < items.length; i++) {
       for (let j = i + 1; j < items.length; j++) {
         const A = items[i], B = items[j];
         if (A.fixed && B.fixed) continue;
-        const o = ov(A.rect, B.rect);
+        const o = ovGap(A.rect, B.rect);
         if (!o) continue;
         any = true;
         // shrink the movable (or smaller) box on the least-overlap axis
         const target = A.fixed ? B : B.fixed ? A : (A.rect.w * A.rect.h <= B.rect.w * B.rect.h ? A : B);
         const r = target.rect;
-        // gentle shrink, FLOORED at 0.07 so an interactable never collapses to a sliver
-        if (o.ox < o.oy) { r.x += o.ox / 2 + 0.004 * (r.x < (A === target ? B : A).rect.x ? -1 : 1); r.w = Math.max(0.07, r.w - o.ox / 2 - 0.004); }
-        else { r.h = Math.max(0.07, r.h - o.oy / 2 - 0.004); }
+        if (target.round) {
+          // uniform shrink keyed off the least-overlap amount, preserving pixel-square
+          // (h = w * PX_SQUARE). Center stays put. Floored so it never collapses.
+          const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+          const dropW = Math.min(o.ox, o.oy) / 2 + 0.004;
+          const newW = Math.max(0.07, r.w - dropW);
+          r.w = newW; r.h = newW * PX_SQUARE;
+          r.x = cx - r.w / 2; r.y = cy - r.h / 2;
+        } else if (o.ox < o.oy) {
+          r.x += o.ox / 2 + 0.004 * (r.x < (A === target ? B : A).rect.x ? -1 : 1);
+          r.w = Math.max(0.07, r.w - o.ox / 2 - 0.004);
+        } else {
+          r.h = Math.max(0.07, r.h - o.oy / 2 - 0.004);
+        }
         clampBox(r);
       }
     }
@@ -378,15 +410,19 @@ export function resolveOverlaps(regions: Region[]): Region[] {
 // sliver. Displays keep their rects (the screen/marquee/time). Result: clean,
 // well-proportioned, non-overlapping sockets → a clean paint → clean cuts.
 // ---------------------------------------------------------------------------
+// CANON sizes are normalized (0..1) on the GEN_W×GEN_H canvas. Round controls'
+// widths are paired with a PIXEL-SQUARE height (h = w * PX_SQUARE) so button/knob
+// render as TRUE CIRCLES (the blueprint's circle uses min(w_px,h_px), now w_px==h_px).
 const CANON: Record<string, [number, number]> = {
-  button: [0.13, 0.13], knob: [0.14, 0.14], toggle: [0.11, 0.07], segmented: [0.34, 0.08],
+  button: [0.13, 0.13 * PX_SQUARE], knob: [0.14, 0.14 * PX_SQUARE], toggle: [0.11, 0.07],
+  segmented: [0.34, 0.08],
   "slider-h": [0.82, 0.045], "slider-v": [0.06, 0.24], xy: [0.26, 0.26],
   "slider-arc": [0.34, 0.34], "slider-path": [0.34, 0.2],
 };
 export function repackTemplate(regions: Region[]): Region[] {
   const sized = regions.map((r) => {
     if (r.kind === "display") return { ...r, rect: { ...r.rect } };
-    let [cw, ch] = CANON[r.kind] ?? [0.13, 0.13];
+    let [cw, ch] = CANON[r.kind] ?? [0.13, 0.13 * PX_SQUARE];
     if (r.bind === "play") { cw *= 1.25; ch *= 1.25; }          // play dominates the transport row
     const cx = r.rect.x + r.rect.w / 2, cy = r.rect.y + r.rect.h / 2;
     return { ...r, rect: {

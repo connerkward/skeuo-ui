@@ -286,18 +286,31 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
   // --- device sockets: MINIMAL guide (bright magenta keyline only, NO filled shape).
   // Don't draw socket shapes — they override the model's painted control shape. The
   // magenta keyline is just a visual anchor; the model paints inside/around it freely.
+  //
+  // GEOMETRY INVARIANTS (fix for "oval buttons" + "overlapping rings"):
+  //   • ROUND controls (knob / ellipse button) render as a TRUE CIRCLE — diameter =
+  //     min(w_px, h_px) centered in the rect — so a non-pixel-square rect (0.13×0.13
+  //     normalized is 133×200px) can never come out an oval.
+  //   • The ring is stroked INSET (centered on the rect edge, i.e. the stroke's OUTER
+  //     edge sits at the rect boundary) instead of padded OUTWARD by `pad`. Padding the
+  //     ring outward made adjacent, non-overlapping rects produce visibly overlapping
+  //     rings. With an inset ring the painted outline never exceeds the (separated) rect,
+  //     so resolveOverlaps' min-gap guarantees the rings clear each other.
   for (const r of regs) {
     const x = r.rect.x * GEN_W, y = r.rect.y * GEN_H;
     const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
     const ringW = Math.max(4, Math.round(Math.min(w, h) * 0.08));
-    const pad = ringW / 2;
+    const inset = ringW / 2;                 // keep the stroke's outer edge AT the rect boundary
     // magenta outline ONLY — no filled shape to dictate control form
     const round = r.kind === "knob" || ((r.kind === "button" || r.kind === "display") && r.shape === "ellipse");
     if (round) {
-      parts.push(ellipse(x - pad, y - pad, w + 2 * pad, h + 2 * pad, "none", BP_RING, ringW));
+      const d = Math.min(w, h);              // TRUE circle: diameter = shorter side
+      const cx = x + w / 2, cy = y + h / 2;  // centered in the rect
+      const rr = Math.max(0, d / 2 - inset);
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${BP_RING}" stroke-width="${ringW}"/>`);
     } else {
       const rad0 = Math.min(w, h) * 0.3;
-      parts.push(roundRect(x - pad, y - pad, w + 2 * pad, h + 2 * pad, rad0 + pad, "none", BP_RING, ringW));
+      parts.push(roundRect(x + inset, y + inset, w - 2 * inset, h - 2 * inset, Math.max(0, rad0 - inset), "none", BP_RING, ringW));
     }
   }
 

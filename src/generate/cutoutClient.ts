@@ -20,112 +20,8 @@
 // a data: URL (offline demo, no R2), we key out the white background with the
 // shared pure-JS cutoutAlpha — the original behavior — instead of calling fal.
 import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type SpriteKind } from "./blueprint";
-import { resolveOverlaps } from "./layouts";
 import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
-
-// Decode a PNG blob to ImageData (for socket detection on the masked device).
-// Use createImageBitmap, NOT img.decode() — the latter throws EncodingError on
-// some valid PNGs (the BiRefNet output among them), which silently killed the snap.
-async function blobToImageData(blob: Blob): Promise<ImageData> {
-  const bmp = await createImageBitmap(blob);
-  const c = document.createElement("canvas");
-  c.width = bmp.width; c.height = bmp.height;
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-  if (!ctx) { bmp.close?.(); throw new Error("no 2d canvas context"); }
-  ctx.drawImage(bmp, 0, 0);
-  bmp.close?.();
-  return ctx.getImageData(0, 0, c.width, c.height);
-}
-
-// Composite a (possibly transparent) PNG blob onto a solid background → data URL,
-// so the VLM sees the device clearly regardless of how light or dark the body is.
-async function compositeOnBg(blob: Blob, bg: string): Promise<string> {
-  const bmp = await createImageBitmap(blob);
-  const c = document.createElement("canvas");
-  c.width = bmp.width; c.height = bmp.height;
-  const ctx = c.getContext("2d");
-  if (!ctx) { bmp.close?.(); throw new Error("no 2d canvas context"); }
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, c.width, c.height);
-  ctx.drawImage(bmp, 0, 0); bmp.close?.();
-  return c.toDataURL("image/png");
-}
-
-// ALIGN via VLM (gpt-4o vision) — THE chosen approach (see docs/skin-pipeline-sota.md
-// + generation/freeform.py). Send the device image + the template's control checklist
-// to /api/extract; gpt-4o returns each control's ACTUAL painted box, matched by its
-// icon/role → identity correct by construction (no nearest-neighbour mis-assignment).
-// Snap each region onto its box; controls the VLM can't locate keep blueprint coords.
-// canvas = device dims so the frame renders 1:1.
-type SnapRect = { x: number; y: number; w: number; h: number };
-interface VlmBox { bind: string; x: number; y: number; w: number; h: number }
-const ALIGN_KINDS = new Set([
-  "button", "toggle", "slider-h", "slider-v", "knob", "slider-arc", "segmented", "xy", "display",
-]);
-
-// ALIGN via gpt-4o VLM (load-bearing). Snap controls to their painted locations,
-// identified by icon; plausibleBox gates noisy/garbage boxes.
-async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: number): Promise<Template> {
-  const canvas = { w: W, h: H };
-  const align = template.regions.filter((r) => ALIGN_KINDS.has(r.kind));
-  if (!align.length) return { ...template, canvas };
-
-  // checklist: region.id is the unique return key; `label` describes the role so the
-  // VLM can identify the control by its painted icon/shape and report the right id.
-  const controls = align.map((r) => {
-    const role = r.bind || r.kind;
-    const idx = typeof r.index === "number" ? ` #${r.index}` : "";
-    const lbl = r.label ? ` (${r.label})` : "";
-    return { bind: r.id, kind: r.kind, label: `${role}${idx}${lbl}` };
-  });
-
-  let boxes: VlmBox[];
-  try {
-    const imageDataUrl = await compositeOnBg(frameBlob, "#808080");
-    const resp = await fetch(apiUrl("/api/extract"), {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageDataUrl, controls }),
-    });
-    if (!resp.ok) throw new Error(`/api/extract ${resp.status}`);
-    boxes = ((await resp.json()) as { boxes: VlmBox[] }).boxes ?? [];
-  } catch {
-    return { ...template, canvas };   // VLM unavailable → keep the blueprint layout
-  }
-  if (!boxes.length) return { ...template, canvas };
-
-  // a VLM box is only accepted if its shape/size is PLAUSIBLE for the control kind
-  // (gpt-4o occasionally returns a thin sliver for a knob or a tiny screen). When it
-  // fails the sanity check we keep the blueprint rect for that control.
-  const kindOf = new Map(template.regions.map((r) => [r.id, r.kind] as const));
-  const plausibleBox = (kind: string | undefined, b: SnapRect): boolean => {
-    if (b.w <= 0.01 || b.h <= 0.01 || b.w > 0.97 || b.h > 0.97) return false;
-    const ar = b.w / b.h;
-    switch (kind) {
-      case "button": case "knob": case "toggle": case "xy":
-        return ar > 0.45 && ar < 2.2 && b.w >= 0.03 && b.w <= 0.4 && b.h >= 0.03 && b.h <= 0.4;
-      case "slider-h": return ar > 2.0 && b.w >= 0.15;
-      case "slider-v": return ar < 0.8 && b.h >= 0.1;
-      case "segmented": return ar > 1.4 && b.w >= 0.12;
-      case "slider-arc": return ar > 0.5 && ar < 2.0 && b.w >= 0.1;
-      case "display": return b.w >= 0.15 && b.h >= 0.03;
-      default: return true;
-    }
-  };
-  // VLM finds the control; plausibleBox gates junk; snap directly to the VLM box
-  const byId = new Map<string, SnapRect>();
-  for (const b of boxes) {
-    if (!b || typeof b.bind !== "string" || byId.has(b.bind)) continue;
-    const kind = kindOf.get(b.bind);
-    const box = { x: b.x, y: b.y, w: b.w, h: b.h };
-    if (plausibleBox(kind, box)) byId.set(b.bind, box);
-  }
-  const regions = template.regions.map((r) => {
-    const box = byId.get(r.id);
-    return box ? { ...r, rect: box } : r;   // matched + plausible → snap; else keep blueprint
-  });
-  // the snapped render template must ALSO have no overlapping interactables
-  return { ...template, canvas, regions: resolveOverlaps(regions) };
-}
 
 // Decode raw image bytes into something drawable, robustly across engines.
 // createImageBitmap is the fast path, but in real WKWebView (the iOS app + macOS
@@ -468,7 +364,7 @@ export interface FinishResult {
   frameUrl: string;        // public (absolute on native) device frame URL
   sprites: boolean;        // true once per-skin sprites were cut + uploaded
   spriteUrls: Record<string, string>; // bind → public sprite URL
-  template?: Template;     // template with control regions snapped onto the painted sockets
+  template?: Template;     // the input blueprint template (deterministic socket positions, as-is)
 }
 
 // Full client half of a single-pass generation, returning the rich FinishResult
@@ -509,16 +405,13 @@ export async function finishCutoutFull(
   const frameBlob = await serverCutout(deviceCanvas);
   await uploadFrame(id, frameBlob);
 
-  // 1b. ALIGN via gpt-4o VLM (load-bearing). Snap each control's VLM-detected box to
-  //     its template position; VLM identifies by icon, plausibleBox gates trash, we trust
-  //     the painted location. Fallback: blueprint coords for controls the VLM can't locate.
-  let snapped = template;
-  if (template) {
-    try {
-      const dev = await blobToImageData(frameBlob);
-      snapped = await snapToVLM(template, frameBlob, dev.width, dev.height);
-    } catch { /* VLM unavailable → keep the blueprint template */ }
-  }
+  // 1b. PLACEMENT = the blueprint/socket positions, AS-IS. The deterministic template
+  //     rects ARE the load-bearing truth (per ai-image-coords-rule). We do NOT run a VLM
+  //     snap here: in this architecture the controls are painted in the bottom STRIP and
+  //     the device has EMPTY sockets, so sending the device frame to gpt-4o locates only
+  //     the displays/screens that ARE on the body and snaps controls to garbage — worse
+  //     than the known-good blueprint coords. So keep the blueprint template unchanged.
+  const snapped = template;
 
   // 2. control sprites: BiRefNet-isolate the WHOLE strip ONCE (the same rembg model used
   //    for the device), giving a transparent-background strip, then cut each control by
@@ -534,27 +427,15 @@ export async function finishCutoutFull(
     const [nx, ny, nw, nh] = cellRect;
     return cutFromTransparentStrip(ts, nx * W * fx, (ny * H - syOrig) * fy, nw * W * fx, nh * H * fy);
   };
+  // Use the HEAVY BiRefNet model by default (segments low-contrast controls best) — no
+  // light-first pass. (Per request: heavy every time, even before any contrast tune.)
   let tstrip: HTMLCanvasElement | null = null;
-  try { tstrip = await blobToCanvas(await serverCutout(strip)); } catch { tstrip = null; }
-
-  // First pass: cut each control from the (light-model) BiRefNet strip.
+  try { tstrip = await blobToCanvas(await serverCutout(strip, "General Use (Heavy)")); } catch { tstrip = null; }
   const sprites: Record<string, HTMLCanvasElement | null> = {};
   for (const cell of layout.cells) {
     sprites[cell.bind] = tstrip ? cutFrom(tstrip, cell.cellRect) : null;
   }
-  // DETECT failures (eroded/empty — e.g. low-contrast controls) and RETRY with the heavy
-  // BiRefNet model TUNED for low contrast; re-cut only the failed controls from that strip.
-  const failed = layout.cells.filter((c) => cutLooksFailed(sprites[c.bind]));
-  if (failed.length) {
-    try {
-      const tHeavy = await blobToCanvas(await serverCutout(strip, "General Use (Heavy)"));
-      for (const c of failed) {
-        const retry = cutFrom(tHeavy, c.cellRect);
-        if (!cutLooksFailed(retry)) sprites[c.bind] = retry;
-      }
-    } catch { /* heavy retry unavailable → keep first-pass / geometric fallback below */ }
-  }
-  // Upload: prefer the BiRefNet sprite; fall back to the geometric cut if still failed.
+  // Upload: prefer the BiRefNet sprite; fall back to the geometric cut if a control failed.
   for (const cell of layout.cells) {
     try {
       let sprite = sprites[cell.bind];

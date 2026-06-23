@@ -24,6 +24,7 @@ export default function Pipeline() {
   const [id, setId] = useState("");
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState("");
   const [st, setSt] = useState<Record<string, Status>>({});
+  const [templateUrl, setTemplateUrl] = useState("");
   const [blueprintUrl, setBlueprintUrl] = useState("");
   const [paintUrl, setPaintUrl] = useState("");
   const [frameUrl, setFrameUrl] = useState("");
@@ -51,7 +52,24 @@ export default function Pipeline() {
     setPrompt((meta as { prompt?: string }).prompt ?? gid);
     setModel((meta as { model?: string }).model ?? "?");
 
-    // 1. PACKED BLUEPRINT (recompute the real combinedBlueprint from the template)
+    // 1. TEMPLATE — the control layout (regions) as a labeled diagram (device 2:3)
+    set("template", "loading");
+    try {
+      const tW = 400, tH = 600;
+      const KC: Record<string, string> = { button: "#5bd3ff", knob: "#ffb454", toggle: "#b68cff", "slider-h": "#5fffa0", "slider-v": "#5fffa0", "slider-arc": "#5fffa0", display: "#888", segmented: "#ff9a5b", xy: "#ff7a7a" };
+      const rects = template.regions.map((r) => {
+        const c = KC[r.kind] || "#aaa";
+        const x = r.rect.x * tW, y = r.rect.y * tH, w = r.rect.w * tW, h = r.rect.h * tH;
+        const lbl = (r.bind || r.id).replace(/[<>&]/g, "");
+        return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="6" fill="${c}33" stroke="${c}" stroke-width="2"/>`
+          + `<text x="${(x + 4).toFixed(1)}" y="${(y + 15).toFixed(1)}" font-size="12" fill="${c}" font-family="ui-monospace,monospace">${lbl}</text>`;
+      }).join("");
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${tW}" height="${tH}" viewBox="0 0 ${tW} ${tH}"><rect width="100%" height="100%" fill="#16181b"/>${rects}</svg>`;
+      setTemplateUrl(`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`);
+      set("template", "done");
+    } catch { set("template", "error"); }
+
+    // 2. PACKED BLUEPRINT (recompute the real combinedBlueprint from the template)
     set("blueprint", "loading");
     try { setBlueprintUrl(`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(combinedBlueprint(template.regions).svg)))}`); set("blueprint", "done"); }
     catch { set("blueprint", "error"); }
@@ -117,17 +135,17 @@ export default function Pipeline() {
       }
       setVlmUrl(dataUrl(ov)); set("vlm", "done");
 
-      // 7. FINAL — device frame + each isolated sprite placed at its snapped box (or template rect)
+      // 7. FINAL — device frame + each isolated sprite placed at its DETERMINISTIC TEMPLATE rect.
+      // VLM boxes are NOT used for placement: the painted device has empty sockets, so the VLM has
+      // nothing to detect/snap to. Placement is driven entirely by template.regions[].rect.
       set("final", "loading");
-      const byId = new Map(boxes.map((b) => [b.bind, b] as const));
       const fin = document.createElement("canvas"); fin.width = frame.width; fin.height = frame.height;
       const fc = fin.getContext("2d")!; fc.drawImage(frame, 0, 0);
       for (const cell of layout.cells) {
         const sprite = cutFrom(tLight, cell.cellRect); if (!sprite) continue;
         const r = template.regions.find((x) => x.id === cell.bind) as Region | undefined;
-        const box = byId.get(cell.bind);
-        const rect = box ? { x: box.x, y: box.y, w: box.w, h: box.h } : (r ? r.rect : null);
-        if (!rect) continue;
+        if (!r) continue;
+        const rect = r.rect;
         fc.drawImage(sprite, rect.x * fin.width, rect.y * fin.height, rect.w * fin.width, rect.h * fin.height);
       }
       setFinalUrl(dataUrl(fin)); set("final", "done");
@@ -140,22 +158,31 @@ export default function Pipeline() {
       <div style={{ opacity: 0.6, marginBottom: 16 }}>{prompt} · <span style={{ color: "#5BE0C0" }}>{model}</span> · ?id=&lt;substr&gt;</div>
 
       <Stage n={1} title="Prompt" status="done"><div style={{ padding: 12, fontSize: 14 }}>“{prompt}”</div></Stage>
-      <Stage n={2} title="Packed blueprint (device sockets + control slots)" status={st.blueprint}>
-        {blueprintUrl && <img src={blueprintUrl} style={{ maxWidth: 360, width: "100%", borderRadius: 6, background: "#fff" }} />}
+      <Stage n={2} title="Template — control layout (regions on the 2:3 device)" status={st.template}>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+          {templateUrl && <img src={templateUrl} style={{ maxWidth: 300, width: "100%", borderRadius: 6, border: "1px solid #2a2c30" }} />}
+          <TemplateLegend />
+        </div>
       </Stage>
-      <Stage n={3} title="Painted sprite sheet (device + strip)" status={st.paint}>
+      <Stage n={3} title="Packed blueprint (device sockets + control slots, on 9:16)" status={st.blueprint}>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+          {blueprintUrl && <img src={blueprintUrl} style={{ maxWidth: 360, width: "100%", borderRadius: 6, background: "#fff" }} />}
+          <BlueprintLegend />
+        </div>
+      </Stage>
+      <Stage n={4} title="Painted sprite sheet (device + strip)" status={st.paint}>
         {paintUrl && <img src={paintUrl} style={{ maxWidth: 360, width: "100%", borderRadius: 6 }} />}
       </Stage>
-      <Stage n={4} title="BiRefNet — device frame (background removed)" status={st.frame}>
+      <Stage n={5} title="BiRefNet — device frame (background removed)" status={st.frame}>
         {frameUrl && <img src={frameUrl} style={{ maxWidth: 360, width: "100%", borderRadius: 6, background: CHECKER }} />}
       </Stage>
-      <Stage n={5} title="BiRefNet — whole strip isolated (light · heavy branches)" status={st.strip}>
+      <Stage n={6} title="BiRefNet — whole strip isolated (heavy model)" status={st.strip}>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           <div><div style={{ opacity: 0.55, fontSize: 11 }}>light (default)</div>{stripLightUrl && <img src={stripLightUrl} style={{ maxWidth: 520, width: "100%", borderRadius: 6, background: CHECKER }} />}</div>
           <div><div style={{ opacity: 0.55, fontSize: 11 }}>heavy (low-contrast tune)</div>{stripHeavyUrl && <img src={stripHeavyUrl} style={{ maxWidth: 520, width: "100%", borderRadius: 6, background: CHECKER }} />}</div>
         </div>
       </Stage>
-      <Stage n={6} title="Sprite isolation — per control, BRANCHED (light vs heavy)" status={st.isolation}>
+      <Stage n={7} title="Sprite isolation — per control, BRANCHED (light vs heavy)" status={st.isolation}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>
           {cuts.map((c) => (
             <figure key={c.bind} style={{ margin: 0, border: "1px solid #2a2c30", borderRadius: 6, overflow: "hidden", background: "#16181b" }}>
@@ -171,10 +198,17 @@ export default function Pipeline() {
           ))}
         </div>
       </Stage>
-      <Stage n={7} title="VLM snap/warp — gpt-4o control boxes on the device" status={st.vlm}>
+      <Stage n={8} title="Placement — deterministic template positions (VLM snap DEPRECATED)" status={st.vlm}>
+        <div style={{ fontSize: 12, opacity: 0.8, marginBottom: vlmUrl ? 10 : 0, lineHeight: 1.5, maxWidth: 560 }}>
+          VLM snap is <b>no longer load-bearing</b> for placement. The painted device has <b>empty sockets</b>
+          (no controls drawn into it), so gpt-4o has nothing to detect or snap to — every box it returns is a
+          guess on a blank surface. Placement (stage 8) now uses the <b>deterministic template rects</b>
+          (<code>template.regions[].rect</code>) instead. The /api/extract call below is kept only as a debug
+          overlay; its boxes are <b>ignored</b>.
+        </div>
         {vlmUrl && <img src={vlmUrl} style={{ maxWidth: 360, width: "100%", borderRadius: 6, background: CHECKER }} />}
       </Stage>
-      <Stage n={8} title="Final — isolated sprites placed on the skin" status={st.final}>
+      <Stage n={9} title="Final — isolated sprites placed at template rects on the skin" status={st.final}>
         {finalUrl && <img src={finalUrl} style={{ maxWidth: 360, width: "100%", borderRadius: 6, background: CHECKER }} />}
       </Stage>
     </div>
@@ -195,5 +229,60 @@ function Stage({ n, title, status, children }: { n: number; title: string; statu
       <div style={{ padding: 12 }}>{children}</div>
       <style>{"@keyframes pipe-rot{to{transform:rotate(360deg)}} .pipe-spin{animation:pipe-rot .8s linear infinite}"}</style>
     </section>
+  );
+}
+
+function TemplateLegend() {
+  const rows: { color: string; label: string }[] = [
+    { color: "#5bd3ff", label: "button" },
+    { color: "#ffb454", label: "knob" },
+    { color: "#b68cff", label: "toggle" },
+    { color: "#5fffa0", label: "slider / seek" },
+    { color: "#888", label: "display / screen" },
+    { color: "#ff9a5b", label: "segmented" },
+    { color: "#ff7a7a", label: "xy pad" },
+  ];
+  return (
+    <div style={{ border: "1px solid #2a2c30", borderRadius: 8, background: "#16181b", padding: "10px 12px", fontSize: 11.5, lineHeight: 1.4, minWidth: 200, maxWidth: 280 }}>
+      <div style={{ fontWeight: 700, marginBottom: 8, opacity: 0.85 }}>Control kinds</div>
+      <div style={{ display: "grid", gap: 6 }}>
+        {rows.map((r) => (
+          <div key={r.label} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ width: 14, height: 14, borderRadius: 3, background: `${r.color}33`, border: `2px solid ${r.color}`, boxSizing: "border-box" }} />
+            <span><b style={{ color: r.color }}>{r.label}</b></span>
+          </div>
+        ))}
+      </div>
+      <div style={{ opacity: 0.55, marginTop: 8, fontSize: 10.5 }}>each box = a control region at its template rect (bind labelled). Sliders/seek are device/CSS — not cut as sprites.</div>
+    </div>
+  );
+}
+
+function BlueprintLegend() {
+  const rows: { color: string; ring?: boolean; label: string; desc: string }[] = [
+    { color: "rgb(255,40,120)", ring: true, label: "magenta ring", desc: "control socket anchor — where a control goes" },
+    { color: "rgb(218,218,224)", label: "faint grey shape", desc: "device body silhouette" },
+    { color: "#2a2c30", label: "dark rounded bars", desc: "recessed screens / displays" },
+    { color: "transparent", label: "blank bottom band", desc: "the (label-less) control strip — bare control parts get painted here" },
+  ];
+  return (
+    <div style={{ border: "1px solid #2a2c30", borderRadius: 8, background: "#16181b", padding: "10px 12px", fontSize: 11.5, lineHeight: 1.4, minWidth: 240, maxWidth: 320 }}>
+      <div style={{ fontWeight: 700, marginBottom: 8, opacity: 0.85 }}>Legend</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        {rows.map((r) => (
+          <div key={r.label} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <span
+              style={{
+                flex: "0 0 auto", width: 14, height: 14, marginTop: 1, borderRadius: 3,
+                background: r.ring ? "transparent" : r.color,
+                border: r.ring ? `3px solid ${r.color}` : (r.color === "transparent" ? "1px dashed #6a6c70" : "1px solid rgba(255,255,255,0.15)"),
+                boxSizing: "border-box",
+              }}
+            />
+            <span><b>{r.label}</b> — <span style={{ opacity: 0.75 }}>{r.desc}</span></span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

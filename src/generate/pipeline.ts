@@ -30,7 +30,9 @@ import { combinedBlueprint, type BlueprintLayout } from "./blueprint";
 // device (body grown around fixed sockets) and the bare control parts. CRITICAL
 // rules carried over: sockets are FIXED anchors (never move/resize/add/remove);
 // REMOVE the magenta rings in output; the bottom strip = BARE finished controls
-// (round buttons with icons, knob with notch, SEEK = a SMALL thumb NOT a pill);
+// (round buttons with icons, knob with notch, SEEK = a SMALL thumb NOT a pill)
+// on a FLAT PURE-WHITE strip background with ZERO text/labels (the model kept
+// drawing caption text + non-white strip backgrounds — forbidden forcefully now);
 // and — so the masker isn't confused — "no shadows/AO/reflections, pure white
 // background, clean hard edges". {brief} and {material} are filled per request.
 export const PAINT_PROMPT =
@@ -50,21 +52,31 @@ export const PAINT_PROMPT =
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
   "looks pressable/turnable is NOT). Only the sockets (top) and the strip parts (bottom) may look interactive.\n\n" +
-  "BOTTOM CONTROL-PARTS STRIP (a white band with faint slot labels — DO paint controls):\n" +
-  "- The bottom band has evenly-spaced slots left-to-right, each with a faint grey name label in its LOWER margin. " +
-  "Paint ONE finished, glossy control PART in the UPPER part of each slot (above its label), in the SAME material as " +
-  "the body, in this EXACT left-to-right order:\n" +
+  "BOTTOM CONTROL-PARTS STRIP — a row of LOOSE, ISOLATED physical control PARTS photographed on a seamless " +
+  "FLAT PURE-WHITE sweep:\n" +
+  "- This strip is NOT a diagram, NOT a UI mockup, NOT a labeled parts catalog, NOT an instruction sheet. It is simply " +
+  "individual finished hardware parts laid out on an empty white surface, like loose components on a clean studio table.\n" +
+  "- The bottom band has evenly-spaced slots left-to-right. Paint ONE finished, glossy control PART centered in each slot, " +
+  "in the SAME material as the body, in this EXACT left-to-right order:\n" +
   "    {strip}\n" +
+  "- THE STRIP BACKGROUND MUST BE A SINGLE FLAT PURE WHITE (#FFFFFF), perfectly uniform across the whole band: NO gradient, " +
+  "NO texture, NO vignette, NO panel, NO tray, NO surface markings, NO grid, NO shading — just flat pure white #FFFFFF behind " +
+  "and between every part. This is REQUIRED so each control can be cleanly isolated and cut out. (The device body above keeps " +
+  "its material; ONLY this strip background must be flat pure white.)\n" +
   "- Each control is a BARE part: NO square plate, card, tile, rounded-rectangle or box behind it, NO frame, NO shadow. " +
-  "Center each in the upper area of its slot, evenly spaced, not touching neighbours.\n" +
-  "- Each control's own icon belongs EMBOSSED ON ITS FACE (e.g. the play triangle is ON the button) — do NOT draw any " +
-  "separate floating icon, glyph, arrow, or symbol ABOVE, BELOW or beside the control. Nothing floats next to a control.\n" +
-  "- Leave the faint grey slot labels where they are in the lower margin; do NOT add any other text, letters, numbers, " +
-  "lines, outlines, or dividers. The control parts must sit ABOVE the labels with clean empty white around them, so each " +
-  "control can be cut cleanly without catching any label or glyph.\n\n" +
+  "Center each in its slot, evenly spaced, not touching neighbours, with clean empty pure-white space around it.\n" +
+  "- ABSOLUTELY NO TEXT ANYWHERE in this strip. NO text, NO letters, NO words, NO captions, NO labels, NO names, NO numbers, " +
+  "NO legend, NO key, NO title, NO annotation — under, over, beside, or on ANY part, and none in the white space between parts. " +
+  "Do NOT write 'PLAY', 'STOP', 'REWIND', 'POWER', 'OFF', 'ON', 'VOLUME', or any other word, abbreviation, or number next to a " +
+  "control. This is a row of bare physical parts, not a labeled catalog — there is ZERO typography in the strip.\n" +
+  "- Each control's ONLY marking is its own icon EMBOSSED ON ITS FACE (e.g. the play triangle is molded ON the button face) — " +
+  "do NOT draw any separate floating icon, glyph, arrow, symbol, or text ABOVE, BELOW or beside the control. Nothing floats " +
+  "next to a part; the surrounding white is completely empty.\n\n" +
   "RENDER: flat front-on product render on a PERFECTLY CLEAN PURE-WHITE background. CRITICAL: NO shadows of any kind " +
   "anywhere — no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the white. Every element " +
-  "must have clean hard edges against pure white so it can be perfectly masked. No reflections on the ground.";
+  "must have clean hard edges against pure white so it can be perfectly masked. No reflections on the ground. " +
+  "Reminder: the bottom control-parts strip carries NO text, NO labels, NO captions, NO numbers of any kind — only the " +
+  "bare parts on flat pure white.";
 
 export const MATERIAL: Record<string, string> = {
   biomech: "H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping " +
