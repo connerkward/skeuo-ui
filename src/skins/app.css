@@ -8,7 +8,7 @@ body {
 .page {
   width: 100%; height: 100%;
   background: radial-gradient(circle at 28% 18%, #1c1c1f, #060607 72%);
-  display: grid; grid-template-columns: 264px 1fr;
+  display: grid; grid-template-columns: 284px 1fr;
 }
 
 /* ---------- sidebar ---------- */
@@ -20,13 +20,16 @@ body {
   background: rgba(0,0,0,.55);
   border-right: 1px solid #1c1c1c;
   display: flex; flex-direction: column;
-  min-height: 0; /* allow the inner scroll region to actually scroll */
-  overflow: hidden;
+  min-height: 0;
+  /* the column scrolls as a whole; the header + footer stick (top/bottom) so
+     they stay on-screen at ANY viewport height — only the gallery moves between
+     them. (A hard flex-clip pushed the footer off-screen on short windows.) */
+  overflow-y: auto;
 }
 
-/* header zone — pinned, never scrolls */
+/* header zone — sticks to the top; never scrolls out of view */
 .sb-header {
-  flex: 0 0 auto;
+  position: sticky; top: 0; z-index: 3; flex: 0 0 auto;
   padding: 18px 16px 14px;
   background: #0b0b0d;
   border-bottom: 1px solid #1c1c1c;
@@ -67,19 +70,30 @@ body {
 .sb-howlink .arr { transition: transform .15s; }
 .sb-howlink:hover .arr { transform: translateX(2px); }
 
-/* scrolling region — the skin list plus the secondary (customize/connect) groups.
-   The header stays pinned above; everything else scrolls here so the skin list
-   gets the bulk of the height and the primary CTA never leaves the viewport. */
+/* scrolling region — ONLY the skin gallery. The header is pinned above and the
+   footer is pinned below, so the gallery is the single thing that ever scrolls
+   and every action (Create, Customize, Connect, Desktop) stays on-screen. */
+/* gallery — the ONLY scroll region in normal use: it takes the leftover height
+   between the pinned header and footer and scrolls its own overflow, so the
+   footer stays put and only the skin list moves. (When a window is too short to
+   hold header + footer at all, the gallery collapses to 0 and the sidebar itself
+   scrolls as the fallback — see .sidebar overflow-y above.) */
 .sb-body {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
-  padding: 12px 16px 16px;
+  padding: 12px 16px 14px;
   display: flex; flex-direction: column; gap: 8px;
 }
 .sb-skins { display: flex; flex-direction: column; gap: 8px; }
 
-/* the secondary groups sit under the skins, set off by a divider */
+/* footer sits at the column bottom. The header is pinned (sticky) and the
+   column scrolls only as a fallback when a window is too short to hold header +
+   gallery + footer at once — then the footer is reached by scrolling rather
+   than overlapping the header (which sticky-both would do once their combined
+   height exceeds the viewport). */
 .sb-footer {
-  margin-top: 6px; padding-top: 14px;
+  flex: 0 0 auto;
+  padding: 14px 16px 16px;
+  background: #0b0b0d;
   border-top: 1px solid #1c1c1c;
   display: flex; flex-direction: column; gap: 14px;
 }
@@ -134,11 +148,59 @@ body {
 /* ---------- stage ---------- */
 .stage {
   position: relative; overflow: hidden;
-  display: flex; align-items: center; justify-content: center; padding: 40px;
+  display: flex; align-items: center; justify-content: center; padding: 48px;
+  /* corner vignette frames the stage so the lit pool reads as deliberate */
+  box-shadow: inset 0 0 220px 60px rgba(0,0,0,.55);
 }
-.stage-inner { display: flex; align-items: center; justify-content: center; }
+/* spotlight POOL — an ellipse biased low (62% down) so the brightest light sits
+   at the player's base, explaining where it stands rather than haloing its chest */
+.stage::before {
+  content: ""; position: absolute; z-index: 0; pointer-events: none;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(760px, 74%); height: min(840px, 94%);
+  background: radial-gradient(ellipse 52% 56% at 50% 62%,
+    rgba(156,176,214,.18), rgba(120,140,180,.07) 46%, transparent 72%);
+}
+/* faint floor line the player visibly meets */
+.stage::after {
+  content: ""; position: absolute; z-index: 0; pointer-events: none;
+  left: 50%; bottom: 15%; transform: translateX(-50%);
+  width: min(600px, 64%); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.13) 24%,
+    rgba(255,255,255,.13) 76%, transparent);
+}
+.stage-inner {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px;
+}
 .stage .player {
-  --w: min(470px, calc((100dvh - 64px) * 0.686));
+  --w: min(560px, calc((100dvh - 172px) * 0.686));
+}
+/* contact shadow — a dark ellipse hugging the player's base so it sits ON the
+   floor instead of hanging in black. z-index 0 keeps it above the stage wash
+   but the in-flow player (z-index auto/positioned children) paints over it. */
+.player-host { position: relative; }
+.player-host::after {
+  content: ""; position: absolute; z-index: 0; pointer-events: none;
+  left: 50%; bottom: 2px; transform: translateX(-50%);
+  width: 60%; height: 52px;
+  background: radial-gradient(ellipse at center,
+    rgba(0,0,0,.74), rgba(0,0,0,.34) 46%, transparent 74%);
+  filter: blur(11px);
+}
+
+/* skin label under the player — a confident two-tier caption that titles the
+   stage instead of reading as an afterthought */
+.stage-caption {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-align: center; pointer-events: none;
+}
+.stage-caption .cap-name {
+  font-size: 19px; font-weight: 700; letter-spacing: .2px; color: #f1f1f5;
+}
+.stage-caption .cap-blurb {
+  font-size: 12.5px; color: #9498a2; max-width: 40ch; line-height: 1.45;
 }
 
 /* ---------- float player (Document Picture-in-Picture) ---------- */

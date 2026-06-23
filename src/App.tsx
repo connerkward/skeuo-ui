@@ -74,6 +74,7 @@ export default function App() {
   const [edited, setEdited] = useState<Template | null>(null);          // live editor override
   const [diskTemplate, setDiskTemplate] = useState<Template | null>(null); // registry skin's real template.json
   const activeRuntime = runtimeSkins.find((s) => s.id === skinId);
+  const activeMeta = [...visible, ...runtimeSkins].find((s) => s.id === skinId);
 
   // Spotify: drive the skin from real playback only in spotify mode
   const sp = useSpotify();
@@ -193,7 +194,7 @@ export default function App() {
           </a>
         </div>
 
-        {/* ── scrolling body: skin list + secondary groups ── */}
+        {/* ── scrolling body: ONLY the skin gallery scrolls ── */}
         <div className="sb-body">
           <div className="sb-skins">
           <p className="sb-label">Skins</p>
@@ -216,8 +217,10 @@ export default function App() {
             </button>
           ))}
           </div>
+        </div>
 
-        {/* ── secondary: customize · connect · desktop ── */}
+        {/* ── pinned footer: customize · connect · desktop — always reachable
+            without scrolling; only the gallery above scrolls ── */}
         <div className="sb-footer">
           <div className="sb-group">
             <p className="sb-label">Customize</p>
@@ -232,10 +235,7 @@ export default function App() {
           <div className="sb-group">
             <p className="sb-label">Connect</p>
             <SpotifyConnect sp={sp} mode={mode} onMode={setMode} />
-            <DesktopHandoff
-              skinId={skinId}
-              skinName={[...visible, ...runtimeSkins].find((s) => s.id === skinId)?.name ?? skinId}
-            />
+            <DesktopHandoff skinId={skinId} skinName={activeMeta?.name ?? skinId} />
             {FLOAT_ENABLED && pip.supported && (
               <button
                 className="feature-btn pip-float-btn"
@@ -246,11 +246,6 @@ export default function App() {
               </button>
             )}
           </div>
-          <div className="hint">
-            One template → many skins. Buttons / sliders are baked sprites;
-            the clock, spectrum, marquee &amp; playlist are live.
-          </div>
-        </div>
         </div>
       </aside>
       <main className="stage">
@@ -264,6 +259,10 @@ export default function App() {
               <button className="pop-back" onClick={pip.close}>Bring it back</button>
             </div>
           )}
+          <figcaption className="stage-caption">
+            <span className="cap-name">{activeMeta?.name ?? skinId}</span>
+            {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
+          </figcaption>
         </div>
       </main>
 
