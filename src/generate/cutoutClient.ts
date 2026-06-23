@@ -91,13 +91,33 @@ async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: numb
   }
   if (!boxes.length) return { ...template, canvas };
 
+  // a VLM box is only accepted if its shape/size is PLAUSIBLE for the control kind
+  // (gpt-4o occasionally returns a thin sliver for a knob or a tiny screen). When it
+  // fails the sanity check we keep the blueprint rect for that control.
+  const kindOf = new Map(template.regions.map((r) => [r.id, r.kind] as const));
+  const plausibleBox = (kind: string | undefined, b: SnapRect): boolean => {
+    if (b.w <= 0.01 || b.h <= 0.01 || b.w > 0.97 || b.h > 0.97) return false;
+    const ar = b.w / b.h;
+    switch (kind) {
+      case "button": case "knob": case "toggle": case "xy":
+        return ar > 0.45 && ar < 2.2 && b.w >= 0.03 && b.w <= 0.4 && b.h >= 0.03 && b.h <= 0.4;
+      case "slider-h": return ar > 2.0 && b.w >= 0.15;
+      case "slider-v": return ar < 0.8 && b.h >= 0.1;
+      case "segmented": return ar > 1.4 && b.w >= 0.12;
+      case "slider-arc": return ar > 0.5 && ar < 2.0 && b.w >= 0.1;
+      case "display": return b.w >= 0.15 && b.h >= 0.03;
+      default: return true;
+    }
+  };
   const byId = new Map<string, SnapRect>();
   for (const b of boxes) {
-    if (b && typeof b.bind === "string" && !byId.has(b.bind)) byId.set(b.bind, { x: b.x, y: b.y, w: b.w, h: b.h });
+    if (!b || typeof b.bind !== "string" || byId.has(b.bind)) continue;
+    const box = { x: b.x, y: b.y, w: b.w, h: b.h };
+    if (plausibleBox(kindOf.get(b.bind), box)) byId.set(b.bind, box);
   }
   const regions = template.regions.map((r) => {
     const box = byId.get(r.id);
-    return box ? { ...r, rect: box } : r;   // matched → snap to the VLM box; else keep blueprint
+    return box ? { ...r, rect: box } : r;   // matched + plausible → snap; else keep blueprint
   });
   // the snapped render template must ALSO have no overlapping interactables
   return { ...template, canvas, regions: resolveOverlaps(regions) };
