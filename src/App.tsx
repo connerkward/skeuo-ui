@@ -109,7 +109,7 @@ export default function App() {
   }, []);
 
   const runtimeView = activeRuntime
-    ? { frameUrl: activeRuntime.frameUrl, template: activeRuntime.template, style: activeRuntime.style }
+    ? { frameUrl: activeRuntime.frameUrl, template: activeRuntime.template, style: activeRuntime.style, sprites: activeRuntime.sprites }
     : undefined;
 
   // ── mobile shell ───────────────────────────────────────────────────────────

@@ -16,6 +16,11 @@ export interface RuntimeSkin {
   style: DonorStyle;    // donor for sprites/palette (resolves via [data-skin])
   frameUrl: string;
   template: Template;
+  // true when the pipeline produced per-skin control sprites for THIS skin
+  // (served at /api/asset/skins/<id>/sprites/<bind>.png). When set, the player
+  // renders those instead of the donor style's bundled sprites. Set by
+  // GenerateDone (owned by the pipeline team) and consumed in Composite.
+  sprites?: boolean;
 }
 
 // Style + layout-variant pickers were removed from the UI for now — the panel is
@@ -81,6 +86,10 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
           style: data.style,
           frameUrl,
           template: data.template,
+          // the pipeline flags per-skin sprites on the response (api.ts is owned
+          // by the pipeline team and doesn't type this yet) — forward it so the
+          // player renders THIS skin's own sprites the moment they're produced.
+          sprites: (data as { sprites?: boolean }).sprites,
         });
       }
     } catch (e) {

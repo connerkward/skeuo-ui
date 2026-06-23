@@ -13,6 +13,10 @@ export interface RuntimeSkinView {
   frameUrl: string;
   template: Template;
   style: string;        // donor style id for sprites/palette ([data-skin])
+  // true when the pipeline produced per-skin control sprites for THIS skin
+  // (served at /api/asset/skins/<id>/sprites/<bind>.png) — render those instead
+  // of the donor style's bundled sprites.
+  sprites?: boolean;
 }
 
 interface Props {
@@ -71,6 +75,9 @@ export function Composite({ template, skinId, showWireframe, runtime, templateOv
   const tpl = active;
   const { canvas } = tpl;
   const baked = runtime ? false : skinBaked(skinId);
+  // a runtime skin renders its OWN per-skin sprites (vs the donor style's) when
+  // the pipeline flagged them; built-in skins always use the bundled donor set.
+  const rtSprites = !!runtime && !!runtime.sprites;
   const hasFrame = runtime ? true : skinHas(skinId, "frame");
   const frameSrc = runtime ? runtime.frameUrl : layerUrl(skinId, "frame");
 
@@ -101,7 +108,7 @@ export function Composite({ template, skinId, showWireframe, runtime, templateOv
           precisely — so render them as the pure aligned artwork rather than
           overlay misplaced live widgets. Canonical skins overlay live content. */}
       {(!art || liveArt || showWireframe) && tpl.regions.map((r) => (
-        <RegionView key={r.id} region={r} ps={ps} skinId={skinId}
+        <RegionView key={r.id} region={r} ps={ps} skinId={skinId} rtSprites={rtSprites}
           wire={!!showWireframe} baked={baked} onTitleDown={startDrag} />
       ))}
     </div>
@@ -116,8 +123,8 @@ function pct(r: Region["rect"]): React.CSSProperties {
   };
 }
 
-function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
-  region: Region; ps: PlayerState; skinId: string; wire: boolean;
+function RegionView({ region: r, ps, skinId, rtSprites, wire, baked, onTitleDown }: {
+  region: Region; ps: PlayerState; skinId: string; rtSprites: boolean; wire: boolean;
   baked: boolean; onTitleDown: (e: React.PointerEvent) => void;
 }) {
   const style = pct(r.rect);
@@ -149,7 +156,7 @@ function RegionView({ region: r, ps, skinId, wire, baked, onTitleDown }: {
     r.kind === "display" && r.shape === "ellipse" ? { borderRadius: "50%", overflow: "hidden" } : {};
   return (
     <div className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={{ ...style, ...clip }} onPointerDown={titleDown}>
-      {renderControl(r, ps, skinId)}
+      {renderControl(r, ps, skinId, rtSprites)}
     </div>
   );
 }
@@ -164,7 +171,7 @@ function atlas(skinId: string, layer: "components" | "screen", r: Region): React
   };
 }
 
-function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactNode {
+function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: boolean): React.ReactNode {
   if (r.content === "dynamic") {
     switch (r.dynamicType) {
       case "title":
@@ -233,7 +240,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
   // Controls are ALWAYS a live layer — never baked into the faceplate. When the
   // skin ships AI control SPRITES (with states), components render those;
   // otherwise the CSS-skeuomorphic fallback. Either way they're real & animated.
-  const sp = skinSprites(skinId);
+  const sp = skinSprites(skinId, rtSprites);
   if (r.kind === "button") {
     // MOLDED transport faces (sprites/btn-*.png): the icon is part of the
     // hardware art, in the skin's own material — a play button that READS
@@ -247,13 +254,13 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
     const isPlayPause = rawBind === "play";
     const bindId = isPlayPause && ps.playing ? "pause" : rawBind;
     const onClick = isPlayPause ? (ps.playing ? ps.pause : ps.play) : btnHandler(r, ps);
-    const molded = sp && skinMolded(skinId) && ["prev", "play", "pause", "stop", "next"].includes(bindId);
+    const molded = sp && skinMolded(skinId, rtSprites) && ["prev", "play", "pause", "stop", "next"].includes(bindId);
     const face: React.CSSProperties = molded
-      ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`)})`, backgroundPosition: "center", backgroundSize: "118% 118%", backgroundRepeat: "no-repeat" }
+      ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`, rtSprites)})`, backgroundPosition: "center", backgroundSize: "118% 118%", backgroundRepeat: "no-repeat" }
       : sp
         ? round
-          ? { backgroundImage: `url(${spriteUrl(skinId, "knob")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", border: 0 }
-          : { borderImage: `url(${spriteUrl(skinId, "button")}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
+          ? { backgroundImage: `url(${spriteUrl(skinId, "knob", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", border: 0 }
+          : { borderImage: `url(${spriteUrl(skinId, "button", rtSprites)}) 30% fill / 8px stretch`, borderStyle: "solid", borderWidth: "8px", backgroundColor: "transparent", boxShadow: "none" }
         : {};
     const g = molded ? null : glyph(r, bindId);
     if (typeof g === "string" && g.length > 2) face.fontSize = "1.7cqw";   // text labels fit the face
@@ -265,15 +272,15 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
   }
   if (r.kind === "toggle") {
     const [on, toggle] = toggleBinding(r, ps);
-    return <FlipSwitch skinId={skinId} label={r.label ?? r.id} on={on} toggle={toggle} />;
+    return <FlipSwitch skinId={skinId} rtSprites={rtSprites} label={r.label ?? r.id} on={on} toggle={toggle} />;
   }
   if (r.kind === "segmented") return <Segmented r={r} ps={ps} baked={false} />;
-  if (r.kind === "knob") return <Knob r={r} ps={ps} skinId={skinId} />;
+  if (r.kind === "knob") return <Knob r={r} ps={ps} skinId={skinId} rtSprites={rtSprites} />;
   if (r.kind === "xy") return <XYPad ps={ps} baked={false} />;
-  if (r.kind === "slider-h") return <SliderH r={r} ps={ps} skinId={skinId} />;
+  if (r.kind === "slider-h") return <SliderH r={r} ps={ps} skinId={skinId} rtSprites={rtSprites} />;
   if (r.kind === "slider-arc") return <SliderArc r={r} ps={ps} />;
   if (r.kind === "slider-path") return <SliderPath r={r} ps={ps} />;
-  if (r.kind === "slider-v") return <SliderV r={r} ps={ps} skinId={skinId} />;
+  if (r.kind === "slider-v") return <SliderV r={r} ps={ps} skinId={skinId} rtSprites={rtSprites} />;
   return null;
 }
 
@@ -331,15 +338,15 @@ function toggleBinding(r: Region, ps: PlayerState): [boolean, () => void] {
 }
 
 /* ---------- flip switch (real, animated toggle) ---------- */
-function FlipSwitch({ skinId, label, on, toggle }: { skinId: string; label: string; on: boolean; toggle: () => void }) {
-  if (skinSprites(skinId)) {
+function FlipSwitch({ skinId, rtSprites, label, on, toggle }: { skinId: string; rtSprites: boolean; label: string; on: boolean; toggle: () => void }) {
+  if (skinSprites(skinId, rtSprites)) {
     // SPRITE switch: the same AI-rendered switch in two states; toggling swaps
     // the art (with a snap transition), not a CSS imitation.
     return (
       <button className="flipsw sp-sw" data-on={on} onClick={toggle} title={`${label}: ${on ? "ON" : "OFF"}`}>
         <span className="sp-sw-stack">
-          <img src={spriteUrl(skinId, "switch-off")} alt="" draggable={false} className="sp-sw-img off" />
-          <img src={spriteUrl(skinId, "switch-on")} alt="" draggable={false} className="sp-sw-img on" />
+          <img src={spriteUrl(skinId, "switch-off", rtSprites)} alt="" draggable={false} className="sp-sw-img off" />
+          <img src={spriteUrl(skinId, "switch-on", rtSprites)} alt="" draggable={false} className="sp-sw-img on" />
         </span>
         <span className="fsw-label">{label}</span>
       </button>
@@ -373,7 +380,7 @@ function Segmented({ r, ps, baked }: { r: Region; ps: PlayerState; baked: boolea
 }
 
 /* ---------- rotary knob ---------- */
-function Knob({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string }) {
+function Knob({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId: string; rtSprites: boolean }) {
   const value = r.bind === "volume" ? ps.volume : r.bind === "balance" ? ps.balance : 0.5;
   const setV = r.bind === "volume" ? ps.setVolume : ps.setBalance;
   const drag = useRef<{ y: number; v: number } | null>(null);
@@ -388,13 +395,13 @@ function Knob({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string })
     return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, [setV]);
   const angle = -135 + value * 270;
-  if (skinSprites(skinId)) {
+  if (skinSprites(skinId, rtSprites)) {
     // SPRITE knob: the cap art is STATIC (so its lighting never rotates); a
     // live pointer element orbits the exact center instead.
     return (
       <div className="knob sp-knob" title={`${r.label}: ${(value * 100) | 0}%`}
         onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
-        <img className="sp-knob-img" src={spriteUrl(skinId, "knob")} alt="" draggable={false} />
+        <img className="sp-knob-img" src={spriteUrl(skinId, "knob", rtSprites)} alt="" draggable={false} />
         <div className="sp-knob-ptr" style={{ transform: `rotate(${angle}deg)` }} />
         <span className="knob-label">{r.label}</span>
       </div>
@@ -522,9 +529,9 @@ function SliderPath({ r, ps }: { r: Region; ps: PlayerState }) {
 }
 
 /* ---------- sliders ---------- */
-function SliderH({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string }) {
-  const thumbSprite: React.CSSProperties = skinSprites(skinId)
-    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+function SliderH({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId: string; rtSprites: boolean }) {
+  const thumbSprite: React.CSSProperties = skinSprites(skinId, rtSprites)
+    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
     : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
@@ -553,9 +560,9 @@ function SliderH({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
   );
 }
 
-function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string }) {
-  const thumbSprite: React.CSSProperties = skinSprites(skinId)
-    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb")})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+function SliderV({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId: string; rtSprites: boolean }) {
+  const thumbSprite: React.CSSProperties = skinSprites(skinId, rtSprites)
+    ? { backgroundImage: `url(${spriteUrl(skinId, "thumb", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
     : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
