@@ -63,7 +63,9 @@ const ALIGN_KINDS = new Set([
   "button", "toggle", "slider-h", "slider-v", "knob", "slider-arc", "segmented", "xy", "display",
 ]);
 
-async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: number): Promise<Template> {
+// Opt-in VLM ALIGN (path B). NOT used by default — finishCutoutFull trusts the repacked
+// template (path A). Exported so it stays available without an unused-symbol error.
+export async function snapToVLM(template: Template, frameBlob: Blob, W: number, H: number): Promise<Template> {
   const canvas = { w: W, h: H };
   const align = template.regions.filter((r) => ALIGN_KINDS.has(r.kind));
   if (!align.length) return { ...template, canvas };
