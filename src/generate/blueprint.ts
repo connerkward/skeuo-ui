@@ -198,14 +198,21 @@ export interface CombinedBlueprint {
   height: number;
 }
 
-// strip height as a fraction of the device height (matches A_blueprint.py:
-// STRIP_H=460 / DEV_H=1536 ≈ 0.30). The device region keeps GEN_W × GEN_H so the
-// existing region rects (already normalized to GEN_H) map straight through.
-const STRIP_FRAC = 0.30;
+// REPACK to the paint aspect. The combined image (device + strip) MUST be the exact
+// aspect we request from the paint model (9:16) — if it isn't, the model reshapes the
+// output and the normalized strip cells + device sockets land in the wrong place
+// (mis-cut sprites). So we derive the canvas FROM the aspect: combined height =
+// GEN_W / (9/16); the device takes a clean 2:3 (GEN_H) at the top and the strip packs
+// into the remainder. If GEN_H wouldn't leave room for the strip, the device shrinks
+// so the strip always fits (repack). This guarantees the blueprint is 9:16 by build.
+export const PAINT_ASPECT = 9 / 16;                          // width / height of the paint
+const COMBINED_H = Math.round(GEN_W / PAINT_ASPECT);         // 1024 / 0.5625 ≈ 1821
+const MIN_STRIP_H = Math.round(COMBINED_H * 0.14);           // strip always gets ≥14%
+const DEVICE_H = Math.min(GEN_H, COMBINED_H - MIN_STRIP_H);  // device 2:3 if it fits, else shrunk
+const STRIP_H = COMBINED_H - DEVICE_H;
 // device region = the TOP fraction of the combined image (the rest is the sprite
-// strip). Exported so the browser can crop the device even without a layout object
-// (the strip fraction is a pipeline constant). devFrac in BlueprintLayout equals this.
-export const DEVICE_FRAC = 1 / (1 + STRIP_FRAC);
+// strip). Exported so the browser can crop the device even without a layout object.
+export const DEVICE_FRAC = DEVICE_H / COMBINED_H;
 
 const BP_BODY = "rgb(218,218,224)";   // faint gray body silhouette
 const BP_DARK = "rgb(24,24,28)";      // dark socket / cell outline
@@ -228,12 +235,13 @@ function spriteKindOf(r: Region): SpriteKind | null {
 // common transport controls id===bind, so existing lookups keep working.
 const bindOf = (r: Region): string => r.id;
 
-// Build the COMBINED blueprint SVG + its layout. Device region is GEN_W×GEN_H,
-// strip is GEN_W×(GEN_H*STRIP_FRAC) below it. Mirrors A_blueprint.py geometry.
+// Build the COMBINED blueprint SVG + its layout, REPACKED to the paint aspect (9:16)
+// so the model reproduces it ~1:1. Device region is GEN_W×DEVICE_H (2:3), strip is
+// GEN_W×STRIP_H below it; together they equal GEN_W×COMBINED_H = 9:16 by construction.
 export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
-  const stripH = Math.round(GEN_H * STRIP_FRAC);
-  const H = GEN_H + stripH;
-  const devFrac = GEN_H / H;
+  const stripH = STRIP_H;         // remainder packs the control strip
+  const H = COMBINED_H;           // = DEVICE_H + stripH, exactly 9:16
+  const devFrac = DEVICE_FRAC;
 
   // sprite controls = interactive parts only, in stable (region) order.
   const spriteRegs = regs.filter((r) => spriteKindOf(r) !== null);

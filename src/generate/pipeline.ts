@@ -45,7 +45,11 @@ export const PAINT_PROMPT =
   "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place.\n" +
   "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
-  "- REMOVE the bright pink/magenta rings in your output (guides only); the dark socket they ringed stays exactly where it was.\n\n" +
+  "- REMOVE the bright pink/magenta rings in your output (guides only); the dark socket they ringed stays exactly where it was.\n" +
+  "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
+  "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
+  "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
+  "looks pressable/turnable is NOT). Only the sockets (top) and the strip parts (bottom) may look interactive.\n\n" +
   "BOTTOM CONTROL-PARTS STRIP (important — DO paint these):\n" +
   "- Below the body is a row of outlined placeholder cells, each labeled with its control name on white.\n" +
   "- Paint a FINISHED glossy control PART centered inside EACH cell, in the SAME material: round push-buttons " +
@@ -175,11 +179,15 @@ async function falUpload(falKey: string, png: Uint8Array): Promise<string> {
 // submit one edit job (blueprint first = layout authority). The fal input schema
 // differs by model: the gemini endpoints take resolution + aspect_ratio; gpt-image-2
 // takes image_size + quality and rejects resolution/aspect_ratio — so branch the body.
+// The combined blueprint (device + strip) is 9:16; the paint MUST be requested at
+// that SAME aspect or the model reshapes it and the normalized strip cells + device
+// sockets land in the wrong place. gpt-image-2 takes an explicit image_size; the
+// gemini endpoints take aspect_ratio. Keep both at 9:16 (1024×1820).
 function falSubmit(falKey: string, model: ModelId, imageUrls: string[], prompt: string) {
   const body: Record<string, unknown> =
     model === "openai/gpt-image-2/edit"
-      ? { prompt, image_urls: imageUrls, image_size: { width: 1024, height: 1536 }, quality: "high", output_format: "png" }
-      : { prompt, image_urls: imageUrls, resolution: "2K", aspect_ratio: "2:3", output_format: "png" };
+      ? { prompt, image_urls: imageUrls, image_size: { width: 1024, height: 1820 }, quality: "high", output_format: "png" }
+      : { prompt, image_urls: imageUrls, resolution: "2K", aspect_ratio: "9:16", output_format: "png" };
   return falPost(falKey, `https://queue.fal.run/${model}`, body);
 }
 async function falPoll(falKey: string, job: any, timeoutMs: number): Promise<string> {
@@ -197,6 +205,13 @@ async function fetchPng(url: string): Promise<Uint8Array> {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`fetch image ${url} → ${r.status}`);
   return new Uint8Array(await r.arrayBuffer());
+}
+// width/height from a PNG's IHDR (no full decode; works in Worker + Node).
+function pngDims(b: Uint8Array): { w: number; h: number } | null {
+  if (b.length < 24 || b[0] !== 0x89 || b[1] !== 0x50) return null;
+  const u32 = (o: number) => ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]) >>> 0;
+  const w = u32(16), h = u32(20);
+  return w > 0 && h > 0 ? { w, h } : null;
 }
 
 // ---- BiRefNet background removal (server-side; FAL_KEY never leaves the server) --
@@ -241,7 +256,15 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   // 1. COMBINED blueprint PNG — device body (faint envelope + magenta-ringed
   //    sockets) + a bottom sprite strip of labeled control cells. ONE image.
-  const { svg, layout } = combinedBlueprint(regs);
+  const { svg, layout, width: bpW, height: bpH } = combinedBlueprint(regs);
+  // CHECK (pre-paint): the blueprint/template MUST be a model-reproducible aspect so
+  // the paint returns near 1:1 — otherwise the normalized strip cells + device sockets
+  // map to the wrong place on a reshaped output (mis-cut sprites). It's built to 9:16;
+  // assert that BEFORE spending a paint call so a sizing regression fails loud, here.
+  const bpAspect = bpW / bpH;
+  if (Math.abs(bpAspect - 9 / 16) > 0.02) {
+    throw new Error(`blueprint aspect ${bpW}x${bpH} (${bpAspect.toFixed(3)}) is not ~9:16 (0.5625) — the paint model won't reproduce it 1:1; fix STRIP_FRAC so device+strip = 9:16`);
+  }
   const blueprintPng = await deps.rasterize(svg);
 
   // 2. SINGLE PAINT PASS — restyle the whole combined blueprint into the material
@@ -263,6 +286,14 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const paintPng = await fetchPng(paintUrl);
   const paintMs = Date.now() - tPaint;
   log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);
+
+  // ASPECT CHECK: the blueprint is 9:16; if the model reshaped the output, the
+  // normalized strip cells + device sockets map to the wrong place (mis-cut sprites).
+  // Parse the PNG IHDR for dims (no full decode) and warn loudly on a mismatch.
+  const dims = pngDims(paintPng);
+  if (dims && Math.abs(dims.w / dims.h - 9 / 16) > 0.03) {
+    log(`[${input.id}] ⚠️ ASPECT MISMATCH: paint ${dims.w}x${dims.h} (${(dims.w / dims.h).toFixed(3)}) ≠ requested 9:16 (0.5625) — sprite cells will be off.`);
+  }
 
   // 3. CUTOUT is always deferred to the browser. The combined paint must be
   //    background-removed (device region) AND each control sprite cut from its

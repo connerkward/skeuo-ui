@@ -89,7 +89,8 @@ const LAYOUT_SYS =
   "xy pad (bind \"xy\"); slider-arc ring-seek around a dial (use bind \"seek\" as slider-arc INSTEAD of slider-h for dial-centric designs).\n\n" +
   "RULES: every rect inside 0.04..0.96; controls must NOT overlap each other or the screen; round controls ~square (w≈h); group/align related " +
   "controls; sizes sensible (transport buttons 0.06-0.16 with play biggest, knobs 0.08-0.16, the screen 0.4-0.85 wide). " +
-  "Keep it UNCLUTTERED — about 6 to 10 controls total, with generous breathing room between them; do NOT cram the face. " +
+  "Keep it MINIMAL and UNCLUTTERED — at most 4 INTERACTABLES beyond the screen/marquee/time/seek (so ~8 regions total), " +
+  "with generous breathing room; do NOT cram the face. Prefer fewer, larger, well-spaced controls. " +
   "The marquee is WIDE (~0.5-0.65) and the time readout is NARROW (~0.14-0.22) sitting beside it on the same row, NOT stacked full-width. " +
   "If you include EQ faders, use 5-7 bands max. Make it interesting and specific to the theme.\n\n" +
   "Each region: {\"id\":\"snake_case\",\"kind\":\"button|toggle|slider-h|slider-v|knob|slider-arc|segmented|xy|display\",\"bind\":\"<state field>\"," +
@@ -164,11 +165,25 @@ export async function deriveLayout(openaiKey: string, prompt: string): Promise<R
     const content = data.choices?.[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(content) as { regions?: Record<string, unknown>[] };
     const raw = Array.isArray(parsed.regions) ? parsed.regions : [];
-    const regions = raw.map(normRegion).filter((x): x is Region => x !== null);
+    const all = raw.map(normRegion).filter((x): x is Region => x !== null);
+    // HARD density cap (code-enforced, not just prompt): displays always kept; then
+    // transport + seek; then other extras; then EQ bands (≤5). Total interactables ≤9.
+    const TRANSPORT = new Set(["prev", "play", "pause", "next", "stop"]);
+    const prio = (r: Region) => (TRANSPORT.has(r.bind ?? "") || r.bind === "seek") ? 0 : r.bind === "eqBand" ? 2 : 1;
+    const displays = all.filter((r) => r.kind === "display");
+    const inter = all.filter((r) => r.kind !== "display")
+      .map((r, i) => ({ r, i })).sort((a, b) => prio(a.r) - prio(b.r) || a.i - b.i);
+    const MAX_INTERACT = 9; let eq = 0; const kept: Region[] = [];
+    for (const { r } of inter) {
+      if (kept.length >= MAX_INTERACT) break;
+      if (r.bind === "eqBand") { if (eq >= 5) continue; eq++; }
+      kept.push(r);
+    }
+    const regions = [...displays, ...kept];
     const hasViz = regions.some((g) => g.kind === "display");
     const hasPlay = regions.some((g) => g.kind === "button" && g.bind === "play");
     // eslint-disable-next-line no-console
-    console.warn(`[deriveLayout] finish=${data.choices?.[0]?.finish_reason} raw=${raw.length} valid=${regions.length} viz=${hasViz} play=${hasPlay}`);
+    console.warn(`[deriveLayout] finish=${data.choices?.[0]?.finish_reason} raw=${raw.length} kept=${regions.length} (cap ${MAX_INTERACT}) viz=${hasViz} play=${hasPlay}`);
     if (!hasViz || !hasPlay || regions.length < 4) throw new Error("layout missing required controls");
     return regions;
   } catch (e) {
