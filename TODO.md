@@ -2,6 +2,20 @@
 
 ## Open
 
+- [ ] **Website redesign — follow-ups (2026-06-23).** The desktop + mobile shell was
+      reworked + shipped to skeuo.fm this session (see Done below). Loose ends:
+      - **Spotify still hidden + non-functional** — `CONNECT_ENABLED = false` in `App.tsx`
+        gates the Connect pill on desktop AND mobile, so the player only drives the local
+        demo. Real playback needs the BYO-Client-ID wizard (its own open item / prototype in
+        `docs/spotify-byo-wizard-prototype.html`). Flip the flag once that lands.
+      - **Generated-skin name/font unverified live** — the Director (`deriveMaterial`) now
+        returns a concise `name`/`blurb` + a Google-Fonts `font`, threaded handler→api→
+        `onCreated`. Builds + deployed but NOT run end-to-end (needs the OpenAI key + a paid
+        gen). Do one real "Create a skin" on prod to confirm naming/font load + that the CF
+        Pages env keys are set.
+      - **No un-hide UI** — the gallery × HIDES a generated skin (`hidden:true`, raw data kept
+        in `localStorage["skeuo:skins"]`), but there's no restore affordance yet.
+
 - [ ] **Reactive music-player mascot — build the rig + groove layer (animation strategy researched 2026-06-23).**
       A `mascot` player region (like the `cd`/`visualizer` dynamicTypes) that idles when paused and
       grooves to the music when playing, blending smoothly + reactive to energy/BPM.
@@ -123,6 +137,29 @@
       unused). Re-add the `<label className="sp-toggle">` checkbox (desktop/web
       only — gate with `!isMobileApp()`, since iOS WKWebView lacks EME/Widevine)
       when we revisit in-page playback.
+
+## Done (2026-06-23) — Website redesign: shell, thumbnails, cinematic titles (shipped to skeuo.fm)
+- [x] **Desktop shell rebuilt** several times to the final form: a NARROW left gallery
+      (scrolling skin list, animated thumbnails) + a FULL-HEIGHT skin (the hero, vw+height
+      bounded so it never clips) + a cinematic title card whose text sits squarely centered
+      between the skin's right edge and the frame edge. Flat `#08080a` bg, no gradient box.
+- [x] **Baked thumbnails** — `scripts/bake-thumbs.mjs` renders each skin's real `<Composite>`
+      (buttons/dials/screen, visualizer suppressed) → 256px WebP, so the gallery minis show
+      actual controls, not empty wells. A guard skips skins whose `?skin=` id doesn't resolve;
+      only the 10 visible skins were re-baked. Round-dial well-disc removed (the dial is baked).
+- [x] **Per-skin logomark fonts** — `src/player/skinFonts.ts` maps id→a punchy Google font;
+      loaded DYNAMICALLY (`ensureGoogleFont`, any family, not a fixed list) + preloaded on mount
+      with an `isFontReady` cache check so switching skins doesn't pop in. `<CinemaTitle>` fits
+      the title to its area and wraps to ≤2 whole-word lines (no offscreen flow). The Director
+      picks a font for generated skins too (any family, dynamic-loaded).
+- [x] **Director emits concise `name` + `blurb`** (no more "a fanged anglerfish · nano-banana-2"),
+      threaded handler→api→`onCreated`, tidy prompt-derived fallback on the no-key path.
+- [x] **Generated-skin × = HIDE not delete** — sets `hidden:true`, filtered from the gallery,
+      raw materials kept in storage for future processing.
+- [x] **Mobile/narrow bar matched to desktop** — Connect hidden, Template view axed, Share is a
+      labelled pill, Create is the green CTA; skin title+blurb shown small in the stage corner.
+- [x] **Connect (Spotify) hidden** behind `CONNECT_ENABLED=false` (desktop + mobile) until the
+      playback path is fixed. Float-player stays behind `FLOAT_ENABLED=false`.
 
 ## Done (2026-06-22) — Float the player in the browser (Document Picture-in-Picture)
 - [x] **"⧉ Float player — no install"** button (desktop, sidebar Connect group). Pops the
