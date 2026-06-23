@@ -7,6 +7,7 @@ import { useSwipe } from "./useSwipe";
 import { Brand } from "../components/Brand";
 import { MobileSpotify } from "./MobileSpotify";
 import { MobileSkinStrip } from "./MobileSkinStrip";
+import { skinFont, skinFontStyle } from "../player/skinFonts";
 
 interface Props {
   template: Template;
@@ -53,6 +54,16 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp,
       </header>
 
       <div className="m-stage" {...sw.bind}>
+        {/* small skin title + blurb tucked in the corner (the skin's identity,
+            since the full-screen narrow view has no side title card) */}
+        {sw.index < skins.length && (
+          <div className="m-skin-label">
+            <span className="m-skin-name" style={skinFontStyle(skinFont(skins[sw.index].id))}>
+              {skins[sw.index].name.replace(/\s*✦\s*$/, "")}
+            </span>
+            <span className="m-skin-blurb">{skins[sw.index].blurb}</span>
+          </div>
+        )}
         <div
           className="m-track"
           style={{

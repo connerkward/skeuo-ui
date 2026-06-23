@@ -441,6 +441,22 @@ body {
 
 /* the carriage clips the off-screen pages; it is the swipe surface */
 .m-stage { position: relative; overflow: hidden; min-height: 0; }
+/* skin identity tucked in the top-left corner of the narrow full-screen view */
+.m-skin-label {
+  position: absolute; top: 10px; left: 14px; z-index: 5;
+  display: flex; flex-direction: column; gap: 2px;
+  max-width: 64%; pointer-events: none;
+}
+.m-skin-name {
+  font-size: 19px; line-height: 1; color: #fff;
+  text-shadow: 0 1px 10px rgba(0,0,0,.7);
+}
+.m-skin-blurb {
+  font-size: 10.5px; line-height: 1.3; color: #9aa0aa;
+  text-shadow: 0 1px 6px rgba(0,0,0,.7);
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
 .m-track { display: flex; height: 100%; will-change: transform; }
 .m-page {
   flex: 0 0 100%; min-width: 100%; height: 100%;
