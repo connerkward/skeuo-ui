@@ -359,12 +359,41 @@ export function resolveOverlaps(regions: Region[]): Region[] {
         // shrink the movable (or smaller) box on the least-overlap axis
         const target = A.fixed ? B : B.fixed ? A : (A.rect.w * A.rect.h <= B.rect.w * B.rect.h ? A : B);
         const r = target.rect;
-        if (o.ox < o.oy) { r.x += o.ox / 2 + 0.004 * (r.x < (A === target ? B : A).rect.x ? -1 : 1); r.w = Math.max(0.03, r.w - o.ox - 0.008); }
-        else { r.h = Math.max(0.03, r.h - o.oy - 0.008); }
+        // gentle shrink, FLOORED at 0.07 so an interactable never collapses to a sliver
+        if (o.ox < o.oy) { r.x += o.ox / 2 + 0.004 * (r.x < (A === target ? B : A).rect.x ? -1 : 1); r.w = Math.max(0.07, r.w - o.ox / 2 - 0.004); }
+        else { r.h = Math.max(0.07, r.h - o.oy / 2 - 0.004); }
         clampBox(r);
       }
     }
     if (!any) break;
   }
   return items.map((it) => ({ ...it.reg, rect: it.rect }));
+}
+
+// ---------------------------------------------------------------------------
+// repackTemplate — the TEMPLATE is the root of alignment quality, so repack it
+// before it ever reaches the painter: give every interactable a SANE size for its
+// kind (the Director's raw rects are often slivers or oversized), keep its rough
+// center, then de-overlap by MOVING (resolveOverlaps), never by shrinking to a
+// sliver. Displays keep their rects (the screen/marquee/time). Result: clean,
+// well-proportioned, non-overlapping sockets → a clean paint → clean cuts.
+// ---------------------------------------------------------------------------
+const CANON: Record<string, [number, number]> = {
+  button: [0.13, 0.13], knob: [0.14, 0.14], toggle: [0.11, 0.07], segmented: [0.34, 0.08],
+  "slider-h": [0.82, 0.045], "slider-v": [0.06, 0.24], xy: [0.26, 0.26],
+  "slider-arc": [0.34, 0.34], "slider-path": [0.34, 0.2],
+};
+export function repackTemplate(regions: Region[]): Region[] {
+  const sized = regions.map((r) => {
+    if (r.kind === "display") return { ...r, rect: { ...r.rect } };
+    let [cw, ch] = CANON[r.kind] ?? [0.13, 0.13];
+    if (r.bind === "play") { cw *= 1.25; ch *= 1.25; }          // play dominates the transport row
+    const cx = r.rect.x + r.rect.w / 2, cy = r.rect.y + r.rect.h / 2;
+    return { ...r, rect: {
+      x: Math.max(0.02, Math.min(cx - cw / 2, 0.98 - cw)),
+      y: Math.max(0.02, Math.min(cy - ch / 2, 0.98 - ch)),
+      w: cw, h: ch,
+    } };
+  });
+  return resolveOverlaps(sized);   // move-based separation (no sliver-shrink for sane sizes)
 }
