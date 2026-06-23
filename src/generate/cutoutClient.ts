@@ -66,7 +66,12 @@ function snapToSockets(template: Template, device: ImageData): Template {
       w: (2 * R) / device.width, h: (2 * R) / device.height,
     } };
   });
-  return { ...template, regions };
+  // CRITICAL: set the canvas to the DEVICE's real dimensions. The blueprint canvas
+  // is 2:3, but the generated device frame has a different aspect — if the player
+  // renders regions on a 2:3 box while the frame is e.g. 0.87:1, the frame stretches
+  // and round sockets become vertical ellipses + control boxes go non-square (square
+  // sprites squish to ovals). Matching the canvas to the frame keeps everything 1:1.
+  return { ...template, canvas: { w: device.width, h: device.height }, regions };
 }
 
 // Decode raw image bytes into something drawable, robustly across engines.

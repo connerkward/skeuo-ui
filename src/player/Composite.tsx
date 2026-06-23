@@ -407,7 +407,7 @@ function Knob({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId
     return (
       <div className="knob sp-knob" title={`${r.label}: ${(value * 100) | 0}%`}
         onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
-        <img className="sp-knob-img" src={spriteUrl(skinId, rtSprites ? r.id : "knob", rtSprites)} alt="" draggable={false} />
+        <div className="sp-knob-img" style={{ backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "knob", rtSprites)})`, backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }} />
         <div className="sp-knob-ptr" style={{ transform: `rotate(${angle}deg)` }} />
         <span className="knob-label">{r.label}</span>
       </div>
