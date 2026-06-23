@@ -122,6 +122,15 @@
   .brand img{width:26px;height:26px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.5)}
   .brand .word{font-size:21px}
   .brand .tld{color:#2dff6e}
+
+  /* ---- contextual mascots: peek from the page margins, guiding not covering ---- */
+  .stage,.finale{overflow:visible}
+  .mascot{position:absolute;z-index:7;pointer-events:none;filter:drop-shadow(0 10px 16px rgba(0,0,0,.5))}
+  .mascot.vc{animation:mbobc 5s ease-in-out infinite}
+  .mascot.bt{animation:mbobb 5s ease-in-out infinite}
+  @keyframes mbobc{0%,100%{transform:translateY(-50%) rotate(var(--r,0deg))}50%{transform:translateY(calc(-50% - 8px)) rotate(var(--r,0deg))}}
+  @keyframes mbobb{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-8px) rotate(var(--r,0deg))}}
+  @media(max-width:1180px){.mascot.edge{display:none}}
 </style></head>
 <body><div class="wrap">
   <span class="brand"><img src="favicon.svg" alt=""><span class="word">skeuo<span class="tld">.fm</span></span></span>
@@ -184,8 +193,6 @@ const STAGES=[
      {to:7,label:"re-snap controls",t:15,c:0.13,needs:"align"},
      {to:5,label:"reskin — keep body, new material",t:30,c:0.15},
      {to:1,label:"re-roll — new idea",t:79,c:0.44}]},
- {n:9,name:"(Edit)",sub:"Human-in-the-loop: drag controls in the template editor — craftsmanship pass, optional.",tech:"in-app · template editor",t:0,c:0,opt:true,img:"pebble-align.png",
-   loops:[{to:8,label:"hand-tweak layout → re-render",t:0,c:0}]},
 ];
 let align=true;
 const flow=document.getElementById('flow'),arcs=document.getElementById('arcs');
@@ -229,5 +236,36 @@ function drawArcs(){
 document.getElementById('alignTg').onclick=e=>{align=!align;e.currentTarget.setAttribute('aria-pressed',align);render();};
 addEventListener('resize',drawArcs);
 render();
+</script>
+
+<script>
+/* place the contextual mascots in the page margins beside the steps they relate to */
+function placeMascots(){
+  document.querySelectorAll('.mascot').forEach(e=>e.remove());
+  const edge=[
+    ['#st1','m-idea',     'right',189, 8],
+    ['#st2','m-director', 'left', 178,-4],
+    ['#st3','m-blueprint','right',178, 6],
+    ['#st5','m-paint',    'right',193, 8],
+    ['#st6','m-composite','left', 178,-6],
+  ];
+  for(const [sel,img,side,w,rot] of edge){
+    const card=document.querySelector(sel); if(!card)continue;
+    card.style.position='relative';
+    const m=document.createElement('img'); m.className='mascot edge vc';
+    m.src='process/'+img+'.png'; m.alt=''; m.loading='lazy';
+    m.style.width=w+'px'; m.style.top='50%'; m.style.setProperty('--r',rot+'deg');
+    if(side==='right'){ m.style.left='100%'; m.style.marginLeft='6px'; }
+    else { m.style.right='100%'; m.style.marginRight='6px'; }
+    card.appendChild(m);
+  }
+  const fin=document.querySelector('.finale');
+  if(fin){ fin.style.position='relative';
+    const m=document.createElement('img'); m.className='mascot edge bt';
+    m.src='process/m-finale.png'; m.alt=''; m.loading='lazy';
+    m.style.width='200px'; m.style.right='100%'; m.style.marginRight='6px';
+    m.style.bottom='14px'; m.style.setProperty('--r','5deg'); fin.appendChild(m); }
+}
+setTimeout(placeMascots,60); addEventListener('resize',()=>setTimeout(placeMascots,60));
 </script>
 </body></html>
