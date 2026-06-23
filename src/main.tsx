@@ -14,9 +14,14 @@ async function boot() {
     root.render(<StrictMode><CutCheck /></StrictMode>)
     return
   }
-  if (import.meta.env.DEV && new URLSearchParams(location.search).has('cutcompare')) {
-    const { default: CutCompare } = await import('./debug/CutCompare')
-    root.render(<StrictMode><CutCompare /></StrictMode>)
+  if (import.meta.env.DEV && (new URLSearchParams(location.search).has('cutcompare') || new URLSearchParams(location.search).has('pipeline'))) {
+    const { default: Pipeline } = await import('./debug/Pipeline')
+    root.render(<StrictMode><Pipeline /></StrictMode>)
+    return
+  }
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('recut')) {
+    const { default: Recut } = await import('./debug/Recut')
+    root.render(<StrictMode><Recut /></StrictMode>)
     return
   }
   if (isWidget()) {

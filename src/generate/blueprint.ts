@@ -204,15 +204,16 @@ export interface CombinedBlueprint {
 function controlDesc(r: Region, kind: SpriteKind): string {
   const b = (r.bind || r.id || "").toLowerCase();
   if (kind === "button") {
-    if (b.includes("prev") || b.includes("rew")) return "a round push-button with a rewind ◀◀ icon";
-    if (b.includes("play")) return "a round push-button with a play ▶ triangle icon";
-    if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return "a round push-button with a fast-forward ▶▶ icon";
-    if (b.includes("stop")) return "a round push-button with a stop ■ square icon";
-    if (b.includes("pause")) return "a round push-button with a pause ⏸ icon";
+    // describe the face icon in WORDS only — NO literal glyph characters (the model
+    // paints literal ◀▶■ as a separate floating glyph that gets cut into the sprite).
+    if (b.includes("prev") || b.includes("rew")) return "a round push-button with a rewind icon (two left-pointing triangles) embossed ON ITS FACE";
+    if (b.includes("play")) return "a round push-button with a play icon (one right-pointing triangle) embossed ON ITS FACE";
+    if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return "a round push-button with a fast-forward icon (two right-pointing triangles) embossed ON ITS FACE";
+    if (b.includes("stop")) return "a round push-button with a stop icon (a filled square) embossed ON ITS FACE";
+    if (b.includes("pause")) return "a round push-button with a pause icon (two vertical bars) embossed ON ITS FACE";
     return "a round push-button";
   }
   if (kind === "knob") return `a round rotary knob with a pointer notch${r.label ? ` (${r.label})` : ""}`;
-  if (kind === "slider") return "a small slider thumb / grip cap (just the small cap, NOT a full track)";
   return "a control part";
 }
 
@@ -310,7 +311,8 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
   const items: StripItem[] = [];
   for (const r of spriteRegs) {
     const kind = spriteKindOf(r)!;
-    if (kind === "toggle") continue; // toggles handled as an off/on pair below
+    if (kind === "toggle") continue;  // toggles handled as an off/on pair below
+    if (kind === "slider") continue;  // sliders/seek are NOT sprites — the skin/CSS renders the track + thumb
     items.push({ bind: bindOf(r), kind, desc: controlDesc(r, kind) });
   }
   const hasToggle = spriteRegs.some((r) => spriteKindOf(r) === "toggle");
@@ -324,9 +326,12 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
   items.forEach((it, i) => {
     const cx = i * cellW + cellW / 2;
     const cw = cellW * 0.92;
+    // LABEL-LESS strip: nothing is drawn — no shape, no line, no text. Control identity
+    // comes ONLY from the paint prompt's slot enumeration (stripDesc) + even spacing.
+    // The cut crop is the control band (top ~63% of the slot); tightAlpha trims the rest.
     cells.push({
       bind: it.bind, kind: it.kind,
-      cellRect: [(cx - cw / 2) / GEN_W, (GEN_H + stripH * 0.04) / H, cw / GEN_W, (stripH * 0.78) / H],
+      cellRect: [(cx - cw / 2) / GEN_W, (GEN_H + stripH * 0.02) / H, cw / GEN_W, (stripH * 0.66) / H],
     });
   });
   const stripDesc = items.map((it, i) => `slot ${i + 1}: ${it.desc}`).join("; ");

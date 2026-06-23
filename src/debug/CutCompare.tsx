@@ -35,7 +35,7 @@ function floodKeyBorder(cv: HTMLCanvasElement, tol = 42): HTMLCanvasElement {
 }
 
 type Cv = HTMLCanvasElement;
-const METHODS = ["current", "flood-key", "VLM-poly", "SAM"] as const;
+const METHODS = ["current", "flood-key", "VLM-poly", "SAM", "BiRefNet"] as const;
 type Method = (typeof METHODS)[number];
 
 interface Tile { bind: string; kind: string; method: Method; url: string; w: number; h: number; note?: string }
@@ -127,6 +127,7 @@ async function processGen(id: string, emit: (g: GenCmp) => void): Promise<void> 
   const tiles: Tile[] = [];
   const prompt = (meta as { prompt?: string }).prompt ?? id;
   const stripUrl = dataUrl(strip);
+  const full = new URLSearchParams(location.search).has("full"); // ?full also runs SAM + VLM (paid)
   const snap = () => emit({ id, prompt, stripUrl, tiles: [...tiles] });
   snap(); // section appears immediately
 
@@ -148,8 +149,10 @@ async function processGen(id: string, emit: (g: GenCmp) => void): Promise<void> 
   });
   snap();
 
-  // --- SAM (fal-ai/sam-3-1 box-prompt on the FULL paint via imageUrl) ---
-  try {
+  // --- SAM (fal-ai/sam-3-1) — PAID, only with ?full (decided loser; gate to save fal $) ---
+  if (!full) {
+    cells.forEach((c) => tiles.push({ bind: c.bind, kind: c.kind, method: "SAM", url: "", w: 0, h: 0, note: "?full" }));
+  } else try {
     const r = await fetch("/api/segment", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ imageUrl: `${base}-paint.png`, boxes: samBoxes }),
@@ -171,7 +174,33 @@ async function processGen(id: string, emit: (g: GenCmp) => void): Promise<void> 
   }
   snap();
 
-  // --- VLM-poly (gpt-4o tight polygon on the strip) ---
+  // --- BiRefNet (THE shipping cut): rembg the whole strip → cut each cell + trim alpha ---
+  try {
+    const blob: Blob = await new Promise((res) => strip.toBlob((b) => res(b!), "image/png"));
+    const r = await fetch("/api/cutout", { method: "POST", headers: { "Content-Type": "image/png" }, body: blob });
+    if (!r.ok) throw new Error(`cutout ${r.status}`);
+    const timg = await loadImg(URL.createObjectURL(await r.blob()));
+    const ts = mk(timg.naturalWidth, timg.naturalHeight); ts.getContext("2d")!.drawImage(timg, 0, 0);
+    const fx = ts.width / strip.width, fy = ts.height / strip.height;
+    cells.forEach((c, i) => {
+      try {
+        const b = boxes[i];
+        const sub = crop(ts, b.x_min * fx, b.y_min * fy, (b.x_max - b.x_min) * fx, (b.y_max - b.y_min) * fy);
+        const t = tightAlpha(sub);
+        tiles.push({ bind: c.bind, kind: c.kind, method: "BiRefNet", url: dataUrl(t), w: t.width, h: t.height });
+      } catch { tiles.push({ bind: c.bind, kind: c.kind, method: "BiRefNet", url: "", w: 0, h: 0, note: "cut fail" }); }
+    });
+  } catch (e) {
+    cells.forEach((c) => tiles.push({ bind: c.bind, kind: c.kind, method: "BiRefNet", url: "", w: 0, h: 0, note: `err: ${String(e).slice(0, 30)}` }));
+  }
+  snap();
+
+  // --- VLM-poly (gpt-4o) — PAID, only with ?full (decided loser; gate to save openai $) ---
+  if (!full) {
+    cells.forEach((c) => tiles.push({ bind: c.bind, kind: c.kind, method: "VLM-poly", url: "", w: 0, h: 0, note: "?full" }));
+    snap();
+    return;
+  }
   try {
     const controls = cells.map((c) => { const r = regById.get(c.bind) as Region | undefined; return { bind: c.bind, kind: c.kind, label: r?.label }; });
     const r = await fetch("/api/maskvlm", {
@@ -211,6 +240,11 @@ const METHOD_INFO: { key: Method; color: string; tag: string; how: string; verdi
     key: "VLM-poly", color: "#FFC04D", tag: "gpt-4o · the 'mask in the VLM pass' arm",
     how: "Asks gpt-4o to TRACE a tight silhouette polygon (8–20 points) for each control, then cuts by that polygon. This is the 'add masking to the second VLM/slot pass' option.",
     verdict: "✗ VLMs can't do precise geometry — returns crude flat blobs, sometimes traces the label text. Not viable for masking (matches the known noisy-VLM failure mode).",
+  },
+  {
+    key: "BiRefNet", color: "#5BE0C0", tag: "fal birefnet/v2 (rembg) · THE SHIPPING CUT",
+    how: "rembg-BiRefNet the WHOLE strip once (the same model that cuts the device), giving a transparent-background strip, then crop each control by its slot + trim to alpha. This is what finishCutoutFull now does.",
+    verdict: "✓ Cleanest + background-agnostic (any strip colour), ~$0.002/skin, already in the pipeline. True silhouette, no halo, no imposed shape. Minor erosion only where a control is the SAME colour as the background (pure-white-on-white).",
   },
   {
     key: "SAM", color: "#7CFF4F", tag: "fal sam-3-1 · box-prompt segmentation",

@@ -211,7 +211,7 @@ function whiteKeyCanvas(canvas: HTMLCanvasElement): Blob | Promise<Blob> {
 
 // ---- device region crop --------------------------------------------------------
 // The device is the TOP `devFrac` of the combined paint. Returns a fresh canvas.
-function cropDevice(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElement {
+export function cropDevice(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElement {
   const W = paint.width;
   const devH = Math.max(1, Math.round(paint.height * devFrac));
   const out = document.createElement("canvas");
@@ -223,7 +223,7 @@ function cropDevice(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElemen
 }
 
 // The control STRIP is the BOTTOM (1 - devFrac) of the combined paint.
-function cropStrip(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElement {
+export function cropStrip(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElement {
   const W = paint.width, H = paint.height;
   const sy = Math.round(H * devFrac), sh = Math.max(1, H - sy);
   const out = document.createElement("canvas");
@@ -234,7 +234,7 @@ function cropStrip(paint: HTMLCanvasElement, devFrac: number): HTMLCanvasElement
   return out;
 }
 
-async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
+export async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
   const bmp = await createImageBitmap(blob);
   const c = document.createElement("canvas");
   c.width = bmp.width; c.height = bmp.height;
@@ -244,18 +244,65 @@ async function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
   return c;
 }
 
+// Keep ONLY the connected alpha component nearest the canvas centre (the target control
+// is centred in its cell); zero every other component. This drops NEIGHBOUR fragments
+// that bleed across the cell boundary and stray glyphs/label bits, which is exactly the
+// "picked up the neighbour" failure. 4-connectivity BFS on alpha>40.
+function keepCenterComponent(c: HTMLCanvasElement): void {
+  const W = c.width, H = c.height, N = W * H;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (!ctx || N < 4) return;
+  const img = ctx.getImageData(0, 0, W, H), d = img.data;
+  const op = (i: number) => d[i * 4 + 3] > 40;
+  const label = new Int32Array(N).fill(-1), stack = new Int32Array(N);
+  const comps: { id: number; size: number; cx: number; cy: number }[] = [];
+  for (let s = 0; s < N; s++) {
+    if (!op(s) || label[s] !== -1) continue;
+    const id = comps.length; let head = 0, tail = 0, size = 0, sx = 0, sy = 0;
+    stack[tail++] = s; label[s] = id;
+    while (head < tail) {
+      const p = stack[head++]; size++; const x = p % W, y = (p / W) | 0; sx += x; sy += y;
+      if (x > 0 && op(p - 1) && label[p - 1] === -1) { label[p - 1] = id; stack[tail++] = p - 1; }
+      if (x < W - 1 && op(p + 1) && label[p + 1] === -1) { label[p + 1] = id; stack[tail++] = p + 1; }
+      if (y > 0 && op(p - W) && label[p - W] === -1) { label[p - W] = id; stack[tail++] = p - W; }
+      if (y < H - 1 && op(p + W) && label[p + W] === -1) { label[p + W] = id; stack[tail++] = p + W; }
+    }
+    comps.push({ id, size, cx: sx / size, cy: sy / size });
+  }
+  if (comps.length <= 1) return;
+  // score = distance-to-centre minus a size bonus → prefer the big, centred control over
+  // a small edge-hugging neighbour fragment. Ignore specks (<1% area).
+  const ccx = W / 2, ccy = H / 2;
+  let best = -1, bestScore = Infinity;
+  for (const k of comps) {
+    if (k.size < N * 0.01) continue;
+    const score = Math.hypot(k.cx - ccx, k.cy - ccy) - Math.sqrt(k.size) * 0.6;
+    if (score < bestScore) { bestScore = score; best = k.id; }
+  }
+  if (best < 0) return;
+  for (let i = 0; i < N; i++) if (label[i] !== best) d[i * 4 + 3] = 0;
+  ctx.putImageData(img, 0, 0);
+}
+
 // Cut one control from the BiRefNet-isolated (transparent-background) strip: crop the
-// cell sub-rect, then trim to its non-transparent bounds → tight true-shape sprite.
-function cutFromTransparentStrip(
+// cell sub-rect, drop neighbour/stray components, then trim to alpha bounds → tight sprite.
+export function cutFromTransparentStrip(
   strip: HTMLCanvasElement, sx: number, sy: number, sw: number, sh: number,
 ): HTMLCanvasElement | null {
   const W = strip.width, H = strip.height;
   const ix = Math.max(0, Math.round(sx)), iy = Math.max(0, Math.round(sy));
   const iw = Math.min(W - ix, Math.round(sw)), ih = Math.min(H - iy, Math.round(sh));
   if (iw < 2 || ih < 2) return null;
-  const ctx = strip.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return null;
-  const d = ctx.getImageData(ix, iy, iw, ih).data;
+  // 1. crop the cell sub-rect into its own canvas
+  const cell = document.createElement("canvas");
+  cell.width = iw; cell.height = ih;
+  const cctx = cell.getContext("2d", { willReadFrequently: true });
+  if (!cctx) return null;
+  cctx.drawImage(strip, ix, iy, iw, ih, 0, 0, iw, ih);
+  // 2. keep only the centre control component (drop neighbours / stray glyphs)
+  keepCenterComponent(cell);
+  // 3. trim to the remaining non-transparent bounds
+  const d = cctx.getImageData(0, 0, iw, ih).data;
   let minx = iw, miny = ih, maxx = -1, maxy = -1;
   for (let y = 0; y < ih; y++) for (let x = 0; x < iw; x++) {
     if (d[(y * iw + x) * 4 + 3] > 16) { if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
@@ -264,9 +311,7 @@ function cutFromTransparentStrip(
   const ow = maxx - minx + 1, oh = maxy - miny + 1;
   const out = document.createElement("canvas");
   out.width = ow; out.height = oh;
-  const octx = out.getContext("2d");
-  if (!octx) return null;
-  octx.drawImage(strip, ix + minx, iy + miny, ow, oh, 0, 0, ow, oh);
+  out.getContext("2d")!.drawImage(cell, minx, miny, ow, oh, 0, 0, ow, oh);
   return out;
 }
 
@@ -372,9 +417,10 @@ function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
 }
 
 // ---- /api/cutout — server-side BiRefNet on the device crop ----------------------
-async function serverCutout(deviceCanvas: HTMLCanvasElement): Promise<Blob> {
+export async function serverCutout(deviceCanvas: HTMLCanvasElement, model?: string): Promise<Blob> {
   const png = await canvasToBlob(deviceCanvas);
-  const r = await fetch(apiUrl("/api/cutout"), {
+  const url = model ? `/api/cutout?model=${encodeURIComponent(model)}` : "/api/cutout";
+  const r = await fetch(apiUrl(url), {
     method: "POST", headers: { "Content-Type": "image/png" }, body: png,
   });
   if (!r.ok) {
@@ -382,6 +428,17 @@ async function serverCutout(deviceCanvas: HTMLCanvasElement): Promise<Blob> {
     throw new Error(err?.error ?? `cutout → ${r.status}`);
   }
   return r.blob();
+}
+
+// A control cut "failed" if it's nearly empty (BiRefNet eroded a low-contrast control
+// away — e.g. white-on-white) — too few opaque pixels to be a real control.
+function cutLooksFailed(c: HTMLCanvasElement | null): boolean {
+  if (!c || c.width < 4 || c.height < 4) return true;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return true;
+  const d = ctx.getImageData(0, 0, c.width, c.height).data;
+  let n = 0; for (let i = 0; i < c.width * c.height; i++) if (d[i * 4 + 3] > 40) n++;
+  return n / (c.width * c.height) < 0.10;
 }
 
 // ---- finalize uploads ----------------------------------------------------------
@@ -471,24 +528,39 @@ export async function finishCutoutFull(
   const spriteUrls: Record<string, string> = {};
   const W = paint.width, H = paint.height;
   const syOrig = Math.round(H * layout.devFrac), stripHOrig = Math.max(1, H - syOrig);
+  const strip = cropStrip(paint, layout.devFrac);
+  const cutFrom = (ts: HTMLCanvasElement, cellRect: [number, number, number, number]) => {
+    const fx = ts.width / W, fy = ts.height / stripHOrig;
+    const [nx, ny, nw, nh] = cellRect;
+    return cutFromTransparentStrip(ts, nx * W * fx, (ny * H - syOrig) * fy, nw * W * fx, nh * H * fy);
+  };
   let tstrip: HTMLCanvasElement | null = null;
-  try {
-    const transpBlob = await serverCutout(cropStrip(paint, layout.devFrac));
-    tstrip = await blobToCanvas(transpBlob);
-  } catch { tstrip = null; }
+  try { tstrip = await blobToCanvas(await serverCutout(strip)); } catch { tstrip = null; }
+
+  // First pass: cut each control from the (light-model) BiRefNet strip.
+  const sprites: Record<string, HTMLCanvasElement | null> = {};
+  for (const cell of layout.cells) {
+    sprites[cell.bind] = tstrip ? cutFrom(tstrip, cell.cellRect) : null;
+  }
+  // DETECT failures (eroded/empty — e.g. low-contrast controls) and RETRY with the heavy
+  // BiRefNet model TUNED for low contrast; re-cut only the failed controls from that strip.
+  const failed = layout.cells.filter((c) => cutLooksFailed(sprites[c.bind]));
+  if (failed.length) {
+    try {
+      const tHeavy = await blobToCanvas(await serverCutout(strip, "General Use (Heavy)"));
+      for (const c of failed) {
+        const retry = cutFrom(tHeavy, c.cellRect);
+        if (!cutLooksFailed(retry)) sprites[c.bind] = retry;
+      }
+    } catch { /* heavy retry unavailable → keep first-pass / geometric fallback below */ }
+  }
+  // Upload: prefer the BiRefNet sprite; fall back to the geometric cut if still failed.
   for (const cell of layout.cells) {
     try {
-      let spriteCanvas: HTMLCanvasElement | null = null;
-      if (tstrip) {
-        const fx = tstrip.width / W, fy = tstrip.height / stripHOrig;
-        const [nx, ny, nw, nh] = cell.cellRect;
-        spriteCanvas = cutFromTransparentStrip(
-          tstrip, nx * W * fx, (ny * H - syOrig) * fy, nw * W * fx, nh * H * fy,
-        );
-      }
-      if (!spriteCanvas) spriteCanvas = cutSprite(paint, cell.cellRect, cell.kind); // fallback
-      const blob = await canvasToBlob(spriteCanvas);
-      spriteUrls[cell.bind] = await uploadSprite(id, cell.bind, blob);
+      let sprite = sprites[cell.bind];
+      if (cutLooksFailed(sprite)) sprite = cutSprite(paint, cell.cellRect, cell.kind);
+      if (!sprite) continue;
+      spriteUrls[cell.bind] = await uploadSprite(id, cell.bind, await canvasToBlob(sprite));
     } catch { /* skip this sprite; app falls back to donor for this bind */ }
   }
 

@@ -50,15 +50,18 @@ export const PAINT_PROMPT =
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
   "looks pressable/turnable is NOT). Only the sockets (top) and the strip parts (bottom) may look interactive.\n\n" +
-  "BOTTOM CONTROL-PARTS STRIP (a BLANK white band — DO paint controls into it):\n" +
-  "- The bottom band is blank white, split into evenly-spaced slots left-to-right. Paint ONE finished, glossy control " +
-  "PART centered in each slot, in the SAME material as the body, in this EXACT left-to-right order:\n" +
+  "BOTTOM CONTROL-PARTS STRIP (a white band with faint slot labels — DO paint controls):\n" +
+  "- The bottom band has evenly-spaced slots left-to-right, each with a faint grey name label in its LOWER margin. " +
+  "Paint ONE finished, glossy control PART in the UPPER part of each slot (above its label), in the SAME material as " +
+  "the body, in this EXACT left-to-right order:\n" +
   "    {strip}\n" +
-  "- Each control is a BARE part: NO square plate, card, tile, rounded-rectangle or box behind it, NO frame, NO shadow " +
-  "under it — just the bare glossy part directly on the white. Center each in its slot, evenly spaced, not touching neighbours.\n" +
-  "- ABSOLUTELY NO TEXT AND NO LINES anywhere in the strip: do NOT draw any letter, word, number, label, caption, cell " +
-  "outline, border, or divider/grid line. The strip must contain ONLY the bare control parts on clean white — nothing " +
-  "else. (Any text or line left in the strip gets cut into the sprite and ruins it.)\n\n" +
+  "- Each control is a BARE part: NO square plate, card, tile, rounded-rectangle or box behind it, NO frame, NO shadow. " +
+  "Center each in the upper area of its slot, evenly spaced, not touching neighbours.\n" +
+  "- Each control's own icon belongs EMBOSSED ON ITS FACE (e.g. the play triangle is ON the button) — do NOT draw any " +
+  "separate floating icon, glyph, arrow, or symbol ABOVE, BELOW or beside the control. Nothing floats next to a control.\n" +
+  "- Leave the faint grey slot labels where they are in the lower margin; do NOT add any other text, letters, numbers, " +
+  "lines, outlines, or dividers. The control parts must sit ABOVE the labels with clean empty white around them, so each " +
+  "control can be cut cleanly without catching any label or glyph.\n\n" +
   "RENDER: flat front-on product render on a PERFECTLY CLEAN PURE-WHITE background. CRITICAL: NO shadows of any kind " +
   "anywhere — no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the white. Every element " +
   "must have clean hard edges against pure white so it can be perfectly masked. No reflections on the ground.";
@@ -221,13 +224,16 @@ function pngDims(b: Uint8Array): { w: number; h: number } | null {
 // {image_url}, output is result.image.url. Reuses the same fal queue helpers as the
 // paint pass so there is ONE fal-REST implementation.
 export const BIREFNET_MODEL = "fal-ai/birefnet/v2";
-export async function removeBackground(falKey: string, png: Uint8Array): Promise<Uint8Array> {
+// model variants for the "tune on fail" retry: Light is fast/default; Heavy is slower but
+// segments low-contrast (e.g. white-on-white controls) better; Matting gives finer edges.
+export type BiRefNetModel = "General Use (Light 2K)" | "General Use (Heavy)" | "Matting";
+export async function removeBackground(
+  falKey: string, png: Uint8Array, model: BiRefNetModel = "General Use (Light 2K)",
+): Promise<Uint8Array> {
   const imageUrl = await falUpload(falKey, png);
   const job = await falPost(falKey, `https://queue.fal.run/${BIREFNET_MODEL}`, {
     image_url: imageUrl,
-    // Light 2K: device frames are ~1024-wide PNGs with hard edges on pure white —
-    // the light model is fast and the clean blueprint render is easy to segment.
-    model: "General Use (Light 2K)",
+    model,
     operating_resolution: "2048x2048",
     output_format: "png",
   });

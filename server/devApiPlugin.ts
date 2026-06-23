@@ -99,6 +99,8 @@ export function devApiPlugin(): Plugin {
         req.on("end", async () => {
           try {
             const ct = (req.headers["content-type"] ?? "").toString();
+            const modelQ = new URL(req.url ?? "", "http://x").searchParams.get("model");
+            const model = (modelQ === "General Use (Heavy)" || modelQ === "Matting") ? modelQ : undefined;
             let png: Uint8Array;
             if (ct.includes("application/json")) {
               const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}") as { imageUrl?: string };
@@ -108,7 +110,7 @@ export function devApiPlugin(): Plugin {
             } else {
               png = new Uint8Array(Buffer.concat(chunks));
             }
-            const cut = await removeBackground(falKey, png);
+            const cut = await removeBackground(falKey, png, model);
             res.statusCode = 200;
             res.setHeader("Content-Type", "image/png");
             res.setHeader("Cache-Control", "no-store");
