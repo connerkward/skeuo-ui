@@ -187,6 +187,26 @@ export function devApiPlugin(): Plugin {
         }
       });
 
+      // GET /api/asset/skins/<id>/<path> — local parity with functions/api/asset.
+      // In dev the store flattens R2's skins/<id>/<path> into public/generated/ as
+      // <id>-frame.png, <id>-paint.png, <id>-sprite-<bind>.png. The PLAYER builds
+      // /api/asset/skins/<id>/sprites/<bind>.png URLs at render time, so without
+      // this route they fall through to Vite's SPA index.html (200 text/html) and
+      // every per-skin sprite silently fails to decode. Map them back to the files.
+      server.middlewares.use("/api/asset/", (req, res, next) => {
+        const m = (req.url ?? "").replace(/^\/+/, "").split(/[?#]/)[0].match(/^skins\/([^/]+)\/(.+)$/);
+        if (!m) return next();
+        const id = decodeURIComponent(m[1]);
+        const rest = m[2];
+        const file = rest.startsWith("sprites/")
+          ? `${id}-sprite-${rest.slice("sprites/".length)}`
+          : `${id}-${rest}`;
+        const path = resolve(genDir, file);
+        if (!existsSync(path)) { res.statusCode = 404; res.setHeader("Cache-Control", "no-store"); res.end("not found"); return; }
+        res.setHeader("Content-Type", file.endsWith(".json") ? "application/json" : "image/png");
+        res.end(readFileSync(path));
+      });
+
       // GET /api/budget — local stub of the lifetime spend ledger. There is no KV
       // in dev, so report the full cap as remaining (the real ceiling is enforced
       // at the edge). SPEND_CAP_CENTS env overrides the default $10.
