@@ -249,19 +249,28 @@ export function segmentStripByComponents(
     }
     comps.push({ id, size, cx: sx / size, minx, miny, maxx, maxy });
   }
-  // 2. drop specks (<0.3% of strip area) — stray glyph bits / matte noise
-  const real = comps.filter((c) => c.size >= N * 0.003);
+  // 2. drop specks (<0.3% of strip area) — stray glyph bits / matte noise — and order L→R
+  const real = comps.filter((c) => c.size >= N * 0.003).sort((a, b) => a.cx - b.cx);
   if (!real.length) return out;
-  // 3. assign each surviving component to the nearest cell by centre-x
-  const cellCx = cells.map((c) => (c.cellRect[0] + c.cellRect[2] / 2) * W);
+  // 3. assign components to cells. The painter paints the N controls left-to-right in the
+  // SAME order as the cells, so when the counts MATCH (the common case) order-based mapping
+  // (blob i → cell i) is exact and never cross-assigns the way nearest-x can when a control
+  // is painted slightly off-centre. Only when the counts DIFFER (the painter dropped/merged
+  // a control, or matte noise) do we fall back to best-effort nearest-cell; cells that then
+  // capture nothing return null and the caller uses the grid crop.
   const assigned: number[][] = cells.map(() => []);
-  for (const c of real) {
-    let best = 0, bestD = Infinity;
-    for (let j = 0; j < cellCx.length; j++) {
-      const dd = Math.abs(c.cx - cellCx[j]);
-      if (dd < bestD) { bestD = dd; best = j; }
+  if (real.length === cells.length) {
+    real.forEach((c, i) => assigned[i].push(c.id));
+  } else {
+    const cellCx = cells.map((c) => (c.cellRect[0] + c.cellRect[2] / 2) * W);
+    for (const c of real) {
+      let best = 0, bestD = Infinity;
+      for (let j = 0; j < cellCx.length; j++) {
+        const dd = Math.abs(c.cx - cellCx[j]);
+        if (dd < bestD) { bestD = dd; best = j; }
+      }
+      assigned[best].push(c.id);
     }
-    assigned[best].push(c.id);
   }
   // 4. per cell: union the assigned components' bbox, copy ONLY their pixels → tight sprite
   for (let j = 0; j < cells.length; j++) {
