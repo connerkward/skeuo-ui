@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Composite } from "./player/Composite";
 import { SkinThumb } from "./player/SkinThumb";
@@ -72,9 +72,8 @@ export default function App() {
   const [showCreate, setShowCreate] = useState(false);
   const activeRuntime = runtimeSkins.find((s) => s.id === skinId);
   const activeMeta = [...visible, ...runtimeSkins].find((s) => s.id === skinId);
-  // the skin's logomark title font — loaded from Google Fonts on demand
+  // the skin's logomark title font (loaded on demand inside <CinemaTitle>)
   const titleFont = skinFont(skinId, activeRuntime?.font);
-  useEffect(() => { ensureGoogleFont(titleFont); }, [titleFont.family, titleFont.weight]);
 
   // Spotify: drive the skin from real playback only in spotify mode
   const sp = useSpotify();
@@ -247,9 +246,7 @@ export default function App() {
           a centered strip under the player on narrower ones (grid handles which). */}
       <section className="meta">
         <figcaption className="stage-caption">
-          <span className="cap-name" style={skinFontStyle(titleFont)}>
-            {(activeMeta?.name ?? skinId).replace(/\s*✦\s*$/, "")}
-          </span>
+          <CinemaTitle text={(activeMeta?.name ?? skinId).replace(/\s*✦\s*$/, "")} font={titleFont} />
           {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
         </figcaption>
         <div className="skin-actions">
@@ -304,6 +301,57 @@ export default function App() {
         pip.pipWindow ? pip.pipWindow.document.body : pipHost,
       )}
     </div>
+  );
+}
+
+// The cinematic title logomark. (1) Loads the skin's Google font, holding the
+// text hidden until it's ready so there's no FOUT pop-in (fallback never flashes).
+// (2) Auto-fits the font-size DOWN from the CSS max so the whole name sits on one
+// line inside its area — no wrapping, words always finish. Refits on resize.
+function CinemaTitle({ text, font }: { text: string; font: ReturnType<typeof skinFont> }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setReady(false);
+    ensureGoogleFont(font);
+    const spec = `${font.weight} 48px '${font.family}'`;
+    const done = () => { if (alive) setReady(true); };
+    const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+    if (fonts?.load) fonts.load(spec).then(() => fonts.ready).then(done, done);
+    else done();
+    return () => { alive = false; };
+  }, [font.family, font.weight]);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !ready) return;
+    const fit = () => {
+      const box = el.parentElement;
+      if (!box) return;
+      el.style.fontSize = "";                              // back to the CSS max
+      const max = parseFloat(getComputedStyle(el).fontSize) || 64;
+      const avail = box.clientWidth;
+      let size = max;
+      el.style.fontSize = `${size}px`;
+      let guard = 0;
+      while (el.scrollWidth > avail && size > 13 && guard++ < 300) {
+        size -= 1;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (el.parentElement) ro.observe(el.parentElement);
+    return () => ro.disconnect();
+  }, [text, ready, font.family, font.weight]);
+
+  return (
+    <span ref={ref} className="cap-name"
+      style={{ ...skinFontStyle(font), opacity: ready ? 1 : 0, transition: "opacity .28s ease" }}>
+      {text}
+    </span>
   );
 }
 
