@@ -162,14 +162,19 @@ body {
 
 .pip-float-btn { color: #aebfff; }
 
-/* the PiP window's own document body (styles are carried in via carryStyles) */
+/* the PiP window's own document body (styles are carried in via carryStyles).
+   No painted backdrop — the skin fills the window edge-to-edge so there's no
+   visible "container" inside the OS chrome. (The title bar + opaque rectangular
+   frame are browser-owned and can't be removed/made transparent — that's the
+   line between Document PiP and the native transparent Tauri widget.) */
 .pip-body {
   margin: 0; height: 100vh; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 30% 18%, #1c1c1f, #060607 75%);
+  background: transparent;
 }
-.pip-body .pip-stage { width: 100%; height: 100%; padding: 10px; box-sizing: border-box; }
-.pip-body .player { --w: min(94vw, calc(94vh * 0.66)); }
+.pip-body .pip-stage { width: 100%; height: 100%; padding: 0; box-sizing: border-box; }
+/* fill the window on the binding axis; 0.6667 = the 1024:1536 player aspect */
+.pip-body .player { --w: min(100vw, calc(100vh * 0.6667)); }
 
 /* ====================================================================== */
 /* MOBILE SHELL (<=820px): compact top bar + swipeable skin carriage.      */
