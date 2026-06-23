@@ -41,12 +41,15 @@
         demo. Real playback needs the BYO-Client-ID wizard (its own open item / prototype in
         `docs/spotify-byo-wizard-prototype.html`). Flip the flag once that lands.
       - **Generated-skin name/font unverified live** — the Director (`deriveMaterial`) now
-        returns a concise `name`/`blurb` + a Google-Fonts `font`, threaded handler→api→
-        `onCreated`. Builds + deployed but NOT run end-to-end (needs the OpenAI key + a paid
-        gen). Do one real "Create a skin" on prod to confirm naming/font load + that the CF
-        Pages env keys are set.
+        returns a concise `name`/`blurb` + a Google-Fonts `font` (now genre-rotated + recent-avoid
+        for diversity, css2 cross-validated), threaded handler→api→`onCreated`. The font path is
+        verified LOCALLY against gpt-4o (10/10 distinct), but the full paid end-to-end gen on PROD
+        is still untested. Do one real "Create a skin" on skeuo.fm to confirm naming/font load +
+        that the CF Pages OpenAI key + env are set. (This is TODO item "C" from 2026-06-23.)
       - **No un-hide UI** — the gallery × HIDES a generated skin (`hidden:true`, raw data kept
-        in `localStorage["skeuo:skins"]`), but there's no restore affordance yet.
+        in `localStorage["skeuo:skins"]`), but there's no restore affordance yet. (2026-06-23: a
+        `?all` query param now reveals ALL hidden catalog bodies in the gallery — a dev/review
+        affordance, not the real per-skin restore UI, but a starting point.)
 
 - [ ] **Reactive music-player mascot — build the rig + groove layer (animation strategy researched 2026-06-23).**
       A `mascot` player region (like the `cd`/`visualizer` dynamicTypes) that idles when paused and
@@ -169,6 +172,32 @@
       unused). Re-add the `<label className="sp-toggle">` checkbox (desktop/web
       only — gate with `!isMobileApp()`, since iOS WKWebView lacks EME/Widevine)
       when we revisit in-page playback.
+
+## Done (2026-06-23, late) — Font polish + skeuo.fm prod-stability fix (shipped)
+- [x] **Real font preload (kills the pop-in)** — `preloadSkinFonts` only injected the Google
+      CSS `<link>`; the woff2 binary still lazy-loaded on first glyph render (the pop-in).
+      `ensureGoogleFont` now forces the binary down via `FontFaceSet.load()` on link-load.
+      Verified network-level: all visible faces fetch (200) + pass `fonts.check()` ~2s after mount.
+- [x] **Font diversity system** — the Director anchored on the same few faces. Each gen now
+      randomly favors one of 8 genre buckets (rotated exemplars) + a recent-fonts avoid-list
+      threaded client→handler→director via `localStorage["skeuo:skins"]`. Live gpt-4o test:
+      10/10 distinct fonts across 10 consecutive gens.
+- [x] **Google-Fonts cross-validation** — LLM picks any family from memory, then `resolveFont`
+      probes the css2 endpoint for THAT family (real→200, hallucinated→400; no API key, no
+      1800-family catalog dump); a made-up name falls back to a style-appropriate face.
+- [x] **Catalog font pass** — hand-picked a distinct, vibe-matched face for ALL 30 skins (was
+      only the 10 visible); preload scoped to the visible roster so mount stays light. `?all`
+      query param reveals the hidden catalog bodies in the gallery (dev affordance — see un-hide).
+- [x] **skeuo.fm HANG fixed — poisoned Cloudflare edge cache.** A deploy-propagation race served
+      not-yet-present hashed chunks as `200 text/html` (the single-page not_found fallback), frozen
+      by the `immutable` `_headers` rule → a fresh browser got HTML for a JS module → app never
+      mounted (`Failed to fetch dynamically imported module`). curl hit a clean variant (read as
+      JS) which masked it; a fresh-profile headless browser reproduced it every time. Couldn't purge
+      (API token lacks the perm) so: (a) moved hashed assets to `/assets/app/` — brand-new,
+      never-poisoned URLs that bust both the edge entry AND any poisoned client caches; (b)
+      `public/_redirects` makes a missing `/assets/*` return **404 `no-store`** instead of the
+      HTML fallback (can't masquerade as a module, isn't cached → can't recur) + a `404.html`.
+      Verified fresh-profile prod load now MOUNTS. Commits 279fc5e/f6bd8e0/4d3ee57/da68da1, deployed.
 
 ## Done (2026-06-23) — Website redesign: shell, thumbnails, cinematic titles (shipped to skeuo.fm)
 - [x] **Desktop shell rebuilt** several times to the final form: a NARROW left gallery
