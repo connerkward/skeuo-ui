@@ -216,14 +216,21 @@ export default function App() {
         <div className="gallery-list">
           <p className="gallery-label">Skins</p>
           {runtimeSkins.map((s) => (
-            <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
-              onClick={() => setSkinId(s.id)} title={s.name}>
-              <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
-              <span className="skin-row-meta">
-                <span className="skin-row-name">{s.name}</span>
-                <span className="skin-row-blurb">{s.blurb}</span>
-              </span>
-            </button>
+            <div key={s.id} className="skin-row-wrap">
+              <button className={`skin-row ${s.id === skinId ? "active" : ""}`}
+                onClick={() => setSkinId(s.id)} title={s.name}>
+                <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
+                <span className="skin-row-meta">
+                  <span className="skin-row-name">{s.name}</span>
+                  <span className="skin-row-blurb">{s.blurb}</span>
+                </span>
+              </button>
+              <button className="skin-row-del" aria-label={`Delete ${s.name}`} title="Delete this skin"
+                onClick={() => {
+                  setRuntimeSkins((rs) => rs.filter((x) => x.id !== s.id));
+                  if (skinId === s.id) setSkinId(visible[0].id);
+                }}>×</button>
+            </div>
           ))}
           {visible.map((s) => (
             <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}

@@ -7,7 +7,7 @@ import type { RuntimeDeps } from "./pipeline";
 import { generateSkin, DONOR_STYLES, MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
 import { checkAndReserve, release } from "./ratelimit";
-import { deriveMaterial } from "./director";
+import { deriveMaterial, titleFromPrompt, blurbFromPrompt } from "./director";
 
 function slug(s: string): string {
   return (s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 24) || "skin");
@@ -35,10 +35,14 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   let style: DonorStyle;
   let materialPrompt: string | undefined;
   let font = "Cinzel";                       // logomark title font (Director pick)
+  // concise title + description — default to a tidy prompt-derived fallback, then
+  // override with the Director's when the LLM runs (never the raw "prompt · model")
+  let name = titleFromPrompt(prompt);
+  let blurb = blurbFromPrompt(prompt);
   if (reqStyle && DONOR_STYLES.includes(reqStyle)) {
     style = reqStyle;
   } else if (deps.openaiKey) {
-    ({ style, materialPrompt, font } = await deriveMaterial(deps.openaiKey, prompt));
+    ({ style, materialPrompt, font, name, blurb } = await deriveMaterial(deps.openaiKey, prompt));
   } else {
     style = "winamp" as DonorStyle;
   }
@@ -64,7 +68,7 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     const regions = Array.isArray(body.regions) && body.regions.length ? body.regions : undefined;
     const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
     return {
-      status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font,
+      status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font, name, blurb,
       template: r.template, frameUrl: r.frameUrl,
       needsCutout: r.needsCutout, paintUrl: r.paintUrl, timingMs: r.timingMs,
     };

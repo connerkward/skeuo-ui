@@ -32,7 +32,29 @@ const HEURISTIC: Array<[RegExp, DonorStyle]> = [
   [/chrome|brushed|gunmetal|boombox|led|winamp|stereo|hi-fi|silver/i, "winamp"],
 ];
 
-function heuristic(prompt: string): { style: DonorStyle; materialPrompt: string; font: string } {
+export interface Material {
+  style: DonorStyle;
+  materialPrompt: string;
+  font: string;
+  name: string;        // concise skin TITLE (1-3 words) — never the raw prompt
+  blurb: string;       // one short descriptive line
+}
+
+// a clean fallback title from the prompt (drop a leading article, Title-Case the
+// first ~3 words) so a generated skin never shows "a fanged anglerfis · model".
+export function titleFromPrompt(prompt: string): string {
+  const words = prompt.trim().replace(/^(a|an|the)\s+/i, "").replace(/[^\w\s-]/g, "")
+    .split(/\s+/).filter(Boolean).slice(0, 3);
+  const t = words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return t || "New Skin";
+}
+export function blurbFromPrompt(prompt: string): string {
+  const p = prompt.trim().replace(/\s+/g, " ");
+  const s = p.charAt(0).toUpperCase() + p.slice(1);
+  return s.length > 64 ? s.slice(0, 61).trimEnd() + "…" : s;
+}
+
+function heuristic(prompt: string): Material {
   const hit = HEURISTIC.find(([re]) => re.test(prompt));
   const style = hit ? hit[1] : ("winamp" as DonorStyle);
   return {
@@ -41,13 +63,12 @@ function heuristic(prompt: string): { style: DonorStyle; materialPrompt: string;
       `a richly detailed photoreal skeuomorphic finish evoking "${prompt}": ` +
       "cohesive material palette, tactile surface highlights, crisp moulded edges and hardware accents.",
     font: STYLE_FONT[style] ?? "Cinzel",
+    name: titleFromPrompt(prompt),
+    blurb: blurbFromPrompt(prompt),
   };
 }
 
-export async function deriveMaterial(
-  openaiKey: string,
-  prompt: string,
-): Promise<{ style: DonorStyle; materialPrompt: string; font: string }> {
+export async function deriveMaterial(openaiKey: string, prompt: string): Promise<Material> {
   if (!openaiKey) return heuristic(prompt);
   try {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -61,9 +82,12 @@ export async function deriveMaterial(
             role: "system",
             content:
               "You art-direct skeuomorphic MP3-player skins. Given a silhouette idea, reply with JSON " +
-              `{"style": <one of ${DONOR_STYLES.join("|")}>, "materialPrompt": <1-2 sentence rich custom ` +
-              "material/finish description derived from the idea: surface, color, sheen, hardware accents>, " +
-              `"font": <a Google Fonts family name>}. ` +
+              `{"name": <title>, "blurb": <description>, "style": <one of ${DONOR_STYLES.join("|")}>, ` +
+              `"materialPrompt": <1-2 sentence rich custom material/finish description derived from the idea: ` +
+              `surface, color, sheen, hardware accents>, "font": <a Google Fonts family name>}. ` +
+              "name is a CONCISE, punchy skin TITLE — 1 to 3 words, like a product or film name (e.g. 'Angler Maw', " +
+              "'Bondi G3', 'Spartan Ring'); NEVER echo the raw prompt or include a model name. " +
+              "blurb is ONE short descriptive line, at most ~8 words (e.g. 'Fanged jaw grown around the dial'). " +
               "style is the closest-fitting donor for palette/sprite reuse and MUST be exactly one of the listed values. " +
               "font is the display typeface for this skin's TITLE LOGOMARK (like a film's title card): pick the real, " +
               "currently-available Google Fonts family whose character best matches the skin's vibe — favour PUNCHY, " +
@@ -84,7 +108,12 @@ export async function deriveMaterial(
     // name (letters/spaces/digits), else default by style. No hard allow-list.
     const raw = typeof parsed.font === "string" ? parsed.font.trim() : "";
     const font = /^[\w][\w '-]{1,40}$/.test(raw) ? raw : (STYLE_FONT[style] ?? "Anton");
-    return { style, materialPrompt, font };
+    // name/blurb: clean LLM output, else derive a tidy fallback from the prompt
+    const name = (typeof parsed.name === "string" && parsed.name.trim())
+      ? parsed.name.trim().replace(/[·|].*$/, "").slice(0, 28).trim() : titleFromPrompt(prompt);
+    const blurb = (typeof parsed.blurb === "string" && parsed.blurb.trim())
+      ? parsed.blurb.trim().slice(0, 72) : blurbFromPrompt(prompt);
+    return { style, materialPrompt, font, name, blurb };
   } catch {
     return heuristic(prompt);
   }

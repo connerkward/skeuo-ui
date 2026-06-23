@@ -77,8 +77,8 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
         }
         onCreated({
           id: data.id,
-          name: `${prompt.trim().slice(0, 18)} · ${modelLabel(data.model)}`,
-          blurb: `generated · ${modelLabel(data.model)}`,
+          name: data.name?.trim() || prompt.trim().slice(0, 24),
+          blurb: data.blurb?.trim() || `generated · ${modelLabel(data.model)}`,
           style: data.style,
           frameUrl,
           template: data.template,

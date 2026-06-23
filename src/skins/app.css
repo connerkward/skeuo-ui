@@ -175,6 +175,19 @@ body {
 }
 .skin-row:hover { background: #1a1a1d; border-color: #41414a; }
 .skin-row.active { background: #1f251e; border-color: rgba(45,255,110,.55); }
+/* generated skins get a delete (×) on hover (top-right) */
+.skin-row-wrap { position: relative; }
+.skin-row-wrap .skin-row { width: 100%; }
+.skin-row-del {
+  position: absolute; top: 6px; right: 6px; z-index: 2;
+  width: 22px; height: 22px; border-radius: 6px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(18,18,22,.9); border: 1px solid #3a3a42; color: #c9c9d0;
+  font-size: 16px; line-height: 1; padding: 0;
+  opacity: 0; transition: opacity .12s, background .12s, color .12s, border-color .12s;
+}
+.skin-row-wrap:hover .skin-row-del, .skin-row-del:focus-visible { opacity: 1; }
+.skin-row-del:hover { background: #5a1f1f; border-color: #8a3030; color: #fff; }
 .skin-row-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .skin-row-name { font-size: 13px; font-weight: 650; color: #d7d7dd; }
 .skin-row.active .skin-row-name { color: #fff; }
