@@ -21,7 +21,7 @@
 // resvg-wasm in a CF Worker or resvg-js + UPNG in Node.
 // ============================================================
 import type { Region, Template } from "../template/schema";
-import { GEN_W, GEN_H, regionsForVariant, repackTemplate, type LayoutVariant } from "./layouts";
+import { GEN_W, GEN_H, regionsForVariant, repackTemplate, bankTransport, type LayoutVariant } from "./layouts";
 import { combinedBlueprint, type BlueprintLayout } from "./blueprint";
 
 // ---- single-pass paint prompt — ported from /tmp/prompt_egg_v3.txt (the winning
@@ -47,6 +47,7 @@ export const PAINT_PROMPT =
   "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place.\n" +
   "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
+  "- SHARED HOUSING: where several sockets sit DIRECTLY ADJACENT in a row (a button bank), paint them as ONE inset, recessed HOUSING / bezel of the body material that CONTAINS those wells — a single sunken panel with thin raised SEAMS between the individual empty wells (like a car-console climate keypad or a Walkman transport cluster), NOT separate free-floating holes. The wells themselves stay empty and dark; only the surrounding bezel/seams are added.\n" +
   "- REMOVE the bright pink/magenta rings in your output (guides only); the dark socket they ringed stays exactly where it was.\n" +
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
@@ -328,7 +329,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   // REPACK the template before the painter: sane per-kind sizes + move-based
   // de-overlap (no slivers). A template with overlapping/sliver interactables must
   // NEVER reach the painter — this is the root of alignment quality.
-  const regs: Region[] = repackTemplate(input.regions?.length ? input.regions : regionsForVariant(input.variant));
+  const regs: Region[] = bankTransport(repackTemplate(input.regions?.length ? input.regions : regionsForVariant(input.variant)));
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 
