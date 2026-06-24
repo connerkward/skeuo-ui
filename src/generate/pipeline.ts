@@ -383,6 +383,12 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   // connected-component sprite cutting is unambiguous. Material is prompt-driven, so
   // the fallback is the brief itself — never a canned donor preset.
   const matText = input.materialPrompt || input.brief;
+  // COLOUR BACKDROP + COLOUR-KEY device cutout. The DEVICE is painted on a contrasting
+  // backdrop (a hue far from its palette; translucent/iridescent → white) and cut with a
+  // pure-JS COLOUR KEY (cutoutColorAware), NOT BiRefNet. VERIFIED 2026-06-24: BiRefNet
+  // eats a coloured body on a colour backdrop (61% of cut holes were body) AND eats a
+  // near-white body on white (white-on-white) — the colour key beats both (green frog
+  // bbox-fill 93.5%, dark screens kept, zero fringe). The STRIP stays white + BiRefNet+CC.
   const keyc = pickKeyColor(matText);
   log(`[${input.id}] key colour ${keyc.css} (${keyc.phrase})`);
 

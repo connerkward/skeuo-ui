@@ -26,8 +26,6 @@ import { cutoutColorAware, KEY_WHITE, type RGB, DEVICE_FRAC, type BlueprintLayou
 import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
 
-const isWhiteKey = (k: RGB) => k[0] >= 250 && k[1] >= 250 && k[2] >= 250;
-
 // Decode raw image bytes into something drawable, robustly across engines.
 // createImageBitmap is the fast path, but in real WKWebView (the iOS app + macOS
 // widget) it has historically been the flakier decoder — it can reject a blob that
@@ -107,44 +105,6 @@ function whiteKeyCanvas(canvas: HTMLCanvasElement, key: RGB = KEY_WHITE): Blob |
   // it in place — despilled RGB + the computed alpha — so the canvas updates directly.
   const rgba = new Uint8Array(img.data.buffer, img.data.byteOffset, img.data.byteLength);
   cutoutColorAware(rgba, W, H, key);
-  ctx.putImageData(img, 0, 0);
-  return canvasToBlob(canvas);
-}
-
-// COLOUR-AWARE cleanup of a BiRefNet device frame, when the device was painted on a
-// contrasting backdrop (keyColor ≠ white). Respects BiRefNet's learned alpha as the
-// base, then: (1) CUTS any pixel BiRefNet kept that is still backdrop-coloured (the
-// fringe/halo BiRefNet leaves on metallic or low-contrast edges), and (2) DESPILLS —
-// subtracts the backdrop hue's chroma from every kept pixel so no coloured rim remains.
-// Dark screens are left to BiRefNet (it keeps them as part of the object), so no fill
-// step is needed here. White key ⇒ no-op (nothing to key/despill). [verify-outputs §7:
-// the output of this is inspected on real skins, not assumed.]
-async function cleanDeviceFrame(frame: Blob, key: RGB): Promise<Blob> {
-  if (isWhiteKey(key)) return frame;
-  const canvas = await blobToCanvas(frame);
-  const W = canvas.width, H = canvas.height;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return frame;
-  const img = ctx.getImageData(0, 0, W, H);
-  const d = img.data;
-  const [kr, kg, kb] = key;
-  const TOL2 = 70 * 70;
-  const km = (kr + kg + kb) / 3;
-  let dxr = kr - km, dxg = kg - km, dxb = kb - km;
-  const dn = Math.hypot(dxr, dxg, dxb) || 1; dxr /= dn; dxg /= dn; dxb /= dn;
-  for (let i = 0; i < W * H; i++) {
-    if (!d[i * 4 + 3]) continue;                              // already transparent (BiRefNet)
-    const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
-    const dr = r - kr, dg = g - kg, db = b - kb;
-    if (dr * dr + dg * dg + db * db < TOL2) { d[i * 4 + 3] = 0; continue; } // backdrop BiRefNet kept → cut
-    const m = (r + g + b) / 3;
-    const proj = (r - m) * dxr + (g - m) * dxg + (b - m) * dxb;
-    if (proj > 0) {                                            // despill: kill backdrop-hue fringe
-      d[i * 4] = Math.max(0, Math.min(255, r - proj * dxr));
-      d[i * 4 + 1] = Math.max(0, Math.min(255, g - proj * dxg));
-      d[i * 4 + 2] = Math.max(0, Math.min(255, b - proj * dxb));
-    }
-  }
   ctx.putImageData(img, 0, 0);
   return canvasToBlob(canvas);
 }
@@ -554,11 +514,15 @@ export async function finishCutoutFull(
   // 1. device frame: crop the top devFrac, BiRefNet via /api/cutout, upload. HEAVY model
   // (same as the strip) — no light pass anywhere; heavy handles low-contrast bodies too.
   const deviceCanvas = cropDevice(paint, layout.devFrac);
-  const frameBlob = await serverCutout(deviceCanvas, "General Use (Heavy)");
-  // colour-aware cleanup when painted on a contrasting backdrop: cut backdrop pixels
-  // BiRefNet kept + despill the coloured fringe (no-op for a white key).
-  const frameFinal = await cleanDeviceFrame(frameBlob, key);
-  await uploadFrame(id, frameFinal);
+  // DEVICE cutout = pure-JS COLOUR KEY on the contrasting backdrop (cutoutColorAware
+  // via whiteKeyCanvas). VERIFIED 2026-06-24 to beat BiRefNet on BOTH failure modes:
+  // BiRefNet eats a coloured body on a colour backdrop (61% of holes were body) AND
+  // eats a near-white body on white (white-on-white). The colour key + colour-aware
+  // fill keeps dark screens solid and despills the backdrop fringe. White key ⇒ the
+  // legacy white-key path (translucent/iridescent fallback). The STRIP still uses
+  // BiRefNet below (loose parts on white — that path is solid).
+  const frameBlob = await whiteKeyCanvas(deviceCanvas, key);
+  await uploadFrame(id, frameBlob);
 
   // 1b. PLACEMENT = the blueprint/socket positions, AS-IS. The deterministic template
   //     rects ARE the load-bearing truth (per ai-image-coords-rule). We do NOT run a VLM
