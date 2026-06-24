@@ -75,21 +75,27 @@
         energy *(additive-only v1)* · beat-sync — strict live-beat lock vs smoothed BPM clock *(gentle)* ·
         reactions/inertialization in v1 *(defer)*.
 
-- [ ] **CD album-art visualizer — MERGE the `cd-visualizer` branch to main (2026-06-23).**
-      It didn't regress and doesn't need git archaeology — it was **built this session on a
-      branch and never merged**. The full feature lives on branch **`cd-visualizer`** (worktree
-      at **`../skeuo-ui-cd-visualizer`**), 6 commits ahead of main:
-      - `3bce622` player: add `cd` + `albumart` dynamicTypes (spinning mock-CD + bare album-art
-        element), `Track.cover` plumbed from Spotify `album.images` in `useSpotify`, authorable
-        in the wizard (screen palette cycles visualizer→cd→albumart→…).
-      - `c874865`→`ad11bab`→`7c34add`→`9b060b4`→`1a6bdc0`: the disc look + motion — settled on a
-        **silver data-side disc** (generated texture, recentred so it doesn't wobble) with an
-        album-color tint, and a **physically-grounded spin-up / inertial coast-down** at
-        full-speed cruise with speed-proportional motion blur. Verified live on the pebble skin.
-      - **NEXT:** merge `cd-visualizer` → `main` (check it doesn't collide with the worker-cutout
-        changes that landed on main since the branch forked; rebase if needed), `git worktree
-        remove ../skeuo-ui-cd-visualizer`, then deploy. The `albumart` element gives the no-disc
-        fallback for local/demo mode with no Spotify art.
+- [x] **CD album-art visualizer — MERGED + baked + deployed (2026-06-24).** The
+      `cd-visualizer` branch (cd + albumart dynamicTypes, spinning silver data-side disc,
+      `Track.cover` from Spotify) merged clean into main (worktree removed). Bake on top:
+      - **Hub recentred via circle-fit** on the hole edge (was ~8px high → wobble; now
+        within 0.2px of center, fit residual 0.29px). The old centroid method was skewed
+        by the gloss — fit a circle, not a centroid.
+      - **Anti-strobe rotational motion blur**: the disc jumps 8–17°/frame at cruise and
+        isotropic blur can't mask it, so `CdDisc` stacks 5 echo layers across ~1.4 frames
+        of motion (oldest opaque, current on top) → smooth sheen. Isotropic softening 0.15px.
+        Tuned in a lookdev studio (now torn down).
+      - **Shows up in a final skin**: `wmp` (Media Capsule) is the one thematic built-in CD
+        showcase (square visualizer region → cd). Every other skin + the wizard default +
+        the 🎲 randomizer stay VISUALIZER; generated skins get a CD only when the prompt is
+        music/disc-thematic (~70%) or rarely at random (~8%) — `maybeCdScreen()` in pipeline.
+      - **Real album-art tint (local mode, no Spotify)**: fetched actual covers (iTunes) for
+        the wmp trance playlist + the winamp fallback playlist → `public/demo-covers/`, wired
+        `Track.cover`, so the disc tints to the playing song's real cover. Tint made WAY
+        stronger (opacity .95 + a 2nd overlay-blend layer). Generated cd skins fall back to
+        the covered winamp playlist, so they tint too.
+      - NOT run-verified: the thematic-generated-CD path (would need a paid "boombox/cd"
+        gen to confirm a generated skin actually gets a CD).
 
 - [x] **More generative template heuristics — BAKED (2026-06-23).** The 10-archetype engine
       + repel/min-spacing pass is now `layoutRandom()` in `src/generate/layouts.ts`, wired to
@@ -172,6 +178,23 @@
       unused). Re-add the `<label className="sp-toggle">` checkbox (desktop/web
       only — gate with `!isMobileApp()`, since iOS WKWebView lacks EME/Widevine)
       when we revisit in-page playback.
+
+## Done (2026-06-24) — Streaming loading preview + shape de-bias (shipped)
+- [x] **Streaming "skin forming" loading preview** — `/api/generate` now STREAMS NDJSON:
+      each pass emits `{stage,url}` as it completes (blueprint → grown body → painted skin),
+      final `GenerateResponse` is the last line. `RuntimeDeps.onStage` → CF Function + dev
+      plugin stream it; `postGenerate` reads line-by-line. Wizard showed the user's REAL
+      artifacts forming. **HIDDEN behind `LIVE_PREVIEW_ENABLED=false`** (user's call) — the
+      streaming infra stays live (harmless), only the in-loader card is gated off. Verified
+      incremental on prod CF (blueprint@3s, envelope@29s, paint@60s, done@63s).
+- [x] **Generated-skin name/font verified LIVE (TODO "C")** — the streaming gens this session
+      returned real Director names ("Cute Red Mushroom", "Victorian Echo") + fonts on prod,
+      with the OpenAI key confirmed working. (Earlier-flagged item, now confirmed.)
+- [x] **Shape de-bias** — `ENVELOPE_PROMPT` no longer forces "horns, fins, tendrils, legs,
+      jaws" on every sculpted body; the form now FOLLOWS the brief (no monster default unless
+      the prompt calls for it). Root-caused the gallery's "evil" motif to this prompt + a
+      legacy biomech-heavy catalog. (Affects the opt-in 2-pass sculpt path; default 1-pass was
+      already neutral.) Catalog curation (hiding the horror cluster) NOT done — still an option.
 
 ## Done (2026-06-23, late) — Font polish + skeuo.fm prod-stability fix (shipped)
 - [x] **Real font preload (kills the pop-in)** — `preloadSkinFonts` only injected the Google
