@@ -227,6 +227,10 @@ function renderControl(r: Region, ps: PlayerState, skinId: string): React.ReactN
             ))}
           </ol>
         );
+      case "cd":
+        return <CdDisc ps={ps} />;
+      case "albumart":
+        return <AlbumArt ps={ps} />;
     }
   }
 
@@ -583,6 +587,84 @@ function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
       <span className="eq-label">{r.label}</span>
     </div>
   );
+}
+
+/* ---------- mock CD: album art on a spinning, reflective disc ----------
+   The platter eases its angular velocity toward a cruise speed when playback
+   starts and coasts back to a stop when paused/stopped, driven by rAF on a ref
+   (no per-frame React re-render). The velocity follows a frame-rate-independent
+   exponential approach — a short time constant on spin-up reads as a motor
+   catching the disc; a long one on spin-down reads as friction letting it coast
+   to rest. The disc is a generated photoreal silver CD data-side (no printed
+   art); it rotates WITH the platter so its diffraction sweeps as it spins. An
+   optional blurred album-cover layer tints the silver via mix-blend-mode:color
+   — the metal's luminance kept, the album's hue applied. The specular gloss is
+   FIXED — the light source doesn't move — which reads as a reflection off a
+   spinning disc. */
+function CdDisc({ ps }: { ps: PlayerState }) {
+  const platter = useRef<HTMLDivElement>(null);
+  const playingRef = useRef(ps.playing);
+  playingRef.current = ps.playing;
+  useEffect(() => {
+    let raf = 0, angle = 0, vel = 0, last = 0;
+    // A real CD drive does two distinct things, so we model two distinct regimes
+    // rather than easing toward a target with one curve:
+    const CRUISE = 1000;       // deg/s cruise (~2.8 rev/s) — a CD spinning at FULL SPEED, not a slow platter
+    const SPINUP_ACCEL = 1300; // deg/s² motor torque vs. the disc's inertia — sets how snappy 0→cruise feels (~1.0s)
+    const KNEE = 0.82;         // governor: full torque until 82% of cruise, then taper to 0 — settles in without overshoot
+    const FRIC_C = 18;         // deg/s² Coulomb (dry) friction — constant drag that brings it to an EXACT stop, and the gentle end-of-coast decel
+    const FRIC_V = 1.4;        // 1/s viscous friction (∝ vel) — the hard initial slow; with FRIC_C sets the ~3s total coast
+    const MAX_BLUR = 1.9;      // px of motion smear at full speed — sells "spinning fast" (a real CD blurs to a sheen) + masks 60Hz strobe
+    const tick = (t: number) => {
+      if (!last) last = t;
+      const dt = Math.min(0.05, (t - last) / 1000); last = t;
+      if (playingRef.current) {
+        // motor: torque-limited ramp (near-linear) with a soft governor near cruise.
+        // head = 1 (full torque) until KNEE·cruise, then falls linearly to 0 at cruise.
+        const head = Math.max(0, Math.min(1, (CRUISE - vel) / (CRUISE * (1 - KNEE))));
+        vel = Math.min(CRUISE, vel + SPINUP_ACCEL * head * dt);
+      } else {
+        // motor off: inertial coast. Coulomb + viscous friction — fast slow at speed,
+        // gentle at the end, and the constant term guarantees a finite stop (no asymptote).
+        vel -= (FRIC_C + FRIC_V * vel) * dt;
+        if (vel < 0.4) vel = 0;
+      }
+      angle = (angle + vel * dt) % 360;
+      const p = platter.current;
+      if (p) {
+        // motion blur ramps with speed so the disc smears into a spinning sheen at cruise
+        const blur = (vel / CRUISE) * MAX_BLUR;
+        p.style.transform = `rotate(${angle.toFixed(2)}deg)`;
+        p.style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : "";
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const cover = ps.track.cover;
+  return (
+    <div className="dyn cd-disc" data-playing={ps.playing}>
+      <div className="cd-wrap">
+        <div className="cd-platter" ref={platter}>
+          <div className="cd-surface" />
+          {cover && <img className="cd-tint" src={cover} alt="" draggable={false} />}
+        </div>
+        <div className="cd-gloss" />
+      </div>
+    </div>
+  );
+}
+
+/* the bare cover image as a placeable element (no disc) */
+function AlbumArt({ ps }: { ps: PlayerState }) {
+  const cover = ps.track.cover;
+  return cover
+    ? <img className="dyn albumart" src={cover} alt={`${ps.track.artist} — ${ps.track.title}`} draggable={false} />
+    : <div className="dyn albumart albumart-fallback">
+        <span className="cd-fb-title">{ps.track.title}</span>
+        <span className="cd-fb-artist">{ps.track.artist}</span>
+      </div>;
 }
 
 function EqCurve({ bands, active }: { bands: number[]; active: boolean }) {
