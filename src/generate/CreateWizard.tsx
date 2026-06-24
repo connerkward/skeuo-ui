@@ -439,6 +439,10 @@ const STAGE_LABEL: Record<GenStageEvent["stage"], string> = {
   envelope: "Your body",
   paint: "Your skin",
 };
+// Hidden for now (the server still streams the stages — see /api/generate; this
+// only gates the in-loader preview card). Flip to re-enable. Same pattern as the
+// CONNECT_ENABLED / FLOAT_ENABLED feature gates.
+const LIVE_PREVIEW_ENABLED = false;
 
 function PaintProgress({ progress, elapsed, autoBody, stage }: {
   progress: GenProgress; elapsed: number; autoBody: boolean; stage: GenStageEvent | null;
@@ -462,13 +466,16 @@ function PaintProgress({ progress, elapsed, autoBody, stage }: {
       <div className="wiz-paint" role="status" aria-live="polite">
         {/* live preview of the user's ACTUAL skin: the real artifact streamed from
             the server for the current pass (blueprint → grown body → painted skin),
-            each fading in as it arrives. Before the first event: a soft shimmer. */}
-        <div className="wiz-proc">
-          {stage
-            ? <img key={stage.url} src={stage.url} alt="" className="wiz-proc-img on" />
-            : <div className="wiz-proc-wait" aria-hidden="true" />}
-          <span className="wiz-proc-tag">{stage ? STAGE_LABEL[stage.stage] : "starting…"}</span>
-        </div>
+            each fading in as it arrives. Before the first event: a soft shimmer.
+            HIDDEN behind LIVE_PREVIEW_ENABLED for now. */}
+        {LIVE_PREVIEW_ENABLED && (
+          <div className="wiz-proc">
+            {stage
+              ? <img key={stage.url} src={stage.url} alt="" className="wiz-proc-img on" />
+              : <div className="wiz-proc-wait" aria-hidden="true" />}
+            <span className="wiz-proc-tag">{stage ? STAGE_LABEL[stage.stage] : "starting…"}</span>
+          </div>
+        )}
         <div className="wiz-paint-head">
           <span className="wiz-paint-model">
             {progress.total > 1 && <b>model {progress.idx + 1}/{progress.total} · </b>}
