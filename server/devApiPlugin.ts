@@ -73,16 +73,24 @@ export function devApiPlugin(): Plugin {
           try { body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"); }
           catch { res.statusCode = 400; res.end(JSON.stringify({ status: "error", error: "invalid JSON" })); return; }
           const ip = (req.socket.remoteAddress || "local").toString();
+          // STREAM NDJSON, mirroring the CF Function: each pass emits a {stage,url}
+          // line as it completes, then the final GenerateResponse is the last line.
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "application/x-ndjson");
+          const write = (obj: unknown) => res.write(JSON.stringify(obj) + "\n");
           // no `cutout`: deferred to the browser, mirroring the deployed Worker.
-          const deps: RuntimeDeps = { falKey, openaiKey, rasterize, store, log: (m) => server.config.logger.info(m) };
+          const deps: RuntimeDeps = {
+            falKey, openaiKey, rasterize, store,
+            log: (m) => server.config.logger.info(m),
+            onStage: (stage, url) => write({ stage, url }),
+          };
           try {
             const out = await handleGenerate({ body, ip, deps });
-            res.statusCode = out.status === "error" ? 429 : 200;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify(out));
+            write(out);
+            res.end();
           } catch (e) {
-            res.statusCode = 500;
-            res.end(JSON.stringify({ status: "error", error: e instanceof Error ? e.message : String(e) }));
+            write({ status: "error", error: e instanceof Error ? e.message : String(e) });
+            res.end();
           }
         });
       });

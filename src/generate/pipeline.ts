@@ -105,6 +105,11 @@ export interface RuntimeDeps {
   // meta.json), reconstructable by id via /api/skin/<id>.
   store?: (id: string, kind: "frame" | "paint" | "template" | "meta", data: Uint8Array | string) => Promise<string>;
   log?: (msg: string) => void;
+  // optional: emit a live progress artifact as each pass completes (blueprint →
+  // grown body → painted skin), so the loading UI can preview the user's ACTUAL
+  // skin forming instead of a placeholder. blueprint is a data: URL; envelope/paint
+  // are fal CDN URLs. Best-effort + fire-and-forget — never blocks the pipeline.
+  onStage?: (stage: "blueprint" | "envelope" | "paint", url: string) => void;
 }
 
 // Small per-skin record persisted alongside the frame + template so a shared link
@@ -194,6 +199,17 @@ async function fetchPng(url: string): Promise<Uint8Array> {
   return new Uint8Array(await r.arrayBuffer());
 }
 
+// bytes → data:image/png;base64 URL (btoa exists in browsers, Workers and modern
+// Node). Chunked so a large array never overflows the String.fromCharCode arg list.
+function pngDataUrl(bytes: Uint8Array): string {
+  let bin = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return `data:image/png;base64,${btoa(bin)}`;
+}
+
 export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Promise<GenerateResult> {
   const log = deps.log ?? (() => {});
   const model = input.model ?? DEFAULT_MODEL;
@@ -205,6 +221,8 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   // 2. wells-only blueprint PNG (envelope input)
   const wellsPng = await deps.rasterize(wellsOnlySvg(regs));
+  // the user's ACTUAL blueprint — show it immediately while the body cooks
+  deps.onStage?.("blueprint", pngDataUrl(wellsPng));
 
   // 3. ENVELOPE pass — grow a flat silhouette around the wells. This is the
   //    DEFAULT (useEnvelope defaults true): with no uploaded envelope the body
@@ -216,12 +234,14 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   if (input.envelopeUrl) {
     // user-uploaded envelope wins: paint straight from it, skip the AI envelope pass.
     paintInputPng = await fetchPng(input.envelopeUrl);
+    deps.onStage?.("envelope", input.envelopeUrl);
     log(`[${input.id}] using uploaded envelope`);
   } else if (useEnvelope) {
     const tEnv = Date.now();
     const wellsUrl = await falUpload(deps.falKey, wellsPng);
     const envJob = await falSubmit(deps.falKey, model, [wellsUrl], ENVELOPE_PROMPT.replace("{brief}", input.brief));
     const envUrl = await falPoll(deps.falKey, envJob, 7 * 60_000);
+    deps.onStage?.("envelope", envUrl);   // the real grown body
     paintInputPng = await fetchPng(envUrl);
     envMs = Date.now() - tEnv;
     log(`[${input.id}] envelope (${modelLabel(model)}) ${(envMs / 1000) | 0}s`);
@@ -241,6 +261,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   }
   const paintJob = await falSubmit(deps.falKey, model, [paintInputUrl, ...refs], prompt);
   const paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
+  deps.onStage?.("paint", paintUrl);   // the real painted skin
   const paintPng = await fetchPng(paintUrl);
   const paintMs = Date.now() - tPaint;
   log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);

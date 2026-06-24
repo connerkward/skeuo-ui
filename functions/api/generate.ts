@@ -144,16 +144,37 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
     }
   }
 
-  const res = await handleGenerate({ body, ip: clientIp(request), deps });
-
-  // Only a SUCCESSFUL (cost-incurring) generation adds to the ledger. KV is
-  // eventually consistent, so a couple of concurrent gens could under-count under
-  // burst — acceptable slack for a cost ceiling. No TTL: it's a lifetime budget.
-  if (env.RATELIMIT && res.status === "done") {
-    const cur = Number((await env.RATELIMIT.get(SPEND_KEY)) ?? "0");
-    await env.RATELIMIT.put(SPEND_KEY, String(cur + est));
-  }
-  return json(res, res.status === "error" ? 429 : 200);
+  // STREAM the response as NDJSON: each pipeline pass emits a {stage,url} line as it
+  // completes (blueprint → grown body → painted skin) so the client can preview the
+  // user's ACTUAL skin forming, then the final GenerateResponse is the LAST line.
+  // The fal awaits are I/O (not CPU), so streaming doesn't change the Function's CPU
+  // budget — the cutout still runs in the browser. Spend pre-check already happened
+  // above (a plain JSON 429); billing the ledger happens after a successful gen here.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const write = (obj: unknown) => {
+        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n")); } catch { /* client disconnected */ }
+      };
+      const streamDeps: RuntimeDeps = { ...deps, onStage: (stage, url) => write({ stage, url }) };
+      let res: Awaited<ReturnType<typeof handleGenerate>>;
+      try {
+        res = await handleGenerate({ body, ip: clientIp(request), deps: streamDeps });
+      } catch (e) {
+        res = { status: "error", error: e instanceof Error ? e.message : String(e) };
+      }
+      write(res);   // final line (carries `status`, no `stage`)
+      // Only a SUCCESSFUL (cost-incurring) generation adds to the ledger. KV is
+      // eventually consistent, so a couple of concurrent gens could under-count under
+      // burst — acceptable slack for a cost ceiling. No TTL: it's a lifetime budget.
+      if (env.RATELIMIT && res.status === "done") {
+        const cur = Number((await env.RATELIMIT.get(SPEND_KEY)) ?? "0");
+        await env.RATELIMIT.put(SPEND_KEY, String(cur + est));
+      }
+      controller.close();
+    },
+  });
+  return new Response(stream, { status: 200, headers: { "Content-Type": "application/x-ndjson", ...CORS } });
 };
 
 // CORS: the native shells (iOS app, macOS widget) POST here from the tauri://

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { GenerateRequest } from "./api";
+import type { GenerateRequest, GenStageEvent } from "./api";
 import { postGenerate } from "./postGenerate";
 import { finishCutout } from "./cutoutClient";
 import { apiUrl } from "../platform";
@@ -102,6 +102,9 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   // live paint-pass progress: which model is in flight + when its pass started
   const [progress, setProgress] = useState<GenProgress | null>(null);
   const [elapsed, setElapsed] = useState(0); // seconds since the current pass began
+  // live preview of the user's ACTUAL skin forming, streamed from the server as each
+  // pass completes (blueprint → grown body → painted skin)
+  const [stage, setStage] = useState<GenStageEvent | null>(null);
 
   const usePreset = (v: LayoutVariant) => { setVariant(v); setRegions(regionsForVariant(v)); };
 
@@ -149,12 +152,13 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
       for (let i = 0; i < models.length; i++) {
         const model = models[i];
         setProgress({ idx: i, total: models.length, model, startedAt: Date.now() });
+        setStage(null);   // reset the live preview for this model's pass
         const req: GenerateRequest = {
           // envelope:true runs the extra sculpt pass (opt-in). Otherwise one pass:
           // the model expands its own shape. An uploaded body is used directly.
           prompt: prompt.trim(), variant, refImage, model, envelope: grows, envelopeImage: envImage, regions,
         };
-        const data = await postGenerate(req);
+        const data = await postGenerate(req, (ev) => setStage(ev));
         if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
         if (data.status !== "done") { setErr("unexpected pending response"); continue; }
         // The CF Worker defers the alpha cutout to here (CPU ceiling) — cut the raw
@@ -177,7 +181,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false); setProgress(null);
+      setBusy(false); setProgress(null); setStage(null);
     }
   };
 
@@ -321,7 +325,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                   {envImage ? " · uploaded body" : grows ? " · sculpted body (2 passes)" : " · auto body (1 pass)"}</div>
                 <div className="wiz-total"><strong>{models.length} model{models.length === 1 ? "" : "s"}</strong> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</div>
               </div>
-              {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={grows} />}
+              {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={grows} stage={stage} />}
               {err && (
                 <div className="wiz-err">
                   <img className="wiz-err-mascot" src="/mascot-error.png" alt="" />
@@ -429,26 +433,15 @@ const PAINT_PHASES = [
 // cumulative fraction of the (expected) duration each phase ends at
 const PHASE_ENDS = [0.06, 0.18, 0.42, 0.86, 1.0];
 
-// process previews — the example pipeline's REAL artifacts (the Pebble skin),
-// cross-faded in the loading area as the bar walks its phases so the wait shows
-// what each step actually produces. See /process for the full how-it-works page.
-const PROC_PREVIEWS = [
-  "/loading/blueprint.webp",   // wells-only layout
-  "/loading/envelope.webp",    // body grown around the wells
-  "/loading/paint.webp",       // material painted on
-  "/loading/composite.webp",   // cut out → final transparent frame
-] as const;
-// phase label → which artifact to show ("Reading your prompt" shares the blueprint)
-const PHASE_PREVIEW: Record<string, string> = {
-  "Reading your prompt": "/loading/blueprint.webp",
-  "Drawing the blueprint": "/loading/blueprint.webp",
-  "Growing the body": "/loading/envelope.webp",
-  "Painting the material": "/loading/paint.webp",
-  "Cutting it out": "/loading/composite.webp",
+// label for each streamed stage artifact — the user's ACTUAL skin at that step
+const STAGE_LABEL: Record<GenStageEvent["stage"], string> = {
+  blueprint: "Your blueprint",
+  envelope: "Your body",
+  paint: "Your skin",
 };
 
-function PaintProgress({ progress, elapsed, autoBody }: {
-  progress: GenProgress; elapsed: number; autoBody: boolean;
+function PaintProgress({ progress, elapsed, autoBody, stage }: {
+  progress: GenProgress; elapsed: number; autoBody: boolean; stage: GenStageEvent | null;
 }) {
   // expected duration of THIS pass — two passes (auto-grow) run longer than one.
   const expected = autoBody ? 75 : 45;
@@ -463,18 +456,18 @@ function PaintProgress({ progress, elapsed, autoBody }: {
   // an uploaded body skips the grow phase — collapse that label so it stays honest
   const phases = autoBody ? PAINT_PHASES : PAINT_PHASES.filter((p) => p !== "Growing the body");
   const phaseLabel = phases[Math.min(phaseIdx, phases.length - 1)];
-  const activePreview = PHASE_PREVIEW[phaseLabel] ?? PROC_PREVIEWS[0];
 
   return (
     <>
       <div className="wiz-paint" role="status" aria-live="polite">
-        {/* process preview: the real pipeline artifacts cross-fading with the phase */}
-        <div className="wiz-proc" aria-hidden="true">
-          {PROC_PREVIEWS.map((src) => (
-            <img key={src} src={src} alt="" loading="eager"
-              className={`wiz-proc-img ${src === activePreview ? "on" : ""}`} />
-          ))}
-          <span className="wiz-proc-tag">how it’s made</span>
+        {/* live preview of the user's ACTUAL skin: the real artifact streamed from
+            the server for the current pass (blueprint → grown body → painted skin),
+            each fading in as it arrives. Before the first event: a soft shimmer. */}
+        <div className="wiz-proc">
+          {stage
+            ? <img key={stage.url} src={stage.url} alt="" className="wiz-proc-img on" />
+            : <div className="wiz-proc-wait" aria-hidden="true" />}
+          <span className="wiz-proc-tag">{stage ? STAGE_LABEL[stage.stage] : "starting…"}</span>
         </div>
         <div className="wiz-paint-head">
           <span className="wiz-paint-model">

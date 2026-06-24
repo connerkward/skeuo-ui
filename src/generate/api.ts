@@ -19,6 +19,12 @@ export interface GenerateRequest {
   avoidFonts?: string[];      // recently-used logomark fonts the Director should NOT reuse (diversity)
 }
 
+// Live progress events streamed (NDJSON) ahead of the final GenerateResponse so the
+// loading UI can show the user's ACTUAL skin forming — their blueprint, then the real
+// grown body, then the real painted skin — as each pipeline pass completes server-side.
+export type GenStage = "blueprint" | "envelope" | "paint";
+export interface GenStageEvent { stage: GenStage; url: string }
+
 export interface GeneratePending { status: "pending"; jobId: string }
 export interface GenerateDone {
   status: "done";
