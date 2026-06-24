@@ -31,7 +31,11 @@ export const onRequestGet = async (
 
   const assetBase = env.ASSETS_BASE_URL ?? "/api/asset";
   const frameUrl = `${assetBase}/skins/${id}/frame.png`;
-  return json({ id, frameUrl, template, meta });
+  // does this skin have per-control cut sprites? (new-pipeline skins do; the player
+  // must know to render them instead of the donor style's bundled sprite set)
+  const spritesList = await env.SKINS.list({ prefix: `skins/${id}/sprites/`, limit: 1 }).catch(() => null);
+  const sprites = !!spritesList && spritesList.objects.length > 0;
+  return json({ id, frameUrl, template, meta, sprites });
 };
 
 function json(obj: unknown, status = 200): Response {

@@ -270,8 +270,11 @@ export function devApiPlugin(): Plugin {
         try {
           const template = JSON.parse(readFileSync(tplPath, "utf8"));
           const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, "utf8")) : null;
+          // per-control cut sprites present? (dev flattens R2's skins/<id>/sprites/<bind>.png
+          // to <id>-sprite-<bind>.png) — tells the player to render cut sprites, not donor set.
+          const sprites = readdirSync(genDir).some((f) => f.startsWith(`${id}-sprite-`) && f.endsWith(".png"));
           res.statusCode = 200;
-          res.end(JSON.stringify({ id, frameUrl: `/generated/${id}-frame.png`, template, meta }));
+          res.end(JSON.stringify({ id, frameUrl: `/generated/${id}-frame.png`, template, meta, sprites }));
         } catch (e) {
           res.statusCode = 502;
           res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));

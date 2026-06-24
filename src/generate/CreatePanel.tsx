@@ -23,10 +23,11 @@ export interface RuntimeSkin {
   sprites?: boolean;
 }
 
-// Style + layout-variant pickers were removed from the UI for now — the panel is
-// just prompt → generate. Defaults are applied internally; the pickers come back
-// as a feature later (see git history for the dropdowns).
-const DEFAULT_STYLE: DonorStyle = "biomech";
+// Layout-variant default — the layout-variant picker was removed from the UI for
+// now (comes back later; see git history). The STYLE/donor picker is gone on
+// purpose: the paint material is driven by the PROMPT (the server's Director), so
+// the panel does NOT send a `style` — that would force a donor palette. The server
+// derives the closest-fit palette id from the prompt itself.
 const DEFAULT_VARIANT: LayoutVariant = "radial";
 
 const fmt$ = (n: number) => `$${n.toFixed(2)}`;
@@ -67,7 +68,8 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
         const model = selected[i];
         setStage(`model ${i + 1}/${selected.length} · ${modelLabel(model)} — envelope → paint (~30-90s)…`);
         const req: GenerateRequest = {
-          prompt: prompt.trim(), style: DEFAULT_STYLE, variant: DEFAULT_VARIANT, refImage, model,
+          // no `style` — material/palette derive from the prompt server-side
+          prompt: prompt.trim(), variant: DEFAULT_VARIANT, refImage, model,
         };
         const data = await postGenerate(req);
         if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }

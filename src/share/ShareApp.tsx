@@ -17,6 +17,7 @@ interface SkinPayload {
   frameUrl: string;
   template: Template;
   meta: { prompt?: string; model?: string; style?: string; variant?: string; createdAt?: string } | null;
+  sprites?: boolean;   // skin has per-control cut sprites → render those, not the donor set
 }
 
 type Load =
@@ -74,6 +75,7 @@ export default function ShareApp() {
     frameUrl: skin.frameUrl,
     template: skin.template,
     style: skin.meta?.style || "winamp", // donor style drives [data-skin] palette CSS
+    sprites: skin.sprites ?? false,      // render this skin's cut sprites when it has them
   };
 
   return (

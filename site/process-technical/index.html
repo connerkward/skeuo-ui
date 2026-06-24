@@ -49,6 +49,13 @@
   .art img.chk{background:var(--chk)}
   .art img.wt{background:#fff}
   .art .cap{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:6px;text-align:center}
+  /* live interactive embed (stage 9) */
+  .live{flex:1 1 420px;min-width:280px;align-self:flex-start}
+  .live iframe{width:100%;height:min(78vh,720px);border:1px solid var(--line);border-radius:12px;
+    background:#0a0b0e;display:block;box-shadow:0 10px 30px #0008}
+  .live .cap{font-family:var(--mono);font-size:11px;color:var(--ok);margin-top:7px}
+  .live .cap code{color:var(--mut)}
+
   .txt{flex:1 1 320px;min-width:260px}
   .txt p{margin:0 0 .9em;color:var(--mut);line-height:1.6;font-size:14px}
   .txt p:last-child{margin-bottom:0}
@@ -321,25 +328,35 @@
     </div>
   </section>
 
-  <!-- 9 FINAL -->
+  <!-- 9 FINAL — LIVE INTERACTIVE PLAYER -->
   <section class="stage">
-    <header><span class="num">9</span><h3>Final composite — sprites seated on the skin</h3><span class="tag">player/Composite.tsx</span></header>
+    <header><span class="num">9</span><h3>Live player — the real interactive device</h3><span class="tag">player/Composite.tsx · /share?id=…</span></header>
     <div class="inner">
-      <div class="art">
-        <img class="chk" src="assets/09-final.png" width="250" alt="final composite">
-        <div class="cap">frame + 5 sprites at template rects</div>
+      <div class="live">
+        <iframe src="http://localhost:5180/share?id=a-chunky-1980s-portable--simple-nano-banana-2-0mhf"
+          title="live generated player" loading="lazy"></iframe>
+        <div class="cap">live · hydrated from <code>/api/skin/&lt;id&gt;</code> · click the controls</div>
       </div>
       <div class="txt">
         <p>
-          The matted device frame plus each isolated sprite drawn at its rect: a real, coherent device.
-          The play button sits centered and largest; the four transport parts and the knob land in
-          their wells.
+          This is the <b>actual running player</b> for the skin generated above — not a screenshot.
+          The matted device frame plus the cut sprites, composited at their template rects, then driven
+          by React: <b>play swaps to pause</b>, the spectrum animates, the marquee scrolls, the clock
+          ticks, the volume knob turns, the seek thumb rides the bar.
         </p>
         <p>
-          In the <b>live player</b>, these sprites aren't baked flat — React overlays them as
-          interactive elements: play swaps to pause, the volume knob rotates, the seek thumb rides the
-          bar, the visualizer and marquee fill the empty screens. That's the payoff of the empty-well +
-          loose-part duplication from stage 3.
+          That interactivity is the payoff of the empty-well + loose-part duplication from stage 3:
+          the device supplies empty sockets to overlay onto, the strip supplied the cut parts to move.
+          Nothing here is baked flat.
+        </p>
+        <p class="note ok">
+          The render now uses <code>backgroundSize:contain</code> for cut button sprites (was
+          <code>100% 100%</code>, which stretched circular buttons into ovals) — so a sprite keeps its
+          true shape. The remaining variation you see here — prev / next / stop as rounded
+          <em>squares</em>, play and knob as <em>circles</em> — is the <b>paint model</b> choosing
+          per-control shapes; the geometry pipeline is already circle-consistent (sockets, strip slots
+          and cut clips are all round for button/knob). A prompt that asks for round buttons (e.g. the
+          walnut tuner) comes back all-round.
         </p>
       </div>
     </div>

@@ -260,7 +260,12 @@ function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: bo
     // the full face, sized by the region rect (so a bigger play region = bigger
     // play button). Built-in skins keep the donor molded/generic-sprite path.
     const face: React.CSSProperties = rtSprites
-      ? { backgroundImage: `url(${spriteUrl(skinId, r.id, true)})`, backgroundPosition: "center", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundColor: "transparent", boxShadow: "none", border: 0 }
+      // GENERATED sprite: the cut sprite is a circular control trimmed to its own
+      // (near-square) alpha bounds — use `contain` so it keeps its aspect ratio and
+      // reads as a CIRCLE in the pixel-square button region. `100% 100%` stretched a
+      // non-square sprite to fill the box → oval buttons (the reported mismatch).
+      // Knobs already use `contain` (see Knob below); match that.
+      ? { backgroundImage: `url(${spriteUrl(skinId, r.id, true)})`, backgroundPosition: "center", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundColor: "transparent", boxShadow: "none", border: 0 }
       : molded
       ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`, rtSprites)})`, backgroundPosition: "center", backgroundSize: "118% 118%", backgroundRepeat: "no-repeat" }
       : sp

@@ -85,6 +85,10 @@ export const PAINT_PROMPT =
   "Reminder: the bottom control-parts strip carries NO text, NO labels, NO captions, NO numbers of any kind — only the " +
   "bare parts on flat pure white.";
 
+// Donor registry. These descriptions are NO LONGER forced onto the paint pass — the
+// paint material is always prompt-driven (handler.ts → deriveMaterial / raw prompt).
+// This dict survives only to define the donor PALETTE/SPRITE ids ([data-skin]) via its
+// keys (DONOR_STYLES / DonorStyle); the value strings are reference descriptions only.
 export const MATERIAL: Record<string, string> = {
   biomech: "H.R. Giger biomechanical nightmare: fused bone and sinew, ribbed chitin tubes wrapping " +
     "the body, vertebrae ridges, wet organic sheen, sickly green-amber bioluminescence glowing from the recesses.",
@@ -123,7 +127,7 @@ const modelLabel = (id: ModelId): string => MODELS.find((m) => m.id === id)?.lab
 export interface RuntimeDeps {
   falKey: string;
   // optional: OpenAI key for the Director (prompt → material). When absent, the
-  // handler falls back to a default style and the MATERIAL dict.
+  // handler drives the paint material from the raw prompt text instead.
   openaiKey?: string;
   // SVG string → PNG bytes (resvg-wasm in CF, resvg-js in Node)
   rasterize: (svg: string) => Promise<Uint8Array>;
@@ -151,7 +155,7 @@ export interface GenerateInput {
   id: string;
   variant: LayoutVariant;
   style: DonorStyle;
-  materialPrompt?: string; // Director-derived custom material; overrides the MATERIAL dict when set
+  materialPrompt?: string; // prompt-driven paint material (Director-derived, or raw prompt); the {material} token. Falls back to brief.
   brief: string;          // the silhouette brief, e.g. "a fanged anglerfish jaw"
   refImageUrls?: string[]; // optional reference-style images (palette/material steer)
   model?: ModelId;        // image edit endpoint (default DEFAULT_MODEL)
@@ -349,7 +353,10 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const blueprintUrl = await falUpload(deps.falKey, blueprintPng);
   let prompt = PAINT_PROMPT
     .replace(/\{brief\}/g, input.brief)
-    .replace("{material}", input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp)
+    // material is PROMPT-DRIVEN: the Director's derived materialPrompt (or, with no
+    // OpenAI key, the raw prompt text). Fall back to the brief itself — NEVER a canned
+    // donor preset — so a missing material can't silently force a winamp/biomech look.
+    .replace("{material}", input.materialPrompt || input.brief)
     .replace("{strip}", stripDesc);
   const refs = input.refImageUrls ?? [];
   if (refs.length) {

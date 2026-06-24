@@ -30,17 +30,27 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   if (!LAYOUT_VARIANTS.includes(variant)) return { status: "error", error: `variant must be one of ${LAYOUT_VARIANTS.join(", ")}` };
   if (!MODELS.some((m) => m.id === model)) return { status: "error", error: `model must be one of ${MODELS.map((m) => m.id).join(", ")}` };
 
-  // Resolve the material. A valid donor named in the request is honored (back-compat,
-  // no custom materialPrompt). Otherwise the Director derives {style, materialPrompt}
-  // from the prompt; with no OpenAI key, default to winamp so it never hard-errors.
+  // Resolve the PAINT MATERIAL and the PALETTE id separately — these are two
+  // different things and must NOT be conflated:
+  //   • materialPrompt → the paint look. ALWAYS derived from the user's PROMPT
+  //     (never a canned donor preset), so the model interprets the sentence freely.
+  //   • style          → the runtime [data-skin] palette/sprite id (a separate CSS
+  //     concern). A donor named in the request, or the Director's closest-fit, just
+  //     picks the palette; it does NOT force the paint material.
+  // With an OpenAI key, the Director gives a rich material + a closest-fit palette.
+  // With NO key, the material is the raw prompt text itself (no hard-forced look),
+  // and the palette defaults to a donor (the heuristic, or the requested style).
   let style: DonorStyle;
-  let materialPrompt: string | undefined;
-  if (reqStyle && DONOR_STYLES.includes(reqStyle)) {
-    style = reqStyle;
-  } else if (deps.openaiKey) {
-    ({ style, materialPrompt } = await deriveMaterial(deps.openaiKey, prompt));
+  let materialPrompt: string;
+  if (deps.openaiKey) {
+    const derived = await deriveMaterial(deps.openaiKey, prompt);
+    materialPrompt = derived.materialPrompt;
+    // an explicitly-requested donor still picks the palette; else the Director's fit
+    style = reqStyle && DONOR_STYLES.includes(reqStyle) ? reqStyle : derived.style;
   } else {
-    style = "winamp" as DonorStyle;
+    // no Director — drive the material straight from the user's sentence
+    materialPrompt = prompt;
+    style = reqStyle && DONOR_STYLES.includes(reqStyle) ? reqStyle : ("winamp" as DonorStyle);
   }
 
   const rl = checkAndReserve(ip);
