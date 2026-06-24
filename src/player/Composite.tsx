@@ -242,12 +242,25 @@ function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: bo
   // otherwise the CSS-skeuomorphic fallback. Either way they're real & animated.
   const sp = skinSprites(skinId, rtSprites);
   if (r.kind === "button") {
+    const rawBind = r.bind ?? r.id;
+    // BAKED button: its face is painted COHESIVELY into the device body (a cluster with
+    // real reference shapes), so there is NO cut sprite — overlay only a transparent
+    // hit-region. play/pause toggles and shows a soft "playing" glow as the state cue.
+    if (r.baked) {
+      const isPP = rawBind === "play" || (/(^|_)play(_|$)/.test(r.id) && !r.id.includes("playlist"));
+      const click = isPP ? (ps.playing ? ps.pause : ps.play) : btnHandler(r, ps);
+      return (
+        <button className="tbtn baked" onClick={click} title={r.label ?? r.id} style={{
+          width: "100%", height: "100%", background: "transparent", border: 0, borderRadius: 10, cursor: "pointer",
+          boxShadow: isPP && ps.playing ? "inset 0 0 0 2px rgba(120,255,140,.55), 0 0 14px rgba(120,255,140,.4)" : "none",
+        }} />
+      );
+    }
     // MOLDED transport faces (sprites/btn-*.png): the icon is part of the
     // hardware art, in the skin's own material — a play button that READS
     // as a play button. Fallbacks: round wells take the knob cap + SVG icon;
     // rectangular wells 9-slice the generic button sprite + SVG icon.
     const round = r.shape === "ellipse";
-    const rawBind = r.bind ?? r.id;
     // The main PLAY button is a real play/pause TOGGLE with TWO painted states.
     //  • built-in skins: bind "play" → swap to the donor "pause" face (btn-pause.png).
     //  • generated skins: the strip painted a paired PAUSE face cut to <id>__pause.png

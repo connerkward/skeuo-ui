@@ -67,6 +67,10 @@ export interface Region {
   options?: string[];     // segmented: the segment labels
   flourish?: string;      // decoration: a hint label (CORNER, RAIL, CREST…)
   shape?: "ellipse";      // round well: circular button face / elliptical glass
+  baked?: boolean;        // control painted COHESIVELY into the device body (not cut to a
+                          // strip sprite) — the player overlays a transparent hit-region on
+                          // top instead of a cut sprite. Lets a cluster (transport bank /
+                          // jog dial) keep real reference shapes the isolated-cut path can't.
   arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
   path?: Pt[];                            // slider-path spline / freeform visualizer shape (normalized in rect)
   vis?: "linear" | "radial" | "teeth" | "ribbon" | "blob";  // visualizer render style

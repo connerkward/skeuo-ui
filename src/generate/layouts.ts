@@ -457,6 +457,10 @@ export function bankTransport(regions: Region[]): Region[] {
   let x = Math.max(0.03, Math.min(cx - totalW / 2, 0.97 - totalW));
   const y = Math.max(0.03, Math.min(cy - h / 2, 0.97 - h));
   const moved = new Map<string, Region>();
-  bank.forEach((r, i) => { moved.set(r.id, { ...r, rect: { x, y, w: widths[i], h } }); x += widths[i]; });
+  // baked:true → the painter renders this cluster COHESIVELY into the device body
+  // (real reference shapes), and the player overlays a transparent hit-region instead
+  // of a cut sprite. This is what lets a Walkman jog-cluster / car-console bank keep
+  // curved, tessellated button shapes the isolated-cut path flattens into boxes.
+  bank.forEach((r, i) => { moved.set(r.id, { ...r, baked: true, rect: { x, y, w: widths[i], h } }); x += widths[i]; });
   return regions.map((r) => moved.get(r.id) ?? r);
 }

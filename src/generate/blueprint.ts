@@ -210,7 +210,10 @@ function controlDesc(r: Region, kind: SpriteKind): string {
     // silhouette is painted (BiRefNet matte + connected components), so a button may
     // be round, pill, square, rounded-rectangle, a car-console key, a Walkman bar —
     // whatever suits the device. Only the FACE ICON is prescribed.
-    const sh = "a push-button (use WHATEVER SHAPE best suits this device — round, pill, squircle, square, rounded-rectangle, or a tactile car-console / Walkman style key; not necessarily round)";
+    // Push toward ORGANIC, era-correct silhouettes — the model defaults to a safe
+    // rounded-square unless steered away. The cut keeps whatever is painted, so the
+    // only job here is to discourage the generic box and invite the reference shapes.
+    const sh = "a tactile push-button whose SILHOUETTE matches REAL hardware of this device era — prefer an ORGANIC, NON-rectangular shape: a half-oval / D-shape, a kidney/lozenge, a curved trapezoid, or a WEDGE / arc-segment like a Walkman jog cluster or a car-console key. AVOID a plain square or plain circle unless the device truly demands it. The button need NOT fill its slot — give it its own distinct sculpted outline";
     if (b.includes("prev") || b.includes("rew")) return `${sh} with a rewind icon (two left-pointing triangles) embossed ON ITS FACE`;
     if (b.includes("play")) return `${sh} with a play icon (one right-pointing triangle) embossed ON ITS FACE`;
     if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return `${sh} with a fast-forward icon (two right-pointing triangles) embossed ON ITS FACE`;
@@ -239,7 +242,8 @@ const STRIP_H = COMBINED_H - DEVICE_H;
 export const DEVICE_FRAC = DEVICE_H / COMBINED_H;
 
 const BP_BODY = "rgb(218,218,224)";   // faint gray body silhouette
-const BP_RING = "rgb(255,40,120)";    // bright magenta anchor ring
+const BP_RING = "rgb(255,40,120)";    // bright magenta anchor ring (empty well → overlay)
+const BP_BAKE = "rgb(0,200,255)";     // cyan ring = paint a REAL cohesive control here (baked, not a well)
 
 // map a template Region kind → the sprite kind we cut, or null for non-sprite
 // (displays/decorations stay on the device and are never cut to the strip).
@@ -266,8 +270,9 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
   const H = COMBINED_H;           // = DEVICE_H + stripH, exactly 9:16
   const devFrac = DEVICE_FRAC;
 
-  // sprite controls = interactive parts only, in stable (region) order.
-  const spriteRegs = regs.filter((r) => spriteKindOf(r) !== null);
+  // sprite controls = interactive parts only, in stable (region) order. BAKED controls
+  // are EXCLUDED — they're painted cohesively into the device body, not cut to the strip.
+  const spriteRegs = regs.filter((r) => spriteKindOf(r) !== null && !r.baked);
 
   const parts: string[] = [];
   parts.push(`<rect width="${GEN_W}" height="${H}" fill="white"/>`);
@@ -310,14 +315,17 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
     // (and round displays) get a circular guide; BUTTONS get a neutral rounded-rect
     // bounding guide so the model is free to paint any button shape inside it.
     const round = r.kind === "knob" || (r.kind === "display" && r.shape === "ellipse");
+    // CYAN guide = "paint a REAL finished control here, integrated into the body"
+    // (baked cluster); MAGENTA = empty well the player overlays a cut sprite onto.
+    const strokeCol = r.baked ? BP_BAKE : BP_RING;
     if (round) {
       const d = Math.min(w, h);              // TRUE circle: diameter = shorter side
       const cx = x + w / 2, cy = y + h / 2;  // centered in the rect
       const rr = Math.max(0, d / 2 - inset);
-      parts.push(`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${BP_RING}" stroke-width="${ringW}"/>`);
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${strokeCol}" stroke-width="${ringW}"/>`);
     } else {
       const rad0 = Math.min(w, h) * 0.3;
-      parts.push(roundRect(x + inset, y + inset, w - 2 * inset, h - 2 * inset, Math.max(0, rad0 - inset), "none", BP_RING, ringW));
+      parts.push(roundRect(x + inset, y + inset, w - 2 * inset, h - 2 * inset, Math.max(0, rad0 - inset), "none", strokeCol, ringW));
     }
   }
 

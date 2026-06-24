@@ -47,7 +47,9 @@ export const PAINT_PROMPT =
   "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place.\n" +
   "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
-  "- SHARED HOUSING: where several sockets sit DIRECTLY ADJACENT in a row (a button bank), paint them as ONE inset, recessed HOUSING / bezel of the body material that CONTAINS those wells — a single sunken panel with thin raised SEAMS between the individual empty wells (like a car-console climate keypad or a Walkman transport cluster), NOT separate free-floating holes. The wells themselves stay empty and dark; only the surrounding bezel/seams are added.\n" +
+  "- CYAN-outlined regions are NOT empty wells — they are REAL CONTROLS. Paint a finished, tactile, pressable BUTTON (or, where several CYAN regions sit adjacent, ONE cohesive COHESIVE CLUSTER of buttons) integrated INTO the body here, in the body material, fully rendered with the correct icon embossed on each. Give them the device-era SHAPE — prefer ORGANIC, non-rectangular silhouettes: curved WEDGE / arc-segments of a jog dial (Walkman), HALF-OVAL or kidney keys (car console), lozenges — that nest together into one sculpted cluster, NOT separate plain squares. These ARE the actual device buttons (they stay in the render); remove the cyan outline itself.\n" +
+  "- SHARED HOUSING for the cyan cluster: seat that button cluster in ONE inset, recessed HOUSING / bezel of the body material, with thin raised SEAMS between the individual curved keys (like a real car-console keypad or a Walkman transport cluster) — one cohesive sunken unit, not free-floating buttons.\n" +
+  "- (MAGENTA wells remain EMPTY dark holes as described above — only CYAN regions get real painted controls.)\n" +
   "- REMOVE the bright pink/magenta rings in your output (guides only); the dark socket they ringed stays exactly where it was.\n" +
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
@@ -60,8 +62,11 @@ export const PAINT_PROMPT =
   "FLAT PURE-WHITE sweep:\n" +
   "- This strip is NOT a diagram, NOT a UI mockup, NOT a labeled parts catalog, NOT an instruction sheet. It is simply " +
   "individual finished hardware parts laid out on an empty white surface, like loose components on a clean studio table.\n" +
-  "- The bottom band has evenly-spaced slots left-to-right, EACH outlined by a bright PINK/MAGENTA KEYLINE. Paint ONE finished, " +
-  "glossy control PART filling each magenta slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
+  "- The bottom band has evenly-spaced slots left-to-right, EACH outlined by a bright PINK/MAGENTA KEYLINE. The keyline marks only WHERE a part " +
+  "goes and ROUGHLY HOW BIG — it does NOT dictate the part's SHAPE. Do NOT just fill the rectangle: give each part its own sculpted, era-correct " +
+  "SILHOUETTE (often NON-rectangular — a half-oval, D-shape, wedge / arc-segment, lozenge, curved trapezoid — matching real hardware of this device), " +
+  "centered in its slot; it may sit inside the keyline without touching all four edges. Paint ONE finished, " +
+  "glossy control PART per magenta slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
   "exactly ONE part per magenta slot: paint a part in EVERY slot, fill ALL of them, do NOT leave a slot empty, do NOT merge two " +
   "parts into one slot, and do NOT omit or add any. Count the magenta slots and match them one-to-one with the list below:\n" +
   "    {strip}\n" +
