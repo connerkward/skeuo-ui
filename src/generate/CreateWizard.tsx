@@ -165,7 +165,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         // paint in-browser and upload the finished frame.png back. No-op server-side.
         let frameUrl = apiUrl(data.frameUrl);
         if (data.needsCutout && data.paintUrl) {
-          try { frameUrl = await finishCutout(data.id, data.paintUrl, data.frameUrl); }
+          try { frameUrl = await finishCutout(data.id, data.paintUrl, data.frameUrl, data.keyColor); }
           catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
         }
         onCreated({

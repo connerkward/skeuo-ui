@@ -70,7 +70,7 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font, name, blurb,
       template: r.template, frameUrl: r.frameUrl,
-      needsCutout: r.needsCutout, paintUrl: r.paintUrl, timingMs: r.timingMs,
+      needsCutout: r.needsCutout, paintUrl: r.paintUrl, keyColor: r.keyColor, timingMs: r.timingMs,
     };
   } catch (e) {
     release(ip);   // our failure — don't bill the user's quota

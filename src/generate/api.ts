@@ -47,6 +47,7 @@ export interface GenerateDone {
   // and leave `needsCutout` falsy. See functions/api/finalize/[id].ts.
   needsCutout?: boolean;
   paintUrl?: string;          // raw paint PNG (public URL or data: URL) — present when needsCutout
+  keyColor?: [number, number, number]; // backdrop the device was painted on — the colour the client cutout keys out (absent ⇒ white)
   timingMs: { envelope: number; paint: number; total: number };
 }
 export interface GenerateError { status: "error"; error: string }

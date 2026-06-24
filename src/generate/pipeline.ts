@@ -22,20 +22,48 @@
 // ============================================================
 import type { Region, Template } from "../template/schema";
 import { GEN_W, GEN_H, regionsForVariant, type LayoutVariant } from "./layouts";
-import { wellsOnlySvg } from "./blueprint";
+import { wellsOnlySvg, type RGB, KEY_WHITE } from "./blueprint";
 
-// ---- prompts: verbatim from wild_sculpt.py so output matches the Python ----
+// ---- CUTOUT KEY COLOUR ----------------------------------------------------
+// The device is painted on a flat CONTRASTING backdrop (a hue OUTSIDE its own
+// palette) so the cutout keys it out unambiguously — fixing the white-key bugs
+// (near-white screens lost; backdrop bleeding into thin gaps kept). The key colour
+// is chosen DETERMINISTICALLY from the material text (no extra LLM cost). Translucent
+// & iridescent finishes route to WHITE: their body legitimately carries every hue
+// (light through / shifting sheen), so a coloured-key despill would desaturate the
+// real material — see cutoutColorAware. Validated 2026-06-23 (see TODO.md).
+export interface KeyChoice { key: RGB; css: string; phrase: string }
+const KW: KeyChoice = { key: KEY_WHITE, css: "white", phrase: "pure white" };
+const MAGENTA: KeyChoice = { key: [230, 0, 126], css: "rgb(230,0,126)", phrase: "pure flat magenta (#E6007E)" };
+const CYAN: KeyChoice = { key: [0, 192, 208], css: "rgb(0,192,208)", phrase: "pure flat bright cyan (#00C0D0)" };
+const YELLOW: KeyChoice = { key: [255, 224, 0], css: "rgb(255,224,0)", phrase: "pure flat bright yellow (#FFE000)" };
+// device-hue (from the material text) → a backdrop FAR from it, bright for a sharp edge
+const KEYS: Array<{ test: RegExp; choice: KeyChoice }> = [
+  { test: /green|lime|emerald|teal|frog|moss|olive/i,                 choice: MAGENTA },
+  { test: /magenta|pink|purple|violet|\bred\b|crimson|rose|ruby|berry|coral/i, choice: CYAN },
+  { test: /blue|cyan|navy|cobalt|azure|aqua|sky|turquoise/i,          choice: YELLOW },
+  { test: /yellow|gold|amber|orange|cream|tan|sand|brass|bronze/i,    choice: MAGENTA },
+];
+// translucent / iridescent → WHITE fallback (a coloured-key despill would harm the real material)
+const WHITE_FALLBACK = /translucent|transparent|see-through|glass|jelly|gel|slime|gummy|crystal|iridescent|pearl|pearlescent|holographic|opal|nacre|prism|rainbow sheen/i;
+export function pickKeyColor(materialText: string): KeyChoice {
+  const t = materialText.toLowerCase();
+  if (WHITE_FALLBACK.test(t)) return KW;
+  return (KEYS.find((k) => k.test.test(t))?.choice) ?? MAGENTA;
+}
+
+// ---- prompts: {BG} is filled with the chosen backdrop phrase per generation ----
 export const ENVELOPE_PROMPT =
   "Keep every dark control socket, round well, ring groove and dark screen EXACTLY where it is, " +
   "pixel-identical, unchanged. Around and BEHIND them, paint ONE flat solid dark-gray SILHOUETTE " +
-  "shape on the pure white background: the outline of {brief}. The silhouette must fully CONTAIN " +
+  "shape on the {BG} background: the outline of {brief}. The silhouette must fully CONTAIN " +
   "every socket and screen with generous margin on all sides. Let the FORM FOLLOW {brief} — shape " +
   "it with the distinctive contours and appendages THAT SUBJECT actually has (a smooth rounded " +
   "gadget stays smooth and rounded; a vehicle, an animal, a plant, a piece of food, an everyday " +
   "object each take their OWN silhouette), so the body is a bold, characterful, non-blob outline " +
   "of the thing itself. Do NOT default to monster anatomy (horns, fangs, tendrils, claws) unless " +
   "{brief} explicitly calls for it. Completely flat dark-gray fill, no interior detail, no shading, " +
-  "no outline strokes. Everything else stays pure white.";
+  "no outline strokes. Everything else stays {BG}.";
 
 export const STYLE_PROMPT =
   "Restyle this blueprint into a photoreal, wildly-shaped skeuomorphic MP3-player device. CRITICAL: " +
@@ -49,7 +77,9 @@ export const STYLE_PROMPT =
   "knobs, dials, sliders, switches, joysticks, D-pads, speaker grilles, extra sockets or any other " +
   "control or raised interactive part ANYWHERE: the ONLY recesses are the marked wells and you must " +
   "not add new ones. The real controls are mounted into the slots later — you make the empty slots " +
-  "and their labels, NEVER the buttons themselves. Everything outside the silhouette stays pure white. Front-on " +
+  "and their labels, NEVER the buttons themselves. Everything outside the silhouette stays {BG}; that " +
+  "backdrop is a separate flat colour ONLY — it must NOT tint, reflect or spill onto the device, which " +
+  "keeps its own material colour and neutral studio lighting. Front-on " +
   "orthographic, even light, high detail. MATERIAL: ";
 
 export const MATERIAL: Record<string, string> = {
@@ -100,7 +130,7 @@ export interface RuntimeDeps {
   // dev server) provide it and cut server-side. The CF Pages Function OMITS it —
   // that CPU trips the Function ceiling (CF 1102) — so the pipeline persists the
   // RAW paint instead and the browser does the cutout + uploads frame.png back.
-  cutout?: (paintPng: Uint8Array) => Promise<Uint8Array>;
+  cutout?: (paintPng: Uint8Array, key?: RGB) => Promise<Uint8Array>;
   // optional: persist one artifact for skin <id>, return its public URL. frame/paint
   // are binary PNG (Uint8Array); template/meta are JSON strings. When omitted, the
   // image is returned inline as a data: URL (demo — no R2 needed) and template/meta
@@ -148,6 +178,7 @@ export interface GenerateResult {
   frameUrl: string;       // public URL or data: URL of the CUT frame
   needsCutout?: boolean;  // true when the cutout was deferred to the browser (CF Worker path)
   paintUrl?: string;      // raw paint PNG to cut client-side — present when needsCutout
+  keyColor: RGB;          // backdrop the device was painted on — the colour the cutout keys out (white = legacy)
   timingMs: { envelope: number; paint: number; total: number };
 }
 
@@ -246,8 +277,15 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 
-  // 2. wells-only blueprint PNG (envelope input)
-  const wellsPng = await deps.rasterize(wellsOnlySvg(regs));
+  // CUTOUT KEY COLOUR — paint on a contrasting backdrop chosen from the material so
+  // the cutout keys it out cleanly (translucent/iridescent → white). Threaded into
+  // both prompts ({BG}), the wells-blueprint background, and the cutout.
+  const matText = input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp;
+  const keyc = pickKeyColor(matText);
+  log(`[${input.id}] key colour ${keyc.css} (${keyc.phrase})`);
+
+  // 2. wells-only blueprint PNG (envelope input) — bg = the chosen key colour
+  const wellsPng = await deps.rasterize(wellsOnlySvg(regs, keyc.css));
   // the user's ACTUAL blueprint — show it immediately while the body cooks
   deps.onStage?.("blueprint", pngDataUrl(wellsPng));
 
@@ -266,7 +304,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   } else if (useEnvelope) {
     const tEnv = Date.now();
     const wellsUrl = await falUpload(deps.falKey, wellsPng);
-    const envJob = await falSubmit(deps.falKey, model, [wellsUrl], ENVELOPE_PROMPT.replace("{brief}", input.brief));
+    const envJob = await falSubmit(deps.falKey, model, [wellsUrl], ENVELOPE_PROMPT.replace("{brief}", input.brief).replace(/\{BG\}/g, keyc.phrase));
     const envUrl = await falPoll(deps.falKey, envJob, 7 * 60_000);
     deps.onStage?.("envelope", envUrl);   // the real grown body
     paintInputPng = await fetchPng(envUrl);
@@ -280,7 +318,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   //    Python draw_blueprint() output. Reference-style images ride along.
   const tPaint = Date.now();
   const paintInputUrl = await falUpload(deps.falKey, paintInputPng);
-  let prompt = STYLE_PROMPT + (input.materialPrompt || MATERIAL[input.style] || MATERIAL.winamp);
+  let prompt = STYLE_PROMPT.replace(/\{BG\}/g, keyc.phrase) + matText;
   const refs = input.refImageUrls ?? [];
   if (refs.length) {
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +
@@ -325,7 +363,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   if (deps.cutout) {
     // server-side cutout (no CPU ceiling) — store/inline the finished frame
-    const framePng = await deps.cutout(paintPng);
+    const framePng = await deps.cutout(paintPng, keyc.key);
     if (deps.store) {
       frameUrl = await deps.store(input.id, "frame", framePng);
       await storeSidecars();
@@ -351,7 +389,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   return {
     id: input.id, style: input.style, variant: input.variant, model, template, frameUrl,
-    needsCutout, paintUrl: paintOut,
+    needsCutout, paintUrl: paintOut, keyColor: keyc.key,
     timingMs: { envelope: envMs, paint: paintMs, total: Date.now() - tAll },
   };
 }

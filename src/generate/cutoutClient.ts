@@ -10,7 +10,7 @@
 // CORS: paintUrl is same-origin (/api/asset/…) or a data: URL, so drawing it to a
 // canvas never taints it and getImageData works. (A cross-origin fal URL WOULD
 // taint the canvas — that's why /api/generate routes the paint through our own R2.)
-import { cutoutAlpha } from "./blueprint";
+import { cutoutColorAware, KEY_WHITE, type RGB } from "./blueprint";
 import { apiUrl } from "../platform";
 
 // Decode raw image bytes into something drawable, robustly across engines.
@@ -49,7 +49,7 @@ async function decodePaint(buf: ArrayBuffer, res: Response): Promise<Decoded> {
 
 // Fetch the raw paint, key out the near-white background, return a PNG Blob of the
 // cut RGBA frame (white → transparent, largest component kept, holes filled).
-export async function cutoutPaintToFrame(paintUrl: string): Promise<Blob> {
+export async function cutoutPaintToFrame(paintUrl: string, key: RGB = KEY_WHITE): Promise<Blob> {
   // apiUrl() makes paths absolute under the native shells (tauri:// origin) so the
   // cross-origin fetch hits skeuo.fm; on the web it stays same-origin. The asset
   // endpoint sends CORS headers so the fetched paint is readable into the canvas.
@@ -79,11 +79,10 @@ export async function cutoutPaintToFrame(paintUrl: string): Promise<Blob> {
   release();
 
   const img = ctx.getImageData(0, 0, W, H);
-  // a Uint8Array VIEW over the same buffer ImageData owns — read RGBA via the view,
-  // write the computed alpha straight back into img.data (no copy).
+  // a Uint8Array VIEW over the same buffer ImageData owns. cutoutColorAware MUTATES
+  // it in place — despilled RGB + the computed alpha — so the canvas updates directly.
   const rgba = new Uint8Array(img.data.buffer, img.data.byteOffset, img.data.byteLength);
-  const alpha = cutoutAlpha(rgba, W, H);
-  for (let i = 0; i < W * H; i++) img.data[i * 4 + 3] = alpha[i];
+  cutoutColorAware(rgba, W, H, key);
   ctx.putImageData(img, 0, 0);
 
   return await new Promise<Blob>((resolve, reject) =>
@@ -105,8 +104,8 @@ export async function uploadFrame(id: string, frame: Blob): Promise<string> {
 // frameUrl to USE/PERSIST: the durable (absolute-on-native) R2 URL after upload, or
 // — in the demo path (paintUrl is a data: URL, no R2) — an in-memory object URL of
 // the cut frame. apiUrl() keeps the persisted URL reachable from the native shell.
-export async function finishCutout(id: string, paintUrl: string, durableFrameUrl: string): Promise<string> {
-  const frame = await cutoutPaintToFrame(paintUrl);
+export async function finishCutout(id: string, paintUrl: string, durableFrameUrl: string, key: RGB = KEY_WHITE): Promise<string> {
+  const frame = await cutoutPaintToFrame(paintUrl, key);
   if (paintUrl.startsWith("data:")) return URL.createObjectURL(frame); // demo: no R2 to upload to
   await uploadFrame(id, frame);
   return apiUrl(durableFrameUrl);

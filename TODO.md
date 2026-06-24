@@ -1,5 +1,46 @@
 # skeuo-ui — TODO
 
+## Cutout — coloured-backdrop matte: WIRED on branch `cutout-coloured-despill` (2026-06-23)
+
+**Status: implemented + build-green + function-verified on real paints; pending a LIVE
+end-to-end gen + a merge decision (interacts with the #1 spritesheet-pipeline cutout).**
+The runtime now paints on a contrasting backdrop and keys it out with the color-aware
+matte below (pure-JS color-key, no model — BiRefNet remains the server-side option on
+the spritesheet branch). Changed: `pipeline.ts` (pickKeyColor + {BG} prompts + thread
+keyColor), `blueprint.ts` (`cutoutColorAware` = key→colour-aware-fill→despill; `cutoutAlpha`
+kept as the white fallback), `cutoutClient.ts`/`api.ts`/`handler.ts`/`CreateWizard`/`CreatePanel`
+(thread `keyColor`). White key = legacy behaviour (translucent/iridescent route here).
+
+Investigated fixing BiRefNet's two cutout failures (white enclosed pockets kept opaque;
+dark glossy screens keyed out). Validated end-to-end on real ship paints (nano-banana-2)
++ real fal BiRefNet v2. Interactive lookdev preserved at
+`~/Desktop/cc-skeuo/cutout-lookdev/index.html` (14 skins incl. the original problem
+concepts regenerated on coloured bg — jelly/clamshell/pet/frog/mushroom/robot; toggle
+stage + backdrop, green backdrop exposes keyed-out holes).
+
+**Recipe (for the spritesheet pipeline's BiRefNet cutout step):** paint the device on a
+flat CONTRASTING backdrop (a hue OUTSIDE the device palette, luminance-contrasting —
+bright magenta/yellow/cyan; bright beats dark, dark risks eating black screens), then
+matte = **BiRefNet alpha → colour-aware CUT (remove kept pixels that ARE the backdrop
+colour — fixes backdrop leaking through thin gaps, e.g. obsidian comb slots) →
+colour-aware FILL (fill enclosed non-backdrop holes — keeps dark screens) → despill
+(chroma-suppress the backdrop hue, strength 1.0)**.
+
+**Why coloured bg:** on WHITE bg a near-white screen == bg (can't tell a screen from a
+gap); on a coloured bg screen≠bg so fill/cut are unambiguous. Also cleanly keys
+white/silver devices that blend into white. Luminance-contrasting key → ~12× sharper edge
+(green==steel luma was the worst; yellow sharpest).
+
+**Caveats — route these to white-bg OR edge-only-unmix (NO global despill):**
+- TRANSLUCENT (jelly) — backdrop glows through the body; despill flattens it.
+- IRIDESCENT / PEARL — sheen spans the hue wheel incl. the backdrop hue; despill mutes real colour.
+- MIRROR — reflects the backdrop into the body.
+- PALETTE CLASH — never key on a hue the device contains (green bg ate the green LEDs).
+
+**Next:** wire `cut → fill → despill` into the runtime cutout (`src/generate/cutoutClient.ts`
+/ `functions/api/cutout.ts`) with material-class routing; choose the per-skin key colour in
+the paint prompt (`src/generate/pipeline.ts`).
+
 ## Open
 
 - [ ] **★ #1 PRIORITY — Merge `spritesheet-pipeline` → main: single-pass skin generation + sprite-sheet (decision A locked 2026-06-23).**
