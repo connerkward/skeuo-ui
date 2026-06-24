@@ -206,12 +206,17 @@ function controlDesc(r: Region, kind: SpriteKind): string {
   if (kind === "button") {
     // describe the face icon in WORDS only — NO literal glyph characters (the model
     // paints literal ◀▶■ as a separate floating glyph that gets cut into the sprite).
-    if (b.includes("prev") || b.includes("rew")) return "a round push-button with a rewind icon (two left-pointing triangles) embossed ON ITS FACE";
-    if (b.includes("play")) return "a round push-button with a play icon (one right-pointing triangle) embossed ON ITS FACE";
-    if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return "a round push-button with a fast-forward icon (two right-pointing triangles) embossed ON ITS FACE";
-    if (b.includes("stop")) return "a round push-button with a stop icon (a filled square) embossed ON ITS FACE";
-    if (b.includes("pause")) return "a round push-button with a pause icon (two vertical bars) embossed ON ITS FACE";
-    return "a round push-button";
+    // SHAPE IS THE MODEL'S CHOICE: do not force "round". The cut keeps whatever
+    // silhouette is painted (BiRefNet matte + connected components), so a button may
+    // be round, pill, square, rounded-rectangle, a car-console key, a Walkman bar —
+    // whatever suits the device. Only the FACE ICON is prescribed.
+    const sh = "a push-button (use WHATEVER SHAPE best suits this device — round, pill, squircle, square, rounded-rectangle, or a tactile car-console / Walkman style key; not necessarily round)";
+    if (b.includes("prev") || b.includes("rew")) return `${sh} with a rewind icon (two left-pointing triangles) embossed ON ITS FACE`;
+    if (b.includes("play")) return `${sh} with a play icon (one right-pointing triangle) embossed ON ITS FACE`;
+    if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return `${sh} with a fast-forward icon (two right-pointing triangles) embossed ON ITS FACE`;
+    if (b.includes("stop")) return `${sh} with a stop icon (a filled square) embossed ON ITS FACE`;
+    if (b.includes("pause")) return `${sh} with a pause icon (two vertical bars) embossed ON ITS FACE`;
+    return sh;
   }
   if (kind === "knob") return `a round rotary knob with a pointer notch${r.label ? ` (${r.label})` : ""}`;
   return "a control part";
@@ -301,8 +306,10 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
     const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
     const ringW = Math.max(4, Math.round(Math.min(w, h) * 0.08));
     const inset = ringW / 2;                 // keep the stroke's outer edge AT the rect boundary
-    // magenta outline ONLY — no filled shape to dictate control form
-    const round = r.kind === "knob" || ((r.kind === "button" || r.kind === "display") && r.shape === "ellipse");
+    // magenta outline ONLY — no filled shape to dictate control form. Only KNOBS
+    // (and round displays) get a circular guide; BUTTONS get a neutral rounded-rect
+    // bounding guide so the model is free to paint any button shape inside it.
+    const round = r.kind === "knob" || (r.kind === "display" && r.shape === "ellipse");
     if (round) {
       const d = Math.min(w, h);              // TRUE circle: diameter = shorter side
       const cx = x + w / 2, cy = y + h / 2;  // centered in the rect
@@ -329,7 +336,16 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
     const kind = spriteKindOf(r)!;
     if (kind === "toggle") continue;  // toggles handled as an off/on pair below
     if (kind === "slider") continue;  // sliders/seek are NOT sprites — the skin/CSS renders the track + thumb
-    items.push({ bind: bindOf(r), kind, desc: controlDesc(r, kind) });
+    const bind = bindOf(r);
+    items.push({ bind, kind, desc: controlDesc(r, kind) });
+    // PLAY/PAUSE is a two-state control (like the toggle off/on pair): emit a paired
+    // PAUSE face — the SAME button body, only the icon differs — cut to <id>__pause and
+    // swapped live by the player on play state. (id===bind for transport controls.)
+    const isPlay = kind === "button" && /(^|_)play(_|$)/.test(bind) && !bind.includes("playlist");
+    if (isPlay) items.push({
+      bind: `${bind}__pause`, kind,
+      desc: "the SAME push-button as the previous slot — IDENTICAL body, shape, size and material — but shown with a PAUSE icon (two vertical bars) embossed on its face instead of the play triangle",
+    });
   }
   const hasToggle = spriteRegs.some((r) => spriteKindOf(r) === "toggle");
   if (hasToggle) {
@@ -348,7 +364,9 @@ export function combinedBlueprint(regs: Region[]): CombinedBlueprint {
     // faint magenta keyline anchor (guide only; the painter fills it + removes the magenta)
     const ringW = Math.max(4, Math.round(Math.min(cw, shh) * 0.05));
     const inset = ringW / 2;
-    const round = it.kind === "button" || it.kind === "knob";
+    // knobs are round (rotary); buttons get a neutral rounded-rect slot so the model
+    // paints whatever button shape it wants (the cut keeps the painted silhouette).
+    const round = it.kind === "knob";
     if (round) {
       const d = Math.min(cw, shh);
       const acx = sx0 + cw / 2, acy = sy0 + shh / 2;

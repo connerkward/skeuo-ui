@@ -383,16 +383,29 @@ export function cutSprite(
   const ctx = out.getContext("2d");
   if (!ctx) throw new Error("no 2d canvas context");
 
-  // clip to the control shape (inset 1px), then draw the centered crop through it.
-  ctx.beginPath();
-  if (kind === "slider") {
-    roundRectPath(ctx, 1, 1, ow - 2, oh - 2, Math.min((ow - 2) / 2, (oh - 2) / 2));
+  // Cut to shape. KNOBS are round (rotary) → ellipse clip; SLIDER thumbs → rounded-rect.
+  // BUTTONS (and anything else) may be ANY painted shape — do NOT impose a geometric
+  // clip; keep the painted silhouette by keying out the near-white strip background, so
+  // a pill / square / car-console / Walkman button survives the fallback intact too.
+  if (kind === "knob" || kind === "slider") {
+    ctx.beginPath();
+    if (kind === "slider") {
+      roundRectPath(ctx, 1, 1, ow - 2, oh - 2, Math.min((ow - 2) / 2, (oh - 2) / 2));
+    } else {
+      ctx.ellipse(ow / 2, oh / 2, Math.max(0, ow / 2 - 1), Math.max(0, oh / 2 - 1), 0, 0, Math.PI * 2);
+    }
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(paint, sx, sy, ow, oh, 0, 0, ow, oh);
   } else {
-    ctx.ellipse(ow / 2, oh / 2, Math.max(0, ow / 2 - 1), Math.max(0, oh / 2 - 1), 0, 0, Math.PI * 2);
+    ctx.drawImage(paint, sx, sy, ow, oh, 0, 0, ow, oh);
+    const im = ctx.getImageData(0, 0, ow, oh);
+    const d = im.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] > 234 && d[i + 1] > 234 && d[i + 2] > 234) d[i + 3] = 0;  // near-white → transparent
+    }
+    ctx.putImageData(im, 0, 0);
   }
-  ctx.closePath();
-  ctx.clip();
-  ctx.drawImage(paint, sx, sy, ow, oh, 0, 0, ow, oh);
   return out;
 }
 

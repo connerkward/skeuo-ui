@@ -248,11 +248,14 @@ function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: bo
     // rectangular wells 9-slice the generic button sprite + SVG icon.
     const round = r.shape === "ellipse";
     const rawBind = r.bind ?? r.id;
-    // The main PLAY button is a real play/pause TOGGLE: while playing it shows
-    // the pause face (skins ship btn-pause.png) and pauses; otherwise it plays.
-    // So a single transport button works without a separate pause button.
-    const isPlayPause = rawBind === "play";
-    const bindId = isPlayPause && ps.playing ? "pause" : rawBind;
+    // The main PLAY button is a real play/pause TOGGLE with TWO painted states.
+    //  • built-in skins: bind "play" → swap to the donor "pause" face (btn-pause.png).
+    //  • generated skins: the strip painted a paired PAUSE face cut to <id>__pause.png
+    //    (see blueprint.ts) → swap to it while playing. Either way one button, two states.
+    const isPlayPause = rawBind === "play"
+      || (rtSprites && /(^|_)play(_|$)/.test(r.id) && !r.id.includes("playlist"));
+    const bindId = isPlayPause && ps.playing ? "pause" : rawBind;       // built-in molded path
+    const rtKey = isPlayPause && ps.playing ? `${r.id}__pause` : r.id;  // generated per-skin sprite
     const onClick = isPlayPause ? (ps.playing ? ps.pause : ps.play) : btnHandler(r, ps);
     const molded = sp && skinMolded(skinId, rtSprites) && ["prev", "play", "pause", "stop", "next"].includes(bindId);
     // RUNTIME (generated) skins: each control has its OWN per-region sprite
@@ -265,7 +268,7 @@ function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: bo
       // reads as a CIRCLE in the pixel-square button region. `100% 100%` stretched a
       // non-square sprite to fill the box → oval buttons (the reported mismatch).
       // Knobs already use `contain` (see Knob below); match that.
-      ? { backgroundImage: `url(${spriteUrl(skinId, r.id, true)})`, backgroundPosition: "center", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundColor: "transparent", boxShadow: "none", border: 0 }
+      ? { backgroundImage: `url(${spriteUrl(skinId, rtKey, true)})`, backgroundPosition: "center", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundColor: "transparent", boxShadow: "none", border: 0 }
       : molded
       ? { backgroundImage: `url(${spriteUrl(skinId, `btn-${bindId}`, rtSprites)})`, backgroundPosition: "center", backgroundSize: "118% 118%", backgroundRepeat: "no-repeat" }
       : sp
