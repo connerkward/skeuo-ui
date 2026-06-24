@@ -365,6 +365,21 @@ export async function segmentControls(
   return Promise.all(boxes.map((b) => segmentOne(falKey, imageUrl, b).catch(() => ({ maskUrl: null, box: null, score: 0 }))));
 }
 
+// music/disc-themed prompts that make a spinning-CD screen feel right (cd-visualizer)
+const CD_THEME = /\b(cd|disc|jukebox|juke[\s-]?box|boom[\s-]?box|hi[\s-]?fi|stereo|turntable|vinyl|record\s*player|walkman|discman|gramophone|phonograph|dj\b|sound\s*system|ghetto\s*blaster)\b/i;
+// Keep the VISUALIZER (the default screen) unless the prompt is CD-thematic (then usually
+// a spinning CD) or, rarely, at random — so the CD is a treat, not the norm. Returns a new
+// array; the swapped region is cloned so the shared preset isn't mutated. (cd-visualizer)
+function maybeCdScreen(regs: Region[], brief: string): Region[] {
+  const wantCd = CD_THEME.test(brief) ? Math.random() < 0.7 : Math.random() < 0.08;
+  if (!wantCd) return regs;
+  let swapped = false;
+  return regs.map((r) => {
+    if (!swapped && r.dynamicType === "visualizer") { swapped = true; return { ...r, dynamicType: "cd" as const, label: "cd" }; }
+    return r;
+  });
+}
+
 export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Promise<GenerateResult> {
   const log = deps.log ?? (() => {});
   const model = input.model ?? DEFAULT_MODEL;
@@ -372,7 +387,9 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   // REPACK the template before the painter: sane per-kind sizes + move-based
   // de-overlap (no slivers). A template with overlapping/sliver interactables must
   // NEVER reach the painter — this is the root of alignment quality.
-  const regs: Region[] = bankTransport(repackTemplate(input.regions?.length ? input.regions : regionsForVariant(input.variant)));
+  // maybeCdScreen: cd-visualizer feature — swap the first screen → spinning CD for
+  // music/disc-themed prompts (mostly) or rarely at random.
+  const regs: Region[] = maybeCdScreen(bankTransport(repackTemplate(input.regions?.length ? input.regions : regionsForVariant(input.variant))), input.brief);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 
