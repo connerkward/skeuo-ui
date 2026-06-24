@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { GenerateRequest } from "./api";
+import type { GenerateRequest, GenStageEvent } from "./api";
 import { postGenerate } from "./postGenerate";
 import { finishCutoutFull } from "./cutoutClient";
 import { apiUrl } from "../platform";
@@ -102,6 +102,9 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   // live paint-pass progress: which model is in flight + when its pass started
   const [progress, setProgress] = useState<GenProgress | null>(null);
   const [elapsed, setElapsed] = useState(0); // seconds since the current pass began
+  // live preview of the user's ACTUAL skin forming, streamed from the server as each
+  // pass completes (blueprint → grown body → painted skin)
+  const [stage, setStage] = useState<GenStageEvent | null>(null);
 
   const usePreset = (v: LayoutVariant) => { setVariant(v); setRegions(regionsForVariant(v)); };
 
@@ -149,12 +152,13 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
       for (let i = 0; i < models.length; i++) {
         const model = models[i];
         setProgress({ idx: i, total: models.length, model, startedAt: Date.now() });
+        setStage(null);   // reset the live preview for this model's pass
         const req: GenerateRequest = {
           // envelope:true runs the extra sculpt pass (opt-in). Otherwise one pass:
           // the model expands its own shape. An uploaded body is used directly.
           prompt: prompt.trim(), variant, refImage, model, envelope: grows, envelopeImage: envImage, regions,
         };
-        const data = await postGenerate(req);
+        const data = await postGenerate(req, (ev) => setStage(ev));
         if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
         if (data.status !== "done") { setErr("unexpected pending response"); continue; }
         // The CF Worker defers the alpha cutout to here (CPU ceiling) — cut the raw
@@ -164,24 +168,25 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         let template = data.template;
         if (data.needsCutout && data.paintUrl) {
           try {
-            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template);
+            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template, data.keyColor);
             frameUrl = r.frameUrl; hasSprites = r.sprites; template = r.template ?? data.template;
           } catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
         }
         onCreated({
           id: data.id,
-          name: `${prompt.trim().slice(0, 18)} · ${modelLabel(data.model)}`,
-          blurb: `generated · ${modelLabel(data.model)}`,
+          name: data.name?.trim() || prompt.trim().slice(0, 24),
+          blurb: data.blurb?.trim() || `generated · ${modelLabel(data.model)}`,
           style: data.style,
           frameUrl,
           template,
           sprites: hasSprites,
+          font: data.font,
         });
       }
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false); setProgress(null);
+      setBusy(false); setProgress(null); setStage(null);
     }
   };
 
@@ -325,8 +330,16 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                   {envImage ? " · uploaded body" : grows ? " · sculpted body (2 passes)" : " · auto body (1 pass)"}</div>
                 <div className="wiz-total"><strong>{models.length} model{models.length === 1 ? "" : "s"}</strong> · ~{fmt$(total)}{anyApprox ? "*" : ""} total</div>
               </div>
-              {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={grows} />}
-              {err && <div className="wiz-err">{err}</div>}
+              {progress && <PaintProgress progress={progress} elapsed={elapsed} autoBody={grows} stage={stage} />}
+              {err && (
+                <div className="wiz-err">
+                  <img className="wiz-err-mascot" src="/mascot-error.png" alt="" />
+                  <div className="wiz-err-body">
+                    <span className="wiz-err-title">All tangled up</span>
+                    <span className="wiz-err-msg">{err}</span>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -352,7 +365,12 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
 // Each palette kind owns a list of meaningful names; we add the first one not
 // already present so repeated clicks cycle through real controls instead of
 // piling up duplicates. Ids are friendly (the bind/dynamicType), never "slider-h-14sr".
-const SCREEN_TYPES: DynamicType[] = ["visualizer", "marquee", "playlist"];
+// visualizer is the DEFAULT screen for every skin; cd/albumart sit LAST so they're
+// only picked deliberately (after the standard screens), not auto-selected as the 2nd
+// screen. Generated skins get a CD only thematically/occasionally (see generateSkin).
+const SCREEN_TYPES: DynamicType[] = ["visualizer", "marquee", "playlist", "cd", "albumart"];
+// cd/albumart want a SQUARE pixel region; canvas is 1024×1536 so a square needs w = 1.5·h.
+const SQUARE_TYPES = new Set<DynamicType>(["cd", "albumart"]);
 const BUTTON_BINDS = ["play", "prev", "next", "stop"];
 const KNOB_BINDS = ["volume", "balance"];
 const TOGGLE_BINDS = ["shuffle", "eqOn"];
@@ -375,9 +393,13 @@ function newRegion(palette: PaletteKind, regions: Region[]): Region {
 
   if (palette === "screen") {
     const dt = firstFree(usedTypes, SCREEN_TYPES) as DynamicType;
+    // a square pixel region for the disc/cover (w = 1.5·h on the 1024×1536 canvas)
+    const rect = SQUARE_TYPES.has(dt)
+      ? { x: 0.3, y: 0.33, w: 0.4, h: 0.267 }
+      : { x: 0.3, y: 0.4, w: 0.4, h: 0.16 };
     return {
       id: uniqueId(dt, regions), kind: "display", content: "dynamic", layer: "screen",
-      rect: { x: 0.3, y: 0.4, w: 0.4, h: 0.16 }, dynamicType: dt, label: dt,
+      rect, dynamicType: dt, label: dt,
     };
   }
   if (palette === "button") {
@@ -425,8 +447,19 @@ const PAINT_PHASES = [
 // cumulative fraction of the (expected) duration each phase ends at
 const PHASE_ENDS = [0.06, 0.18, 0.42, 0.86, 1.0];
 
-function PaintProgress({ progress, elapsed, autoBody }: {
-  progress: GenProgress; elapsed: number; autoBody: boolean;
+// label for each streamed stage artifact — the user's ACTUAL skin at that step
+const STAGE_LABEL: Record<GenStageEvent["stage"], string> = {
+  blueprint: "Your blueprint",
+  envelope: "Your body",
+  paint: "Your skin",
+};
+// Hidden for now (the server still streams the stages — see /api/generate; this
+// only gates the in-loader preview card). Flip to re-enable. Same pattern as the
+// CONNECT_ENABLED / FLOAT_ENABLED feature gates.
+const LIVE_PREVIEW_ENABLED = false;
+
+function PaintProgress({ progress, elapsed, autoBody, stage }: {
+  progress: GenProgress; elapsed: number; autoBody: boolean; stage: GenStageEvent | null;
 }) {
   // expected duration of THIS pass — two passes (auto-grow) run longer than one.
   const expected = autoBody ? 75 : 45;
@@ -445,6 +478,18 @@ function PaintProgress({ progress, elapsed, autoBody }: {
   return (
     <>
       <div className="wiz-paint" role="status" aria-live="polite">
+        {/* live preview of the user's ACTUAL skin: the real artifact streamed from
+            the server for the current pass (blueprint → grown body → painted skin),
+            each fading in as it arrives. Before the first event: a soft shimmer.
+            HIDDEN behind LIVE_PREVIEW_ENABLED for now. */}
+        {LIVE_PREVIEW_ENABLED && (
+          <div className="wiz-proc">
+            {stage
+              ? <img key={stage.url} src={stage.url} alt="" className="wiz-proc-img on" />
+              : <div className="wiz-proc-wait" aria-hidden="true" />}
+            <span className="wiz-proc-tag">{stage ? STAGE_LABEL[stage.stage] : "starting…"}</span>
+          </div>
+        )}
         <div className="wiz-paint-head">
           <span className="wiz-paint-model">
             {progress.total > 1 && <b>model {progress.idx + 1}/{progress.total} · </b>}

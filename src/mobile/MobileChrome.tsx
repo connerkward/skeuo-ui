@@ -7,6 +7,7 @@ import { useSwipe } from "./useSwipe";
 import { Brand } from "../components/Brand";
 import { MobileSpotify } from "./MobileSpotify";
 import { MobileSkinStrip } from "./MobileSkinStrip";
+import { skinFont, skinFontStyle } from "../player/skinFonts";
 
 interface Props {
   template: Template;
@@ -20,11 +21,15 @@ interface Props {
   mode: "local" | "spotify";
   setMode: (m: "local" | "spotify") => void;
   spotifyDrive: SpotifyDrive | null;
+  // top-bar treatment matching the desktop bar:
+  connectEnabled?: boolean;      // show the Spotify connect pill (hidden while broken)
+  share?: React.ReactNode;       // the Share button (rendered by App)
 }
 
 // Mobile shell (<820px): a compact top bar + a swipeable carriage of skins,
 // with a trailing "+ Generate your own" page. Desktop never mounts this.
-export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp, mode, setMode, spotifyDrive }: Props) {
+export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp, mode, setMode, spotifyDrive,
+  connectEnabled, share }: Props) {
   // pages = every visible skin, plus one trailing "create" page
   const createIdx = skins.length;
   const startIdx = Math.max(0, skins.findIndex((s) => s.id === skinId));
@@ -45,14 +50,25 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp,
       <header className="m-topbar">
         <Brand size="sm" className="m-title" />
         <div className="m-topbar-actions">
-          <MobileSpotify sp={sp} mode={mode} setMode={setMode} />
-          <button className="m-menu" onClick={() => sw.goTo(createIdx)} aria-label="Generate your own skin">
-            + skin
+          {share}
+          {connectEnabled && <MobileSpotify sp={sp} mode={mode} setMode={setMode} />}
+          <button className="m-cta" onClick={fire} aria-label="Create your own skin">
+            <span className="m-cta-mark">✦</span> Create
           </button>
         </div>
       </header>
 
       <div className="m-stage" {...sw.bind}>
+        {/* small skin title + blurb tucked in the corner (the skin's identity,
+            since the full-screen narrow view has no side title card) */}
+        {sw.index < skins.length && (
+          <div className="m-skin-label">
+            <span className="m-skin-name" style={skinFontStyle(skinFont(skins[sw.index].id))}>
+              {skins[sw.index].name.replace(/\s*✦\s*$/, "")}
+            </span>
+            <span className="m-skin-blurb">{skins[sw.index].blurb}</span>
+          </div>
+        )}
         <div
           className="m-track"
           style={{

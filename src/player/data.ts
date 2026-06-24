@@ -6,6 +6,7 @@ export interface Track {
   artist: string;
   title: string;
   seconds: number;
+  cover?: string;   // album-art URL (real when Spotify-driven; absent for the mock playlists → CD/art uses a CSS fallback)
 }
 
 export interface SkinContent {
@@ -57,14 +58,14 @@ export const skinContent: Record<string, SkinContent> = {
     bitrate: "160",
     khz: "44",
     tracks: [
-      { artist: "009 Sound System", title: "Dreamscape", seconds: 339 },
-      { artist: "009 Sound System", title: "With a Spirit", seconds: 312 },
+      { artist: "009 Sound System", title: "Dreamscape", seconds: 339, cover: "/demo-covers/009-sound-system-dreamscape.jpg" },
+      { artist: "009 Sound System", title: "With a Spirit", seconds: 312, cover: "/demo-covers/009-sound-system-with-a-spir.jpg" },
       { artist: "TradeSend", title: "Trance — Sound System Drea", seconds: 519 },
-      { artist: "Darude", title: "Sandstorm", seconds: 225 },
-      { artist: "Robert Miles", title: "Children (Dream Version)", seconds: 297 },
-      { artist: "ATB", title: "9 PM (Till I Come)", seconds: 212 },
-      { artist: "Alice Deejay", title: "Better Off Alone", seconds: 214 },
-      { artist: "Zombie Nation", title: "Kernkraft 400", seconds: 318 },
+      { artist: "Darude", title: "Sandstorm", seconds: 225, cover: "/demo-covers/darude-sandstorm.jpg" },
+      { artist: "Robert Miles", title: "Children (Dream Version)", seconds: 297, cover: "/demo-covers/robert-miles-children.jpg" },
+      { artist: "ATB", title: "9 PM (Till I Come)", seconds: 212, cover: "/demo-covers/atb-9-pm-till-i-come.jpg" },
+      { artist: "Alice Deejay", title: "Better Off Alone", seconds: 214, cover: "/demo-covers/alice-deejay-better-off-alon.jpg" },
+      { artist: "Zombie Nation", title: "Kernkraft 400", seconds: 318, cover: "/demo-covers/zombie-nation-kernkraft-400.jpg" },
     ],
   },
   halo: {
@@ -88,13 +89,13 @@ export const skinContent: Record<string, SkinContent> = {
     khz: "44",
     tracks: [
       { artist: "DJ Mike Llama", title: "Llama Whippin' Intro", seconds: 8 },
-      { artist: "Bran Van 3000", title: "Drinking in L.A. (Radio Edit)", seconds: 244 },
-      { artist: "Fatboy Slim", title: "Praise You", seconds: 343 },
-      { artist: "The Crystal Method", title: "Busy Child", seconds: 437 },
-      { artist: "Daft Punk", title: "Around the World", seconds: 429 },
-      { artist: "Aphex Twin", title: "Windowlicker", seconds: 366 },
-      { artist: "Moby", title: "Porcelain", seconds: 240 },
-      { artist: "Underworld", title: "Born Slippy .NUXX", seconds: 569 },
+      { artist: "Bran Van 3000", title: "Drinking in L.A. (Radio Edit)", seconds: 244, cover: "/demo-covers/drinking-in-la.jpg" },
+      { artist: "Fatboy Slim", title: "Praise You", seconds: 343, cover: "/demo-covers/praise-you.jpg" },
+      { artist: "The Crystal Method", title: "Busy Child", seconds: 437, cover: "/demo-covers/busy-child.jpg" },
+      { artist: "Daft Punk", title: "Around the World", seconds: 429, cover: "/demo-covers/around-the-world.jpg" },
+      { artist: "Aphex Twin", title: "Windowlicker", seconds: 366, cover: "/demo-covers/windowlicker.jpg" },
+      { artist: "Moby", title: "Porcelain", seconds: 240, cover: "/demo-covers/porcelain.jpg" },
+      { artist: "Underworld", title: "Born Slippy .NUXX", seconds: 569, cover: "/demo-covers/born-slippy.jpg" },
     ],
   },
   fallout: {

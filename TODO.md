@@ -1,6 +1,186 @@
 # skeuo-ui — TODO
 
+## Cutout — coloured-backdrop matte: WIRED on branch `cutout-coloured-despill` (2026-06-23)
+
+**Status: implemented + build-green + function-verified on real paints; pending a LIVE
+end-to-end gen + a merge decision (interacts with the #1 spritesheet-pipeline cutout).**
+The runtime now paints on a contrasting backdrop and keys it out with the color-aware
+matte below (pure-JS color-key, no model — BiRefNet remains the server-side option on
+the spritesheet branch). Changed: `pipeline.ts` (pickKeyColor + {BG} prompts + thread
+keyColor), `blueprint.ts` (`cutoutColorAware` = key→colour-aware-fill→despill; `cutoutAlpha`
+kept as the white fallback), `cutoutClient.ts`/`api.ts`/`handler.ts`/`CreateWizard`/`CreatePanel`
+(thread `keyColor`). White key = legacy behaviour (translucent/iridescent route here).
+
+Investigated fixing BiRefNet's two cutout failures (white enclosed pockets kept opaque;
+dark glossy screens keyed out). Validated end-to-end on real ship paints (nano-banana-2)
++ real fal BiRefNet v2. Interactive lookdev preserved at
+`~/Desktop/cc-skeuo/cutout-lookdev/index.html` (14 skins incl. the original problem
+concepts regenerated on coloured bg — jelly/clamshell/pet/frog/mushroom/robot; toggle
+stage + backdrop, green backdrop exposes keyed-out holes).
+
+**Recipe (for the spritesheet pipeline's BiRefNet cutout step):** paint the device on a
+flat CONTRASTING backdrop (a hue OUTSIDE the device palette, luminance-contrasting —
+bright magenta/yellow/cyan; bright beats dark, dark risks eating black screens), then
+matte = **BiRefNet alpha → colour-aware CUT (remove kept pixels that ARE the backdrop
+colour — fixes backdrop leaking through thin gaps, e.g. obsidian comb slots) →
+colour-aware FILL (fill enclosed non-backdrop holes — keeps dark screens) → despill
+(chroma-suppress the backdrop hue, strength 1.0)**.
+
+**Why coloured bg:** on WHITE bg a near-white screen == bg (can't tell a screen from a
+gap); on a coloured bg screen≠bg so fill/cut are unambiguous. Also cleanly keys
+white/silver devices that blend into white. Luminance-contrasting key → ~12× sharper edge
+(green==steel luma was the worst; yellow sharpest).
+
+**Caveats — route these to white-bg OR edge-only-unmix (NO global despill):**
+- TRANSLUCENT (jelly) — backdrop glows through the body; despill flattens it.
+- IRIDESCENT / PEARL — sheen spans the hue wheel incl. the backdrop hue; despill mutes real colour.
+- MIRROR — reflects the backdrop into the body.
+- PALETTE CLASH — never key on a hue the device contains (green bg ate the green LEDs).
+
+**Next:** wire `cut → fill → despill` into the runtime cutout (`src/generate/cutoutClient.ts`
+/ `functions/api/cutout.ts`) with material-class routing; choose the per-skin key colour in
+the paint prompt (`src/generate/pipeline.ts`).
+
 ## Open
+
+- [ ] **★ #1 PRIORITY — Merge `spritesheet-pipeline` → main: single-pass skin generation + sprite-sheet (decision A locked 2026-06-23).**
+      **→ Full design + decisions + rejected approaches: [`docs/skin-pipeline-sota.md`](docs/skin-pipeline-sota.md) (READ FIRST).**
+      ONE generative paint pass renders the device body + all button/knob/slider parts together
+      (combined blueprint); then non-generative BiRefNet mask + local cut + heuristic snap. Generated
+      skins render their OWN per-skin cut sprites (A). This is the top thing to land next session.
+      The `spritesheet-pipeline` branch (worktree `../skeuo-ui-spritesheet`, tip `d88a4cc`, pushed)
+      has the single-pass generation: ONE paint call renders the device body (grown around fixed
+      sockets) + a bottom strip of bare control parts (`combinedBlueprint` in `blueprint.ts`,
+      `PAINT_PROMPT` in `pipeline.ts`), BiRefNet device cutout (`functions/api/cutout.ts`), and
+      per-skin control sprites cut from the strip + uploaded (`finalize` + `cutoutClient.ts`).
+      **Keep this generation + spritesheet approach.**
+      - **Merge state:** branch is 13 ahead / 26 behind main. Clean except **3 conflicts**:
+        `src/generate/CreatePanel.tsx`, `CreateWizard.tsx`, `handler.ts` (main added the Director
+        title/blurb/font + delete; branch changed the cutout wiring — reconcile, keep BOTH).
+        Also overlapping: `src/App.tsx`, `src/generate/api.ts`.
+      - **DECIDED (2026-06-23) — (a): generated skins render their OWN cut sprites.** Conner: "A is
+        very important to me." So the merge KEEPS the branch's per-skin button-asset handling
+        (`cutoutClient.ts` cut+snap, `Composite.tsx` per-skin sprite render, `skins.ts` sprite URLs)
+        — NOT main's donor path. The 3 create-flow conflicts resolve by keeping BOTH: main's newer
+        Director title/blurb/font + delete AND the branch's `finishCutoutFull` cutout/sprite wiring.
+        The remaining real work is the **alignment** below (heuristic tuning, NOT SAM).
+      - **Alignment = VLM, NOT heuristic/SAM (decided 2026-06-23).** The landed approach is a VLM
+        (gpt-4o vision) — already implemented in `generation/freeform.py` `extract()`: send the
+        device image + the template's control checklist, get back STRICT JSON of each control's box
+        `{kind,x,y,w,h}` (center + size), then snap each cut sprite onto its box. Semantic → reads
+        the painted ►/VOL icons so identity is correct by construction (no nearest-neighbor mishaps),
+        one cheap call, returns centers AND sizes. Port `freeform.py extract()` into the runtime
+        (a server `/api/extract` like `/api/sam`, FAL/OpenAI key server-side) and replace
+        `cutoutClient.snapToSockets`. Dead-ends NOT to repeat: the dark-well heuristic (flaky per
+        gen) and `sam_snap.py` SAM box-prompt (merges/misses on AI-painted devices — tried + reverted
+        this session; the comfyui seg bake-off had already concluded zero-shot seg fails here).
+
+- [ ] **Website redesign — follow-ups (2026-06-23).** The desktop + mobile shell was
+      reworked + shipped to skeuo.fm this session (see Done below). Loose ends:
+      - **Spotify still hidden + non-functional** — `CONNECT_ENABLED = false` in `App.tsx`
+        gates the Connect pill on desktop AND mobile, so the player only drives the local
+        demo. Real playback needs the BYO-Client-ID wizard (its own open item / prototype in
+        `docs/spotify-byo-wizard-prototype.html`). Flip the flag once that lands.
+      - **Generated-skin name/font unverified live** — the Director (`deriveMaterial`) now
+        returns a concise `name`/`blurb` + a Google-Fonts `font` (now genre-rotated + recent-avoid
+        for diversity, css2 cross-validated), threaded handler→api→`onCreated`. The font path is
+        verified LOCALLY against gpt-4o (10/10 distinct), but the full paid end-to-end gen on PROD
+        is still untested. Do one real "Create a skin" on skeuo.fm to confirm naming/font load +
+        that the CF Pages OpenAI key + env are set. (This is TODO item "C" from 2026-06-23.)
+      - **No un-hide UI** — the gallery × HIDES a generated skin (`hidden:true`, raw data kept
+        in `localStorage["skeuo:skins"]`), but there's no restore affordance yet. (2026-06-23: a
+        `?all` query param now reveals ALL hidden catalog bodies in the gallery — a dev/review
+        affordance, not the real per-skin restore UI, but a starting point.)
+
+- [ ] **Reactive music-player mascot — build the rig + groove layer (animation strategy researched 2026-06-23).**
+      A `mascot` player region (like the `cd`/`visualizer` dynamicTypes) that idles when paused and
+      grooves to the music when playing, blending smoothly + reactive to energy/BPM.
+      - **Research (read first):** `docs/anim-pipeline-ideation.md`
+        (substrate landscape) + `docs/anim-transitions-research.md`
+        (transition mechanics — web-verified: Bollo inertialization GDC2018, Spine mixDuration/tracks,
+        Mecanim blend-trees + additive layers, Live2D keyform interp, critically-damped springs).
+        (both now in docs/.)
+      - **Recommended approach:** generate the gremlin ONCE → BiRefNet matte → cut ~8 parts → a code
+        **cut-out rig** (PixiJS/`pixi-spine` or hand-rolled canvas bones + Verlet jiggle on cap/tail).
+        Drive dance as an **ADDITIVE groove layer** (bounce + head-bob + cap-tilt) scaled by `alpha=energy`
+        — ghost-free by construction (composes transform deltas on one rig; avoids the "blend only similar
+        poses" trap). Spring-smooth `energy` with the CD-spin envelope `v += (target−v)(1−e^(−dt/τ))`;
+        bounce phase from a beat clock softly locked to the track so the downbeat lands on the beat.
+        Reserve **inertialization** for reaction one-shots; keep authored "getting-into-it/settling" clips
+        as accents + the fallback floor.
+      - **Assets already made:** low-res idle/dance sprite frames `/tmp/cdtex/mascotA/frames/` + Desktop
+        `mascot-react-*`; canonical refs `~/Desktop/cc-skeuo/mix-dk-red-a.png`, `/tmp/cdtex/eh0.png`.
+        (Note: the early crossfade-sprite prototype GHOSTED — that's why the rig/additive approach.)
+      - **Decisions to lock before building (my leans in parens):** rig substrate — cut-out 2D rig vs
+        Dead-Cells 3D-render *(2D rig)* · dance depth — additive-bounce-only vs full body re-pose at high
+        energy *(additive-only v1)* · beat-sync — strict live-beat lock vs smoothed BPM clock *(gentle)* ·
+        reactions/inertialization in v1 *(defer)*.
+
+- [x] **CD album-art visualizer — MERGED + baked + deployed (2026-06-24).** The
+      `cd-visualizer` branch (cd + albumart dynamicTypes, spinning silver data-side disc,
+      `Track.cover` from Spotify) merged clean into main (worktree removed). Bake on top:
+      - **Hub recentred via circle-fit** on the hole edge (was ~8px high → wobble; now
+        within 0.2px of center, fit residual 0.29px). The old centroid method was skewed
+        by the gloss — fit a circle, not a centroid.
+      - **Anti-strobe rotational motion blur**: the disc jumps 8–17°/frame at cruise and
+        isotropic blur can't mask it, so `CdDisc` stacks 5 echo layers across ~1.4 frames
+        of motion (oldest opaque, current on top) → smooth sheen. Isotropic softening 0.15px.
+        Tuned in a lookdev studio (now torn down).
+      - **Shows up in a final skin**: `wmp` (Media Capsule) is the one thematic built-in CD
+        showcase (square visualizer region → cd). Every other skin + the wizard default +
+        the 🎲 randomizer stay VISUALIZER; generated skins get a CD only when the prompt is
+        music/disc-thematic (~70%) or rarely at random (~8%) — `maybeCdScreen()` in pipeline.
+      - **Real album-art tint (local mode, no Spotify)**: fetched actual covers (iTunes) for
+        the wmp trance playlist + the winamp fallback playlist → `public/demo-covers/`, wired
+        `Track.cover`, so the disc tints to the playing song's real cover. Tint made WAY
+        stronger (opacity .95 + a 2nd overlay-blend layer). Generated cd skins fall back to
+        the covered winamp playlist, so they tint too.
+      - NOT run-verified: the thematic-generated-CD path (would need a paid "boombox/cd"
+        gen to confirm a generated skin actually gets a CD).
+
+- [x] **More generative template heuristics — BAKED (2026-06-23).** The 10-archetype engine
+      + repel/min-spacing pass is now `layoutRandom()` in `src/generate/layouts.ts`, wired to
+      the wizard's 🎲 and verified live (arc + dial rolls, round controls, glass cleared, 0
+      overlaps). Density varies per roll. Studio kept at `/tmp/lookdev-layout/` for further
+      tuning. Still open below: weight curation / gridSnap exposure / lopsided-default are
+      hardcoded to the dialed-in config — revisit if you want them user-tunable.
+- [ ] **Wizard-randomizer polish (autonomous, low-stakes).** The 🎲 config is hardcoded in
+      `layoutRandom()` (`src/generate/layouts.ts`). Optional next passes: expose `gridSnap` /
+      archetype-weight / lopsided as user controls in the wizard; and/or auto-pick the archetype
+      from the prompt/silhouette aspect (wide→console/split, tall→stack/dial) instead of pure
+      weighted-random. Studio for tuning: `~/dev/central/scripts/serve /tmp/lookdev-layout --bg`.
+
+- [ ] **(was) More generative template heuristics — original notes (kept for reference).**
+      A layout-randomization studio was built (`/tmp/lookdev-layout/index.html`; re-serve with
+      `~/dev/central/scripts/serve /tmp/lookdev-layout --bg`) to ideate graphic-design-informed
+      layout heuristics for the wizard's 🎲 Randomize. It generates **10 archetypes** — stack,
+      dial, split, mini-widget, console, **diagonal/Z, golden-section, Swiss grid, L-corner,
+      arc/fan** — each a complete working player, run through a **repel + min-spacing validity
+      pass** (`resolveOverlaps`) that guarantees 0 overlaps / no too-close controls (verified:
+      400 seeds × every archetype → 0 overlaps, min gap 0.02). Controls carry a `nopush` flag on
+      the dial glass + arc ring so things ride them intentionally.
+      - **Tuned default config the user picked** (mini + arc heavy, full symmetry, sparse,
+        max play-dominance): `{count:24,seed:9999,density:0,symmetry:1,bias:1,jitter:0,
+        hierarchy:1,margin:0.14,gapScale:1.5,gridSnap:0,gridN:16,repel:1,spacing:0.02,
+        wStack:0.4,wDial:0.5,wSplit:0.5,wMini:1,wConsole:0.45,wDiagonal:0.05,wGolden:0.6,
+        wGrid:0.45,wCorner:0.2,wArc:1}` (now the studio's `DEFAULTS`).
+      - **BAKE:** port the studio's archetype generators + `resolveOverlaps` into
+        `src/generate/layouts.ts` (px-on-1024×1536, matching the existing `layout*()` fns) and
+        wire the wizard's 🎲 to `layoutRandom()` drawing from them with these weights. Decide:
+        all 10 in the 🎲 vs a curated subset; whether `gridSnap` is user-facing (only the Swiss
+        grid benefits); lopsided as a frequent default vs gated to mini-widget. Then tear down
+        the `/tmp` studio.
+
+- [ ] **Mascot favicon — revisit (current SVG `public/favicon.svg` stays for now).**
+      Want a favicon that keeps the skeuomorphic iOS-original tile + the existing
+      chrome-knob + green-pointer/LED, with a *hint* of the mascot worked in. Explored
+      (2026-06-22) and rejected: gremlin horns added to the knob; "horns-as-the-knob's-
+      tick-marks" on a glossy bright-green tile with a dark knob (dark-on-green reads well
+      at distance, but the execution was ugly). Variant generator + sized/16px lookdev:
+      `/tmp/cdtex/fav/` (`gen.py`, `gen2.py`, `index.html`). Reactive-mascot / error-mascot
+      art lives in `~/Desktop/cc-skeuo/` (`mascot-*`); error picks are matted to alpha
+      (`mascot-error-*-cutout.png`). Direction still open — the hint just needs a better
+      idea than horns/tick-marks.
 
 - [ ] **Spotify BYO-Client-ID onboarding wizard — RESUME after the 24h Spotify
       app-creation cooldown (~2026-06-23).** Prototype built + verified, NOT yet wired
@@ -39,6 +219,72 @@
       unused). Re-add the `<label className="sp-toggle">` checkbox (desktop/web
       only — gate with `!isMobileApp()`, since iOS WKWebView lacks EME/Widevine)
       when we revisit in-page playback.
+
+## Done (2026-06-24) — Streaming loading preview + shape de-bias (shipped)
+- [x] **Streaming "skin forming" loading preview** — `/api/generate` now STREAMS NDJSON:
+      each pass emits `{stage,url}` as it completes (blueprint → grown body → painted skin),
+      final `GenerateResponse` is the last line. `RuntimeDeps.onStage` → CF Function + dev
+      plugin stream it; `postGenerate` reads line-by-line. Wizard showed the user's REAL
+      artifacts forming. **HIDDEN behind `LIVE_PREVIEW_ENABLED=false`** (user's call) — the
+      streaming infra stays live (harmless), only the in-loader card is gated off. Verified
+      incremental on prod CF (blueprint@3s, envelope@29s, paint@60s, done@63s).
+- [x] **Generated-skin name/font verified LIVE (TODO "C")** — the streaming gens this session
+      returned real Director names ("Cute Red Mushroom", "Victorian Echo") + fonts on prod,
+      with the OpenAI key confirmed working. (Earlier-flagged item, now confirmed.)
+- [x] **Shape de-bias** — `ENVELOPE_PROMPT` no longer forces "horns, fins, tendrils, legs,
+      jaws" on every sculpted body; the form now FOLLOWS the brief (no monster default unless
+      the prompt calls for it). Root-caused the gallery's "evil" motif to this prompt + a
+      legacy biomech-heavy catalog. (Affects the opt-in 2-pass sculpt path; default 1-pass was
+      already neutral.) Catalog curation (hiding the horror cluster) NOT done — still an option.
+
+## Done (2026-06-23, late) — Font polish + skeuo.fm prod-stability fix (shipped)
+- [x] **Real font preload (kills the pop-in)** — `preloadSkinFonts` only injected the Google
+      CSS `<link>`; the woff2 binary still lazy-loaded on first glyph render (the pop-in).
+      `ensureGoogleFont` now forces the binary down via `FontFaceSet.load()` on link-load.
+      Verified network-level: all visible faces fetch (200) + pass `fonts.check()` ~2s after mount.
+- [x] **Font diversity system** — the Director anchored on the same few faces. Each gen now
+      randomly favors one of 8 genre buckets (rotated exemplars) + a recent-fonts avoid-list
+      threaded client→handler→director via `localStorage["skeuo:skins"]`. Live gpt-4o test:
+      10/10 distinct fonts across 10 consecutive gens.
+- [x] **Google-Fonts cross-validation** — LLM picks any family from memory, then `resolveFont`
+      probes the css2 endpoint for THAT family (real→200, hallucinated→400; no API key, no
+      1800-family catalog dump); a made-up name falls back to a style-appropriate face.
+- [x] **Catalog font pass** — hand-picked a distinct, vibe-matched face for ALL 30 skins (was
+      only the 10 visible); preload scoped to the visible roster so mount stays light. `?all`
+      query param reveals the hidden catalog bodies in the gallery (dev affordance — see un-hide).
+- [x] **skeuo.fm HANG fixed — poisoned Cloudflare edge cache.** A deploy-propagation race served
+      not-yet-present hashed chunks as `200 text/html` (the single-page not_found fallback), frozen
+      by the `immutable` `_headers` rule → a fresh browser got HTML for a JS module → app never
+      mounted (`Failed to fetch dynamically imported module`). curl hit a clean variant (read as
+      JS) which masked it; a fresh-profile headless browser reproduced it every time. Couldn't purge
+      (API token lacks the perm) so: (a) moved hashed assets to `/assets/app/` — brand-new,
+      never-poisoned URLs that bust both the edge entry AND any poisoned client caches; (b)
+      `public/_redirects` makes a missing `/assets/*` return **404 `no-store`** instead of the
+      HTML fallback (can't masquerade as a module, isn't cached → can't recur) + a `404.html`.
+      Verified fresh-profile prod load now MOUNTS. Commits 279fc5e/f6bd8e0/4d3ee57/da68da1, deployed.
+
+## Done (2026-06-23) — Website redesign: shell, thumbnails, cinematic titles (shipped to skeuo.fm)
+- [x] **Desktop shell rebuilt** several times to the final form: a NARROW left gallery
+      (scrolling skin list, animated thumbnails) + a FULL-HEIGHT skin (the hero, vw+height
+      bounded so it never clips) + a cinematic title card whose text sits squarely centered
+      between the skin's right edge and the frame edge. Flat `#08080a` bg, no gradient box.
+- [x] **Baked thumbnails** — `scripts/bake-thumbs.mjs` renders each skin's real `<Composite>`
+      (buttons/dials/screen, visualizer suppressed) → 256px WebP, so the gallery minis show
+      actual controls, not empty wells. A guard skips skins whose `?skin=` id doesn't resolve;
+      only the 10 visible skins were re-baked. Round-dial well-disc removed (the dial is baked).
+- [x] **Per-skin logomark fonts** — `src/player/skinFonts.ts` maps id→a punchy Google font;
+      loaded DYNAMICALLY (`ensureGoogleFont`, any family, not a fixed list) + preloaded on mount
+      with an `isFontReady` cache check so switching skins doesn't pop in. `<CinemaTitle>` fits
+      the title to its area and wraps to ≤2 whole-word lines (no offscreen flow). The Director
+      picks a font for generated skins too (any family, dynamic-loaded).
+- [x] **Director emits concise `name` + `blurb`** (no more "a fanged anglerfish · nano-banana-2"),
+      threaded handler→api→`onCreated`, tidy prompt-derived fallback on the no-key path.
+- [x] **Generated-skin × = HIDE not delete** — sets `hidden:true`, filtered from the gallery,
+      raw materials kept in storage for future processing.
+- [x] **Mobile/narrow bar matched to desktop** — Connect hidden, Template view axed, Share is a
+      labelled pill, Create is the green CTA; skin title+blurb shown small in the stage corner.
+- [x] **Connect (Spotify) hidden** behind `CONNECT_ENABLED=false` (desktop + mobile) until the
+      playback path is fixed. Float-player stays behind `FLOAT_ENABLED=false`.
 
 ## Done (2026-06-22) — Float the player in the browser (Document Picture-in-Picture)
 - [x] **"⧉ Float player — no install"** button (desktop, sidebar Connect group). Pops the

@@ -22,7 +22,7 @@
 // ============================================================
 import type { Region, Template } from "../template/schema";
 import { GEN_W, GEN_H, regionsForVariant, repackTemplate, bankTransport, type LayoutVariant } from "./layouts";
-import { combinedBlueprint, type BlueprintLayout } from "./blueprint";
+import { combinedBlueprint, type BlueprintLayout, type RGB, KEY_WHITE } from "./blueprint";
 
 // ---- single-pass paint prompt — ported from /tmp/prompt_egg_v3.txt (the winning
 // prototype prompt), generalized over the chosen material + brief. The blueprint
@@ -42,7 +42,11 @@ export const PAINT_PROMPT =
   "CRITICAL — the blueprint geometry is LOCKED. Output the SAME dimensions and SAME positions for every element.\n\n" +
   "TOP DEVICE BODY:\n" +
   "- The faint gray rounded shape is the BODY — restyle ONLY it into the material above; grow detailing " +
-  "only into the gray body and the white margins. Do NOT change the body outline, position, or size.\n" +
+  "only into the gray body and the margins. Do NOT change the body outline, position, or size.\n" +
+  "- BACKDROP (top device region): the area AROUND the body is a flat {BG} backdrop. Paint it as a CLEAN, " +
+  "FLAT, perfectly UNIFORM {BG} — it is a separate backdrop that gets keyed out, so it must NOT tint, reflect, " +
+  "bleed or spill onto the device; the device keeps its OWN material colour and neutral studio lighting, with a " +
+  "crisp edge against the {BG}. (Only this top backdrop is {BG}; the bottom control strip stays flat pure white.)\n" +
   "- Each dark shape ringed in bright PINK/MAGENTA is a FIXED SOCKET. KEEP every socket at its EXACT " +
   "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place.\n" +
@@ -85,11 +89,39 @@ export const PAINT_PROMPT =
   "- Each control's ONLY marking is its own icon EMBOSSED ON ITS FACE (e.g. the play triangle is molded ON the button face) — " +
   "do NOT draw any separate floating icon, glyph, arrow, symbol, or text ABOVE, BELOW or beside the control. Nothing floats " +
   "next to a part; the surrounding white is completely empty.\n\n" +
-  "RENDER: flat front-on product render on a PERFECTLY CLEAN PURE-WHITE background. CRITICAL: NO shadows of any kind " +
-  "anywhere — no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the white. Every element " +
-  "must have clean hard edges against pure white so it can be perfectly masked. No reflections on the ground. " +
+  "RENDER: flat front-on product render. The top device region sits on a flat {BG} backdrop; the bottom control " +
+  "strip sits on flat PURE-WHITE — both perfectly clean and uniform. CRITICAL: NO shadows of any kind anywhere — " +
+  "no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the backdrop. Every element " +
+  "must have clean hard edges against its backdrop so it can be perfectly masked. No reflections on the ground. " +
   "Reminder: the bottom control-parts strip carries NO text, NO labels, NO captions, NO numbers of any kind — only the " +
   "bare parts on flat pure white.";
+// ---- CUTOUT KEY COLOUR ----------------------------------------------------
+// The device is painted on a flat CONTRASTING backdrop (a hue OUTSIDE its own
+// palette) so the cutout keys it out unambiguously — fixing the white-key bugs
+// (near-white screens lost; backdrop bleeding into thin gaps kept). The key colour
+// is chosen DETERMINISTICALLY from the material text (no extra LLM cost). Translucent
+// & iridescent finishes route to WHITE: their body legitimately carries every hue
+// (light through / shifting sheen), so a coloured-key despill would desaturate the
+// real material — see cutoutColorAware. Validated 2026-06-23 (see TODO.md).
+export interface KeyChoice { key: RGB; css: string; phrase: string }
+const KW: KeyChoice = { key: KEY_WHITE, css: "white", phrase: "pure white" };
+const MAGENTA: KeyChoice = { key: [230, 0, 126], css: "rgb(230,0,126)", phrase: "pure flat magenta (#E6007E)" };
+const CYAN: KeyChoice = { key: [0, 192, 208], css: "rgb(0,192,208)", phrase: "pure flat bright cyan (#00C0D0)" };
+const YELLOW: KeyChoice = { key: [255, 224, 0], css: "rgb(255,224,0)", phrase: "pure flat bright yellow (#FFE000)" };
+// device-hue (from the material text) → a backdrop FAR from it, bright for a sharp edge
+const KEYS: Array<{ test: RegExp; choice: KeyChoice }> = [
+  { test: /green|lime|emerald|teal|frog|moss|olive/i,                 choice: MAGENTA },
+  { test: /magenta|pink|purple|violet|\bred\b|crimson|rose|ruby|berry|coral/i, choice: CYAN },
+  { test: /blue|cyan|navy|cobalt|azure|aqua|sky|turquoise/i,          choice: YELLOW },
+  { test: /yellow|gold|amber|orange|cream|tan|sand|brass|bronze/i,    choice: MAGENTA },
+];
+// translucent / iridescent → WHITE fallback (a coloured-key despill would harm the real material)
+const WHITE_FALLBACK = /translucent|transparent|see-through|glass|jelly|gel|slime|gummy|crystal|iridescent|pearl|pearlescent|holographic|opal|nacre|prism|rainbow sheen/i;
+export function pickKeyColor(materialText: string): KeyChoice {
+  const t = materialText.toLowerCase();
+  if (WHITE_FALLBACK.test(t)) return KW;
+  return (KEYS.find((k) => k.test.test(t))?.choice) ?? MAGENTA;
+}
 
 // Donor registry. These descriptions are NO LONGER forced onto the paint pass — the
 // paint material is always prompt-driven (handler.ts → deriveMaterial / raw prompt).
@@ -145,6 +177,11 @@ export interface RuntimeDeps {
   // meta.json), reconstructable by id via /api/skin/<id>.
   store?: (id: string, kind: "frame" | "paint" | "template" | "meta" | "layout", data: Uint8Array | string) => Promise<string>;
   log?: (msg: string) => void;
+  // optional: emit a live progress artifact as each pass completes (blueprint →
+  // grown body → painted skin), so the loading UI can preview the user's ACTUAL
+  // skin forming instead of a placeholder. blueprint is a data: URL; envelope/paint
+  // are fal CDN URLs. Best-effort + fire-and-forget — never blocks the pipeline.
+  onStage?: (stage: "blueprint" | "envelope" | "paint", url: string) => void;
 }
 
 // Small per-skin record persisted alongside the frame + template so a shared link
@@ -181,6 +218,7 @@ export interface GenerateResult {
   sprites?: boolean;       // true once per-skin control sprites exist at skins/<id>/sprites/<bind>.png
   needsCutout?: boolean;  // true when the cutout was deferred to the browser (single-pass: always)
   paintUrl?: string;      // raw combined paint PNG to cut client-side — present when needsCutout
+  keyColor: RGB;          // backdrop the device was painted on — the colour the cutout keys out (white = legacy)
   timingMs: { envelope: number; paint: number; total: number };
 }
 
@@ -338,9 +376,19 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 
+  // CUTOUT KEY COLOUR — the DEVICE is painted on a contrasting backdrop chosen from
+  // the material so the cutout keys it out cleanly (translucent/iridescent → white).
+  // Threaded into the combined blueprint's DEVICE-region background, the paint prompt
+  // ({BG}), and the client cutout (cleanDeviceFrame). The STRIP stays flat white so
+  // connected-component sprite cutting is unambiguous. Material is prompt-driven, so
+  // the fallback is the brief itself — never a canned donor preset.
+  const matText = input.materialPrompt || input.brief;
+  const keyc = pickKeyColor(matText);
+  log(`[${input.id}] key colour ${keyc.css} (${keyc.phrase})`);
+
   // 1. COMBINED blueprint PNG — device body (faint envelope + magenta-ringed
-  //    sockets) + a bottom sprite strip of labeled control cells. ONE image.
-  const { svg, layout, width: bpW, height: bpH, stripDesc } = combinedBlueprint(regs);
+  //    sockets) on the KEY-COLOUR backdrop + a bottom sprite strip on WHITE. ONE image.
+  const { svg, layout, width: bpW, height: bpH, stripDesc } = combinedBlueprint(regs, keyc.css);
   // CHECK (pre-paint): the blueprint/template MUST be a model-reproducible aspect so
   // the paint returns near 1:1 — otherwise the normalized strip cells + device sockets
   // map to the wrong place on a reshaped output (mis-cut sprites). It's built to 9:16;
@@ -363,7 +411,8 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
     // OpenAI key, the raw prompt text). Fall back to the brief itself — NEVER a canned
     // donor preset — so a missing material can't silently force a winamp/biomech look.
     .replace("{material}", input.materialPrompt || input.brief)
-    .replace("{strip}", stripDesc);
+    .replace("{strip}", stripDesc)
+    .replace(/\{BG\}/g, keyc.phrase);   // device-region backdrop colour (keyed out by the cutout)
   const refs = input.refImageUrls ?? [];
   if (refs.length) {
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +
@@ -371,6 +420,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   }
   const paintJob = await falSubmit(deps.falKey, model, [blueprintUrl, ...refs], prompt);
   const paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
+  deps.onStage?.("paint", paintUrl);   // the real painted skin
   const paintPng = await fetchPng(paintUrl);
   const paintMs = Date.now() - tPaint;
   log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);
@@ -428,7 +478,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   return {
     id: input.id, style: input.style, variant: input.variant, model, template, frameUrl, layout,
-    needsCutout: true, paintUrl: paintOut,
+    needsCutout: true, paintUrl: paintOut, keyColor: keyc.key,
     timingMs: { envelope: 0, paint: paintMs, total: Date.now() - tAll },
   };
 }

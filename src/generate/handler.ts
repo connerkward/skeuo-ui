@@ -7,7 +7,7 @@ import type { RuntimeDeps } from "./pipeline";
 import { generateSkin, DONOR_STYLES, MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
 import { checkAndReserve, release } from "./ratelimit";
-import { deriveMaterial, deriveLayout } from "./director";
+import { deriveMaterial, deriveLayout, titleFromPrompt, blurbFromPrompt } from "./director";
 import type { Region } from "../template/schema";
 
 function slug(s: string): string {
@@ -42,10 +42,16 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   // and the palette defaults to a donor (the heuristic, or the requested style).
   let style: DonorStyle;
   let materialPrompt: string;
+  let font = "Cinzel";                       // logomark title font (Director pick)
+  // concise title + description — default to a tidy prompt-derived fallback, then
+  // override with the Director's when the LLM runs (never the raw "prompt · model")
+  let name = titleFromPrompt(prompt);
+  let blurb = blurbFromPrompt(prompt);
   if (deps.openaiKey) {
-    const derived = await deriveMaterial(deps.openaiKey, prompt);
-    materialPrompt = derived.materialPrompt;
-    // an explicitly-requested donor still picks the palette; else the Director's fit
+    const derived = await deriveMaterial(deps.openaiKey, prompt, body.avoidFonts);
+    materialPrompt = derived.materialPrompt;   // paint look — prompt-driven, never a canned donor
+    font = derived.font; name = derived.name; blurb = derived.blurb;
+    // an explicitly-requested donor still picks the PALETTE; else the Director's fit
     style = reqStyle && DONOR_STYLES.includes(reqStyle) ? reqStyle : derived.style;
   } else {
     // no Director — drive the material straight from the user's sentence
@@ -80,9 +86,9 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     }
     const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
     return {
-      status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model,
+      status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font, name, blurb,
       template: r.template, frameUrl: r.frameUrl, layout: r.layout, sprites: r.sprites,
-      needsCutout: r.needsCutout, paintUrl: r.paintUrl, timingMs: r.timingMs,
+      needsCutout: r.needsCutout, paintUrl: r.paintUrl, keyColor: r.keyColor, timingMs: r.timingMs,
     };
   } catch (e) {
     release(ip);   // our failure — don't bill the user's quota

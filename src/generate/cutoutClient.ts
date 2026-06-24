@@ -17,11 +17,16 @@
 // only cut clean per-control sprites).
 //
 // LEGACY/DEMO FALLBACK: when no `layout` is provided (old callers) or the paint is
-// a data: URL (offline demo, no R2), we key out the white background with the
-// shared pure-JS cutoutAlpha — the original behavior — instead of calling fal.
-import { cutoutAlpha, DEVICE_FRAC, type BlueprintLayout, type BlueprintCell, type SpriteKind } from "./blueprint";
+// a data: URL (offline demo, no R2), we key out the background with the shared pure-JS
+// cutoutColorAware (white → legacy white-key; a colour key → colour-aware matte).
+// COLOUR-AWARE DEVICE CLEANUP: when the device was painted on a contrasting backdrop
+// (keyColor ≠ white), the BiRefNet alpha is post-cleaned — cut any backdrop pixels it
+// kept + despill the coloured fringe (see cleanDeviceFrame).
+import { cutoutColorAware, KEY_WHITE, type RGB, DEVICE_FRAC, type BlueprintLayout, type BlueprintCell, type SpriteKind } from "./blueprint";
 import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
+
+const isWhiteKey = (k: RGB) => k[0] >= 250 && k[1] >= 250 && k[2] >= 250;
 
 // Decode raw image bytes into something drawable, robustly across engines.
 // createImageBitmap is the fast path, but in real WKWebView (the iOS app + macOS
@@ -93,14 +98,53 @@ function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 // Key out the near-white background of the (already cropped) device, keeping the
 // largest connected component with internal holes filled. Used only when there is
 // no layout (old caller) or no server to call (data: URL demo).
-function whiteKeyCanvas(canvas: HTMLCanvasElement): Blob | Promise<Blob> {
+function whiteKeyCanvas(canvas: HTMLCanvasElement, key: RGB = KEY_WHITE): Blob | Promise<Blob> {
   const W = canvas.width, H = canvas.height;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("no 2d canvas context");
   const img = ctx.getImageData(0, 0, W, H);
+  // a Uint8Array VIEW over the same buffer ImageData owns. cutoutColorAware MUTATES
+  // it in place — despilled RGB + the computed alpha — so the canvas updates directly.
   const rgba = new Uint8Array(img.data.buffer, img.data.byteOffset, img.data.byteLength);
-  const alpha = cutoutAlpha(rgba, W, H);
-  for (let i = 0; i < W * H; i++) img.data[i * 4 + 3] = alpha[i];
+  cutoutColorAware(rgba, W, H, key);
+  ctx.putImageData(img, 0, 0);
+  return canvasToBlob(canvas);
+}
+
+// COLOUR-AWARE cleanup of a BiRefNet device frame, when the device was painted on a
+// contrasting backdrop (keyColor ≠ white). Respects BiRefNet's learned alpha as the
+// base, then: (1) CUTS any pixel BiRefNet kept that is still backdrop-coloured (the
+// fringe/halo BiRefNet leaves on metallic or low-contrast edges), and (2) DESPILLS —
+// subtracts the backdrop hue's chroma from every kept pixel so no coloured rim remains.
+// Dark screens are left to BiRefNet (it keeps them as part of the object), so no fill
+// step is needed here. White key ⇒ no-op (nothing to key/despill). [verify-outputs §7:
+// the output of this is inspected on real skins, not assumed.]
+async function cleanDeviceFrame(frame: Blob, key: RGB): Promise<Blob> {
+  if (isWhiteKey(key)) return frame;
+  const canvas = await blobToCanvas(frame);
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return frame;
+  const img = ctx.getImageData(0, 0, W, H);
+  const d = img.data;
+  const [kr, kg, kb] = key;
+  const TOL2 = 70 * 70;
+  const km = (kr + kg + kb) / 3;
+  let dxr = kr - km, dxg = kg - km, dxb = kb - km;
+  const dn = Math.hypot(dxr, dxg, dxb) || 1; dxr /= dn; dxg /= dn; dxb /= dn;
+  for (let i = 0; i < W * H; i++) {
+    if (!d[i * 4 + 3]) continue;                              // already transparent (BiRefNet)
+    const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
+    const dr = r - kr, dg = g - kg, db = b - kb;
+    if (dr * dr + dg * dg + db * db < TOL2) { d[i * 4 + 3] = 0; continue; } // backdrop BiRefNet kept → cut
+    const m = (r + g + b) / 3;
+    const proj = (r - m) * dxr + (g - m) * dxg + (b - m) * dxb;
+    if (proj > 0) {                                            // despill: kill backdrop-hue fringe
+      d[i * 4] = Math.max(0, Math.min(255, r - proj * dxr));
+      d[i * 4 + 1] = Math.max(0, Math.min(255, g - proj * dxg));
+      d[i * 4 + 2] = Math.max(0, Math.min(255, b - proj * dxb));
+    }
+  }
   ctx.putImageData(img, 0, 0);
   return canvasToBlob(canvas);
 }
@@ -489,6 +533,7 @@ export async function finishCutoutFull(
   durableFrameUrl: string,
   layout?: BlueprintLayout,
   template?: Template,
+  key: RGB = KEY_WHITE,          // backdrop the device was painted on (white ⇒ no colour cleanup)
 ): Promise<FinishResult> {
   const paint = await fetchPaintCanvas(paintUrl);
   const isData = paintUrl.startsWith("data:");
@@ -500,7 +545,7 @@ export async function finishCutoutFull(
   if (!layout || isData) {
     const devFrac = layout?.devFrac ?? DEVICE_FRAC;
     const deviceCanvas = cropDevice(paint, devFrac);
-    const frame = await whiteKeyCanvas(deviceCanvas);
+    const frame = await whiteKeyCanvas(deviceCanvas, key);
     if (isData) return { frameUrl: URL.createObjectURL(frame), sprites: false, spriteUrls: {} };
     await uploadFrame(id, frame);
     return { frameUrl: apiUrl(durableFrameUrl), sprites: false, spriteUrls: {} };
@@ -510,7 +555,10 @@ export async function finishCutoutFull(
   // (same as the strip) — no light pass anywhere; heavy handles low-contrast bodies too.
   const deviceCanvas = cropDevice(paint, layout.devFrac);
   const frameBlob = await serverCutout(deviceCanvas, "General Use (Heavy)");
-  await uploadFrame(id, frameBlob);
+  // colour-aware cleanup when painted on a contrasting backdrop: cut backdrop pixels
+  // BiRefNet kept + despill the coloured fringe (no-op for a white key).
+  const frameFinal = await cleanDeviceFrame(frameBlob, key);
+  await uploadFrame(id, frameFinal);
 
   // 1b. PLACEMENT = the blueprint/socket positions, AS-IS. The deterministic template
   //     rects ARE the load-bearing truth (per ai-image-coords-rule). We do NOT run a VLM
@@ -575,7 +623,8 @@ export async function finishCutout(
   paintUrl: string,
   durableFrameUrl: string,
   layout?: BlueprintLayout,
+  key: RGB = KEY_WHITE,
 ): Promise<string> {
-  const out = await finishCutoutFull(id, paintUrl, durableFrameUrl, layout);
+  const out = await finishCutoutFull(id, paintUrl, durableFrameUrl, layout, undefined, key);
   return out.frameUrl;
 }

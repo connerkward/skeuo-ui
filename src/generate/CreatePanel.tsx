@@ -21,6 +21,9 @@ export interface RuntimeSkin {
   // renders those instead of the donor style's bundled sprites. Set by
   // GenerateDone (owned by the pipeline team) and consumed in Composite.
   sprites?: boolean;
+  font?: string;        // logomark display font (Director pick); falls back to Cinzel
+  hidden?: boolean;     // hidden from the gallery, but KEPT in storage (raw materials
+                        // are never destroyed — "delete" = hide for future processing)
 }
 
 // Layout-variant default — the layout-variant picker was removed from the UI for
@@ -82,19 +85,21 @@ export function CreatePanel({ onCreated }: { onCreated: (s: RuntimeSkin) => void
         if (data.needsCutout && data.paintUrl) {
           // FULL path: BiRefNet the device, cut each control sprite, AND snap the
           // control regions onto the painted sockets (returns a corrected template).
+          // keyColor → color-aware cut/fill/despill on the BiRefNet device frame.
           try {
-            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template);
+            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template, data.keyColor);
             frameUrl = r.frameUrl; hasSprites = r.sprites; template = r.template ?? data.template;
           } catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
         }
         onCreated({
           id: data.id,
-          name: `${prompt.trim().slice(0, 18)} · ${modelLabel(data.model)}`,
-          blurb: `generated · ${modelLabel(data.model)}`,
+          name: data.name?.trim() || prompt.trim().slice(0, 24),
+          blurb: data.blurb?.trim() || `generated · ${modelLabel(data.model)}`,
           style: data.style,
           frameUrl,
           template,
           sprites: hasSprites,   // render THIS skin's own per-control sprites
+          font: data.font,
         });
       }
     } catch (e) {

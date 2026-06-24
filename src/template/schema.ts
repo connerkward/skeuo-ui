@@ -40,7 +40,11 @@ export type Content = "sprite" | "dynamic" | "decoration";
 
 export type DynamicType =
   | "time" | "visualizer" | "marquee" | "meta"
-  | "eq-curve" | "playlist" | "title";
+  | "eq-curve" | "playlist" | "title"
+  // cd: a mock compact-disc showing the current track's album art; spins up when
+  // playback starts, spins down when paused/stopped, with a reflective gloss.
+  // albumart: the bare cover image (no disc) as its own placeable element.
+  | "cd" | "albumart";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 

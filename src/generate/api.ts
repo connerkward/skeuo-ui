@@ -17,7 +17,14 @@ export interface GenerateRequest {
   envelope?: boolean;         // run the AI envelope pass first (default true)
   envelopeImage?: string;     // optional user-uploaded body envelope PNG as a data: URL (skips the AI envelope pass)
   regions?: Region[];         // custom layout authored in the wizard (else the variant preset)
+  avoidFonts?: string[];      // recently-used logomark fonts the Director should NOT reuse (diversity)
 }
+
+// Live progress events streamed (NDJSON) ahead of the final GenerateResponse so the
+// loading UI can show the user's ACTUAL skin forming — their blueprint, then the real
+// grown body, then the real painted skin — as each pipeline pass completes server-side.
+export type GenStage = "blueprint" | "envelope" | "paint";
+export interface GenStageEvent { stage: GenStage; url: string }
 
 export interface GeneratePending { status: "pending"; jobId: string }
 export interface GenerateDone {
@@ -26,6 +33,9 @@ export interface GenerateDone {
   style: DonorStyle;
   variant: LayoutVariant;
   model: ModelId;
+  font?: string;              // logomark title font (Director pick; one of LOGO_FONTS)
+  name?: string;              // concise skin title (Director)
+  blurb?: string;             // one-line description (Director)
   template: Template;
   frameUrl: string;           // public URL or data: URL of the CUT device frame (background removed)
   // LAYOUT: devFrac (device region = top devFrac of the combined paint) + per-control
@@ -48,6 +58,7 @@ export interface GenerateDone {
   // functions/api/cutout.ts + functions/api/finalize/[id].ts.
   needsCutout?: boolean;
   paintUrl?: string;          // raw combined paint PNG (public URL or data: URL) — present when needsCutout
+  keyColor?: [number, number, number]; // backdrop the device was painted on — the colour the client cutout keys out (absent ⇒ white)
   timingMs: { envelope: number; paint: number; total: number };
 }
 export interface GenerateError { status: "error"; error: string }

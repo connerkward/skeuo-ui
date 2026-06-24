@@ -177,6 +177,34 @@
   background: #101622; border: 1px solid #243a5a; border-radius: 8px;
   padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
 }
+/* live preview of the USER'S actual skin forming: the real artifact streamed from
+   the server for the current pass (blueprint → grown body → painted skin), fading
+   in as each arrives. A soft shimmer fills the frame before the first event. */
+.wiz-proc {
+  position: relative; align-self: center;
+  width: 150px; aspect-ratio: 3 / 4; margin: 2px 0 2px;
+  border-radius: 9px; overflow: hidden;
+  background: radial-gradient(120% 120% at 50% 18%, #131c2c, #0a0e16 72%);
+  border: 1px solid #243a5a;
+}
+.wiz-proc-img {
+  position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px);
+  object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45));
+  animation: wiz-proc-in .5s ease both;
+}
+@keyframes wiz-proc-in { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+.wiz-proc-wait {
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, #131c2c 30%, #1d2942 50%, #131c2c 70%);
+  background-size: 220% 100%; animation: wiz-proc-shimmer 1.4s linear infinite;
+}
+@keyframes wiz-proc-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.wiz-proc-tag {
+  position: absolute; left: 7px; bottom: 6px; z-index: 2;
+  font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: #9fb6d8; background: rgba(8,12,20,.7); border: 1px solid #243a5a;
+  padding: 2px 6px; border-radius: 999px; backdrop-filter: blur(2px);
+}
 .wiz-paint-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12px; }
 .wiz-paint-model { color: #cfe2ff; }
 .wiz-paint-model b { color: #fff; font-weight: 700; }
@@ -199,7 +227,12 @@
   width: 100%; display: block; margin-top: 4px;
   mix-blend-mode: screen; pointer-events: none;
 }
-.wiz-err { font-size: 12px; color: #f4a0a0; background: #2a1414; border: 1px solid #5a2a2a; padding: 8px; border-radius: 6px; }
+.wiz-err { display: flex; align-items: center; gap: 10px; background: #2a1414; border: 1px solid #5a2a2a; padding: 10px 12px; border-radius: 8px; }
+.wiz-err-mascot { width: 52px; height: auto; flex: 0 0 auto; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); animation: wiz-err-bob 4s ease-in-out infinite; }
+@keyframes wiz-err-bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-3px) rotate(-3deg); } }
+.wiz-err-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wiz-err-title { font-size: 12px; font-weight: 700; color: #ffc9c9; }
+.wiz-err-msg { font-size: 11.5px; color: #f4a0a0; word-break: break-word; }
 .wiz-nav { display: flex; gap: 10px; padding: 13px 16px; border-top: 1px solid #1e1e24; }
 .wiz-back { background: #18181c; border: 1px solid #333; color: #bbb; border-radius: 7px; padding: 9px 14px; font: inherit; cursor: pointer; }
 .wiz-back:disabled { opacity: .4; cursor: default; }

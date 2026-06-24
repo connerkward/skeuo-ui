@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Composite } from "./player/Composite";
 import { SkinThumb } from "./player/SkinThumb";
+import { skinFont, skinFontStyle, ensureGoogleFont, isFontReady, preloadSkinFonts } from "./player/skinFonts";
 import { useDocumentPip } from "./player/useDocumentPip";
 import { playerTemplate } from "./template/winamp-layout";
 import { skinList, thumbUrl } from "./player/skins";
@@ -36,7 +37,11 @@ const FLOAT_ENABLED = false;
 const CONNECT_ENABLED = false;
 
 export default function App() {
-  const visible = skinList.filter((s) => !s.hidden);
+  // ?all reveals the normally-hidden catalog bodies (themed/iteration skins +
+  // donors) in the gallery — a dev/review affordance for seeing every skin (and
+  // its logomark font) at once. Default gallery still hides them.
+  const showAll = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("all");
+  const visible = skinList.filter((s) => showAll || !s.hidden);
   // honor a shared ?skin=<id> link (skeuo.fm/?skin=…) when it names a known skin
   // (built-in or a persisted generated one); otherwise the first skin.
   const [skinId, setSkinId] = useState(() => {
@@ -71,6 +76,8 @@ export default function App() {
   const [showCreate, setShowCreate] = useState(false);
   const activeRuntime = runtimeSkins.find((s) => s.id === skinId);
   const activeMeta = [...visible, ...runtimeSkins].find((s) => s.id === skinId);
+  // the skin's logomark title font (loaded on demand inside <CinemaTitle>)
+  const titleFont = skinFont(skinId, activeRuntime?.font);
 
   // Spotify: drive the skin from real playback only in spotify mode
   const sp = useSpotify();
@@ -99,6 +106,12 @@ export default function App() {
   // player — the same instance keeps driving Spotify.
   const pip = useDocumentPip();
   const [pipHost, setPipHost] = useState<HTMLElement | null>(null);
+  // preload the visible roster's logomark fonts up front so switching never pops in
+  // (skinList is a stable module import, so the visible set is constant → run once).
+  // With ?all, preload the WHOLE catalog so the revealed bodies don't pop in either.
+  useEffect(() => {
+    preloadSkinFonts(showAll ? undefined : skinList.filter((s) => !s.hidden).map((s) => s.id));
+  }, [showAll]);
   // top-bar popovers (Connect / Desktop) — only one open at a time
   const [panel, setPanel] = useState<null | "connect" | "desktop">(null);
 
@@ -122,7 +135,7 @@ export default function App() {
             <button className="m-menu" onClick={() => setSkinId(visible[0].id)} aria-label="Back to skins">← skins</button>
             <h1 className="m-title">{activeRuntime.name}</h1>
             <div className="m-topbar-actions">
-              <MobileSpotify sp={sp} mode={mode} setMode={setMode} />
+              {CONNECT_ENABLED && <MobileSpotify sp={sp} mode={mode} setMode={setMode} />}
             </div>
           </header>
           <div className="m-stage">
@@ -145,6 +158,15 @@ export default function App() {
           mode={mode}
           setMode={setMode}
           spotifyDrive={spotifyDrive}
+          connectEnabled={CONNECT_ENABLED}
+          share={
+            <ExportGifButton
+              skinId={skinId}
+              template={playerTemplate}
+              runtime={runtimeView}
+              spotifyDrive={spotifyDrive}
+            />
+          }
         />
         {showCreate && (
           <div className="wiz-modal" onPointerDown={(e) => e.target === e.currentTarget && setShowCreate(false)}>
@@ -197,10 +219,29 @@ export default function App() {
         </div>
       </header>
 
-      {/* left gallery — scrolling skin list with animated thumbnails + names */}
+      {/* left gallery — one scrolling list: built-in skins + your generated ones */}
       <aside className="gallery">
         <div className="gallery-list">
           <p className="gallery-label">Skins</p>
+          {runtimeSkins.filter((s) => !s.hidden).map((s) => (
+            <div key={s.id} className="skin-row-wrap">
+              <button className={`skin-row ${s.id === skinId ? "active" : ""}`}
+                onClick={() => setSkinId(s.id)} title={s.name}>
+                <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
+                <span className="skin-row-meta">
+                  <span className="skin-row-name">{s.name}</span>
+                  <span className="skin-row-blurb">{s.blurb}</span>
+                </span>
+              </button>
+              {/* "delete" = HIDE: drop it from the gallery but keep the raw skin in
+                  storage for future processing (never destroyed) */}
+              <button className="skin-row-del" aria-label={`Hide ${s.name}`} title="Hide this skin (kept in storage)"
+                onClick={() => {
+                  setRuntimeSkins((rs) => rs.map((x) => (x.id === s.id ? { ...x, hidden: true } : x)));
+                  if (skinId === s.id) setSkinId(visible[0].id);
+                }}>×</button>
+            </div>
+          ))}
           {visible.map((s) => (
             <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
               onClick={() => setSkinId(s.id)} title={`${s.name} — ${s.blurb}`}>
@@ -211,49 +252,42 @@ export default function App() {
               </span>
             </button>
           ))}
-          {runtimeSkins.length > 0 && <p className="gallery-label sub">Your skins</p>}
-          {runtimeSkins.map((s) => (
-            <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
-              onClick={() => setSkinId(s.id)} title={s.name}>
-              <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
-              <span className="skin-row-meta">
-                <span className="skin-row-name">{s.name}</span>
-                <span className="skin-row-blurb">{s.blurb}</span>
-              </span>
-            </button>
-          ))}
         </div>
       </aside>
 
-      <main className="stage">
-        <div className="stage-inner">
-          {/* portal target when docked; empty while the player is floating */}
-          <div className="player-host" ref={setPipHost} />
-          {pip.pipWindow && (
-            <div className="stage-popped">
-              <span className="pop-ico">⧉</span>
-              <p>Player is floating in its own window.</p>
-              <button className="pop-back" onClick={pip.close}>Bring it back</button>
-            </div>
-          )}
-          {/* meta panel — beside the player on wide screens, below it on narrow */}
-          <div className="stage-meta">
-            <figcaption className="stage-caption">
-              <span className="cap-name">{activeMeta?.name ?? skinId}</span>
-              {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
-            </figcaption>
-            {/* the action ON the skin — Share (Connect/Template moved to the bar) */}
-            <div className="skin-actions">
-              <ExportGifButton
-                skinId={skinId}
-                template={playerTemplate}
-                runtime={runtimeView}
-                spotifyDrive={spotifyDrive}
-              />
-            </div>
+      {/* main area: the full-height skin sized to its content, then the title card
+          which FILLS the rest of the width and centers its text — so the text sits
+          squarely between the skin's right edge and the frame's right edge. */}
+      <div className="main">
+        <main className="stage">
+          <div className="stage-inner">
+            {/* portal target when docked; empty while the player is floating */}
+            <div className="player-host" ref={setPipHost} />
+            {pip.pipWindow && (
+              <div className="stage-popped">
+                <span className="pop-ico">⧉</span>
+                <p>Player is floating in its own window.</p>
+                <button className="pop-back" onClick={pip.close}>Bring it back</button>
+              </div>
+            )}
           </div>
-        </div>
-      </main>
+        </main>
+
+        <section className="meta">
+          <figcaption className="stage-caption">
+            <CinemaTitle text={(activeMeta?.name ?? skinId).replace(/\s*✦\s*$/, "")} font={titleFont} />
+            {activeMeta?.blurb && <span className="cap-blurb">{activeMeta.blurb}</span>}
+          </figcaption>
+          <div className="skin-actions">
+            <ExportGifButton
+              skinId={skinId}
+              template={playerTemplate}
+              runtime={runtimeView}
+              spotifyDrive={spotifyDrive}
+            />
+          </div>
+        </section>
+      </div>
 
       {/* Connect / Desktop open as centered panels */}
       {panel && (
@@ -297,6 +331,59 @@ export default function App() {
         pip.pipWindow ? pip.pipWindow.document.body : pipHost,
       )}
     </div>
+  );
+}
+
+// The cinematic title logomark. (1) Loads the skin's Google font, holding the
+// text hidden until it's ready so there's no FOUT pop-in (fallback never flashes).
+// (2) Auto-fits the font-size DOWN from the CSS max so the whole name sits on one
+// line inside its area — no wrapping, words always finish. Refits on resize.
+function CinemaTitle({ text, font }: { text: string; font: ReturnType<typeof skinFont> }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  // start visible if the font is already cached (preloaded) → no pop-in/fade
+  const [ready, setReady] = useState(() => isFontReady(font));
+
+  useEffect(() => {
+    ensureGoogleFont(font);
+    if (isFontReady(font)) { setReady(true); return; }   // cached → show instantly
+    setReady(false);
+    let alive = true;
+    const spec = `${font.weight} 48px '${font.family}'`;
+    const done = () => { if (alive) setReady(true); };
+    const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+    if (fonts?.load) fonts.load(spec).then(() => fonts.ready).then(done, done);
+    else done();
+    return () => { alive = false; };
+  }, [font.family, font.weight]);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !ready) return;
+    const fit = () => {
+      const box = el.parentElement;
+      if (!box) return;
+      el.style.fontSize = "";                              // back to the CSS max
+      const max = parseFloat(getComputedStyle(el).fontSize) || 64;
+      const avail = box.clientWidth;
+      let size = max;
+      el.style.fontSize = `${size}px`;
+      let guard = 0;
+      while (el.scrollWidth > avail && size > 13 && guard++ < 300) {
+        size -= 1;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (el.parentElement) ro.observe(el.parentElement);
+    return () => ro.disconnect();
+  }, [text, ready, font.family, font.weight]);
+
+  return (
+    <span ref={ref} className="cap-name"
+      style={{ ...skinFontStyle(font), opacity: ready ? 1 : 0, transition: "opacity .28s ease" }}>
+      {text}
+    </span>
   );
 }
 
