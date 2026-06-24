@@ -322,9 +322,11 @@ const isRoundReg = (r: Region): boolean =>
   r.kind === "knob" || (r.kind === "button" && r.shape === "ellipse");
 
 // Minimum clear space (normalized) the separation must leave BETWEEN any two
-// control rects. The blueprint inset-strokes the magenta ring on the rect edge, so
-// a positive gap here guarantees the rings of adjacent sockets never touch/overlap.
-const MIN_GAP = 0.012;
+// control rects. Kept TINY so controls may sit ADJACENT (touching, forming a button
+// bank like real hardware) — resolveOverlaps only pushes apart TRUE overlaps, it no
+// longer forces visible breathing room. (Buttons now use neutral rounded-rect keylines,
+// so adjacent guides touching is fine; the cut keeps each painted silhouette regardless.)
+const MIN_GAP = 0.002;
 // overlap WITH a min-gap: treats boxes as if grown by MIN_GAP/2 on every side, so
 // "touching within MIN_GAP" counts as an overlap to resolve.
 const ovGap = (a: Box, b: Box): { ox: number; oy: number } | null => {

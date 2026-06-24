@@ -82,15 +82,20 @@ const LAYOUT_SYS =
   "Output STRICT JSON {\"regions\":[...]} on a PORTRAIT canvas, normalized 0..1 (x,y=top-left, w,h=fractions; canvas is 2:3 tall).\n\n" +
   "ALWAYS include: one display bind \"visualizer\" (the main screen, large, upper area); one display bind \"marquee\" (track text) " +
   "and one display bind \"time\" (clock); one slider-h bind \"seek\"; transport buttons (kind button) bind prev/play/next/stop with " +
-  "PLAY the largest and round (shape \"ellipse\").\n\n" +
+  "PLAY the largest. Button SHAPE is FREE — do NOT force buttons round (see SHAPE & BANKS).\n\n" +
   "Then add a THEME-APPROPRIATE, VARIED selection of extras (vary the set + arrangement per theme — a boombox, a handheld, a dashboard, " +
   "a compact should look different): knob (bind volume/balance/tone/bass/treble, round shape \"ellipse\"); slider-v EQ faders (bind " +
   "\"eqBand\", group \"eq\", index 0..n); toggle (bind shuffle/repeat/eqOn/power); segmented (bind \"mode\", options like [\"FM\",\"CD\",\"TAPE\"]); " +
   "xy pad (bind \"xy\"); slider-arc ring-seek around a dial (use bind \"seek\" as slider-arc INSTEAD of slider-h for dial-centric designs).\n\n" +
-  "RULES: every rect inside 0.04..0.96; controls must NOT overlap each other or the screen; round controls ~square (w≈h); group/align related " +
-  "controls; sizes sensible (transport buttons 0.06-0.16 with play biggest, knobs 0.08-0.16, the screen 0.4-0.85 wide). " +
-  "Keep it MINIMAL and UNCLUTTERED — at most 4 INTERACTABLES beyond the screen/marquee/time/seek (so ~8 regions total), " +
-  "with generous breathing room; do NOT cram the face. Prefer fewer, larger, well-spaced controls. " +
+  "SHAPE & BANKS: real hardware groups controls into ADJACENT BANKS in a shared housing — a row of climate/transport keys that touch edge-to-edge, " +
+  "a Walkman rocker cluster, a car-console keypad. You MAY place buttons DIRECTLY ADJACENT (touching, sharing edges, zero gap) to form such a bank — " +
+  "this is ENCOURAGED and theme-appropriate; they must only never OVERLAP. Buttons may be ANY shape/aspect (wide pill, tall key, square, rounded-rect, " +
+  "trapezoid-ish); only KNOBS stay round. Align an adjacent bank on a shared baseline with equal heights so it reads as one unit. " +
+  "Vary shape + grouping to match the theme so a car dashboard, a Walkman, and a boombox look distinct.\n\n" +
+  "RULES: every rect inside 0.04..0.96; controls must NOT OVERLAP each other or the screen (touching/adjacent IS allowed — overlap is not); " +
+  "KNOBS are round (~square, w≈h); BUTTONS may be any aspect/shape; group/align related controls; " +
+  "sizes sensible (transport buttons 0.06-0.16 with play biggest, knobs 0.08-0.16, the screen 0.4-0.85 wide). " +
+  "Keep it FOCUSED — at most ~5 INTERACTABLES beyond the screen/marquee/time/seek. Avoid RANDOM clutter, but a TIGHT, INTENTIONAL adjacent bank is good, not clutter. " +
   "The marquee is WIDE (~0.5-0.65) and the time readout is NARROW (~0.14-0.22) sitting beside it on the same row, NOT stacked full-width. " +
   "If you include EQ faders, use 5-7 bands max. Make it interesting and specific to the theme.\n\n" +
   "Each region: {\"id\":\"snake_case\",\"kind\":\"button|toggle|slider-h|slider-v|knob|slider-arc|segmented|xy|display\",\"bind\":\"<state field>\"," +
