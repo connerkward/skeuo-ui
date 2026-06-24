@@ -17,8 +17,9 @@
         "w": 0.2771875,
         "h": 0.18479166666666666
       },
-      "dynamicType": "visualizer",
-      "shape": "ellipse"
+      "dynamicType": "cd",
+      "shape": "ellipse",
+      "label": "cd"
     },
     {
       "id": "next",

@@ -601,8 +601,12 @@ function SliderV({ r, ps, skinId }: { r: Region; ps: PlayerState; skinId: string
    — the metal's luminance kept, the album's hue applied. The specular gloss is
    FIXED — the light source doesn't move — which reads as a reflection off a
    spinning disc. */
+const CD_ECHOES = 5;     // rotational-motion-blur layers (anti-strobe)
+const CD_TRAIL = 1.4;    // trail length in FRAMES of motion the echoes span
+const CD_SMEAR = 0.5;    // per-echo opacity (bottom layer stays opaque for coverage)
 function CdDisc({ ps }: { ps: PlayerState }) {
-  const platter = useRef<HTMLDivElement>(null);
+  const layers = useRef<HTMLDivElement[]>([]);
+  const stack = useRef<HTMLDivElement>(null);
   const playingRef = useRef(ps.playing);
   playingRef.current = ps.playing;
   useEffect(() => {
@@ -614,7 +618,7 @@ function CdDisc({ ps }: { ps: PlayerState }) {
     const KNEE = 0.82;         // governor: full torque until 82% of cruise, then taper to 0 — settles in without overshoot
     const FRIC_C = 18;         // deg/s² Coulomb (dry) friction — constant drag that brings it to an EXACT stop, and the gentle end-of-coast decel
     const FRIC_V = 1.4;        // 1/s viscous friction (∝ vel) — the hard initial slow; with FRIC_C sets the ~3s total coast
-    const MAX_BLUR = 1.9;      // px of motion smear at full speed — sells "spinning fast" (a real CD blurs to a sheen) + masks 60Hz strobe
+    const MAX_BLUR = 0.15;     // px isotropic softening on top — small; the ECHO layers do the anti-strobe smear
     const tick = (t: number) => {
       if (!last) last = t;
       const dt = Math.min(0.05, (t - last) / 1000); last = t;
@@ -630,13 +634,20 @@ function CdDisc({ ps }: { ps: PlayerState }) {
         if (vel < 0.4) vel = 0;
       }
       angle = (angle + vel * dt) % 360;
-      const p = platter.current;
-      if (p) {
-        // motion blur ramps with speed so the disc smears into a spinning sheen at cruise
-        const blur = (vel / CRUISE) * MAX_BLUR;
-        p.style.transform = `rotate(${angle.toFixed(2)}deg)`;
-        p.style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : "";
+      // ROTATIONAL motion blur: isotropic blur can't mask the spin's strobe (the disc
+      // jumps 8–17°/frame at cruise), so we stack N echo layers across `trail` frames of
+      // motion — oldest at the back (opaque, for coverage), current angle on top. echoDeg
+      // → 0 at rest, so the disc is sharp when stopped and smears only when spinning.
+      const ls = layers.current, n = ls.length;
+      const echoDeg = n > 1 ? (vel / 60) * CD_TRAIL / (n - 1) : 0;
+      for (let i = 0; i < n; i++) {
+        const el = ls[i]; if (!el) continue;
+        const age = (n - 1) - i;
+        el.style.transform = `rotate(${(angle - age * echoDeg).toFixed(2)}deg)`;
+        el.style.opacity = i === 0 ? "1" : String(CD_SMEAR);
       }
+      const st = stack.current;
+      if (st) { const blur = (vel / CRUISE) * MAX_BLUR; st.style.filter = blur > 0.04 ? `blur(${blur.toFixed(2)}px)` : ""; }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -646,8 +657,12 @@ function CdDisc({ ps }: { ps: PlayerState }) {
   return (
     <div className="dyn cd-disc" data-playing={ps.playing}>
       <div className="cd-wrap">
-        <div className="cd-platter" ref={platter}>
-          <div className="cd-surface" />
+        <div className="cd-platter">
+          <div className="cd-stack" ref={stack}>
+            {Array.from({ length: CD_ECHOES }).map((_, i) => (
+              <div key={i} className="cd-surface" ref={(el) => { if (el) layers.current[i] = el; }} />
+            ))}
+          </div>
           {cover && <img className="cd-tint" src={cover} alt="" draggable={false} />}
         </div>
         <div className="cd-gloss" />

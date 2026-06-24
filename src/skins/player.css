@@ -260,15 +260,20 @@
 @container (aspect-ratio < 1) { .cd-wrap { height: auto; width: 100%; } }
 .cd-platter {
   position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: #0c0d10;
-  will-change: transform; backface-visibility: hidden;
+  backface-visibility: hidden;
   box-shadow: 0 0.6cqw 1.6cqw rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.14);
 }
-/* the silver CD data-side texture forms the whole disc surface. The texture's hub is
-   recentred to the exact middle so it doesn't orbit when spinning; background-size is
-   overscanned a touch (104%) so the recenter's edge never shows a black sliver. */
+/* echo stack: the rotational-motion-blur layers live here; the (small) isotropic
+   softening filter is applied to the stack as a whole, the spin to each surface. */
+.cd-stack { position: absolute; inset: 0; will-change: filter; }
+/* the silver CD data-side texture forms each surface. The texture's hub is recentred
+   to the exact middle (circle-fit) so it doesn't orbit when spinning; background-size
+   is overscanned a touch (104%) so the recenter's edge never shows a black sliver.
+   Several of these stack as trailing echoes — each rotates independently. */
 .cd-surface {
   position: absolute; inset: 0; border-radius: 50%;
   background: url("/cd-disc.png") center / 104% 104% no-repeat;
+  will-change: transform; backface-visibility: hidden;
 }
 /* optional album-color tint: the cover, oversized + heavily blurred to a soft colour
    field, blended with mix-blend-mode:color so it recolours the silver to the album's
