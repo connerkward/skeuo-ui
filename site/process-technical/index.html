@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0d10">
+<title>skeuo.fm — technical pipeline (sentence → live device)</title>
+<meta name="description" content="The real, end-to-end skeuo.fm generation pipeline at the function level: Region template → packed 9:16 blueprint → single fal paint pass → BiRefNet heavy matte → connected-component sprite isolation → deterministic composite. Annotated with a real raw generation.">
+<style>
+  :root{
+    --bg:#0c0d10;--card:#15171c;--card2:#1a1d24;--ink:#e8eaef;--mut:#9aa0ab;--dim:#6b7280;
+    --line:#262a32;--acc:#5cc8ff;--ok:#7CFF4F;--warn:#ffcf5c;--mag:#ff2878;--cut:#c08bff;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;--font:ui-sans-serif,system-ui,sans-serif;
+    --chk:conic-gradient(#23262b 90deg,#1a1d22 0 180deg,#23262b 0 270deg,#1a1d22 0) 0 0/18px 18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  a{color:var(--acc)}
+  .wrap{max-width:1100px;margin:0 auto;padding:clamp(16px,4vw,44px)}
+  h1{font-size:clamp(23px,4.4vw,38px);margin:0 0 .2em;letter-spacing:-.02em;line-height:1.05}
+  .lede{color:var(--mut);max-width:68ch;line-height:1.55;margin:0 0 1.4em;font-size:clamp(14px,1.6vw,16px)}
+  code,kbd{font-family:var(--mono)}
+  .pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;
+    background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:4px 11px;color:var(--mut)}
+  .pill b{color:var(--ink);font-weight:600}
+  .params{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px}
+
+  /* hero: the raw generation */
+  .hero{display:flex;flex-wrap:wrap;gap:clamp(16px,3vw,36px);align-items:center;
+    background:radial-gradient(120% 120% at 22% 88%,#16201d,#0e1014);
+    border:1px solid var(--line);border-radius:20px;padding:clamp(18px,3vw,34px);margin:0 0 38px}
+  .hero figure{margin:0;flex:0 0 auto;width:clamp(180px,30vw,250px)}
+  .hero img{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);
+    box-shadow:0 18px 40px #000a;display:block;background:#0a0b0e}
+  .hero .copy{flex:1 1 280px;min-width:240px}
+  .hero .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ok);margin:0 0 8px}
+  .hero h2{margin:0 0 .4em;font-size:clamp(18px,2.6vw,24px);line-height:1.15}
+  .hero p{margin:0 0 .8em;color:var(--mut);line-height:1.55;max-width:48ch}
+
+  /* stages */
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    margin:0 0 16px;overflow:hidden}
+  .stage > header{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#13151a;border-bottom:1px solid var(--line)}
+  .stage .num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--card2);border:1px solid var(--line);
+    display:grid;place-items:center;font-family:var(--mono);font-size:13px;color:var(--acc)}
+  .stage h3{margin:0;font-size:clamp(15px,2vw,17px);letter-spacing:-.01em;flex:1}
+  .stage .tag{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap}
+  .stage .inner{display:flex;flex-wrap:wrap;gap:clamp(14px,2.5vw,28px);padding:clamp(14px,2.5vw,24px)}
+  .art{flex:0 0 auto;align-self:flex-start}
+  .art img{height:auto;border-radius:10px;border:1px solid var(--line);display:block}
+  .art img.chk{background:var(--chk)}
+  .art img.wt{background:#fff}
+  .art .cap{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:6px;text-align:center}
+  .txt{flex:1 1 320px;min-width:260px}
+  .txt p{margin:0 0 .9em;color:var(--mut);line-height:1.6;font-size:14px}
+  .txt p:last-child{margin-bottom:0}
+  .txt b,.txt strong{color:var(--ink);font-weight:600}
+  .spec{font-family:var(--mono);font-size:12px;line-height:1.7;background:#0f1115;border:1px solid var(--line);
+    border-radius:9px;padding:11px 13px;margin:0 0 12px;color:var(--mut);overflow-x:auto}
+  .spec .k{color:var(--acc)}
+  .spec .v{color:var(--ink)}
+  .note{font-size:13px;color:var(--warn);background:#1c180f;border:1px solid #3a3214;
+    border-radius:8px;padding:9px 12px;line-height:1.5;margin:12px 0 0}
+  .note.ok{color:var(--ok);background:#0f1c11;border-color:#1f3a20}
+  .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:baseline;margin-right:2px}
+
+  /* sprite row */
+  .sprites{display:flex;flex-wrap:wrap;gap:10px;flex:1 1 100%}
+  .sprites figure{margin:0;width:120px;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card2)}
+  .sprites .px{height:96px;display:grid;place-items:center;background:var(--chk)}
+  .sprites .px img{max-width:84%;max-height:84%;border:0;border-radius:0}
+  .sprites figcaption{padding:6px 8px;font-family:var(--mono);font-size:10px;line-height:1.4}
+  .sprites figcaption b{color:var(--ok)}
+  .sprites figcaption .m{color:var(--dim)}
+
+  footer{color:var(--dim);font-size:12px;margin-top:34px;border-top:1px solid var(--line);padding-top:16px;line-height:1.6}
+
+  @media(max-width:640px){
+    .stage .inner{flex-direction:column}
+    .art{width:100%}.art img{width:100%}
+    .hero figure{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>skeuo.fm — the generation pipeline, at the function level</h1>
+  <p class="lede">
+    One sentence becomes a real, working skeuomorphic music player. This page walks the
+    <b>actual shipping path</b> — the same TypeScript functions that run in dev and in the Cloudflare
+    Worker — stage by stage, annotated with a <b>real raw generation</b> (every image below is the
+    genuine artifact from this run, not a mockup). The core idea: a deterministic
+    <b>Region</b> template owns all geometry; the image model only paints; a heavy matte plus
+    connected-component segmentation cuts each control; the live React player overlays the cut parts
+    back onto the empty device so knobs turn and play→pause.
+  </p>
+
+  <div class="params">
+    <span class="pill">prompt <b>&ldquo;a chunky 1980s portable boombox with a big chrome speaker grille&rdquo;</b></span>
+    <span class="pill">style <b>winamp</b></span>
+    <span class="pill">variant <b>simple</b></span>
+    <span class="pill">paint model <b>nano-banana-2</b> · gemini-3.1-flash-image-preview/edit</span>
+    <span class="pill">paint cost <b>~$0.16</b></span>
+    <span class="pill">matte cost <b>2 × ~$0.002</b> (BiRefNet heavy)</span>
+  </div>
+
+  <!-- RAW GENERATION HERO -->
+  <section class="hero">
+    <figure>
+      <img src="assets/04-paint.png" alt="raw painted sprite sheet" loading="eager">
+    </figure>
+    <div class="copy">
+      <p class="eyebrow">the raw generation</p>
+      <h2>One paint pass → device + loose parts on one sheet</h2>
+      <p>
+        This is the <b>untouched output</b> of the single fal paint pass (1536×2752 px). The top
+        <b>84.4%</b> is the device body — grown around fixed, empty sockets. The bottom <b>15.6%</b>
+        is a strip of the <b>same controls as loose parts</b> on flat white, positioned for clean cut-out.
+        Everything downstream is deterministic CPU work on this one image — no second model decides
+        <em>where</em> anything goes.
+      </p>
+      <p style="color:var(--dim);font-size:13px">
+        Why controls appear twice: the device needs <b>empty wells</b> as overlay targets; the strip
+        supplies the <b>cut parts</b> the live player drops into them (so play can become pause, the
+        knob can rotate). This duplication is load-bearing, not redundant.
+      </p>
+    </div>
+  </section>
+
+  <!-- 1 PROMPT -->
+  <section class="stage">
+    <header><span class="num">1</span><h3>Prompt &amp; resolve</h3><span class="tag">handler.ts · director.ts</span></header>
+    <div class="inner">
+      <div class="txt">
+        <div class="spec">
+<span class="k">prompt</span>  <span class="v">"a chunky 1980s portable boombox…"</span>
+<span class="k">style</span>   <span class="v">winamp</span>     <span style="color:var(--dim)">// named donor → deterministic material</span>
+<span class="k">variant</span> <span class="v">simple</span>     <span style="color:var(--dim)">// layout family</span>
+<span class="k">model</span>   <span class="v">fal-ai/gemini-3.1-flash-image-preview/edit</span>
+        </div>
+        <p>
+          The request resolves a <b>material</b> (a named donor style like <code>winamp</code> is used
+          verbatim; otherwise the gpt-4o Director derives <code>{style, materialPrompt}</code> from the
+          sentence) and a <b>layout variant</b>. No geometry is decided here.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 TEMPLATE -->
+  <section class="stage">
+    <header><span class="num">2</span><h3>Template — the Region layout (deterministic geometry)</h3><span class="tag">template/schema.ts · layouts.ts</span></header>
+    <div class="inner">
+      <div class="art">
+        <img class="wt" src="assets/02-template.svg" width="260" alt="template region diagram">
+        <div class="cap">9 regions · normalized to the 2:3 device</div>
+      </div>
+      <div class="txt">
+        <p>
+          A <b>Template</b> is a flat list of <code>Region</code>s, each a normalized rect
+          (<code>0..1</code>) over the 2:3 device, plus what it <em>is</em> (<code>kind</code>), how its
+          pixels are produced (<code>content</code>), and what player state it drives (<code>bind</code>).
+          This is the <b>single source of truth for placement</b> — the same rects drive the blueprint,
+          the cut, and the live compositor, so generated art and live React always line up.
+        </p>
+        <div class="spec">
+<span class="k">display</span>  visualizer · marquee · time     <span style="color:var(--dim)">(dynamic — React fills)</span>
+<span class="k">slider-h</span> seek
+<span class="k">button</span>   prev · play · next · stop
+<span class="k">knob</span>     volume
+<span style="color:var(--dim)">// play rect is largest: w 0.163 vs 0.13 — emphasis baked in, not post-hoc</span>
+        </div>
+        <p style="color:var(--dim);font-size:13px">
+          The image model never sees coordinates as numbers — it sees the rendered blueprint (next).
+          Keeping geometry in code, not in the model, is why placement is repeatable.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 BLUEPRINT -->
+  <section class="stage">
+    <header><span class="num">3</span><h3>Packed blueprint — device sockets + control strip on 9:16</h3><span class="tag">blueprint.ts · combinedBlueprint()</span></header>
+    <div class="inner">
+      <div class="art">
+        <img class="wt" src="assets/03-blueprint.svg" width="240" alt="packed blueprint">
+        <div class="cap">1024 × 1820 (9:16)</div>
+      </div>
+      <div class="txt">
+        <p>
+          <code>combinedBlueprint(regions)</code> renders one SVG packing <b>two zones</b>: the device
+          body (top, 2:3) with its sockets, and a <b>bottom strip</b> of evenly-spaced slots — one per
+          interactive control — onto a single 9:16 canvas the paint model accepts.
+        </p>
+        <p>
+          <span class="swatch" style="background:var(--mag)"></span><b>Magenta keylines</b> mark every
+          socket and every strip slot — fixed anchors the model must keep and then <b>erase</b> from its
+          output. The gray fill is the body to restyle. The strip slots are what get filled with loose
+          parts and later cut.
+        </p>
+        <div class="spec">
+<span class="k">canvas</span>   1024 × 1820   <span style="color:var(--dim)">// must match the requested paint aspect exactly</span>
+<span class="k">devFrac</span>  0.844          <span style="color:var(--dim)">// device = top 84.4%, strip = bottom 15.6%</span>
+<span class="k">slots</span>    5              <span style="color:var(--dim)">// prev play next stop volume → 1:1 with strip cells</span>
+        </div>
+        <p class="note">Known rough edges (tracked for the blueprint revamp): screens use the same
+          magenta as sockets, and the big screen ring is heavy (stroke 37). The revamp gives screens /
+          wells / strip-anchors three distinct visual languages and caps ring width.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 PAINT -->
+  <section class="stage">
+    <header><span class="num">4</span><h3>Paint — a single fal edit pass</h3><span class="tag">pipeline.ts · PAINT_PROMPT</span></header>
+    <div class="inner">
+      <div class="art">
+        <img src="assets/04-paint.png" width="240" alt="painted sheet">
+        <div class="cap">1536 × 2752 · ~$0.16</div>
+      </div>
+      <div class="txt">
+        <p>
+          One call to <code>nano-banana-2</code> restyles the blueprint into the material. The prompt
+          locks geometry (&ldquo;output the SAME positions&rdquo;), keeps sockets empty, forces a
+          <b>flat pure-white strip background</b> (so parts cut cleanly), forbids text/shadows, and
+          removes the magenta guides.
+        </p>
+        <p class="note ok">
+          New this run — a <b>slight debias against printed button symbols on the body itself</b>:
+          the prompt now nudges the model to keep play-triangles / power-circles / arrows / EQ glyphs
+          on the actual strip parts, not scattered across the bare skin. The body here reads as smooth
+          chrome between sockets — debias respected.
+        </p>
+        <p style="color:var(--dim);font-size:13px">
+          Honest defect visible on close inspection: the model printed faint &ldquo;ON ITS FACE&rdquo;
+          text on a few strip parts (it over-read &ldquo;molded ON the button face&rdquo;). It's a strip-text
+          artifact, separate from the body-symbol debias; small enough to survive into the cut. Noted, not fixed here.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 FRAME -->
+  <section class="stage">
+    <header><span class="num">5</span><h3>BiRefNet — device frame matte</h3><span class="tag">cutoutClient.ts · /api/cutout</span></header>
+    <div class="inner">
+      <div class="art">
+        <img class="chk" src="assets/05-frame.png" width="240" alt="device frame, background removed">
+        <div class="cap">top crop · alpha over checker</div>
+      </div>
+      <div class="txt">
+        <p>
+          The device crop (top <code>devFrac</code>) goes through <b>BiRefNet v2, &ldquo;General Use
+          (Heavy)&rdquo;</b> for background removal. Heavy everywhere — no light pass anywhere in the
+          pipeline. The key happens server-side so the fal key never reaches the browser.
+        </p>
+        <div class="spec">
+<span class="k">model</span>  fal-ai/birefnet/v2 · "General Use (Heavy)"
+<span class="k">in</span>     cropDevice(paint, 0.844)
+<span class="k">out</span>    RGBA, transparent background, ~$0.002
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 STRIP -->
+  <section class="stage">
+    <header><span class="num">6</span><h3>BiRefNet — whole strip matte</h3><span class="tag">cutoutClient.ts · serverCutout()</span></header>
+    <div class="inner">
+      <div class="art">
+        <img class="chk" src="assets/06-strip.png" width="360" alt="strip isolated">
+        <div class="cap">bottom crop · all parts, one matte</div>
+      </div>
+      <div class="txt">
+        <p>
+          The bottom strip is matted in <b>one</b> heavy BiRefNet call — every loose part becomes an
+          opaque island on full transparency. Background removal is solved; the remaining problem is
+          <b>which pixels belong to which control</b> — that's the next stage.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 ISOLATION -->
+  <section class="stage">
+    <header><span class="num">7</span><h3>Sprite isolation — connected-component segmentation</h3><span class="tag">segmentStripByComponents()</span></header>
+    <div class="inner">
+      <div class="txt" style="flex:1 1 100%">
+        <p>
+          <code>segmentStripByComponents(strip, cells)</code> labels every alpha blob with a
+          <b>4-connectivity BFS</b> (alpha &gt; 40), drops specks (&lt; 0.3% of strip area), sorts the
+          survivors left-to-right, and assigns them to the strip cells. When the blob count equals the
+          cell count it's a clean <b>1:1 order-based</b> match; on a mismatch it falls back to
+          nearest-cell-x. Each cell unions its blobs' bbox, copies only those pixels, and tight-crops →
+          one sprite per control. The old per-cell grid crop is kept only as a fallback.
+        </p>
+        <div class="spec">
+<span class="k">blobs</span> 5  ·  <span class="k">cells</span> 5  →  <span class="v">1:1 order-based</span>  ·  <span style="color:var(--ok)">0 grid fallbacks this run</span>
+        </div>
+      </div>
+      <div class="sprites">
+        <figure><div class="px"><img src="assets/07-sprite-prev_button.png" alt="prev"></div><figcaption><b>prev_button</b><br><span class="m">286×288 · CC</span></figcaption></figure>
+        <figure><div class="px"><img src="assets/07-sprite-play_button.png" alt="play"></div><figcaption><b>play_button</b><br><span class="m">286×288 · CC</span></figcaption></figure>
+        <figure><div class="px"><img src="assets/07-sprite-next_button.png" alt="next"></div><figcaption><b>next_button</b><br><span class="m">287×288 · CC</span></figcaption></figure>
+        <figure><div class="px"><img src="assets/07-sprite-stop_button.png" alt="stop"></div><figcaption><b>stop_button</b><br><span class="m">286×288 · CC</span></figcaption></figure>
+        <figure><div class="px"><img src="assets/07-sprite-volume_knob.png" alt="volume"></div><figcaption><b>volume_knob</b><br><span class="m">288×288 · CC</span></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 PLACEMENT -->
+  <section class="stage">
+    <header><span class="num">8</span><h3>Placement — deterministic template rects</h3><span class="tag">template.regions[].rect</span></header>
+    <div class="inner">
+      <div class="txt">
+        <p>
+          Each cut sprite is placed at its control's <b>template rect</b> — the exact same normalized
+          rect from stage 2. There is <b>no VLM snap</b>: the painted device has empty sockets, so a
+          vision model would have nothing to detect. Earlier pipelines leaned on gpt-4o box detection;
+          that's deprecated and ignored. Geometry comes from code, start to finish.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 FINAL -->
+  <section class="stage">
+    <header><span class="num">9</span><h3>Final composite — sprites seated on the skin</h3><span class="tag">player/Composite.tsx</span></header>
+    <div class="inner">
+      <div class="art">
+        <img class="chk" src="assets/09-final.png" width="250" alt="final composite">
+        <div class="cap">frame + 5 sprites at template rects</div>
+      </div>
+      <div class="txt">
+        <p>
+          The matted device frame plus each isolated sprite drawn at its rect: a real, coherent device.
+          The play button sits centered and largest; the four transport parts and the knob land in
+          their wells.
+        </p>
+        <p>
+          In the <b>live player</b>, these sprites aren't baked flat — React overlays them as
+          interactive elements: play swaps to pause, the volume knob rotates, the seek thumb rides the
+          bar, the visualizer and marquee fill the empty screens. That's the payoff of the empty-well +
+          loose-part duplication from stage 3.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Every image on this page is a real artifact from one generation
+    (<code>a-chunky-1980s-portable--simple-nano-banana-2-0mhf</code>), captured by driving the live
+    <code>?pipeline</code> harness through the shipping functions — not reimplemented previews.
+    Branch <code>spritesheet-pipeline</code>.
+  </footer>
+</div>
+</body></html>

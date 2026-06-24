@@ -51,7 +51,10 @@ export const PAINT_PROMPT =
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
-  "looks pressable/turnable is NOT). Only the sockets (top) and the strip parts (bottom) may look interactive.\n\n" +
+  "looks pressable/turnable is NOT). Only the sockets (top) and the strip parts (bottom) may look interactive.\n" +
+  "- Go easy on printed iconography on the body itself: a maker's mark or a small model name is fine, but avoid " +
+  "scattering control symbols (play triangles, power circles, arrows, EQ glyphs, ▶ ⏸ ⏹ ⏮ ⏭ ⏏) across the bare " +
+  "material — those symbols belong on the actual control parts in the strip, not printed on the empty skin.\n\n" +
   "BOTTOM CONTROL-PARTS STRIP — a row of LOOSE, ISOLATED physical control PARTS photographed on a seamless " +
   "FLAT PURE-WHITE sweep:\n" +
   "- This strip is NOT a diagram, NOT a UI mockup, NOT a labeled parts catalog, NOT an instruction sheet. It is simply " +
