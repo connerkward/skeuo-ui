@@ -664,6 +664,7 @@ function CdDisc({ ps }: { ps: PlayerState }) {
             ))}
           </div>
           {cover && <img className="cd-tint" src={cover} alt="" draggable={false} />}
+          {cover && <img className="cd-tint2" src={cover} alt="" draggable={false} aria-hidden="true" />}
         </div>
         <div className="cd-gloss" />
       </div>

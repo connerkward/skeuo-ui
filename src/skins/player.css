@@ -281,11 +281,21 @@
 .cd-tint {
   position: absolute; inset: -20%; width: 140%; height: 140%; object-fit: cover;
   border-radius: 50%; pointer-events: none;
-  filter: blur(7cqw) saturate(1.6);
-  mix-blend-mode: color; opacity: .5;
+  filter: blur(5cqw) saturate(2.4);
+  mix-blend-mode: color; opacity: .95;
   transition: opacity .9s ease;
 }
-.cd-disc[data-playing="false"] .cd-tint { opacity: .34; }
+.cd-disc[data-playing="false"] .cd-tint { opacity: .8; }
+/* a second pass in a stronger blend pushes the album's actual COLOUR into the silver
+   (not just a hue shift), so the disc visibly takes on the cover's palette. */
+.cd-tint2 {
+  position: absolute; inset: -20%; width: 140%; height: 140%; object-fit: cover;
+  border-radius: 50%; pointer-events: none;
+  filter: blur(6cqw) saturate(1.8);
+  mix-blend-mode: overlay; opacity: .55;
+  transition: opacity .9s ease;
+}
+.cd-disc[data-playing="false"] .cd-tint2 { opacity: .42; }
 .cd-fb-title { font-size: 9cqw; font-weight: 700; line-height: 1.05; color: #eef2f8; max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .cd-fb-artist { font-size: 6cqw; color: #aab4c4; }

@@ -29,9 +29,13 @@ export const ENVELOPE_PROMPT =
   "Keep every dark control socket, round well, ring groove and dark screen EXACTLY where it is, " +
   "pixel-identical, unchanged. Around and BEHIND them, paint ONE flat solid dark-gray SILHOUETTE " +
   "shape on the pure white background: the outline of {brief}. The silhouette must fully CONTAIN " +
-  "every socket and screen with generous margin on all sides, and its wild parts — horns, fins, " +
-  "tendrils, legs, jaws — grow outward from that mass. Completely flat dark-gray fill, no interior " +
-  "detail, no shading, no outline strokes. Everything else stays pure white.";
+  "every socket and screen with generous margin on all sides. Let the FORM FOLLOW {brief} — shape " +
+  "it with the distinctive contours and appendages THAT SUBJECT actually has (a smooth rounded " +
+  "gadget stays smooth and rounded; a vehicle, an animal, a plant, a piece of food, an everyday " +
+  "object each take their OWN silhouette), so the body is a bold, characterful, non-blob outline " +
+  "of the thing itself. Do NOT default to monster anatomy (horns, fangs, tendrils, claws) unless " +
+  "{brief} explicitly calls for it. Completely flat dark-gray fill, no interior detail, no shading, " +
+  "no outline strokes. Everything else stays pure white.";
 
 export const STYLE_PROMPT =
   "Restyle this blueprint into a photoreal, wildly-shaped skeuomorphic MP3-player device. CRITICAL: " +
@@ -199,6 +203,24 @@ async function fetchPng(url: string): Promise<Uint8Array> {
   return new Uint8Array(await r.arrayBuffer());
 }
 
+// music/disc-themed prompts that make a spinning-CD screen feel right
+const CD_THEME = /\b(cd|disc|jukebox|juke[\s-]?box|boom[\s-]?box|hi[\s-]?fi|stereo|turntable|vinyl|record\s*player|walkman|discman|gramophone|phonograph|dj\b|sound\s*system|ghetto\s*blaster)\b/i;
+// Decide a generated skin's first screen: keep the VISUALIZER (the default for every
+// skin) unless the prompt is CD-thematic (then usually a CD) or, rarely, at random.
+// Returns a new array; the swapped region is cloned so the shared preset isn't mutated.
+function maybeCdScreen(regs: Region[], brief: string): Region[] {
+  const wantCd = CD_THEME.test(brief) ? Math.random() < 0.7 : Math.random() < 0.08;
+  if (!wantCd) return regs;
+  let swapped = false;
+  return regs.map((r) => {
+    if (!swapped && r.dynamicType === "visualizer") {
+      swapped = true;
+      return { ...r, dynamicType: "cd" as const, label: "cd" };
+    }
+    return r;
+  });
+}
+
 // bytes → data:image/png;base64 URL (btoa exists in browsers, Workers and modern
 // Node). Chunked so a large array never overflows the String.fromCharCode arg list.
 function pngDataUrl(bytes: Uint8Array): string {
@@ -215,7 +237,12 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const model = input.model ?? DEFAULT_MODEL;
   const useEnvelope = input.envelope ?? true;
   // custom layout from the wizard wins; otherwise the constant variant preset.
-  const regs: Region[] = input.regions?.length ? input.regions : regionsForVariant(input.variant);
+  const baseRegs: Region[] = input.regions?.length ? input.regions : regionsForVariant(input.variant);
+  // Every skin defaults to a VISUALIZER. A generated skin shows the spinning CD only
+  // when the prompt is music/disc-THEMATIC (mostly) or, rarely, at random — so the CD
+  // is a treat, not the norm. Swap the FIRST visualizer screen → cd; never mutate the
+  // shared preset array (clone the swapped region).
+  const regs = maybeCdScreen(baseRegs, input.brief);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 

@@ -360,7 +360,10 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
 // Each palette kind owns a list of meaningful names; we add the first one not
 // already present so repeated clicks cycle through real controls instead of
 // piling up duplicates. Ids are friendly (the bind/dynamicType), never "slider-h-14sr".
-const SCREEN_TYPES: DynamicType[] = ["visualizer", "cd", "albumart", "marquee", "playlist"];
+// visualizer is the DEFAULT screen for every skin; cd/albumart sit LAST so they're
+// only picked deliberately (after the standard screens), not auto-selected as the 2nd
+// screen. Generated skins get a CD only thematically/occasionally (see generateSkin).
+const SCREEN_TYPES: DynamicType[] = ["visualizer", "marquee", "playlist", "cd", "albumart"];
 // cd/albumart want a SQUARE pixel region; canvas is 1024×1536 so a square needs w = 1.5·h.
 const SQUARE_TYPES = new Set<DynamicType>(["cd", "albumart"]);
 const BUTTON_BINDS = ["play", "prev", "next", "stop"];
