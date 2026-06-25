@@ -27,6 +27,9 @@ export interface SkinAssets {
   hidden?: boolean;
   // sprites/btn-{prev,play,pause,stop,next}.png exist — molded transport faces
   molded?: boolean;
+  // explicit thumbnail/frame URL for non-built-in skins (runtime/cloud) whose
+  // /skins/<id>/thumb.webp does NOT exist — the mobile strip uses this instead.
+  frameUrl?: string;
 }
 
 export function skinLive(id: string): boolean {

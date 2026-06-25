@@ -213,14 +213,14 @@ export default function App() {
   // map (resolved lazily as each becomes active); the entry itself just carries
   // id/name/blurb for the strip + label.
   const cloudAsAssets: SkinAssets[] = cloudSkins.map((s) => ({
-    id: s.id, name: s.name, blurb: s.blurb, has: ["frame"],
+    id: s.id, name: s.name, blurb: s.blurb, has: ["frame"], frameUrl: s.frameUrl ? apiUrl(s.frameUrl) : undefined,
   }));
   // Locally-created (runtime) skins also ride the mobile carriage — same as the
   // desktop rail lists them. Without this a skin you just made on the phone never
   // appears in the gallery (it only flashed full-screen right after creation).
   const runtimeAsAssets: SkinAssets[] = runtimeSkins
     .filter((s) => !s.hidden)
-    .map((s) => ({ id: s.id, name: s.name, blurb: s.blurb, has: ["frame"] }));
+    .map((s) => ({ id: s.id, name: s.name, blurb: s.blurb, has: ["frame"], frameUrl: s.frameUrl }));
   const galleryMobile = [...visible, ...runtimeAsAssets, ...cloudAsAssets];
   // render views for EVERY non-built-in skin in the carriage: cloud (lazily resolved)
   // + local runtime (resolved inline — its template/frame are already in memory).
@@ -228,6 +228,37 @@ export default function App() {
   for (const s of runtimeSkins) {
     if (!s.hidden) carriageRuntimes[s.id] = { frameUrl: s.frameUrl, template: s.template, style: s.style, sprites: s.sprites };
   }
+
+  // Owner-only publish: the cloud gallery is curated by the owner, not open UGC.
+  // The owner enables the Publish UI by visiting once with ?ownerKey=<secret> (stored
+  // to localStorage, stripped from the URL); the button is hidden for everyone else.
+  // Publishing POSTs the marker with the X-Owner-Key header the server checks.
+  const [ownerKey] = useState<string | null>(() => {
+    try {
+      const u = new URL(window.location.href);
+      const k = u.searchParams.get("ownerKey");
+      if (k) { localStorage.setItem("skeuo:ownerKey", k); u.searchParams.delete("ownerKey"); window.history.replaceState(null, "", u); }
+      return localStorage.getItem("skeuo:ownerKey");
+    } catch { return null; }
+  });
+  const [publishing, setPublishing] = useState<string | null>(null);
+  const [publishedIds, setPublishedIds] = useState<Set<string>>(new Set());
+  const publish = useCallback(async (s: RuntimeSkin) => {
+    if (!ownerKey) return;
+    setPublishing(s.id);
+    try {
+      const r = await fetch(apiUrl(`/api/finalize/${encodeURIComponent(s.id)}/publish`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Owner-Key": ownerKey },
+        body: JSON.stringify({ name: s.name, blurb: s.blurb, font: s.font, style: s.style }),
+      });
+      if (r.ok) setPublishedIds((p) => new Set(p).add(s.id));
+      else console.error("publish failed", r.status, await r.text().catch(() => ""));
+    } catch (e) { console.error("publish error", e); }
+    finally { setPublishing(null); }
+  }, [ownerKey]);
+  const publishLabel = (id: string) =>
+    publishedIds.has(id) ? "✓ Published" : publishing === id ? "Publishing…" : "Publish to gallery";
 
   // ── mobile shell ───────────────────────────────────────────────────────────
   if (mobile) {
@@ -239,6 +270,12 @@ export default function App() {
             <button className="m-menu" onClick={() => setSkinId(visible[0].id)} aria-label="Back to skins">← skins</button>
             <h1 className="m-title">{activeRuntime.name}</h1>
             <div className="m-topbar-actions">
+              {ownerKey && (
+                <button className="m-menu" onClick={() => publish(activeRuntime)}
+                  disabled={publishing === activeRuntime.id || publishedIds.has(activeRuntime.id)}>
+                  {publishedIds.has(activeRuntime.id) ? "✓" : publishing === activeRuntime.id ? "…" : "Publish"}
+                </button>
+              )}
               {CONNECT_ENABLED && <MobileSpotify sp={sp} mode={mode} setMode={setMode} />}
             </div>
           </header>
@@ -345,6 +382,12 @@ export default function App() {
                   setRuntimeSkins((rs) => rs.map((x) => (x.id === s.id ? { ...x, hidden: true } : x)));
                   if (skinId === s.id) setSkinId(visible[0].id);
                 }}>×</button>
+              {ownerKey && (
+                <button className="skin-row-del" style={{ width: "auto", padding: "0 8px", fontSize: 11 }}
+                  title="Publish this skin to the shared cloud gallery"
+                  disabled={publishing === s.id || publishedIds.has(s.id)}
+                  onClick={() => publish(s)}>{publishLabel(s.id)}</button>
+              )}
             </div>
           ))}
           {visible.map((s) => (

@@ -88,8 +88,9 @@ export function MobileSkinStrip({ skins, index, createIdx, onPick }: {
           <span className="m-strip-mini" data-skin={skinStyle(s.id)}>
             {live.has(i) ? (
               <>
-                <img className="m-mini-img" src={thumbUrl(s.id)} alt="" draggable={false}
-                  loading="lazy" decoding="async" />
+                <img className="m-mini-img" src={s.frameUrl ?? thumbUrl(s.id)} alt="" draggable={false}
+                  loading="lazy" decoding="async"
+                  onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} />
                 <MiniVis skinId={s.id} />
               </>
             ) : null}
