@@ -23,21 +23,31 @@
 //   • device frame  → /api/asset/skins/<id>/frame.png
 //   • per-skin sprite → /api/asset/skins/<id>/sprites/<bind>.png
 //
-// ABUSE GUARDS (this is an unauthenticated write):
-//   • id must be the slug format /api/generate produces; bind must be a safe token.
-//   • template.json for <id> MUST already exist — proves a real prior generation
-//     (bounded by the $10 lifetime spend cap), so this can't write arbitrary keys.
+// ABUSE GUARDS:
+//   • PUBLISH is OWNER-ONLY: requires the X-Owner-Key header == PUBLISH_KEY secret,
+//     so only the owner can curate the shared gallery (not any visitor). Marker
+//     fields are sanitized (no stored XSS).
+//   • frame/sprite uploads are unauthenticated but bounded: id must be the slug
+//     format /api/generate produces; bind must be a safe token; template.json for
+//     <id> MUST already exist (proves a real prior gen, bounded by the spend cap),
+//     so this can't write arbitrary keys.
 //   • WRITE-ONCE: an existing frame/sprite no-ops (200) instead of overwriting.
 //   • image/png only, body size capped.
 
 interface Env {
   SKINS?: R2Bucket;
   ASSETS_BASE_URL?: string;
+  PUBLISH_KEY?: string;   // owner-only publish secret (wrangler secret; absent → publish disabled)
 }
 
 const ID_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const BIND_RE = /^[a-z0-9][a-z0-9_-]{0,39}$/i;
 const MAX_BYTES = 8 * 1024 * 1024; // a 2K RGBA PNG is well under this
+
+// strip HTML/markup-significant chars so a marker field can never carry stored XSS
+// into a gallery client that renders it; collapse whitespace, cap length.
+const sanitizeField = (s: string): string =>
+  s.replace(/[<>&"'`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
 
 export const onRequestPost = async (
   ctx: { request: Request; params: { path: string | string[] }; env: Env }
@@ -49,15 +59,20 @@ export const onRequestPost = async (
   if (!env.SKINS) return json({ error: "storage not configured" }, 503);
 
   // route: /<id>/publish — write the published marker carrying display metadata.
+  // OWNER-ONLY: requires the X-Owner-Key header to match the PUBLISH_KEY secret.
+  // Without this gate ANYONE could publish/overwrite/hijack arbitrary skins into the
+  // shared gallery. If PUBLISH_KEY isn't configured, publishing is disabled (safe).
   if (parts.length === 2 && parts[1] === "publish") {
+    if (!env.PUBLISH_KEY) return json({ error: "publishing disabled" }, 403);
+    if (request.headers.get("X-Owner-Key") !== env.PUBLISH_KEY) return json({ error: "not authorized to publish" }, 403);
     const tpl = await env.SKINS.head(`skins/${id}/template.json`);
     if (!tpl) return json({ error: "unknown skin (generate first)" }, 404);
-    let marker: Record<string, unknown> = {};
+    const marker: Record<string, unknown> = {};
     try {
       const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-      // keep only the small display fields; ignore anything else the client sends.
+      // keep only the small display fields, sanitized; ignore anything else the client sends.
       for (const k of ["name", "blurb", "font", "style"]) {
-        if (typeof body[k] === "string") marker[k] = (body[k] as string).slice(0, 200);
+        if (typeof body[k] === "string") marker[k] = sanitizeField(body[k] as string);
       }
     } catch { /* empty/invalid body → marker with no overrides is still valid */ }
     marker.publishedAt = new Date().toISOString();
