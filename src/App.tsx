@@ -112,6 +112,21 @@ export default function App() {
     })();
     return () => { alive = false; };
   }, []);
+  // Honor a ?skin=<id> deep link to a CLOUD skin: the initial param is resolved against
+  // built-ins + localStorage at mount (above), but cloud skins load async, so a link to a
+  // cloud skin would fall back to visible[0]. Captured the original param at mount (the
+  // skinId-sync effect rewrites the URL), and once /api/skins lands, switch to it — but
+  // ONLY while still on the fallback, so it never overrides user navigation.
+  const deepLinkParam = useRef(initialSkinParam());
+  const deepLinkDone = useRef(false);
+  useEffect(() => {
+    if (deepLinkDone.current) return;
+    const p = deepLinkParam.current;
+    if (p && skinId === visible[0].id && cloudSkins.some((s) => s.id === p)) {
+      deepLinkDone.current = true;
+      setSkinId(p);
+    }
+  }, [cloudSkins, skinId, visible]);
   // resolved runtime views per cloud-skin id (template fetched lazily on activate)
   const [cloudRuntimes, setCloudRuntimes] = useState<Record<string, RuntimeSkinView>>({});
   const activeCloud = cloudSkins.find((s) => s.id === skinId);

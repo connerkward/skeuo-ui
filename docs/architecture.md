@@ -1,5 +1,11 @@
 # Architecture — alignment by construction
 
+> **Pipeline note (2026-06-25):** the SHIPPING web/app pipeline (`src/generate/`) is now a
+> SINGLE-PASS combined-blueprint paint (device sockets + sprite strip in one image, no
+> separate envelope pass) with a colour-key device cutout. The two-pass `generation/`
+> Python tools below are the research lineage. Current feature × platform truth lives in
+> [feature-parity.md](feature-parity.md).
+
 > Deep-dive companion to the [README](../README.md). This is the "how it actually
 > works" doc: the three composited layers and why the controls never drift out of
 > the painted cavities.
