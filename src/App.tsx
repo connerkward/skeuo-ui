@@ -200,7 +200,19 @@ export default function App() {
   const cloudAsAssets: SkinAssets[] = cloudSkins.map((s) => ({
     id: s.id, name: s.name, blurb: s.blurb, has: ["frame"],
   }));
-  const galleryMobile = [...visible, ...cloudAsAssets];
+  // Locally-created (runtime) skins also ride the mobile carriage — same as the
+  // desktop rail lists them. Without this a skin you just made on the phone never
+  // appears in the gallery (it only flashed full-screen right after creation).
+  const runtimeAsAssets: SkinAssets[] = runtimeSkins
+    .filter((s) => !s.hidden)
+    .map((s) => ({ id: s.id, name: s.name, blurb: s.blurb, has: ["frame"] }));
+  const galleryMobile = [...visible, ...runtimeAsAssets, ...cloudAsAssets];
+  // render views for EVERY non-built-in skin in the carriage: cloud (lazily resolved)
+  // + local runtime (resolved inline — its template/frame are already in memory).
+  const carriageRuntimes: Record<string, RuntimeSkinView> = { ...cloudRuntimes };
+  for (const s of runtimeSkins) {
+    if (!s.hidden) carriageRuntimes[s.id] = { frameUrl: s.frameUrl, template: s.template, style: s.style, sprites: s.sprites };
+  }
 
   // ── mobile shell ───────────────────────────────────────────────────────────
   if (mobile) {
@@ -236,7 +248,7 @@ export default function App() {
           setMode={setMode}
           spotifyDrive={spotifyDrive}
           connectEnabled={CONNECT_ENABLED}
-          runtimes={cloudRuntimes}
+          runtimes={carriageRuntimes}
           share={
             <ExportGifButton
               skinId={skinId}
