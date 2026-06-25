@@ -138,8 +138,8 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   // cutout alpha follows that silhouette (no shrink-wrap). The envelope "sculpt"
   // pass is an OPTIONAL second pass for a wilder, more controlled shape (2× cost).
   // An uploaded body is also one pass (painted directly).
-  const grows = !envImage && sculpt;            // does the extra envelope pass run?
-  const factor = grows ? 1 : 0.55;
+  const grows = ENVELOPE_ENABLED && !envImage && sculpt; // extra envelope pass (disabled — pipeline is single-pass)
+  const factor = 1;                             // single-pass billing: cost shown == what the server charges
   const total = MODELS.filter((m) => models.includes(m.id)).reduce((s, m) => s + m.costPerSkin * factor, 0);
   const anyApprox = MODELS.some((m) => models.includes(m.id) && m.approx);
 
@@ -280,31 +280,36 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
                 </span>
               </div>
 
-              <label className={`wiz-env wiz-env-sculpt ${sculpt && !envImage ? "on" : ""} ${envImage ? "disabled" : ""}`}>
-                <input type="checkbox" checked={sculpt && !envImage} disabled={!!envImage}
-                  onChange={(e) => setSculpt(e.target.checked)} />
-                <span className="wiz-env-txt">
-                  <strong>✦ Sculpt a wilder body (optional)</strong>
-                  <small>Adds a shaping pass that grows a more elaborate silhouette — horns, fins, tendrils — and guarantees the body wraps the controls with margin. ~2× cost, a bit slower.</small>
-                </span>
-              </label>
-
-              <label className={`wiz-env wiz-env-upload ${envImage ? "on" : ""}`}>
-                <span className="wiz-env-txt">
-                  <strong>…or upload your own body</strong>
-                  <small>{envImage
-                    ? "Uploaded body — the paint pass uses this directly (auto-grow skipped)."
-                    : "A pre-made silhouette PNG (drawn by hand or in another tool). The paint pass paints straight onto it, skipping the auto-grow."}</small>
-                  <input ref={envFileRef} type="file" accept="image/*"
-                    onChange={(e) => pickEnv(e.target.files?.[0])} />
-                </span>
-                {envImage && (
-                  <span className="wiz-env-thumb">
-                    <img src={envImage} alt="uploaded body envelope" />
-                    <button type="button" className="wiz-env-rm" onClick={clearEnv}>× remove</button>
-                  </span>
-                )}
-              </label>
+              {/* Sculpt (2nd envelope pass) + upload-your-own-body are DISABLED: the
+                  pipeline is single-pass and never read the uploaded envelope, so both
+                  were no-ops that mis-stated cost/behavior. Gated off (not deleted) to
+                  match the codebase's flag pattern; remove the plumbing in a cleanup. */}
+              {ENVELOPE_ENABLED && (
+                <>
+                  <label className={`wiz-env wiz-env-sculpt ${sculpt && !envImage ? "on" : ""} ${envImage ? "disabled" : ""}`}>
+                    <input type="checkbox" checked={sculpt && !envImage} disabled={!!envImage}
+                      onChange={(e) => setSculpt(e.target.checked)} />
+                    <span className="wiz-env-txt">
+                      <strong>✦ Sculpt a wilder body (optional)</strong>
+                      <small>Adds a shaping pass that grows a more elaborate silhouette — horns, fins, tendrils.</small>
+                    </span>
+                  </label>
+                  <label className={`wiz-env wiz-env-upload ${envImage ? "on" : ""}`}>
+                    <span className="wiz-env-txt">
+                      <strong>…or upload your own body</strong>
+                      <small>A pre-made silhouette PNG; the paint pass paints straight onto it.</small>
+                      <input ref={envFileRef} type="file" accept="image/*"
+                        onChange={(e) => pickEnv(e.target.files?.[0])} />
+                    </span>
+                    {envImage && (
+                      <span className="wiz-env-thumb">
+                        <img src={envImage} alt="uploaded body envelope" />
+                        <button type="button" className="wiz-env-rm" onClick={clearEnv}>× remove</button>
+                      </span>
+                    )}
+                  </label>
+                </>
+              )}
             </>
           )}
 
@@ -457,6 +462,10 @@ const STAGE_LABEL: Record<GenStageEvent["stage"], string> = {
 // only gates the in-loader preview card). Flip to re-enable. Same pattern as the
 // CONNECT_ENABLED / FLOAT_ENABLED feature gates.
 const LIVE_PREVIEW_ENABLED = false;
+// Body "sculpt" (2nd envelope pass) + upload-your-own-body. DISABLED: the pipeline is
+// single-pass and never read the uploaded envelope, so both were no-ops that lied about
+// cost/behavior. Flip on only if a real envelope pass is re-wired end to end.
+const ENVELOPE_ENABLED = false;
 
 function PaintProgress({ progress, elapsed, autoBody, stage }: {
   progress: GenProgress; elapsed: number; autoBody: boolean; stage: GenStageEvent | null;
