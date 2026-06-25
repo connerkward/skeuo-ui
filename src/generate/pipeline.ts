@@ -384,12 +384,27 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const log = deps.log ?? (() => {});
   const model = input.model ?? DEFAULT_MODEL;
   // custom layout from the wizard wins; otherwise the constant variant preset.
-  // REPACK the template before the painter: sane per-kind sizes + move-based
-  // de-overlap (no slivers). A template with overlapping/sliver interactables must
-  // NEVER reach the painter — this is the root of alignment quality.
+  //
+  // ALIGNMENT ROOT CAUSE (fixed 2026-06-24): the preset layouts (layoutSimple /
+  // layoutRadial / layoutCapsule / layoutMinimal) are ALREADY clean — sane per-kind
+  // sizes, GROUPED controls (the 6-band EQ as a tight evenly-spaced row, paired knobs),
+  // and intentional dial/arc overlaps the renderer handles. Running repackTemplate over
+  // them DESTROYED that baseline: CANON forced every EQ slider-v to h=0.24 (3× the
+  // authored 0.085), which triggered resolveOverlaps to scatter the band row across the
+  // body + sliver the knobs — so the painted controls (drawn at the MANGLED guide
+  // positions) and the live overlays both landed nowhere coherent. This is the
+  // "trust the clean procedural baseline, don't run a noisy mangling step on it" lesson
+  // (ai-image-coords-rule): repackTemplate is for the DIRECTOR's raw rects (often
+  // slivers/oversized/overlapping), NOT for the hand-authored presets.
+  //   • custom regions (input.regions, from the wizard/Director) → repack as before.
+  //   • preset variant → use AS-IS (it's the load-bearing truth). Still bankTransport
+  //     (snaps the transport into one cohesive cluster — that part aligns well).
   // maybeCdScreen: cd-visualizer feature — swap the first screen → spinning CD for
   // music/disc-themed prompts (mostly) or rarely at random.
-  const regs: Region[] = maybeCdScreen(bankTransport(repackTemplate(input.regions?.length ? input.regions : regionsForVariant(input.variant))), input.brief);
+  const baseRegs: Region[] = input.regions?.length
+    ? repackTemplate(input.regions)            // messy Director input → sane + de-overlap
+    : regionsForVariant(input.variant);        // clean authored preset → keep its geometry
+  const regs: Region[] = maybeCdScreen(bankTransport(baseRegs), input.brief);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 
