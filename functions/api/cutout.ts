@@ -9,47 +9,52 @@
 // src/generate/pipeline.ts removeBackground() (the fal call).
 //
 // CONTRACT:
-//   • Request body is image/png bytes (the cropped device region), OR
-//     application/json {"imageUrl": "<public same-origin /api/asset URL>"}.
-//   • Response is image/png bytes of the transparent (background-removed) device.
-//   • image/png only, body size capped; this is an unauthenticated call but it only
-//     forwards to BiRefNet (no storage write) and is bounded by the per-request size.
+//   • Request body is image/png BYTES (the cropped device/strip region). That is the
+//     ONLY accepted shape — the legacy application/json {imageUrl} branch was removed
+//     because (a) the shipping client never used it and (b) fetching an arbitrary
+//     attacker-supplied URL server-side is an SSRF + blind-relay hole.
+//   • Response is image/png bytes of the transparent (background-removed) image.
+//   • SECURITY/COST: this calls paid fal BiRefNet, so it is metered against the SAME
+//     edge spend ledger + a per-IP/day cap as /api/generate (src/generate/meter.ts).
+//     Without that, anyone could loop POSTs and run up an unbounded fal bill the $10
+//     cap never saw. Reserve up front, refund if BiRefNet fails.
 
 import { removeBackground, BIREFNET_MODEL } from "../../src/generate/pipeline";
+import { reserve, refund, CUT_BUCKET, BIREFNET_COST_CENTS, type MeterEnv } from "../../src/generate/meter";
 
-interface Env {
+interface Env extends MeterEnv {
   FAL_KEY: string;
 }
 
 const MAX_BYTES = 12 * 1024 * 1024; // a 2K RGBA device PNG is well under this
+
+function clientIp(req: Request): string {
+  return req.headers.get("CF-Connecting-IP") || req.headers.get("X-Forwarded-For") || "anon";
+}
 
 export const onRequestPost = async (ctx: { request: Request; env: Env }): Promise<Response> => {
   const { request, env } = ctx;
   if (!env.FAL_KEY) return json({ error: "server missing FAL_KEY" }, 500);
 
   const ct = request.headers.get("content-type") ?? "";
-  let png: Uint8Array;
+  if (!ct.includes("image/png")) return json({ error: "image/png body required" }, 415);
+  const buf = await request.arrayBuffer();
+  if (buf.byteLength === 0) return json({ error: "empty body" }, 400);
+  if (buf.byteLength > MAX_BYTES) return json({ error: "image too large" }, 413);
+  const png = new Uint8Array(buf);
+
+  // meter BEFORE the paid BiRefNet call; refuse over budget, refund on failure.
+  const ip = clientIp(request);
+  const r = await reserve(env, ip, BIREFNET_COST_CENTS, CUT_BUCKET);
+  if (!r.ok) return json({ error: r.reason }, 429);
   try {
-    if (ct.includes("application/json")) {
-      const body = (await request.json()) as { imageUrl?: string };
-      if (!body?.imageUrl) return json({ error: "imageUrl required" }, 400);
-      const r = await fetch(body.imageUrl);
-      if (!r.ok) return json({ error: `fetch imageUrl → ${r.status}` }, 400);
-      png = new Uint8Array(await r.arrayBuffer());
-    } else if (ct.includes("image/png")) {
-      const buf = await request.arrayBuffer();
-      if (buf.byteLength === 0) return json({ error: "empty body" }, 400);
-      if (buf.byteLength > MAX_BYTES) return json({ error: "image too large" }, 413);
-      png = new Uint8Array(buf);
-    } else {
-      return json({ error: "image/png body or application/json {imageUrl} required" }, 415);
-    }
     const cut = await removeBackground(env.FAL_KEY, png);
     return new Response(cut as unknown as ArrayBuffer, {
       status: 200,
       headers: { "Content-Type": "image/png", "Cache-Control": "no-store", ...CORS },
     });
   } catch (e) {
+    await refund(env, ip, BIREFNET_COST_CENTS, CUT_BUCKET);
     return json({ error: `${BIREFNET_MODEL}: ${e instanceof Error ? e.message : String(e)}` }, 502);
   }
 };

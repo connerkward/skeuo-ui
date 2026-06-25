@@ -37,6 +37,7 @@ import { initWasm, Resvg } from "@resvg/resvg-wasm";
 import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
 import { handleGenerate } from "../../src/generate/handler";
 import { MODELS, DEFAULT_MODEL, type ModelId, type RuntimeDeps } from "../../src/generate/pipeline";
+import { reserve, refund, GEN_BUCKET } from "../../src/generate/meter";
 
 interface Env {
   FAL_KEY: string;
@@ -61,19 +62,15 @@ interface Env {
 //   (or set a higher SPEND_CAP_CENTS env var in the Pages dashboard)
 // Read the current total any time:
 //   npx wrangler kv key get --binding RATELIMIT spend:cents --remote
-const SPEND_KEY = "spend:cents";
-const DEFAULT_CAP_CENTS = 1000;
 
-// Estimate the cost of ONE generation in cents. costPerSkin in MODELS already
-// covers the two paid passes (envelope + paint) at full price; when the envelope
-// pass is skipped (envelope:false or a user-uploaded envelope) only the paint
-// pass runs, so we bill the ~0.55 fraction. This is an ESTIMATE for the ceiling —
-// the real bill is whatever fal charges. We Math.ceil so we lean toward stopping
-// early, not overspending.
-function estCostCents(model: ModelId, envelope: boolean): number {
+// Estimate the cost of ONE generation's PAINT pass in cents. The pipeline is now
+// single-pass (the envelope pass was removed), so costPerSkin is already the
+// upper-bound estimate for that one paint pass — no envelope factor. The separate
+// BiRefNet cutout the client runs afterward is metered by /api/cutout, so it is
+// NOT double-counted here. Math.ceil → lean toward stopping early, not overspending.
+function estCostCents(model: ModelId): number {
   const m = MODELS.find((x) => x.id === model) ?? MODELS.find((x) => x.id === DEFAULT_MODEL)!;
-  const dollars = m.costPerSkin * (envelope ? 1 : 0.55);
-  return Math.ceil(dollars * 100);
+  return Math.ceil(m.costPerSkin * 100);
 }
 
 let wasmReady: Promise<void> | null = null;
@@ -128,21 +125,15 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
       : undefined,
   };
 
-  // $10 LIFETIME spend cap (edge-shared via KV ledger) — a cumulative-dollars
-  // budget that does NOT auto-reset. Estimate THIS request's cost from the model +
-  // envelope factor; refuse BEFORE paying fal if it would push us over the cap.
-  // Per-IP limiting still happens inside handleGenerate; this is the cost backstop.
-  const cap = Number(env.SPEND_CAP_CENTS ?? String(DEFAULT_CAP_CENTS));
+  // LIFETIME spend cap + per-IP/day cap, both edge-shared via the RATELIMIT KV
+  // (see src/generate/meter.ts). RESERVE the estimated cost up front; refuse BEFORE
+  // paying fal if it would exceed the cap or the per-IP/day limit, and refund the
+  // reservation below if the generation didn't actually incur cost.
+  const ip = clientIp(request);
   const model = (body?.model as ModelId) ?? DEFAULT_MODEL;
-  const envelope = body?.envelope ?? true;
-  const est = estCostCents(model, envelope);
-  let spent = 0;
-  if (env.RATELIMIT) {
-    spent = Number((await env.RATELIMIT.get(SPEND_KEY)) ?? "0");
-    if (spent + est > cap) {
-      return json({ status: "error", error: "Budget exhausted — generation paused until the owner tops up." }, 429);
-    }
-  }
+  const est = estCostCents(model);
+  const res0 = await reserve(env, ip, est, GEN_BUCKET);
+  if (!res0.ok) return json({ status: "error", error: res0.reason }, 429);
 
   // STREAM the response as NDJSON: each pipeline pass emits a {stage,url} line as it
   // completes (blueprint → grown body → painted skin) so the client can preview the
@@ -159,18 +150,14 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
       const streamDeps: RuntimeDeps = { ...deps, onStage: (stage, url) => write({ stage, url }) };
       let res: Awaited<ReturnType<typeof handleGenerate>>;
       try {
-        res = await handleGenerate({ body, ip: clientIp(request), deps: streamDeps });
+        res = await handleGenerate({ body, ip, deps: streamDeps });
       } catch (e) {
         res = { status: "error", error: e instanceof Error ? e.message : String(e) };
       }
       write(res);   // final line (carries `status`, no `stage`)
-      // Only a SUCCESSFUL (cost-incurring) generation adds to the ledger. KV is
-      // eventually consistent, so a couple of concurrent gens could under-count under
-      // burst — acceptable slack for a cost ceiling. No TTL: it's a lifetime budget.
-      if (env.RATELIMIT && res.status === "done") {
-        const cur = Number((await env.RATELIMIT.get(SPEND_KEY)) ?? "0");
-        await env.RATELIMIT.put(SPEND_KEY, String(cur + est));
-      }
+      // Cost was RESERVED up front; refund it if the generation didn't actually
+      // incur fal cost (error / no paint pass run). A `done` keeps the reservation.
+      if (res.status !== "done") await refund(env, ip, est, GEN_BUCKET);
       controller.close();
     },
   });
