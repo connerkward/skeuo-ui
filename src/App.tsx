@@ -212,7 +212,11 @@ export default function App() {
   // the built-ins (appended AFTER them). Their device renders via the `runtimes`
   // map (resolved lazily as each becomes active); the entry itself just carries
   // id/name/blurb for the strip + label.
-  const cloudAsAssets: SkinAssets[] = cloudSkins.map((s) => ({
+  // A locally-created skin that the owner has PUBLISHED also comes back in the cloud
+  // index — dedup so it doesn't appear twice (duplicate React key) in the gallery.
+  const runtimeIds = new Set(runtimeSkins.map((s) => s.id));
+  const cloudVisible = cloudSkins.filter((s) => !runtimeIds.has(s.id));
+  const cloudAsAssets: SkinAssets[] = cloudVisible.map((s) => ({
     id: s.id, name: s.name, blurb: s.blurb, has: ["frame"], frameUrl: s.frameUrl ? apiUrl(s.frameUrl) : undefined,
   }));
   // Locally-created (runtime) skins also ride the mobile carriage — same as the
@@ -402,7 +406,7 @@ export default function App() {
           ))}
           {/* cloud skins (published via /api/skins) — appended AFTER the built-ins.
               thumb is the served frame; selecting one resolves its template lazily. */}
-          {cloudSkins.map((s) => (
+          {cloudVisible.map((s) => (
             <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
               onClick={() => setSkinId(s.id)} title={`${s.name} — ${s.blurb}`}>
               <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
