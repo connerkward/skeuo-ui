@@ -1,5 +1,13 @@
 // POST /api/finalize/<id>                  → upload the cut device frame.png
 // POST /api/finalize/<id>/sprites/<bind>   → upload one cut control sprite.png
+// POST /api/finalize/<id>/publish          → mark the skin PUBLISHED (gallery index)
+//
+// PUBLISH: writes the marker object `published/<id>` whose JSON body carries the
+// display fields the pipeline does NOT persist (name/blurb/font/style — those live
+// only in the generate response client-side). GET /api/skins lists that prefix to
+// build the cloud gallery index. Idempotent: re-publishing just overwrites the
+// marker (cheap, lets the client refresh display metadata). Gated on a real prior
+// generation (template.json must exist) like the asset uploads.
 //
 // WHY THIS EXISTS: the single-pass pipeline paints the device + control strip in
 // ONE image and persists the RAW combined paint (the cutout is pure-JS CPU that
@@ -39,6 +47,25 @@ export const onRequestPost = async (
   const id = parts[0];
   if (!id || !ID_RE.test(id)) return json({ error: "bad id" }, 400);
   if (!env.SKINS) return json({ error: "storage not configured" }, 503);
+
+  // route: /<id>/publish — write the published marker carrying display metadata.
+  if (parts.length === 2 && parts[1] === "publish") {
+    const tpl = await env.SKINS.head(`skins/${id}/template.json`);
+    if (!tpl) return json({ error: "unknown skin (generate first)" }, 404);
+    let marker: Record<string, unknown> = {};
+    try {
+      const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+      // keep only the small display fields; ignore anything else the client sends.
+      for (const k of ["name", "blurb", "font", "style"]) {
+        if (typeof body[k] === "string") marker[k] = (body[k] as string).slice(0, 200);
+      }
+    } catch { /* empty/invalid body → marker with no overrides is still valid */ }
+    marker.publishedAt = new Date().toISOString();
+    await env.SKINS.put(`published/${id}`, JSON.stringify(marker), {
+      httpMetadata: { contentType: "application/json" },
+    });
+    return json({ id, published: true });
+  }
 
   // route: /<id> (frame) | /<id>/sprites/<bind> (control sprite)
   let bind: string | null = null;
