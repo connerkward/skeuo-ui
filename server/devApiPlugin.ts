@@ -234,6 +234,31 @@ export function devApiPlugin(): Plugin {
         const id = segs[0];
         if (!id || !ID_RE.test(id)) { res.statusCode = 400; res.end(JSON.stringify({ error: "bad id" })); return; }
         if (!existsSync(resolve(genDir, `${id}-template.json`))) { res.statusCode = 404; res.end(JSON.stringify({ error: "unknown skin" })); return; }
+        // publish: /<id>/publish — write the dev published marker (<id>-published.json)
+        // carrying the small display fields. Parity with the CF Function's
+        // published/<id> R2 marker. GET /api/skins lists these as published.
+        if (segs.length === 2 && segs[1] === "publish") {
+          const chunks2: Buffer[] = [];
+          req.on("data", (c) => chunks2.push(c as Buffer));
+          req.on("end", () => {
+            try {
+              let body: Record<string, unknown> = {};
+              try { body = JSON.parse(Buffer.concat(chunks2).toString("utf8") || "{}"); } catch { /* ignore */ }
+              const marker: Record<string, unknown> = { publishedAt: new Date().toISOString() };
+              for (const k of ["name", "blurb", "font", "style"]) {
+                if (typeof body[k] === "string") marker[k] = (body[k] as string).slice(0, 200);
+              }
+              mkdirSync(genDir, { recursive: true });
+              writeFileSync(resolve(genDir, `${id}-published.json`), JSON.stringify(marker));
+              res.statusCode = 200;
+              res.end(JSON.stringify({ id, published: true }));
+            } catch (e) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
+            }
+          });
+          return;
+        }
         // sprite upload: /<id>/sprites/<bind>
         let bind: string | null = null;
         if (segs.length >= 3 && segs[1] === "sprites") {
@@ -263,6 +288,60 @@ export function devApiPlugin(): Plugin {
             res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
           }
         });
+      });
+
+      // GET /api/skins — local parity with functions/api/skins.ts: the cloud skin
+      // INDEX the app merges into the gallery. Lists finalized skins in
+      // public/generated/ (ids having BOTH <id>-template.json and <id>-frame.png)
+      // and returns the SAME shape. A skin counts as published if its <id>-published.json
+      // marker exists; if NO markers exist at all, dev treats every finalized skin as
+      // published (so a fresh local skin shows up without an extra publish step).
+      const titleFromPrompt = (prompt: string): string => {
+        const words = prompt.trim().replace(/^(a|an|the)\s+/i, "").replace(/[^\w\s-]/g, "")
+          .split(/\s+/).filter(Boolean).slice(0, 3);
+        const t = words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+        return t || "New Skin";
+      };
+      const blurbFromPrompt = (prompt: string): string => {
+        const p = prompt.trim().replace(/\s+/g, " ");
+        const s = p.charAt(0).toUpperCase() + p.slice(1);
+        return s.length > 64 ? s.slice(0, 61).trimEnd() + "…" : s;
+      };
+      server.middlewares.use("/api/skins", (_req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-store");
+        let files: string[] = [];
+        try { files = readdirSync(genDir); } catch { files = []; }
+        const fileSet = new Set(files);
+        const hasAnyMarker = files.some((f) => f.endsWith("-published.json"));
+        const readJson = (file: string): any => {
+          try { return JSON.parse(readFileSync(resolve(genDir, file), "utf8")); } catch { return null; }
+        };
+        const skins: any[] = [];
+        for (const f of files) {
+          const m = f.match(/^(.+)-template\.json$/);
+          if (!m) continue;
+          const id = m[1];
+          if (!fileSet.has(`${id}-frame.png`)) continue;            // not finalized yet
+          const marker = fileSet.has(`${id}-published.json`) ? readJson(`${id}-published.json`) : null;
+          // published if it has a marker, OR (no markers anywhere) dev shows all finalized.
+          if (hasAnyMarker && !marker) continue;
+          const meta = fileSet.has(`${id}-meta.json`) ? readJson(`${id}-meta.json`) : null;
+          const tpl = readJson(`${id}-template.json`) || {};
+          const prompt = meta?.prompt ?? "";
+          const name = marker?.name || tpl.name || (prompt ? titleFromPrompt(prompt) : id);
+          const blurb = marker?.blurb || tpl.blurb || (prompt ? blurbFromPrompt(prompt) : "");
+          const style = marker?.style || meta?.style || id;
+          const sprites = files.some((x) => x.startsWith(`${id}-sprite-`) && x.endsWith(".png"));
+          skins.push({
+            id, name, blurb, style,
+            frameUrl: `/api/asset/skins/${id}/frame.png`,
+            sprites, font: marker?.font, createdAt: meta?.createdAt,
+          });
+        }
+        skins.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+        res.statusCode = 200;
+        res.end(JSON.stringify({ skins }));
       });
 
       // GET /api/skin/<id> — local parity with the CF Function: reconstruct a

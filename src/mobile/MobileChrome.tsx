@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Composite } from "../player/Composite";
+import { Composite, type RuntimeSkinView } from "../player/Composite";
 import type { Template } from "../template/schema";
 import type { SkinAssets } from "../player/skins";
 import type { SpotifyDrive, SpotifyHook } from "../spotify/useSpotify";
@@ -24,12 +24,17 @@ interface Props {
   // top-bar treatment matching the desktop bar:
   connectEnabled?: boolean;      // show the Spotify connect pill (hidden while broken)
   share?: React.ReactNode;       // the Share button (rendered by App)
+  // cloud/generated skins in the carriage need a per-skin runtime so they render
+  // through the SAME <Composite runtime={…}> path as desktop — without it a cloud
+  // skin would fall back to the bundled donor template and show the wrong device.
+  // Map of skin id → resolved runtime view; absent ids render as built-ins.
+  runtimes?: Record<string, RuntimeSkinView>;
 }
 
 // Mobile shell (<820px): a compact top bar + a swipeable carriage of skins,
 // with a trailing "+ Generate your own" page. Desktop never mounts this.
 export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp, mode, setMode, spotifyDrive,
-  connectEnabled, share }: Props) {
+  connectEnabled, share, runtimes }: Props) {
   // pages = every visible skin, plus one trailing "create" page
   const createIdx = skins.length;
   const startIdx = Math.max(0, skins.findIndex((s) => s.id === skinId));
@@ -82,8 +87,11 @@ export function MobileChrome({ template, skins, skinId, setSkinId, onCreate, sp,
                   graph is heavy; off-screen skins render an empty placeholder */}
               {Math.abs(i - sw.index) <= 1 ? (
                 // drive the CURRENT page from real Spotify when connected; the
-                // neighbors stay on the local demo (off-screen, about to mount)
+                // neighbors stay on the local demo (off-screen, about to mount).
+                // cloud/generated skins pass their resolved runtime so they render
+                // their OWN device frame + template (not the bundled donor).
                 <Composite template={template} skinId={s.id}
+                  runtime={runtimes?.[s.id]}
                   spotifyDrive={i === sw.index ? spotifyDrive : null} />
               ) : (
                 <div className="m-placeholder" />

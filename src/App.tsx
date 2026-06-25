@@ -5,7 +5,7 @@ import { SkinThumb } from "./player/SkinThumb";
 import { skinFont, skinFontStyle, ensureGoogleFont, isFontReady, preloadSkinFonts } from "./player/skinFonts";
 import { useDocumentPip } from "./player/useDocumentPip";
 import { playerTemplate } from "./template/winamp-layout";
-import { skinList, thumbUrl } from "./player/skins";
+import { skinList, thumbUrl, type SkinAssets } from "./player/skins";
 import "./skins/all"; // app.css + player.css + every skin palette (shared with the widget)
 // ── feature: generate-from-prompt ────────────────────────────────────────────
 import { type RuntimeSkin } from "./generate/CreatePanel";
@@ -23,7 +23,24 @@ import { DesktopHandoff } from "./desktop/DesktopHandoff";
 // ── feature: export the running skin as an animated GIF ──────────────────────
 import { ExportGifButton } from "./export/ExportGifButton";
 import { Brand } from "./components/Brand";
-import { initialSkinParam, isMobileApp } from "./platform";
+import { initialSkinParam, isMobileApp, apiUrl } from "./platform";
+import type { RuntimeSkinView } from "./player/Composite";
+import type { Template } from "./template/schema";
+
+// A row of the cloud skin INDEX (GET /api/skins) — published skins served by the
+// backend that the app merges into the gallery AFTER the bundled built-ins, so new
+// skins reach the app WITHOUT a rebuild. The full template is fetched lazily from
+// /api/skin/<id> only when the skin becomes active (see resolveCloudRuntime).
+interface CloudSkin {
+  id: string;
+  name: string;
+  blurb: string;
+  style: string;
+  frameUrl: string;
+  sprites: boolean;
+  font?: string;
+  createdAt?: string;
+}
 
 // expose the single-source-of-truth template for tooling (wireframe/mask export)
 (window as unknown as { __template: unknown }).__template = playerTemplate;
@@ -74,8 +91,59 @@ export default function App() {
     } catch { /* ignore */ }
   }, [skinId]);
   const [showCreate, setShowCreate] = useState(false);
+
+  // ── cloud skin index ─────────────────────────────────────────────────────────
+  // Fetch published skins once at startup and merge them into the gallery AFTER the
+  // bundled built-ins. Built-in ids win on collision (a cloud row with the same id
+  // is dropped) so the static catalog is never shadowed. Failures are silent — the
+  // gallery still works offline / without a backend.
+  const [cloudSkins, setCloudSkins] = useState<CloudSkin[]>([]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await fetch(apiUrl("/api/skins"), { cache: "no-store" });
+        if (!r.ok) return;
+        const data = (await r.json()) as { skins?: CloudSkin[] };
+        if (!alive || !Array.isArray(data.skins)) return;
+        const builtinIds = new Set(skinList.map((s) => s.id));
+        setCloudSkins(data.skins.filter((s) => s && s.id && !builtinIds.has(s.id)));
+      } catch { /* offline / no backend — gallery still works */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+  // resolved runtime views per cloud-skin id (template fetched lazily on activate)
+  const [cloudRuntimes, setCloudRuntimes] = useState<Record<string, RuntimeSkinView>>({});
+  const activeCloud = cloudSkins.find((s) => s.id === skinId);
+  // when a cloud skin becomes active and we haven't resolved its template yet,
+  // fetch /api/skin/<id> (the authoritative template) and cache the runtime view.
+  useEffect(() => {
+    if (!activeCloud || cloudRuntimes[activeCloud.id]) return;
+    let alive = true;
+    (async () => {
+      try {
+        const r = await fetch(apiUrl(`/api/skin/${encodeURIComponent(activeCloud.id)}`), { cache: "no-store" });
+        if (!r.ok) return;
+        const data = (await r.json()) as { template?: Template; frameUrl?: string; sprites?: boolean };
+        const template = data.template;
+        if (!alive || !template) return;
+        const view: RuntimeSkinView = {
+          frameUrl: apiUrl(data.frameUrl ?? activeCloud.frameUrl),
+          template,
+          style: activeCloud.style,
+          sprites: data.sprites ?? activeCloud.sprites,
+        };
+        setCloudRuntimes((m) => ({ ...m, [activeCloud.id]: view }));
+      } catch { /* keep showing the gallery; the device just won't resolve */ }
+    })();
+    return () => { alive = false; };
+  }, [activeCloud, cloudRuntimes]);
+
   const activeRuntime = runtimeSkins.find((s) => s.id === skinId);
-  const activeMeta = [...visible, ...runtimeSkins].find((s) => s.id === skinId);
+  // map of id → resolved runtime view for every cloud skin (drives the mobile
+  // carriage; desktop reads the active one). Only resolved skins appear here.
+  const activeCloudRuntime = activeCloud ? cloudRuntimes[activeCloud.id] : undefined;
+  const activeMeta = [...visible, ...runtimeSkins, ...cloudSkins].find((s) => s.id === skinId);
   // the skin's logomark title font (loaded on demand inside <CinemaTitle>)
   const titleFont = skinFont(skinId, activeRuntime?.font);
 
@@ -121,9 +189,18 @@ export default function App() {
     setShowCreate(false);
   }, []);
 
-  const runtimeView = activeRuntime
+  const runtimeView: RuntimeSkinView | undefined = activeRuntime
     ? { frameUrl: activeRuntime.frameUrl, template: activeRuntime.template, style: activeRuntime.style, sprites: activeRuntime.sprites }
-    : undefined;
+    : activeCloudRuntime;
+
+  // Cloud skins as minimal SkinAssets so they ride the mobile carriage alongside
+  // the built-ins (appended AFTER them). Their device renders via the `runtimes`
+  // map (resolved lazily as each becomes active); the entry itself just carries
+  // id/name/blurb for the strip + label.
+  const cloudAsAssets: SkinAssets[] = cloudSkins.map((s) => ({
+    id: s.id, name: s.name, blurb: s.blurb, has: ["frame"],
+  }));
+  const galleryMobile = [...visible, ...cloudAsAssets];
 
   // ── mobile shell ───────────────────────────────────────────────────────────
   if (mobile) {
@@ -150,7 +227,7 @@ export default function App() {
       <>
         <MobileChrome
           template={playerTemplate}
-          skins={visible}
+          skins={galleryMobile}
           skinId={skinId}
           setSkinId={setSkinId}
           onCreate={() => setShowCreate(true)}
@@ -159,6 +236,7 @@ export default function App() {
           setMode={setMode}
           spotifyDrive={spotifyDrive}
           connectEnabled={CONNECT_ENABLED}
+          runtimes={cloudRuntimes}
           share={
             <ExportGifButton
               skinId={skinId}
@@ -246,6 +324,18 @@ export default function App() {
             <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
               onClick={() => setSkinId(s.id)} title={`${s.name} — ${s.blurb}`}>
               <SkinThumb skinId={s.id} imgSrc={thumbUrl(s.id)} />
+              <span className="skin-row-meta">
+                <span className="skin-row-name">{s.name}</span>
+                <span className="skin-row-blurb">{s.blurb}</span>
+              </span>
+            </button>
+          ))}
+          {/* cloud skins (published via /api/skins) — appended AFTER the built-ins.
+              thumb is the served frame; selecting one resolves its template lazily. */}
+          {cloudSkins.map((s) => (
+            <button key={s.id} className={`skin-row ${s.id === skinId ? "active" : ""}`}
+              onClick={() => setSkinId(s.id)} title={`${s.name} — ${s.blurb}`}>
+              <SkinThumb skinId={s.id} imgSrc={s.frameUrl} animate={false} />
               <span className="skin-row-meta">
                 <span className="skin-row-name">{s.name}</span>
                 <span className="skin-row-blurb">{s.blurb}</span>
