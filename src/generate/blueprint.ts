@@ -343,6 +343,7 @@ function controlDesc(r: Region, kind: SpriteKind): string {
     return sh;
   }
   if (kind === "knob") return `a round rotary knob with a pointer notch${r.label ? ` (${r.label})` : ""}`;
+  if (kind === "slider") return `a small slider THUMB/grip — JUST the compact movable handle that rides along a track (a knurled cap / grip button), matching the device's material and era; NOT the whole track, NOT the groove — only the little part the finger drags`;
   return "a control part";
 }
 
@@ -471,7 +472,10 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   for (const r of spriteRegs) {
     const kind = spriteKindOf(r)!;
     if (kind === "toggle") continue;  // toggles handled as an off/on pair below
-    if (kind === "slider") continue;  // sliders/seek are NOT sprites — the skin/CSS renders the track + thumb
+    // Horizontal sliders (seek / volume / balance) get a CUT THUMB sprite (Winamp model:
+    // painted track in the device + a movable thumb sprite). slider-v (EQ) / arc / path
+    // keep CSS for now. The cut sprite is named by r.id → SliderH reads spriteUrl(skinId, r.id).
+    if (kind === "slider" && r.kind !== "slider-h") continue;
     const bind = bindOf(r);
     items.push({ bind, kind, desc: controlDesc(r, kind) });
     // PLAY/PAUSE is a two-state control (like the toggle off/on pair): emit a paired

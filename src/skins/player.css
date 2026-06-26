@@ -370,11 +370,14 @@
 /* the baked face lives in the frame image, so simulate a press with a
    momentary dark inset over the region */
 .tbtn.sprited:active, .btn.sprited:active,
-.toggle.sprited:active {
+.toggle.sprited:active,
+.tbtn.baked:active {
   transform: none;
   background: rgba(0,0,0,.26);
   box-shadow: inset 0 2px 5px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.3);
 }
+/* baked buttons: transparent hit-region, no glow — darken only on press (above) */
+.tbtn.baked { border-radius: 10px; }
 .toggle.sprited[data-on="true"] {
   background: transparent;
   filter: brightness(1.12) drop-shadow(0 0 6px var(--toggle-on-spark, rgba(120,255,160,.85)));
@@ -405,6 +408,13 @@
   transform: translateY(-50%); background: var(--thumb-bg);
   border-radius: var(--thumb-radius, 2px); box-shadow: var(--thumb-shadow); pointer-events: none;
 }
+/* generated skins: the track is PAINTED into the device + the thumb is a cut sprite.
+   Size the thumb to the track (bigger than the tiny default) — the --thumb-h var also
+   drives the position-travel calc, so set it here — and hide the CSS rail/fill so they
+   don't double up over the painted groove. */
+.sk-slider-h.sprited { --thumb-h: 30px; --thumb-w: 26px; --thumb-radius: 4px; }
+.sk-slider-h.sprited .rail, .sk-slider-h.sprited .fill { display: none; }
+.sk-slider-h.sprited .thumb { box-shadow: none; background-color: transparent; }
 
 /* ---------- vertical slider (inside an eq-slot with a label) ---------- */
 .eq-slot { display: flex; flex-direction: column; align-items: center; gap: 3px; }

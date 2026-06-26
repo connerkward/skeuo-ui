@@ -151,9 +151,15 @@ function RegionView({ region: r, ps, skinId, rtSprites, wire, baked, onTitleDown
 
   const titleDown = r.dynamicType === "title" && r.id === "titlebar" ? onTitleDown : undefined;
   const dyn = r.content === "dynamic" ? "region-dyn" : "";
-  // round dial screens (orbit layout) clip their live content to the circle
+  // Clip live content to the screen so the visualizer/marquee can never spill past
+  // the screen onto the device body ("outside of area"). Ellipse dials clip to a
+  // circle; every other display clips to its rounded-rect box.
   const clip: React.CSSProperties =
-    r.kind === "display" && r.shape === "ellipse" ? { borderRadius: "50%", overflow: "hidden" } : {};
+    r.kind === "display"
+      ? (r.shape === "ellipse"
+          ? { borderRadius: "50%", overflow: "hidden" }
+          : { borderRadius: "var(--lcd-radius, 4px)", overflow: "hidden" })
+      : {};
   return (
     <div className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={{ ...style, ...clip }} onPointerDown={titleDown}>
       {renderControl(r, ps, skinId, rtSprites)}
@@ -249,14 +255,14 @@ function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: bo
     const rawBind = r.bind ?? r.id;
     // BAKED button: its face is painted COHESIVELY into the device body (a cluster with
     // real reference shapes), so there is NO cut sprite — overlay only a transparent
-    // hit-region. play/pause toggles and shows a soft "playing" glow as the state cue.
+    // hit-region. NO glow/state cue: per design the only feedback is a momentary DARKEN
+    // on press (handled by .tbtn.baked:active in CSS), matching real hardware.
     if (r.baked) {
       const isPP = rawBind === "play" || (/(^|_)play(_|$)/.test(r.id) && !r.id.includes("playlist"));
       const click = isPP ? (ps.playing ? ps.pause : ps.play) : btnHandler(r, ps);
       return (
         <button className="tbtn baked" onClick={click} title={r.label ?? r.id} style={{
           width: "100%", height: "100%", background: "transparent", border: 0, borderRadius: 10, cursor: "pointer",
-          boxShadow: isPP && ps.playing ? "inset 0 0 0 2px rgba(120,255,140,.55), 0 0 14px rgba(120,255,140,.4)" : "none",
         }} />
       );
     }
@@ -562,7 +568,9 @@ function SliderPath({ r, ps }: { r: Region; ps: PlayerState }) {
 /* ---------- sliders ---------- */
 function SliderH({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId: string; rtSprites: boolean }) {
   const thumbSprite: React.CSSProperties = skinSprites(skinId, rtSprites)
-    ? { backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "thumb", rtSprites)})`, backgroundSize: "100% 100%", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+    // generated thumbs are arbitrary-aspect (the painter draws whatever grip suits the
+    // skin), so `contain` preserves their shape; the built-in thumb.png is authored to fill.
+    ? { backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "thumb", rtSprites)})`, backgroundSize: rtSprites ? "contain" : "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
     : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
@@ -582,8 +590,9 @@ function SliderH({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; ski
     window.addEventListener("pointermove", m); window.addEventListener("pointerup", u);
     return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, []);
+  const sprited = !!thumbSprite.backgroundImage;
   return (
-    <div ref={ref} className="sk-slider-h"
+    <div ref={ref} className={`sk-slider-h ${sprited ? "sprited" : ""}`}
       onPointerDown={(e) => { drag.current = true; set(e.clientX); }} title={r.label}>
       <div className="rail" /><div className="fill" style={{ width: `${value * 100}%` }} />
       <div className="thumb" style={{ left: `calc(${value} * (100% - var(--thumb-h, 11px)))`, ...thumbSprite }} />
