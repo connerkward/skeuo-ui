@@ -170,7 +170,13 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
           try {
             const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template, data.keyColor);
             frameUrl = r.frameUrl; hasSprites = r.sprites; template = r.template ?? data.template;
-          } catch (e) { setErr(`${modelLabel(model)}: cutout failed: ${e instanceof Error ? e.message : String(e)}`); continue; }
+          } catch (e) {
+            // Cutout failed (BiRefNet/upload error) — do NOT discard a paid generation.
+            // Fall through with the raw painted frame (frameUrl already = the paint) and
+            // no sprites, so the user still gets the skin instead of nothing.
+            console.warn("cutout failed, falling back to raw paint frame", e);
+            setErr(`${modelLabel(model)}: cutout failed — showing raw paint (${e instanceof Error ? e.message : String(e)})`);
+          }
         }
         onCreated({
           id: data.id,
