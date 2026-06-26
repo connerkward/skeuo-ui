@@ -15,7 +15,7 @@ export function Visualizer({ playing, analyser, bars = 19, variant = "linear", p
   // "radial" fills a circular dial; "teeth" draws a red grinning equalizer;
   // "ribbon" stands reactive bars perpendicular to an arbitrary freeform spline
   // (the `path`) so each skin's EQ is its own shape, not the same rectangle.
-  variant?: "linear" | "radial" | "teeth" | "ribbon" | "blob";
+  variant?: "linear" | "radial" | "teeth" | "ribbon";
   path?: Pt[];
   // when variant==="radial", which dial treatment: classic bars, concentric
   // pulsing rings, a rotating radar sweep, blooming petals, or a closed

@@ -77,7 +77,7 @@ export interface Region {
                           // jog dial) keep real reference shapes the isolated-cut path can't.
   arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
   path?: Pt[];                            // slider-path spline / freeform visualizer shape (normalized in rect)
-  vis?: "linear" | "radial" | "teeth" | "ribbon" | "blob";  // visualizer render style
+  vis?: "linear" | "radial" | "teeth" | "ribbon";  // visualizer render style
   dialStyle?: "bars" | "rings" | "radar" | "bloom" | "wave"; // round-dial sub-style (else hashed per skin)
 }
 

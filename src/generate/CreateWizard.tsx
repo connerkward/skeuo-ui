@@ -6,7 +6,7 @@ import { apiUrl } from "../platform";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, layoutRandom, type LayoutVariant } from "./layouts";
 import type { Region, Kind, DynamicType } from "../template/schema";
-import type { RuntimeSkin } from "./CreatePanel";
+import type { RuntimeSkin } from "./runtimeSkin";
 import { LayoutStage } from "../template/LayoutStage";
 
 // ─────────────────────────────────────────────────────────────────────────────

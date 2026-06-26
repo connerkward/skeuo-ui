@@ -8,7 +8,7 @@ import { playerTemplate } from "./template/winamp-layout";
 import { skinList, thumbUrl, type SkinAssets } from "./player/skins";
 import "./skins/all"; // app.css + player.css + every skin palette (shared with the widget)
 // ── feature: generate-from-prompt ────────────────────────────────────────────
-import { type RuntimeSkin } from "./generate/CreatePanel";
+import { type RuntimeSkin } from "./generate/runtimeSkin";
 import { CreateWizard } from "./generate/CreateWizard";
 import "./generate/create.css";
 // ── feature: Spotify connect & control ───────────────────────────────────────
