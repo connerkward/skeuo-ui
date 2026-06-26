@@ -129,6 +129,21 @@ function RegionView({ region: r, ps, skinId, rtSprites, wire, baked, onTitleDown
 }) {
   const style = pct(r.rect);
 
+  // Measure the rendered screen so the live-content clip uses a corner radius that
+  // MATCHES the painted screen's rounding (the painter rounds screens far more than
+  // the tiny CSS default), and rescales responsively. ~18% of the shorter side reads
+  // as a rounded Y2K screen; the round-dial case clips to a full circle instead.
+  const dispRef = useRef<HTMLDivElement>(null);
+  const [scrRad, setScrRad] = useState(14);
+  useEffect(() => {
+    if (r.kind !== "display" || r.shape === "ellipse") return;
+    const el = dispRef.current; if (!el) return;
+    const measure = () => setScrRad(Math.max(6, Math.round(Math.min(el.clientWidth, el.clientHeight) * 0.18)));
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(el);
+    return () => ro.disconnect();
+  }, [r.kind, r.shape]);
+
   if (wire) {
     return (
       <div className={`wire wire-${r.kind}`} style={style} data-content={r.content}>
@@ -158,10 +173,10 @@ function RegionView({ region: r, ps, skinId, rtSprites, wire, baked, onTitleDown
     r.kind === "display"
       ? (r.shape === "ellipse"
           ? { borderRadius: "50%", overflow: "hidden" }
-          : { borderRadius: "var(--lcd-radius, 4px)", overflow: "hidden" })
+          : { borderRadius: `${scrRad}px`, overflow: "hidden" })
       : {};
   return (
-    <div className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={{ ...style, ...clip }} onPointerDown={titleDown}>
+    <div ref={dispRef} className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={{ ...style, ...clip }} onPointerDown={titleDown}>
       {renderControl(r, ps, skinId, rtSprites)}
     </div>
   );
