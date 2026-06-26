@@ -134,8 +134,18 @@ const median = (a: number[]) => { const s = [...a].sort((x, y) => x - y); const 
 // Snap each control's rect to SAM (when confident), then structurally refit
 // evenly-spaced rows (transport buttons, EQ bands) so a missed member is interpolated.
 // Returns a NEW regions array with corrected rects (only CTRL kinds change).
+// snap controls, and ONLY the live screen among displays (visualizer/cd/albumart) — NOT
+// small text displays (marquee/time/playlist), whose box prompts overlap neighbours and
+// mis-snap onto a button; their layout position is reliable, so keep it.
+const BIG_SCREEN = new Set(["visualizer", "cd", "albumart"]);
+function snappable(r: Region): boolean {
+  if (!CTRL.has(r.kind)) return false;
+  if (r.kind === "display") return BIG_SCREEN.has(String((r as { dynamicType?: string }).dynamicType ?? ""));
+  return true;
+}
+
 export async function snapRegions(falKey: string, imageUrl: string, regions: Region[], imgW = SAM_W, imgH = SAM_H): Promise<{ regions: Region[]; snapped: number; total: number }> {
-  const ctrl = regions.filter((r) => CTRL.has(r.kind));
+  const ctrl = regions.filter(snappable);
   if (!ctrl.length) return { regions, snapped: 0, total: 0 };
   const det = await detect(falKey, imageUrl, ctrl, imgW, imgH);
   const newRects: Rect[] = [];
@@ -143,7 +153,10 @@ export async function snapRegions(falKey: string, imageUrl: string, regions: Reg
   ctrl.forEach((r, i) => {
     const d = det[i];
     if (plausible(r.rect, d) && d) {
-      newRects.push({ x: d.cx - d.w / 2, y: d.cy - d.h / 2, w: d.w, h: d.h }); flags.push("snap");
+      // POSITION-ONLY: move the rect's CENTER onto SAM's detection, but KEEP the prior
+      // size. Never let detection resize a control — that made knobs/buttons different
+      // sizes (ai-image-coords-rule). The blueprint sizes are the load-bearing truth.
+      newRects.push({ x: d.cx - r.rect.w / 2, y: d.cy - r.rect.h / 2, w: r.rect.w, h: r.rect.h }); flags.push("snap");
     } else { newRects.push({ ...r.rect }); flags.push("keep"); }
   });
 
@@ -158,12 +171,11 @@ export async function snapRegions(falKey: string, imageUrl: string, regions: Reg
     const [a, b] = lineFit(gPos, gXs);
     const gi = order.filter((_, k) => good[k]);
     const cyMed = median(gi.map((i) => newRects[i].y + newRects[i].h / 2));
-    const wMed = median(gi.map((i) => newRects[i].w));
-    const hMed = median(gi.map((i) => newRects[i].h));
     order.forEach((i, k) => {
       if (flags[i] === "snap") return;
-      const cx = a * k + b;
-      newRects[i] = { x: cx - wMed / 2, y: cyMed - hMed / 2, w: wMed, h: hMed };
+      // POSITION-ONLY refit: interpolate the row position; KEEP this control's prior size.
+      const cx = a * k + b, pw = ctrl[i].rect.w, ph = ctrl[i].rect.h;
+      newRects[i] = { x: cx - pw / 2, y: cyMed - ph / 2, w: pw, h: ph };
       flags[i] = "refit";
     });
   };
@@ -172,7 +184,7 @@ export async function snapRegions(falKey: string, imageUrl: string, regions: Reg
 
   let ci = 0;
   const out = regions.map((r) => {
-    if (!CTRL.has(r.kind)) return r;
+    if (!snappable(r)) return r;
     const nr = newRects[ci++];
     return { ...r, rect: { x: +nr.x.toFixed(4), y: +nr.y.toFixed(4), w: +nr.w.toFixed(4), h: +nr.h.toFixed(4) } };
   });

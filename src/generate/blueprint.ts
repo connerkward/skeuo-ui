@@ -342,7 +342,7 @@ function controlDesc(r: Region, kind: SpriteKind): string {
     if (b.includes("pause")) return `${sh} with a pause icon (two vertical bars) embossed ON ITS FACE`;
     return sh;
   }
-  if (kind === "knob") return `a round rotary knob with a pointer notch${r.label ? ` (${r.label})` : ""}`;
+  if (kind === "knob") return `a round rotary knob cap, smooth or knurled, with NO painted pointer/notch/indicator line — a plain symmetric cap (the app draws the rotating indicator on top)${r.label ? ` (${r.label})` : ""}`;
   if (kind === "slider") return `a small slider THUMB/grip — JUST the compact movable handle that rides along a track (a knurled cap / grip button), matching the device's material and era; NOT the whole track, NOT the groove — only the little part the finger drags`;
   return "a control part";
 }

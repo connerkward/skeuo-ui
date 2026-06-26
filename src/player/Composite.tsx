@@ -448,13 +448,14 @@ function Knob({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId
   }, [setV]);
   const angle = -135 + value * 270;
   if (skinSprites(skinId, rtSprites)) {
-    // SPRITE knob: ROTATE the cut cap itself (its painted pointer-notch turns with it),
-    // so the knob visibly rotates like real hardware — not a static cap with a fake
-    // CSS pointer orbiting it.
+    // SPRITE knob: the cap art is STATIC (the painter paints a smooth/knurled cap with NO
+    // divot, so its baked lighting must NOT rotate — rotating a baked highlight reads
+    // wrong). A CSS indicator line orbits the center to show the value instead.
     return (
       <div className="knob sp-knob" title={`${r.label}: ${(value * 100) | 0}%`}
         onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
-        <div className="sp-knob-img" style={{ backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "knob", rtSprites)})`, backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat", transform: `rotate(${angle}deg)` }} />
+        <div className="sp-knob-img" style={{ backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "knob", rtSprites)})`, backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }} />
+        <div className="sp-knob-ptr" style={{ transform: `rotate(${angle}deg)` }} />
         <span className="knob-label">{r.label}</span>
       </div>
     );
