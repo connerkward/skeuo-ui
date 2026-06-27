@@ -318,10 +318,13 @@ async function judgeBankOnce(falKey: string, paintUrl: string): Promise<boolean>
   } catch { return true; } // fail-open: never block a generation on a judge hiccup
 }
 
-// consensus of 2 runs (Gemini's verdict varies); perfect only if BOTH agree.
+// consensus of 3 runs (Gemini's verdict varies — 2/3 let borderline banks slip through);
+// perfect only if ALL THREE agree. Stricter → rejects marginal banks, re-rolls instead.
 async function bankPerfect(falKey: string, paintUrl: string): Promise<boolean> {
-  const [a, b] = await Promise.all([judgeBankOnce(falKey, paintUrl), judgeBankOnce(falKey, paintUrl)]);
-  return a && b;
+  const v = await Promise.all([
+    judgeBankOnce(falKey, paintUrl), judgeBankOnce(falKey, paintUrl), judgeBankOnce(falKey, paintUrl),
+  ]);
+  return v.every(Boolean);
 }
 // width/height from a PNG's IHDR (no full decode; works in Worker + Node).
 function pngDims(b: Uint8Array): { w: number; h: number } | null {
