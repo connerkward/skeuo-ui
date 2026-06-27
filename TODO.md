@@ -43,6 +43,16 @@ the paint prompt (`src/generate/pipeline.ts`).
 
 ## Open
 
+- [ ] **Streamline lookdev/proof capture & human-sharing pipeline (cleanliness).** The repo keeps
+      getting littered with stray image files — dumped in the repo root, in an ad-hoc `.proof/`
+      directory, scattered intermediates from generate→cut→detect→render runs, etc. Need ONE
+      consistent convention for where lookdev/proof artifacts are captured and how they're surfaced
+      to a human, instead of every run inventing its own dumping ground. Target state: agent-only
+      scratch → `/tmp` (cleaned up); human-review artifacts → served web page + `~/Desktop/cc-skeuo/`
+      per the file-output / review-in-browser rules; NOTHING written to the repo root or a random
+      `.proof/` dir. Audit the proof/lookdev codepaths (`cutoutClient.ts`, any `*proof*`/`*lookdev*`
+      scripts, the sam_snap/align passes) for hardcoded output paths and centralize them.
+
 - [ ] **★ #1 PRIORITY — Merge `spritesheet-pipeline` → main: single-pass skin generation + sprite-sheet (decision A locked 2026-06-23).**
       **→ Full design + decisions + rejected approaches: [`docs/skin-pipeline-sota.md`](docs/skin-pipeline-sota.md) (READ FIRST).**
       ONE generative paint pass renders the device body + all button/knob/slider parts together
