@@ -13,7 +13,6 @@ import { Resvg } from "@resvg/resvg-js";
 import { handleGenerate } from "../src/generate/handler";
 import { removeBackground, segmentControls, type RuntimeDeps, type SamBoxPx } from "../src/generate/pipeline";
 import { extractSlots, extractMasks, type SlotControl } from "../src/generate/director";
-import { snapFromUrl } from "../src/generate/samSnap";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
 // the same precedence used for both FAL_KEY and OPENAI_API_KEY.
@@ -127,40 +126,6 @@ export function devApiPlugin(): Plugin {
           } catch (e) {
             res.statusCode = 502;
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
-          }
-        });
-      });
-
-      // POST /api/snap — ALIGN pass: SAM-3.1 snaps each region onto the actual painted
-      // socket/screen. Dev parity for functions/api/snap.ts. fal can't fetch localhost, so
-      // we pull the asset bytes ourselves and upload to fal storage first.
-      server.middlewares.use("/api/snap", (req, res) => {
-        if (req.method !== "POST") { res.statusCode = 405; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "POST only" })); return; }
-        if (!falKey) { res.statusCode = 500; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "server missing FAL_KEY (.dev.vars)" })); return; }
-        const chunks: Buffer[] = [];
-        req.on("data", (c) => chunks.push(c as Buffer));
-        req.on("end", async () => {
-          try {
-            const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}") as { id?: string; imageUrl?: string; regions?: unknown[] };
-            if (!body.imageUrl || !Array.isArray(body.regions)) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "imageUrl + regions required" })); return; }
-            const port = (server.config.server.port ?? 5180);
-            const abs = body.imageUrl.startsWith("http") ? body.imageUrl : `http://localhost:${port}${body.imageUrl}`;
-            const out = await snapFromUrl(falKey, abs, body.regions as Parameters<typeof snapFromUrl>[2]);
-            if (body.id) {
-              const p = resolve(genDir, `${body.id}-template.json`);
-              if (existsSync(p)) {
-                try {
-                  const tpl = JSON.parse(readFileSync(p, "utf8"));
-                  writeFileSync(resolve(genDir, `${body.id}-template.prior.json`), JSON.stringify(tpl)); // pre-snap baseline (dev review)
-                  tpl.regions = out.regions; writeFileSync(p, JSON.stringify(tpl));
-                } catch { /* best-effort */ }
-              }
-            }
-            res.statusCode = 200; res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ regions: out.regions, snapped: out.snapped, total: out.total }));
-          } catch (e) {
-            res.statusCode = 502; res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }));
           }
         });

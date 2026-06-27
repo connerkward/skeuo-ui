@@ -524,25 +524,14 @@ export async function finishCutoutFull(
   const frameBlob = await whiteKeyCanvas(deviceCanvas, key);
   await uploadFrame(id, frameBlob);
 
-  // 1b. ALIGN PASS: snap each region onto the ACTUAL painted socket/screen with SAM-3.1
-  //     (box-prompted segmentation — robust, unlike the noisy gpt-4o freeform boxes the
-  //     old comment rightly rejected). The device has empty sockets + painted screens;
-  //     SAM segments exactly those at each region's prior rect and snaps to them, fixing
-  //     the "everything outside bounds" drift incl. the visualizer/screen. Best-effort:
-  //     any failure keeps the blueprint prior (never snap to garbage — samSnap guards too).
-  let snapped = template;
-  if (template) {
-    try {
-      const sr = await fetch(apiUrl("/api/snap"), {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, imageUrl: apiUrl(durableFrameUrl), regions: template.regions }),
-      });
-      if (sr.ok) {
-        const d = await sr.json() as { regions?: Template["regions"] };
-        if (d.regions?.length) snapped = { ...template, regions: d.regions };
-      }
-    } catch { /* keep the blueprint prior */ }
-  }
+  // 1b. PLACEMENT = the blueprint/socket positions, AS-IS. The deterministic template
+  //     rects ARE the load-bearing truth (ai-image-coords-rule). Detection-snapping was
+  //     tried (gpt-4o, then SAM-3.1) and REJECTED twice: in this architecture the controls
+  //     are painted in the bottom STRIP and the device has EMPTY sockets, so detecting on
+  //     the device frame snaps controls to garbage (or barely moves, while resizing them) —
+  //     worse than the blueprint. The real misalignment is the PAINTER not honouring the
+  //     sockets; fix that, not detection. Keep the blueprint template unchanged.
+  const snapped = template;
 
   // 2. control sprites: BiRefNet-isolate the WHOLE strip ONCE (the same rembg model used
   //    for the device), giving a transparent-background strip, then cut each control by
