@@ -53,6 +53,7 @@ export const PAINT_PROMPT =
   "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
   "- CYAN-outlined regions are NOT empty wells — they are REAL CONTROLS. Paint a finished, tactile, pressable BUTTON (or, where several CYAN regions sit adjacent, ONE cohesive COHESIVE CLUSTER of buttons) integrated INTO the body here, in the body material, fully rendered with the correct icon embossed on each. Give them the device-era SHAPE — prefer ORGANIC, non-rectangular silhouettes: curved WEDGE / arc-segments of a jog dial (Walkman), HALF-OVAL or kidney keys (car console), lozenges — that nest together into one sculpted cluster, NOT separate plain squares. These ARE the actual device buttons (they stay in the render); remove the cyan outline itself.\n" +
   "- SHARED HOUSING for the cyan cluster: seat that button cluster in ONE inset, recessed HOUSING / bezel of the body material, with thin raised SEAMS between the individual curved keys (like a real car-console keypad or a Walkman transport cluster) — one cohesive sunken unit, not free-floating buttons.\n" +
+  "- EVEN, UNIFORM cluster: the keys MUST be EVENLY SPACED in a clean straight row with IDENTICAL gaps between them, and (apart from the PLAY key, which may be larger) the keys are the SAME size as each other. The dividing seams between keys are all the same thickness. No key crowded against a neighbour, drifting, tilted, or distorted — precise, deliberate, symmetric spacing like real manufactured hardware, EVEN when the body is lumpy/inflated/organic (the cluster stays a crisp even row regardless of the body shape).\n" +
   "- (MAGENTA wells remain EMPTY dark holes as described above — only CYAN regions get real painted controls.)\n" +
   "- REMOVE the bright pink/magenta rings in your output (guides only); the dark socket they ringed stays exactly where it was.\n" +
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
@@ -277,6 +278,51 @@ async function fetchPng(url: string): Promise<Uint8Array> {
   if (!r.ok) throw new Error(`fetch image ${url} → ${r.status}`);
   return new Uint8Array(await r.arrayBuffer());
 }
+
+// ── ALIGNMENT GATE: re-roll the paint until a strong VISION MODEL confirms the
+//    transport BUTTON bank is clean + EVENLY spaced. The painter places the baked bank
+//    well most of the time but drifts on hard/lumpy bodies; instead of trying to detect
+//    + move controls (SAM/heuristics — rejected, they make it worse), we KEEP the
+//    blueprint coords and just re-roll the paint a few times, gated by Gemini 2.5 Pro
+//    (via fal/OpenRouter — the strongest reachable, far better than my own eyes). Only a
+//    paint whose bank Gemini approves ships. Fail-OPEN: any judge error/timeout treats
+//    the bank as OK so a flaky model never blocks generation.
+const BANK_GATE_ENABLED = true;
+const MAX_BANK_TRIES = 4;
+const BANK_MODEL = "google/gemini-2.5-pro";
+const BANK_PROMPT =
+  "This is the PAINTED hardware of a skeuomorphic music player. Judge ONLY the transport BUTTON cluster " +
+  "(play / stop / previous-rewind / next-forward). Are the buttons EVENLY spaced with identical gaps, " +
+  "consistently sized (play may be larger), cleanly formed, undistorted, and seated in one tidy row/housing — " +
+  "like real manufactured hardware? Any uneven gap, crowded/merged/drifting/tilted/distorted key, or a missing " +
+  "button = FAIL. Ignore knobs, screens, colours, the disc, and art style.\n" +
+  'Return ONLY strict JSON: {"buttons_perfect":true|false,"issue":"<short>"}';
+
+async function judgeBankOnce(falKey: string, paintUrl: string): Promise<boolean> {
+  try {
+    const job = await falPost(falKey, "https://queue.fal.run/openrouter/router/vision", {
+      model: BANK_MODEL, reasoning: true, temperature: 0, max_tokens: 3500,
+      image_urls: [paintUrl], prompt: BANK_PROMPT,
+    });
+    const t0 = Date.now();
+    for (;;) {
+      const s = (await falGet(falKey, job.status_url)).status;
+      if (s === "COMPLETED") break;
+      if (s === "FAILED" || s === "ERROR" || Date.now() - t0 > 120_000) return true; // fail-open
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    const out: string = (await falGet(falKey, job.response_url)).output ?? "";
+    const a = out.indexOf("{"), b = out.lastIndexOf("}");
+    if (a < 0) return true;
+    return !!JSON.parse(out.slice(a, b + 1)).buttons_perfect;
+  } catch { return true; } // fail-open: never block a generation on a judge hiccup
+}
+
+// consensus of 2 runs (Gemini's verdict varies); perfect only if BOTH agree.
+async function bankPerfect(falKey: string, paintUrl: string): Promise<boolean> {
+  const [a, b] = await Promise.all([judgeBankOnce(falKey, paintUrl), judgeBankOnce(falKey, paintUrl)]);
+  return a && b;
+}
 // width/height from a PNG's IHDR (no full decode; works in Worker + Node).
 function pngDims(b: Uint8Array): { w: number; h: number } | null {
   if (b.length < 24 || b[0] !== 0x89 || b[1] !== 0x50) return null;
@@ -456,9 +502,17 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +
       "image(s) provided, but DO NOT copy their layout or shape — the silhouette, sockets and cells come only from the blueprint.";
   }
-  const paintJob = await falSubmit(deps.falKey, model, [blueprintUrl, ...refs], prompt);
-  const paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
-  deps.onStage?.("paint", paintUrl);   // the real painted skin
+  // RE-ROLL until the vision model approves the button bank (alignment gate above).
+  let paintUrl = "";
+  const tries = BANK_GATE_ENABLED ? MAX_BANK_TRIES : 1;
+  for (let bt = 1; bt <= tries; bt++) {
+    const paintJob = await falSubmit(deps.falKey, model, [blueprintUrl, ...refs], prompt);
+    paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
+    deps.onStage?.("paint", paintUrl);   // stream each attempt so the user watches it form
+    if (!BANK_GATE_ENABLED || bt === tries) break;
+    if (await bankPerfect(deps.falKey, paintUrl)) { log(`[${input.id}] button bank OK (try ${bt})`); break; }
+    log(`[${input.id}] button bank uneven — reroll ${bt}/${tries}`);
+  }
   const paintPng = await fetchPng(paintUrl);
   const paintMs = Date.now() - tPaint;
   log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);
