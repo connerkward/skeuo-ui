@@ -1,0 +1,74 @@
+{
+  "id": "a-cute-y2k-virtual-pet-e-radial-nano-banana-pro-yni4",
+  "shift": 0.0,
+  "score": 1.0,
+  "n_aligned": 4,
+  "n_total": 4,
+  "disagreements": 0,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 1.0102,
+        "offset": 0.0261,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 1.0448,
+        "offset": 0.1671,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 0.8841,
+        "offset": 0.0407,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 0.9606,
+        "offset": 0.0605,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    }
+  ]
+}

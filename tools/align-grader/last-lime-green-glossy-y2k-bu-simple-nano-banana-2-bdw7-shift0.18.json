@@ -1,0 +1,150 @@
+{
+  "id": "lime-green-glossy-y2k-bu-simple-nano-banana-2-bdw7",
+  "shift": 0.18,
+  "score": 0.5714,
+  "n_aligned": 4,
+  "n_total": 7,
+  "disagreements": 3,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 1.3756,
+        "offset": 0.3227,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on horizontal slider well"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 1.8159,
+        "offset": 0.2763,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.8,
+        "note": "box off-center from button"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 1.5264,
+        "offset": 0.2036,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on round play button well"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 1.532,
+        "offset": 0.0882,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on button well"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "stop",
+      "kind": "button",
+      "det": {
+        "presence": 1.6033,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on button well"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "volume",
+      "kind": "knob",
+      "det": {
+        "presence": 1.4307,
+        "offset": 0.4217,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on knob well"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "balance",
+      "kind": "knob",
+      "det": {
+        "presence": 1.3995,
+        "offset": 0.392,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.8,
+        "note": "box on blank body"
+      },
+      "aligned": false
+    }
+  ]
+}

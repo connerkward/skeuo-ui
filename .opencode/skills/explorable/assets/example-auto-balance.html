@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the auto-balance algorithm works — an explorable explanation</title>
+<style>
+  :root{
+    --paper:#ebe8df; --paper-warm:#efebe1; --card:#f4f1e8;
+    --ink:#1a1712; --ink-soft:#403a30; --ink-mut:#857c6a; --line:#d8d4c8;
+    --accent:#b4543f; --good:#3f7a4a; --warn:#a8762a; --blue:#3c6e8f;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--serif);font-size:18px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px 140px}
+  header.top{max-width:760px;margin:0 auto;padding:64px 22px 8px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-mut);margin:0 0 18px}
+  h1{font-size:clamp(2rem,5.4vw,3.1rem);line-height:1.04;margin:0 0 18px;letter-spacing:-.01em}
+  .dek{font-size:1.18rem;color:var(--ink-soft);margin:0 0 8px;max-width:60ch}
+  h2{font-size:1.7rem;line-height:1.12;margin:0 0 14px;letter-spacing:-.01em}
+  h2 .num{font-family:var(--mono);font-size:.8rem;color:var(--accent);
+    display:block;letter-spacing:.18em;margin-bottom:8px;font-weight:400}
+  h3{font-size:1.12rem;margin:26px 0 8px}
+  section{padding-top:62px}
+  p{margin:0 0 16px;max-width:64ch}
+  a{color:var(--ink);text-decoration-color:var(--line);text-underline-offset:3px}
+  a:hover{text-decoration-color:var(--accent)}
+  strong{font-weight:600}
+  em.term{font-style:normal;font-weight:600;border-bottom:1.5px solid var(--accent);padding-bottom:1px}
+  code{font-family:var(--mono);font-size:.86em;background:#0000000d;padding:1px 5px;border-radius:4px}
+  .eq{font-family:var(--mono);font-size:.96rem;background:var(--card);border:1px solid var(--line);
+    border-radius:8px;padding:14px 16px;margin:18px 0;overflow-x:auto;line-height:1.7}
+  .eq b{color:var(--accent);font-weight:600}
+  .eq .c{color:var(--ink-mut)}
+
+  /* figure cards */
+  .fig{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    margin:26px 0;padding:18px;box-shadow:0 1px 0 #fff6 inset}
+  .fig canvas{display:block;width:100%;border-radius:8px;background:var(--paper);touch-action:none}
+  .fig .cap{font-family:var(--mono);font-size:11.5px;color:var(--ink-mut);
+    margin:12px 2px 0;line-height:1.6;letter-spacing:.01em}
+  .controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:14px 2px 4px;
+    font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .controls label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .controls input[type=range]{width:120px;accent-color:var(--accent)}
+  .controls .val{color:var(--accent);min-width:46px;display:inline-block}
+  .btn{font-family:var(--mono);font-size:12px;padding:6px 13px;border:1px solid var(--ink);
+    background:transparent;color:var(--ink);border-radius:999px;cursor:pointer;transition:.12s}
+  .btn:hover{background:var(--ink);color:var(--paper)}
+  .btn.primary{background:var(--ink);color:var(--paper)}
+  .btn.primary:hover{opacity:.85}
+  .readout{font-family:var(--mono);font-size:12.5px;display:flex;flex-wrap:wrap;gap:6px 22px;
+    margin:14px 2px 0;padding-top:12px;border-top:1px solid var(--line)}
+  .readout span b{color:var(--ink-mut);font-weight:400}
+  .tag{color:var(--good)} .tag.bad{color:var(--accent)} .tag.warn{color:var(--warn)}
+
+  /* predict / reveal */
+  .predict{border-left:3px solid var(--blue);background:#3c6e8f0f;border-radius:0 10px 10px 0;
+    padding:14px 18px;margin:22px 0}
+  .predict .q{font-weight:600;margin:0 0 8px}
+  .predict .reveal{display:none;margin-top:10px;color:var(--ink-soft);font-size:.97rem}
+  .predict.open .reveal{display:block}
+  .predict .btn{margin-top:4px}
+
+  /* pedagogy note */
+  .ped{font-family:var(--mono);font-size:11.5px;color:var(--ink-mut);background:#0000000a;
+    border:1px dashed var(--line);border-radius:8px;padding:11px 14px;margin:20px 0;line-height:1.65}
+  .ped b{color:var(--ink-soft);font-weight:600}
+
+  .lead-box{border-top:2px solid var(--ink);border-bottom:1px solid var(--line);
+    padding:18px 0;margin:8px 0 0}
+  .toc{font-family:var(--mono);font-size:13px;line-height:2;columns:2;margin:30px 0 0;color:var(--ink-soft)}
+  .toc a{display:block;text-decoration:none;color:var(--ink-soft)}
+  .toc a:hover{color:var(--accent)}
+  .toc .tnum{color:var(--accent)}
+  footer{max-width:760px;margin:0 auto;padding:40px 22px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:12px;color:var(--ink-mut);line-height:1.8}
+  .refs{font-size:.92rem;color:var(--ink-soft)}
+  .refs li{margin-bottom:7px}
+  hr.soft{border:0;border-top:1px solid var(--line);margin:54px 0 0}
+  @media(max-width:640px){.toc{columns:1}body{font-size:17px}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <p class="eyebrow">Explorable explanation · portfolio-2026 / about-page balance</p>
+  <h1>How the auto-balance algorithm works</h1>
+  <p class="dek">A layout has a portrait on one side and a column of text on the other.
+  When does it <em>feel</em> balanced — and how do you get a machine to decide that without
+  relying on its (untrustworthy) opinion? This is the whole pipeline, one playable idea at a time.</p>
+  <div class="lead-box">
+  <p style="margin:0;max-width:64ch">Every figure below is live. Drag things, move sliders, press the
+  buttons. Nothing here is a screenshot — each widget runs the <em>same math</em> the real studio
+  (<code>asym.html</code>) runs. Read it top to bottom; each idea is a brick for the next.</p>
+  </div>
+  <nav class="toc">
+    <a href="#s1"><span class="tnum">01</span> The see-saw: visual weight</a>
+    <a href="#s2"><span class="tnum">02</span> The optical center</a>
+    <a href="#s3"><span class="tnum">03</span> The centroid (2D)</a>
+    <a href="#s4"><span class="tnum">04</span> What "weight" means: ink density</a>
+    <a href="#s5"><span class="tnum">05</span> Two models: box vs pixels</a>
+    <a href="#s6"><span class="tnum">06</span> The discrepancy δ</a>
+    <a href="#s7"><span class="tnum">07</span> Learning δ: ridge regression</a>
+    <a href="#s8"><span class="tnum">08</span> The trust dial α</a>
+    <a href="#s9"><span class="tnum">09</span> Auto-balance: hill climbing</a>
+    <a href="#s10"><span class="tnum">10</span> The real lesson</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+<!-- ===================================================== 1 -->
+<section id="s1">
+  <h2><span class="num">01 / FOUNDATION</span>The see-saw: what "balance" physically is</h2>
+  <p>Forget pixels for a second. A composition balances the way a playground see-saw balances.
+  Each element has a <em class="term">visual weight</em> and sits at some <em class="term">distance</em>
+  from the center line. What tips the beam is not weight alone — it's weight <em>times</em> distance.
+  That product is the <em class="term">moment</em> (physicists call it torque).</p>
+
+  <div class="eq"><b>moment</b> = Σ <span class="c">over every element i of</span> ( weight<sub>i</sub> × distance<sub>i</sub> from center )<br>
+  balanced ⇔ moment ≈ 0 <span class="c">(left moments cancel right moments)</span></div>
+
+  <p>A small weight far out can balance a big weight near the middle — which is exactly the trick the
+  whole algorithm exploits later: a heavy portrait near the edge gets counterweighted by making the
+  heading bigger, or by sliding the portrait inward (shorter lever arm).</p>
+
+  <div class="fig">
+    <canvas id="c1" height="300"></canvas>
+    <div class="controls">
+      <label>portrait weight <input type="range" id="c1w" min="20" max="120" value="80"><span class="val" id="c1wv">80</span></label>
+      <span style="color:var(--ink-mut)">drag either block left ↔ right</span>
+    </div>
+    <div class="readout">
+      <span><b>left moment</b> <span id="c1ml">—</span></span>
+      <span><b>right moment</b> <span id="c1mr">—</span></span>
+      <span><b>net</b> <span id="c1net">—</span></span>
+      <span id="c1verd" class="tag">—</span>
+    </div>
+    <p class="cap">The text column (left, light + tall) vs the portrait (right, heavy + compact).
+    Move them, or change the portrait's weight. The beam tilts with the net moment. Get it level.</p>
+  </div>
+
+  <div class="predict">
+    <p class="q">Predict before you drag: the portrait weighs more than the text. To balance, should the
+    portrait be <em>closer to</em> or <em>farther from</em> the center than the text?</p>
+    <button class="btn" data-reveal>reveal</button>
+    <div class="reveal">Closer. The heavier element needs the <em>shorter</em> lever arm. That's why the
+    final layout pulls the portrait inward (<code>pShift</code>) and never lets it sit at the far margin —
+    distance is doing as much work as weight.</div>
+  </div>
+
+  <div class="ped"><b>Pedagogy — concreteness fading (Jerome Bruner, 1966).</b> We start <em>enactive</em>:
+  you physically drag a beam. Later we move to <em>iconic</em> (centroid dots) and finally <em>symbolic</em>
+  (the regression equations). Starting at the equation is how most explanations lose people. The physics
+  metaphor is from Rudolf Arnheim, <em>Art and Visual Perception</em> (1954), the canonical text on
+  visual weight and pictorial balance.</p>
+</section>
+
+<!-- ===================================================== 2 -->
+<section id="s2">
+  <h2><span class="num">02 / CALIBRATION</span>The center isn't the center</h2>
+  <p>"Balanced around the middle" hides a subtlety. The <em class="term">optical center</em> — where the
+  eye perceives the middle — sits slightly <em>above</em> the geometric middle. Put something at exactly
+  50% height and it looks like it's sagging. Designers nudge it up; the studio uses
+  <code>y = 0.46</code> (46% down from the top) as the vertical target, and <code>x = 0.50</code>
+  horizontally.</p>
+
+  <div class="eq">OPT = { x: <b>0.50</b>, y: <b>0.46</b> } <span class="c">// optical center — geometric x, slightly-high y</span></div>
+
+  <div class="fig">
+    <canvas id="c2" height="300"></canvas>
+    <div class="controls">
+      <button class="btn" id="c2toggle">showing: <b id="c2mode">geometric (0.50)</b></button>
+      <span style="color:var(--ink-mut)">same dot, two ideas of "centered"</span>
+    </div>
+    <p class="cap">The dot is fixed at the true middle of the frame. Toggle the target line between
+    geometric center and optical center. Against the optical line the dot reads as <em>low</em> —
+    which is why the algorithm aims a hair higher.</p>
+  </div>
+
+  <div class="ped"><b>Pedagogy — confront the misconception directly (Posner et al., 1982, conceptual
+  change).</b> "Center = 50%" is a sticky wrong intuition. Rather than just stating the correction, the
+  widget makes you <em>see</em> the dot look wrong, creating the dissonance that makes the right rule stick.</p>
+</section>
+
+<!-- ===================================================== 3 -->
+<section id="s3">
+  <h2><span class="num">03 / GENERALIZE</span>From see-saw to centroid</h2>
+  <p>The see-saw was one dimension (left–right). A page is two. Generalize the moment idea: the balance
+  point of <em>all</em> the visual weight is the <em class="term">centroid</em> — the weighted average
+  position. It's literally the center of mass of the ink.</p>
+
+  <div class="eq">
+  centroid<sub>x</sub> = <b>Σ(wᵢ · xᵢ) / Σwᵢ</b> &nbsp;&nbsp; <span class="c">// weighted-average x</span><br>
+  centroid<sub>y</sub> = <b>Σ(wᵢ · yᵢ) / Σwᵢ</b> &nbsp;&nbsp; <span class="c">// weighted-average y</span>
+  </div>
+
+  <p>A layout is balanced when its centroid lands on the optical center from §2. Click in the frame below
+  to drop weighted blobs and watch the centroid (the ◉) chase the center of mass. The blob size = its
+  weight.</p>
+
+  <div class="fig">
+    <canvas id="c3" height="320"></canvas>
+    <div class="controls">
+      <label>next blob weight <input type="range" id="c3w" min="10" max="90" value="40"><span class="val" id="c3wv">40</span></label>
+      <button class="btn" id="c3clear">clear</button>
+      <span style="color:var(--ink-mut)">click to place · ◉ = centroid · ✛ = optical target</span>
+    </div>
+    <div class="readout">
+      <span><b>centroid</b> <span id="c3c">—</span></span>
+      <span><b>offset from target</b> <span id="c3off">—</span></span>
+      <span id="c3verd" class="tag">—</span>
+    </div>
+    <p class="cap">Two blobs on one side pull the centroid that way; one heavy blob equals two light ones
+    at half the distance. Try to land the ◉ on the ✛.</p>
+  </div>
+
+  <div class="predict">
+    <p class="q">You drop one big blob on the right. Where do you put one blob to re-center the ◉ — and
+    how big?</p>
+    <button class="btn" data-reveal>reveal</button>
+    <div class="reveal">Mirror it: same weight, symmetric position. <em>Or</em> a heavier blob closer to
+    center, or a lighter blob farther out — any combination with an equal-and-opposite moment. There's no
+    single answer, which is precisely why the auto-balancer has several levers to pull.</div>
+  </div>
+</section>
+
+<!-- ===================================================== 4 -->
+<section id="s4">
+  <h2><span class="num">04 / THE HARD PART</span>What "weight" actually means: ink density</h2>
+  <p>Here's where naïve balance breaks. Two boxes the same <em>size</em> are not the same <em>weight</em>.
+  A solid black heading is heavy. The ASCII portrait — which looks like a big block — is actually a field
+  of grey dither on cream paper, so per unit area it carries far <em>less</em> visual weight than it
+  appears to. The studio encodes this as an <em class="term">ink-density</em> multiplier per element type:</p>
+
+  <div class="eq">
+  DENS = { portrait:<b>0.34</b>, h1:<b>0.82</b>, kicker:0.42, lead:0.22, body:<b>0.16</b>, meta:0.5 }<br>
+  weight = area × width × <b>density</b> <span class="c">// big-but-grey ≠ small-but-black</span>
+  </div>
+
+  <p>This single table is what makes the model match reality. The first hand-guess gave the portrait
+  density <code>0.62</code> — the model then claimed a layout was balanced that the pixels showed was
+  badly lopsided. The densities below were re-calibrated against actual pixel measurements. Drag the
+  sliders and watch the centroid swing.</p>
+
+  <div class="fig">
+    <canvas id="c4" height="300"></canvas>
+    <div class="controls">
+      <label>portrait dens <input type="range" id="c4p" min="5" max="100" value="34"><span class="val" id="c4pv">.34</span></label>
+      <label>heading dens <input type="range" id="c4h" min="5" max="100" value="82"><span class="val" id="c4hv">.82</span></label>
+      <label>body dens <input type="range" id="c4b" min="5" max="100" value="16"><span class="val" id="c4bv">.16</span></label>
+      <button class="btn" id="c4preset1">ASCII portrait (real)</button>
+      <button class="btn" id="c4preset2">if portrait were solid black</button>
+    </div>
+    <div class="readout">
+      <span><b>centroid x</b> <span id="c4cx">—</span></span>
+      <span><b>target</b> 0.50</span>
+      <span id="c4verd" class="tag">—</span>
+    </div>
+    <p class="cap">Same geometry, portrait fixed on the right. The <em>only</em> thing changing the balance
+    is how heavy each element is declared to be. Hit the two presets to see the swing the grey-vs-black
+    distinction causes.</p>
+  </div>
+
+  <div class="ped"><b>Pedagogy — a worked example with one varying part (Sweller, cognitive load theory,
+  1988).</b> Geometry is frozen so your whole working memory goes to the one causal variable: density.
+  Changing many things at once is how interactive demos overwhelm. Isolate the variable.</p>
+</section>
+
+<!-- ===================================================== 5 -->
+<section id="s5">
+  <h2><span class="num">05 / TWO MODELS</span>The cheap estimate and the expensive truth</h2>
+  <p>There are two ways to measure the centroid, and they disagree.</p>
+  <p><strong>The box model (cheap, instant).</strong> Treat each element as its bounding box; put its
+  weight at the box's <em>center</em>. Runs every frame as you drag a slider. But it has a built-in bug:
+  text is left-aligned, so its <em>ink</em> sits toward the left of its box, not the box's center. The
+  box model places the weight too far right.</p>
+  <p><strong>The pixel oracle (expensive, true).</strong> Actually rasterize the layout to a canvas
+  (<code>html2canvas</code>), then average the position of every non-paper pixel. This is the real ink
+  centroid — no alignment bug — but it costs a full screenshot, so you only run it on demand (the
+  <code>📸 pixels</code> button).</p>
+
+  <div class="fig">
+    <canvas id="c5" height="300"></canvas>
+    <div class="controls">
+      <button class="btn" id="c5align">text align: <b id="c5mode">left</b></button>
+      <span style="color:var(--ink-mut)">□ box-center (cheap) vs ◉ true ink (pixels)</span>
+    </div>
+    <div class="readout">
+      <span><b>box model</b> <span id="c5box">—</span></span>
+      <span><b>pixel truth</b> <span id="c5px">—</span></span>
+      <span><b>gap (δ)</b> <span id="c5gap" class="tag bad">—</span></span>
+    </div>
+    <p class="cap">The grey rectangle is a text block; the dark marks are where the ink really is. □ is what
+    the box model assumes (block center); ◉ is the true ink centroid. Switch alignment to center and watch
+    the gap collapse — the bug is alignment-dependent.</p>
+  </div>
+
+  <div class="predict">
+    <p class="q">If you justified the text (ink spread evenly edge to edge), what happens to the gap
+    between □ and ◉?</p>
+    <button class="btn" data-reveal>reveal</button>
+    <div class="reveal">It nearly vanishes — justified/centered text has its ink centroid at the box
+    center, so the box model becomes accurate. The gap is a <em>systematic</em> function of layout
+    parameters, not random noise. That predictability is the key to §6–7: a systematic error can be
+    learned and subtracted.</div>
+  </div>
+</section>
+
+<!-- ===================================================== 6 -->
+<section id="s6">
+  <h2><span class="num">06 / THE FIX, PART 1</span>Model the discrepancy, don't rebuild the model</h2>
+  <p>The box model is wrong but cheap; the pixel oracle is right but slow. The classic move — straight
+  out of <strong>Kennedy &amp; O'Hagan (2001)</strong>, "Bayesian calibration of computer models" — is to
+  not throw away the cheap model. Instead, write reality as the cheap model <em>plus a learned correction</em>:</p>
+
+  <div class="eq">
+  truth(x) ≈ <b>cheap_model(x)</b> + <b>δ(x)</b><br>
+  <span class="c">// box centroid + a discrepancy term that depends on the layout x</span>
+  </div>
+
+  <p>Every time you press <code>📸 pixels</code>, the studio records one data point: the layout's
+  parameters, and the gap <code>δ = pixel_truth − box_estimate</code> at that layout. The discrepancy
+  isn't a single number — it shifts as the layout changes (more portrait → bigger right-bias, etc.).
+  So δ is a <em>function</em> of the layout, and we learn that function from the samples. That's §7.</p>
+
+  <div class="ped"><b>Pedagogy — name the expert move (Chi et al., 1989, self-explanation &amp; expert
+  schemas).</b> Naming this "surrogate + discrepancy modeling" and attaching the Kennedy–O'Hagan citation
+  gives you a transferable schema, not a one-off trick. You'll recognize the same pattern in ML residual
+  correction and in engineering "fudge-factor" models.</p>
+</section>
+
+<!-- ===================================================== 7 -->
+<section id="s7">
+  <h2><span class="num">07 / THE FIX, PART 2</span>Learning δ with ridge regression</h2>
+  <p>Each 📸 sample is (features → δ). The features are just the layout's normalized parameters:
+  portrait size, pull-in, heading scale, gap, measure, which side, etc. We fit a linear map from
+  features to δ. With only a handful of samples and nine features, a plain least-squares fit
+  <em>overfits</em> wildly — it'll draw an absurd steep line through 3 points and explode on the 4th.</p>
+  <p><em class="term">Ridge regression</em> fixes this by adding a penalty <code>λ</code> on the size of
+  the weights. Large λ shrinks the fit toward zero slope — which here means "when in doubt, trust the
+  cheap model and apply no correction." The studio uses <code>λ = 0.08</code>: enough to stay stable on
+  2–4 samples, small enough to still bend toward the data.</p>
+
+  <div class="eq">
+  w = <b>(XᵀX + λI)⁻¹ Xᵀy</b> &nbsp; <span class="c">// the ridge normal equations</span><br>
+  δ̂(x) = w · features(x) &nbsp; <span class="c">// predicted discrepancy at a new layout</span>
+  </div>
+
+  <p>Below is the idea in 1D (one feature, e.g. heading scale → δ). Click to add sample points; drag the
+  λ slider. Watch a small λ chase every point (overfit) and a large λ flatten toward the safe "no
+  correction" line.</p>
+
+  <div class="fig">
+    <canvas id="c7" height="300"></canvas>
+    <div class="controls">
+      <label>λ (ridge penalty) <input type="range" id="c7lam" min="0" max="200" value="8"><span class="val" id="c7lamv">0.08</span></label>
+      <button class="btn" id="c7clear">clear points</button>
+      <button class="btn" id="c7demo">load 3 samples</button>
+      <span style="color:var(--ink-mut)">click to add a sample</span>
+    </div>
+    <div class="readout">
+      <span><b>samples</b> <span id="c7n">0</span></span>
+      <span><b>slope</b> <span id="c7slope">—</span></span>
+      <span id="c7note" style="color:var(--ink-mut)"></span>
+    </div>
+    <p class="cap">The line is the learned δ̂. Dashed grey = the "no correction" line (δ=0). As λ→large the
+    fit relaxes onto the dashed line; as λ→0 it strains to hit every dot, even a noisy one.</p>
+  </div>
+
+  <div class="predict">
+    <p class="q">Two layouts gave almost the same box estimate but very different pixel truths. With λ near
+    zero, what does the fitted slope do — and why is that bad?</p>
+    <button class="btn" data-reveal>reveal</button>
+    <div class="reveal">It blows up — near-identical x with different y forces an enormous slope (this
+    literally happened: the scalar fit hit slope ≈ 32). Ridge's λ penalty is exactly the guard against
+    that degeneracy. It was the fix after the variance blow-up.</div>
+  </div>
+</section>
+
+<!-- ===================================================== 8 -->
+<section id="s8">
+  <h2><span class="num">08 / THE DIAL</span>Trusting the correction: α</h2>
+  <p>The learned δ is only as good as its few samples. So the studio doesn't force you to fully trust it —
+  it gives you a dial, <em class="term">α</em>, that blends the raw cheap estimate with the corrected one:</p>
+
+  <div class="eq">
+  centroid = <b>raw</b> + <b>α</b> · δ̂ <span class="c">// α=0 → pure box model · α=1 → full correction</span>
+  </div>
+
+  <p>At <code>α = 0</code> you see the cheap model alone. At <code>α = 1</code> you fully apply the learned
+  discrepancy. (The studio auto-bumps α to 1 the first time you take a pixel sample — once there's any
+  ground truth, start trusting it.) The dial exists because this is a <em>hand-tunable</em> trade-off, not
+  a fact: you, the human, decide how much to believe the model.</p>
+
+  <div class="fig">
+    <canvas id="c8" height="180"></canvas>
+    <div class="controls">
+      <label>trust α <input type="range" id="c8a" min="0" max="100" value="0"><span class="val" id="c8av">0.00</span></label>
+      <span style="color:var(--ink-mut)">□ raw &nbsp; ◆ corrected &nbsp; ◉ blended (what you act on)</span>
+    </div>
+    <div class="readout">
+      <span><b>raw</b> <span id="c8raw">0.560</span></span>
+      <span><b>+α·δ</b> <span id="c8d">—</span></span>
+      <span><b>blended</b> <span id="c8out">—</span></span>
+    </div>
+    <p class="cap">Raw box says 0.560 (too far right). The pixel-learned δ pulls it toward 0.50. Slide α to
+    blend. The ◉ is the value the rest of the system uses.</p>
+  </div>
+</section>
+
+<!-- ===================================================== 9 -->
+<section id="s9">
+  <h2><span class="num">09 / THE LOOP</span>Auto-balance: gradient-free hill climbing</h2>
+  <p>Now put it together. "Auto-balance" doesn't solve an equation — it <em>nudges</em>. It measures the
+  imbalance, decides which way the centroid is pulled, and applies the cheapest counterweight first,
+  escalating only if needed. The ordering is deliberate, lightest-touch to heaviest:</p>
+  <div class="eq">
+  while imbalance &gt; tol &amp;&amp; steps &lt; 120:<br>
+  &nbsp; if centroid pulled toward portrait:<br>
+  &nbsp;&nbsp;&nbsp; 1. grow the heading (counterweight the text side)  <span class="c">headScale → 2.2</span><br>
+  &nbsp;&nbsp;&nbsp; 2. else turn on the meta block  <span class="c">more text-side weight</span><br>
+  &nbsp;&nbsp;&nbsp; 3. else pull the portrait inward  <span class="c">pShift → shorter lever</span><br>
+  &nbsp;&nbsp;&nbsp; 4. else shrink the portrait  <span class="c">last resort: less weight</span><br>
+  &nbsp; else (overshot): unwind in reverse
+  </div>
+  <p>It's a bounded, gradient-free hill-climb with a step guard (max 120 iterations) so it can't loop
+  forever. Press run and watch it converge — the log shows which lever it reached for each step.</p>
+
+  <div class="fig">
+    <canvas id="c9" height="300"></canvas>
+    <div class="controls">
+      <button class="btn primary" id="c9run">▶ run auto-balance</button>
+      <button class="btn" id="c9reset">reset (lopsided)</button>
+      <span style="color:var(--ink-mut)">starts portrait-heavy → climbs to level</span>
+    </div>
+    <div class="readout">
+      <span><b>imbalance</b> <span id="c9imb">—</span></span>
+      <span><b>step</b> <span id="c9step">0</span></span>
+      <span><b>last move</b> <span id="c9move" style="color:var(--accent)">—</span></span>
+      <span id="c9verd" class="tag">—</span>
+    </div>
+    <p class="cap">A live see-saw of the actual layout. Watch it grow the heading first (cheap
+    counterweight), then pull the portrait in, until the centroid sits on the axis.</p>
+  </div>
+
+  <div class="ped"><b>Pedagogy — synthesis after segmenting (Mayer, 2005, multimedia principles).</b>
+  Concepts were taught one at a time (§1–8); only now do they combine. Recombining isolated parts into the
+  whole is where durable understanding forms — but only <em>after</em> each part is solid on its own.</p>
+</section>
+
+<!-- ===================================================== 10 -->
+<section id="s10">
+  <h2><span class="num">10 / THE POINT</span>Why any of this exists</h2>
+  <p>The honest version: a language model has no reliable sense of visual balance. Asked "does this look
+  centered?", it confabulates. The entire apparatus above exists to <em>replace opinion with a measured
+  number</em> — and then to keep that number honest with an <em>independent</em> check (the pixel oracle),
+  because a model that grades its own homework always passes.</p>
+  <p>That's the load-bearing idea, and it generalizes far past page layout:</p>
+  <ul>
+    <li><strong>Don't trust a metric that shares the assumptions of the thing it measures.</strong> The box
+    model judging the box model is circular. The pixel oracle is independent — it rasterizes and counts,
+    knowing nothing about the layout's intent.</li>
+    <li><strong>Cheap-model-plus-learned-correction</strong> (§6) beats both "use the cheap wrong thing" and
+    "always pay for the expensive thing."</li>
+    <li><strong>Keep a human dial</strong> (§8) on anything where the model's confidence outruns its
+    evidence.</li>
+  </ul>
+  <p>And the caveat the studio prints to itself, in code: <code>HUD_APPROX = true</code> — "the live HUD is
+  an estimate; the pixel measurement on a screenshot is ground truth." The cheap model is a guide, never
+  the verdict. When the two disagree, the pixels win.</p>
+
+  <div class="predict">
+    <p class="q">Final check: why couldn't we just ask a vision model "rate this layout's balance 1–10" and
+    skip all the math?</p>
+    <button class="btn" data-reveal>reveal</button>
+    <div class="reveal">Because that score isn't <em>independent</em> of the thing being judged, isn't
+    <em>reproducible</em>, and gives no <em>gradient</em> — it can't tell you <em>which lever</em> to move or
+    by how much. The centroid offset is a signed, decomposable number (too-far-right by 0.06): it points at
+    the fix. A vibe score doesn't. This is the same independence principle as not validating a tilt-corrector
+    with the same tilt model that drove the correction.</div>
+  </div>
+</section>
+
+<hr class="soft">
+
+</div>
+
+<footer>
+  <p><strong>Source:</strong> the live studio is
+  <code>scripts/.lookdev-about/asym.html</code> (the box model, ridge fit, α dial, auto-balance loop) and
+  <code>scripts/.lookdev-about/analyze.py</code> (the offline pixel oracle). This page reimplements the same
+  math in standalone widgets.</p>
+  <p class="refs"><strong>References named above</strong></p>
+  <ul class="refs">
+    <li>Rudolf Arnheim — <em>Art and Visual Perception: A Psychology of the Creative Eye</em> (1954). Visual weight, pictorial balance.</li>
+    <li>Jerome Bruner — <em>Toward a Theory of Instruction</em> (1966). Enactive → iconic → symbolic (concreteness fading).</li>
+    <li>John Sweller — Cognitive Load Theory (1988); worked-example effect.</li>
+    <li>Richard E. Mayer — <em>Cambridge Handbook of Multimedia Learning</em> (2005). Segmenting, pre-training.</li>
+    <li>Michelene Chi et al. — Self-explanation &amp; expert problem schemas (1989).</li>
+    <li>George Posner et al. — Conceptual change theory (1982).</li>
+    <li>Marc Kennedy &amp; Anthony O'Hagan — "Bayesian calibration of computer models," <em>JRSS-B</em> (2001). Surrogate + discrepancy.</li>
+    <li>Arthur Hoerl &amp; Robert Kennard — Ridge regression (1970).</li>
+    <li>Form influence: Bret Victor's "Explorable Explanations" (2011) and the reactive-document tradition (Nicky Case, Bartosz Ciechanowski).</li>
+  </ul>
+</footer>
+
+<script>
+"use strict";
+const PAPER="#ebe8df", INK="#1a1712", MUT="#857c6a", ACC="#b4543f", GOOD="#3f7a4a", LINE="#d8d4c8", BLUE="#3c6e8f";
+const DPR=Math.min(2,window.devicePixelRatio||1);
+function fit(cv){const r=cv.getBoundingClientRect();cv.width=r.width*DPR;cv.height=cv.height*DPR;
+  const ctx=cv.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);return {ctx,w:r.width,h:cv.height/DPR};}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function dot(ctx,x,y,r,fill,ring){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=fill;ctx.fill();
+  if(ring){ctx.lineWidth=2;ctx.strokeStyle=ring;ctx.stroke();}}
+
+/* reveal buttons */
+document.querySelectorAll('[data-reveal]').forEach(b=>b.addEventListener('click',()=>{
+  b.parentElement.classList.add('open');b.style.display='none';}));
+
+/* ---------- 1 see-saw ---------- */
+(function(){
+  const cv=document.getElementById('c1');let G=fit(cv);
+  let pw=80; // portrait weight
+  const tw=46; // text weight (lighter)
+  let tx=0.28, px=0.74; // normalized positions
+  let drag=null;
+  const wv=document.getElementById('c1wv');
+  document.getElementById('c1w').addEventListener('input',e=>{pw=+e.target.value;wv.textContent=pw;draw();});
+  function geom(){return {pivotX:G.w/2, beamY:G.h*0.52, span:G.w*0.40};}
+  function px2x(n){const g=geom();return g.pivotX+(n-0.5)*2*g.span;}
+  function x2n(X){const g=geom();return 0.5+(X-g.pivotX)/(2*g.span);}
+  function moments(){const g=geom();
+    const ml=tw*(0.5-tx), mr=pw*(px-0.5); return {ml:ml,mr:mr,net:mr-ml};}
+  function draw(){
+    const {ctx,w,h}=G; ctx.clearRect(0,0,w,h);
+    const g=geom(); const m=moments();
+    const tilt=Math.max(-0.32,Math.min(0.32,m.net/180));
+    // pivot triangle
+    ctx.fillStyle=MUT;ctx.beginPath();ctx.moveTo(g.pivotX,g.beamY);ctx.lineTo(g.pivotX-16,g.beamY+34);
+    ctx.lineTo(g.pivotX+16,g.beamY+34);ctx.closePath();ctx.fill();
+    // beam
+    ctx.save();ctx.translate(g.pivotX,g.beamY);ctx.rotate(tilt);
+    ctx.fillStyle=INK;rr(ctx,-g.span-30,-4,(g.span+30)*2,8,4);ctx.fill();
+    // text block (left) — tall, light
+    const txX=(tx-0.5)*2*g.span;
+    const th=58, tWid=30; ctx.fillStyle="#9a9race".slice(0,0)||"#a59c89";
+    ctx.fillStyle="#bdb4a0";rr(ctx,txX-tWid/2,-th-6,tWid,th,4);ctx.fill();
+    ctx.fillStyle=MUT;ctx.font="10px ui-monospace";ctx.textAlign="center";ctx.fillText("text",txX,-th-12);
+    ctx.fillText("w="+tw,txX,8+18);
+    // portrait (right) — compact, heavy (size grows with weight)
+    const pxX=(px-0.5)*2*g.span;
+    const ps=20+pw*0.42; ctx.fillStyle=INK;ctx.beginPath();ctx.arc(pxX,-ps/2-6,ps/2,0,7);ctx.fill();
+    ctx.fillStyle=MUT;ctx.fillText("portrait",pxX,-ps-14);ctx.fillText("w="+pw,pxX,8+18);
+    ctx.restore();
+    // center guide
+    ctx.strokeStyle="#b4543f55";ctx.setLineDash([4,4]);ctx.beginPath();
+    ctx.moveTo(g.pivotX,18);ctx.lineTo(g.pivotX,h-10);ctx.stroke();ctx.setLineDash([]);
+    // readouts
+    document.getElementById('c1ml').textContent=m.ml.toFixed(1);
+    document.getElementById('c1mr').textContent=m.mr.toFixed(1);
+    document.getElementById('c1net').textContent=(m.net>=0?'+':'')+m.net.toFixed(1);
+    const v=document.getElementById('c1verd');const ok=Math.abs(m.net)<3;
+    v.textContent=ok?'● level':(m.net>0?'○ tips right (portrait-heavy)':'○ tips left (text-heavy)');
+    v.className='tag'+(ok?'':' bad');
+  }
+  function hit(mx,my){const g=geom();
+    const txX=px2x(tx),pxX=px2x(px);
+    if(Math.abs(mx-pxX)<40) return 'p'; if(Math.abs(mx-txX)<32) return 't'; return null;}
+  cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();
+    drag=hit(e.clientX-r.left,e.clientY-r.top);if(drag)cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const r=cv.getBoundingClientRect();
+    let n=x2n(e.clientX-r.left);n=Math.max(0.06,Math.min(0.94,n));
+    if(drag==='p')px=n;else tx=n;draw();});
+  cv.addEventListener('pointerup',()=>drag=null);
+  window.addEventListener('resize',()=>{G=fit(cv);draw();});draw();
+})();
+
+/* ---------- 2 optical center ---------- */
+(function(){
+  const cv=document.getElementById('c2');let G=fit(cv);let optical=false;
+  const btn=document.getElementById('c2toggle'),mode=document.getElementById('c2mode');
+  btn.addEventListener('click',()=>{optical=!optical;mode.textContent=optical?'optical (0.46)':'geometric (0.50)';draw();});
+  function draw(){const {ctx,w,h}=G;ctx.clearRect(0,0,w,h);
+    const fx=24,fy=18,fw=w-48,fh=h-36;
+    ctx.strokeStyle=LINE;ctx.lineWidth=1;ctx.strokeRect(fx,fy,fw,fh);
+    // dot at true middle
+    const dx=fx+fw/2, dy=fy+fh/2;
+    // target line
+    const ty=fy + fh*(optical?0.46:0.50);
+    ctx.strokeStyle=ACC;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(fx,ty);ctx.lineTo(fx+fw,ty);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=ACC;ctx.font="11px ui-monospace";ctx.textAlign="left";
+    ctx.fillText(optical?"optical center y=0.46":"geometric center y=0.50",fx+6,ty-7);
+    // the dot
+    dot(ctx,dx,dy,9,INK,PAPER);
+    ctx.fillStyle=MUT;ctx.textAlign="center";ctx.fillText("dot at true 50% / 50%",dx,dy+26);
+    if(optical){ctx.fillStyle=ACC;ctx.fillText("↑ reads as 'low' against the optical line",dx,fy+fh-12);}
+  }
+  window.addEventListener('resize',()=>{G=fit(cv);draw();});draw();
+})();
+
+/* ---------- 3 centroid 2D ---------- */
+(function(){
+  const cv=document.getElementById('c3');let G=fit(cv);let blobs=[];let nw=40;
+  const wv=document.getElementById('c3wv');
+  document.getElementById('c3w').addEventListener('input',e=>{nw=+e.target.value;wv.textContent=nw;});
+  document.getElementById('c3clear').addEventListener('click',()=>{blobs=[];draw();});
+  function frame(){return {fx:24,fy:16,fw:G.w-48,fh:G.h-32};}
+  cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();const f=frame();
+    const x=e.clientX-r.left,y=e.clientY-r.top;
+    if(x<f.fx||x>f.fx+f.fw||y<f.fy||y>f.fy+f.fh)return;
+    blobs.push({x,y,w:nw});draw();});
+  function draw(){const {ctx,w,h}=G;ctx.clearRect(0,0,w,h);const f=frame();
+    ctx.strokeStyle=LINE;ctx.strokeRect(f.fx,f.fy,f.fw,f.fh);
+    const tx=f.fx+f.fw*0.5, ty=f.fy+f.fh*0.46;
+    // target crosshair
+    ctx.strokeStyle="#b4543f88";ctx.lineWidth=1;ctx.beginPath();
+    ctx.moveTo(tx-9,ty);ctx.lineTo(tx+9,ty);ctx.moveTo(tx,ty-9);ctx.lineTo(tx,ty+9);ctx.stroke();
+    // blobs
+    let W=0,Mx=0,My=0;
+    blobs.forEach(b=>{W+=b.w;Mx+=b.w*b.x;My+=b.w*b.y;
+      ctx.fillStyle="#1a171233";ctx.beginPath();ctx.arc(b.x,b.y,4+b.w*0.18,0,7);ctx.fill();
+      dot(ctx,b.x,b.y,3,INK);});
+    const c=document.getElementById('c3c'),off=document.getElementById('c3off'),v=document.getElementById('c3verd');
+    if(W>0){const cx=Mx/W,cy=My/W;
+      dot(ctx,cx,cy,8,ACC,PAPER);
+      const nx=(cx-f.fx)/f.fw, ny=(cy-f.fy)/f.fh;
+      const d=Math.hypot(nx-0.5,ny-0.46);
+      c.textContent=nx.toFixed(3)+' / '+ny.toFixed(3);off.textContent=d.toFixed(3);
+      const ok=d<0.04;v.textContent=ok?'● on target':(d<0.1?'◐ close':'○ off-center');v.className='tag'+(ok?'':d<0.1?' warn':' bad');
+    } else {c.textContent='—';off.textContent='—';v.textContent='click to place blobs';v.className='tag';}
+  }
+  window.addEventListener('resize',()=>{G=fit(cv);draw();});draw();
+})();
+
+/* ---------- 4 density ---------- */
+(function(){
+  const cv=document.getElementById('c4');let G=fit(cv);
+  let dp=0.34,dh=0.82,db=0.16;
+  const map={c4p:[v=>dp=v,'c4pv'],c4h:[v=>dh=v,'c4hv'],c4b:[v=>db=v,'c4bv']};
+  Object.keys(map).forEach(id=>{document.getElementById(id).addEventListener('input',e=>{
+    const val=(+e.target.value)/100;map[id][0](val);document.getElementById(map[id][1]).textContent='.'+String(Math.round(val*100)).padStart(2,'0');draw();});});
+  document.getElementById('c4preset1').addEventListener('click',()=>set(.34,.82,.16));
+  document.getElementById('c4preset2').addEventListener('click',()=>set(.95,.82,.16));
+  function set(p,hh,b){dp=p;dh=hh;db=b;
+    document.getElementById('c4p').value=p*100;document.getElementById('c4h').value=hh*100;document.getElementById('c4b').value=b*100;
+    document.getElementById('c4pv').textContent='.'+String(Math.round(p*100)).padStart(2,'0');
+    document.getElementById('c4hv').textContent='.'+String(Math.round(hh*100)).padStart(2,'0');
+    document.getElementById('c4bv').textContent='.'+String(Math.round(b*100)).padStart(2,'0');draw();}
+  function draw(){const {ctx,w,h}=G;ctx.clearRect(0,0,w,h);
+    const fx=24,fy=16,fw=w-48,fh=h-32;ctx.strokeStyle=LINE;ctx.strokeRect(fx,fy,fw,fh);
+    // layout: text left (heading + 3 body lines), portrait right
+    const colL=fx+fw*0.06, colW=fw*0.46;
+    // heading
+    const hX=colL+colW*0.42, hY=fy+fh*0.26, hW=colW*0.8, hH=26;
+    ctx.fillStyle=`rgba(26,23,18,${0.25+dh*0.6})`;rr(ctx,colL,hY-hH/2,hW,hH,4);ctx.fill();
+    // body lines
+    const parts=[{x:hX,y:hY,w:hW*hH*dh}];
+    for(let i=0;i<3;i++){const by=fy+fh*(0.45+i*0.13),bw=colW*(0.86-i*0.05),bh=10;
+      ctx.fillStyle=`rgba(26,23,18,${0.18+db*0.5})`;rr(ctx,colL,by-bh/2,bw,bh,3);ctx.fill();
+      parts.push({x:colL+bw/2,y:by,w:bw*bh*db});}
+    // portrait right (grey dither look)
+    const ps=fh*0.62, pcx=fx+fw*0.80, pcy=fy+fh*0.5;
+    ctx.save();ctx.beginPath();ctx.arc(pcx,pcy,ps/2,0,7);ctx.clip();
+    ctx.fillStyle=`rgba(26,23,18,${0.12+dp*0.7})`;ctx.fillRect(pcx-ps/2,pcy-ps/2,ps,ps);
+    ctx.restore();ctx.strokeStyle="#0000001a";ctx.beginPath();ctx.arc(pcx,pcy,ps/2,0,7);ctx.stroke();
+    parts.push({x:pcx,y:pcy,w:ps*ps*dp});
+    // centroid x
+    let W=0,Mx=0;parts.forEach(p=>{W+=p.w;Mx+=p.w*p.x;});const cx=Mx/W;
+    const nx=(cx-fx)/fw;
+    // axis + centroid
+    const ax=fx+fw*0.5;ctx.strokeStyle="#b4543f88";ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(ax,fy);ctx.lineTo(ax,fy+fh);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=ACC;ctx.beginPath();ctx.moveTo(cx,fy-2);ctx.lineTo(cx-6,fy-12);ctx.lineTo(cx+6,fy-12);ctx.closePath();ctx.fill();
+    const v=document.getElementById('c4verd');const off=nx-0.5;const ok=Math.abs(off)<0.025;
+    document.getElementById('c4cx').textContent=nx.toFixed(3);
+    v.textContent=ok?'● balanced':(off>0?'○ pulled right (+'+off.toFixed(3)+')':'○ pulled left ('+off.toFixed(3)+')');
+    v.className='tag'+(ok?'':' bad');
+  }
+  window.addEventListener('resize',()=>{G=fit(cv);draw();});draw();
+})();
+
+/* ---------- 5 box vs pixels ---------- */
+(function(){
+  const cv=document.getElementById('c5');let G=fit(cv);let align='left';
+  document.getElementById('c5align').addEventListener('click',()=>{
+    align=align==='left'?'center':align==='center'?'right':'left';
+    document.getElementById('c5mode').textContent=align;draw();});
+  function draw(){const {ctx,w,h}=G;ctx.clearRect(0,0,w,h);
+    const bx=w*0.22,by=h*0.22,bw=w*0.56,bh=h*0.56;
+    // bounding box
+    ctx.strokeStyle=LINE;ctx.setLineDash([4,4]);ctx.strokeRect(bx,by,bw,bh);ctx.setLineDash([]);
+    ctx.fillStyle="#0000000a";ctx.fillRect(bx,by,bw,bh);
+    // simulate text lines of varying length, aligned
+    const lines=[0.92,0.78,0.85,0.6,0.8,0.5];const lh=bh/(lines.length+1);
+    let inkX=0,inkW=0;
+    lines.forEach((len,i)=>{const lw=bw*len;let lx;
+      if(align==='left')lx=bx; else if(align==='center')lx=bx+(bw-lw)/2; else lx=bx+(bw-lw);
+      const ly=by+lh*(i+1);
+      ctx.fillStyle="#1a1712cc";rr(ctx,lx,ly-4,lw,8,3);ctx.fill();
+      inkX+=(lx+lw/2)*lw;inkW+=lw;});
+    const trueX=inkX/inkW; const boxX=bx+bw/2;
+    // markers
+    ctx.fillStyle=MUT;ctx.font="11px ui-monospace";ctx.textAlign="center";
+    // box center □
+    ctx.strokeStyle=BLUE;ctx.lineWidth=2;ctx.strokeRect(boxX-7,by+bh+14-7,14,14);
+    ctx.fillStyle=BLUE;ctx.fillText("□ box",boxX,by+bh+44);
+    // true ink ◉
+    dot(ctx,trueX,by+bh+14,7,ACC,PAPER);ctx.fillStyle=ACC;ctx.fillText("◉ ink",trueX,by-10);
+    // gap line
+    ctx.strokeStyle="#b4543f";ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(boxX,by+bh+14);ctx.lineTo(trueX,by+bh+14);ctx.stroke();ctx.setLineDash([]);
+    const gap=(trueX-boxX)/bw;
+    document.getElementById('c5box').textContent=((boxX-bx)/bw).toFixed(3);
+    document.getElementById('c5px').textContent=((trueX-bx)/bw).toFixed(3);
+    const gv=document.getElementById('c5gap');gv.textContent=(gap>=0?'+':'')+gap.toFixed(3);
+    gv.className='tag '+(Math.abs(gap)<0.02?'':'bad');
+  }
+  window.addEventListener('resize',()=>{G=fit(cv);draw();});draw();
+})();
+
+/* ---------- 7 ridge regression 1D ---------- */
+(function(){
+  const cv=document.getElementById('c7');let G=fit(cv);let pts=[];let lam=0.08;
+  const lv=document.getElementById('c7lamv');
+  document.getElementById('c7lam').addEventListener('input',e=>{
+    lam=(+e.target.value)/100;lv.textContent=lam.toFixed(2);draw();});
+  document.getElementById('c7clear').addEventListener('click',()=>{pts=[];draw();});
+  document.getElementById('c7demo').addEventListener('click',()=>{
+    pts=[{x:0.2,y:0.62},{x:0.55,y:0.40},{x:0.85,y:0.30}];draw();});
+  function frame(){return {fx:38,fy:16,fw:G.w-54,fh:G.h-46};}
+  cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();const f=frame();
+    const x=(e.clientX-r.left-f.fx)/f.fw, y=(e.clientY-r.top-f.fy)/f.fh;
+    if(x<0||x>1||y<0||y>1)return;pts.push({x,y});draw();});
+  // ridge: fit y = a*x + b with penalty lam on [a,b]
+  function ridge(){
+    if(pts.length===0)return {a:0,b:0};
+    // design with bias; XtX 2x2 + lam*I ; note we don't penalize toward arbitrary—
+    // here center y so b shrinks toward mean (matches "no-correction toward 0 slope").
+    let Sxx=0,Sx=0,Sxy=0,Sy=0,n=pts.length;
+    pts.forEach(p=>{Sxx+=p.x*p.x;Sx+=p.x;Sxy+=p.x*p.y;Sy+=p.y;});
+    // normal eqs (XtX+lamI) [a,b] = Xty
+    const A=[[Sxx+lam,Sx],[Sx,n+lam]],B=[Sxy,Sy];
+    const det=A[0][0]*A[1][1]-A[0][1]*A[1][0]||1e-9;
+    const a=(B[0]*A[1][1]-A[0][1]*B[1])/det;
+    const b=(A[0][0]*B[1]-B[0]*A[1][0])/det;
+    return {a,b};
+  }
+  function draw(){const {ctx,w,h}=G;ctx.clearRect(0,0,w,h);const f=frame();
+    // axes
+    ctx.strokeStyle=LINE;ctx.strokeRect(f.fx,f.fy,f.fw,f.fh);
+    ctx.fillStyle=MUT;ctx.font="10px ui-monospace";ctx.textAlign="center";
+    ctx.fillText("feature (e.g. heading scale) →",f.fx+f.fw/2,f.fy+f.fh+26);
+    ctx.save();ctx.translate(12,f.fy+f.fh/2);ctx.rotate(-Math.PI/2);ctx.fillText("δ discrepancy",0,0);ctx.restore();
+    // zero/no-correction line (δ=0 baseline at mid)
+    const zy=f.fy+f.fh*0.5;ctx.strokeStyle="#85857c66";ctx.setLineDash([5,5]);
+    ctx.beginPath();ctx.moveTo(f.fx,zy);ctx.lineTo(f.fx+f.fw,zy);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=MUT;ctx.textAlign="left";ctx.fillText("δ=0 (no correction)",f.fx+6,zy-5);
+    // points
+    pts.forEach(p=>{const X=f.fx+p.x*f.fw,Y=f.fy+p.y*f.fh;dot(ctx,X,Y,5,INK,PAPER);});
+    // fitted line
+    const {a,b}=ridge();
+    const y0=a*0+b, y1=a*1+b;
+    ctx.strokeStyle=ACC;ctx.lineWidth=2.2;ctx.beginPath();
+    ctx.moveTo(f.fx, f.fy+y0*f.fh);ctx.lineTo(f.fx+f.fw, f.fy+y1*f.fh);ctx.stroke();
+    document.getElementById('c7n').textContent=pts.length;
+    document.getElementById('c7slope').textContent=pts.length?a.toFixed(2):'—';
+    const note=document.getElementById('c7note');
+    if(pts.length>=2){note.textContent= lam<0.05?'small λ → chasing points':lam>1?'large λ → flattening to no-correction':'balanced';}
+    else note.textContent='add ≥2 points';
+  }
+  window.addEventListener('resize',()=>{G=fit(cv);draw();});draw();
+})();
+
+/* ---------- 8 trust alpha ---------- */
+(function(){
+  const cv=document.getElementById('c8');let G=fit(cv);let a=0;
+  const raw=0.560, delta=-0.062; // pixel-learned pull toward center
+  document.getElementById('c8a').addEventListener('input',e=>{a=(+e.target.value)/100;
+    document.getElementById('c8av').textContent=a.toFixed(2);draw();});
+  function draw(){const {ctx,w,h}=G;ctx.clearRect(0,0,w,h);
+    const tx=40,ty=h*0.5,tw=w-80;
+    // track
+    ctx.strokeStyle=LINE;ctx.lineWidth=8;ctx.lineCap="round";ctx.beginPath();
+    ctx.moveTo(tx,ty);ctx.lineTo(tx+tw,ty);ctx.stroke();
+    // target 0.50
+    const px=x=>tx+ (x-0.40)/0.20 *tw; // map 0.40..0.60 across track
+    const optX=px(0.50);
+    ctx.strokeStyle="#b4543f88";ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();
+    ctx.moveTo(optX,ty-30);ctx.lineTo(optX,ty+30);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=ACC;ctx.font="10px ui-monospace";ctx.textAlign="center";ctx.fillText("target 0.50",optX,ty-36);
+    const out=raw+a*delta;
+    // raw □
+    ctx.strokeStyle=BLUE;ctx.lineWidth=2;ctx.strokeRect(px(raw)-6,ty-6,12,12);
+    ctx.fillStyle=BLUE;ctx.fillText("□ raw",px(raw),ty+30);
+    // corrected ◆
+    const cor=raw+delta;ctx.fillStyle=MUT;ctx.save();ctx.translate(px(cor),ty);ctx.rotate(Math.PI/4);
+    ctx.fillRect(-5,-5,10,10);ctx.restore();ctx.fillText("◆ corrected",px(cor),ty+44);
+    // blended ◉
+    dot(ctx,px(out),ty,9,INK,PAPER);ctx.fillStyle=INK;ctx.fillText("◉",px(out),ty-16);
+    document.getElementById('c8raw').textContent=raw.toFixed(3);
+    document.getElementById('c8d').textContent=(a*delta).toFixed(3);
+    document.getElementById('c8out').textContent=out.toFixed(3);
+  }
+  window.addEventListener('resize',()=>{G=fit(cv);draw();});draw();
+})();
+
+/* ---------- 9 auto-balance ---------- */
+(function(){
+  const cv=document.getElementById('c9');let G=fit(cv);
+  const OPT=0.50;
+  let st, anim=null;
+  function reset(){st={headScale:1.0,meta:false,pShift:0,pSize:320};step0();draw('—');}
+  function centroid(){
+    // crude moment model mirroring the studio: portrait right-heavy, heading counterweights left.
+    const portW = st.pSize*st.pSize*0.34;
+    const portX = 0.82 - (st.pShift/380)*0.22;       // pull-in moves it toward center
+    const headW = 240*26*st.headScale*0.82;
+    const headX = 0.22;
+    const bodyW = 3*180*10*0.16, bodyX=0.24;
+    const metaW = st.meta? 200*40*0.5:0, metaX=0.24;
+    let W=portW+headW+bodyW+metaW;
+    let Mx=portW*portX+headW*headX+bodyW*bodyX+metaW*metaX;
+    return Mx/W;
+  }
+  function step0(){document.getElementById('c9step').textContent=0;
+    document.getElementById('c9imb').textContent=(centroid()-OPT).toFixed(3);}
+  function draw(move){const {ctx,w,h}=G;ctx.clearRect(0,0,w,h);
+    const fx=24,fy=16,fw=w-48,fh=h-58;ctx.strokeStyle=LINE;ctx.strokeRect(fx,fy,fw,fh);
+    // text col
+    const colL=fx+fw*0.06,colW=fw*0.46;
+    const hH=18*st.headScale;
+    ctx.fillStyle="#1a1712cc";rr(ctx,colL,fy+fh*0.22-hH/2,colW*0.82,hH,4);ctx.fill();
+    for(let i=0;i<3;i++){ctx.fillStyle="#1a171255";rr(ctx,colL,fy+fh*(0.46+i*0.12),colW*(0.86-i*0.06),8,3);ctx.fill();}
+    if(st.meta){ctx.fillStyle="#1a171244";rr(ctx,colL,fy+fh*0.86,colW*0.7,10,3);ctx.fill();}
+    // portrait
+    const ps=st.pSize*0.42*(fh/210), pcx=fx+fw*(0.82-(st.pShift/380)*0.22),pcy=fy+fh*0.5;
+    ctx.save();ctx.beginPath();ctx.arc(pcx,pcy,ps/2,0,7);ctx.clip();
+    ctx.fillStyle="#1a171255";ctx.fillRect(pcx-ps/2,pcy-ps/2,ps,ps);ctx.restore();
+    ctx.strokeStyle="#0000001a";ctx.beginPath();ctx.arc(pcx,pcy,ps/2,0,7);ctx.stroke();
+    // axis + centroid
+    const ax=fx+fw*0.5;ctx.strokeStyle="#b4543f88";ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(ax,fy);ctx.lineTo(ax,fy+fh);ctx.stroke();ctx.setLineDash([]);
+    const c=centroid();const cX=fx+fw*c;
+    ctx.fillStyle=ACC;ctx.beginPath();ctx.moveTo(cX,fy-2);ctx.lineTo(cX-6,fy-12);ctx.lineTo(cX+6,fy-12);ctx.closePath();ctx.fill();
+    // readout
+    const imb=c-OPT;document.getElementById('c9imb').textContent=(imb>=0?'+':'')+imb.toFixed(3);
+    document.getElementById('c9move').textContent=move||'—';
+    const v=document.getElementById('c9verd');const ok=Math.abs(imb)<0.02;
+    v.textContent=ok?'● balanced':'○ '+(imb>0?'portrait-heavy':'text-heavy');v.className='tag'+(ok?'':' bad');
+  }
+  function run(){if(anim)return;let steps=0;
+    const tick=()=>{const imb=centroid()-OPT;let move='—';
+      if(Math.abs(imb)<0.02||steps>120){anim=null;draw('done');return;}
+      if(imb>0){ // portrait-heavy → counterweight text side
+        if(st.headScale<2.2){st.headScale=Math.min(2.2,st.headScale+0.05);move='grow heading';}
+        else if(!st.meta){st.meta=true;move='enable meta block';}
+        else if(st.pShift<380){st.pShift=Math.min(380,st.pShift+10);move='pull portrait in';}
+        else if(st.pSize>200){st.pSize=Math.max(200,st.pSize-6);move='shrink portrait';}
+      } else { // overshot
+        if(st.pSize<320){st.pSize=Math.min(320,st.pSize+6);move='regrow portrait';}
+        else if(st.pShift>0){st.pShift=Math.max(0,st.pShift-10);move='push portrait out';}
+        else if(st.meta&&st.headScale>1.8){st.meta=false;move='disable meta';}
+        else if(st.headScale>1){st.headScale=Math.max(1,st.headScale-0.05);move='shrink heading';}
+      }
+      steps++;document.getElementById('c9step').textContent=steps;draw(move);
+      anim=requestAnimationFrame(tick);};
+    anim=requestAnimationFrame(tick);
+  }
+  document.getElementById('c9run').addEventListener('click',run);
+  document.getElementById('c9reset').addEventListener('click',()=>{if(anim){cancelAnimationFrame(anim);anim=null;}reset();});
+  window.addEventListener('resize',()=>{G=fit(cv);draw('—');});
+  reset();
+})();
+</script>
+</body>
+</html>

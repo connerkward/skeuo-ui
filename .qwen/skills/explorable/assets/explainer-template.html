@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explainer template</title>
+<style>
+  /* ============================================================
+     DEFAULT THEME — warm "paper" editorial palette.
+     This is the house style for explainers; use it unless the user
+     asks to theme from a specific repo. (For heavy-particle / 3D
+     canvas demos a dark stage may read better — swap --paper/--ink.)
+     ============================================================ */
+  :root{
+    --paper:#ebe8df; --paper-warm:#efebe1; --card:#f4f1e8;
+    --ink:#1a1712; --ink-soft:#403a30; --ink-mut:#857c6a; --line:#d8d4c8;
+    --accent:#b4543f;  /* terracotta — the one hot color: handles, the live value */
+    --good:#3f7a4a; --warn:#a8762a; --blue:#3c6e8f;
+    --mono: ui-monospace,"SF Mono",Menlo,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--serif);font-size:18px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(18px,4vw,22px)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-mut);margin:0 0 16px}
+  h1{font-size:clamp(2rem,5vw,3rem);line-height:1.04;margin:0 0 .35em;letter-spacing:-.01em}
+  .lede{color:var(--ink-soft);margin:0 0 1.4em;line-height:1.5;max-width:60ch;font-size:1.12rem}
+  p{max-width:64ch}
+
+  /* figure card */
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px;display:grid;place-items:center;box-shadow:0 1px 0 #fff6 inset}
+  svg,canvas{width:100%;height:auto;display:block}
+  .controls{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin:18px 0 0;
+    font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .ctl{display:flex;flex-direction:column;gap:6px}
+  .ctl input[type=range]{width:200px;accent-color:var(--accent)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  button,.toggle{font-family:var(--mono);font-size:12px;background:transparent;color:var(--ink);
+    border:1px solid var(--ink);border-radius:999px;padding:6px 13px;cursor:pointer;transition:.12s}
+  button:hover,.toggle:hover{background:var(--ink);color:var(--paper)}
+  .toggle[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+  .readout{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;
+    display:flex;gap:22px;flex-wrap:wrap}
+  .readout b{color:var(--ink-mut);font-weight:400}
+  .num{font-size:20px;color:var(--ink)}
+  .num.warn{color:var(--accent)} .num.ok{color:var(--good)}
+  .note{color:var(--ink-mut);font-size:.95rem;margin-top:1.4em;line-height:1.55;max-width:62ch}
+  code{font-family:var(--mono);font-size:.85em;background:#0000000d;padding:1px 5px;border-radius:4px}
+  /* a wiki-style link-out: dotted underline marks a major concept worth chasing */
+  a.wiki{color:var(--ink);text-decoration:underline dotted var(--accent);text-underline-offset:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Explorable · concept name</p>
+  <h1>What does this parameter actually do?</h1>
+  <p class="lede">Drag the slider. The box moves; the number moves with it. Replace this whole
+  demo with your concept — keep the state→render→controls shape. (Major concepts get a
+  <a class="wiki" href="https://en.wikipedia.org/wiki/Center_of_mass" target="_blank" rel="noopener">wiki
+  link-out</a> like this.)</p>
+
+  <div class="stage">
+    <!-- SVG stage: crisp boxes + labels. Swap for <canvas> when you need pixels/particles. -->
+    <svg viewBox="0 0 400 200" id="svg">
+      <rect x="40" y="70" width="60" height="60" rx="6" fill="none"
+            stroke="#3c6e8f" stroke-width="2" id="ref"/>
+      <rect x="40" y="70" width="60" height="60" rx="6" fill="#b4543f33"
+            stroke="#b4543f" stroke-width="2" id="box"/>
+      <text x="200" y="184" fill="#857c6a" font-size="12" text-anchor="middle"
+            font-family="ui-monospace,Menlo,monospace">blue = reference · terracotta = driven by the slider</text>
+    </svg>
+  </div>
+
+  <div class="controls">
+    <label class="ctl">offset <span id="vlabel">0</span> px
+      <input type="range" id="offset" min="0" max="200" value="0">
+    </label>
+    <div class="row">
+      <button class="toggle" id="showRef" aria-pressed="true">reference layer</button>
+      <button id="reset">reset</button>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div><b>offset</b><div class="num" id="rOffset">0</div></div>
+    <div><b>gap from reference</b><div class="num warn" id="rGap">0 px</div></div>
+  </div>
+
+  <p class="note">Pattern: one <code>state</code> object, one <code>render()</code>. Every
+  control mutates state and re-renders. Add a <code>requestAnimationFrame</code> loop only if
+  something animates on its own — a slider-driven explainer usually doesn't need one.</p>
+</div>
+
+<script>
+  const state = { offset: 0, showRef: true };
+  const $ = id => document.getElementById(id);
+  const box = $('box'), ref = $('ref');
+
+  function render(){
+    const x = 40 + state.offset;
+    box.setAttribute('x', x);
+    ref.style.display = state.showRef ? '' : 'none';
+    $('vlabel').textContent = state.offset;
+    $('rOffset').textContent = state.offset;
+    $('rGap').textContent = state.offset + ' px';
+    $('rGap').className = 'num ' + (state.offset === 0 ? 'ok' : 'warn');
+  }
+
+  $('offset').oninput = e => { state.offset = +e.target.value; render(); };
+  $('showRef').onclick = e => {
+    state.showRef = !state.showRef;
+    e.currentTarget.setAttribute('aria-pressed', state.showRef);
+    render();
+  };
+  $('reset').onclick = () => {
+    state.offset = 0; $('offset').value = 0;
+    state.showRef = true; $('showRef').setAttribute('aria-pressed', true);
+    render();
+  };
+
+  render(); // first paint
+</script>
+</body>
+</html>

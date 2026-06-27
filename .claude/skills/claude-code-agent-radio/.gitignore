@@ -1,0 +1,6 @@
+# compiled overlay binary (built on demand by say-notify.sh)
+say-notify-overlayd
+*.o
+__pycache__/
+.DS_Store
+.serve-url

@@ -1,0 +1,74 @@
+{
+  "id": "a-baby-blue-clamshell-fl-simple-nano-banana-2-v4ri",
+  "shift": 0.0,
+  "score": 0.75,
+  "n_aligned": 3,
+  "n_total": 4,
+  "disagreements": 1,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 0.2956,
+        "offset": 0.2958,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 1.4785,
+        "offset": 0.1182,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 1.2056,
+        "offset": 0.1338,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 1.4674,
+        "offset": 0.334,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    }
+  ]
+}

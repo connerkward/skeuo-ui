@@ -1,0 +1,122 @@
+{
+  "id": "lime-green-glossy-y2k-bu-simple-nano-banana-2-bdw7",
+  "shift": 0.0,
+  "score": 1.0,
+  "n_aligned": 7,
+  "n_total": 7,
+  "disagreements": 0,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 0.9257,
+        "offset": 0.0453,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 1.626,
+        "offset": 0.2529,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 1.2866,
+        "offset": 0.1743,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 1.6589,
+        "offset": 0.2846,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "stop",
+      "kind": "button",
+      "det": {
+        "presence": 1.8449,
+        "offset": 0.19,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "volume",
+      "kind": "knob",
+      "det": {
+        "presence": 1.4557,
+        "offset": 0.1766,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "balance",
+      "kind": "knob",
+      "det": {
+        "presence": 1.4569,
+        "offset": 0.2156,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    }
+  ]
+}

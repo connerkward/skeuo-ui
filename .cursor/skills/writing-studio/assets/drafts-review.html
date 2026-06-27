@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing studio — review &amp; edit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ebe8df; --paper-warm:#efebe1; --card:#f4f1e8;
+    --ink:#1d1d1b; --ink-soft:rgba(29,29,27,.62); --ink-mut:rgba(29,29,27,.4); --ink-line:rgba(29,29,27,.12);
+    --mono:ui-monospace,Menlo,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Spectral",Georgia,serif;
+    --hl:#e8c75a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;mix-blend-mode:multiply;opacity:.06;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23p)'/%3E%3C/svg%3E");background-size:220px}
+  ::highlight(cmt){ background:var(--hl); color:#1d1d1b; }
+
+  /* toolbar */
+  .bar{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;
+    padding:10px 16px;background:color-mix(in srgb,var(--paper-warm) 92%,transparent);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--ink-line);font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .bar .tabs{display:flex;flex-wrap:wrap;gap:4px}
+  .bar .tab{font:inherit;border:1px solid var(--ink-line);background:transparent;color:var(--ink-soft);
+    padding:5px 11px;border-radius:999px;cursor:pointer}
+  .bar .tab[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .bar .tab .n{color:var(--hl)} .bar .tab[aria-pressed=true] .n{color:var(--hl)}
+  .bar .act{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .bar .btn{font:inherit;font-size:11px;padding:6px 12px;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;cursor:pointer}
+  .bar .btn:hover{background:var(--ink);color:var(--paper)}
+  .bar .btn.primary{background:var(--ink);color:var(--paper)}
+
+  /* layout */
+  .wrap{display:grid;grid-template-columns:1fr 320px;gap:0;align-items:start}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr} .rail{display:none}}
+  main{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:40px clamp(20px,5vw,64px) 140px;width:100%}
+  .hero{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--paper-warm);border-radius:4px;margin:0 0 36px;box-shadow:inset 0 0 0 1px var(--ink-line)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mut);margin:0 0 14px}
+  h1.title{font-family:var(--serif);font-size:clamp(2rem,3.6vw,2.7rem);font-weight:600;line-height:1.1;letter-spacing:-.01em;margin:0 0 4px}
+  .article-body{font-size:18px;line-height:1.62;max-width:64ch}
+  .article-body .lead{font-size:1.18rem;line-height:1.5;color:var(--ink-soft);margin:.6em 0 1.2em}
+  .article-body p{margin:1.5em 0}
+  .article-body h2{font-size:1.4em;font-weight:600;line-height:1.2;margin:2em 0 .7em;padding-bottom:.4em;border-bottom:1px solid var(--ink-line)}
+  .article-body blockquote{margin:1.6em 0;padding-left:1.1em;border-left:2px solid var(--ink-line);color:var(--ink-soft);font-style:italic}
+  .article-body blockquote .by{display:block;font-style:normal;font-family:var(--mono);font-size:.8em;color:var(--ink-mut);margin-top:.5em}
+  .article-body em{font-style:italic}
+  .article-body .pull{font-size:1.3em;line-height:1.4;font-style:italic;color:var(--ink-soft);margin:1.3em 0}
+  .article-body .thesisline{display:block;font-size:1.32em;line-height:1.32;font-weight:600;letter-spacing:-.01em;
+    color:var(--ink);margin:1.15em 0 1.35em;padding-left:.9em;border-left:3px solid var(--accent)}
+  .article-body .conc{margin-top:1.9em}
+  /* inline editor */
+  .article-body[contenteditable="true"]{outline:none;caret-color:var(--accent)}
+  .article-body[contenteditable="true"]:focus-within{}
+  mark.cmt{background:var(--hl);color:#1d1d1b;border-radius:2px;padding:0 1px;cursor:pointer;
+    box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  mark.cmt:hover{box-shadow:0 0 0 2px var(--hl)}
+  mark.cmt.has-note{border-bottom:2px solid var(--accent)}
+  /* inline figures (media) — not editable */
+  .article-body figure{margin:1.7em 0}
+  .article-body figure img{display:block;width:100%;border-radius:6px;background:var(--paper-warm);box-shadow:inset 0 0 0 1px var(--ink-line)}
+  .article-body figure figcaption{font-family:var(--mono);font-size:11px;line-height:1.55;color:var(--ink-mut);margin-top:8px}
+  .article-body figure figcaption .cred{display:block;opacity:.7;margin-top:2px}
+  .editstate{font-family:var(--mono);font-size:10px;color:var(--ink-mut)}
+  .editstate b{color:var(--accent)}
+  .overall{margin-top:48px;border-top:2px solid var(--ink);padding-top:16px}
+  .overall label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mut)}
+  .overall textarea{display:block;width:100%;margin-top:8px;min-height:80px;font-family:var(--serif);font-size:16px;
+    line-height:1.5;color:var(--ink);background:var(--card);border:1px solid var(--ink-line);border-radius:8px;padding:12px;resize:vertical}
+
+  /* comment rail */
+  .rail{position:sticky;top:44px;height:calc(100vh - 44px);overflow:auto;border-left:1px solid var(--ink-line);
+    padding:18px 16px;background:var(--paper-warm);font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .rail h4{margin:0 0 12px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mut)}
+  .rail .cmt{border:1px solid var(--ink-line);border-radius:8px;padding:10px 11px;margin:0 0 10px;background:#fff8;cursor:pointer}
+  .rail .cmt:hover{border-color:var(--ink)}
+  .rail .cmt .q{color:var(--ink);border-left:2px solid var(--hl);padding-left:8px;margin:0 0 6px;font-style:italic;line-height:1.45}
+  .rail .cmt .nt{color:var(--ink-soft);line-height:1.5}
+  .rail .cmt .meta{display:flex;justify-content:space-between;margin-top:7px;color:var(--ink-mut);font-size:10px}
+  .rail .cmt .del{cursor:pointer;color:var(--ink-mut)} .rail .cmt .del:hover{color:#b4543f}
+  .rail .empty{color:var(--ink-mut);line-height:1.6}
+
+  /* selection popover */
+  .pop{position:absolute;z-index:60;display:none;flex-direction:column;gap:6px;width:240px;
+    background:#fff;border:1px solid var(--ink);border-radius:8px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+  .pop textarea{font-family:var(--serif);font-size:14px;border:1px solid var(--ink-line);border-radius:6px;padding:8px;min-height:54px;resize:vertical}
+  .pop .row{display:flex;gap:6px;justify-content:flex-end}
+  .pop button{font-family:var(--mono);font-size:11px;padding:5px 10px;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;cursor:pointer}
+  .pop button.save{background:var(--ink);color:var(--paper)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:70;background:var(--ink);color:var(--paper);
+    font-family:var(--mono);font-size:12px;padding:9px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="tabs" id="tabs"></div>
+  <div class="act">
+    <span class="editstate" id="editstate"></span>
+    <button class="btn" id="editToggle" aria-pressed="true">✎ edit: on</button>
+    <button class="btn" id="reset">reset draft</button>
+    <button class="btn" id="railToggle">💬 comments</button>
+    <button class="btn primary" id="copy">copy feedback JSON</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <main>
+    <p class="kicker" id="kicker">Draft · for review</p>
+    <h1 class="title" id="title"></h1>
+    <div class="article-body" id="body" spellcheck="false" autocapitalize="off" autocorrect="off"></div>
+    <div class="overall">
+      <label>Overall note on this piece</label>
+      <textarea id="overall" placeholder="general feedback, direction, keep/cut, tone…"></textarea>
+    </div>
+  </main>
+  <aside class="rail" id="rail">
+    <h4>Comments · this piece</h4>
+    <div id="cmts"></div>
+  </aside>
+</div>
+
+<div class="pop" id="pop">
+  <textarea id="popnote" placeholder="comment on the selected text… (leave blank to just highlight)"></textarea>
+  <div class="row"><button id="popdelete" style="display:none;margin-right:auto;border-color:#b4543f;color:#b4543f">delete</button><button id="popcancel">cancel</button><button class="save" id="popsave">save</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ========================= ARTICLE CONTENT ========================= -->
+<!-- ======================= DRAFTS (populate this) =======================
+  One <template data-art="unique-id" data-title="Title" data-hero="optional.jpg"> per draft.
+  HOUSE STRUCTURE (hold it): lead/dek → opening <p> → <p class="thesisline"> (isolated thesis,
+  set apart) → body (<p>, <h2>, <blockquote>…<span class="by">— Name</span></blockquote>, <em>,
+  one <p class="pull">, optional <figure contenteditable="false"><img src="x.jpg" alt="">
+  <figcaption>caption<span class="cred">credit · license</span></figcaption></figure>) →
+  close with <h2 class="conc">punch heading</h2><p>punch paragraph</p>.
+  data-hero hides if the file is missing. Tabs, inline editing, highlight/comment, JSON are automatic.
+====================================================================== -->
+<template data-art="draft-1" data-title="Draft One — replace me" data-hero="">
+<p class="lead">One-sentence standfirst that names the subject.</p>
+<p>Open on a concrete anecdote or image.</p>
+<p class="thesisline">An isolated one-line thesis, set apart for emphasis.</p>
+<blockquote>An epigraph, if you want one.<span class="by">— Source</span></blockquote>
+<h2>A section heading</h2>
+<p>Body. <em>Emphasis</em> where it earns it.</p>
+<p class="pull">A mid pull-quote for rhythm.</p>
+<h2 class="conc">Punch heading</h2>
+<p>A short closing paragraph that turns rather than summarizes.</p>
+</template>
+<template data-art="draft-2" data-title="Draft Two — replace me" data-hero="">
+<p class="lead">Second draft's standfirst.</p>
+<p>Opening.</p>
+<p class="thesisline">Its isolated thesis line.</p>
+<p>Body…</p>
+<h2 class="conc">Punch heading</h2>
+<p>Closing punch.</p>
+</template>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const ARTS = [...document.querySelectorAll('template[data-art]')].map(t => ({
+  id:t.dataset.art, title:t.dataset.title, hero:t.dataset.hero||'', html:t.innerHTML.trim()
+}));
+const VER = "v4-media";                          // bump when template content changes
+const KEY = "ckw-blog-review-" + VER;
+let store = JSON.parse(localStorage.getItem(KEY) || '{}');   // { id: {body:html|null, overall} }
+const st = id => store[id] || (store[id] = {body:null, overall:""});
+const save = () => localStorage.setItem(KEY, JSON.stringify(store));
+let cur = ARTS[0].id, editing = true;
+const body = $('body');
+
+const esc = s => s.replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const trunc = (s,n) => s.length>n ? s.slice(0,n)+'…' : s;
+function offscreenText(html){            // innerText (block-aware) minus figures
+  const d=document.createElement('div'); d.style.cssText='position:fixed;left:-99999px;top:0';
+  d.innerHTML=html; d.querySelectorAll('figure').forEach(f=>f.remove());
+  document.body.appendChild(d); const t=d.innerText.replace(/\n{3,}/g,'\n\n').trim(); d.remove(); return t;
+}
+function curHtml(id){ const s=store[id]; return (s&&s.body!=null)?s.body:ARTS.find(a=>a.id===id).html; }
+function isEdited(id){ const s=store[id]; if(!s||s.body==null) return false;
+  return offscreenText(s.body) !== offscreenText(ARTS.find(a=>a.id===id).html); }
+function markCount(id){ const d=new DOMParser().parseFromString(curHtml(id),'text/html'); return d.querySelectorAll('mark.cmt').length; }
+
+function render(){
+  const a = ARTS.find(x=>x.id===cur);
+  $('title').textContent = a.title;
+  document.querySelectorAll('main .hero').forEach(h=>h.remove());
+  if(a.hero){ const img=new Image(); img.className='hero'; img.src=a.hero; img.alt=''; img.onerror=()=>img.remove(); $('kicker').parentNode.insertBefore(img,$('kicker')); }
+  body.innerHTML = st(cur).body!=null ? st(cur).body : a.html;
+  body.setAttribute('contenteditable', editing?'true':'false');
+  body.querySelectorAll('figure').forEach(f=>f.contentEditable='false');
+  body.querySelectorAll('mark.cmt').forEach(m=>{ if((m.dataset.note||'').trim()) m.classList.add('has-note'); });
+  $('overall').value = st(cur).overall || "";
+  renderTabs(); renderRail(); updateState();
+  window.scrollTo(0,0);
+}
+function persist(){ st(cur).body = body.innerHTML; save(); renderTabs(); renderRail(); updateState(); }
+let dt; body.addEventListener('input', ()=>{ clearTimeout(dt); dt=setTimeout(persist,350); });
+
+function updateState(){ const n=body.querySelectorAll('mark.cmt').length;
+  $('editstate').innerHTML = (isEdited(cur)?'<b>● edited</b> · ':'') + n + ' highlight'+(n!==1?'s':''); }
+
+function renderTabs(){
+  $('tabs').innerHTML = ARTS.map(a=>{ const n=markCount(a.id), ed=isEdited(a.id);
+    return `<button class="tab" data-id="${a.id}" aria-pressed="${a.id===cur}">${esc(a.title)}${n?` <span class="n">${n}</span>`:''}${ed?' <span class="n">✎</span>':''}</button>`;}).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ if(editing)persist(); cur=b.dataset.id; render(); });
+}
+
+/* ---- highlight create / edit / delete ---- */
+const pop=$('pop'); let pendingRange=null, activeMark=null;
+function sameBlock(range){ const blk=n=>{ while(n&&n!==body){ if(n.nodeType===1 && /^(P|H1|H2|H3|H4|LI|BLOCKQUOTE|FIGCAPTION)$/.test(n.tagName)) return n; n=n.parentNode;} return body;};
+  return blk(range.startContainer)===blk(range.endContainer); }
+function showPop(rect, note, isEdit){
+  pop.style.display='flex';
+  const x=Math.min(scrollX+rect.left, scrollX+document.documentElement.clientWidth-260);
+  pop.style.left=x+'px'; pop.style.top=(scrollY+rect.bottom+8)+'px';
+  $('popnote').value=note||''; $('popdelete').style.display=isEdit?'':'none';
+  setTimeout(()=>$('popnote').focus(),0);
+}
+function closePop(){ pop.style.display='none'; pendingRange=null; activeMark=null; }
+function wrap(range, note){
+  const m=document.createElement('mark'); m.className='cmt'+(note?' has-note':''); if(note)m.dataset.note=note;
+  try{ range.surroundContents(m); } catch(_){ const f=range.extractContents(); m.appendChild(f); range.insertNode(m); }
+  return m;
+}
+function unwrap(m){ const p=m.parentNode; while(m.firstChild) p.insertBefore(m.firstChild,m); p.removeChild(m); p.normalize(); }
+function openMark(m){ activeMark=m; pendingRange=null; showPop(m.getBoundingClientRect(), m.dataset.note||'', true); }
+
+body.addEventListener('mouseup', e=>{
+  if(!editing || pop.contains(e.target)) return;
+  const sel=getSelection();
+  const m=e.target.closest ? e.target.closest('mark.cmt') : null;
+  if(m && (!sel || sel.isCollapsed)){ openMark(m); return; }
+  if(!sel || sel.isCollapsed) return;
+  const r=sel.getRangeAt(0);
+  if(!body.contains(r.commonAncestorContainer) || r.toString().trim().length<2) return;
+  if(!sameBlock(r)){ toast('select within one paragraph'); return; }
+  pendingRange=r.cloneRange(); activeMark=null;
+  showPop(r.getBoundingClientRect(), '', false);
+});
+$('popcancel').onclick=()=>{ closePop(); getSelection().removeAllRanges(); };
+document.addEventListener('mousedown', e=>{ if(pop.style.display!=='none' && !pop.contains(e.target)) closePop(); });
+$('popsave').onclick=()=>{
+  const note=$('popnote').value.trim();
+  if(activeMark){ if(note){activeMark.dataset.note=note;activeMark.classList.add('has-note');} else {delete activeMark.dataset.note;activeMark.classList.remove('has-note');} }
+  else if(pendingRange){ wrap(pendingRange, note); }
+  closePop(); getSelection().removeAllRanges(); persist(); toast(note?'comment saved':'highlighted');
+};
+$('popdelete').onclick=()=>{ if(activeMark) unwrap(activeMark); closePop(); persist(); toast('removed'); };
+
+function renderRail(){
+  const marks=[...body.querySelectorAll('mark.cmt')];
+  $('cmts').innerHTML = marks.length ? marks.map((m,i)=>`
+    <div class="cmt" data-i="${i}">
+      <div class="q">"${esc(trunc(m.textContent.trim(),140))}"</div>
+      ${(m.dataset.note||'').trim()?`<div class="nt">${esc(m.dataset.note)}</div>`:'<div class="nt" style="color:var(--ink-mut)">— highlight —</div>'}
+      <div class="meta"><span>click → edit / delete</span></div>
+    </div>`).join('')
+    : '<div class="empty">This is a live document — <b>type and backspace right in the text</b> to rewrite it. Select text to highlight or comment; <b>click a highlight to edit or delete it</b>. “copy feedback JSON” exports your inline edits + comments — paste it back to me and I revise from it.</div>';
+  $('cmts').querySelectorAll('.cmt').forEach(el=>el.onclick=()=>{ const m=body.querySelectorAll('mark.cmt')[+el.dataset.i]; if(m){ m.scrollIntoView({block:'center',behavior:'smooth'}); openMark(m);} });
+}
+
+$('overall').addEventListener('input',e=>{ st(cur).overall=e.target.value; save(); });
+$('editToggle').onclick=()=>{ editing=!editing; body.setAttribute('contenteditable',editing?'true':'false');
+  $('editToggle').textContent='✎ edit: '+(editing?'on':'off'); $('editToggle').setAttribute('aria-pressed',String(editing)); };
+$('reset').onclick=()=>{ if(confirm('Reset THIS draft to the original text (loses your edits + highlights on this piece)?')){ delete store[cur]; save(); render(); toast('draft reset'); } };
+$('railToggle').onclick=()=>{ const r=$('rail'); r.style.display=r.style.display==='none'?'':'none'; };
+$('copy').onclick=()=>{
+  if(editing) persist();
+  const out={ drafts: ARTS.map(a=>{
+    const html=curHtml(a.id), dom=new DOMParser().parseFromString(html,'text/html');
+    const comments=[...dom.querySelectorAll('mark.cmt')].map(m=>({quote:m.textContent.trim(), note:(m.getAttribute('data-note')||'').trim()}));
+    const edited=isEdited(a.id);
+    const o={ title:a.title, overall:(store[a.id]&&store[a.id].overall||''), edited, comments };
+    if(edited) o.revisedText = offscreenText(html);
+    return o;
+  })};
+  const json=JSON.stringify(out,null,2);
+  (navigator.clipboard?navigator.clipboard.writeText(json):Promise.reject())
+    .then(()=>toast('feedback JSON copied — paste it back to me'))
+    .catch(()=>{ const ta=document.createElement('textarea'); ta.value=json; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('feedback JSON copied'); });
+};
+
+let tt; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1800); }
+render();
+</script>
+</body>
+</html>

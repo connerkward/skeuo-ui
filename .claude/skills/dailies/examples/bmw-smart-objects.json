@@ -1,0 +1,39 @@
+{
+  "_comment": "BMW iX smart-objects §00 — captures full-page parallax scroll plus three §00 viewport interactions. Used as the reference config for the productionized driver (replaces the original /tmp/dailies-playwright-driver.js). Serve portfolio-2026 at :4747 (python3 -m http.server) before running.",
+  "url": "http://localhost:4747/projects/bmw-research/smart-objects/",
+  "viewport": { "width": 1920, "height": 1080 },
+  "preload": {
+    "localStorage": { "ckw-theme": "dark" },
+    "waitForSelector": ".smart-object-viewer canvas",
+    "waitForFonts": true,
+    "settleMs": 1500
+  },
+  "scenes": [
+    {
+      "slug": "fullpage-parallax-scroll",
+      "drive": [
+        { "action": "scroll-to-top" },
+        { "action": "wait", "ms": 400 },
+        { "action": "raf-scroll", "from": 0, "to": "document", "durationMs": 22000 }
+      ]
+    },
+    {
+      "slug": "viewport-3d-orbit",
+      "drive": [
+        { "action": "scroll-into-view", "selector": ".smart-object-viewer canvas" },
+        { "action": "wait", "ms": 800 },
+        { "action": "raf-orbit", "selector": ".smart-object-viewer canvas",
+          "dxPx": 380, "dyPx": 0, "durationMs": 6500 }
+      ]
+    },
+    {
+      "slug": "viewport-3d-cinema-zoom",
+      "drive": [
+        { "action": "scroll-into-view", "selector": "[data-cinema-zoom]" },
+        { "action": "wait", "ms": 400 },
+        { "action": "click", "selector": "[data-cinema-zoom]" },
+        { "action": "wait", "ms": 6200 }
+      ]
+    }
+  ]
+}

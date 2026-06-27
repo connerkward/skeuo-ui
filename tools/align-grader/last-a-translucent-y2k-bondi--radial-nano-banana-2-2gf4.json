@@ -1,0 +1,266 @@
+{
+  "id": "a-translucent-y2k-bondi--radial-nano-banana-2-2gf4",
+  "shift": 0.0,
+  "score": 1.0,
+  "n_aligned": 16,
+  "n_total": 16,
+  "disagreements": 0,
+  "controls": [
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 1.1006,
+        "offset": 0.1269,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 1.5617,
+        "offset": 0.1366,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "pause",
+      "kind": "button",
+      "det": {
+        "presence": 1.4094,
+        "offset": 0.1349,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "stop",
+      "kind": "button",
+      "det": {
+        "presence": 1.2821,
+        "offset": 0.1169,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 1.8813,
+        "offset": 0.1127,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "volume",
+      "kind": "knob",
+      "det": {
+        "presence": 1.7473,
+        "offset": 0.1485,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "balance",
+      "kind": "knob",
+      "det": {
+        "presence": 1.7168,
+        "offset": 0.1809,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "seek",
+      "kind": "slider-arc",
+      "det": {
+        "presence": 1.2161,
+        "offset": 0.4674,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "shuffle",
+      "kind": "toggle",
+      "det": {
+        "presence": 1.6355,
+        "offset": 0.2356,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "eqOn",
+      "kind": "toggle",
+      "det": {
+        "presence": 1.9003,
+        "offset": 0.2194,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "eqBand",
+      "kind": "slider-v",
+      "det": {
+        "presence": 1.8837,
+        "offset": 0.0508,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "eqBand",
+      "kind": "slider-v",
+      "det": {
+        "presence": 1.8972,
+        "offset": 0.0423,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "eqBand",
+      "kind": "slider-v",
+      "det": {
+        "presence": 1.7669,
+        "offset": 0.0282,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "eqBand",
+      "kind": "slider-v",
+      "det": {
+        "presence": 1.8736,
+        "offset": 0.0121,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "eqBand",
+      "kind": "slider-v",
+      "det": {
+        "presence": 1.9283,
+        "offset": 0.0091,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "eqBand",
+      "kind": "slider-v",
+      "det": {
+        "presence": 1.912,
+        "offset": 0.0196,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    }
+  ]
+}

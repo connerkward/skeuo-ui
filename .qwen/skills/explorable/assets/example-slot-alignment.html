@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why the controls drift — an explorable</title>
+<style>
+  :root{
+    --bg:#0d0e11; --panel:#15171c; --panel2:#1b1e25; --ink:#e8eaef; --muted:#969cab;
+    --tmpl:#5cc8ff; --paint:#c9a35e; --overlay:#ff6a4d; --warn:#ff6a4d; --ok:#5dd28a;
+    --line:#2a2e36; --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.55}
+  .wrap{max-width:920px;margin:0 auto;padding:clamp(18px,4vw,44px)}
+  h1{font-size:clamp(22px,3.4vw,34px);margin:0 0 .25em;letter-spacing:-.015em}
+  h2{font-size:clamp(17px,2.4vw,22px);margin:2.2em 0 .5em;letter-spacing:-.01em}
+  .lede{color:var(--muted);margin:0 0 1.6em;max-width:64ch}
+  p{max-width:66ch;color:#cfd3dc}
+  code{background:#22262e;padding:.08em .38em;border-radius:5px;font-size:.9em;color:#e7d9b0}
+  .key{color:var(--tmpl)} .keyp{color:var(--paint)} .keyo{color:var(--overlay)}
+
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+         padding:clamp(12px,2.5vw,22px);margin-top:.4em}
+  svg{width:100%;height:auto;display:block;border-radius:10px;background:#0a0b0e}
+
+  .controls{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;margin:18px 2px 0}
+  .ctl{display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+  .ctl input[type=range]{width:190px;accent-color:var(--paint)}
+  .ctl.disabled{opacity:.4}
+  .seg{display:flex;flex-direction:column;gap:7px}
+  .seg .opts{display:flex;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{background:#1a1d24;color:var(--ink);border:0;border-right:1px solid var(--line);
+         padding:8px 13px;font:inherit;font-size:12.5px;cursor:pointer}
+  .seg button:last-child{border-right:0}
+  .seg button[aria-pressed=true]{background:var(--ok);color:#062414;font-weight:600}
+  .row{display:flex;gap:9px;flex-wrap:wrap}
+  .toggle{background:#1a1d24;color:var(--ink);border:1px solid var(--line);border-radius:8px;
+         padding:7px 12px;font:inherit;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:7px}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .toggle[aria-pressed=false]{opacity:.45}
+  button.reset{background:#1a1d24;color:var(--muted);border:1px solid var(--line);border-radius:8px;
+         padding:7px 12px;font:inherit;font-size:12.5px;cursor:pointer}
+
+  .readout{display:flex;gap:26px;flex-wrap:wrap;margin:20px 2px 0;font-variant-numeric:tabular-nums}
+  .readout .lbl{font-size:12px;color:var(--muted)}
+  .readout .num{font-size:26px;font-weight:600}
+  .num.warn{color:var(--warn)} .num.ok{color:var(--ok)}
+  .verdict{margin-top:14px;padding:12px 15px;border-radius:10px;background:var(--panel2);
+         border:1px solid var(--line);font-size:13.5px;color:#cfd3dc;max-width:none}
+  .verdict b{color:var(--ink)}
+
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:.6em}
+  .three .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .three h3{margin:.1em 0 .4em;font-size:14px}
+  .three p{font-size:12.5px;color:var(--muted);margin:0}
+  .three .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#e7d9b0;margin-top:.5em}
+  @media(max-width:680px){.three{grid-template-columns:1fr}}
+  .foot{color:var(--muted);font-size:12.5px;margin-top:2.4em;border-top:1px solid var(--line);padding-top:1em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Why the controls drift off the art</h1>
+  <p class="lede">Each skin is built from a <span class="key">blueprint</span> (where the
+  control wells are <em>supposed</em> to be), then a generative model <span class="keyp">paints</span>
+  the device over it, and finally the app drops a live HTML <span class="keyo">control</span> on top.
+  Three layers, two coordinate systems, and one assumption that breaks. Drag the sliders and watch it break.</p>
+
+  <div class="stage">
+    <svg viewBox="0 0 760 380" id="svg" aria-label="slot alignment diagram">
+      <defs>
+        <linearGradient id="bodyg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#3a4150"/><stop offset="1" stop-color="#252a33"/>
+        </linearGradient>
+        <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#d8b878"/><stop offset="1" stop-color="#a07d3e"/>
+        </linearGradient>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0H0V20" fill="none" stroke="#13151a" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="760" height="380" fill="url(#grid)"/>
+
+      <!-- context thumbnail: where this well lives on the device -->
+      <g id="thumb" transform="translate(28,40)">
+        <text x="0" y="-12" fill="#969cab" font-size="11" font-family="ui-sans-serif">the device</text>
+        <rect x="0" y="0" width="150" height="300" rx="22" fill="url(#bodyg)" stroke="#454d5c"/>
+        <rect x="20" y="22" width="110" height="64" rx="6" fill="#0c0d10" stroke="#11202a"/>
+        <g fill="#0c0d10" stroke="#1a1d24">
+          <rect x="22" y="110" width="22" height="18" rx="4"/><rect x="50" y="110" width="22" height="18" rx="4"/>
+          <rect x="78" y="110" width="22" height="18" rx="4"/><rect x="106" y="110" width="22" height="18" rx="4"/>
+        </g>
+        <rect x="20" y="150" width="110" height="10" rx="5" fill="#0c0d10"/>
+        <!-- highlighted well -->
+        <rect id="thumbWell" x="104" y="186" width="28" height="44" rx="5" fill="#0c0d10" stroke="#5cc8ff" stroke-width="2"/>
+        <rect x="20" y="250" width="110" height="40" rx="6" fill="#0c0d10" stroke="#11202a"/>
+        <line x1="132" y1="208" x2="232" y2="208" stroke="#5cc8ff" stroke-width="1.3" stroke-dasharray="3 3"/>
+      </g>
+
+      <!-- zoomed well: the three layers stacked -->
+      <g id="zoom" transform="translate(300,52)">
+        <!-- 2. painted hardware (moves with drift). Drawn first so outlines sit on top -->
+        <g id="paintG">
+          <rect id="pBez" x="0" y="0" width="150" height="220" rx="14" fill="url(#bezel)" stroke="#7a5e2c" stroke-width="3"/>
+          <rect id="pSlot" x="0" y="0" width="60" height="150" rx="10" fill="#16120a"/>
+          <rect id="pLever" x="0" y="0" width="74" height="52" rx="9" fill="#e8c886" stroke="#7a5e2c" stroke-width="2"/>
+        </g>
+
+        <!-- 1. blueprint template rect (fixed) -->
+        <rect id="tmpl" x="0" y="0" width="150" height="220" rx="12" fill="none"
+              stroke="#5cc8ff" stroke-width="2.5" stroke-dasharray="7 5"/>
+        <text id="tmplLab" fill="#5cc8ff" font-size="11.5" font-family="ui-sans-serif">template rect (blueprint coord)</text>
+
+        <!-- 3. live HTML overlay control -->
+        <rect id="ovl" x="0" y="0" width="150" height="220" rx="12" fill="#ff6a4d18"
+              stroke="#ff6a4d" stroke-width="2.5"/>
+        <text id="ovlLab" fill="#ff6a4d" font-size="11.5" font-family="ui-sans-serif">live overlay control</text>
+
+        <!-- misalignment arrow -->
+        <g id="arrowG">
+          <line id="arrow" x1="0" y1="0" x2="0" y2="0" stroke="#ff6a4d" stroke-width="2"/>
+          <circle id="aDotA" r="3.5" fill="#ff6a4d"/><circle id="aDotB" r="3.5" fill="#c9a35e"/>
+          <text id="arrowLab" fill="#ff6a4d" font-size="12" font-weight="600" font-family="ui-sans-serif"></text>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="controls">
+    <label class="ctl" id="cx">paint drift X <span id="vx">0</span> px
+      <input type="range" id="driftX" min="-90" max="90" value="0">
+    </label>
+    <label class="ctl" id="cy">paint drift Y <span id="vy">0</span> px
+      <input type="range" id="driftY" min="-70" max="70" value="0">
+    </label>
+    <div class="seg">
+      <span>fix applied</span>
+      <div class="opts" id="fix">
+        <button data-v="none" aria-pressed="true">None</button>
+        <button data-v="inpaint" aria-pressed="false">Masked inpaint</button>
+        <button data-v="snap" aria-pressed="false">Detect &amp; snap</button>
+      </div>
+    </div>
+    <div class="ctl">layers
+      <div class="row">
+        <button class="toggle" data-layer="tmpl" aria-pressed="true"><span class="swatch" style="background:#5cc8ff"></span>blueprint</button>
+        <button class="toggle" data-layer="paint" aria-pressed="true"><span class="swatch" style="background:#c9a35e"></span>painted art</button>
+        <button class="toggle" data-layer="ovl" aria-pressed="true"><span class="swatch" style="background:#ff6a4d"></span>overlay</button>
+      </div>
+    </div>
+    <button class="reset" id="reset">reset</button>
+  </div>
+
+  <div class="readout">
+    <div><div class="lbl">drift requested</div><div class="num" id="rReq">0 px</div></div>
+    <div><div class="lbl">painted vs template</div><div class="num" id="rActual">0 px</div></div>
+    <div><div class="lbl">misalignment (overlay ↔ art)</div><div class="num ok" id="rMis">0 px</div></div>
+  </div>
+  <div class="verdict" id="verdict"></div>
+
+  <h2>The one assumption that breaks</h2>
+  <p>The <span class="key">template rect</span> is the blueprint's <em>intent</em> — a fixed
+  <code>{x,y,w,h}</code> stored per skin. The <span class="keyp">painted art</span> is a
+  <em>separate</em> generative interpretation of that blueprint. The <span class="keyo">live
+  overlay</span> is positioned from the template rect and <em>trusts it absolutely</em>.
+  That trust is the bug: the paint model is told "keep every well exactly where it is," but a
+  generative model isn't pixel-faithful — it nudges, resizes, and merges wells. Nothing ever
+  measures the final art to correct the overlay. So the overlay sits at the blueprint coord
+  while the hardware sits somewhere else, and the gap you dragged into existence above is every
+  misalignment you've been seeing.</p>
+
+  <h2>Where do the slot numbers even come from?</h2>
+  <p>Not one place — three pipelines feed the same <code>template.json</code>, none of which
+  look at the painted output:</p>
+  <div class="three">
+    <div class="card">
+      <h3 style="color:#9ec9ff">1 · Fixed constants</h3>
+      <p>frog, bondi, burger… One hard-coded layout in pixels, <b>identical on every body</b>.
+      Zero adaptation to the specific art.</p>
+      <div class="mono">wild_proc.py → layout()<br>bx=252,by=530,bw=88…</div>
+    </div>
+    <div class="card">
+      <h3 style="color:#9ec9ff">2 · Mask-fit</h3>
+      <p>biomech, halo… Largest inscribed rectangle per torso band of the AI silhouette.
+      Per-body, but fit to the <b>blueprint mask</b>, not the paint.</p>
+      <div class="mono">wild_sculpt.py → max_rect()</div>
+    </div>
+    <div class="card">
+      <h3 style="color:#9ec9ff">3 · Layout-first</h3>
+      <p>maw, wmp… Hard-coded polar coords; the body is grown <b>around</b> the ring.
+      Coords precede the art entirely.</p>
+      <div class="mono">layout_radial()/capsule()</div>
+    </div>
+  </div>
+  <p style="margin-top:1em">All three share the fatal line at the top of the pipeline:
+  <em>"No detection, no repair, ever."</em> The rect is where the well was <em>drawn</em>,
+  never where it was <em>painted</em>.</p>
+
+  <h2>Two ways to close the gap</h2>
+  <p>Flip the <b>fix</b> control above between them and watch the misalignment go to zero from
+  opposite ends:</p>
+  <p><b class="ok">Masked inpaint</b> — repaint only the body; hand the model a mask that marks
+  the wells as <em>preserve</em> (black) so it <em>physically cannot</em> move them. The wells
+  come back bit-exact at the blueprint coords. Drift can't happen → the overlay still fits.
+  Crucially, the shared template stays valid across every skin: same generator emits blueprint
+  <em>and</em> mask, zero per-skin re-measurement. (fal <code>flux-pro/v1/fill</code> or
+  <code>qwen-image-edit/inpaint</code>, mask = body-white / wells-black.) The one cost is a
+  crisp recessed seam at the well edge — on skeuomorphic hardware that reads as a machined
+  bezel, not a defect.</p>
+  <p><b style="color:#c9a35e">Detect &amp; snap</b> — keep the free paint model, then run a
+  CV / vision pass on the <em>final</em> frame to find where each well actually landed and
+  rewrite the overlay coords to match. The art looks natural, but every skin must be
+  re-measured and the overlay coords become <em>per-skin</em> — you lose the shared-template
+  reuse. Accuracy is only as good as the detector (±several px for a vision-model bbox).</p>
+  <p>Verdict from the research pass: <b>masked inpaint is the structural fix</b> (exact by
+  construction, keeps the shared template); detect-and-snap is the rescue path for art you've
+  already generated, or a validator that the inpaint didn't bleed.</p>
+
+  <p class="foot">An explorable explanation, in the lineage of Bret Victor ("Explorable
+  Explanations"), Nicky Case, Bartosz Ciechanowski, and 3Blue1Brown — built with the
+  <code>explorable</code> skill. The numbers and pipeline names are from this repo's actual
+  <code>generation/</code> code.</p>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const TX = 0, TY = 0, W = 150, H = 220;          // template rect within #zoom group
+  const SLOTW = 60, SLOTH = 150, LEVW = 74, LEVH = 52;
+  const state = { dx: 0, dy: 0, fix: 'none', layers: { tmpl:true, paint:true, ovl:true } };
+
+  function render(){
+    const inpaint = state.fix === 'inpaint';
+    const snap    = state.fix === 'snap';
+    // painted hardware position: masked inpaint freezes it to the template rect
+    const px = inpaint ? TX : TX + state.dx;
+    const py = inpaint ? TY : TY + state.dy;
+    // overlay position: detect-and-snap re-measures it onto the painted art
+    const ox = snap ? px : TX;
+    const oy = snap ? py : TY;
+
+    // painted layers (bezel + slot + centered lever)
+    $('pBez').setAttribute('x', px); $('pBez').setAttribute('y', py);
+    $('pSlot').setAttribute('x', px + (W-SLOTW)/2); $('pSlot').setAttribute('y', py + (H-SLOTH)/2);
+    $('pLever').setAttribute('x', px + (W-LEVW)/2); $('pLever').setAttribute('y', py + 26);
+    // blueprint rect (always at template)
+    $('tmpl').setAttribute('x', TX); $('tmpl').setAttribute('y', TY);
+    $('tmplLab').setAttribute('x', TX); $('tmplLab').setAttribute('y', TY - 8);
+    // overlay
+    $('ovl').setAttribute('x', ox); $('ovl').setAttribute('y', oy);
+    $('ovlLab').setAttribute('x', ox); $('ovlLab').setAttribute('y', oy + H + 18);
+
+    // layer visibility
+    $('paintG').style.display = state.layers.paint ? '' : 'none';
+    $('tmpl').style.display = $('tmplLab').style.display = state.layers.tmpl ? '' : 'none';
+    $('ovl').style.display = $('ovlLab').style.display = state.layers.ovl ? '' : 'none';
+
+    // misalignment = overlay center vs painted-hardware center
+    const ocx = ox + W/2, ocy = oy + H/2, pcx = px + W/2, pcy = py + H/2;
+    const mis = Math.round(Math.hypot(ocx - pcx, ocy - pcy));
+    const reqd = Math.round(Math.hypot(state.dx, state.dy));
+    const actual = Math.round(Math.hypot(px - TX, py - TY));
+
+    const showArrow = mis > 1 && state.layers.paint && state.layers.ovl;
+    $('arrowG').style.display = showArrow ? '' : 'none';
+    if (showArrow){
+      $('arrow').setAttribute('x1', ocx); $('arrow').setAttribute('y1', ocy);
+      $('arrow').setAttribute('x2', pcx); $('arrow').setAttribute('y2', pcy);
+      $('aDotA').setAttribute('cx', ocx); $('aDotA').setAttribute('cy', ocy);
+      $('aDotB').setAttribute('cx', pcx); $('aDotB').setAttribute('cy', pcy);
+      $('arrowLab').setAttribute('x', (ocx+pcx)/2 + 8); $('arrowLab').setAttribute('y', (ocy+pcy)/2);
+      $('arrowLab').textContent = mis + ' px off';
+    }
+
+    // readouts
+    $('vx').textContent = state.dx; $('vy').textContent = state.dy;
+    $('rReq').textContent = reqd + ' px';
+    $('rActual').textContent = actual + ' px';
+    $('rActual').className = 'num ' + (actual===0 ? 'ok' : 'warn');
+    $('rMis').textContent = mis + ' px';
+    $('rMis').className = 'num ' + (mis===0 ? 'ok' : 'warn');
+
+    // drift sliders greyed when inpaint makes them inert
+    $('cx').classList.toggle('disabled', inpaint);
+    $('cy').classList.toggle('disabled', inpaint);
+
+    // verdict line
+    let v;
+    if (state.fix==='none')
+      v = mis===0
+        ? "<b>No fix, no drift.</b> The overlay sits on the painted hardware — but only because you haven't dragged yet. The paint model gets no such guarantee."
+        : `<b>Misaligned by ${mis}px.</b> The overlay trusts the blueprint coord; the paint moved the well. Nothing measures the art, so the gap is permanent.`;
+    else if (inpaint)
+      v = `<b style="color:#5dd28a">Masked inpaint:</b> you requested ${reqd}px of drift but the well is frozen by the mask — actual ${actual}px. Overlay still fits, and the shared template stays valid across every skin.`;
+    else
+      v = `<b style="color:#c9a35e">Detect &amp; snap:</b> the paint drifted ${reqd}px, then the overlay was re-measured onto the art → ${mis}px off. Looks aligned, but this skin's overlay coords are now per-skin — the shared template is gone.`;
+    $('verdict').innerHTML = v;
+  }
+
+  $('driftX').oninput = e => { state.dx = +e.target.value; render(); };
+  $('driftY').oninput = e => { state.dy = +e.target.value; render(); };
+  $('fix').querySelectorAll('button').forEach(b => b.onclick = () => {
+    state.fix = b.dataset.v;
+    $('fix').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x===b));
+    render();
+  });
+  document.querySelectorAll('.toggle[data-layer]').forEach(b => b.onclick = () => {
+    const k = b.dataset.layer; state.layers[k] = !state.layers[k];
+    b.setAttribute('aria-pressed', state.layers[k]); render();
+  });
+  $('reset').onclick = () => {
+    state.dx = 0; state.dy = 0; state.fix='none';
+    $('driftX').value = 0; $('driftY').value = 0;
+    $('fix').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v==='none'));
+    Object.keys(state.layers).forEach(k => state.layers[k]=true);
+    document.querySelectorAll('.toggle[data-layer]').forEach(b => b.setAttribute('aria-pressed', true));
+    render();
+  };
+
+  render();
+</script>
+</body>
+</html>

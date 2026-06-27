@@ -1,0 +1,150 @@
+{
+  "id": "a-glossy-blue-robot-spea-simple-nano-banana-2-0oyq",
+  "shift": 0.35,
+  "score": 0.0,
+  "n_aligned": 0,
+  "n_total": 7,
+  "disagreements": 3,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on left arrow button"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on play/pause button"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on right arrow button"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "stop",
+      "kind": "button",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "no box present"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "volume",
+      "kind": "knob",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "balance",
+      "kind": "knob",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    }
+  ]
+}

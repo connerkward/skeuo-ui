@@ -1,0 +1,90 @@
+{
+  "id": "a-small-green-frog-minimal-nano-banana-2-cr73",
+  "shift": 0.0,
+  "score": 0.8,
+  "n_aligned": 4,
+  "n_total": 5,
+  "disagreements": 1,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 0.3127,
+        "offset": 0.0036,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 0.8921,
+        "offset": 0.105,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 0.9848,
+        "offset": 0.1941,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 0.9516,
+        "offset": 0.1944,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    },
+    {
+      "bind": "volume",
+      "kind": "knob",
+      "det": {
+        "presence": 0.865,
+        "offset": 0.3292,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [],
+        "confidence": 0.0,
+        "note": "vlm skipped"
+      },
+      "aligned": true
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "id": "a-glossy-blue-robot-spea-simple-nano-banana-2-0oyq",
+  "shift": 0.18,
+  "score": 0.0,
+  "n_aligned": 0,
+  "n_total": 7,
+  "disagreements": 3,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 0.7885,
+        "offset": 0.3818,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.833,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 0.5954,
+        "offset": 0.7612,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on round prev well"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 0.9841,
+        "offset": 0.8982,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on round play well"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 0.7341,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": true,
+        "votes": [
+          true,
+          true,
+          true
+        ],
+        "confidence": 0.9,
+        "note": "box on round next well"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "stop",
+      "kind": "button",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.833,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "volume",
+      "kind": "knob",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.833,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "balance",
+      "kind": "knob",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.833,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    }
+  ]
+}

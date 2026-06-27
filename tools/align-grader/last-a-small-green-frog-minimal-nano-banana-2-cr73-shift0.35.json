@@ -1,0 +1,110 @@
+{
+  "id": "a-small-green-frog-minimal-nano-banana-2-cr73",
+  "shift": 0.35,
+  "score": 0.0,
+  "n_aligned": 0,
+  "n_total": 5,
+  "disagreements": 1,
+  "controls": [
+    {
+      "bind": "seek",
+      "kind": "slider-h",
+      "det": {
+        "presence": 0.5785,
+        "offset": 0.3261,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.8,
+        "note": "box floats on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "play",
+      "kind": "button",
+      "det": {
+        "presence": 1.3491,
+        "offset": 0.3392,
+        "aligned": true
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "box on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "prev",
+      "kind": "button",
+      "det": {
+        "presence": 0.2193,
+        "offset": 0.051,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "box on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "next",
+      "kind": "button",
+      "det": {
+        "presence": 0.0,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "box on blank body"
+      },
+      "aligned": false
+    },
+    {
+      "bind": "volume",
+      "kind": "knob",
+      "det": {
+        "presence": 1.415,
+        "offset": 1.0,
+        "aligned": false
+      },
+      "vlm": {
+        "aligned": false,
+        "votes": [
+          false,
+          false,
+          false
+        ],
+        "confidence": 0.9,
+        "note": "box on blank body"
+      },
+      "aligned": false
+    }
+  ]
+}

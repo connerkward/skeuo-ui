@@ -1,0 +1,106 @@
+{
+  "updated": "2026-06-23",
+  "projects": [
+    {
+      "id": "war-room",
+      "name": "War Room",
+      "start": "2026-06-12",
+      "touched": "2026-06-13",
+      "progress": 0.7,
+      "status": "active",
+      "note": "TV hub (per-URL subprojects) on the XGIMI projector. Live combined timeline (realtime now-line, conveyor/sweep motion, real git commit density) + Floor of live agent sessions with agent-radio portraits + callsigns. Access-gated (home-IP + secret). Pending: live KV producer, spotify-outpaint."
+    },
+    {
+      "id": "muser",
+      "name": "Muser",
+      "start": "2026-05-26",
+      "touched": "2026-06-17",
+      "progress": 0.8,
+      "status": "active",
+      "note": "hidden personal Google-Photos triage sub-tool shipped: Faces (1389 people, name/merge/bulk-label), Evaluate/Cleanup/Trash tabs, label-trained personal-vs-reference (~88% CV) + deletion (~98% prec) models, classification frames. Now in manual triage (~7% labeled). 2026-06-17: published as triple-duty Claude Code plugin (CLI + MCP server + bundled skill) on connerkward/Muser, added to ckw-skills marketplace + topic-indexed for skill/MCP scrapers. Web UI: result thumbs now fade in from grey skeleton boxes (kills search flicker). Demo gif (full-site start + left→right reading pan) in repo + ckw-skills README. Open: MCP runtime distribution (bun -> npx/compiled binary) so install works without manual setup; crosspost announce (both in TODO). 2026-06-17 also drafted MCP-registry publish (server.json/manifest/CI via the mcpb-uv path) — BLOCKED on verifying the uv-Python bundle actually packs+launches (heavy SigLIP/torch service)."
+    },
+    {
+      "id": "feed-demon",
+      "name": "Feed Demon",
+      "aka": [
+        "feedsieve"
+      ],
+      "start": "2026-06-10",
+      "touched": "2026-06-18",
+      "progress": 0.78,
+      "status": "active",
+      "note": "local taste-learning RSS reader; +Reddit/HN, upvote-led ranking, click=implicit-upvote, in-reader Digest, mobile UX pass, MCP server (Claude Code/Desktop); on GitHub"
+    },
+    {
+      "id": "portfolio-2026",
+      "name": "Portfolio 2026",
+      "start": "2026-02-25",
+      "touched": "2026-06-23",
+      "progress": 0.7,
+      "status": "active",
+      "note": "Portfolio + /writing blog (connerkward.dev). Landing: eased hero→footer snap, full-screen WARD footer w/ ultra-thin dithered divider. Gallery (public-first + gated section). Muser aesthetic ranking + d-menu sort. 2026-06-23: 'The End of the App Grid' essay — built a tone-parametric PostTitle (standard↔cinematic-E emotional-tone slider + app-grid icon-position picker, debug 'title tone' panel; default clean type, no icon), a generative crumbling-app-grid banner cover, a simpler deck subtitle, a clean single-hue terracotta c-threat exposure chart (dropped rainbow-heat + diagram attempts), and a 1200x630 OG share card with the dissolving-grid mark. Charts via make-chart.py baker. Committed not deployed (deploy tabled). Earlier (06-17): bas page nav-frame + machine-only GEO lead. | 2026-06-23 (later): footer WARD entrance — crisp vector revealed through a dissolving Bayer MASK on scroll-in (eased body + accelerating tail, no dip/flash/misalign — Gemini-verified), divider line OFF by default; FOUT killed (self-hosted+preloaded 42dot/BBH Bartle, font-display optional/block + metric-matched fallbacks); dark-mode portrait reverted to original invert. Alt blue \"punku\" theme built but parked localhost-only on branch worktree-agent-a482b206ee15b2c52 (not merged)."
+    },
+    {
+      "id": "central",
+      "name": "Central",
+      "start": "2026-02-14",
+      "touched": "2026-06-13",
+      "progress": 0.82,
+      "status": "active",
+      "note": "Rules/skills source of truth. This session: added verify-app-setting-location-rule (confirm a GUI setting's exact path via web search for the user's app version + edition gating before directing them). Prior: project-timeline skill + close-shop integration; XGIMI MoGo projector (per_mogo); CF token scope note."
+    },
+    {
+      "id": "notes-graph",
+      "aka": [
+        "mcp-apple-notes",
+        "exp-notes-indexing"
+      ],
+      "name": "Notes Knowledge Graph",
+      "start": "2026-06-08",
+      "touched": "2026-06-17",
+      "progress": 0.8,
+      "status": "active",
+      "note": "layered deterministic graph over 1.8k Apple Notes ($0 vs Graphiti $4.63); evidence-first feed, bridges/map disk-cached. 2026-06-17: published triple-duty (MCP server + Claude Code plugin + bundled skill) at connerkward/mcp-apple-notes; live in the official MCP Registry (io.github.connerkward/mcp-apple-notes); security-hardened (loopback bind, removed a private path leak); one-command release pipeline (scripts/release.sh + CI .mcpb publish); submitted to the official Claude plugin directory (pending review). Pending: blog publish; feature backlog (image search, bridges viz) is unvalidated; the apple-notes-graph rename was explored but not adopted."
+    },
+    {
+      "id": "crosspost",
+      "name": "Crosspost",
+      "start": "2026-03-18",
+      "touched": "2026-06-12",
+      "progress": 0.5,
+      "status": "active",
+      "note": "Optional human-gated, preview-first, semi-autonomous multi-platform social posting. Purpose defined, browser flow working (X/Discord live-tested); preview OG fidelity + headless channels are TODO."
+    },
+    {
+      "id": "screen-studio-alternative",
+      "aka": [
+        "demo-polish",
+        "screenstudio-alt-skill",
+        "screenstudio-alternative-skill"
+      ],
+      "start": "2026-06-11",
+      "touched": "2026-06-23",
+      "progress": 0.92,
+      "status": "active",
+      "note": "Headless scriptable Screen Studio alternative: auto click-zoom, idle speed-up, cursor smoothing, frame styling; CLI (polish/render) + single-clip web editor (studio.py) + multi-clip NLE (sequence.py) + demo-polish skill. sequence.py: arrange clips end-to-end, trim/reorder (fixed-px-per-second timeline frozen mid-drag, edges track cursor 1:1), split/razor (S) + arrow frame-step, multi-select (shift/⌘-click) with group edge-trim, double-buffered playback (no boundary hiccup). Both windows export video + editable FCPXML (to_fcpxml_sequence, integer-frame contiguous) + GIF (palette transcode); 60fps + 1080p defaults (16:9/9:16/1:1 auto from first clip). 2026-06-14: added 3 competitor-parity features after a GitHub/marketplace survey — GIF export (both editors), style presets (studio, named looks persisted in presets.json), activity-aware auto-zoom (zooms standalone typing bursts centred on cursor, not just clicks). All verified in-browser/via ffprobe+frame extraction. Survey takeaway: our niche (headless, agent-driven, FCPXML handoff) is uncontested; GUI clones (screenize/recordly/screenarc) exist — don't rebuild those. Pending: study competitor auto-zoom impls (esp. screenize Apple-Vision UI-element targeting — TODO); FCPXML pan-calibration needs a Resolve Studio round-trip; sequence.py crossfade + per-clip effects deferred; naming/marketplace prep deferred. 2026-06-17: shipped the public demo + reproducible tooling. Deterministic frame-stepping recorder (test/record-demo.js) — steps the studio timeline frame-by-frame (O2S(i/fps) -> seeked + 2 RAFs -> screenshot -> assemble) for perfect CFR; replaces Playwright recordVideo whose VFR->CFR juddered on the auto-zoom (verified 0 frozen-mid-motion, loop-seam ~0.5); documented in SKILL.md + ARCHITECTURE.md, contrasted with macos-screen-recorder/sck-record. Server-side text-callout persistence (/callouts GET+POST, debounced) so manual placement survives reload + the headless re-record. Timeline UX: fixed inspector height (no timeline jump on select, verified dy=0), cmd/shift multi-select, drag-to-select rubber band. Inspector decluttered: Text callouts -> own drawer, stray Keystroke subtitle removed, all drawers collapsed by default. HD annotated NLE demo (auto-zoom/fast-forward/keystroke callouts) is now the README hero in central + the public repo + ckw-skills marketplace; posted to X. render.py: added an in-region PAN (cx1/cy1 → camera glides at held zoom instead of returning to rest between regions, which had read as zoom-in/out/in) + agent-readable metadata baking (mp4 chapters + <video>.moments.json sidecar, so a video-blind agent can jump to full-zoom moments and screenshot them). 2026-06-23: studio polish — 60fps default + frame-stepping (←/→ steps one REAL frame, hold = continuous 1× jog; was 4-at-a-time), greyed-overlay non-destructive trim (no timeline reflow, no spec clipping), FCPXML export on its own lock (renders + exports in parallel), color-coded timeline tracks (ZOOM amber / SPEED green / KEYS purple). Muser white-flash root-caused (concept-bar search fired pre-Enter → blank-loading gallery captured) + fixed in Muser (recorder fires search only on Enter; Muser keeps the old grid until new thumbs paint). Big push on an 'agentic' promo cut for social: a Claude-Code-style 'Loading skill: screenstudio-alt' terminal whose colored decisions MORPH down to dock onto the studio's real timeline bars → tightened demo + feature callouts → ending where the real Export/FCPXML buttons grow into output cards (real Premiere/Resolve/Final-Cut icons via the iTunes API + Wikimedia) + brand (big wordmark, real logo, 'free · MIT · a Claude Code skill'); 16:9+9:16 output frames balance the NLE icons. Explored simpler demo apps (⌘K command palette, chat) to cut Muser's visual busyness but ABANDONED — failed 'instantly clear what it is'; Muser kept for the promo (image-search reads instantly). Public repo renamed connerkward/screenstudio-alternative-skill → screenstudio-alt-skill; README clarity pass kept the simple demo + fixed copy/section order. Pending: swap README demo to the new cut (unfinished — left as flagged loose end); reconcile 3 repo names in llms.txt; Reddit batch (r/SideProject + r/vibecoding) staged in ~/Desktop/cc-screenstudio-alt for posting; X reply drafted to @aakashgupta's Screen-Studio-clone thread."
+    },
+    {
+      "id": "skeuo-ui",
+      "name": "skeuo-ui",
+      "start": "2026-05-27",
+      "touched": "2026-06-23",
+      "progress": 0.71,
+      "status": "active",
+      "note": "AI-generated skeuomorphic music-player skins — one template, infinite wild creature/object bodies with real working hardware (knobs/switches/WebAudio). wild_sculpt pipeline (silhouette->deterministic layout->paint->alpha). Deployed: skeuo-ui.pages.dev. Shipped: generate-from-prompt (/api/generate Pages Function, key server-side, cost-capped, OFF in prod until cost model chosen), draggable template editor, Spotify connect/control, mobile swipe. IG-story export pipeline (capture.mjs virtual-time frame-stepping -> sharp/stutter-free hero/motion-graphics/sequence clips; make_seq.py reels; sequence-editor beat-cut handoff) documented in docs/render-pipeline.md; capture.mjs de-coupled from the @playwright/mcp npx cache onto its own playwright devDep. Pending: name+domain (.fm lane: guise/ruckus/coup/imp), enable FAL_KEY secret, Spotify client ID, KV rate-limit + R2 before public generation. ComfyUI port (generation/comfyui/): cloud API-node workflows mirror wild_sculpt (verified), to_ui.py emits Desktop-openable graphs, comfyui MCP wired. Slot-detection seg bake-off (SAM3/Florence-2/GroundingDINO/BiRefNet) showed zero-shot open-vocab fails on stylized UI art -> per-slot needs prior-guided box prompts (sam_snap). 2026-06-22 Spotify pass: shipped a self-diagnosing dev-mode 403 (NotRegisteredError + clean re-auth on retry, src/spotify/api.ts+useSpotify.ts, deployed) and confirmed the iOS 403 is wrong-account/dev-mode-allowlist (works on web, fails on phone), not a code bug. Verified Spotify's 2026 lockdown: dev mode = 5 users max + owner-Premium + ONE app per person + app-creation rate-limit; Extended Quota now needs a registered business + ~250k MAU (unavailable to an indie) -> public skeuo CANNOT control arbitrary users' Spotify; YouTube ripping AND hidden-player embed both violate ToS. Built+verified (headless Playwright) a BYO-Client-ID onboarding wizard (docs/spotify-byo-wizard-prototype.html: Document-PiP floating copy-helper, create-or-reuse-app modes, https-only redirect URIs, back-to-connect handhold) — NOT yet wired into the app; paused on the 24h app-creation cooldown. Fork pending: wire the BYO wizard for power users vs build a zero-setup local-files/Audius default engine for casual visitors. 2026-06-23 wizard/layout pass: unified the wizard's Step-2 layout stage + the standalone template editor onto ONE shared LayoutStage (8-handle resize, screen-space snap, symmetry guides, Alt-suspend); made the wizard's Layout step a big aspect-safe canvas; revamped the 'simple' default. Built a layout-randomization lookdev (/tmp/lookdev-layout) to ideate graphic-design-informed heuristics, then BAKED a 10-archetype generative engine (stack/dial/split/mini/console/diagonal/golden/Swiss-grid/L-corner/arc-fan) + a repel/min-spacing validity pass (0 overlaps, nothing too close; verified 400 seeds/archetype) into layoutRandom() driving the wizard's 🎲.2026-06-23 mascot pass: designed an on-model glossy-3D gremlin mascot (red backwards cap, gray horns, BiRefNet-matted real-alpha cutouts) and SHIPPED two surfaces to prod — contextual mascots across the /process 'how it works' page (6 margin peekers, one per pipeline step) and a friendly 'all tangled up' error card in the generate wizard. Explored but parked: music-reactive player mascot (researched the strategy: cut-out rig + ADDITIVE groove-layer driven by spring-smoothed energy/beat-clock, ghost-free; decisions pending) and a mascot-hint favicon (rejected). Also updated central fal-skill: web-search the SOTA model before grepping the catalog (Kling 3.0 motion-control >> Wan-Animate for character motion). 2026-06-23 WEBSITE REDESIGN shipped to skeuo.fm: narrow scrolling gallery + a FULL-HEIGHT skin hero + a cinematic per-skin logomark title card (punchy Google fonts loaded dynamically + preloaded so no pop-in, fit-to-width wrapping to 2 lines, text centered squarely between the skin and the frame edge); baked thumbnails (bake-thumbs.mjs renders the real Composite so minis show actual controls); Director now emits a concise name+blurb (no \"prompt · model\" junk) + a font, threaded handler->api->onCreated; generated-skin × = HIDE not delete (raw kept in localStorage); mobile/narrow bar matched to desktop (Connect hidden, Template axed, labelled Share, green Create CTA, corner skin label). Spotify stays gated OFF (CONNECT_ENABLED=false) pending the BYO wizard; generated-skin naming/font + prod gen-keys still need one live end-to-end test. 2026-06-23 (late) spritesheet-pipeline branch (tip d88a4cc, pushed): single-pass gen (device body + bottom control-strip in ONE paint) + BiRefNet device cutout + per-skin control-sprite cut WORKS end-to-end; runtime control-alignment is a heuristic (detect-wells -> global shortest-edge match -> snap screen-cluster/seek/buttons/knobs) that's clean on good gens (j4v9/xqeg) but varies per generation. Tried porting the documented SAM box-prompt Align (generation/sam_snap.py) into the runtime — came out WORSE on AI-painted devices (SAM merges/misses controls), reverted to the heuristic. Merge to main PENDING: only 3 conflicts (CreatePanel/CreateWizard/handler) but an unresolved coupling question — 'use main's button handling' (donor sprites) is incompatible with the spritesheet's per-skin-sprite rendering; needs a decision (see TODO). 2026-06-23 (latest) font polish + a prod-stability save: fixed the logomark-font pop-in (preload now FORCE-downloads the woff2 via FontFaceSet.load on link-load, not just the CSS link); added a font-diversity system (Director randomly favors 1 of 8 genre buckets + a recent-fonts avoid-list threaded from localStorage so it stops anchoring on Anton/Bebas — 10/10 distinct over 10 live gpt-4o gens) + Google-Fonts css2 cross-validation of the LLM's pick (real->200/hallucinated->400, no catalog dump); hand-picked a distinct face for ALL 30 catalog skins (was 10), with a ?all gallery reveal for hidden bodies. Then skeuo.fm was HANGING for fresh visitors: a deploy-propagation race had served not-yet-present hashed chunks as 200 text/html (SPA not_found fallback) frozen by the immutable _headers rule -> browsers got HTML for a JS module -> app never mounted (curl read a clean JS variant, masking it; a fresh-profile headless browser reproduced it). Couldn't purge the edge cache (token lacks perm), so moved hashed assets to /assets/app/ (new never-poisoned URLs, busts edge + client caches) + added public/_redirects so a missing /assets/* returns 404 no-store instead of the HTML fallback (can't masquerade as a module, can't recur) + 404.html. Verified fresh-profile prod load now mounts. All deployed (commits 279fc5e/f6bd8e0/4d3ee57/da68da1). 2026-06-24: (1) STREAMING loading preview — /api/generate now streams NDJSON {stage,url} per pass (blueprint->grown body->painted skin) so the wizard can show the user's REAL skin forming; verified incremental on prod CF; user had me HIDE the in-loader card behind LIVE_PREVIEW_ENABLED=false (streaming infra stays live). Confirmed TODO-C live: Director name/font work on prod ('Cute Red Mushroom','Victorian Echo'). (2) MERGED + baked + deployed the CD album-art visualizer: recentred the disc texture via CIRCLE-FIT on the hub hole (centroid was gloss-skewed; now hub within 0.2px of center, residual 0.29px); anti-strobe ROTATIONAL motion blur (5 echo layers across ~1.4 frames of motion since isotropic blur can't mask an 8-17deg/frame strobe; isotropic 0.15px) tuned in a lookdev studio (torn down); wmp (Media Capsule) is the one thematic built-in CD showcase while every other skin + wizard default + 🎲 randomizer stay VISUALIZER; generated skins get a CD only when the prompt is music/disc-thematic (~70%) or rarely random (~8%) via maybeCdScreen(); REAL album-art tint in local mode by fetching actual covers (iTunes) for the wmp+winamp playlists -> public/demo-covers/ wired to Track.cover, tint made way stronger (opacity .95 + 2nd overlay-blend layer). (3) SHAPE de-bias: ENVELOPE_PROMPT stop forcing 'horns/fins/tendrils/jaws' on every sculpted body -> form follows the brief (root-caused the gallery's 'evil' motif to this prompt + a legacy biomech-heavy catalog; catalog curation still an option). Deployed (commits 5f756d1 merge / b2e03fd cd bake / 1951ea0 debias+tint; + d5b1612 streaming, 4c77f3d hide-preview). 2026-06-23 (cutout) investigated + FIXED BiRefNet's two cutout failures (near-white screens lost; dark glossy screens keyed out; backdrop bleeding through thin gaps). Validated on real nano-banana paints + fal BiRefNet v2 that painting the device on a flat CONTRASTING backdrop (hue outside the device palette, luminance-contrasting; translucent/iridescent route to white) keys it out unambiguously, and a color-aware matte = key -> color-aware fill (keep enclosed dark screens, cut leaked backdrop) -> despill (chroma-suppress the backdrop hue) gives clean edges with screens intact. WIRED into the runtime on branch cutout-coloured-despill (pickKeyColor + {BG} prompts + cutoutColorAware in blueprint.ts, keyColor threaded generation->response->client; cutoutAlpha kept as white fallback); build-green, function-verified on real paints; pending a live end-to-end gen + merge (interacts with the spritesheet-pipeline cutout). Interactive lookdev preserved at ~/Desktop/cc-skeuo/cutout-lookdev/."
+    },
+    {
+      "id": "ckw-skills",
+      "name": "ckw-skills",
+      "start": "2026-06-16",
+      "touched": "2026-06-17",
+      "progress": 0.78,
+      "status": "active",
+      "note": "Public Claude Code plugin marketplace (connerkward/ckw-skills, renamed from connerkward-skills) indexing 7 skills + the apple-notes MCP server, each in its own public repo. This session: renamed the marketplace; gave every repo a real README (shields badges, emoji sections, embedded hero preview + caption, install) grounded in its SKILL.md; generated genuine previews (bas-relief extrusion studio shot for lookdev, multi-source web-media results sheet, lookdev-auto contact sheet, macos-screen-recorder usage card); a how-it-works diagram for lookdev; baked a caption into the lookdev hero (sized for GitHub downscale); and built an animated deterministic-design demo (a layout self-balancing) that is itself audited by the skill's own layout-audit.js (centroid->optical-center, 0 collisions/overflow), now the det-design hero + marketplace preview. Marketplace README also extended (banner, apple-notes) by a parallel session. Pending: previews still synthetic for a couple skills; confirm all raw image URLs render after CDN refresh. 2026-06-17 distribution pass: GitHub topics on all repos; geo-seo standard pass (consistent entity one-liner + llms.txt across 8 repos); 8+ curated-list PRs (ComposioHQ 64.9k, BehiSecc 9.5k, jeremylongshore, sickn33, netresearch, majiayu000, GetBindu, jqueryscript); apple-notes published to the official MCP Registry; 4 plugins (apple-notes, lookdev, screenstudio-alt, deterministic-design) submitted to the official Claude plugin directory (pending review). Distribution mechanics + per-surface status dashboards documented in publish-skill."
+    }
+  ]
+}
