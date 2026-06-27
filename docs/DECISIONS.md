@@ -4,6 +4,11 @@ Architecture Decision Records for skeuo-ui — the curated record of *why*. Newe
 **append-only** (supersede a past entry with a new dated one; never edit it), **real tradeoffs
 only** (no fork in the road → no entry). Format + discipline: central `docs` skill.
 
+## 2026-06-27 — Detection-snapping is rejected for control alignment; the generation system needs a ground-up rebuild
+Context: overlay boxes (knobs/sliders/seek/visualizer) don't land on the painted controls because the painter drifts them off the fixed blueprint sockets. Every detection fix — CV well-detect, gpt-4o boxes, SAM-3.1 (the 2026-06-23 entry below), and TWO Gemini 2.5 Pro passes this session — made alignment WORSE (0oyq 29→0; a SAM-snapped render scored 1/10). A noisy VLM/SAM cannot precisely re-locate AI-painted controls (ai-image-coords-rule).
+Decision: SUPERSEDES the 2026-06-23 "SAM is load-bearing" entry — SAM snap was wired in and reverted (f1db039). Blueprint coords stay the only placement; a Gemini-gated paint RE-ROLL (3-run consensus, cfd7fe5/5d7ed05) re-rolls until the baked button bank is clean — but that fixes bank *evenness* only, NOT overlay-to-paint alignment of the sprite/CSS controls, which remains UNSOLVED after ~6 attempts.
+Consequence: the root cause is architectural (painter drift vs fixed overlays); patching detection is a confirmed dead end. The generation system is slated for a ground-up revamp (see TODO #1) rather than more detection patches.
+
 ## 2026-06-23 — SAM box-prompted align is the load-bearing control placement, not a heuristic detector
 Context: a homegrown dark-blob + nearest-neighbor control detector (`src/generate/cutoutClient.ts`) was rebuilt over many rounds and still failed on low-contrast/radial skins.
 Decision: use the existing documented `generation/sam_snap.py` "Align" pass (SAM 3.1 box-prompted by each control's template rect → snap/warp) as the deterministic placement step; any VLM is *optional polish within tight bounds*, never load-bearing and never resizing a control.

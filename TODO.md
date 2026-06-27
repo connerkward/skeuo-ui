@@ -1,5 +1,32 @@
 # skeuo-ui — TODO
 
+## GENERATION SYSTEM — full revamp / nuke from the ground up (2026-06-27) — #1, BRAIN WORK
+
+User directive 2026-06-27: *"complete revamp / nuke of the entire generation system from the
+ground up. brain work."* The whole pipeline (prompt → director → blueprint → paint → cutout →
+composite → control placement) gets a ground-up rethink — design first, not more patches.
+
+**Why now (this session's finding):** overlay-to-paint **alignment is the unsolved through-line.**
+The painter drifts controls off the fixed blueprint sockets, so knob/slider/seek/visualizer
+overlays don't sit on the painted controls. Detection to fix it is a **confirmed dead end** —
+CV well-detect, gpt-4o boxes, SAM-3.1, and 2× Gemini 2.5 Pro passes ALL made it worse (0oyq
+29→0; a SAM render scored 1/10). See `docs/DECISIONS.md` (2026-06-27). Baked buttons can't
+visually misalign (bank evenness is now Gemini-gated via paint re-roll) — but the sprite/CSS
+overlays (knobs/sliders/seek/visualizer) are the real problem and stay broken.
+
+**Architecture is the question, not the code.** Directions floated but NOT chosen — decide first:
+- (a) re-roll the paint until Gemini confirms controls land on the fixed boxes;
+- (b) stronger blueprint socket guides so the painter stops drifting at the source;
+- (c) clean-socket + sprite/overlay controls (painter paints empty recessed sockets the
+  sprites drop into — minimize what can misalign).
+Reusable: the Gemini-gated verification harness (`tools/align-verify/`, NOT my-eyes).
+
+### Done this session (2026-06-26/27)
+- Reverted the SAM-3.1 snap (`f1db039`) — detection makes alignment worse; re-litigated a settled call.
+- Shipped Gemini-gated paint re-roll for even baked button banks (`cfd7fe5`, `5d7ed05` 3-run consensus).
+- Cleaned 4 merged worktrees + 6 feature branches; audited dead code (`spriteSheet.ts`,
+  `CutCompare.tsx` + the SAM/VLM arm ≈ 1,300 dead lines — see junk list, NOT yet removed).
+
 ## Cutout — coloured-backdrop matte: WIRED on branch `cutout-coloured-despill` (2026-06-23)
 
 **Status: implemented + build-green + function-verified on real paints; pending a LIVE
