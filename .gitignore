@@ -61,3 +61,6 @@ public/generated/
 
 # agent: cached BiRefNet mattes for segmentation validation (not source)
 public/seg-cache/
+
+# claude-mem auto-generated per-project memory context (local/episodic, regenerated)
+.agents/
