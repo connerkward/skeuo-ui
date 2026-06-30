@@ -18,8 +18,8 @@ regenerate (the AI paint); derive the rest.
 
 ## Container — layered TIFF + XMP
 
-Storage mechanism is the `comfyui-save-image-xmp` layered-TIFF format
-(`save_layered_tiff_xmp.py`):
+Storage mechanism is the Layered TIFF + XMP format — see the spec submodule
+at [`spec/layered-tiff-xmp`](../spec/layered-tiff-xmp):
 
 - **One multi-page TIFF.** Page 0 is the final composite/preview — what Finder,
   QuickLook and Preview.app render natively. Each subsequent page is one named layer.
@@ -33,7 +33,7 @@ Storage mechanism is the `comfyui-save-image-xmp` layered-TIFF format
   is uncompressed. (The current node writes `compression="deflate"`,
   `compressionargs={"level": 9}`, `predictor=2` uniformly; this spec asks the skeuo
   emitter to vary it per the manifest below.)
-- `bigtiff=False`; layer-name list is mirrored into the XMP `comfy:layers` field.
+- `bigtiff=False`; layer-name list is mirrored into the XMP `skeuo:layers` field.
 
 ## Layer manifest
 
@@ -60,25 +60,20 @@ Real sprite page names for the common transport set: `sprite/prev`, `sprite/play
 
 ## XMP metadata schema
 
-> **Wire-name caveat.** The reference repo's README documents the fields as `cfl:*`,
-> but the **actual node code** (`save_image_xmp.py::_build_xmp`) emits prefix
-> `comfy:` under namespace `urn:comfy:xmp:v1`, and the arbitrary-JSON field is
-> `comfy:json` (the README's "`cfl:extra`"). This spec uses the **real wire names**
-> and notes the README labels. (Reconcile the upstream README to match the code.)
 
-The node's real XMP block (namespace `urn:comfy:xmp:v1`, prefix `comfy:`) carries:
+The XMP block (namespace `urn:skeuo:bundle:v1`, prefix `skeuo:`) carries:
 
-| Wire field (code) | README label | skeuo content |
-|---|---|---|
-| `comfy:workflow` | `cfl:workflow` | request body + pipeline identity (skeuo commit, pipeline name) |
-| `comfy:prompt` | `cfl:prompt` | the filled `PAINT_PROMPT` actually sent to the paint model |
-| `comfy:models` | `cfl:models` | image model id `+ hash` (JSON array, mirroring `_collect_model_hashes`) |
-| `comfy:json` | `cfl:extra` | the typed skeuo generation object (below) |
-| `comfy:layers` | `cfl:layers` | comma-joined `PageName`s |
-| `dc:creator` | `cfl:author` | author (e.g. `skeuo.fm`) |
-| `xmp:CreateDate`, `xmp:CreatorTool` | — | ISO timestamp, `"skeuo.fm"` |
+| Field | skeuo content |
+|---|---|
+| `skeuo:workflow` | request body + pipeline identity (skeuo commit, pipeline name) |
+| `skeuo:prompt` | the filled `PAINT_PROMPT` actually sent to the paint model |
+| `skeuo:models` | image model id `+ hash` (JSON array) |
+| `skeuo:json` | the typed skeuo generation object (below) |
+| `skeuo:layers` | comma-joined `PageName`s |
+| `dc:creator` | author (e.g. `skeuo.fm`) |
+| `xmp:CreateDate`, `xmp:CreatorTool` | ISO timestamp, `"skeuo.fm"` |
 
-### `comfy:json` — the typed skeuo object
+### `skeuo:json` — the typed skeuo object
 
 Stringified JSON; field names are the **real ones** from `api.ts` / `pipeline.ts` /
 `director.ts` / `blueprint.ts`:
@@ -137,7 +132,7 @@ Stringified JSON; field names are the **real ones** from `api.ts` / `pipeline.ts
 
 `request`, `director`, `keyColor`, `template`, `layout`, `timingMs` are the literal
 shapes of `GenerateRequest`, `Material`, `KeyChoice`, `Template`, `BlueprintLayout`
-and `GenerateResult.timingMs`. `comfy:models` example:
+and `GenerateResult.timingMs`. `skeuo:models` example:
 `[{"name":"fal-ai/gemini-3.1-flash-image-preview/edit","sha256":""}]` — hosted, no
 local weights, so the hash is empty (see Open questions).
 
@@ -179,7 +174,7 @@ alone will diverge.
 
 ## Versioning
 
-`comfy:json` carries three identity fields, checked on read:
+`skeuo:json` carries three identity fields, checked on read:
 
 - **`bundle_version`** — this format's version (start at `1`); bump on any layer-set
   or field-shape change.
@@ -210,7 +205,7 @@ do not implement here.*
 - **Seed surfacing.** Surface + store the gemini fal `seed` so paint is reproducible;
   decide a default-seed policy (fixed vs. random-but-recorded).
 - **Model hashing for hosted models.** fal/gemini weights aren't local, so
-  `comfy:models` SHA256 is empty. Pin the endpoint id + any returned request/response
+  `skeuo:models` SHA256 is empty. Pin the endpoint id + any returned request/response
   id instead? Snapshot the model label + cost from `MODELS`?
 - **Float layers.** Is the alpha plane / any future depth or drift map worth an
   uncompressed float page, or is 8-bit Deflate enough?
