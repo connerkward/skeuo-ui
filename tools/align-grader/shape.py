@@ -20,7 +20,7 @@ template.json. For each control:
 
 Run:  python shape.py <paint.png> <template.json> [--overlay OUT.png] [--json]
 """
-import sys, json, math
+import sys, os, json, math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -151,74 +151,119 @@ def strip_sprites(rgb, dev_frac):
     return blobs, sy
 
 # ---- per-skin grade ----------------------------------------------------------
-def grade(paint_path, template_path):
+# ---- sprite COMPONENT silhouette ---------------------------------------------
+# Prefer the REAL stored cut sprite (<base>-sprite-<bind>.png — the shipped artifact).
+# Else recut from the real strip cellRect in <base>-layout.json (the actual cell the
+# pipeline cuts, not a blob guess): near-white key -> largest central component.
+def sprite_from_png(path):
+    a = np.asarray(Image.open(path).convert("RGBA"))[..., 3]
+    return a > 40, Image.open(path).convert("RGBA")
+
+def sprite_from_cell(rgb, cellrect, W, H):
+    x0, y0 = int(cellrect[0] * W), int(cellrect[1] * H)
+    x1, y1 = int((cellrect[0] + cellrect[2]) * W), int((cellrect[1] + cellrect[3]) * H)
+    patch = rgb[y0:y1, x0:x1]
+    if patch.shape[0] < 6 or patch.shape[1] < 6:
+        return None, None
+    nonwhite = ndimage.binary_closing(patch.min(axis=2) < 225, iterations=2)
+    lab, n = ndimage.label(nonwhite)
+    if n == 0:
+        return None, None
+    ph, pw = patch.shape[:2]; ccx, ccy = pw / 2, ph / 2
+    best, bs = None, -1
+    for i in range(1, n + 1):
+        comp = lab == i; a = comp.sum()
+        if a < 0.03 * ph * pw:
+            continue
+        yy, xx = np.where(comp); s = a - math.hypot(xx.mean() - ccx, yy.mean() - ccy) ** 2 * 4
+        if s > bs:
+            bs, best = s, comp
+    if best is None:
+        return None, None
+    return best, Image.fromarray(np.dstack([patch, (best * 255).astype(np.uint8)]))
+
+def grade(paint_path, template_path, save_sprite_dir=None):
     tpl = json.load(open(template_path))
     im = Image.open(paint_path).convert("RGB")
     W, H = im.size
     rgb = np.asarray(im)
     DH = DEVICE_FRAC * H
+    base = paint_path[:-len("-paint.png")] if paint_path.endswith("-paint.png") else paint_path
+
+    layout = None
+    cand = base + "-layout.json"
+    if os.path.exists(cand):
+        layout = json.load(open(cand))
 
     controls = [r for r in tpl["regions"] if r.get("kind") in INTERACTIVE]
     sprite_ctrls = [r for r in controls if sprite_kind(r["kind"]) and not r.get("baked")]
-    blobs, _ = strip_sprites(rgb, DEVICE_FRAC)
-    # assign strip blobs to sprite controls in order (best-effort; flag count mismatch)
-    sprite_shape_by_id = {}
-    if len(blobs) == len(sprite_ctrls):
-        for r, b in zip(sprite_ctrls, blobs):
-            sx0, sy0, sx1, sy1 = b["box"]
-            m = b["mask"]
-            sprite_shape_by_id[r["id"]] = (classify(shape_descriptors(m)), b["box"])
-    strip_matched = (len(blobs) == len(sprite_ctrls))
+    # pair each template sprite-control (in order) with the real layout control + cell
+    pairing = {}
+    if layout and len(layout.get("controls", [])) == len(sprite_ctrls) == len(layout.get("cells", [])):
+        for r, lc, cell in zip(sprite_ctrls, layout["controls"], layout["cells"]):
+            pairing[r["id"]] = dict(cellbind=cell["bind"], cellrect=cell["cellRect"], devrect=lc["rect"])
 
     out = []
     for r in controls:
-        rc = r["rect"]
-        box = (int(rc["x"] * W), int(rc["y"] * DH),
-               int((rc["x"] + rc["w"]) * W), int((rc["y"] + rc["h"]) * DH))
+        rc = r["rect"]; kind = r["kind"]; sk = sprite_kind(kind); baked = bool(r.get("baked"))
+        pr = pairing.get(r["id"])
+        drect = pr["devrect"] if pr else (rc["x"], rc["y"], rc["w"], rc["h"])  # real layout rect if known
+        box = (int(drect[0] * W), int(drect[1] * DH),
+               int((drect[0] + drect[2]) * W), int((drect[1] + drect[3]) * DH))
         mask, patchbox = segment_control(rgb, box)
+        dev_class = classify(shape_descriptors(mask) if mask is not None else None)
         dev_desc = shape_descriptors(mask) if mask is not None else None
-        dev_class = classify(dev_desc)
-        kind = r["kind"]
-        sk = sprite_kind(kind)
-        # SLIDERS: the track is defined by the (elongated) rect itself — far more robust
-        # than segmenting a thin dark channel. arc kinds are curved-line.
         if sk == "slider":
-            ra = (rc["w"] * W) / (rc["h"] * DH + 1e-6)
-            if kind in ("slider-arc", "slider-path"):
-                dev_class = "arc"
-            elif ra >= 2.0 or ra <= 0.5:
-                dev_class = "line"
-        baked = bool(r.get("baked"))
-        spr = sprite_shape_by_id.get(r["id"]) if (sk and not baked and strip_matched) else None
-        spr_class = spr[0] if spr else None
+            ra = (drect[2] * W) / (drect[3] * DH + 1e-6)
+            dev_class = "arc" if kind in ("slider-arc", "slider-path") else ("line" if (ra >= 2.0 or ra <= 0.5) else dev_class)
 
-        # ---- per-kind gate ----
+        # ---- the REAL sprite COMPONENT (stored artifact, else recut from real cell) ----
+        spr_class = spr_src = spr_thumb = None
+        if sk and not baked and pr:
+            stored = f"{base}-sprite-{pr['cellbind']}.png"
+            if os.path.exists(stored):
+                smask, simg = sprite_from_png(stored); spr_src = "stored"
+            else:
+                smask, simg = sprite_from_cell(rgb, pr["cellrect"], W, H); spr_src = "recut"
+            if smask is not None:
+                spr_class = classify(shape_descriptors(smask))
+                if save_sprite_dir and simg is not None:
+                    spr_thumb = f"{tpl.get('id')}__{r['id']}.png"
+                    simg.save(os.path.join(save_sprite_dir, spr_thumb))
+
+        # ---- per-kind gate, now CROSS-CHECKED against the component ----
         ok = True; reason = ""
         if kind == "knob":
             if dev_class != "circle":
                 ok = False; reason = f"knob well is '{dev_class}', must be circle"
-            elif spr_class and spr_class != "circle":
-                ok = False; reason = f"knob sprite is '{spr_class}', must be circle"
+            elif spr_class == "rect":
+                ok = False; reason = "knob component is 'rect', must be circle"
+            elif spr_class:
+                reason = f"well+component both round ({spr_src})"
         elif sk == "slider":
             if dev_class not in ("line", "arc"):
                 ok = False; reason = f"slider well is '{dev_class}', must be line/arc"
+            elif spr_class:
+                reason = f"track {dev_class}; component present ({spr_src})"
         elif kind in ("button", "toggle"):
             if baked:
                 reason = "baked (arbitrary shape allowed)"
+            elif not pr:
+                reason = "no stored component / layout — unverified"
             elif spr_class and dev_class not in ("none", "blob") and spr_class != dev_class:
-                ok = False; reason = f"sprite '{spr_class}' != well '{dev_class}' (shape mismatch)"
-            elif not strip_matched:
-                reason = "strip count mismatch — sprite shape unverified"
+                ok = False; reason = f"component '{spr_class}' != well '{dev_class}' shape mismatch ({spr_src})"
             else:
-                reason = "shape matches"
-        out.append(dict(id=r["id"], bind=r.get("bind", r["id"]), kind=kind,
-                        baked=baked, dev_class=dev_class, sprite_class=spr_class,
-                        ok=ok, reason=reason, dev=dev_desc, box=box,
-                        patchbox=patchbox,
-                        mask=mask, spritebox=(spr[1] if spr else None)))
+                reason = f"component matches well: {dev_class} ({spr_src})"
+        out.append(dict(id=r["id"], bind=r.get("bind", r["id"]), kind=kind, baked=baked,
+                        dev_class=dev_class, sprite_class=spr_class, sprite_src=spr_src,
+                        sprite_thumb=spr_thumb, ok=ok, reason=reason, dev=dev_desc,
+                        box=box, patchbox=patchbox, mask=mask))
     valid = all(c["ok"] for c in out)
-    return dict(id=tpl.get("id"), valid=valid, strip_matched=strip_matched,
-                n_blobs=len(blobs), n_sprite_ctrls=len(sprite_ctrls), controls=out)
+    return dict(id=tpl.get("id"), valid=valid, has_layout=bool(layout),
+                n_sprite_ctrls=len(sprite_ctrls),
+                n_stored=sum(1 for c in out if c["sprite_src"] == "stored"),
+                n_recut=sum(1 for c in out if c["sprite_src"] == "recut"),
+                controls=out)
 
 # ---- overlay -----------------------------------------------------------------
 def _font(sz):
