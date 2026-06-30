@@ -192,6 +192,7 @@ export interface SkinMeta {
   model: ModelId;
   style: string;
   variant: string;
+  seed?: number;       // paint seed that produced the shipped image (reproducibility; gemini only)
   createdAt: string;   // ISO
 }
 
@@ -206,6 +207,7 @@ export interface GenerateInput {
   envelope?: boolean;     // run the AI envelope pass first (default true)
   envelopeUrl?: string;   // optional fal-hosted user-uploaded envelope; paints from it directly, skipping the AI envelope pass
   regions?: Region[];     // custom authored layout (else the variant preset)
+  seed?: number;          // paint base seed; absent ⇒ random-but-recorded (every gen reproducible)
 }
 
 export interface GenerateResult {
@@ -219,6 +221,7 @@ export interface GenerateResult {
   sprites?: boolean;       // true once per-skin control sprites exist at skins/<id>/sprites/<bind>.png
   needsCutout?: boolean;  // true when the cutout was deferred to the browser (single-pass: always)
   paintUrl?: string;      // raw combined paint PNG to cut client-side — present when needsCutout
+  seed?: number;          // the paint seed that produced the shipped image (gemini only)
   keyColor: RGB;          // backdrop the device was painted on — the colour the cutout keys out (white = legacy)
   timingMs: { envelope: number; paint: number; total: number };
 }
@@ -255,11 +258,16 @@ async function falUpload(falKey: string, png: Uint8Array): Promise<string> {
 // that SAME aspect or the model reshapes it and the normalized strip cells + device
 // sockets land in the wrong place. gpt-image-2 takes an explicit image_size; the
 // gemini endpoints take aspect_ratio. Keep both at 9:16 (1024×1820).
-function falSubmit(falKey: string, model: ModelId, imageUrls: string[], prompt: string) {
+// 31-bit non-negative seed (random-but-recorded so every generation is reproducible).
+const randomSeed = (): number => Math.floor(Math.random() * 0x7fffffff);
+
+function falSubmit(falKey: string, model: ModelId, imageUrls: string[], prompt: string, seed?: number) {
   const body: Record<string, unknown> =
     model === "openai/gpt-image-2/edit"
+      // gpt-image-2 has no seed parameter (rejects unknown keys) → its paints can't be seed-reproduced.
       ? { prompt, image_urls: imageUrls, image_size: { width: 1024, height: 1820 }, quality: "high", output_format: "png" }
-      : { prompt, image_urls: imageUrls, resolution: "2K", aspect_ratio: "9:16", output_format: "png" };
+      // the gemini edit endpoints accept an optional seed → pass it to fix the paint for reproducibility.
+      : { prompt, image_urls: imageUrls, resolution: "2K", aspect_ratio: "9:16", output_format: "png", ...(seed !== undefined ? { seed } : {}) };
   return falPost(falKey, `https://queue.fal.run/${model}`, body);
 }
 async function falPoll(falKey: string, job: any, timeoutMs: number): Promise<string> {
@@ -506,14 +514,21 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
       "image(s) provided, but DO NOT copy their layout or shape — the silhouette, sockets and cells come only from the blueprint.";
   }
   // RE-ROLL until the vision model approves the button bank (alignment gate above).
+  // SEED for reproducibility: a base seed (caller-supplied or random-but-recorded). Each
+  // reroll uses base+(bt-1) so a reroll actually changes the image (a fixed seed would
+  // re-roll the identical paint), and we record the seed of the attempt that SHIPPED
+  // (paintSeed) into meta + the result. gpt-image-2 has no seed, so it stays unseeded.
+  const baseSeed = input.seed ?? randomSeed();
   let paintUrl = "";
+  let paintSeed = baseSeed;
   const tries = BANK_GATE_ENABLED ? MAX_BANK_TRIES : 1;
   for (let bt = 1; bt <= tries; bt++) {
-    const paintJob = await falSubmit(deps.falKey, model, [blueprintUrl, ...refs], prompt);
+    paintSeed = baseSeed + (bt - 1);
+    const paintJob = await falSubmit(deps.falKey, model, [blueprintUrl, ...refs], prompt, paintSeed);
     paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
     deps.onStage?.("paint", paintUrl);   // stream each attempt so the user watches it form
     if (!BANK_GATE_ENABLED || bt === tries) break;
-    if (await bankPerfect(deps.falKey, paintUrl)) { log(`[${input.id}] button bank OK (try ${bt})`); break; }
+    if (await bankPerfect(deps.falKey, paintUrl)) { log(`[${input.id}] button bank OK (try ${bt}, seed ${paintSeed})`); break; }
     log(`[${input.id}] button bank uneven — reroll ${bt}/${tries}`);
   }
   const paintPng = await fetchPng(paintUrl);
@@ -542,6 +557,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   //    + the finalize sprite endpoint), so we always return needsCutout + layout.
   const meta: SkinMeta = {
     prompt: input.brief, model, style: input.style, variant: input.variant,
+    seed: paintSeed,
     createdAt: new Date().toISOString(),
   };
   const storeSidecars = async () => {
@@ -573,7 +589,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   return {
     id: input.id, style: input.style, variant: input.variant, model, template, frameUrl, layout,
-    needsCutout: true, paintUrl: paintOut, keyColor: keyc.key,
+    needsCutout: true, paintUrl: paintOut, seed: paintSeed, keyColor: keyc.key,
     timingMs: { envelope: 0, paint: paintMs, total: Date.now() - tAll },
   };
 }

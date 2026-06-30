@@ -155,14 +155,16 @@ To re-run a generation deterministically you must pin, and the bundle stores:
 "Recompute" means **re-run the pinned pipeline**, NOT bit-identical pixels — unless
 seed *and* model are fixed. The nondeterministic surfaces, all real:
 
-- **The image model has no surfaced seed.** `falSubmit` sends `resolution` +
-  `aspect_ratio` (gemini) or `image_size` + `quality` (gpt-image-2) — **no `seed`**.
-  The gemini fal edit endpoints *do* accept an optional `seed`; surfacing it on
-  `GenerateInput`, passing it in `falSubmit`, and storing it in `paint.seed` is
-  **required for true reproducibility**. Until then the paint differs every run.
+- **Paint seed — NOW surfaced + recorded.** `falSubmit` passes an optional `seed` to the
+  gemini edit endpoints, threaded from `GenerateRequest.seed` → `GenerateInput.seed`; when
+  the caller omits it a random one is generated (`randomSeed()`, 31-bit) so it is never
+  unrecorded. The seed that **shipped** is stored in `SkinMeta.seed` / `GenerateResult.seed`
+  / `GenerateDone.seed` (→ `paint.seed` in the bundle). Caveat: gpt-image-2 has **no** seed
+  param (still unseeded), and hosted gemini seed determinism is **best-effort** — re-feeding
+  the seed targets the same paint but bit-identical output is not guaranteed by the vendor.
 - **The bank-gate reroll** (`MAX_BANK_TRIES = 4`, gated by a Gemini 2.5 Pro vision
-  consensus that is itself temperature-0 but fail-open) picks a different paint per
-  run; only `triesUsed` is recorded, not which roll shipped.
+  consensus that is itself temperature-0 but fail-open) re-rolls with `seed = base+(bt-1)`;
+  the **shipped** attempt's seed is the one recorded, so the winning roll is reproducible.
 - **The Director** (`deriveMaterial`) uses `Math.random` for the font-genre bucket
   and exemplar shuffle; `maybeCdScreen` flips a screen on `Math.random`;
   `layoutRandom` is fully `Math.random`. Storing the *outputs* (materialPrompt, font,
@@ -202,7 +204,8 @@ do not implement here.*
 
 ## Open questions
 
-- **Seed surfacing.** Surface + store the gemini fal `seed` so paint is reproducible;
+- **Seed determinism (verify).** Seed is now surfaced + stored; still UNVERIFIED whether a
+  fixed gemini seed yields bit-identical paint (run a same-seed A/B). Original open item:
   decide a default-seed policy (fixed vs. random-but-recorded).
 - **Model hashing for hosted models.** fal/gemini weights aren't local, so
   `skeuo:models` SHA256 is empty. Pin the endpoint id + any returned request/response

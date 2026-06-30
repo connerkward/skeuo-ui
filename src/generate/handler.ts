@@ -84,11 +84,11 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     if (!regions && deps.openaiKey) {
       regions = (await deriveLayout(deps.openaiKey, prompt)) ?? undefined;
     }
-    const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions });
+    const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions, seed: body.seed });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font, name, blurb,
       template: r.template, frameUrl: r.frameUrl, layout: r.layout, sprites: r.sprites,
-      needsCutout: r.needsCutout, paintUrl: r.paintUrl, keyColor: r.keyColor, timingMs: r.timingMs,
+      needsCutout: r.needsCutout, paintUrl: r.paintUrl, seed: r.seed, keyColor: r.keyColor, timingMs: r.timingMs,
     };
   } catch (e) {
     release(ip);   // our failure — don't bill the user's quota

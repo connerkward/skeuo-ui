@@ -18,6 +18,7 @@ export interface GenerateRequest {
   envelopeImage?: string;     // optional user-uploaded body envelope PNG as a data: URL (skips the AI envelope pass)
   regions?: Region[];         // custom layout authored in the wizard (else the variant preset)
   avoidFonts?: string[];      // recently-used logomark fonts the Director should NOT reuse (diversity)
+  seed?: number;              // paint RNG seed (gemini endpoints only); absent ⇒ a random one is generated + recorded so every gen is reproducible
 }
 
 // Live progress events streamed (NDJSON) ahead of the final GenerateResponse so the
@@ -59,6 +60,7 @@ export interface GenerateDone {
   needsCutout?: boolean;
   paintUrl?: string;          // raw combined paint PNG (public URL or data: URL) — present when needsCutout
   keyColor?: [number, number, number]; // backdrop the device was painted on — the colour the client cutout keys out (absent ⇒ white)
+  seed?: number;              // the paint seed that produced the shipped image (gemini only); re-feed it to reproduce this exact paint
   timingMs: { envelope: number; paint: number; total: number };
 }
 export interface GenerateError { status: "error"; error: string }
