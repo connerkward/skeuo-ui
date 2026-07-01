@@ -60,6 +60,12 @@ export const PAINT_PROMPT =
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
   "looks pressable/turnable is NOT). Only the sockets (top) and the strip parts (bottom) may look interactive.\n" +
+  "- KEEP A CLEAR MARGIN of plain, uninterrupted material immediately around EVERY socket and control cluster — a smooth " +
+  "buffer zone at least one socket-width wide. Do NOT place ANY circle, ring, pill, disc, rounded-rect, dark recess, hole, " +
+  "stud, rivet, boss, dot, embossed medallion, grille of dots, or ANY shape with a control-like silhouette NEAR a socket or " +
+  "control. Such decoys are indistinguishable from real controls to an automatic shape detector and corrupt it: the region " +
+  "around each socket must be featureless material so every real control stays isolated and unambiguous. Push all decorative " +
+  "detail FAR from the controls, and never let decoration form a button/knob/well-like shape anywhere on the body.\n" +
   "- Go easy on printed iconography on the body itself: a maker's mark or a small model name is fine, but avoid " +
   "scattering control symbols (play triangles, power circles, arrows, EQ glyphs, ▶ ⏸ ⏹ ⏮ ⏭ ⏏) across the bare " +
   "material — those symbols belong on the actual control parts in the strip, not printed on the empty skin.\n\n" +
