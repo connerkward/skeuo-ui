@@ -448,13 +448,17 @@ function Knob({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId
   }, [setV]);
   const angle = -135 + value * 270;
   if (skinSprites(skinId, rtSprites)) {
-    // SPRITE knob: the cap art is STATIC (the painter paints a smooth/knurled cap with NO
-    // divot, so its baked lighting must NOT rotate — rotating a baked highlight reads
-    // wrong). A CSS indicator line orbits the center to show the value instead.
+    // SPRITE knob, technique ② (lookdev 2026-07-01): the cap art ROTATES with the value, and a
+    // FIXED radial specular overlay (`.sp-knob-spec`, NOT rotated) keeps the light source pinned
+    // so the knurl/notch visibly turn under a static highlight — reads as a real knob turning
+    // (the cheap modern equivalent of Winamp's pre-lit rotation frames). Caps are authored with a
+    // neutral/symmetric specular so the pinned overlay is the sole light source. A faint pointer
+    // tick is kept as a value cue for rotationally-symmetric caps.
     return (
       <div className="knob sp-knob" title={`${r.label}: ${(value * 100) | 0}%`}
         onPointerDown={(e) => { drag.current = { y: e.clientY, v: value }; }}>
-        <div className="sp-knob-img" style={{ backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "knob", rtSprites)})`, backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }} />
+        <div className="sp-knob-img" style={{ backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "knob", rtSprites)})`, backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat", transform: `rotate(${angle}deg)` }} />
+        <div className="sp-knob-spec" />
         <div className="sp-knob-ptr" style={{ transform: `rotate(${angle}deg)` }} />
         <span className="knob-label">{r.label}</span>
       </div>

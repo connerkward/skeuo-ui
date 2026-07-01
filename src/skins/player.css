@@ -73,10 +73,20 @@
 .sp-knob { cursor: ns-resize; position: relative; }
 .sp-knob .knob-label { display: none; }
 .sp-knob-img {
-  /* fill the allotted knob well; contain keeps the cap circular in a square box */
+  /* fill the allotted knob well; contain keeps the cap circular in a square box.
+     technique ②: this rotates with the value (inline transform); origin = center. */
   position: absolute; inset: 0; margin: auto;
   width: 100%; height: 100%; object-fit: contain; pointer-events: none;
+  transform-origin: 50% 50%;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
+}
+/* technique ②: PINNED specular — a fixed light source that does NOT rotate with the cap,
+   so the knurl/notch turn beneath a static highlight (reads as a real knob turning). */
+.sp-knob-spec {
+  position: absolute; inset: 0; margin: auto; width: 100%; height: 100%;
+  border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(circle at 32% 28%,
+    rgba(255,255,255,.5), rgba(255,255,255,.08) 34%, transparent 62%);
 }
 .sp-knob-ptr {
   position: absolute; inset: 0; margin: auto;

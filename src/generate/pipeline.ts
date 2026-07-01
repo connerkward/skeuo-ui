@@ -21,7 +21,7 @@
 // resvg-wasm in a CF Worker or resvg-js + UPNG in Node.
 // ============================================================
 import type { Region, Template } from "../template/schema";
-import { GEN_W, GEN_H, regionsForVariant, repackTemplate, bankTransport, type LayoutVariant } from "./layouts";
+import { GEN_W, GEN_H, regionsForVariant, repackTemplate, bakeButtons, type LayoutVariant } from "./layouts";
 import { combinedBlueprint, type BlueprintLayout, type RGB, KEY_WHITE } from "./blueprint";
 
 // ---- single-pass paint prompt — ported from /tmp/prompt_egg_v3.txt (the winning
@@ -460,14 +460,14 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   // (ai-image-coords-rule): repackTemplate is for the DIRECTOR's raw rects (often
   // slivers/oversized/overlapping), NOT for the hand-authored presets.
   //   • custom regions (input.regions, from the wizard/Director) → repack as before.
-  //   • preset variant → use AS-IS (it's the load-bearing truth). Still bankTransport
-  //     (snaps the transport into one cohesive cluster — that part aligns well).
+  //   • preset variant → use AS-IS (it's the load-bearing truth). Then bakeButtons
+  //     (bake ALL buttons in place — no snapping; the layout's organic arrangement stands).
   // maybeCdScreen: cd-visualizer feature — swap the first screen → spinning CD for
   // music/disc-themed prompts (mostly) or rarely at random.
   const baseRegs: Region[] = input.regions?.length
     ? repackTemplate(input.regions)            // messy Director input → sane + de-overlap
     : regionsForVariant(input.variant);        // clean authored preset → keep its geometry
-  const regs: Region[] = maybeCdScreen(bankTransport(baseRegs), input.brief);
+  const regs: Region[] = maybeCdScreen(bakeButtons(baseRegs), input.brief);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };
   const tAll = Date.now();
 

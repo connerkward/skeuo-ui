@@ -597,31 +597,15 @@ export function repackTemplate(regions: Region[]): Region[] {
   return resolveOverlaps(sized);   // move-based separation (no sliver-shrink for sane sizes)
 }
 
-// bankTransport — DETERMINISTIC button-bank geometry (approach "A"): snap the transport
-// buttons into a TIGHT ADJACENT row (shared baseline, equal height, touching edges) so the
-// painter can render them as ONE recessed shared housing with inset wells (a car-console /
-// Walkman cluster) instead of separate floating sockets. Code owns the geometry (centers +
-// scale); the model owns the painted shape inside it. Widths are kept per-button (play stays
-// wider) so the bank still reads as transport. No-op if there are <2 transport buttons.
-const TRANSPORT_BANK = ["prev", "rew", "play", "pause", "next", "fwd", "forward", "stop"];
-export function bankTransport(regions: Region[]): Region[] {
-  const isT = (r: Region) => r.kind === "button"
-    && TRANSPORT_BANK.some((k) => (r.bind ?? r.id).toLowerCase().includes(k))
-    && !(r.bind ?? r.id).toLowerCase().includes("playlist");
-  const bank = regions.filter(isT).sort((a, b) => a.rect.x - b.rect.x);
-  if (bank.length < 2) return regions;
-  const h = Math.max(...bank.map((r) => r.rect.h));               // equal height = tallest
-  const widths = bank.map((r) => r.rect.w);
-  const totalW = widths.reduce((s, w) => s + w, 0);
-  const cx = bank.reduce((s, r) => s + r.rect.x + r.rect.w / 2, 0) / bank.length;
-  const cy = bank.reduce((s, r) => s + r.rect.y + r.rect.h / 2, 0) / bank.length;
-  let x = Math.max(0.03, Math.min(cx - totalW / 2, 0.97 - totalW));
-  const y = Math.max(0.03, Math.min(cy - h / 2, 0.97 - h));
-  const moved = new Map<string, Region>();
-  // baked:true → the painter renders this cluster COHESIVELY into the device body
-  // (real reference shapes), and the player overlays a transparent hit-region instead
-  // of a cut sprite. This is what lets a Walkman jog-cluster / car-console bank keep
-  // curved, tessellated button shapes the isolated-cut path flattens into boxes.
-  bank.forEach((r, i) => { moved.set(r.id, { ...r, baked: true, rect: { x, y, w: widths[i], h } }); x += widths[i]; });
-  return regions.map((r) => moved.get(r.id) ?? r);
+// bakeButtons — bake EVERY momentary button into the device body (baked:true), PRESERVING its
+// authored organic position (no snapping into a uniform row — the layout's organic arrangement
+// stands so the paint can fly free into wild WMP/Winamp/Sonique silhouettes). Baked buttons are
+// painted cohesively INTO the housing (the molded look) and the player overlays a transparent
+// hit-region at the authored coord instead of cutting a sprite — so an organic/tessellated
+// button shape survives (the isolated-cut path would flatten it into a box). Knobs, slider
+// thumbs and toggles stay NON-baked → they are cut as MOVABLE sprites (knob rotates, thumb
+// slides, switch flips). (Was bankTransport, which forced a tight straight transport row and
+// baked only transport — replaced 2026-07-01: bake all, snap nothing.)
+export function bakeButtons(regions: Region[]): Region[] {
+  return regions.map((r) => (r.kind === "button" ? { ...r, baked: true } : r));
 }
