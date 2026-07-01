@@ -22,7 +22,7 @@
 // ============================================================
 import type { Region, Template } from "../template/schema";
 import { GEN_W, GEN_H, regionsForVariant, repackTemplate, bakeButtons, type LayoutVariant } from "./layouts";
-import { combinedBlueprint, type BlueprintLayout, type RGB, KEY_WHITE } from "./blueprint";
+import { combinedBlueprint, type BlueprintLayout, type RGB } from "./blueprint";
 
 // ---- single-pass paint prompt — ported from /tmp/prompt_egg_v3.txt (the winning
 // prototype prompt), generalized over the chosen material + brief. The blueprint
@@ -39,23 +39,21 @@ export const PAINT_PROMPT =
   "You are restyling a fixed UI blueprint into a finished product render. The image has TWO regions: " +
   "a DEVICE BODY (top) and a STRIP OF CONTROL PARTS (bottom). Repaint everything as a device shaped " +
   "like {brief}, in this material: {material}\n\n" +
-  "CRITICAL — the blueprint geometry is LOCKED. Output the SAME dimensions and SAME positions for every element.\n\n" +
+  "CRITICAL — control POSITIONS are LOCKED: keep every socket/button/screen at its marked position and keep the same overall dimensions. But the SHAPES are FREE — sculpt the body outline and each control's silhouette WILD and organic (see below); do NOT regularize them into boxes or circles.\n\n" +
   "TOP DEVICE BODY:\n" +
-  "- The faint gray rounded shape is the BODY — restyle ONLY it into the material above; grow detailing " +
-  "only into the gray body and the margins. Do NOT change the body outline, position, or size.\n" +
+  "- The faint gray shape marks the ROUGH BODY FOOTPRINT — restyle it into the material above and SCULPT its outline into a WILD, organic, era-correct silhouette (a blobby teardrop, a faceted pod, an amoeba, a curved shield, a melted-metal form — like a Winamp / WMP-XP / Sonique skin), NOT a plain rounded rectangle. Keep roughly the same overall footprint and KEEP every control at its marked position, but the body OUTLINE should be characterful and organic, never boxy.\n" +
   "- BACKDROP (top device region): the area AROUND the body is a flat {BG} backdrop. Paint it as a CLEAN, " +
   "FLAT, perfectly UNIFORM {BG} — it is a separate backdrop that gets keyed out, so it must NOT tint, reflect, " +
   "bleed or spill onto the device; the device keeps its OWN material colour and neutral studio lighting, with a " +
-  "crisp edge against the {BG}. (Only this top backdrop is {BG}; the bottom control strip stays flat pure white.)\n" +
-  "- Each dark shape ringed in bright PINK/MAGENTA is a FIXED SOCKET. KEEP every socket at its EXACT " +
+  "crisp edge against the {BG}. (BOTH the device backdrop AND the bottom control-strip background are this SAME {BG} — one uniform neutral behind everything, so both cut out cleanly.)\n" +
+  "- Each dark shape ringed in bright GREEN is a FIXED SOCKET. KEEP every socket at its EXACT " +
   "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
-  "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place.\n" +
+  "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place. Leave them BLANK dark glass: NO text, NO numbers, NO track names, NO fake UI, NO waveform, NO menu, NO icons on the screen — the screen content is added live afterwards.\n" +
   "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
-  "- CYAN-outlined regions are NOT empty wells — they are REAL CONTROLS. Paint a finished, tactile, pressable BUTTON (or, where several CYAN regions sit adjacent, ONE cohesive COHESIVE CLUSTER of buttons) integrated INTO the body here, in the body material, fully rendered with the correct icon embossed on each. Give them the device-era SHAPE — prefer ORGANIC, non-rectangular silhouettes: curved WEDGE / arc-segments of a jog dial (Walkman), HALF-OVAL or kidney keys (car console), lozenges — that nest together into one sculpted cluster, NOT separate plain squares. These ARE the actual device buttons (they stay in the render); remove the cyan outline itself.\n" +
-  "- SHARED HOUSING for the cyan cluster: seat that button cluster in ONE inset, recessed HOUSING / bezel of the body material, with thin raised SEAMS between the individual curved keys (like a real car-console keypad or a Walkman transport cluster) — one cohesive sunken unit, not free-floating buttons.\n" +
-  "- EVEN, UNIFORM cluster: the keys MUST be EVENLY SPACED in a clean straight row with IDENTICAL gaps between them, and (apart from the PLAY key, which may be larger) the keys are the SAME size as each other. The dividing seams between keys are all the same thickness. No key crowded against a neighbour, drifting, tilted, or distorted — precise, deliberate, symmetric spacing like real manufactured hardware, EVEN when the body is lumpy/inflated/organic (the cluster stays a crisp even row regardless of the body shape).\n" +
-  "- (MAGENTA wells remain EMPTY dark holes as described above — only CYAN regions get real painted controls.)\n" +
-  "- REMOVE the bright pink/magenta rings in your output (guides only); the dark socket they ringed stays exactly where it was.\n" +
+  "- BLUE-outlined regions are REAL BUTTONS (not empty wells). At EACH blue mark paint ONE finished, tactile, pressable button MOLDED SEAMLESSLY INTO the sculpted housing here, in the body material, with the correct icon embossed on its face. Each button gets a WILD, era-correct, ORGANIC silhouette — a curved WEDGE or arc-segment (jog dial), a KIDNEY or half-oval, a TRAPEZOID or faceted polygon, a LOZENGE or teardrop lobe — like a real early-2000s Winamp / Windows-Media-Player / Sonique skin where the controls are facets of the housing. NEVER a plain circle and NEVER a plain rounded-rectangle. Remove the blue outline itself.\n" +
+  "- The buttons do NOT need to be uniform: they MAY be different shapes and sizes, sit at different angles, and follow the organic contour of the body — do NOT force them into an even straight row, a uniform grid, or identical evenly-spaced keys. Where blue marks sit adjacent you MAY flow them into one sculpted housing facet with thin raised seams, but the arrangement stays organic and characterful, not a regimented row. Each button is molded into the body (it stays in the render), not a loose part on top.\n" +
+  "- (GREEN wells remain EMPTY dark holes as described above — only BLUE regions get real painted controls.)\n" +
+  "- REMOVE the bright green rings in your output completely (guides only, not part of the device); the dark socket they ringed stays exactly where it was.\n" +
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
@@ -70,25 +68,25 @@ export const PAINT_PROMPT =
   "scattering control symbols (play triangles, power circles, arrows, EQ glyphs, ▶ ⏸ ⏹ ⏮ ⏭ ⏏) across the bare " +
   "material — those symbols belong on the actual control parts in the strip, not printed on the empty skin.\n\n" +
   "BOTTOM CONTROL-PARTS STRIP — a row of LOOSE, ISOLATED physical control PARTS photographed on a seamless " +
-  "FLAT PURE-WHITE sweep:\n" +
+  "flat {BG} sweep (the SAME neutral backdrop as the device region above):\n" +
   "- This strip is NOT a diagram, NOT a UI mockup, NOT a labeled parts catalog, NOT an instruction sheet. It is simply " +
   "individual finished hardware parts laid out on an empty white surface, like loose components on a clean studio table.\n" +
-  "- The bottom band has evenly-spaced slots left-to-right, EACH outlined by a bright PINK/MAGENTA KEYLINE. The keyline marks only WHERE a part " +
+  "- The bottom band has evenly-spaced slots left-to-right, EACH outlined by a bright GREEN KEYLINE. The keyline marks only WHERE a part " +
   "goes and ROUGHLY HOW BIG — it does NOT dictate the part's SHAPE. Do NOT just fill the rectangle: give each part its own sculpted, era-correct " +
   "SILHOUETTE (often NON-rectangular — a half-oval, D-shape, wedge / arc-segment, lozenge, curved trapezoid — matching real hardware of this device), " +
   "centered in its slot; it may sit inside the keyline without touching all four edges. Paint ONE finished, " +
-  "glossy control PART per magenta slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
-  "exactly ONE part per magenta slot: paint a part in EVERY slot, fill ALL of them, do NOT leave a slot empty, do NOT merge two " +
-  "parts into one slot, and do NOT omit or add any. Count the magenta slots and match them one-to-one with the list below:\n" +
+  "glossy control PART per green slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
+  "exactly ONE part per green slot: paint a part in EVERY slot, fill ALL of them, do NOT leave a slot empty, do NOT merge two " +
+  "parts into one slot, and do NOT omit or add any. Count the green slots and match them one-to-one with the list below:\n" +
   "    {strip}\n" +
-  "- REMOVE the magenta keyline outlines in your output (guides ONLY, exactly like the device sockets' rings) — only the finished " +
-  "part remains, on flat pure-white; the magenta must be completely gone.\n" +
-  "- THE STRIP BACKGROUND MUST BE A SINGLE FLAT PURE WHITE (#FFFFFF), perfectly uniform across the whole band: NO gradient, " +
-  "NO texture, NO vignette, NO panel, NO tray, NO surface markings, NO grid, NO shading — just flat pure white #FFFFFF behind " +
+  "- REMOVE the green keyline outlines in your output (guides ONLY, exactly like the device sockets' rings) — only the finished " +
+  "part remains, on the flat {BG} backdrop; the green must be completely gone.\n" +
+  "- THE STRIP BACKGROUND MUST BE A SINGLE FLAT {BG}, perfectly uniform across the whole band: NO gradient, " +
+  "NO texture, NO vignette, NO panel, NO tray, NO surface markings, NO grid, NO shading — just that flat uniform {BG} behind " +
   "and between every part. This is REQUIRED so each control can be cleanly isolated and cut out. (The device body above keeps " +
-  "its material; ONLY this strip background must be flat pure white.)\n" +
+  "its material; the strip background is the SAME neutral {BG} as the device backdrop.)\n" +
   "- Each control is a BARE part: NO square plate, card, tile, rounded-rectangle or box behind it, NO frame, NO shadow. " +
-  "Center each in its slot, evenly spaced, not touching neighbours, with clean empty pure-white space around it.\n" +
+  "Center each in its slot, evenly spaced, not touching neighbours, with clean empty {BG} space around it.\n" +
   "- ABSOLUTELY NO TEXT ANYWHERE in this strip. NO text, NO letters, NO words, NO captions, NO labels, NO names, NO numbers, " +
   "NO legend, NO key, NO title, NO annotation — under, over, beside, or on ANY part, and none in the white space between parts. " +
   "Do NOT write 'PLAY', 'STOP', 'REWIND', 'POWER', 'OFF', 'ON', 'VOLUME', or any other word, abbreviation, or number next to a " +
@@ -96,12 +94,12 @@ export const PAINT_PROMPT =
   "- Each control's ONLY marking is its own icon EMBOSSED ON ITS FACE (e.g. the play triangle is molded ON the button face) — " +
   "do NOT draw any separate floating icon, glyph, arrow, symbol, or text ABOVE, BELOW or beside the control. Nothing floats " +
   "next to a part; the surrounding white is completely empty.\n\n" +
-  "RENDER: flat front-on product render. The top device region sits on a flat {BG} backdrop; the bottom control " +
-  "strip sits on flat PURE-WHITE — both perfectly clean and uniform. CRITICAL: NO shadows of any kind anywhere — " +
+  "RENDER: flat front-on product render. The top device region AND the bottom control strip both sit on the SAME " +
+  "flat {BG} backdrop — perfectly clean and uniform. CRITICAL: NO shadows of any kind anywhere — " +
   "no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the backdrop. Every element " +
   "must have clean hard edges against its backdrop so it can be perfectly masked. No reflections on the ground. " +
   "Reminder: the bottom control-parts strip carries NO text, NO labels, NO captions, NO numbers of any kind — only the " +
-  "bare parts on flat pure white.";
+  "bare parts on the flat {BG} backdrop.";
 // ---- CUTOUT KEY COLOUR ----------------------------------------------------
 // The device is painted on a flat CONTRASTING backdrop (a hue OUTSIDE its own
 // palette) so the cutout keys it out unambiguously — fixing the white-key bugs
@@ -111,23 +109,24 @@ export const PAINT_PROMPT =
 // (light through / shifting sheen), so a coloured-key despill would desaturate the
 // real material — see cutoutColorAware. Validated 2026-06-23 (see TODO.md).
 export interface KeyChoice { key: RGB; css: string; phrase: string }
-const KW: KeyChoice = { key: KEY_WHITE, css: "white", phrase: "pure white" };
-const MAGENTA: KeyChoice = { key: [230, 0, 126], css: "rgb(230,0,126)", phrase: "pure flat magenta (#E6007E)" };
-const CYAN: KeyChoice = { key: [0, 192, 208], css: "rgb(0,192,208)", phrase: "pure flat bright cyan (#00C0D0)" };
-const YELLOW: KeyChoice = { key: [255, 224, 0], css: "rgb(255,224,0)", phrase: "pure flat bright yellow (#FFE000)" };
-// device-hue (from the material text) → a backdrop FAR from it, bright for a sharp edge
-const KEYS: Array<{ test: RegExp; choice: KeyChoice }> = [
-  { test: /green|lime|emerald|teal|frog|moss|olive/i,                 choice: MAGENTA },
-  { test: /magenta|pink|purple|violet|\bred\b|crimson|rose|ruby|berry|coral/i, choice: CYAN },
-  { test: /blue|cyan|navy|cobalt|azure|aqua|sky|turquoise/i,          choice: YELLOW },
-  { test: /yellow|gold|amber|orange|cream|tan|sand|brass|bronze/i,    choice: MAGENTA },
-];
-// translucent / iridescent → WHITE fallback (a coloured-key despill would harm the real material)
-const WHITE_FALLBACK = /translucent|transparent|see-through|glass|jelly|gel|slime|gummy|crystal|iridescent|pearl|pearlescent|holographic|opal|nacre|prism|rainbow sheen/i;
+// NEUTRAL contrasting backdrops (2026-07-01 — replaces the chroma-key scheme). BiRefNet cutout
+// is object-based (needs NO chroma to find the device), and a saturated key (magenta/cyan) is
+// physically TRANSMITTED into translucent bodies (a see-through skin picked up the backdrop
+// hue) and reflected by chrome. A neutral grey/white/black never tints, so we pick one by the
+// material's LIGHTNESS for a hard cut edge: light body → dark backdrop, dark body → light
+// backdrop, mid/colourful → mid grey. Used for BOTH the device region AND the control strip.
+const BG_DARK: KeyChoice  = { key: [18, 18, 20],   css: "rgb(18,18,20)",    phrase: "a flat, uniform near-black charcoal (#121214)" };
+const BG_LIGHT: KeyChoice = { key: [242, 242, 244], css: "rgb(242,242,244)", phrase: "a flat, uniform near-white light grey (#F2F2F4)" };
+const BG_GREY: KeyChoice  = { key: [128, 128, 130], css: "rgb(128,128,130)", phrase: "a flat, uniform neutral mid-grey (#808082)" };
+// LIGHT bodies (need a dark backdrop) vs DARK bodies (need a light backdrop). Everything else
+// (colourful, translucent, unknown) takes mid-grey, which contrasts in both directions.
+const LIGHT_MAT = /white|pearl|pearlescent|cream|ivory|chrome|silver|steel|alumini?um|platinum|pastel|\blight\b|pale|bone|milk|snow|mirror|glossy silver/i;
+const DARK_MAT  = /black|charcoal|obsidian|onyx|graphite|gunmetal|\bjet\b|ebony|\bdark\b|midnight|carbon|slate|coal|soot|tar|ink/i;
 export function pickKeyColor(materialText: string): KeyChoice {
   const t = materialText.toLowerCase();
-  if (WHITE_FALLBACK.test(t)) return KW;
-  return (KEYS.find((k) => k.test.test(t))?.choice) ?? MAGENTA;
+  if (LIGHT_MAT.test(t) && !DARK_MAT.test(t)) return BG_DARK;   // light body → dark backdrop
+  if (DARK_MAT.test(t)  && !LIGHT_MAT.test(t)) return BG_LIGHT;  // dark body → light backdrop
+  return BG_GREY;                                                // mid / colourful / translucent
 }
 
 // Donor registry. These descriptions are NO LONGER forced onto the paint pass — the
@@ -301,7 +300,8 @@ async function fetchPng(url: string): Promise<Uint8Array> {
 //    (via fal/OpenRouter — the strongest reachable, far better than my own eyes). Only a
 //    paint whose bank Gemini approves ships. Fail-OPEN: any judge error/timeout treats
 //    the bank as OK so a flaky model never blocks generation.
-const BANK_GATE_ENABLED = true;
+const BANK_GATE_ENABLED = false;   // 2026-07-01: buttons are now baked wild + NON-uniform; the
+// "even button bank" judge fights that (and would reroll up to 4× against the wild look). Off.
 const MAX_BANK_TRIES = 4;
 const BANK_MODEL = "google/gemini-2.5-pro";
 const BANK_PROMPT =

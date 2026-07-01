@@ -514,14 +514,12 @@ export async function finishCutoutFull(
   // 1. device frame: crop the top devFrac, BiRefNet via /api/cutout, upload. HEAVY model
   // (same as the strip) — no light pass anywhere; heavy handles low-contrast bodies too.
   const deviceCanvas = cropDevice(paint, layout.devFrac);
-  // DEVICE cutout = pure-JS COLOUR KEY on the contrasting backdrop (cutoutColorAware
-  // via whiteKeyCanvas). VERIFIED 2026-06-24 to beat BiRefNet on BOTH failure modes:
-  // BiRefNet eats a coloured body on a colour backdrop (61% of holes were body) AND
-  // eats a near-white body on white (white-on-white). The colour key + colour-aware
-  // fill keeps dark screens solid and despills the backdrop fringe. White key ⇒ the
-  // legacy white-key path (translucent/iridescent fallback). The STRIP still uses
-  // BiRefNet below (loose parts on white — that path is solid).
-  const frameBlob = await whiteKeyCanvas(deviceCanvas, key);
+  // DEVICE cutout = BiRefNet (object-based), same as the strip (2026-07-01). The backdrop is
+  // now a NEUTRAL grey/white/black chosen to CONTRAST the material (pipeline.pickKeyColor), so
+  // BiRefNet has the figure-ground contrast it needs — a light body sits on a dark backdrop and
+  // vice-versa. We DROPPED the colour key: a neutral key would eat grey/chrome device parts, and
+  // a saturated key tinted translucent bodies + bled pink frames. `key` is now unused here.
+  const frameBlob = await serverCutout(deviceCanvas, "General Use (Heavy)");
   await uploadFrame(id, frameBlob);
 
   // 1b. PLACEMENT = the blueprint/socket positions, AS-IS. The deterministic template

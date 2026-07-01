@@ -201,7 +201,8 @@ const LAYOUT_SYS =
   "sizes sensible (transport buttons 0.06-0.16 with play biggest, knobs 0.08-0.16, the screen 0.4-0.85 wide). " +
   "Keep it FOCUSED — at most ~5 INTERACTABLES beyond the screen/marquee/time/seek. Avoid RANDOM clutter, but a TIGHT, INTENTIONAL adjacent bank is good, not clutter. " +
   "The marquee is WIDE (~0.5-0.65) and the time readout is NARROW (~0.14-0.22) sitting beside it on the same row, NOT stacked full-width. " +
-  "If you include EQ faders, use 5-7 bands max. Make it interesting and specific to the theme.\n\n" +
+  "If you include EQ faders, use 5-7 bands max. Make it interesting and specific to the theme.\n" +
+  "ARRANGEMENT — place controls ORGANICALLY to fit the theme's FORM, like an early-2000s Winamp / WMP-XP / Sonique skin: hug a bezel, RING the screen, cluster into a sculpted facet, or scatter across an asymmetric body — vary it wildly per theme. Do NOT default to a centered rack / a plain transport row every time; asymmetric, contour-following, characterful layouts are ENCOURAGED (positions only need to not overlap).\n\n" +
   "Each region: {\"id\":\"snake_case\",\"kind\":\"button|toggle|slider-h|slider-v|knob|slider-arc|segmented|xy|display\",\"bind\":\"<state field>\"," +
   "\"label\":\"<short>\",\"x\":0,\"y\":0,\"w\":0,\"h\":0,\"shape\":\"ellipse\"(round only),\"options\":[...](segmented),\"group\":\"eq\",\"index\":0}. " +
   "Return ONLY the JSON object.";
@@ -261,7 +262,7 @@ export async function deriveLayout(openaiKey: string, prompt: string): Promise<R
       body: JSON.stringify({
         model: LAYOUT_MODEL,
         response_format: { type: "json_object" },
-        temperature: 0.9,   // variety across skins
+        temperature: 1.05,   // high variety — push wild, organic, non-uniform arrangements
         max_tokens: 4000,
         messages: [
           { role: "system", content: LAYOUT_SYS },

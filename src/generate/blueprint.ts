@@ -364,8 +364,11 @@ const STRIP_H = COMBINED_H - DEVICE_H;
 export const DEVICE_FRAC = DEVICE_H / COMBINED_H;
 
 const BP_BODY = "rgb(218,218,224)";   // faint gray body silhouette
-const BP_RING = "rgb(255,40,120)";    // bright magenta anchor ring (empty well → overlay)
-const BP_BAKE = "rgb(0,200,255)";     // cyan ring = paint a REAL cohesive control here (baked, not a well)
+const BP_RING = "rgb(0,190,90)";      // bright GREEN anchor ring (empty well → sprite overlay). Green,
+                                      // not magenta: magenta was physically transmitted into translucent
+                                      // bodies + bled as pink frames (2026-07-01). Green reads as a clearly
+                                      // foreign guide on any neutral backdrop and removes cleanly.
+const BP_BAKE = "rgb(0,120,255)";     // blue ring = paint a REAL cohesive control here (baked, not a well)
 
 // map a template Region kind → the sprite kind we cut, or null for non-sprite
 // (displays/decorations stay on the device and are never cut to the strip).
@@ -403,8 +406,10 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   // base = white (the STRIP must be white for clean cutting). The DEVICE region (top
   // DEVICE_H) gets the key-colour backdrop so the device cuts out cleanly; the strip
   // below stays white.
-  parts.push(`<rect width="${GEN_W}" height="${H}" fill="white"/>`);
-  if (deviceBg !== "white") parts.push(`<rect width="${GEN_W}" height="${DEVICE_H}" fill="${deviceBg}"/>`);
+  // whole blueprint on ONE neutral backdrop — device region AND control strip share it.
+  // BiRefNet (object-based) cuts both, and a neutral grey/white/black never tints a
+  // translucent body or eats a white knob the way the old white/magenta keys did.
+  parts.push(`<rect width="${GEN_W}" height="${H}" fill="${deviceBg}"/>`);
 
   // --- faint gray BODY silhouette: rounded envelope around all DEVICE wells. ---
   // (mirrors A_blueprint.py: bbox of every well + generous margin, big radius.)
