@@ -182,7 +182,7 @@ export interface RuntimeDeps {
   // are simply not persisted. Wiring R2 (env.SKINS) makes EVERY generated skin a
   // shared cloud artifact under skins/<id>/ (frame.png OR paint.png + template.json +
   // meta.json), reconstructable by id via /api/skin/<id>.
-  store?: (id: string, kind: "frame" | "paint" | "template" | "meta" | "layout", data: Uint8Array | string) => Promise<string>;
+  store?: (id: string, kind: "frame" | "paint" | "template" | "meta" | "layout" | "rawlayout" | "blueprint", data: Uint8Array | string) => Promise<string>;
   log?: (msg: string) => void;
   // optional: emit a live progress artifact as each pass completes (blueprint →
   // grown body → painted skin), so the loading UI can preview the user's ACTUAL
@@ -500,6 +500,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
     throw new Error(`blueprint aspect ${bpW}x${bpH} (${bpAspect.toFixed(3)}) is not ~9:16 (0.5625) — the paint model won't reproduce it 1:1; fix STRIP_FRAC so device+strip = 9:16`);
   }
   const blueprintPng = await deps.rasterize(svg);
+  if (deps.store) { try { await deps.store(input.id, "blueprint", blueprintPng); } catch { /* debug artifact only */ } }
 
   // 2. SINGLE PAINT PASS — restyle the whole combined blueprint into the material
   //    in ONE shot (NO separate envelope pass). The blueprint IS the layout
@@ -571,9 +572,12 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const storeSidecars = async () => {
     if (!deps.store) return;
     try {
-      await deps.store!(input.id, "template", JSON.stringify(template));
+      await deps.store!(input.id, "template", JSON.stringify(template));   // PACKED template (post repackTemplate + bakeButtons)
       await deps.store!(input.id, "meta", JSON.stringify(meta));
       await deps.store!(input.id, "layout", JSON.stringify(layout));
+      // ORIGINAL template = the Director's raw layout, BEFORE repackTemplate/bakeButtons — dumped so
+      // the pipeline steps (original → packed → blueprint → paint) are all inspectable.
+      if (input.regions?.length) await deps.store!(input.id, "rawlayout", JSON.stringify({ canvas: { w: GEN_W, h: GEN_H }, regions: input.regions }));
     } catch (e) { log(`[${input.id}] sidecar store failed: ${e instanceof Error ? e.message : e}`); }
   };
 

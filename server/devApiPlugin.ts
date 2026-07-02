@@ -55,11 +55,11 @@ export function devApiPlugin(): Plugin {
       const genDir = resolve(server.config.root, "public", "generated");
       const store = async (
         id: string,
-        kind: "frame" | "paint" | "template" | "meta" | "layout",
+        kind: "frame" | "paint" | "template" | "meta" | "layout" | "rawlayout" | "blueprint",
         data: Uint8Array | string,
       ): Promise<string> => {
         mkdirSync(genDir, { recursive: true });
-        const ext = kind === "frame" || kind === "paint" ? "png" : "json";
+        const ext = kind === "frame" || kind === "paint" || kind === "blueprint" ? "png" : "json";
         const file = `${id}-${kind}.${ext}`;
         writeFileSync(resolve(genDir, file), data as Uint8Array | string);
         return `/generated/${file}`;
