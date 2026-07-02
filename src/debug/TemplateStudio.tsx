@@ -5,11 +5,12 @@
 //   • packer                      → repackTemplate (canon-size + resolveOverlaps), live
 // Each component has a CENTROID (draggable), an ARBITRARY SHAPE connected to it, and a modular
 // DIFFUSENESS (soft-guide spread). Left = raw seeded template, right = packed result.
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import {
-  layoutRandomP, layoutArch, repackTemplate, ARCHETYPES, DEFAULT_PARAMS,
+  layoutRandomP, layoutArch, repackTemplate, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
+import { combinedBlueprint } from "../generate/blueprint";
 import type { Region, Kind } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
@@ -48,29 +49,90 @@ export default function TemplateStudio() {
   const [prompt, setPrompt] = useState("a wild organic Y2K Winamp media player");
   const [llmMsg, setLlmMsg] = useState("");
   const [drag, setDrag] = useState<string | null>(null);
+  // human-authored flag: once the human edits (drag/add/patch/nudge), the packer becomes a
+  // PASS-THROUGH — packing must not rearrange a human-authored template. Generators reset it.
+  const [authored, setAuthored] = useState(false);
 
-  // PACKER — the real repackTemplate, live. (repack canon-sizes by kind + resolveOverlaps.)
-  const packed = useMemo(() => repackTemplate(regions as Region[]) as SR[], [regions]);
+  // HARD CONSTRAINT: components at 0 diffuseness (crisp, must-follow guides) may NEVER overlap.
+  // Enforced with the SHIPPING resolveOverlaps, scoped to only the zero-diff subset — the packer
+  // heuristic applied exactly where it makes sense, even on human-authored templates.
+  const enforceZeroDiff = useCallback((rs: SR[]): SR[] => {
+    const isZero = (r: SR) => (r.diff ?? globalDiff) <= 0.001;
+    const zero = rs.filter(isZero);
+    if (zero.length < 2) return rs;
+    const solved = resolveOverlaps(zero.map((r) => ({ ...r })) as Region[]) as SR[];
+    const byId = new Map(solved.map((r) => [r.id, r]));
+    return rs.map((r) => byId.get(r.id) ?? r);
+  }, [globalDiff]);
 
-  const randomize = () => { setRegions(layoutRandomP(P) as SR[]); setSel(null); };
-  const archGen = (a: string) => { setRegions(layoutArch(a, P) as SR[]); setSel(null); };
+  // undo/redo history — normal expected editor UX (⌘Z / ⇧⌘Z). Snapshots on every
+  // discrete mutation (and at drag START, so a whole drag undoes as one step).
+  const past = useRef<SR[][]>([]); const future = useRef<SR[][]>([]);
+  const mutate = useCallback((updater: (rs: SR[]) => SR[]) => setRegions((rs) => {
+    past.current.push(rs); if (past.current.length > 60) past.current.shift();
+    future.current = []; return updater(rs);
+  }), []);
+  const snapshot = useCallback(() => setRegions((rs) => { past.current.push(rs); future.current = []; return rs; }), []);
+  const undo = useCallback(() => setRegions((cur) => { const p = past.current.pop(); if (!p) return cur; future.current.push(cur); return p; }), []);
+  const redo = useCallback(() => setRegions((cur) => { const f = future.current.pop(); if (!f) return cur; past.current.push(cur); return f; }), []);
+
+  // PACKER — the real repackTemplate, live — but a HUMAN-AUTHORED template passes through
+  // untouched (packing must not rearrange what the human placed; only the zero-diffuseness
+  // no-overlap invariant is enforced at edit time).
+  const packed = useMemo(
+    () => (authored ? (regions as SR[]) : (repackTemplate(regions as Region[]) as SR[])),
+    [regions, authored],
+  );
+  // COMBINED blueprint — the packer's FULL output: device guides + the SPRITE STRIP cells
+  // (knob/thumb/toggle sprite locations, incl. the derived switch-off/on pair). Real
+  // shipping function (bakeButtons → combinedBlueprint), same as pipeline.ts.
+  const combined = useMemo(() => {
+    try { return combinedBlueprint(bakeButtons(packed as Region[]), "rgb(128,128,130)"); }
+    catch { return null; }
+  }, [packed]);
+
+  const randomize = () => { mutate(() => layoutRandomP(P) as SR[]); setSel(null); setAuthored(false); };
+  const archGen = (a: string) => { mutate(() => layoutArch(a, P) as SR[]); setSel(null); setAuthored(false); };
+  const repackNow = () => mutate((rs) => repackTemplate(rs as Region[]) as SR[]);   // explicit human choice
   const llmGen = async () => {
     setLlmMsg("generating…");
     try {
       const r = await fetch("/api/derive", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
       const d = await r.json();
-      if (d.regions?.length) { setRegions(d.regions as SR[]); setSel(null); setLlmMsg(`LLM: ${d.regions.length} regions`); }
+      if (d.regions?.length) { mutate(() => d.regions as SR[]); setSel(null); setAuthored(false); setLlmMsg(`LLM: ${d.regions.length} regions`); }
       else setLlmMsg(d.hasKey ? "LLM returned no usable layout (fell back)" : "no OpenAI key on server");
     } catch (e) { setLlmMsg("error: " + (e instanceof Error ? e.message : String(e))); }
   };
 
-  const patchSel = (patch: Partial<SR>) => setRegions((rs) => rs.map((r) => r.id === sel ? { ...r, ...patch } : r));
-  const delSel = () => { setRegions((rs) => rs.filter((r) => r.id !== sel)); setSel(null); };
+  const patchSel = (patch: Partial<SR>) => { setAuthored(true); mutate((rs) => enforceZeroDiff(rs.map((r) => r.id === sel ? { ...r, ...patch } : r))); };
+  const delSel = useCallback(() => { setSel((s) => { if (s) { setAuthored(true); mutate((rs) => rs.filter((r) => r.id !== s)); } return null; }); }, [mutate]);
   const addComp = () => {
     const id = "c" + Math.random().toString(36).slice(2, 6);
-    setRegions((rs) => [...rs, { id, kind: "button", content: "sprite", layer: "components", bind: id, rect: { x: 0.44, y: 0.44, w: 0.12, h: 0.08 }, shapeKind: "auto", diff: globalDiff } as SR]);
+    setAuthored(true);
+    mutate((rs) => enforceZeroDiff([...rs, { id, kind: "button", content: "sprite", layer: "components", bind: id, rect: { x: 0.44, y: 0.44, w: 0.12, h: 0.08 }, shapeKind: "auto", diff: globalDiff } as SR]));
     setSel(id);
   };
+
+  // normal expected keyboard shortcuts (guarded: never intercept while typing in a field)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+      if (e.key === "Escape") { setSel(null); return; }
+      if (!sel) return;
+      if (e.key === "Backspace" || e.key === "Delete") { e.preventDefault(); delSel(); return; }
+      const step = e.shiftKey ? 0.02 : 0.005;
+      const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+      const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+      if (dx || dy) {
+        e.preventDefault(); setAuthored(true);
+        mutate((rs) => enforceZeroDiff(rs.map((r) => r.id === sel ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, r.rect.x + dx)), y: Math.max(0, Math.min(1 - r.rect.h, r.rect.y + dy)) } } : r)));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sel, mutate, undo, redo, delSel, enforceZeroDiff]);
 
   // drag a centroid on the RAW canvas (pointer coords → normalized, recentre the rect)
   const onMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
@@ -82,7 +144,9 @@ export default function TemplateStudio() {
 
   const renderShape = (r: SR, editable: boolean) => {
     const W = GEN_W, H = GEN_H; const x = r.rect.x * W, y = r.rect.y * H, w = r.rect.w * W, h = r.rect.h * H;
-    const col = KCOL[r.kind] ?? "#888"; const sk = autoShape(r); const poly = unitPoly(sk);
+    const col = KCOL[r.kind] ?? "#888"; const sk = autoShape(r);
+    // an LLM/human-drawn custom silhouette (schema `path`, normalized in-rect) beats the named shape
+    const poly = (r.path && r.path.length >= 3) ? r.path.map((p) => [p.x, p.y] as [number, number]) : unitPoly(sk);
     const diff = r.diff ?? globalDiff; const blur = diff * Math.min(w, h) * 0.5;   // diffuseness → soft edge
     const fid = `f_${r.id}`; const selected = sel === r.id;
     const shape = poly
@@ -94,7 +158,7 @@ export default function TemplateStudio() {
         {shape}
         <circle cx={x + w / 2} cy={y + h / 2} r={editable ? 11 : 6} fill={selected ? "#fff" : col}
           stroke="#000" strokeWidth={2} style={{ cursor: editable ? "grab" : "default" }}
-          onPointerDown={editable ? (e) => { e.stopPropagation(); setSel(r.id); setDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); } : undefined} />
+          onPointerDown={editable ? (e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); } : undefined} />
         <text x={x + w / 2} y={y - 6} fill={col} fontSize={26} textAnchor="middle" style={{ pointerEvents: "none", fontWeight: 700 }}>{(r.bind || r.id).slice(0, 8)}</text>
       </g>
     );
@@ -104,7 +168,9 @@ export default function TemplateStudio() {
     <div style={{ flex: "1 1 320px", minWidth: 260 }}>
       <div style={{ color: "#cfcfe0", fontWeight: 600, marginBottom: 6 }}>{title} <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>({regs.length} regions)</span></div>
       <svg viewBox={`0 0 ${GEN_W} ${GEN_H}`} width="100%" style={{ maxWidth: 460, aspectRatio: `${GEN_W}/${GEN_H}`, background: "#15151c", border: "1px solid #2a2a34", borderRadius: 10, touchAction: "none" }}
-        onPointerMove={editable ? onMove : undefined} onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)}>
+        onPointerMove={editable ? onMove : undefined}
+        onPointerUp={() => { setDrag(null); if (editable) setRegions(enforceZeroDiff); }}
+        onPointerLeave={() => setDrag(null)}>
         {regs.map((r) => renderShape(r, editable))}
       </svg>
     </div>
@@ -130,6 +196,7 @@ export default function TemplateStudio() {
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <button style={btn} onClick={randomize}>🎲 Randomize</button>
             <button style={btn} onClick={addComp}>＋ Component</button>
+            <button style={btn} onClick={repackNow} title="apply repackTemplate heuristics on demand">⇥ Repack now</button>
           </div>
           <div style={{ fontSize: 12, color: "#8a8a96" }}>Archetype (heuristic):</div>
           <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -150,12 +217,38 @@ export default function TemplateStudio() {
           </div>
         </div>
 
-        {/* center + right: raw + packed canvases */}
+        {/* center + right: raw + packed canvases + the COMBINED blueprint (device + sprite strip) */}
         <Canvas regs={regions} editable title="RAW template (seed / edit)" />
-        <Canvas regs={packed} editable={false} title="PACKED (repackTemplate, live)" />
+        <Canvas regs={packed} editable={false} title={authored ? "PACKED — pass-through (human-authored)" : "PACKED (repackTemplate, live)"} />
+        {combined && (
+          <div style={{ flex: "1 1 280px", minWidth: 240 }}>
+            <div style={{ color: "#cfcfe0", fontWeight: 600, marginBottom: 6 }}>COMBINED blueprint <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>(device + {combined.layout.cells.length} sprite cells)</span></div>
+            <div style={{ position: "relative", maxWidth: 400, borderRadius: 10, overflow: "hidden", border: "1px solid #2a2a34" }}>
+              <div style={{ lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: combined.svg.replace(/width="\d+" height="\d+"/, 'width="100%"') }} />
+              {/* sprite-cell labels — the SPRITE LOCATIONS the cutter will use, keyed by bind */}
+              {combined.layout.cells.map((c) => (
+                <div key={c.bind} style={{ position: "absolute", left: `${c.cellRect[0] * 100}%`, top: `${c.cellRect[1] * 100}%`, width: `${c.cellRect[2] * 100}%`, height: `${c.cellRect[3] * 100}%`, display: "flex", alignItems: "flex-end", justifyContent: "center", pointerEvents: "none", color: "#0a8f4d", font: "700 11px ui-monospace,monospace", textShadow: "0 1px 0 rgba(255,255,255,.5)" }}>{c.bind}</div>
+              ))}
+              <div style={{ position: "absolute", left: 0, right: 0, top: `${combined.layout.devFrac * 100}%`, borderTop: "2px dashed rgba(0,0,0,.45)", color: "rgba(0,0,0,.55)", fontSize: 10, paddingLeft: 4, pointerEvents: "none" }}>sprite strip ↓</div>
+            </div>
+            <div style={{ fontSize: 11, color: "#8a8a96", marginTop: 4 }}>real combinedBlueprint(bakeButtons(packed)) — what the painter receives; green cells = where each movable sprite is painted + cut.</div>
+          </div>
+        )}
 
-        {/* inspector */}
-        <div style={{ flex: "0 0 200px", display: "flex", flexDirection: "column", gap: 8 }}>
+        {/* inspector + component list */}
+        <div style={{ flex: "0 0 220px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ color: "#cfcfe0", fontWeight: 600 }}>Components <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>({regions.length})</span></div>
+          <div style={{ maxHeight: 240, overflowY: "auto", border: "1px solid #26262f", borderRadius: 8 }}>
+            {regions.map((r) => (
+              <div key={r.id} onClick={() => setSel(r.id)}
+                style={{ display: "flex", gap: 6, alignItems: "center", padding: "4px 8px", fontSize: 12, cursor: "pointer", background: sel === r.id ? "#242432" : "transparent", color: "#c8c8d2" }}>
+                <span style={{ width: 9, height: 9, borderRadius: "50%", background: KCOL[r.kind] ?? "#888", flex: "0 0 auto" }} />
+                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.bind || r.id}</span>
+                <span style={{ color: "#8a8a96" }}>{r.kind}</span>
+                <span style={{ color: "#66666f" }}>d{(r.diff ?? globalDiff).toFixed(1)}</span>
+              </div>
+            ))}
+          </div>
           <div style={{ color: "#cfcfe0", fontWeight: 600 }}>Inspector</div>
           {selR ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: "#b8b8c4" }}>
@@ -170,7 +263,8 @@ export default function TemplateStudio() {
             </div>
           ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (or its centroid) to edit its kind, bind, shape, diffuseness, size.</div>}
           <div style={{ marginTop: "auto", fontSize: 11, color: "#66666f", borderTop: "1px solid #26262f", paddingTop: 8 }}>
-            Packed uses the SHIPPING packer (repackTemplate → resolveOverlaps). Edit raw → packed updates live.
+            Packed uses the SHIPPING packer (repackTemplate → resolveOverlaps). Edit raw → packed + blueprint update live.
+            <div style={{ marginTop: 6 }}>⌫ delete · arrows nudge (⇧ = coarse) · esc deselect · ⌘Z undo · ⇧⌘Z redo</div>
           </div>
         </div>
       </div>

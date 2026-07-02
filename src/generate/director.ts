@@ -204,7 +204,12 @@ const LAYOUT_SYS =
   "If you include EQ faders, use 5-7 bands max. Make it interesting and specific to the theme.\n" +
   "ARRANGEMENT — place controls ORGANICALLY to fit the theme's FORM, like an early-2000s Winamp / WMP-XP / Sonique skin: hug a bezel, RING the screen, cluster into a sculpted facet, or scatter across an asymmetric body — vary it wildly per theme. Do NOT default to a centered rack / a plain transport row every time; asymmetric, contour-following, characterful layouts are ENCOURAGED (positions only need to not overlap).\n\n" +
   "Each region: {\"id\":\"snake_case\",\"kind\":\"button|toggle|slider-h|slider-v|knob|slider-arc|segmented|xy|display\",\"bind\":\"<state field>\"," +
-  "\"label\":\"<short>\",\"x\":0,\"y\":0,\"w\":0,\"h\":0,\"shape\":\"ellipse\"(round only),\"options\":[...](segmented),\"group\":\"eq\",\"index\":0}. " +
+  "\"label\":\"<short>\",\"x\":0,\"y\":0,\"w\":0,\"h\":0,\"shape\":\"ellipse\"(round only),\"options\":[...](segmented),\"group\":\"eq\",\"index\":0}.\n" +
+  "SILHOUETTES (optional, encouraged): per control you MAY also give " +
+  "\"shapeKind\":\"circle|square|hexagon|wedge|kidney|lozenge|teardrop|blob|arc\" (an organic era-correct silhouette), " +
+  "OR draw ANY custom silhouette as \"path\":[{\"x\":0..1,\"y\":0..1},...] (5-12 points, a closed polygon normalized INSIDE the control's rect — " +
+  "invent whatever shape fits the theme), plus \"diff\":0..1 (guide diffuseness: 0 = the painter must follow this exact silhouette, 1 = a soft " +
+  "suggestion the painter is free to reinterpret). " +
   "Return ONLY the JSON object.";
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -241,6 +246,12 @@ function normRegion(r: Record<string, unknown>, i: number): Region | null {
     ...(Array.isArray(r.options) ? { options: (r.options as unknown[]).map(String) } : {}),
     ...(typeof r.group === "string" ? { group: r.group } : {}),
     ...(typeof r.index === "number" ? { index: r.index } : {}),
+    // studio silhouette fields (pass-through; harmless to the pipeline, drawn by the studio)
+    ...(typeof r.shapeKind === "string" ? { shapeKind: String(r.shapeKind) } : {}),
+    ...(typeof r.diff === "number" && Number.isFinite(r.diff) ? { diff: clamp01(Number(r.diff)) } : {}),
+    ...(Array.isArray(r.path) && (r.path as unknown[]).length >= 3
+      && (r.path as Array<Record<string, unknown>>).every((p) => p && typeof p.x === "number" && typeof p.y === "number")
+      ? { path: (r.path as Array<{ x: number; y: number }>).slice(0, 16).map((p) => ({ x: clamp01(p.x), y: clamp01(p.y) })) } : {}),
   };
   if (isDisplay) {
     // dynamicType from whichever field carried the role
