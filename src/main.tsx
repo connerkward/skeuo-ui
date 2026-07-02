@@ -29,6 +29,11 @@ async function boot() {
     root.render(<StrictMode><SegCheck /></StrictMode>)
     return
   }
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('studio')) {
+    const { default: TemplateStudio } = await import('./debug/TemplateStudio')
+    root.render(<StrictMode><TemplateStudio /></StrictMode>)
+    return
+  }
   if (isWidget()) {
     document.documentElement.classList.add('widget') // transparent-bg hook (widget.css)
     const { default: WidgetApp } = await import('./widget/WidgetApp')

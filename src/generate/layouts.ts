@@ -99,7 +99,7 @@ export function layoutSimple(): Region[] {
 const AR = GEN_W / GEN_H;                 // 0.667 — a square control is h = w * AR
 const clampN = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-interface Params {
+export interface Params {
   density: number; symmetry: number; bias: number; hierarchy: number;
   margin: number; gapScale: number; spacing: number;
   wStack: number; wDial: number; wSplit: number; wMini: number; wConsole: number;
@@ -332,6 +332,29 @@ export function layoutRandom(): Region[] {
   const raw = ARCH_FNS[pickArch(P)](P);
   resolveOverlapsW(raw, P);
   raw.forEach((r) => delete r.nopush);   // strip the transient repel flag
+  return raw as Region[];
+}
+
+// ---- STUDIO HOOKS: drive the SAME heuristic archetypes with explicit params, so the
+// template studio uses the shipping generator (not a reimplementation). ----
+export const ARCHETYPES = Object.keys(ARCH_FNS);
+export const DEFAULT_PARAMS: Params = {
+  density: 0.3, symmetry: 1, bias: 1, hierarchy: 1, margin: 0.14, gapScale: 1.5, spacing: 0.02,
+  wStack: 0.4, wDial: 0.5, wSplit: 0.5, wMini: 1, wConsole: 0.45,
+  wDiagonal: 0.05, wGolden: 0.6, wGrid: 0.45, wCorner: 0.2, wArc: 1,
+};
+// generate from a SPECIFIC archetype with explicit params (heuristic randomizer, controllable).
+export function layoutArch(arch: string, P: Params = DEFAULT_PARAMS): Region[] {
+  const raw = (ARCH_FNS[arch] ?? ARCH_FNS.stack)(P);
+  resolveOverlapsW(raw, P);
+  raw.forEach((r) => delete r.nopush);
+  return raw as Region[];
+}
+// weighted-random archetype with explicit params.
+export function layoutRandomP(P: Params = DEFAULT_PARAMS): Region[] {
+  const raw = ARCH_FNS[pickArch(P)](P);
+  resolveOverlapsW(raw, P);
+  raw.forEach((r) => delete r.nopush);
   return raw as Region[];
 }
 

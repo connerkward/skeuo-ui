@@ -12,7 +12,7 @@ import { resolve } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import { handleGenerate } from "../src/generate/handler";
 import { removeBackground, segmentControls, type RuntimeDeps, type SamBoxPx } from "../src/generate/pipeline";
-import { extractSlots, extractMasks, type SlotControl } from "../src/generate/director";
+import { extractSlots, extractMasks, deriveLayout, type SlotControl } from "../src/generate/director";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
 // the same precedence used for both FAL_KEY and OPENAI_API_KEY.
@@ -93,6 +93,23 @@ export function devApiPlugin(): Plugin {
             write({ status: "error", error: e instanceof Error ? e.message : String(e) });
             res.end();
           }
+        });
+      });
+
+      // POST /api/derive — the LLM data-template generator for the template studio.
+      // Calls the SAME deriveLayout (gpt-4o, heuristic-guided LAYOUT_SYS) the pipeline uses,
+      // returns the raw Region[] so the studio can seed + pack it. { prompt } → { regions }.
+      server.middlewares.use("/api/derive", (req, res) => {
+        if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
+        const chunks: Buffer[] = [];
+        req.on("data", (c) => chunks.push(c as Buffer));
+        req.on("end", async () => {
+          res.setHeader("Content-Type", "application/json");
+          try {
+            const { prompt } = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+            const regions = openaiKey ? await deriveLayout(openaiKey, String(prompt || "")) : null;
+            res.end(JSON.stringify({ regions: regions ?? [], ok: !!regions, hasKey: !!openaiKey }));
+          } catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
         });
       });
 
