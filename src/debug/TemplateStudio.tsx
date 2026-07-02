@@ -164,10 +164,12 @@ export default function TemplateStudio() {
     );
   };
 
+  // height-fit canvas: the stage derives its width from the viewport height via aspect-ratio,
+  // so all three panels are fully visible at once (no page scroll).
   const Canvas = ({ regs, editable, title }: { regs: SR[]; editable: boolean; title: string }) => (
-    <div style={{ flex: "1 1 320px", minWidth: 260 }}>
-      <div style={{ color: "#cfcfe0", fontWeight: 600, marginBottom: 6 }}>{title} <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>({regs.length} regions)</span></div>
-      <svg viewBox={`0 0 ${GEN_W} ${GEN_H}`} width="100%" style={{ maxWidth: 460, aspectRatio: `${GEN_W}/${GEN_H}`, background: "#15151c", border: "1px solid #2a2a34", borderRadius: 10, touchAction: "none" }}
+    <div className="tsCanvas dev">
+      <div className="tsCap">{title} <span>({regs.length} regions)</span></div>
+      <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`}
         onPointerMove={editable ? onMove : undefined}
         onPointerUp={() => { setDrag(null); if (editable) setRegions(enforceZeroDiff); }}
         onPointerLeave={() => setDrag(null)}>
@@ -186,88 +188,120 @@ export default function TemplateStudio() {
   const btn: React.CSSProperties = { background: "#1c1c26", color: "#e8e8ee", border: "1px solid #33333f", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13 };
 
   return (
-    <div style={{ background: "#0c0c10", color: "#e8e8ee", minHeight: "100vh", font: "14px system-ui,sans-serif", padding: "clamp(10px,2.5vw,24px)" }}>
-      <h1 style={{ fontSize: 20, margin: "0 0 2px" }}>Template Studio</h1>
-      <p style={{ color: "#9a9aa6", margin: "0 0 12px", maxWidth: "80ch" }}>Seed or generate a DATA template, then see it packed live — on the real shipping heuristics (layoutRandomP · repackTemplate · deriveLayout). Drag centroids; pick shape + diffuseness per component.</p>
+    <div className="tsRoot">
+      <style>{`
+        .tsRoot{position:fixed;inset:0;display:grid;grid-template-columns:218px minmax(0,1fr) 236px;grid-template-rows:auto minmax(0,1fr) auto;background:#0c0c10;color:#e8e8ee;font:14px system-ui,sans-serif}
+        .tsHead{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;padding:7px 14px;border-bottom:1px solid #1e1e26;flex-wrap:wrap}
+        .tsHead h1{font-size:16px;margin:0}
+        .tsHead span{color:#8a8a96;font-size:11.5px}
+        .tsLeft{overflow-y:auto;min-height:0;padding:10px;border-right:1px solid #1e1e26;display:flex;flex-direction:column;gap:10px}
+        .tsMain{display:flex;gap:12px;padding:8px 12px;min-width:0;min-height:0;justify-content:center;align-items:flex-start;overflow:hidden}
+        .tsRight{overflow-y:auto;min-height:0;padding:10px;border-left:1px solid #1e1e26;display:flex;flex-direction:column;gap:8px}
+        .tsFoot{grid-column:1/-1;display:flex;gap:10px;align-items:center;padding:6px 14px;border-top:1px solid #1e1e26;flex-wrap:wrap}
+        .tsCanvas{display:flex;flex-direction:column;min-width:0;align-items:stretch}
+        /* width derives from viewport HEIGHT (fit-to-height, exact aspect — no letterboxing),
+           clamped by the column's share of width. 150px ≈ header+footer+caption chrome. */
+        .tsCanvas.dev{width:min(31%,calc((100vh - 150px) * ${(GEN_W / GEN_H).toFixed(4)}))}
+        .tsCanvas.bp{width:min(31%,calc((100vh - 150px) * ${(GEN_W / 1820).toFixed(4)}))}
+        .tsCap{color:#cfcfe0;font-weight:600;font-size:12.5px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .tsCap span{color:#8a8a96;font-weight:400;font-size:11px}
+        .tsStage{width:100%;aspect-ratio:${GEN_W}/${GEN_H};background:#15151c;border:1px solid #2a2a34;border-radius:10px;touch-action:none}
+        .tsBP{width:100%;aspect-ratio:${GEN_W}/1820;position:relative;border-radius:10px;overflow:hidden;border:1px solid #2a2a34}
+        .tsBP svg{display:block;width:100%;height:100%}
+        @media (max-width:1020px){
+          .tsRoot{position:static;height:auto;grid-template-columns:1fr;grid-template-rows:auto}
+          .tsMain{flex-wrap:wrap;overflow:visible}
+          .tsCanvas.dev,.tsCanvas.bp{width:min(100%,420px)}
+          .tsLeft,.tsRight{border:0}
+        }
+      `}</style>
 
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-        {/* left: generators + heuristic params */}
-        <div style={{ flex: "0 0 220px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button style={btn} onClick={randomize}>🎲 Randomize</button>
-            <button style={btn} onClick={addComp}>＋ Component</button>
-            <button style={btn} onClick={repackNow} title="apply repackTemplate heuristics on demand">⇥ Repack now</button>
-          </div>
-          <div style={{ fontSize: 12, color: "#8a8a96" }}>Archetype (heuristic):</div>
-          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-            {ARCHETYPES.map((a) => <button key={a} style={{ ...btn, padding: "3px 7px", fontSize: 11 }} onClick={() => archGen(a)}>{a}</button>)}
-          </div>
-          <div style={{ borderTop: "1px solid #26262f", paddingTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
-            {sl("density", "density", 0, 1)}{sl("symmetry", "symmetry", 0, 1)}{sl("hierarchy", "hierarchy", 0, 1)}{sl("gapScale", "gapScale", 0.5, 3, 0.1)}{sl("spacing", "spacing", 0, 0.08, 0.005)}
-          </div>
-          <div style={{ borderTop: "1px solid #26262f", paddingTop: 8 }}>
-            <label style={{ fontSize: 12, color: "#b8b8c4" }}>global diffuseness <b style={{ color: "#7fe0a0" }}>{globalDiff.toFixed(2)}</b>
-              <input type="range" min={0} max={1} step={0.05} value={globalDiff} onChange={(e) => setGlobalDiff(+e.target.value)} style={{ width: "100%" }} /></label>
-          </div>
-          <div style={{ borderTop: "1px solid #26262f", paddingTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 12, color: "#8a8a96" }}>LLM generate (heuristic-guided):</div>
-            <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={2} style={{ background: "#15151c", color: "#e8e8ee", border: "1px solid #2a2a34", borderRadius: 6, padding: 6, fontSize: 12, resize: "vertical" }} />
-            <button style={btn} onClick={llmGen}>🧠 Generate (deriveLayout)</button>
-            <div style={{ fontSize: 11, color: "#8a8a96" }}>{llmMsg}</div>
-          </div>
+      <header className="tsHead">
+        <h1>Template Studio</h1>
+        <span>seed / generate a DATA template → live pack → combined blueprint · real shipping heuristics (layoutRandomP · repackTemplate · combinedBlueprint · deriveLayout)</span>
+      </header>
+
+      {/* LEFT — generators + heuristic params */}
+      <aside className="tsLeft">
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <button style={btn} onClick={randomize}>🎲 Randomize</button>
+          <button style={btn} onClick={addComp}>＋ Component</button>
+          <button style={btn} onClick={repackNow} title="apply repackTemplate heuristics on demand">⇥ Repack now</button>
         </div>
+        <div style={{ fontSize: 12, color: "#8a8a96" }}>Archetype (heuristic):</div>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {ARCHETYPES.map((a) => <button key={a} style={{ ...btn, padding: "3px 7px", fontSize: 11 }} onClick={() => archGen(a)}>{a}</button>)}
+        </div>
+        <div style={{ borderTop: "1px solid #26262f", paddingTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+          {sl("density", "density", 0, 1)}{sl("symmetry", "symmetry", 0, 1)}{sl("hierarchy", "hierarchy", 0, 1)}{sl("gapScale", "gapScale", 0.5, 3, 0.1)}{sl("spacing", "spacing", 0, 0.08, 0.005)}
+        </div>
+        <div style={{ borderTop: "1px solid #26262f", paddingTop: 8 }}>
+          <label style={{ fontSize: 12, color: "#b8b8c4" }}>global diffuseness <b style={{ color: "#7fe0a0" }}>{globalDiff.toFixed(2)}</b>
+            <input type="range" min={0} max={1} step={0.05} value={globalDiff} onChange={(e) => setGlobalDiff(+e.target.value)} style={{ width: "100%" }} /></label>
+        </div>
+        <div style={{ marginTop: "auto", fontSize: 11, color: "#66666f", borderTop: "1px solid #26262f", paddingTop: 8 }}>
+          Packed uses the SHIPPING packer; human-authored templates pass through. Edit raw → packed + blueprint update live.
+        </div>
+      </aside>
 
-        {/* center + right: raw + packed canvases + the COMBINED blueprint (device + sprite strip) */}
+      {/* CENTER — everything at once: raw, packed, combined blueprint (height-fit) */}
+      <main className="tsMain">
         <Canvas regs={regions} editable title="RAW template (seed / edit)" />
         <Canvas regs={packed} editable={false} title={authored ? "PACKED — pass-through (human-authored)" : "PACKED (repackTemplate, live)"} />
         {combined && (
-          <div style={{ flex: "1 1 280px", minWidth: 240 }}>
-            <div style={{ color: "#cfcfe0", fontWeight: 600, marginBottom: 6 }}>COMBINED blueprint <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>(device + {combined.layout.cells.length} sprite cells)</span></div>
-            <div style={{ position: "relative", maxWidth: 400, borderRadius: 10, overflow: "hidden", border: "1px solid #2a2a34" }}>
-              <div style={{ lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: combined.svg.replace(/width="\d+" height="\d+"/, 'width="100%"') }} />
+          <div className="tsCanvas bp">
+            <div className="tsCap">COMBINED blueprint <span>(device + {combined.layout.cells.length} sprite cells)</span></div>
+            <div className="tsBP">
+              <div style={{ position: "absolute", inset: 0, lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: combined.svg.replace(/width="\d+" height="\d+"/, 'width="100%" height="100%"') }} />
               {/* sprite-cell labels — the SPRITE LOCATIONS the cutter will use, keyed by bind */}
               {combined.layout.cells.map((c) => (
-                <div key={c.bind} style={{ position: "absolute", left: `${c.cellRect[0] * 100}%`, top: `${c.cellRect[1] * 100}%`, width: `${c.cellRect[2] * 100}%`, height: `${c.cellRect[3] * 100}%`, display: "flex", alignItems: "flex-end", justifyContent: "center", pointerEvents: "none", color: "#0a8f4d", font: "700 11px ui-monospace,monospace", textShadow: "0 1px 0 rgba(255,255,255,.5)" }}>{c.bind}</div>
+                <div key={c.bind} style={{ position: "absolute", left: `${c.cellRect[0] * 100}%`, top: `${c.cellRect[1] * 100}%`, width: `${c.cellRect[2] * 100}%`, height: `${c.cellRect[3] * 100}%`, display: "flex", alignItems: "flex-end", justifyContent: "center", pointerEvents: "none", color: "#0a8f4d", font: "700 10px ui-monospace,monospace", textShadow: "0 1px 0 rgba(255,255,255,.5)" }}>{c.bind}</div>
               ))}
               <div style={{ position: "absolute", left: 0, right: 0, top: `${combined.layout.devFrac * 100}%`, borderTop: "2px dashed rgba(0,0,0,.45)", color: "rgba(0,0,0,.55)", fontSize: 10, paddingLeft: 4, pointerEvents: "none" }}>sprite strip ↓</div>
             </div>
-            <div style={{ fontSize: 11, color: "#8a8a96", marginTop: 4 }}>real combinedBlueprint(bakeButtons(packed)) — what the painter receives; green cells = where each movable sprite is painted + cut.</div>
           </div>
         )}
+      </main>
 
-        {/* inspector + component list */}
-        <div style={{ flex: "0 0 220px", display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ color: "#cfcfe0", fontWeight: 600 }}>Components <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>({regions.length})</span></div>
-          <div style={{ maxHeight: 240, overflowY: "auto", border: "1px solid #26262f", borderRadius: 8 }}>
-            {regions.map((r) => (
-              <div key={r.id} onClick={() => setSel(r.id)}
-                style={{ display: "flex", gap: 6, alignItems: "center", padding: "4px 8px", fontSize: 12, cursor: "pointer", background: sel === r.id ? "#242432" : "transparent", color: "#c8c8d2" }}>
-                <span style={{ width: 9, height: 9, borderRadius: "50%", background: KCOL[r.kind] ?? "#888", flex: "0 0 auto" }} />
-                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.bind || r.id}</span>
-                <span style={{ color: "#8a8a96" }}>{r.kind}</span>
-                <span style={{ color: "#66666f" }}>d{(r.diff ?? globalDiff).toFixed(1)}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ color: "#cfcfe0", fontWeight: 600 }}>Inspector</div>
-          {selR ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: "#b8b8c4" }}>
-              <div>id <b style={{ color: "#e8e8ee" }}>{selR.id}</b></div>
-              <label>kind<select value={selR.kind} onChange={(e) => patchSel({ kind: e.target.value as Kind })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }}>{KINDS.map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
-              <label>bind<input value={selR.bind || ""} onChange={(e) => patchSel({ bind: e.target.value })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }} /></label>
-              <label>shape<select value={selR.shapeKind || "auto"} onChange={(e) => patchSel({ shapeKind: e.target.value })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }}>{SHAPEKINDS.map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
-              <label>diffuseness <b style={{ color: "#7fe0a0" }}>{(selR.diff ?? globalDiff).toFixed(2)}</b>
-                <input type="range" min={0} max={1} step={0.05} value={selR.diff ?? globalDiff} onChange={(e) => patchSel({ diff: +e.target.value })} style={{ width: "100%" }} /></label>
-              <label>size <input type="range" min={0.03} max={0.4} step={0.01} value={selR.rect.w} onChange={(e) => { const w = +e.target.value; patchSel({ rect: { ...selR.rect, w, h: w * 0.7 } }); }} style={{ width: "100%" }} /></label>
-              <button style={{ ...btn, background: "#3a1c1c", borderColor: "#5a2a2a" }} onClick={delSel}>🗑 Delete</button>
+      {/* RIGHT — components list + inspector */}
+      <aside className="tsRight">
+        <div style={{ color: "#cfcfe0", fontWeight: 600 }}>Components <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>({regions.length})</span></div>
+        <div style={{ flex: "1 1 120px", minHeight: 90, overflowY: "auto", border: "1px solid #26262f", borderRadius: 8 }}>
+          {regions.map((r) => (
+            <div key={r.id} onClick={() => setSel(r.id)}
+              style={{ display: "flex", gap: 6, alignItems: "center", padding: "4px 8px", fontSize: 12, cursor: "pointer", background: sel === r.id ? "#242432" : "transparent", color: "#c8c8d2" }}>
+              <span style={{ width: 9, height: 9, borderRadius: "50%", background: KCOL[r.kind] ?? "#888", flex: "0 0 auto" }} />
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.bind || r.id}</span>
+              <span style={{ color: "#8a8a96" }}>{r.kind}</span>
+              <span style={{ color: "#66666f" }}>d{(r.diff ?? globalDiff).toFixed(1)}</span>
             </div>
-          ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (or its centroid) to edit its kind, bind, shape, diffuseness, size.</div>}
-          <div style={{ marginTop: "auto", fontSize: 11, color: "#66666f", borderTop: "1px solid #26262f", paddingTop: 8 }}>
-            Packed uses the SHIPPING packer (repackTemplate → resolveOverlaps). Edit raw → packed + blueprint update live.
-            <div style={{ marginTop: 6 }}>⌫ delete · arrows nudge (⇧ = coarse) · esc deselect · ⌘Z undo · ⇧⌘Z redo</div>
-          </div>
+          ))}
         </div>
-      </div>
+        <div style={{ color: "#cfcfe0", fontWeight: 600 }}>Inspector</div>
+        {selR ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: "#b8b8c4" }}>
+            <div>id <b style={{ color: "#e8e8ee" }}>{selR.id}</b></div>
+            <label>kind<select value={selR.kind} onChange={(e) => patchSel({ kind: e.target.value as Kind })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }}>{KINDS.map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
+            <label>bind<input value={selR.bind || ""} onChange={(e) => patchSel({ bind: e.target.value })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }} /></label>
+            <label>shape<select value={selR.shapeKind || "auto"} onChange={(e) => patchSel({ shapeKind: e.target.value })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }}>{SHAPEKINDS.map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
+            <label>diffuseness <b style={{ color: "#7fe0a0" }}>{(selR.diff ?? globalDiff).toFixed(2)}</b>
+              <input type="range" min={0} max={1} step={0.05} value={selR.diff ?? globalDiff} onChange={(e) => patchSel({ diff: +e.target.value })} style={{ width: "100%" }} /></label>
+            <label>size <input type="range" min={0.03} max={0.4} step={0.01} value={selR.rect.w} onChange={(e) => { const w = +e.target.value; patchSel({ rect: { ...selR.rect, w, h: w * 0.7 } }); }} style={{ width: "100%" }} /></label>
+            <button style={{ ...btn, background: "#3a1c1c", borderColor: "#5a2a2a" }} onClick={delSel}>🗑 Delete</button>
+          </div>
+        ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, shape, diffuseness, size.</div>}
+      </aside>
+
+      {/* BOTTOM — LLM command bar + shortcuts */}
+      <footer className="tsFoot">
+        <span style={{ fontSize: 13 }}>🧠</span>
+        <input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="LLM theme — e.g. a wild organic Y2K Winamp media player"
+          onKeyDown={(e) => { if (e.key === "Enter") void llmGen(); }}
+          style={{ flex: "1 1 260px", maxWidth: 560, background: "#15151c", color: "#e8e8ee", border: "1px solid #2a2a34", borderRadius: 6, padding: "5px 9px", fontSize: 12 }} />
+        <button style={btn} onClick={llmGen}>Generate (deriveLayout)</button>
+        <span style={{ fontSize: 11, color: "#8a8a96" }}>{llmMsg}</span>
+        <span style={{ marginLeft: "auto", fontSize: 11, color: "#66666f" }}>⌫ delete · arrows nudge (⇧ coarse) · esc deselect · ⌘Z undo · ⇧⌘Z redo</span>
+      </footer>
     </div>
   );
 }
