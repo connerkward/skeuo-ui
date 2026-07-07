@@ -20,12 +20,17 @@
     }
     .wrap{width:100%;max-width:440px;text-align:center}
 
-    /* the mascot peeking over the player — the wire-tangled gremlin who lost your page */
-    .player-stage{position:relative;padding-top:84px}
-    .m404{position:absolute;top:0;right:6px;width:132px;height:auto;z-index:3;
-      filter:drop-shadow(0 12px 18px rgba(0,0,0,.6));
+    /* the mascot sitting on top of the player — the wire-tangled gremlin who lost your page.
+       Centered via a flex wrapper so the bob transform stays conflict-free + responsive. */
+    .player-stage{position:relative;padding-top:158px}
+    .m404wrap{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;z-index:3;pointer-events:none}
+    .m404{width:min(200px,54vw);height:auto;
+      filter:drop-shadow(0 16px 22px rgba(0,0,0,.62));
       animation:m404bob 5s ease-in-out infinite;transform-origin:bottom center}
-    @keyframes m404bob{0%,100%{transform:translateY(0) rotate(4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
+    @keyframes m404bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(-2deg)}}
+    /* mirrored variant (randomized) — same bob, flipped horizontally */
+    .m404.flip{animation-name:m404bobF}
+    @keyframes m404bobF{0%,100%{transform:translateY(0) scaleX(-1) rotate(2deg)}50%{transform:translateY(-8px) scaleX(-1) rotate(2deg)}}
 
     /* the skeuomorphic player unit */
     .unit{
@@ -79,11 +84,11 @@
 <body>
   <main class="wrap">
     <div class="player-stage">
-    <img class="m404" src="/mascot-error.png" alt="skeuo.fm's gremlin mascot, tangled in wires" />
+    <div class="m404wrap"><img class="m404" src="/mascot-error.png" alt="skeuo.fm's gremlin mascot, tangled in wires" /></div>
     <div class="unit" role="img" aria-label="A skeuomorphic music player showing error 404, track not found">
       <div class="lcd">
         <p class="code">404</p>
-        <p class="msg">track not found</p>
+        <p class="msg" id="lcdmsg">track not found</p>
       </div>
       <nav class="transport" aria-label="Player controls">
         <span class="btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 6 8 12l10 6V6zM6 6h2v12H6z"/></svg></span>
@@ -93,7 +98,27 @@
       </nav>
     </div>
     </div>
-    <p class="foot">this page isn't on the shelf · <a href="/">back to the player →</a></p>
+    <p class="foot"><span id="quip">this page isn't on the shelf</span> · <a href="/">back to the player →</a></p>
   </main>
+  <script>
+    // randomize the 404 between a few variants on each load: LCD message + footer quip,
+    // paired, plus a coin-flip mascot mirror. Pure client-side; the page still reads fine
+    // with JS off (the defaults above ship the first variant).
+    (function () {
+      var V = [
+        { lcd: "track not found",  quip: "this page isn't on the shelf" },
+        { lcd: "signal lost",      quip: "the gremlin tangled this one up" },
+        { lcd: "no such tune",     quip: "nothing playing on this frequency" },
+        { lcd: "dead air",         quip: "wrong track — hit home to reset" },
+        { lcd: "off the playlist", quip: "this one skipped" },
+        { lcd: "bad frequency",    quip: "just static where a page should be" }
+      ];
+      var v = V[Math.floor(Math.random() * V.length)];
+      var m = document.getElementById("lcdmsg"), q = document.getElementById("quip");
+      if (m) m.textContent = v.lcd;
+      if (q) q.textContent = v.quip;
+      if (Math.random() < 0.5) { var im = document.querySelector(".m404"); if (im) im.classList.add("flip"); }
+    })();
+  </script>
 </body>
 </html>
