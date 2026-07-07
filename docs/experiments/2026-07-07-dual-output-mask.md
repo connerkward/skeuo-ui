@@ -95,12 +95,12 @@ Two fixes surfaced while running this:
 
 ## Artifacts
 
-- 4K joint (paint + sprite sheet + socket/cell mask): `assets/2026-07-07-mask-4k-joint.png`
-- 4K mask ⊕ paint overlay (all 8 targets aligned): `assets/2026-07-07-mask-4k-overlay.png`
-- Monochrome molded facets (the hard test): `assets/2026-07-07-mask-monochrome-molded.png`
-- Clean baseline: `assets/2026-07-07-mask-clean-joint.png`
+- 4K joint (paint + sprite sheet + socket/cell mask): `assets/2026-07-07-mask-4k-joint.webp`
+- 4K mask ⊕ paint overlay (all 8 targets aligned): `assets/2026-07-07-mask-4k-overlay.webp`
+- Monochrome molded facets (the hard test): `assets/2026-07-07-mask-monochrome-molded.webp`
+- Clean baseline: `assets/2026-07-07-mask-clean-joint.webp`
 - Interactive chain view + all runs: served from `/private/tmp/skeuo-maskexp/` (interactive.html
   cuts sprites from the raw paint via the mask regions and makes them live).
 
-![4K joint — paint + sprite sheet + region mask](assets/2026-07-07-mask-4k-joint.png)
-![Mask overlaid on the paint — all 8 targets land](assets/2026-07-07-mask-4k-overlay.png)
+![4K joint — paint + sprite sheet + region mask](assets/2026-07-07-mask-4k-joint.webp)
+![Mask overlaid on the paint — all 8 targets land](assets/2026-07-07-mask-4k-overlay.webp)
