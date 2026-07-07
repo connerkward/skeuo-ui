@@ -117,7 +117,13 @@
       var m = document.getElementById("lcdmsg"), q = document.getElementById("quip");
       if (m) m.textContent = v.lcd;
       if (q) q.textContent = v.quip;
-      if (Math.random() < 0.5) { var im = document.querySelector(".m404"); if (im) im.classList.add("flip"); }
+      // randomize the mascot POSE too — wire-cocoon, sitting in a wire nest, dangling, or the standing wrap
+      var MASC = ["/mascot-error.png", "/mascot-404-sit.png", "/mascot-404-cocoon.png", "/mascot-404-hang.png"];
+      var im = document.querySelector(".m404");
+      if (im) {
+        im.src = MASC[Math.floor(Math.random() * MASC.length)];
+        if (Math.random() < 0.5) im.classList.add("flip");
+      }
     })();
   </script>
 </body>
