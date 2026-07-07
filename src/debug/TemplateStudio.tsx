@@ -11,6 +11,7 @@ import {
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
 import { combinedBlueprint } from "../generate/blueprint";
+import { PAINT_PROMPT } from "../generate/pipeline";
 import PaintedSheet from "./PaintedSheet";
 import type { Region, Kind } from "../template/schema";
 
@@ -87,6 +88,22 @@ export default function TemplateStudio() {
     }
     catch { return null; }
   }, [packed, globalDiff]);
+
+  // The exact TEXT prompt that rides ALONGSIDE the blueprint image to FAL — reconstructed
+  // live from the shared PAINT_PROMPT + this template's strip / bake-legend, so you can read
+  // what textual data the model actually receives. (material + BG key-colour are Director-
+  // derived server-side; shown as placeholders here.)
+  const promptPreview = useMemo(() => {
+    if (!combined) return "";
+    const nButtons = packed.filter((r) => r.kind === "button").length;
+    return PAINT_PROMPT
+      .replace(/\{brief\}/g, prompt)
+      .replace("{material}", prompt)
+      .replace("{strip}", combined.stripDesc)
+      .replace("{bakeLegend}", combined.bakeLegend || "(no baked buttons)")
+      .replace(/\{NBUTTONS\}/g, String(nButtons))
+      .replace(/\{BG\}/g, "«BG key-colour · derived from material server-side»");
+  }, [combined, prompt, packed]);
 
   const randomize = () => { mutate(() => layoutRandomP(P) as SR[]); setSel(null); setAuthored(false); };
   const archGen = (a: string) => { mutate(() => layoutArch(a, P) as SR[]); setSel(null); setAuthored(false); };
@@ -199,6 +216,9 @@ export default function TemplateStudio() {
            clamped by the column's share of width. 150px ≈ header+footer+caption chrome. */
         .tsCanvas.dev{width:min(24%,calc((100vh - 150px) * ${(GEN_W / GEN_H).toFixed(4)}))}
         .tsCanvas.bp{width:min(24%,calc((100vh - 150px) * ${(GEN_W / 1820).toFixed(4)}))}
+        /* combined column WITH the FAL text-prompt box under it — blueprint takes ~62% of the
+           height so the scrollable prompt gets the rest; column fills the row height. */
+        .tsCanvas.bpc{width:min(23%,calc((100vh - 150px) * ${(GEN_W / 1820).toFixed(4)} * 0.62));height:100%}
         .tsCap{color:#cfcfe0;font-weight:600;font-size:12.5px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .tsCap span{color:#8a8a96;font-weight:400;font-size:11px}
         .tsStage{width:100%;aspect-ratio:${GEN_W}/${GEN_H};background:#15151c;border:1px solid #2a2a34;border-radius:10px;touch-action:none}
@@ -244,15 +264,22 @@ export default function TemplateStudio() {
         <Canvas regs={regions} editable title="RAW template (seed / edit)" />
         <Canvas regs={packed} editable={false} title={authored ? "PACKED — repack off (mirrors edited raw)" : "PACKED — repack off (mirrors raw)"} />
         {combined && (
-          <div className="tsCanvas bp">
+          <div className="tsCanvas bpc">
             <div className="tsCap">COMBINED blueprint <span>(device + {combined.layout.cells.length} sprite cells)</span></div>
-            <div className="tsBP">
+            <div className="tsBP" style={{ flex: "0 0 auto" }}>
               <div style={{ position: "absolute", inset: 0, lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: combined.svg.replace(/width="\d+" height="\d+"/, 'width="100%" height="100%"') }} />
               {/* sprite-cell labels — the SPRITE LOCATIONS the cutter will use, keyed by bind */}
               {combined.layout.cells.map((c) => (
                 <div key={c.bind} style={{ position: "absolute", left: `${c.cellRect[0] * 100}%`, top: `${c.cellRect[1] * 100}%`, width: `${c.cellRect[2] * 100}%`, height: `${c.cellRect[3] * 100}%`, display: "flex", alignItems: "flex-end", justifyContent: "center", pointerEvents: "none", color: "#0a8f4d", font: "700 10px ui-monospace,monospace", textShadow: "0 1px 0 rgba(255,255,255,.5)" }}>{c.bind}</div>
               ))}
               <div style={{ position: "absolute", left: 0, right: 0, top: `${combined.layout.devFrac * 100}%`, borderTop: "2px dashed rgba(0,0,0,.45)", color: "rgba(0,0,0,.55)", fontSize: 10, paddingLeft: 4, pointerEvents: "none" }}>sprite strip ↓</div>
+            </div>
+            {/* scrollable view of the TEXT prompt that ALSO goes to FAL with the blueprint image */}
+            <div style={{ flex: "1 1 0", minHeight: 70, marginTop: 6, overflowY: "auto", background: "#0b0b11", border: "1px solid #26262f", borderRadius: 8, padding: "0 8px 8px" }}>
+              <div style={{ position: "sticky", top: 0, background: "#0b0b11", fontSize: 10, color: "#8a8a96", fontWeight: 600, padding: "6px 0 4px", marginBottom: 4, borderBottom: "1px solid #1e1e26" }}>
+                text prompt → FAL <span style={{ color: "#66666f", fontWeight: 400 }}>(sent with the blueprint image · {promptPreview.length.toLocaleString()} chars)</span>
+              </div>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 10, lineHeight: 1.45, color: "#c2c2ce", fontFamily: "ui-monospace,SFMono-Regular,monospace" }}>{promptPreview}</pre>
             </div>
           </div>
         )}
