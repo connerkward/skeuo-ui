@@ -7,16 +7,15 @@
 // DIFFUSENESS (soft-guide spread). Left = raw seeded template, right = packed result.
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import {
-  layoutRandomP, layoutArch, repackTemplate, packDiffuse, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS,
+  layoutRandomP, layoutArch, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
 import { combinedBlueprint } from "../generate/blueprint";
-import LivePaintPanel from "./LivePaintPanel";
-import type { Region, Kind, Pt } from "../template/schema";
+import PaintedSheet from "./PaintedSheet";
+import type { Region, Kind } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
 const KINDS: Kind[] = ["button", "knob", "toggle", "slider-h", "slider-v", "slider-arc", "display"];
-const SHAPEKINDS = ["auto", "circle", "square", "hexagon", "wedge", "kidney", "lozenge", "teardrop", "blob", "arc"];
 const KCOL: Record<string, string> = {
   button: "#ff9a3c", knob: "#3ce07f", toggle: "#40c8ff", "slider-h": "#ff6a6a",
   "slider-v": "#c47cff", "slider-arc": "#ff6a6a", display: "#8a8a99", flourish: "#556",
@@ -39,8 +38,6 @@ function unitPoly(kind: string): [number, number][] | null {
 const autoShape = (r: SR): string => r.shapeKind && r.shapeKind !== "auto" ? r.shapeKind
   : r.kind === "knob" ? "circle" : r.kind === "button" ? "wedge" : r.kind === "display" ? "square"
   : r.kind === "slider-arc" ? "arc" : "square";
-const cx = (r: SR) => r.rect.x + r.rect.w / 2;
-const cy = (r: SR) => r.rect.y + r.rect.h / 2;
 
 export default function TemplateStudio() {
   const [P, setP] = useState<Params>({ ...DEFAULT_PARAMS });
@@ -77,22 +74,10 @@ export default function TemplateStudio() {
   const undo = useCallback(() => setRegions((cur) => { const p = past.current.pop(); if (!p) return cur; future.current.push(cur); return p; }), []);
   const redo = useCallback(() => setRegions((cur) => { const f = future.current.pop(); if (!f) return cur; past.current.push(cur); return f; }), []);
 
-  // PACKER — DIFFUSE-AWARE. If authored, pass through untouched. Otherwise, use packDiffuse
-  // which shrinks overlapping pairs on shared diffuseness. Zero-diff constraints still enforced.
-  const packed = useMemo(
-    () => {
-      if (authored) return regions as SR[];
-      const diffusePacked = packDiffuse(regions as Region[], globalDiff) as SR[];
-      // Enforce hard zero-diff no-overlap (the diffuse packer allows soft pairs to coexist)
-      const isZero = (r: SR) => (r.diff ?? globalDiff) <= 0.001;
-      const zero = diffusePacked.filter(isZero);
-      if (zero.length < 2) return diffusePacked;
-      const solved = resolveOverlaps(zero.map((r) => ({ ...r })) as Region[]) as SR[];
-      const byId = new Map(solved.map((r) => [r.id, r]));
-      return diffusePacked.map((r) => byId.get(r.id) ?? r);
-    },
-    [regions, authored, globalDiff],
-  );
+  // REPACK DISABLED ("for now"): packed mirrors the raw regions 1:1 — no packDiffuse /
+  // repackTemplate rearrangement — so the blueprint reflects exactly what you edit.
+  // (Zero-diff overlap prevention still runs live on edits via enforceZeroDiff.)
+  const packed = useMemo(() => regions as SR[], [regions]);
   // COMBINED blueprint — the packer's FULL output: device guides (with diffuseness blur)
   // + the SPRITE STRIP cells. Real shipping function (bakeButtons → combinedBlueprint).
   const combined = useMemo(() => {
@@ -105,7 +90,6 @@ export default function TemplateStudio() {
 
   const randomize = () => { mutate(() => layoutRandomP(P) as SR[]); setSel(null); setAuthored(false); };
   const archGen = (a: string) => { mutate(() => layoutArch(a, P) as SR[]); setSel(null); setAuthored(false); };
-  const repackNow = () => mutate((rs) => repackTemplate(rs as Region[]) as SR[]);   // explicit human choice
   const llmGen = async () => {
     setLlmMsg("generating…");
     try {
@@ -199,45 +183,6 @@ export default function TemplateStudio() {
   );
   const btn: React.CSSProperties = { background: "#1c1c26", color: "#e8e8ee", border: "1px solid #33333f", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13 };
 
-  // ShapeEditor — draggable-vertex editor for custom freeform shapes
-  const ShapeEditor = ({ region }: { region: SR }) => {
-    const editorSize = 120;
-    const initPoly = (region.path && region.path.length >= 3)
-      ? region.path.map((p) => [p.x, p.y] as [number, number])
-      : unitPoly(autoShape(region)) ?? [[0.2, 0.2], [0.8, 0.2], [0.5, 0.8]];
-    const [poly, setPoly] = useState<[number, number][]>(initPoly);
-    const [drag, setDrag] = useState<number | null>(null);
-    const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
-      if (drag === null) return;
-      const svg = e.currentTarget;
-      const b = svg.getBoundingClientRect();
-      const nx = (e.clientX - b.left) / b.width;
-      const ny = (e.clientY - b.top) / b.height;
-      const next = [...poly];
-      next[drag] = [Math.max(0, Math.min(1, nx)), Math.max(0, Math.min(1, ny))];
-      setPoly(next);
-    };
-    const commit = () => patchSel({ path: poly.map(([x, y]) => ({ x, y } as Pt)) });
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <label style={{ fontSize: 12, color: "#b8b8c4" }}>
-          shape editor
-          <svg viewBox="0 0 1 1" style={{ width: "100%", aspectRatio: "1/1", background: "#15151c", border: "1px solid #2a2a34", borderRadius: 4, cursor: "crosshair", marginTop: 4 }}
-            onPointerMove={onMove} onPointerUp={() => { setDrag(null); commit(); }} onPointerLeave={() => setDrag(null)}>
-            <polygon points={poly.map(([x, y]) => `${x},${y}`).join(" ")} fill="rgba(62,224,127,.2)" stroke="#3ce07f" strokeWidth="0.01" />
-            {poly.map(([x, y], i) => (
-              <circle key={i} cx={x} cy={y} r="0.04" fill="#3ce07f" stroke="#000" strokeWidth="0.008"
-                style={{ cursor: "grab" }} onPointerDown={() => { setDrag(i); }} />
-            ))}
-          </svg>
-        </label>
-        <div style={{ fontSize: 11, color: "#66666f" }}>
-          Drag points. {poly.length} vertices — middle-click point to add, double-click to remove (min 3).
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="tsRoot">
       <style>{`
@@ -252,8 +197,8 @@ export default function TemplateStudio() {
         .tsCanvas{display:flex;flex-direction:column;min-width:0;align-items:stretch}
         /* width derives from viewport HEIGHT (fit-to-height, exact aspect — no letterboxing),
            clamped by the column's share of width. 150px ≈ header+footer+caption chrome. */
-        .tsCanvas.dev{width:min(31%,calc((100vh - 150px) * ${(GEN_W / GEN_H).toFixed(4)}))}
-        .tsCanvas.bp{width:min(31%,calc((100vh - 150px) * ${(GEN_W / 1820).toFixed(4)}))}
+        .tsCanvas.dev{width:min(24%,calc((100vh - 150px) * ${(GEN_W / GEN_H).toFixed(4)}))}
+        .tsCanvas.bp{width:min(24%,calc((100vh - 150px) * ${(GEN_W / 1820).toFixed(4)}))}
         .tsCap{color:#cfcfe0;font-weight:600;font-size:12.5px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .tsCap span{color:#8a8a96;font-weight:400;font-size:11px}
         .tsStage{width:100%;aspect-ratio:${GEN_W}/${GEN_H};background:#15151c;border:1px solid #2a2a34;border-radius:10px;touch-action:none}
@@ -277,7 +222,6 @@ export default function TemplateStudio() {
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button style={btn} onClick={randomize}>🎲 Randomize</button>
           <button style={btn} onClick={addComp}>＋ Component</button>
-          <button style={btn} onClick={repackNow} title="apply repackTemplate heuristics on demand">⇥ Repack now</button>
         </div>
         <div style={{ fontSize: 12, color: "#8a8a96" }}>Archetype (heuristic):</div>
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -291,14 +235,14 @@ export default function TemplateStudio() {
             <input type="range" min={0} max={1} step={0.05} value={globalDiff} onChange={(e) => setGlobalDiff(+e.target.value)} style={{ width: "100%" }} /></label>
         </div>
         <div style={{ marginTop: "auto", fontSize: 11, color: "#66666f", borderTop: "1px solid #26262f", paddingTop: 8 }}>
-          Packed uses the SHIPPING packer; human-authored templates pass through. Edit raw → packed + blueprint update live.
+          Repack is OFF — packed mirrors raw 1:1. Edit raw → packed + blueprint update live.
         </div>
       </aside>
 
       {/* CENTER — everything at once: raw, packed, combined blueprint (height-fit) */}
       <main className="tsMain">
         <Canvas regs={regions} editable title="RAW template (seed / edit)" />
-        <Canvas regs={packed} editable={false} title={authored ? "PACKED — pass-through (human-authored)" : "PACKED (repackTemplate, live)"} />
+        <Canvas regs={packed} editable={false} title={authored ? "PACKED — repack off (mirrors edited raw)" : "PACKED — repack off (mirrors raw)"} />
         {combined && (
           <div className="tsCanvas bp">
             <div className="tsCap">COMBINED blueprint <span>(device + {combined.layout.cells.length} sprite cells)</span></div>
@@ -312,6 +256,8 @@ export default function TemplateStudio() {
             </div>
           </div>
         )}
+        {/* 4th section — click to paint the current template via the FAL API */}
+        <PaintedSheet regions={packed as Region[]} prompt={prompt} />
       </main>
 
       {/* RIGHT — components list + inspector */}
@@ -334,14 +280,12 @@ export default function TemplateStudio() {
             <div>id <b style={{ color: "#e8e8ee" }}>{selR.id}</b></div>
             <label>kind<select value={selR.kind} onChange={(e) => patchSel({ kind: e.target.value as Kind })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }}>{KINDS.map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
             <label>bind<input value={selR.bind || ""} onChange={(e) => patchSel({ bind: e.target.value })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }} /></label>
-            <label>shape<select value={selR.shapeKind || "auto"} onChange={(e) => patchSel({ shapeKind: e.target.value })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }}>{SHAPEKINDS.map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
             <label>diffuseness <b style={{ color: "#7fe0a0" }}>{(selR.diff ?? globalDiff).toFixed(2)}</b>
               <input type="range" min={0} max={1} step={0.05} value={selR.diff ?? globalDiff} onChange={(e) => patchSel({ diff: +e.target.value })} style={{ width: "100%" }} /></label>
             <label>size <input type="range" min={0.03} max={0.4} step={0.01} value={selR.rect.w} onChange={(e) => { const w = +e.target.value; patchSel({ rect: { ...selR.rect, w, h: w * 0.7 } }); }} style={{ width: "100%" }} /></label>
-            <ShapeEditor region={selR} />
             <button style={{ ...btn, background: "#3a1c1c", borderColor: "#5a2a2a" }} onClick={delSel}>🗑 Delete</button>
           </div>
-        ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, shape, diffuseness, size, or draw a custom shape.</div>}
+        ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, diffuseness, or size.</div>}
       </aside>
 
       {/* BOTTOM — LLM command bar + shortcuts */}
@@ -354,9 +298,6 @@ export default function TemplateStudio() {
         <span style={{ fontSize: 11, color: "#8a8a96" }}>{llmMsg}</span>
         <span style={{ marginLeft: "auto", fontSize: 11, color: "#66666f" }}>⌫ delete · arrows nudge (⇧ coarse) · esc deselect · ⌘Z undo · ⇧⌘Z redo</span>
       </footer>
-
-      {/* LIVE PAINT — real-time local paint of the combined blueprint (SD1.5·LCM·ControlNet) */}
-      <LivePaintPanel combinedSvg={combined?.svg} theme={prompt} />
     </div>
   );
 }

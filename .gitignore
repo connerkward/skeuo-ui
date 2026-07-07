@@ -64,7 +64,3 @@ public/seg-cache/
 
 # claude-mem auto-generated per-project memory context (local/episodic, regenerated)
 .agents/
-
-# local real-time paint sidecar — python venv (torch/diffusers, multi-GB, rebuildable)
-generation/.venv-zimage/
-.venv-zimage/
