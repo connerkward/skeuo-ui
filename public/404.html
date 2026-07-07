@@ -20,6 +20,13 @@
     }
     .wrap{width:100%;max-width:440px;text-align:center}
 
+    /* the mascot peeking over the player — the wire-tangled gremlin who lost your page */
+    .player-stage{position:relative;padding-top:84px}
+    .m404{position:absolute;top:0;right:6px;width:132px;height:auto;z-index:3;
+      filter:drop-shadow(0 12px 18px rgba(0,0,0,.6));
+      animation:m404bob 5s ease-in-out infinite;transform-origin:bottom center}
+    @keyframes m404bob{0%,100%{transform:translateY(0) rotate(4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
+
     /* the skeuomorphic player unit */
     .unit{
       background:linear-gradient(180deg,#1c1f26,#141519);
@@ -71,6 +78,8 @@
 </head>
 <body>
   <main class="wrap">
+    <div class="player-stage">
+    <img class="m404" src="/mascot-error.png" alt="skeuo.fm's gremlin mascot, tangled in wires" />
     <div class="unit" role="img" aria-label="A skeuomorphic music player showing error 404, track not found">
       <div class="lcd">
         <p class="code">404</p>
@@ -82,6 +91,7 @@
         <a class="btn home" href="/"><svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h6v-5h2v5h6v-8h3z"/></svg>skeuo.fm</a>
         <span class="btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l10 6L6 18V6zm10 0h2v12h-2z"/></svg></span>
       </nav>
+    </div>
     </div>
     <p class="foot">this page isn't on the shelf · <a href="/">back to the player →</a></p>
   </main>
