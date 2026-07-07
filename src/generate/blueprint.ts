@@ -42,8 +42,8 @@ function regionSvg(r: Region): string {
 function ellipse(x: number, y: number, w: number, h: number, fill: string, stroke: string, sw: number): string {
   return `<ellipse cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
 }
-function roundRect(x: number, y: number, w: number, h: number, rad: number, fill: string, stroke: string, sw: number): string {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rad}" ry="${rad}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+function roundRect(x: number, y: number, w: number, h: number, rad: number, fill: string, stroke: string, sw: number, filterId?: string): string {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rad}" ry="${rad}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${filterId ? ` filter="url(#${filterId})"` : ""}/>`;
 }
 // PIL's ImageDraw.arc sweeps clockwise from start→end in screen (y-down) degrees,
 // which is exactly SVG's coordinate sense; we emit an explicit A path.
@@ -427,9 +427,9 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     parts.push(roundRect(bx0, by0, bx1 - bx0, by1 - by0, GEN_W * 0.10, BP_BODY, "none", 0));
   }
 
-  // --- device sockets: MINIMAL guide (bright magenta keyline only, NO filled shape).
-  // Don't draw socket shapes — they override the model's painted control shape. The
-  // magenta keyline is just a visual anchor; the model paints inside/around it freely.
+  // --- device sockets: MINIMAL guide (bright guide keyline only, NO filled shape).
+  // Don't draw socket shapes — they override the model's painted control shape.
+  // Guides are blurred by diffuseness (0=crisp, 1=soft); BAKED controls stay crisp.
   //
   // GEOMETRY INVARIANTS (fix for "oval buttons" + "overlapping rings"):
   //   • ROUND controls (knob / ellipse button) render as a TRUE CIRCLE — diameter =
@@ -440,6 +440,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   //     ring outward made adjacent, non-overlapping rects produce visibly overlapping
   //     rings. With an inset ring the painted outline never exceeds the (separated) rect,
   //     so resolveOverlaps' min-gap guarantees the rings clear each other.
+  const defs: string[] = [];
   for (const r of regs) {
     const x = r.rect.x * GEN_W, y = r.rect.y * GEN_H;
     const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
@@ -450,16 +451,22 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     // bounding guide so the model is free to paint any button shape inside it.
     const round = r.kind === "knob" || (r.kind === "display" && r.shape === "ellipse");
     // CYAN guide = "paint a REAL finished control here, integrated into the body"
-    // (baked cluster); MAGENTA = empty well the player overlays a cut sprite onto.
+    // (baked cluster); GREEN/BLUE = empty well the player overlays a cut sprite onto.
     const strokeCol = r.baked ? BP_BAKE : BP_RING;
+    // Diffuseness blur: 0 = crisp, 1 = soft suggestion. BAKED guides stay crisp always.
+    const diff = !r.baked && typeof (r as any).diff === "number" ? (r as any).diff : 0;
+    const blur = diff * Math.min(w, h) * 0.18;  // scale blur by component size
+    const filterId = blur > 0.6 ? `f_${r.id}` : undefined;
+    if (filterId) defs.push(`<filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter>`);
+
     if (round) {
       const d = Math.min(w, h);              // TRUE circle: diameter = shorter side
       const cx = x + w / 2, cy = y + h / 2;  // centered in the rect
       const rr = Math.max(0, d / 2 - inset);
-      parts.push(`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${strokeCol}" stroke-width="${ringW}"/>`);
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${strokeCol}" stroke-width="${ringW}"${filterId ? ` filter="url(#${filterId})"` : ""}/>`);
     } else {
       const rad0 = Math.min(w, h) * 0.3;
-      parts.push(roundRect(x + inset, y + inset, w - 2 * inset, h - 2 * inset, Math.max(0, rad0 - inset), "none", strokeCol, ringW));
+      parts.push(roundRect(x + inset, y + inset, w - 2 * inset, h - 2 * inset, Math.max(0, rad0 - inset), "none", strokeCol, ringW, filterId));
     }
   }
 
@@ -528,7 +535,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   });
   const stripDesc = items.map((it, i) => `slot ${i + 1}: ${it.desc}`).join("; ");
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${GEN_W}" height="${H}" viewBox="0 0 ${GEN_W} ${H}">${parts.join("")}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${GEN_W}" height="${H}" viewBox="0 0 ${GEN_W} ${H}"><defs>${defs.join("")}</defs>${parts.join("")}</svg>`;
   const controls: BlueprintControl[] = spriteRegs.map((r) => ({
     bind: bindOf(r), kind: spriteKindOf(r)!,
     rect: [r.rect.x, r.rect.y, r.rect.w, r.rect.h], // normalized to the DEVICE region (GEN_H)

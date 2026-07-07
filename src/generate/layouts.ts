@@ -589,6 +589,73 @@ export function resolveOverlaps(regions: Region[]): Region[] {
 }
 
 // ---------------------------------------------------------------------------
+// packDiffuse — DIFFUSE-AWARE packer. When two components overlap, SHRINK BOTH
+// about their centroids (not moving). Allowed overlap grows with pair's shared
+// diffuseness (crisp diff=0 pairs → zero overlap allowed, soft diff=1 pairs → can
+// coexist at high overlap). On zero-diff pairs, lock enforceZeroDiff; on soft-diff
+// pairs, iterative shrink (~×0.95/iteration) lets them settle to a coexistence
+// equilibrium — no spacing needed between soft guides.
+// ---------------------------------------------------------------------------
+export function packDiffuse(regions: Region[], globalDiff: number): Region[] {
+  const items = regions.map((r) => ({
+    reg: r,
+    rect: { ...r.rect },
+    fixed: r.kind === "display",
+    round: isRoundReg(r),
+    diff: (r as any).diff ?? globalDiff,
+  }));
+
+  // Iterative shrink: each overlapping pair shrinks both by ~5% per iteration.
+  for (let iter = 0; iter < 40; iter++) {
+    let any = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const A = items[i], B = items[j];
+        if (A.fixed && B.fixed) continue;
+        const o = ovGap(A.rect, B.rect);
+        if (!o) continue;
+        any = true;
+
+        // Allowed overlap grows with diffuseness: crisp (diff≈0) → zero allowed;
+        // soft (diff≈1) → can tolerate high overlap (allows soft guides to coexist).
+        const effDiffA = A.diff;
+        const effDiffB = B.diff;
+        const sharedDiff = Math.min(effDiffA, effDiffB);
+        const allowedOverlap = sharedDiff * 0.55;
+
+        const a = A.rect, b = B.rect;
+        const ax = a.x + a.w / 2, ay = a.y + a.h / 2;
+        const bx = b.x + b.w / 2, by = b.y + b.h / 2;
+
+        // Skip if overlap is within tolerance
+        const overlapRatio = Math.min(o.ox, o.oy) / Math.min(a.w, a.h, b.w, b.h);
+        if (overlapRatio <= allowedOverlap) continue;
+
+        // Shrink both boxes about their centroids to reduce overlap
+        const shrinkFactor = 0.95;
+        if (!A.fixed) {
+          a.w *= shrinkFactor;
+          a.h *= shrinkFactor;
+          a.x = ax - a.w / 2;
+          a.y = ay - a.h / 2;
+          clampBox(a);
+        }
+        if (!B.fixed) {
+          b.w *= shrinkFactor;
+          b.h *= shrinkFactor;
+          b.x = bx - b.w / 2;
+          b.y = by - b.h / 2;
+          clampBox(b);
+        }
+      }
+    }
+    if (!any) break;
+  }
+
+  return items.map((it) => ({ ...it.reg, rect: it.rect }));
+}
+
+// ---------------------------------------------------------------------------
 // repackTemplate — the TEMPLATE is the root of alignment quality, so repack it
 // before it ever reaches the painter: give every interactable a SANE size for its
 // kind (the Director's raw rects are often slivers or oversized), keep its rough

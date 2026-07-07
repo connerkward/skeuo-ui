@@ -75,6 +75,9 @@ export interface Region {
                           // strip sprite) — the player overlays a transparent hit-region on
                           // top instead of a cut sprite. Lets a cluster (transport bank /
                           // jog dial) keep real reference shapes the isolated-cut path can't.
+  diff?: number;          // guide DIFFUSENESS 0..1 — 0 = crisp guide the painter must follow
+                          // exactly; 1 = soft suggestion the painter may freely reinterpret.
+                          // Drawn as guide blur in the blueprint; authored by studio/LLM.
   arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
   path?: Pt[];                            // slider-path spline / freeform visualizer shape (normalized in rect)
   vis?: "linear" | "radial" | "teeth" | "ribbon";  // visualizer render style

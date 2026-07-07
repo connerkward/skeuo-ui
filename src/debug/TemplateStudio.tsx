@@ -7,11 +7,11 @@
 // DIFFUSENESS (soft-guide spread). Left = raw seeded template, right = packed result.
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import {
-  layoutRandomP, layoutArch, repackTemplate, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS,
+  layoutRandomP, layoutArch, repackTemplate, packDiffuse, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
 import { combinedBlueprint } from "../generate/blueprint";
-import type { Region, Kind } from "../template/schema";
+import type { Region, Kind, Pt } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
 const KINDS: Kind[] = ["button", "knob", "toggle", "slider-h", "slider-v", "slider-arc", "display"];
@@ -76,20 +76,31 @@ export default function TemplateStudio() {
   const undo = useCallback(() => setRegions((cur) => { const p = past.current.pop(); if (!p) return cur; future.current.push(cur); return p; }), []);
   const redo = useCallback(() => setRegions((cur) => { const f = future.current.pop(); if (!f) return cur; past.current.push(cur); return f; }), []);
 
-  // PACKER — the real repackTemplate, live — but a HUMAN-AUTHORED template passes through
-  // untouched (packing must not rearrange what the human placed; only the zero-diffuseness
-  // no-overlap invariant is enforced at edit time).
+  // PACKER — DIFFUSE-AWARE. If authored, pass through untouched. Otherwise, use packDiffuse
+  // which shrinks overlapping pairs on shared diffuseness. Zero-diff constraints still enforced.
   const packed = useMemo(
-    () => (authored ? (regions as SR[]) : (repackTemplate(regions as Region[]) as SR[])),
-    [regions, authored],
+    () => {
+      if (authored) return regions as SR[];
+      const diffusePacked = packDiffuse(regions as Region[], globalDiff) as SR[];
+      // Enforce hard zero-diff no-overlap (the diffuse packer allows soft pairs to coexist)
+      const isZero = (r: SR) => (r.diff ?? globalDiff) <= 0.001;
+      const zero = diffusePacked.filter(isZero);
+      if (zero.length < 2) return diffusePacked;
+      const solved = resolveOverlaps(zero.map((r) => ({ ...r })) as Region[]) as SR[];
+      const byId = new Map(solved.map((r) => [r.id, r]));
+      return diffusePacked.map((r) => byId.get(r.id) ?? r);
+    },
+    [regions, authored, globalDiff],
   );
-  // COMBINED blueprint — the packer's FULL output: device guides + the SPRITE STRIP cells
-  // (knob/thumb/toggle sprite locations, incl. the derived switch-off/on pair). Real
-  // shipping function (bakeButtons → combinedBlueprint), same as pipeline.ts.
+  // COMBINED blueprint — the packer's FULL output: device guides (with diffuseness blur)
+  // + the SPRITE STRIP cells. Real shipping function (bakeButtons → combinedBlueprint).
   const combined = useMemo(() => {
-    try { return combinedBlueprint(bakeButtons(packed as Region[]), "rgb(128,128,130)"); }
+    try {
+      const withDiff = packed.map((r) => ({ ...r, diff: r.diff ?? globalDiff }));
+      return combinedBlueprint(bakeButtons(withDiff as Region[]), "rgb(128,128,130)");
+    }
     catch { return null; }
-  }, [packed]);
+  }, [packed, globalDiff]);
 
   const randomize = () => { mutate(() => layoutRandomP(P) as SR[]); setSel(null); setAuthored(false); };
   const archGen = (a: string) => { mutate(() => layoutArch(a, P) as SR[]); setSel(null); setAuthored(false); };
@@ -186,6 +197,45 @@ export default function TemplateStudio() {
     </label>
   );
   const btn: React.CSSProperties = { background: "#1c1c26", color: "#e8e8ee", border: "1px solid #33333f", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13 };
+
+  // ShapeEditor — draggable-vertex editor for custom freeform shapes
+  const ShapeEditor = ({ region }: { region: SR }) => {
+    const editorSize = 120;
+    const initPoly = (region.path && region.path.length >= 3)
+      ? region.path.map((p) => [p.x, p.y] as [number, number])
+      : unitPoly(autoShape(region)) ?? [[0.2, 0.2], [0.8, 0.2], [0.5, 0.8]];
+    const [poly, setPoly] = useState<[number, number][]>(initPoly);
+    const [drag, setDrag] = useState<number | null>(null);
+    const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
+      if (drag === null) return;
+      const svg = e.currentTarget;
+      const b = svg.getBoundingClientRect();
+      const nx = (e.clientX - b.left) / b.width;
+      const ny = (e.clientY - b.top) / b.height;
+      const next = [...poly];
+      next[drag] = [Math.max(0, Math.min(1, nx)), Math.max(0, Math.min(1, ny))];
+      setPoly(next);
+    };
+    const commit = () => patchSel({ path: poly.map(([x, y]) => ({ x, y } as Pt)) });
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={{ fontSize: 12, color: "#b8b8c4" }}>
+          shape editor
+          <svg viewBox="0 0 1 1" style={{ width: "100%", aspectRatio: "1/1", background: "#15151c", border: "1px solid #2a2a34", borderRadius: 4, cursor: "crosshair", marginTop: 4 }}
+            onPointerMove={onMove} onPointerUp={() => { setDrag(null); commit(); }} onPointerLeave={() => setDrag(null)}>
+            <polygon points={poly.map(([x, y]) => `${x},${y}`).join(" ")} fill="rgba(62,224,127,.2)" stroke="#3ce07f" strokeWidth="0.01" />
+            {poly.map(([x, y], i) => (
+              <circle key={i} cx={x} cy={y} r="0.04" fill="#3ce07f" stroke="#000" strokeWidth="0.008"
+                style={{ cursor: "grab" }} onPointerDown={() => { setDrag(i); }} />
+            ))}
+          </svg>
+        </label>
+        <div style={{ fontSize: 11, color: "#66666f" }}>
+          Drag points. {poly.length} vertices — middle-click point to add, double-click to remove (min 3).
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="tsRoot">
@@ -287,9 +337,10 @@ export default function TemplateStudio() {
             <label>diffuseness <b style={{ color: "#7fe0a0" }}>{(selR.diff ?? globalDiff).toFixed(2)}</b>
               <input type="range" min={0} max={1} step={0.05} value={selR.diff ?? globalDiff} onChange={(e) => patchSel({ diff: +e.target.value })} style={{ width: "100%" }} /></label>
             <label>size <input type="range" min={0.03} max={0.4} step={0.01} value={selR.rect.w} onChange={(e) => { const w = +e.target.value; patchSel({ rect: { ...selR.rect, w, h: w * 0.7 } }); }} style={{ width: "100%" }} /></label>
+            <ShapeEditor region={selR} />
             <button style={{ ...btn, background: "#3a1c1c", borderColor: "#5a2a2a" }} onClick={delSel}>🗑 Delete</button>
           </div>
-        ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, shape, diffuseness, size.</div>}
+        ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, shape, diffuseness, size, or draw a custom shape.</div>}
       </aside>
 
       {/* BOTTOM — LLM command bar + shortcuts */}
