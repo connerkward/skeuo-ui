@@ -42,6 +42,7 @@ export const PAINT_PROMPT =
   "CRITICAL — control POSITIONS are LOCKED: keep every socket/button/screen at its marked position and keep the same overall dimensions. But the SHAPES are FREE — sculpt the body outline and each control's silhouette WILD and organic (see below); do NOT regularize them into boxes or circles.\n\n" +
   "TOP DEVICE BODY:\n" +
   "- The faint gray shape marks the ROUGH BODY FOOTPRINT — restyle it into the material above and SCULPT its outline into a WILD, organic, era-correct silhouette (a blobby teardrop, a faceted pod, an amoeba, a curved shield, a melted-metal form — like a Winamp / WMP-XP / Sonique skin), NOT a plain rounded rectangle. Keep roughly the same overall footprint and KEEP every control at its marked position, but the body OUTLINE should be characterful and organic, never boxy.\n" +
+  "- The body MUST be a SINGLE SOLID CONTINUOUS silhouette with NO fully-enclosed see-through holes, interior cut-outs, open loops, ring/donut gaps, or handle-holes punched THROUGH the body — the housing is one unbroken solid mass. ANY negative space or concavity MUST open to the OUTER edge of the silhouette: an inward bite from the outside edge is fine, but a hole or gap FULLY SURROUNDED by body is ABSOLUTELY FORBIDDEN.\n" +
   "- BACKDROP (top device region): the area AROUND the body is a flat {BG} backdrop. Paint it as a CLEAN, " +
   "FLAT, perfectly UNIFORM {BG} — it is a separate backdrop that gets keyed out, so it must NOT tint, reflect, " +
   "bleed or spill onto the device; the device keeps its OWN material colour and neutral studio lighting, with a " +
@@ -121,13 +122,21 @@ const BG_LIGHT: KeyChoice = { key: [242, 242, 244], css: "rgb(242,242,244)", phr
 const BG_GREY: KeyChoice  = { key: [128, 128, 130], css: "rgb(128,128,130)", phrase: "a flat, uniform neutral mid-grey (#808082)" };
 // LIGHT bodies (need a dark backdrop) vs DARK bodies (need a light backdrop). Everything else
 // (colourful, translucent, unknown) takes mid-grey, which contrasts in both directions.
-const LIGHT_MAT = /white|pearl|pearlescent|cream|ivory|chrome|silver|steel|alumini?um|platinum|pastel|\blight\b|pale|bone|milk|snow|mirror|glossy silver/i;
-const DARK_MAT  = /black|charcoal|obsidian|onyx|graphite|gunmetal|\bjet\b|ebony|\bdark\b|midnight|carbon|slate|coal|soot|tar|ink/i;
+const LIGHT_MAT = /white|pearl|pearlescent|cream|ivory|chrome|silver|steel|alumini?um|platinum|pastel|\blight\b|pale|bone|milk|snow|mirror|glossy silver/gi;
+const DARK_MAT  = /black|charcoal|obsidian|onyx|graphite|gunmetal|\bjet\b|ebony|\bdark\b|midnight|carbon|slate|coal|soot|tar|ink/gi;
+// Translucent/iridescent bodies carry many hues; a coloured key would desaturate them, so they
+// legitimately keep neutral mid-grey rather than a contrasting backdrop.
+const MULTIHUE_MAT = /translucent|iridescent|clear|see-through|see through|\bgel\b|frosted|holographic|pearlescent[- ]shift/i;
 export function pickKeyColor(materialText: string): KeyChoice {
   const t = materialText.toLowerCase();
-  if (LIGHT_MAT.test(t) && !DARK_MAT.test(t)) return BG_DARK;   // light body → dark backdrop
-  if (DARK_MAT.test(t)  && !LIGHT_MAT.test(t)) return BG_LIGHT;  // dark body → light backdrop
-  return BG_GREY;                                                // mid / colourful / translucent
+  if (MULTIHUE_MAT.test(t)) return BG_GREY;                      // translucent/iridescent → neutral (carve-out)
+  const light = (t.match(LIGHT_MAT) || []).length;
+  const dark  = (t.match(DARK_MAT)  || []).length;
+  // Ambiguity → pick the contrasting backdrop of the DOMINANT lightness (a silver body with a
+  // stray "dark trim" is still light-dominant, so it gets a dark backdrop for a clean matte edge).
+  if (light > dark) return BG_DARK;                              // light-dominant body → dark backdrop
+  if (dark > light) return BG_LIGHT;                             // dark-dominant body → light backdrop
+  return BG_GREY;                                                // balanced / neither / colourful → mid grey
 }
 
 // Donor registry. These descriptions are NO LONGER forced onto the paint pass — the
