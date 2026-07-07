@@ -11,6 +11,7 @@ import {
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
 import { combinedBlueprint } from "../generate/blueprint";
+import LivePaintPanel from "./LivePaintPanel";
 import type { Region, Kind, Pt } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
@@ -353,6 +354,9 @@ export default function TemplateStudio() {
         <span style={{ fontSize: 11, color: "#8a8a96" }}>{llmMsg}</span>
         <span style={{ marginLeft: "auto", fontSize: 11, color: "#66666f" }}>⌫ delete · arrows nudge (⇧ coarse) · esc deselect · ⌘Z undo · ⇧⌘Z redo</span>
       </footer>
+
+      {/* LIVE PAINT — real-time local paint of the combined blueprint (SD1.5·LCM·ControlNet) */}
+      <LivePaintPanel combinedSvg={combined?.svg} theme={prompt} />
     </div>
   );
 }
