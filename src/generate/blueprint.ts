@@ -422,6 +422,30 @@ const bindOf = (r: Region): string => r.id;
 // deviceBg = the DEVICE-region backdrop colour (the cutout key colour). The STRIP
 // stays flat white so connected-component sprite cutting is unambiguous. Default
 // white = legacy behaviour (no colour key).
+// Shape-AGNOSTIC control anchor (blueprint "option B"). Instead of a ring / rounded-rect
+// that implies a silhouette (and then a prompt fighting to say "ignore that shape"), mark
+// each control with a crisp CENTROID CROSSHAIR (exact position) + a SOFT SIZE DISC (roughly
+// how big) — the silhouette is left entirely to the paint model. There is NO hard edge, so
+// nothing dictates the painted control's form. DIFFUSENESS is encoded honestly: diff 0 = a
+// tight, bright, firm anchor ("control is HERE"); diff 1 = a large, soft, blurry disc + a
+// faded crosshair ("somewhere around here — nudge freely").
+function anchorMark(cx: number, cy: number, w: number, h: number, col: string, diff: number, key: string, defs: string[]): string {
+  const s = Math.min(w, h);
+  const blur = s * 0.10 + diff * s * 0.55;                 // always soft; diffuseness → spread
+  const fid = `a_${key}`;
+  defs.push(`<filter id="${fid}" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="${blur.toFixed(1)}"/></filter>`);
+  const rx = (w / 2) * 0.74, ry = (h / 2) * 0.74;          // soft field ~ the footprint extent
+  const disc = `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${col}" fill-opacity="0.36" filter="url(#${fid})"/>`;
+  const arm = s * 0.27, lw = Math.max(2.5, s * 0.03), dot = Math.max(3, s * 0.05);
+  const op = (0.95 - diff * 0.45).toFixed(2);              // crosshair fades as the position gets diffuse
+  const ch =
+    `<g stroke="${col}" stroke-width="${lw.toFixed(1)}" stroke-linecap="round" opacity="${op}">` +
+    `<line x1="${(cx - arm).toFixed(1)}" y1="${cy.toFixed(1)}" x2="${(cx + arm).toFixed(1)}" y2="${cy.toFixed(1)}"/>` +
+    `<line x1="${cx.toFixed(1)}" y1="${(cy - arm).toFixed(1)}" x2="${cx.toFixed(1)}" y2="${(cy + arm).toFixed(1)}"/></g>` +
+    `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${dot.toFixed(1)}" fill="${col}" opacity="${op}"/>`;
+  return disc + ch;                                        // disc behind, crosshair on top
+}
+
 export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedBlueprint {
   const stripH = STRIP_H;         // remainder packs the control strip
   const H = COMBINED_H;           // = DEVICE_H + stripH, exactly 9:16
@@ -479,37 +503,21 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     const hue = bakeHueOf.get(r.id)!;
     const icon = faceIconWords((r.bind || r.id).toLowerCase());
     const who = (r.bind || r.id).toUpperCase();
-    return `the button ringed in ${hue.name} is ${who}${icon ? `: emboss ${icon} on its face` : ""}`;
+    return `the button marked ${hue.name} is ${who}${icon ? `: emboss ${icon} on its face` : ""}`;
   }).join("; ");
 
+  // SHAPE-AGNOSTIC anchors (no ring / rounded-rect — those implied a silhouette the prompt
+  // then had to un-say). Each socket = a crisp centroid crosshair + a soft size disc; the
+  // painted control's shape is entirely the model's. GREEN = empty well (player overlays a cut
+  // sprite); a BAKED button gets its OWN identity HUE so the model can tell which molded button
+  // is which. DIFFUSENESS spreads the disc + fades the crosshair; BAKED anchors stay crisp.
   const defs: string[] = [];
   for (const r of regs) {
     const x = r.rect.x * GEN_W, y = r.rect.y * GEN_H;
     const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
-    const ringW = Math.max(4, Math.round(Math.min(w, h) * 0.08));
-    const inset = ringW / 2;                 // keep the stroke's outer edge AT the rect boundary
-    // magenta outline ONLY — no filled shape to dictate control form. Only KNOBS
-    // (and round displays) get a circular guide; BUTTONS get a neutral rounded-rect
-    // bounding guide so the model is free to paint any button shape inside it.
-    const round = r.kind === "knob" || (r.kind === "display" && r.shape === "ellipse");
-    // GREEN = empty well (player overlays a cut sprite); a BAKED button gets its OWN
-    // identity HUE (from bakeHueOf) so the model can tell which molded button is which.
-    const strokeCol = r.baked ? (bakeHueOf.get(r.id)?.css ?? BP_BAKE) : BP_RING;
-    // Diffuseness blur: 0 = crisp, 1 = soft suggestion. BAKED guides stay crisp always.
+    const col = r.baked ? (bakeHueOf.get(r.id)?.css ?? BP_BAKE) : BP_RING;
     const diff = !r.baked && typeof (r as any).diff === "number" ? (r as any).diff : 0;
-    const blur = diff * Math.min(w, h) * 0.18;  // scale blur by component size
-    const filterId = blur > 0.6 ? `f_${r.id}` : undefined;
-    if (filterId) defs.push(`<filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter>`);
-
-    if (round) {
-      const d = Math.min(w, h);              // TRUE circle: diameter = shorter side
-      const cx = x + w / 2, cy = y + h / 2;  // centered in the rect
-      const rr = Math.max(0, d / 2 - inset);
-      parts.push(`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${strokeCol}" stroke-width="${ringW}"${filterId ? ` filter="url(#${filterId})"` : ""}/>`);
-    } else {
-      const rad0 = Math.min(w, h) * 0.3;
-      parts.push(roundRect(x + inset, y + inset, w - 2 * inset, h - 2 * inset, Math.max(0, rad0 - inset), "none", strokeCol, ringW, filterId));
-    }
+    parts.push(anchorMark(x + w / 2, y + h / 2, w, h, col, diff, r.id, defs));
   }
 
   // --- bottom SPRITE STRIP: each slot gets a faint MAGENTA KEYLINE anchor (outline only,
@@ -555,21 +563,10 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     const sx0 = cx - cw / 2;
     const sy0 = GEN_H + stripH * 0.02;
     const shh = stripH * 0.66;
-    // faint magenta keyline anchor (guide only; the painter fills it + removes the magenta)
-    const ringW = Math.max(4, Math.round(Math.min(cw, shh) * 0.05));
-    const inset = ringW / 2;
-    // knobs are round (rotary); buttons get a neutral rounded-rect slot so the model
-    // paints whatever button shape it wants (the cut keeps the painted silhouette).
-    const round = it.kind === "knob";
-    if (round) {
-      const d = Math.min(cw, shh);
-      const acx = sx0 + cw / 2, acy = sy0 + shh / 2;
-      const rr = Math.max(0, d / 2 - inset);
-      parts.push(`<circle cx="${acx}" cy="${acy}" r="${rr}" fill="none" stroke="${BP_RING}" stroke-width="${ringW}"/>`);
-    } else {
-      const rad = Math.min(cw, shh) * 0.25;
-      parts.push(roundRect(sx0 + inset, sy0 + inset, cw - 2 * inset, shh - 2 * inset, Math.max(0, rad - inset), "none", BP_RING, ringW));
-    }
+    // shape-agnostic anchor: crosshair + soft green disc centered in the slot (crisp — strip
+    // positions are deterministic). Same honest marker as the device sockets; the painter
+    // fills one control per anchor and removes the mark.
+    parts.push(anchorMark(sx0 + cw / 2, sy0 + shh / 2, cw, shh, BP_RING, 0, `strip_${i}`, defs));
     cells.push({
       bind: it.bind, kind: it.kind,
       cellRect: [sx0 / GEN_W, sy0 / H, cw / GEN_W, shh / H],

@@ -47,15 +47,18 @@ export const PAINT_PROMPT =
   "FLAT, perfectly UNIFORM {BG} — it is a separate backdrop that gets keyed out, so it must NOT tint, reflect, " +
   "bleed or spill onto the device; the device keeps its OWN material colour and neutral studio lighting, with a " +
   "crisp edge against the {BG}. (BOTH the device backdrop AND the bottom control-strip background are this SAME {BG} — one uniform neutral behind everything, so both cut out cleanly.)\n" +
-  "- Each dark shape ringed in bright GREEN is a FIXED SOCKET. KEEP every socket at its EXACT " +
-  "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
+  "- Each control is marked by a bright GREEN CROSSHAIR at its exact centre, wrapped in a soft " +
+  "green disc showing ROUGHLY how big it is (the SHAPE is yours to sculpt). Paint ONE socket per green " +
+  "crosshair, centred on it. NEVER duplicate, remove, or add a socket. Read each mark's diffuseness: a " +
+  "TIGHT bright crosshair + small disc = the position is FIRM (place it exactly there); a FADED crosshair " +
+  "+ LARGE soft blurry disc = the position is approximate — nudge the control anywhere within that soft region.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place. Leave them BLANK dark glass: NO text, NO numbers, NO track names, NO fake UI, NO waveform, NO menu, NO icons on the screen — the screen content is added live afterwards.\n" +
-  "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
-  "- COLOUR-outlined regions are REAL BUTTONS (not empty wells). At EACH coloured mark paint ONE finished, tactile, pressable button MOLDED SEAMLESSLY INTO the sculpted housing here, in the body material, with the correct icon embossed on its face. EACH button's ring is a DIFFERENT COLOUR that tells you WHICH control it is and WHAT icon to emboss on its face — follow this colour→control→icon map EXACTLY: {bakeLegend}. Each button gets a WILD, era-correct, ORGANIC silhouette — a curved WEDGE or arc-segment (jog dial), a KIDNEY or half-oval, a TRAPEZOID or faceted polygon, a LOZENGE or teardrop lobe — like a real early-2000s Winamp / Windows-Media-Player / Sonique skin where the controls are facets of the housing. NEVER a plain circle and NEVER a plain rounded-rectangle. Remove the coloured outline itself.\n" +
+  "- A GREEN crosshair with NO colour is an EMPTY recessed socket — paint a dark empty hole centred on it (do NOT put a button there).\n" +
+  "- A COLOURED crosshair+disc marks a REAL BUTTON (not an empty well). At EACH coloured mark paint ONE finished, tactile, pressable button MOLDED SEAMLESSLY INTO the sculpted housing here, in the body material, with the correct icon embossed on its face. EACH button's COLOUR tells you WHICH control it is and WHAT icon to emboss on its face — follow this colour→control→icon map EXACTLY: {bakeLegend}. Each button gets a WILD, era-correct, ORGANIC silhouette — a curved WEDGE or arc-segment (jog dial), a KIDNEY or half-oval, a TRAPEZOID or faceted polygon, a LOZENGE or teardrop lobe — like a real early-2000s Winamp / Windows-Media-Player / Sonique skin where the controls are facets of the housing. The soft disc hints only at SIZE, never shape.\n" +
   "- The buttons do NOT need to be uniform: they MAY be different shapes and sizes, sit at different angles, and follow the organic contour of the body — do NOT force them into an even straight row, a uniform grid, or identical evenly-spaced keys. Where blue marks sit adjacent you MAY flow them into one sculpted housing facet with thin raised seams, but the arrangement stays organic and characterful, not a regimented row. Each button is molded into the body (it stays in the render), not a loose part on top.\n" +
-  "- BUTTON COUNT IS EXACT — CRITICAL: there are EXACTLY {NBUTTONS} buttons on the ENTIRE device: the {NBUTTONS} colour-marked positions and ABSOLUTELY NO OTHERS. Do NOT hallucinate or add ANY extra button, a second/conventional transport row, another play/pause/skip cluster, jog-dial keys, or any media-control ANYWHERE else on the body — NOT EVEN if the device 'looks like it should have' a normal transport row. It does NOT. Media players you have seen have a conventional button row; THIS device's buttons are ONLY the {NBUTTONS} marked ones, wherever they sit. Count the coloured button rings, paint exactly that many buttons, and paint NONE beyond them. Every non-marked area of the body is smooth material with NO buttons.\n" +
-  "- (GREEN wells remain EMPTY dark holes as described above — only the COLOUR-RINGED regions get real painted controls.)\n" +
-  "- REMOVE the bright green well-rings AND the coloured button-rings in your output completely (guides only, not part of the device); the dark socket / painted button they marked stays exactly where it was.\n" +
+  "- BUTTON COUNT IS EXACT — CRITICAL: there are EXACTLY {NBUTTONS} buttons on the ENTIRE device: the {NBUTTONS} colour-marked positions and ABSOLUTELY NO OTHERS. Do NOT hallucinate or add ANY extra button, a second/conventional transport row, another play/pause/skip cluster, jog-dial keys, or any media-control ANYWHERE else on the body — NOT EVEN if the device 'looks like it should have' a normal transport row. It does NOT. Media players you have seen have a conventional button row; THIS device's buttons are ONLY the {NBUTTONS} marked ones, wherever they sit. Count the coloured button marks, paint exactly that many buttons, and paint NONE beyond them. Every non-marked area of the body is smooth material with NO buttons.\n" +
+  "- (GREEN crosshairs remain EMPTY dark holes as described above — only the COLOUR-marked regions get real painted controls.)\n" +
+  "- REMOVE every crosshair and soft disc (green AND coloured) from your output completely (guides only, not part of the device); the dark socket / painted button they marked stays exactly where it was.\n" +
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
@@ -73,15 +76,15 @@ export const PAINT_PROMPT =
   "flat {BG} sweep (the SAME neutral backdrop as the device region above):\n" +
   "- This strip is NOT a diagram, NOT a UI mockup, NOT a labeled parts catalog, NOT an instruction sheet. It is simply " +
   "individual finished hardware parts laid out on an empty white surface, like loose components on a clean studio table.\n" +
-  "- The bottom band has evenly-spaced slots left-to-right, EACH outlined by a bright GREEN KEYLINE. The keyline marks only WHERE a part " +
-  "goes and ROUGHLY HOW BIG — it does NOT dictate the part's SHAPE. Do NOT just fill the rectangle: give each part its own sculpted, era-correct " +
+  "- The bottom band has evenly-spaced slots left-to-right, EACH marked by a bright GREEN CROSSHAIR + soft disc. The crosshair marks WHERE a part " +
+  "goes and the disc ROUGHLY HOW BIG — it does NOT dictate the part's SHAPE. Do NOT fill a box: give each part its own sculpted, era-correct " +
   "SILHOUETTE (often NON-rectangular — a half-oval, D-shape, wedge / arc-segment, lozenge, curved trapezoid — matching real hardware of this device), " +
-  "centered in its slot; it may sit inside the keyline without touching all four edges. Paint ONE finished, " +
+  "centered on its crosshair; it may be smaller than the soft disc. Paint ONE finished, " +
   "glossy control PART per green slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
   "exactly ONE part per green slot: paint a part in EVERY slot, fill ALL of them, do NOT leave a slot empty, do NOT merge two " +
   "parts into one slot, and do NOT omit or add any. Count the green slots and match them one-to-one with the list below:\n" +
   "    {strip}\n" +
-  "- REMOVE the green keyline outlines in your output (guides ONLY, exactly like the device sockets' rings) — only the finished " +
+  "- REMOVE the green crosshairs + discs in your output (guides ONLY, exactly like the device sockets' marks) — only the finished " +
   "part remains, on the flat {BG} backdrop; the green must be completely gone.\n" +
   "- THE STRIP BACKGROUND MUST BE A SINGLE FLAT {BG}, perfectly uniform across the whole band: NO gradient, " +
   "NO texture, NO vignette, NO panel, NO tray, NO surface markings, NO grid, NO shading — just that flat uniform {BG} behind " +
