@@ -44,7 +44,7 @@ export default function TemplateStudio() {
   const [P, setP] = useState<Params>({ ...DEFAULT_PARAMS });
   const [regions, setRegions] = useState<SR[]>(() => layoutArch("console", DEFAULT_PARAMS) as SR[]);
   const [sel, setSel] = useState<string | null>(null);
-  const [showOverlays, setShowOverlays] = useState(true);  // studio annotations on the blueprint — NOT part of the image sent to FAL; always labelled + toggleable
+  const [showOverlays, setShowOverlays] = useState(false);  // studio annotations on the blueprint — OFF by default (see the exact image sent to FAL); toggle on to label cells
   const [globalDiff, setGlobalDiff] = useState(0.35);
   const [prompt, setPrompt] = useState("a wild organic Y2K Winamp media player");
   const [llmMsg, setLlmMsg] = useState("");
