@@ -4,19 +4,86 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>404 — skeuo.fm</title>
+  <meta name="description" content="Track not found — the page you're looking for isn't on skeuo.fm." />
   <style>
+    :root{
+      --bg:#0c0d10; --ink:#e8eaef; --mut:#9aa0ab; --acc:#7fe0a8; --line:#2a2e36;
+      --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+      --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box}
     html,body{height:100%;margin:0}
-    body{display:grid;place-items:center;background:#0a0a0a;color:#e6e6e6;
-      font:500 16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
-    a{color:#22c55e;text-decoration:none}
-    .wrap{text-align:center;padding:2rem}
-    h1{font-size:3rem;margin:0 0 .25rem}
+    body{
+      background:var(--bg);color:var(--ink);font-family:var(--font);
+      display:grid;place-items:center;padding:24px;
+      background-image:radial-gradient(900px 500px at 50% -8%,#12241d55,transparent);
+    }
+    .wrap{width:100%;max-width:440px;text-align:center}
+
+    /* the skeuomorphic player unit */
+    .unit{
+      background:linear-gradient(180deg,#1c1f26,#141519);
+      border:1px solid #33383f;border-radius:26px;
+      padding:26px 24px 30px;
+      box-shadow:0 24px 60px #000a, inset 0 1px 0 #ffffff10, inset 0 -2px 6px #0006;
+    }
+    /* the LCD screen */
+    .lcd{
+      background:linear-gradient(180deg,#0a1512,#08100e);
+      border-radius:12px;border:1px solid #04120d;
+      box-shadow:inset 0 3px 10px #000c, inset 0 0 0 1px #ffffff08, 0 0 24px #7fe0a820;
+      padding:22px 18px;margin-bottom:22px;position:relative;overflow:hidden;
+    }
+    .lcd::after{ /* scanline sheen */
+      content:"";position:absolute;inset:0;pointer-events:none;
+      background:repeating-linear-gradient(180deg,#ffffff06 0 1px,transparent 1px 3px);
+      mix-blend-mode:screen;opacity:.35;
+    }
+    .lcd .code{font-family:var(--mono);font-size:64px;font-weight:700;letter-spacing:.06em;
+      color:var(--acc);text-shadow:0 0 14px #7fe0a870;line-height:1;margin:0}
+    .lcd .msg{font-family:var(--mono);font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;
+      color:#5f9c81;margin:10px 0 0}
+
+    /* transport row (decorative, non-interactive except the "home" button) */
+    .transport{display:flex;gap:12px;align-items:center;justify-content:center}
+    .btn{
+      width:44px;height:44px;border-radius:50%;
+      background:linear-gradient(180deg,#262a31,#191c21);
+      border:1px solid #383d45;
+      box-shadow:0 3px 6px #0007, inset 0 1px 0 #ffffff12;
+      display:grid;place-items:center;color:#8a929c;
+      text-decoration:none;transition:transform .08s ease, box-shadow .08s ease;
+    }
+    .btn svg{width:16px;height:16px;fill:currentColor}
+    .btn.home{width:auto;padding:0 18px;border-radius:22px;color:#04140e;
+      background:linear-gradient(180deg,#8ff0b8,#5cc98c);border-color:#3f9a6b;font-family:var(--mono);
+      font-size:13px;font-weight:700;letter-spacing:.04em;gap:8px}
+    .btn.home svg{fill:#04140e}
+    .btn:active{transform:translateY(1px);box-shadow:inset 0 2px 6px #0008}
+    .btn.home:hover{filter:brightness(1.06)}
+
+    .foot{margin-top:20px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#5b6472;text-transform:uppercase}
+    .foot a{color:var(--mut);text-decoration:none}
+    .foot a:hover{color:var(--acc)}
+
+    @media (max-width:420px){ .lcd .code{font-size:52px} .btn{width:40px;height:40px} }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>404</h1>
-    <p>That page isn’t here. <a href="/">Back to skeuo.fm →</a></p>
-  </div>
+  <main class="wrap">
+    <div class="unit" role="img" aria-label="A skeuomorphic music player showing error 404, track not found">
+      <div class="lcd">
+        <p class="code">404</p>
+        <p class="msg">track not found</p>
+      </div>
+      <nav class="transport" aria-label="Player controls">
+        <span class="btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 6 8 12l10 6V6zM6 6h2v12H6z"/></svg></span>
+        <span class="btn" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg></span>
+        <a class="btn home" href="/"><svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h6v-5h2v5h6v-8h3z"/></svg>skeuo.fm</a>
+        <span class="btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l10 6L6 18V6zm10 0h2v12h-2z"/></svg></span>
+      </nav>
+    </div>
+    <p class="foot">this page isn't on the shelf · <a href="/">back to the player →</a></p>
+  </main>
 </body>
 </html>
