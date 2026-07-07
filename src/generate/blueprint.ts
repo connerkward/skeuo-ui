@@ -318,6 +318,22 @@ export interface CombinedBlueprint {
   width: number;
   height: number;
   stripDesc: string;   // enumerated control list for the paint prompt (no text drawn in-image)
+  bakeLegend: string;  // colour→identity→icon map for the BAKED device buttons (each unique button its own hue)
+}
+
+// The FACE ICON for a transport button, in WORDS only — NO literal glyph characters
+// (the model paints literal ◀▶■ as a separate floating glyph that gets cut into the
+// sprite). Returns "" when the bind carries no prescribed icon. Shared by the strip
+// description (controlDesc) AND the baked-button colour legend so the two never drift.
+function faceIconWords(b: string): string {
+  b = b.toLowerCase();
+  if (b.includes("prev") || b.includes("rew")) return "a rewind icon (two left-pointing triangles)";
+  if (b.includes("play")) return "a play icon (one right-pointing triangle)";
+  if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return "a fast-forward icon (two right-pointing triangles)";
+  if (b.includes("stop")) return "a stop icon (a filled square)";
+  if (b.includes("pause")) return "a pause icon (two vertical bars)";
+  if (b.includes("power") || b.includes("eject") || b.includes("open")) return "a power/eject icon embossed subtly";
+  return "";
 }
 
 // Human description of a control for the paint prompt (so we can convey identity
@@ -335,12 +351,8 @@ function controlDesc(r: Region, kind: SpriteKind): string {
     // rounded-square unless steered away. The cut keeps whatever is painted, so the
     // only job here is to discourage the generic box and invite the reference shapes.
     const sh = "a tactile push-button whose SILHOUETTE matches REAL hardware of this device era — prefer an ORGANIC, NON-rectangular shape: a half-oval / D-shape, a kidney/lozenge, a curved trapezoid, or a WEDGE / arc-segment like a Walkman jog cluster or a car-console key. AVOID a plain square or plain circle unless the device truly demands it. The button need NOT fill its slot — give it its own distinct sculpted outline";
-    if (b.includes("prev") || b.includes("rew")) return `${sh} with a rewind icon (two left-pointing triangles) embossed ON ITS FACE`;
-    if (b.includes("play")) return `${sh} with a play icon (one right-pointing triangle) embossed ON ITS FACE`;
-    if (b.includes("next") || b.includes("fwd") || b.includes("forward")) return `${sh} with a fast-forward icon (two right-pointing triangles) embossed ON ITS FACE`;
-    if (b.includes("stop")) return `${sh} with a stop icon (a filled square) embossed ON ITS FACE`;
-    if (b.includes("pause")) return `${sh} with a pause icon (two vertical bars) embossed ON ITS FACE`;
-    return sh;
+    const icon = faceIconWords(b);
+    return icon ? `${sh} with ${icon} embossed ON ITS FACE` : sh;
   }
   if (kind === "knob") return `a round rotary knob cap, smooth or knurled, with NO painted pointer/notch/indicator line — a plain symmetric cap (the app draws the rotating indicator on top)${r.label ? ` (${r.label})` : ""}`;
   if (kind === "slider") return `a small slider THUMB/grip — JUST the compact movable handle that rides along a track (a knurled cap / grip button), matching the device's material and era; NOT the whole track, NOT the groove — only the little part the finger drags`;
@@ -369,6 +381,23 @@ const BP_RING = "rgb(0,190,90)";      // bright GREEN anchor ring (empty well �
                                       // bodies + bled as pink frames (2026-07-01). Green reads as a clearly
                                       // foreign guide on any neutral backdrop and removes cleanly.
 const BP_BAKE = "rgb(0,120,255)";     // blue ring = paint a REAL cohesive control here (baked, not a well)
+
+// PER-BUTTON identity hues for BAKED device buttons. The baked buttons are molded
+// into the body and are NOT in the ordered strip, so — unlike the strip — they carry
+// NO left-to-right position cue; without a per-button tag the model can't tell WHICH
+// scattered ring is play vs stop and embosses icons arbitrarily. Each unique baked
+// button gets its OWN hue + a prose legend maps hue→control→face-icon (reusing the
+// glyph-free faceIconWords vocabulary). Hues kept MODERATE (removed guide rings, but
+// strong chroma can still tint the painted control — the magenta-bleed lesson).
+interface BakeHue { css: string; name: string }
+const BAKE_HUES: BakeHue[] = [
+  { css: "rgb(255,90,60)",  name: "ORANGE-RED" },
+  { css: "rgb(0,120,255)",  name: "BLUE" },
+  { css: "rgb(240,180,0)",  name: "AMBER" },
+  { css: "rgb(170,80,255)", name: "VIOLET" },
+  { css: "rgb(0,200,180)",  name: "TEAL" },
+  { css: "rgb(255,130,40)", name: "ORANGE" },
+];
 
 // map a template Region kind → the sprite kind we cut, or null for non-sprite
 // (displays/decorations stay on the device and are never cut to the strip).
@@ -440,6 +469,19 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   //     ring outward made adjacent, non-overlapping rects produce visibly overlapping
   //     rings. With an inset ring the painted outline never exceeds the (separated) rect,
   //     so resolveOverlaps' min-gap guarantees the rings clear each other.
+  // PER-BUTTON identity: assign each BAKED button its own hue (stable region order) and
+  // build a colour→identity→icon legend for the paint prompt. So the model knows which
+  // scattered ring is which control + what to emboss, with no ambiguity and no drawn text.
+  const bakedButtons = regs.filter((r) => r.kind === "button" && r.baked);
+  const bakeHueOf = new Map<string, BakeHue>();
+  bakedButtons.forEach((r, i) => bakeHueOf.set(r.id, BAKE_HUES[i % BAKE_HUES.length]));
+  const bakeLegend = bakedButtons.map((r) => {
+    const hue = bakeHueOf.get(r.id)!;
+    const icon = faceIconWords((r.bind || r.id).toLowerCase());
+    const who = (r.bind || r.id).toUpperCase();
+    return `the button ringed in ${hue.name} is ${who}${icon ? `: emboss ${icon} on its face` : ""}`;
+  }).join("; ");
+
   const defs: string[] = [];
   for (const r of regs) {
     const x = r.rect.x * GEN_W, y = r.rect.y * GEN_H;
@@ -450,9 +492,9 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     // (and round displays) get a circular guide; BUTTONS get a neutral rounded-rect
     // bounding guide so the model is free to paint any button shape inside it.
     const round = r.kind === "knob" || (r.kind === "display" && r.shape === "ellipse");
-    // CYAN guide = "paint a REAL finished control here, integrated into the body"
-    // (baked cluster); GREEN/BLUE = empty well the player overlays a cut sprite onto.
-    const strokeCol = r.baked ? BP_BAKE : BP_RING;
+    // GREEN = empty well (player overlays a cut sprite); a BAKED button gets its OWN
+    // identity HUE (from bakeHueOf) so the model can tell which molded button is which.
+    const strokeCol = r.baked ? (bakeHueOf.get(r.id)?.css ?? BP_BAKE) : BP_RING;
     // Diffuseness blur: 0 = crisp, 1 = soft suggestion. BAKED guides stay crisp always.
     const diff = !r.baked && typeof (r as any).diff === "number" ? (r as any).diff : 0;
     const blur = diff * Math.min(w, h) * 0.18;  // scale blur by component size
@@ -540,7 +582,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     bind: bindOf(r), kind: spriteKindOf(r)!,
     rect: [r.rect.x, r.rect.y, r.rect.w, r.rect.h], // normalized to the DEVICE region (GEN_H)
   }));
-  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H, stripDesc };
+  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H, stripDesc, bakeLegend };
 }
 
 

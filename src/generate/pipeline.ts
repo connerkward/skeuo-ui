@@ -50,11 +50,11 @@ export const PAINT_PROMPT =
   "position, size and shape. NEVER move, resize, rotate, duplicate, remove, or add a socket.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place. Leave them BLANK dark glass: NO text, NO numbers, NO track names, NO fake UI, NO waveform, NO menu, NO icons on the screen — the screen content is added live afterwards.\n" +
   "- The round dark wells are EMPTY recessed sockets — paint them as dark empty holes, in place (do NOT put buttons in them).\n" +
-  "- BLUE-outlined regions are REAL BUTTONS (not empty wells). At EACH blue mark paint ONE finished, tactile, pressable button MOLDED SEAMLESSLY INTO the sculpted housing here, in the body material, with the correct icon embossed on its face. Each button gets a WILD, era-correct, ORGANIC silhouette — a curved WEDGE or arc-segment (jog dial), a KIDNEY or half-oval, a TRAPEZOID or faceted polygon, a LOZENGE or teardrop lobe — like a real early-2000s Winamp / Windows-Media-Player / Sonique skin where the controls are facets of the housing. NEVER a plain circle and NEVER a plain rounded-rectangle. Remove the blue outline itself.\n" +
+  "- COLOUR-outlined regions are REAL BUTTONS (not empty wells). At EACH coloured mark paint ONE finished, tactile, pressable button MOLDED SEAMLESSLY INTO the sculpted housing here, in the body material, with the correct icon embossed on its face. EACH button's ring is a DIFFERENT COLOUR that tells you WHICH control it is and WHAT icon to emboss on its face — follow this colour→control→icon map EXACTLY: {bakeLegend}. Each button gets a WILD, era-correct, ORGANIC silhouette — a curved WEDGE or arc-segment (jog dial), a KIDNEY or half-oval, a TRAPEZOID or faceted polygon, a LOZENGE or teardrop lobe — like a real early-2000s Winamp / Windows-Media-Player / Sonique skin where the controls are facets of the housing. NEVER a plain circle and NEVER a plain rounded-rectangle. Remove the coloured outline itself.\n" +
   "- The buttons do NOT need to be uniform: they MAY be different shapes and sizes, sit at different angles, and follow the organic contour of the body — do NOT force them into an even straight row, a uniform grid, or identical evenly-spaced keys. Where blue marks sit adjacent you MAY flow them into one sculpted housing facet with thin raised seams, but the arrangement stays organic and characterful, not a regimented row. Each button is molded into the body (it stays in the render), not a loose part on top.\n" +
-  "- BUTTON COUNT IS EXACT — CRITICAL: there are EXACTLY {NBUTTONS} buttons on the ENTIRE device: the {NBUTTONS} blue-marked positions and ABSOLUTELY NO OTHERS. Do NOT hallucinate or add ANY extra button, a second/conventional transport row, another play/pause/skip cluster, jog-dial keys, or any media-control ANYWHERE else on the body — NOT EVEN if the device 'looks like it should have' a normal transport row. It does NOT. Media players you have seen have a conventional button row; THIS device's buttons are ONLY the {NBUTTONS} marked ones, wherever they sit. Count the blue marks, paint exactly that many buttons, and paint NONE beyond them. Every non-marked area of the body is smooth material with NO buttons.\n" +
-  "- (GREEN wells remain EMPTY dark holes as described above — only BLUE regions get real painted controls.)\n" +
-  "- REMOVE the bright green rings in your output completely (guides only, not part of the device); the dark socket they ringed stays exactly where it was.\n" +
+  "- BUTTON COUNT IS EXACT — CRITICAL: there are EXACTLY {NBUTTONS} buttons on the ENTIRE device: the {NBUTTONS} colour-marked positions and ABSOLUTELY NO OTHERS. Do NOT hallucinate or add ANY extra button, a second/conventional transport row, another play/pause/skip cluster, jog-dial keys, or any media-control ANYWHERE else on the body — NOT EVEN if the device 'looks like it should have' a normal transport row. It does NOT. Media players you have seen have a conventional button row; THIS device's buttons are ONLY the {NBUTTONS} marked ones, wherever they sit. Count the coloured button rings, paint exactly that many buttons, and paint NONE beyond them. Every non-marked area of the body is smooth material with NO buttons.\n" +
+  "- (GREEN wells remain EMPTY dark holes as described above — only the COLOUR-RINGED regions get real painted controls.)\n" +
+  "- REMOVE the bright green well-rings AND the coloured button-rings in your output completely (guides only, not part of the device); the dark socket / painted button they marked stays exactly where it was.\n" +
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
@@ -490,7 +490,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
 
   // 1. COMBINED blueprint PNG — device body (faint envelope + magenta-ringed
   //    sockets) on the KEY-COLOUR backdrop + a bottom sprite strip on WHITE. ONE image.
-  const { svg, layout, width: bpW, height: bpH, stripDesc } = combinedBlueprint(regs, keyc.css);
+  const { svg, layout, width: bpW, height: bpH, stripDesc, bakeLegend } = combinedBlueprint(regs, keyc.css);
   // CHECK (pre-paint): the blueprint/template MUST be a model-reproducible aspect so
   // the paint returns near 1:1 — otherwise the normalized strip cells + device sockets
   // map to the wrong place on a reshaped output (mis-cut sprites). It's built to 9:16;
@@ -515,6 +515,7 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
     // donor preset — so a missing material can't silently force a winamp/biomech look.
     .replace("{material}", input.materialPrompt || input.brief)
     .replace("{strip}", stripDesc)
+    .replace("{bakeLegend}", bakeLegend || "each button carries no prescribed icon — leave each face cleanly molded")  // per-button colour→identity→icon map
     .replace(/\{NBUTTONS\}/g, String(regs.filter((r) => r.kind === "button").length))  // exact button count → anti-hallucination
     .replace(/\{BG\}/g, keyc.phrase);   // device-region backdrop colour (keyed out by the cutout)
   const refs = input.refImageUrls ?? [];
