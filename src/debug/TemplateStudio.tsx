@@ -44,6 +44,7 @@ export default function TemplateStudio() {
   const [P, setP] = useState<Params>({ ...DEFAULT_PARAMS });
   const [regions, setRegions] = useState<SR[]>(() => layoutArch("console", DEFAULT_PARAMS) as SR[]);
   const [sel, setSel] = useState<string | null>(null);
+  const [showOverlays, setShowOverlays] = useState(true);  // studio annotations on the blueprint — NOT part of the image sent to FAL; always labelled + toggleable
   const [globalDiff, setGlobalDiff] = useState(0.35);
   const [prompt, setPrompt] = useState("a wild organic Y2K Winamp media player");
   const [llmMsg, setLlmMsg] = useState("");
@@ -265,14 +266,28 @@ export default function TemplateStudio() {
         <Canvas regs={packed} editable={false} title={authored ? "PACKED — repack off (mirrors edited raw)" : "PACKED — repack off (mirrors raw)"} />
         {combined && (
           <div className="tsCanvas bpc">
-            <div className="tsCap">COMBINED blueprint <span>(device + {combined.layout.cells.length} sprite cells)</span></div>
+            <div className="tsCap" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>COMBINED blueprint <span>(device + {combined.layout.cells.length} sprite cells)</span></span>
+              <button onClick={() => setShowOverlays((v) => !v)} title="toggle studio overlays — the bind labels + divider are annotations, NOT part of the image sent to FAL"
+                style={{ marginLeft: "auto", flex: "0 0 auto", background: showOverlays ? "#243524" : "#15151c", color: showOverlays ? "#7fe0a0" : "#8a8a96", border: "1px solid #2a2a34", borderRadius: 5, padding: "1px 7px", cursor: "pointer", fontSize: 10, fontWeight: 600, whiteSpace: "nowrap" }}>
+                {showOverlays ? "◉" : "◯"} overlays
+              </button>
+            </div>
             <div className="tsBP" style={{ flex: "0 0 auto" }}>
               <div style={{ position: "absolute", inset: 0, lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: combined.svg.replace(/width="\d+" height="\d+"/, 'width="100%" height="100%"') }} />
-              {/* sprite-cell labels — the SPRITE LOCATIONS the cutter will use, keyed by bind */}
-              {combined.layout.cells.map((c) => (
-                <div key={c.bind} style={{ position: "absolute", left: `${c.cellRect[0] * 100}%`, top: `${c.cellRect[1] * 100}%`, width: `${c.cellRect[2] * 100}%`, height: `${c.cellRect[3] * 100}%`, display: "flex", alignItems: "flex-end", justifyContent: "center", pointerEvents: "none", color: "#0a8f4d", font: "700 10px ui-monospace,monospace", textShadow: "0 1px 0 rgba(255,255,255,.5)" }}>{c.bind}</div>
-              ))}
-              <div style={{ position: "absolute", left: 0, right: 0, top: `${combined.layout.devFrac * 100}%`, borderTop: "2px dashed rgba(0,0,0,.45)", color: "rgba(0,0,0,.55)", fontSize: 10, paddingLeft: 4, pointerEvents: "none" }}>sprite strip ↓</div>
+              {/* STUDIO OVERLAYS — annotations drawn ON TOP of the blueprint for the human; NOT part of
+                  the rasterized image sent to FAL. Always badge-labelled as such + toggleable, so it's
+                  never ambiguous whether an annotation is in the real artifact. */}
+              {showOverlays && (
+                <>
+                  <div style={{ position: "absolute", top: 4, left: 4, zIndex: 2, background: "rgba(10,10,16,.72)", color: "#7fe0a0", fontSize: 8.5, fontWeight: 700, padding: "1px 5px", borderRadius: 4, pointerEvents: "none" }}>◉ studio overlay · not in image → FAL</div>
+                  {/* sprite-cell labels — the SPRITE LOCATIONS the cutter will use, keyed by bind */}
+                  {combined.layout.cells.map((c) => (
+                    <div key={c.bind} style={{ position: "absolute", left: `${c.cellRect[0] * 100}%`, top: `${c.cellRect[1] * 100}%`, width: `${c.cellRect[2] * 100}%`, height: `${c.cellRect[3] * 100}%`, display: "flex", alignItems: "flex-end", justifyContent: "center", pointerEvents: "none", color: "#0a8f4d", font: "700 10px ui-monospace,monospace", textShadow: "0 1px 0 rgba(255,255,255,.5)" }}>{c.bind}</div>
+                  ))}
+                  <div style={{ position: "absolute", left: 0, right: 0, top: `${combined.layout.devFrac * 100}%`, borderTop: "2px dashed rgba(0,0,0,.45)", color: "rgba(0,0,0,.55)", fontSize: 10, paddingLeft: 4, pointerEvents: "none" }}>sprite strip ↓</div>
+                </>
+              )}
             </div>
             {/* scrollable view of the TEXT prompt that ALSO goes to FAL with the blueprint image */}
             <div style={{ flex: "1 1 0", minHeight: 70, marginTop: 6, overflowY: "auto", background: "#0b0b11", border: "1px solid #26262f", borderRadius: 8, padding: "0 8px 8px" }}>
