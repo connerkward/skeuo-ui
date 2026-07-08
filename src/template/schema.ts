@@ -79,6 +79,7 @@ export interface Region {
                           // exactly; 1 = soft suggestion the painter may freely reinterpret.
                           // Drawn as guide blur in the blueprint; authored by studio/LLM.
   arc?: { start: number; end: number };  // slider-arc: angle range, deg, y-down screen convention
+  corner?: number;                        // control shape corner radius: 0 = sharp rect · 1 = oval
   path?: Pt[];                            // slider-path spline / freeform visualizer shape (normalized in rect)
   vis?: "linear" | "radial" | "teeth" | "ribbon";  // visualizer render style
   dialStyle?: "bars" | "rings" | "radar" | "bloom" | "wave"; // round-dial sub-style (else hashed per skin)

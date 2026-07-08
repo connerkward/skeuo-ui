@@ -37,6 +37,7 @@ export default function TemplateStudio() {
   const [prompt, setPrompt] = useState("a wild organic Y2K Winamp media player");
   const [llmMsg, setLlmMsg] = useState("");
   const [drag, setDrag] = useState<string | null>(null);
+  const [cornerDrag, setCornerDrag] = useState<string | null>(null);  // dragging a live corner-radius handle
   // human-authored flag: once the human edits (drag/add/patch/nudge), the packer becomes a
   // PASS-THROUGH — packing must not rearrange a human-authored template. Generators reset it.
   const [authored, setAuthored] = useState(false);
@@ -145,51 +146,73 @@ export default function TemplateStudio() {
 
   // drag a centroid on the RAW canvas (pointer coords → normalized, recentre the rect)
   const onMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (!drag) return;
+    if (!drag && !cornerDrag) return;
     const svg = e.currentTarget; const b = svg.getBoundingClientRect();
     const nx = (e.clientX - b.left) / b.width, ny = (e.clientY - b.top) / b.height;
-    setRegions((rs) => rs.map((r) => r.id === drag ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, nx - r.rect.w / 2)), y: Math.max(0, Math.min(1 - r.rect.h, ny - r.rect.h / 2)) } } : r));
-  }, [drag]);
+    if (drag) {
+      setRegions((rs) => rs.map((r) => r.id === drag ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, nx - r.rect.w / 2)), y: Math.max(0, Math.min(1 - r.rect.h, ny - r.rect.h / 2)) } } : r));
+    } else if (cornerDrag) {
+      // Illustrator-style live corner: the radius = how far the pointer is INSET from the
+      // nearest corner (0 → sharp rect, half the short side → oval).
+      const px = nx * GEN_W, py = ny * GEN_H;
+      setRegions((rs) => rs.map((r) => {
+        if (r.id !== cornerDrag) return r;
+        const rx0 = r.rect.x * GEN_W, ry0 = r.rect.y * GEN_H, rw = r.rect.w * GEN_W, rh = r.rect.h * GEN_H;
+        const half = Math.min(rw, rh) / 2;
+        const inset = Math.max(0, Math.min(half, Math.min(Math.min(px - rx0, rx0 + rw - px), Math.min(py - ry0, ry0 + rh - py))));
+        return { ...r, corner: half > 0 ? +(inset / half).toFixed(3) : 0 } as SR;
+      }));
+    }
+  }, [drag, cornerDrag]);
 
   const renderShape = (r: SR, editable: boolean) => {
     const W = GEN_W, H = GEN_H;
     const x = r.rect.x * W, y = r.rect.y * H, w = r.rect.w * W, h = r.rect.h * H;
     const cx = x + w / 2, cy = y + h / 2;
     const col = colorOf(r);
-    const diff = 0;   // diffuseness disabled for now — crisp anchor
     const s = Math.min(w, h);
-    // SAME anchor as the combined blueprint (blueprint.ts anchorMark): a soft SIZE DISC + a
-    // crisp CENTROID CROSSHAIR, coloured by this component's identity. No fake silhouette
-    // (shape is the model's choice — that's why there are no wedge/kidney outlines), and the
-    // diffuseness maths is IDENTICAL to the blueprint, so diff reads the same in both.
-    const blur = s * 0.10 + diff * s * 0.55;
-    const op = 0.95 - diff * 0.45;
-    const rx = (w / 2) * 0.74, ry = (h / 2) * 0.74;
-    const arm = s * 0.27, lw = Math.max(2.5, s * 0.03), dot = Math.max(3, s * 0.05);
-    // slider TRACK: a straight line (slider-h / slider-v) or a partial-circle arc (slider-arc)
-    // — the only two slider geometries supported. Same colour + arc maths as the blueprint.
-    const tw = Math.max(3, s * 0.07);
-    const track = r.kind === "slider-h"
-      ? <line x1={x + w * 0.12} y1={cy} x2={x + w * 0.88} y2={cy} stroke={col} strokeWidth={tw} strokeLinecap="round" opacity={0.9} />
+    const selected = sel === r.id;
+    const isSlider = r.kind === "slider-h" || r.kind === "slider-v" || r.kind === "slider-arc";
+    const corner = Math.max(0, Math.min(1, r.corner ?? 0.5));   // 0 = rect · 1 = oval
+    const fid = `f_${r.id}`;
+    const arm = s * 0.27, lw = Math.max(2.5, s * 0.03), dot = Math.max(3, s * 0.05), tw = Math.max(3, s * 0.08);
+
+    // SLIDERS = their track (straight line / partial-circle arc); every other control = a
+    // DIFFUSE rounded-rect ANCHOR whose `corner` morphs it rect↔oval (dragged with live
+    // corner handles). Same shape maths as the blueprint's anchorMark.
+    const rw = w * 0.88, rh = h * 0.88, rrx = cx - rw / 2, rry = cy - rh / 2;
+    const rr = (Math.min(rw, rh) / 2) * corner;
+    const shape = r.kind === "slider-h"
+      ? <line x1={x + w * 0.1} y1={cy} x2={x + w * 0.9} y2={cy} stroke={col} strokeWidth={tw} strokeLinecap="round" />
       : r.kind === "slider-v"
-        ? <line x1={cx} y1={y + h * 0.12} x2={cx} y2={y + h * 0.88} stroke={col} strokeWidth={tw} strokeLinecap="round" opacity={0.9} />
+        ? <line x1={cx} y1={y + h * 0.1} x2={cx} y2={y + h * 0.9} stroke={col} strokeWidth={tw} strokeLinecap="round" />
         : r.kind === "slider-arc"
-          ? <path d={arcD(cx, cy, (s / 2) * 0.86, (r.arc ?? DEF_ARC).start, (r.arc ?? DEF_ARC).end)} fill="none" stroke={col} strokeWidth={tw} strokeLinecap="round" opacity={0.9} />
-          : null;
-    const fid = `f_${r.id}`; const selected = sel === r.id;
+          ? <path d={arcD(cx, cy, (s / 2) * 0.86, (r.arc ?? DEF_ARC).start, (r.arc ?? DEF_ARC).end)} fill="none" stroke={col} strokeWidth={tw} strokeLinecap="round" />
+          : <rect x={rrx} y={rry} width={rw} height={rh} rx={rr} ry={rr} fill={col} fillOpacity={0.38} stroke={col} strokeWidth={Math.max(1.5, s * 0.022)} filter={`url(#${fid})`} />;
+
+    // live corner-radius handles (Illustrator style) — box controls only, when selected
+    const hi = Math.max(rr, s * 0.05);
+    const cornerPts: Array<[number, number]> = [
+      [rrx + hi, rry + hi], [rrx + rw - hi, rry + hi],
+      [rrx + hi, rry + rh - hi], [rrx + rw - hi, rry + rh - hi],
+    ];
+
     return (
       <g key={r.id} onClick={() => editable && setSel(r.id)} style={{ cursor: editable ? "pointer" : "default" }}>
-        <filter id={fid} x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation={blur} /></filter>
-        <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={col} fillOpacity={0.36} filter={`url(#${fid})`} />
-        <g stroke={col} strokeWidth={lw} strokeLinecap="round" opacity={op}>
+        {!isSlider && <filter id={fid} x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation={s * 0.09} /></filter>}
+        {shape}
+        {!isSlider && <g stroke={col} strokeWidth={lw} strokeLinecap="round" opacity={0.9}>
           <line x1={cx - arm} y1={cy} x2={cx + arm} y2={cy} />
           <line x1={cx} y1={cy - arm} x2={cx} y2={cy + arm} />
-        </g>
-        {track}
-        {selected && <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="none" stroke="#fff" strokeWidth={2.5} strokeDasharray="7 5" opacity={0.7} />}
-        <circle cx={cx} cy={cy} r={editable ? Math.max(dot, 12) : dot} fill={selected ? "#fff" : col} stroke="#000" strokeWidth={2} opacity={editable ? 1 : op}
+        </g>}
+        {selected && <rect x={x} y={y} width={w} height={h} fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="7 5" opacity={0.55} />}
+        <circle cx={cx} cy={cy} r={editable ? Math.max(dot, 11) : dot} fill={selected ? "#fff" : col} stroke="#000" strokeWidth={2}
           style={{ cursor: editable ? "grab" : "default" }}
           onPointerDown={editable ? (e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); } : undefined} />
+        {editable && selected && !isSlider && cornerPts.map(([hx, hy], i) => (
+          <circle key={i} cx={hx} cy={hy} r={9} fill="#fff" stroke={col} strokeWidth={3} style={{ cursor: "nwse-resize" }}
+            onPointerDown={(e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setCornerDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); }} />
+        ))}
         <text x={cx} y={y - 6} fill={col} fontSize={26} textAnchor="middle" style={{ pointerEvents: "none", fontWeight: 700 }}>{(r.bind || r.id).slice(0, 10)}</text>
       </g>
     );
@@ -202,8 +225,8 @@ export default function TemplateStudio() {
       <div className="tsCap">{title} <span>({regs.length} regions)</span></div>
       <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`}
         onPointerMove={editable ? onMove : undefined}
-        onPointerUp={() => { setDrag(null); if (editable) setRegions(enforceZeroDiff); }}
-        onPointerLeave={() => setDrag(null)}>
+        onPointerUp={() => { setDrag(null); setCornerDrag(null); if (editable) setRegions(enforceZeroDiff); }}
+        onPointerLeave={() => { setDrag(null); setCornerDrag(null); }}>
         {regs.map((r) => renderShape(r, editable))}
       </svg>
     </div>
@@ -337,6 +360,10 @@ export default function TemplateStudio() {
                 {(SPOTIFY_BINDS.includes(selR.bind || "") ? SPOTIFY_BINDS : [selR.bind || "", ...SPOTIFY_BINDS]).map((b) => <option key={b} value={b}>{b || "—"}</option>)}
               </select></label>
             <label>size <input type="range" min={0.03} max={0.4} step={0.01} value={selR.rect.w} onChange={(e) => { const w = +e.target.value; patchSel({ rect: { ...selR.rect, w, h: w * 0.7 } }); }} style={{ width: "100%" }} /></label>
+            {selR.kind !== "slider-h" && selR.kind !== "slider-v" && selR.kind !== "slider-arc" && (
+              <label>corner (rect ↔ oval) <b style={{ color: "#7fe0a0" }}>{(selR.corner ?? 0.5).toFixed(2)}</b>
+                <input type="range" min={0} max={1} step={0.02} value={selR.corner ?? 0.5} onChange={(e) => patchSel({ corner: +e.target.value })} style={{ width: "100%" }} /></label>
+            )}
             {selR.kind === "slider-arc" && (() => {
               const arc = selR.arc ?? DEF_ARC;
               return (

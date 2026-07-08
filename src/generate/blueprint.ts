@@ -466,13 +466,16 @@ const bindOf = (r: Region): string => r.id;
 // nothing dictates the painted control's form. DIFFUSENESS is encoded honestly: diff 0 = a
 // tight, bright, firm anchor ("control is HERE"); diff 1 = a large, soft, blurry disc + a
 // faded crosshair ("somewhere around here — nudge freely").
-function anchorMark(cx: number, cy: number, w: number, h: number, col: string, diff: number, key: string, defs: string[]): string {
+function anchorMark(cx: number, cy: number, w: number, h: number, col: string, diff: number, corner: number, key: string, defs: string[]): string {
   const s = Math.min(w, h);
   const blur = s * 0.10 + diff * s * 0.55;                 // always soft; diffuseness → spread
   const fid = `a_${key}`;
   defs.push(`<filter id="${fid}" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="${blur.toFixed(1)}"/></filter>`);
-  const rx = (w / 2) * 0.74, ry = (h / 2) * 0.74;          // soft field ~ the footprint extent
-  const disc = `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${col}" fill-opacity="0.36" filter="url(#${fid})"/>`;
+  // soft SHAPE: a rounded-rect whose corner radius morphs it between a RECTANGLE (corner 0)
+  // and an OVAL (corner 1) — the "anchor + shape" the studio drags with live corner handles.
+  const rw = w * 0.88, rh = h * 0.88, rx0 = cx - rw / 2, ry0 = cy - rh / 2;
+  const rr = (Math.min(rw, rh) / 2) * Math.max(0, Math.min(1, corner));
+  const disc = `<rect x="${rx0.toFixed(1)}" y="${ry0.toFixed(1)}" width="${rw.toFixed(1)}" height="${rh.toFixed(1)}" rx="${rr.toFixed(1)}" ry="${rr.toFixed(1)}" fill="${col}" fill-opacity="0.36" filter="url(#${fid})"/>`;
   const arm = s * 0.27, lw = Math.max(2.5, s * 0.03), dot = Math.max(3, s * 0.05);
   const op = (0.95 - diff * 0.45).toFixed(2);              // crosshair fades as the position gets diffuse
   const ch =
@@ -560,13 +563,13 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
     const col = colors.get(r.id)!.hex;   // this component's identity hex (same everywhere)
     const diff = !r.baked && typeof (r as any).diff === "number" ? (r as any).diff : 0;
-    parts.push(anchorMark(x + w / 2, y + h / 2, w, h, col, diff, r.id, defs));
-    // slider TRACK guide (straight line / partial-circle arc) so the model paints the seek
-    // groove along the right geometry; same colour as the control's anchor.
     const scx = x + w / 2, scy = y + h / 2, ss = Math.min(w, h), stw = Math.max(4, ss * 0.06);
+    // SLIDERS draw their track (straight line / partial-circle arc); every other control is a
+    // diffuse rounded-rect anchor whose `corner` morphs it between rectangle and oval.
     if (r.kind === "slider-h") parts.push(`<line x1="${x + w * 0.12}" y1="${scy}" x2="${x + w * 0.88}" y2="${scy}" stroke="${col}" stroke-width="${stw}" stroke-linecap="round"/>`);
     else if (r.kind === "slider-v") parts.push(`<line x1="${scx}" y1="${y + h * 0.12}" x2="${scx}" y2="${y + h * 0.88}" stroke="${col}" stroke-width="${stw}" stroke-linecap="round"/>`);
     else if (r.kind === "slider-arc") { const a = r.arc ?? { start: 200, end: 340 }; parts.push(arcPath(scx, scy, (ss / 2) * 0.86, a.start, a.end, stw, col, "none")); }
+    else parts.push(anchorMark(scx, scy, w, h, col, diff, (r as any).corner ?? 0.5, r.id, defs));
   }
 
   // --- bottom SPRITE STRIP: each slot gets a faint MAGENTA KEYLINE anchor (outline only,
@@ -616,7 +619,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     // shape-agnostic anchor: crosshair + soft green disc centered in the slot (crisp — strip
     // positions are deterministic). Same honest marker as the device sockets; the painter
     // fills one control per anchor and removes the mark.
-    parts.push(anchorMark(sx0 + cw / 2, sy0 + shh / 2, cw, shh, it.color, 0, `strip_${i}`, defs));
+    parts.push(anchorMark(sx0 + cw / 2, sy0 + shh / 2, cw, shh, it.color, 0, 0.5, `strip_${i}`, defs));
     cells.push({
       bind: it.bind, kind: it.kind,
       cellRect: [sx0 / GEN_W, sy0 / H, cw / GEN_W, shh / H],
