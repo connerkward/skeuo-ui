@@ -22,7 +22,9 @@
     "gifenc": "^1.0.3",
     "modern-screenshot": "^4.7.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-moveable": "^0.56.0",
+    "react-selecto": "^1.26.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260613.1",

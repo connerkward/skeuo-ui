@@ -13,6 +13,8 @@ import {
 import { combinedBlueprint, componentColors } from "../generate/blueprint";
 import { PAINT_PROMPT } from "../generate/pipeline";
 import PaintedSheet from "./PaintedSheet";
+import Moveable from "react-moveable";
+import Selecto from "react-selecto";
 import type { Region, Kind } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
@@ -32,14 +34,26 @@ const arcD = (cx: number, cy: number, r: number, a0: number, a1: number): string
 export default function TemplateStudio() {
   const [P, setP] = useState<Params>({ ...DEFAULT_PARAMS });
   const [regions, setRegions] = useState<SR[]>(() => layoutArch("console", DEFAULT_PARAMS) as SR[]);
-  const [sel, setSel] = useState<string | null>(null);
+  // SELECTION — a set (marquee multi-select via Selecto). `sel` is the PRIMARY (last-added)
+  // selection the inspector/keyboard operate on; `selIds` drives the Moveable target set.
+  const [selIds, setSelIds] = useState<string[]>([]);
+  const sel = selIds.length ? selIds[selIds.length - 1] : null;
   const [showOverlays, setShowOverlays] = useState(false);  // studio annotations on the blueprint — OFF by default (see the exact image sent to FAL); toggle on to label cells
   const globalDiff = 0;   // diffuseness disabled for now — anchors are crisp
   const [prompt, setPrompt] = useState("a wild organic Y2K Winamp media player");
   const [llmMsg, setLlmMsg] = useState("");
-  const [drag, setDrag] = useState<string | null>(null);
-  const [cornerDrag, setCornerDrag] = useState<string | null>(null);  // dragging a live corner-radius handle
-  const [resize, setResize] = useState<{ id: string; h: string } | null>(null);  // dragging a bbox corner to RESIZE
+  // Moveable/Selecto interaction refs — the transparent overlay divs (.ctrl) are Moveable's
+  // targets; the SVG below is a pure visual projection of the normalized model (pointer-events:none).
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const moveableRef = useRef<Moveable>(null);
+  const selectoRef = useRef<Selecto>(null);
+  const ctrlEls = useRef<Map<string, HTMLElement>>(new Map());
+  const [targets, setTargets] = useState<HTMLElement[]>([]);
+  const [stagePx, setStagePx] = useState({ w: 1, h: 1 });
+  // Ids under an ACTIVE Moveable gesture — while set, the transparent target div is frozen at its
+  // gesture-start rect so Moveable's gesto sees a STABLE target (moving its own target mid-drag
+  // corrupts the pointer baseline). The visible SVG shape still tracks the live model underneath.
+  const [gesturing, setGesturing] = useState<Set<string>>(new Set());
   // human-authored flag: once the human edits (drag/add/patch/nudge), the packer becomes a
   // PASS-THROUGH — packing must not rearrange a human-authored template. Generators reset it.
   const [, setAuthored] = useState(false);   // human-edit flag (setter kept; value unused while repack is off)
@@ -104,25 +118,27 @@ export default function TemplateStudio() {
       .replace(/\{BG\}/g, "«BG key-colour · derived from material server-side»");
   }, [combined, prompt, packed]);
 
-  const randomize = () => { mutate(() => layoutRandomP(P) as SR[]); setSel(null); setAuthored(false); };
-  const archGen = (a: string) => { mutate(() => layoutArch(a, P) as SR[]); setSel(null); setAuthored(false); };
+  const randomize = () => { mutate(() => layoutRandomP(P) as SR[]); setSelIds([]); setAuthored(false); };
+  const archGen = (a: string) => { mutate(() => layoutArch(a, P) as SR[]); setSelIds([]); setAuthored(false); };
   const llmGen = async () => {
     setLlmMsg("generating…");
     try {
       const r = await fetch("/api/derive", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
       const d = await r.json();
-      if (d.regions?.length) { mutate(() => d.regions as SR[]); setSel(null); setAuthored(false); setLlmMsg(`LLM: ${d.regions.length} regions`); }
+      if (d.regions?.length) { mutate(() => d.regions as SR[]); setSelIds([]); setAuthored(false); setLlmMsg(`LLM: ${d.regions.length} regions`); }
       else setLlmMsg(d.hasKey ? "LLM returned no usable layout (fell back)" : "no OpenAI key on server");
     } catch (e) { setLlmMsg("error: " + (e instanceof Error ? e.message : String(e))); }
   };
 
   const patchSel = (patch: Partial<SR>) => { setAuthored(true); mutate((rs) => enforceZeroDiff(rs.map((r) => r.id === sel ? { ...r, ...patch } : r))); };
-  const delSel = useCallback(() => { setSel((s) => { if (s) { setAuthored(true); mutate((rs) => rs.filter((r) => r.id !== s)); } return null; }); }, [mutate]);
+  const delSel = useCallback(() => {
+    setSelIds((ids) => { if (ids.length) { setAuthored(true); mutate((rs) => rs.filter((r) => !ids.includes(r.id))); } return []; });
+  }, [mutate]);
   const addComp = () => {
     const id = "c" + Math.random().toString(36).slice(2, 6);
     setAuthored(true);
     mutate((rs) => enforceZeroDiff([...rs, { id, kind: "button", content: "sprite", layer: "components", bind: id, rect: { x: 0.44, y: 0.44, w: 0.12, h: 0.08 }, shapeKind: "auto", diff: globalDiff } as SR]));
-    setSel(id);
+    setSelIds([id]);
   };
 
   // normal expected keyboard shortcuts (guarded: never intercept while typing in a field)
@@ -131,55 +147,85 @@ export default function TemplateStudio() {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
-      if (e.key === "Escape") { setSel(null); return; }
-      if (!sel) return;
+      if (e.key === "Escape") { setSelIds([]); return; }
+      if (!selIds.length) return;
       if (e.key === "Backspace" || e.key === "Delete") { e.preventDefault(); delSel(); return; }
       const step = e.shiftKey ? 0.02 : 0.005;
       const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
       const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
       if (dx || dy) {
         e.preventDefault(); setAuthored(true);
-        mutate((rs) => enforceZeroDiff(rs.map((r) => r.id === sel ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, r.rect.x + dx)), y: Math.max(0, Math.min(1 - r.rect.h, r.rect.y + dy)) } } : r)));
+        mutate((rs) => enforceZeroDiff(rs.map((r) => selIds.includes(r.id) ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, r.rect.x + dx)), y: Math.max(0, Math.min(1 - r.rect.h, r.rect.y + dy)) } } : r)));
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sel, mutate, undo, redo, delSel, enforceZeroDiff]);
+  }, [selIds, mutate, undo, redo, delSel, enforceZeroDiff]);
 
-  // drag a centroid on the RAW canvas (pointer coords → normalized, recentre the rect)
-  const onMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (!drag && !cornerDrag && !resize) return;
-    const svg = e.currentTarget; const b = svg.getBoundingClientRect();
-    const nx = (e.clientX - b.left) / b.width, ny = (e.clientY - b.top) / b.height;
-    if (drag) {
-      setRegions((rs) => rs.map((r) => r.id === drag ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, nx - r.rect.w / 2)), y: Math.max(0, Math.min(1 - r.rect.h, ny - r.rect.h / 2)) } } : r));
-    } else if (resize) {
-      // grab a BBOX CORNER to resize — the opposite corner stays fixed. (normalized rect)
-      setRegions((rs) => rs.map((r) => {
-        if (r.id !== resize.id) return r;
-        const MIN = 0.03; let { x, y, w, h } = r.rect; const r2 = x + w, b2 = y + h;
-        if (resize.h === "se") { w = Math.max(MIN, nx - x); h = Math.max(MIN, ny - y); }
-        else if (resize.h === "nw") { x = Math.max(0, Math.min(nx, r2 - MIN)); y = Math.max(0, Math.min(ny, b2 - MIN)); w = r2 - x; h = b2 - y; }
-        else if (resize.h === "ne") { y = Math.max(0, Math.min(ny, b2 - MIN)); w = Math.max(MIN, nx - x); h = b2 - y; }
-        else { x = Math.max(0, Math.min(nx, r2 - MIN)); w = r2 - x; h = Math.max(MIN, ny - y); }   // sw
-        w = Math.min(w, 1 - x); h = Math.min(h, 1 - y);
-        return { ...r, rect: { x, y, w, h } } as SR;
-      }));
-    } else if (cornerDrag) {
-      // Illustrator-style live corner: the radius = how far the pointer is INSET from the
-      // nearest corner (0 → sharp rect, half the short side → oval).
-      const px = nx * GEN_W, py = ny * GEN_H;
-      setRegions((rs) => rs.map((r) => {
-        if (r.id !== cornerDrag) return r;
-        const rx0 = r.rect.x * GEN_W, ry0 = r.rect.y * GEN_H, rw = r.rect.w * GEN_W, rh = r.rect.h * GEN_H;
-        const half = Math.min(rw, rh) / 2;
-        const inset = Math.max(0, Math.min(half, Math.min(Math.min(px - rx0, rx0 + rw - px), Math.min(py - ry0, ry0 + rh - py))));
-        return { ...r, corner: half > 0 ? +(inset / half).toFixed(3) : 0 } as SR;
-      }));
-    }
-  }, [drag, cornerDrag, resize]);
+  // ── Moveable/Selecto plumbing ────────────────────────────────────────────────
+  // Track the overlay's live pixel box (for px→normalized conversion + Moveable bounds).
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+    const measure = () => { const b = el.getBoundingClientRect(); if (b.width && b.height) setStagePx({ w: b.width, h: b.height }); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  // Resolve the DOM targets Moveable acts on from the current selection (after render commits refs).
+  // Depend on SELECTION only — the .ctrl elements are stable across region edits (stable keys), so
+  // rebuilding this array on every drag frame (regions dep) would hand Moveable a new `target` prop
+  // mid-gesture and abort the drag. `regions.length` catches add/delete membership changes.
+  useEffect(() => {
+    setTargets(selIds.map((id) => ctrlEls.current.get(id)).filter(Boolean) as HTMLElement[]);
+  }, [selIds, regions.length]);
+  // Model changed (inspector edit, nudge, generator) → re-sync Moveable's control box to the divs.
+  // Skip WHILE a gesture is active (updateRect mid-drag would reset Moveable's in-progress state).
+  useEffect(() => { if (gesturing.size === 0) moveableRef.current?.updateRect(); }, [regions, targets, stagePx, gesturing]);
 
-  const renderShape = (r: SR, editable: boolean) => {
+  const px2n = () => { const b = overlayRef.current?.getBoundingClientRect(); return { w: b?.width || stagePx.w, h: b?.height || stagePx.h }; };
+  const clampPos = (v: number, size: number) => Math.max(0, Math.min(1 - size, v));
+  const MIN_N = 0.03;
+  // Capture each target's START rect so drag/resize are DELTA-based off Moveable's px distance
+  // (e.dist), NOT its re-measured absolute e.left/e.top — which drift, because the .ctrl divs are
+  // repositioned live from the model every frame and that feeds a runaway back into e.left.
+  const gestureStart = useRef<Map<string, { x: number; y: number; w: number; h: number }>>(new Map());
+  const beginGesture = useCallback(() => {
+    snapshot();
+    const m = new Map<string, { x: number; y: number; w: number; h: number }>();
+    regions.forEach((r) => m.set(r.id, { ...r.rect }));
+    gestureStart.current = m;
+    setGesturing(new Set(selIds));   // freeze the active target divs for the gesture's duration
+  }, [snapshot, regions, selIds]);
+  // MOVE: dist = total px drag from gesture start → normalized delta added to the captured start rect.
+  const applyDrag = (t: HTMLElement, distX: number, distY: number) => {
+    const id = t.dataset.id, s = id ? gestureStart.current.get(id) : undefined; if (!s) return;
+    const { w, h } = px2n();
+    const nx = clampPos(s.x + distX / w, s.w), ny = clampPos(s.y + distY / h, s.h);
+    setRegions((rs) => rs.map((r) => r.id === id ? { ...r, rect: { ...r.rect, x: nx, y: ny } } : r));
+  };
+  // RESIZE: absolute e.width/e.height (start-cached in Moveable → safe) for size; the moving corner's
+  // position via delta (opposite corner fixed → its drag dist is 0). Clamped to [0,1] + MIN size.
+  const applyResize = (t: HTMLElement, width: number, height: number, distX: number, distY: number) => {
+    const id = t.dataset.id, s = id ? gestureStart.current.get(id) : undefined; if (!s) return;
+    const { w, h } = px2n();
+    let nx = Math.max(0, s.x + distX / w), ny = Math.max(0, s.y + distY / h);
+    let nw = Math.max(MIN_N, width / w), nh = Math.max(MIN_N, height / h);
+    nw = Math.min(nw, 1 - nx); nh = Math.min(nh, 1 - ny);
+    setRegions((rs) => rs.map((r) => r.id === id ? { ...r, rect: { x: nx, y: ny, w: nw, h: nh } } as SR : r));
+  };
+  // CORNER RADIUS: roundable emits a % border-radius (roundRelative) → scalar corner 0..1 (50%=oval→1).
+  const applyRound = (t: HTMLElement, borderRadius: string) => {
+    const id = t.dataset.id; if (!id) return;
+    const first = parseFloat(borderRadius) || 0;
+    const corner = Math.max(0, Math.min(1, borderRadius.includes("%") ? first / 50 : first / (Math.min(stagePx.w, stagePx.h) / 2)));
+    setRegions((rs) => rs.map((r) => r.id === id ? { ...r, corner: +corner.toFixed(3) } as SR : r));
+  };
+  const commitZeroDiff = () => { setAuthored(true); setRegions(enforceZeroDiff); setGesturing(new Set()); requestAnimationFrame(() => moveableRef.current?.updateRect()); };
+  const isSliderK = (k?: Kind) => k === "slider-h" || k === "slider-v" || k === "slider-arc";
+
+  const renderShape = (r: SR) => {
     const W = GEN_W, H = GEN_H;
     const x = r.rect.x * W, y = r.rect.y * H, w = r.rect.w * W, h = r.rect.h * H;
     const cx = x + w / 2, cy = y + h / 2;
@@ -204,15 +250,11 @@ export default function TemplateStudio() {
           ? <path d={arcD(cx, cy, (s / 2) * 0.86, (r.arc ?? DEF_ARC).start, (r.arc ?? DEF_ARC).end)} fill="none" stroke={col} strokeWidth={tw} strokeLinecap="round" />
           : <rect x={rrx} y={rry} width={rw} height={rh} rx={rr} ry={rr} fill={col} fillOpacity={0.38} stroke={col} strokeWidth={Math.max(1.5, s * 0.022)} filter={`url(#${fid})`} />;
 
-    // live corner-radius handles (Illustrator style, INSET circles) — box controls only, when selected
-    const hi = Math.max(rr, s * 0.18);
-    const cornerPts: Array<[number, number]> = [
-      [rrx + hi, rry + hi], [rrx + rw - hi, rry + hi],
-      [rrx + hi, rry + rh - hi], [rrx + rw - hi, rry + rh - hi],
-    ];
-
+    // PURE VISUAL LAYER — no pointer interaction here. Selection/drag/resize/radius are owned by
+    // react-moveable + react-selecto on the transparent HTML overlay (.ctrl divs) above this SVG;
+    // the shapes below are just a projection of the normalized model, redrawn as it edits.
     return (
-      <g key={r.id} onClick={() => editable && setSel(r.id)} style={{ cursor: editable ? "pointer" : "default" }}>
+      <g key={r.id}>
         {!isSlider && <filter id={fid} x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation={s * 0.09} /></filter>}
         {shape}
         {!isSlider && <g stroke={col} strokeWidth={lw} strokeLinecap="round" opacity={0.9}>
@@ -220,37 +262,102 @@ export default function TemplateStudio() {
           <line x1={cx} y1={cy - arm} x2={cx} y2={cy + arm} />
         </g>}
         {selected && <rect x={x} y={y} width={w} height={h} fill="none" stroke="#fff" strokeWidth={2} strokeDasharray="7 5" opacity={0.55} />}
-        <circle cx={cx} cy={cy} r={editable ? Math.max(dot, 11) : dot} fill={selected ? "#fff" : col} stroke="#000" strokeWidth={2}
-          style={{ cursor: editable ? "grab" : "default" }}
-          onPointerDown={editable ? (e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); } : undefined} />
-        {/* INSET circles = corner RADIUS (rect↔oval) */}
-        {editable && selected && !isSlider && cornerPts.map(([hx, hy], i) => (
-          <circle key={`rad${i}`} cx={hx} cy={hy} r={8} fill={col} stroke="#fff" strokeWidth={2.5} style={{ cursor: "pointer" }}
-            onPointerDown={(e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setCornerDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); }} />
-        ))}
-        {/* BBOX-corner squares = RESIZE (grab a corner to resize the control) */}
-        {editable && selected && ([["nw", x, y], ["ne", x + w, y], ["sw", x, y + h], ["se", x + w, y + h]] as Array<[string, number, number]>).map(([k, hx, hy]) => (
-          <rect key={`rs${k}`} x={hx - 9} y={hy - 9} width={18} height={18} fill="#fff" stroke="#000" strokeWidth={2}
-            style={{ cursor: k === "nw" || k === "se" ? "nwse-resize" : "nesw-resize" }}
-            onPointerDown={(e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setResize({ id: r.id, h: k }); (e.target as Element).setPointerCapture(e.pointerId); }} />
-        ))}
+        <circle cx={cx} cy={cy} r={dot} fill={selected ? "#fff" : col} stroke="#000" strokeWidth={2} />
         <text x={cx} y={y - 6} fill={col} fontSize={26} textAnchor="middle" style={{ pointerEvents: "none", fontWeight: 700 }}>{(r.bind || r.id).slice(0, 10)}</text>
       </g>
     );
   };
 
-  // height-fit canvas: the stage derives its width from the viewport height via aspect-ratio,
-  // so all three panels are fully visible at once (no page scroll).
-  const Canvas = ({ regs, editable, title }: { regs: SR[]; editable: boolean; title: string }) => (
+  // height-fit canvas (READ-ONLY): the stage derives its width from the viewport height via
+  // aspect-ratio. The SVG is pointer-events:none — a pure visual projection of the model.
+  const Canvas = ({ regs, title }: { regs: SR[]; title: string }) => (
     <div className="tsCanvas dev">
       <div className="tsCap">{title} <span>({regs.length} regions)</span></div>
       <div className="tsFit">
-        <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`}
-          onPointerMove={editable ? onMove : undefined}
-          onPointerUp={() => { setDrag(null); setCornerDrag(null); setResize(null); if (editable) setRegions(enforceZeroDiff); }}
-          onPointerLeave={() => { setDrag(null); setCornerDrag(null); setResize(null); }}>
-          {regs.map((r) => renderShape(r, editable))}
+        <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`} style={{ pointerEvents: "none" }}>
+          {regs.map((r) => renderShape(r))}
         </svg>
+      </div>
+    </div>
+  );
+
+  const selRegion = regions.find((r) => r.id === sel);
+  const roundable = selIds.length === 1 && !!selRegion && !isSliderK(selRegion.kind);
+  // EDITABLE stage — SVG visual layer (pointer-events:none) UNDER a transparent HTML overlay of
+  // .ctrl divs (Moveable targets), driven by react-moveable (drag/resize/round) + react-selecto
+  // (marquee + click select). Inlined (NOT a nested component) so Moveable/Selecto persist across
+  // renders instead of remounting.
+  const editableStage = (
+    <div className="tsCanvas dev">
+      <div className="tsCap">RAW template (seed / edit) <span>({regions.length} regions)</span></div>
+      <div className="tsFit">
+        <div className="tsStageWrap" ref={overlayRef}>
+          <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+            {regions.map((r) => renderShape(r))}
+          </svg>
+          {/* transparent Moveable targets — projections of the normalized rects, FROZEN at the
+              gesture-start rect while under active drag/resize so gesto's baseline stays stable. */}
+          {regions.map((r) => {
+            const g = gesturing.has(r.id) ? gestureStart.current.get(r.id) : undefined;
+            const rc = g ?? r.rect;
+            return (
+              <div key={r.id} className="ctrl" data-id={r.id}
+                ref={(el) => { if (el) ctrlEls.current.set(r.id, el); else ctrlEls.current.delete(r.id); }}
+                style={{ position: "absolute", left: `${rc.x * 100}%`, top: `${rc.y * 100}%`, width: `${rc.w * 100}%`, height: `${rc.h * 100}%`, boxSizing: "border-box", background: "transparent" }} />
+            );
+          })}
+          <Moveable
+            ref={moveableRef}
+            target={targets}
+            draggable
+            resizable
+            roundable={roundable}
+            roundRelative
+            snappable
+            origin={false}
+            elementGuidelines={[".ctrl"]}
+            bounds={{ left: 0, top: 0, right: stagePx.w, bottom: stagePx.h, position: "css" }}
+            throttleDrag={0}
+            throttleResize={0}
+            keepRatio={false}
+            onDragStart={beginGesture}
+            onDrag={(e) => applyDrag(e.target as HTMLElement, e.dist[0], e.dist[1])}
+            onDragEnd={commitZeroDiff}
+            onDragGroupStart={beginGesture}
+            onDragGroup={(e) => e.events.forEach((ev) => applyDrag(ev.target as HTMLElement, ev.dist[0], ev.dist[1]))}
+            onDragGroupEnd={commitZeroDiff}
+            onResizeStart={beginGesture}
+            onResize={(e) => applyResize(e.target as HTMLElement, e.width, e.height, e.drag.dist[0], e.drag.dist[1])}
+            onResizeEnd={commitZeroDiff}
+            onResizeGroupStart={beginGesture}
+            onResizeGroup={(e) => e.events.forEach((ev) => applyResize(ev.target as HTMLElement, ev.width, ev.height, ev.drag.dist[0], ev.drag.dist[1]))}
+            onResizeGroupEnd={commitZeroDiff}
+            onRoundStart={snapshot}
+            onRound={(e) => applyRound(e.target as HTMLElement, String(e.borderRadius))}
+          />
+          <Selecto
+            ref={selectoRef}
+            dragContainer={".tsStageWrap"}
+            selectableTargets={[".ctrl"]}
+            hitRate={0}
+            selectByClick
+            selectFromInside={false}
+            toggleContinueSelect={"shift"}
+            onDragStart={(e) => {
+              const mv = moveableRef.current;
+              const t = e.inputEvent.target as HTMLElement;
+              if (mv && (mv.isMoveableElement(t) || targets.some((tg) => tg === t || tg.contains(t)))) e.stop();
+            }}
+            onSelect={(e) => setSelIds((e.selected as HTMLElement[]).map((el) => el.dataset.id!).filter(Boolean))}
+            onSelectEnd={(e) => {
+              setSelIds((e.selected as HTMLElement[]).map((el) => el.dataset.id!).filter(Boolean));
+              if (e.isDragStart) {
+                e.inputEvent.preventDefault();
+                requestAnimationFrame(() => requestAnimationFrame(() => moveableRef.current?.dragStart(e.inputEvent)));
+              }
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -286,6 +393,10 @@ export default function TemplateStudio() {
         .tsCap{color:#cfcfe0;font-weight:600;font-size:12.5px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .tsCap span{color:#8a8a96;font-weight:400;font-size:11px}
         .tsStage{width:100%;aspect-ratio:${GEN_W}/${GEN_H};background:#15151c;border:1px solid #2a2a34;border-radius:10px;touch-action:none}
+        /* editable stage: relative wrapper holds the visual SVG + the transparent Moveable target divs */
+        .tsStageWrap{position:relative;width:100%;aspect-ratio:${GEN_W}/${GEN_H};background:#15151c;border:1px solid #2a2a34;border-radius:10px;touch-action:none}
+        .ctrl{cursor:grab}
+        .ctrl:active{cursor:grabbing}
         .tsBP{width:100%;aspect-ratio:${GEN_W}/1820;position:relative;border-radius:10px;overflow:hidden;border:1px solid #2a2a34}
         .tsBP svg{display:block;width:100%;height:100%}
         @media (max-width:1020px){
@@ -321,8 +432,8 @@ export default function TemplateStudio() {
 
       {/* CENTER — everything at once: raw, packed, combined blueprint (height-fit) */}
       <main className="tsMain">
-        <Canvas regs={regions} editable title="RAW template (seed / edit)" />
-        {REPACK_ENABLED && <Canvas regs={packed} editable={false} title="PACKED (repack)" />}
+        {editableStage}
+        {REPACK_ENABLED && <Canvas regs={packed} title="PACKED (repack)" />}
         {combined && (
           <div className="tsCanvas bp">
             <div className="tsCap" style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -359,7 +470,7 @@ export default function TemplateStudio() {
         <div style={{ color: "#cfcfe0", fontWeight: 600 }}>Components <span style={{ color: "#8a8a96", fontWeight: 400, fontSize: 12 }}>({regions.length})</span></div>
         <div style={{ flex: "1 1 120px", minHeight: 90, overflowY: "auto", border: "1px solid #26262f", borderRadius: 8 }}>
           {regions.map((r) => (
-            <div key={r.id} onClick={() => setSel(r.id)}
+            <div key={r.id} onClick={() => setSelIds([r.id])}
               style={{ display: "flex", gap: 6, alignItems: "center", padding: "4px 8px", fontSize: 12, cursor: "pointer", background: sel === r.id ? "#242432" : "transparent", color: "#c8c8d2" }}>
               <span style={{ width: 9, height: 9, borderRadius: "50%", background: colorOf(r), flex: "0 0 auto" }} />
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.bind || r.id}</span>
