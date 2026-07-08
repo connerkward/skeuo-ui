@@ -27,6 +27,13 @@ Reusable: the Gemini-gated verification harness (`tools/align-verify/`, NOT my-e
 - Cleaned 4 merged worktrees + 6 feature branches; audited dead code (`spriteSheet.ts`,
   `CutCompare.tsx` + the SAM/VLM arm ≈ 1,300 dead lines — see junk list, NOT yet removed).
 
+## Template Studio
+- [ ] **Auto-snapping grid for Template Studio** (added 2026-07-07). Snap controls to a grid
+      / to each other while dragging-resizing. Library-first: the in-flight react-moveable
+      migration likely covers this out of the box — Moveable ships `snappable`,
+      `snapGridWidth`/`snapGridHeight`, element guidelines + snap thresholds
+      (verify against current react-moveable docs before hand-rolling anything).
+
 ## Cutout — coloured-backdrop matte: WIRED on branch `cutout-coloured-despill` (2026-06-23)
 
 **Status: implemented + build-green + function-verified on real paints; pending a LIVE
