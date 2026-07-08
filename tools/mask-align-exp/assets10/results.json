@@ -1,0 +1,174 @@
+{
+ "dims": [
+  4608,
+  3712
+ ],
+ "seed": 41,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "magma_orange": [
+   255,
+   110,
+   20
+  ],
+  "lava_red": [
+   230,
+   40,
+   25
+  ],
+  "ember_yellow": [
+   255,
+   210,
+   60
+  ],
+  "gold_chrome": [
+   212,
+   170,
+   40
+  ],
+  "crust_black": [
+   25,
+   22,
+   20
+  ],
+  "rubber_dark": [
+   45,
+   40,
+   38
+  ],
+  "backdrop": [
+   235,
+   235,
+   238
+  ]
+ },
+ "keys": {
+  "prev": [
+   0,
+   128,
+   255
+  ],
+  "play": [
+   0,
+   255,
+   128
+  ],
+  "next": [
+   0,
+   255,
+   255
+  ],
+  "stop": [
+   128,
+   0,
+   255
+  ],
+  "vol": [
+   255,
+   0,
+   255
+  ],
+  "bal": [
+   0,
+   0,
+   255
+  ],
+  "seek": [
+   0,
+   255,
+   0
+  ],
+  "tog": [
+   128,
+   128,
+   255
+  ],
+  "screen": [
+   128,
+   255,
+   128
+  ]
+ },
+ "keyNames": {
+  "prev": "AZURE SKY-BLUE",
+  "play": "SPRING GREEN",
+  "next": "CYAN",
+  "stop": "VIOLET-PURPLE",
+  "vol": "MAGENTA",
+  "bal": "PURE BLUE",
+  "seek": "PURE GREEN",
+  "tog": "LAVENDER-PERIWINKLE",
+  "screen": "PALE MINT-GREEN"
+ },
+ "buttons": [
+  "prev",
+  "play",
+  "next",
+  "stop"
+ ],
+ "sprites": [
+  "vol",
+  "bal",
+  "seek",
+  "tog"
+ ],
+ "extras": [
+  "screen"
+ ],
+ "template": {
+  "prev": [
+   0.36,
+   0.27
+  ],
+  "play": [
+   0.635,
+   0.28875
+  ],
+  "next": [
+   0.38,
+   0.3975
+  ],
+  "stop": [
+   0.65,
+   0.41250000000000003
+  ],
+  "vol": [
+   0.365,
+   0.585
+  ],
+  "bal": [
+   0.635,
+   0.585
+  ],
+  "seek": [
+   0.5,
+   0.49875
+  ],
+  "tog": [
+   0.5,
+   0.6637500000000001
+  ],
+  "screen": [
+   0.5,
+   0.14625
+  ]
+ },
+ "defsz": {
+  "vol": 0.12666666666666668,
+  "bal": 0.12666666666666668,
+  "seek": 0.058333333333333334,
+  "tog": 0.09166666666666666
+ },
+ "screen_rect": [
+  0.32,
+  0.10500000000000001,
+  0.36000000000000004,
+  0.08249999999999999
+ ],
+ "devFrac": 0.75
+}

@@ -1,61 +1,97 @@
 # mask-align-exp — joint paint+mask alignment pipeline (2026-07-07)
 
-Working experiment state, committed for the studio to port. Live-iterated copy lives in
-`/private/tmp/skeuo-maskexp/` (this snapshot converts the big PNGs to full-res WebP).
+Working experiment state. Live-iterated copy in `/private/tmp/skeuo-maskexp/`.
 Companion record: `docs/experiments/2026-07-07-dual-output-mask.md`.
 
-## What works (verified end-to-end in `interactive.html`)
+## What works (verified end-to-end)
 
 One $0.15 nano-banana-pro generation (`fal-ai/gemini-3-pro-image-preview/edit`, 4K, 5:4)
 returns a two-panel canvas: **LEFT** = painted device + 5-part sprite strip on flat charcoal
-`(22,22,26)`; **RIGHT** = color-keyed region mask on pure black. Split at `w//2` (verified:
-the model draws the divider exactly there).
+`(22,22,26)`; **RIGHT** = color-keyed region mask on pure black. Split at `w//2`.
 
-Pipeline (`run8.py` → `extract8.py` → `run_biref.py` → `interactive.html`):
+Pipeline (`run9.py` → `extract9.py` → `run_biref9.py` → `phone9.html`):
 
-1. **Mask-color correlation** (`extract8.py`) — nearest-color assignment (`sat>55, max>90,
-   dist<95`), **largest connected component** per color (kills stray-pixel bbox inflation),
-   sprite-strip cells by **color identity, never left-to-right order** (order-based
-   assignment put a toggle where seek belonged), toggle = two pink cells split left/right.
-2. **Snap-to-paint, X ONLY** — the model paints the mask panel ~**+0.5% right** of the paint
-   (systematic across generations; direction consistent, magnitude 0.2–0.7%). Snap each
-   region's x-center onto the painted feature (dark well for sockets, saturated icon for
-   buttons); **keep the mask's y** — the dark-pixel centroid is biased UP (recess shadow hugs
-   the top inner rim under top-light) and was seating knobs too high. Residual after snap:
-   **≈0.05%**. `regions.json` carries both `maskDevice` (raw blob bbox) and `device` (snapped).
-3. **BiRefNet matting** (`run_biref.py`, `fal-ai/birefnet/v2` Heavy 2048) — **global pass**
-   (1 call, ~$0.005) mattes the device body + all parts at once; **per-part crops** (~$0.013
-   total) give cleaner small-part edges. Verdict: global for the device, per-part for sprites.
-   Client tight-crops the per-part PNGs (BiRefNet returns transparent padding that lies about
-   part geometry).
-4. **Placement** (`interactive.html`) — knobs: circle-clipped cut seated at snapped center,
-   cap rotates under a **pinned** specular (normal-blend hotspot+counter-shade; screen-blend
-   white is invisible on chrome), drop shadow on the **non-rotating** container. Seek: thumb
-   travel flush to slot ends; `tw = th*(t.w/t.h)*PH/PW` (x/y normalizers differ — omitting
-   the PH/PW factor renders 1.6× too narrow). Buttons: baked; press-darkening = the button's
-   own mask silhouette cropped around `maskDevice`, positioned translated by the snap delta,
-   `mask-size:100%` (1:1 pixel mapping — `contain` rescaling was the oversize bug).
+1. **Mask-color correlation** — nearest-color assignment (`sat>55, max>90, dist<95`),
+   **largest connected component** per color, sprite-strip cells by **color identity not
+   left-to-right order**. Toggle = two pink cells split left/right.
+2. **Circle-fit alignment** (extract9) — mini-Hough on gradient magnitude for vol/bal knob
+   sockets. Material-agnostic: works on dark-on-dark chrome and MAGMA CORE black bodies.
+   Residual vs painted rim center: **<3 px**. Global drift vector from knob fits applied to
+   ALL controls (-0.5% X, +0.0% Y on run9 seed 41).
+3. **rrect-fit alignment** (extract9) — same gradient scoring along rounded-rect perimeter
+   for seek groove and toggle slot. Measured on MAGMA CORE: tog 214×299 px, seek 904×116 px.
+4. **Snap-to-paint X ONLY** — model paints mask ~+0.5% right of paint (systematic). Snap
+   each region's x-center onto the painted dark well (socket) or saturated icon (button);
+   keep mask's y (dark-pixel centroid biased UP by top-light shadow).
+5. **Leak gate** (`leak_check()`) — scan paint panel for surviving guide colors (sat>55,
+   dist<60 px from any key). FAIL threshold 0.05%. Per-color counts printed.
+6. **Relative emptiness gate** — floor = 10th percentile luminance in the socket well.
+   FAIL if >10% of interior is >floor+55. Catches baked thumbs/handles on ANY material.
+7. **Gate-driven repair** (`erase_baked.py`) — for sockets failing emptiness gate: dilate
+   part mask, fill with floor tone + gaussian noise, feathered blend. Cheaper than re-rolling.
+8. **BiRefNet global + CC island split** (`run_biref9.py`) — one pass mattes the whole
+   paint; largest island = device body; smaller islands identity-matched by centroid to strip
+   cells. Alpha holes in device matte = exact painted socket geometry.
+9. **Alpha-hole seats** — device BiRefNet matte has enclosed alpha holes at sockets → fit
+   inscribed circle → exact painted socket center without any paint-color assumption.
+10. **Backdrop-by-material-lightness** — dark body → pale (235,235,238) backdrop; light
+    body → charcoal (22,22,26). Parameterized in blueprint canvas AND all prompt clauses.
+11. **Screen as mask region** — lime (100,255,0) key, verified min dist 149 from all other
+    keys. `extras:["screen"]` in regions.json.
+
+## Adaptive color contract (run10 — wild/stress test)
+
+`run10.py` builds the color key contract FIRST (9 keys from the {0,128,255}³ lattice,
+≥120 RGB distance from each other AND from the design palette). Written to `results.json`
+before the fal call; `extract10.py` reads colors from there — palette-agnostic. Result on
+MAGMA CORE Y2K skin: single-gen fully clean mask on first try (conventional chrome hardware
+triggers baked-part prior; vivid unusual designs pass more easily).
+
+## Prompt clauses that matter (run9)
+
+- **ALIGNMENT MARKINGS** framing: "like masking tape on a workpiece — NOT part of the
+  product's design and MUST be COMPLETELY removed."
+- **ZERO RESIDUE clause**: "Do NOT leave ANY thin coloured rim, ring, halo, edge tint or
+  glow around ANY socket, button, slot or part."
+- **EXACT FIT clause**: "every strip part's guide outline is drawn at the EXACT SAME SIZE
+  AND SHAPE as its slot."
+- **PHOTOGRAPHED BEFORE ASSEMBLY** block: device photographed before parts installed →
+  all sockets completely empty.
+- **Solid blob mask clause**: "NEVER flood a whole strip cell or any rectangle of
+  background with colour; NEVER draw outlines or hollow shapes — every blob is ONE solid
+  filled silhouette."
+- **Congruence contract**: slot geometry defined ONCE (`KNOB_R=76`, `TOG_W/H/R=110/170/38`,
+  `GROOVE_W/H=520/70`, `THUMB_W/H/R=150/92/44`) used for BOTH device slot AND strip anchor.
+  Old mismatch (110×170 socket vs 120×150 strip anchor) was the toggle-size bug.
 
 ## Key numbers
 
-- mask→skin (does the blob sit on the painted control): **0.5–2% raw, ≈0.05% after snap**.
-- template→mask (model rearranges the authored layout): **~26–30% — expected, not error**;
-  place from the mask, never the template.
-- Joint = 1 image billed; separate mask pass or `num_images:2` = 2× cost. 4K recovers the
-  shared-canvas resolution loss for the same $0.15.
-
-## Prompt clauses that matter (see `run8.py` PROMPT)
-
-- Flat uniform charcoal backdrop, strongly contrasting the (monochrome) body — none of the
-  guide colors anywhere in the paint.
-- Seek track = COMPLETELY EMPTY groove (the model loves to bake a thumb in).
-- Strip = EXACTLY FIVE parts, ONE row, **straight-down top-down orthographic** (it defaults
-  to 3/4 product shots that can never seat on a flat device), toggle in OFF and ON states.
+- mask→skin (blob on painted control): **0.5–2% raw, ≈0.05% after gradient-fit + snap**.
+- Gradient-fit offset on run9 seed 41: vol -13,+2 px; bal -10,-1 px; global drift -0.50%.
+- Joint = 1 image billed; separate mask pass = 2× cost. 4K recovers resolution.
+- BiRefNet Heavy 2048: ~$0.005/call.
+- Wild Y2K design (run10): passed mask quality on first gen (seed 41).
 
 ## Files
 
-- `run8.py` / `extract8.py` / `run_biref.py` / `maskskin.py` / `gen_explain.py` — pipeline.
-- `interactive.html` — full-chain live proof (template → paint → mask → cut & placed, all
-  controls interactive). `explain.html` — the correlation bug post-mortem. `biref-compare.html`
-  — global vs per-part matting. `global-matte-view.html` — raw matte on checkerboard.
-- `assets8/` — generation + `regions.json` (WebP full-res). `assets_biref/` — matte cuts.
+- `run9.py` — walkman/phone skin generator with all prompt fixes + congruence contract.
+- `extract9.py` — circle-fit + rrect-fit + global drift + slot-extent refinement + gates.
+- `erase_baked.py` — gate-driven repair: fills baked parts with floor tone + noise.
+- `run_biref9.py` — global BiRefNet pass + CC island split + alpha-hole seats.
+- `run10.py` — Y2K MAGMA CORE stress test with adaptive color contract.
+- `extract10.py` — same gradient-fit pipeline, reads color keys from results.json.
+- `run_biref10.py` — BiRefNet pass for run10 assets.
+- `phone9.html` — full contact sheet: blueprint → joint → paint → mask panels → BiRefNet
+  global matte + device island → CC sprite islands → finished interactive product.
+- `wild10.html` — MAGMA CORE contact sheet with same sections.
+- `run8.py` / `extract8.py` / `run_biref.py` / `interactive.html` — earlier iteration
+  (snap-to-paint only, no gradient-fit, no gates). Kept as baseline.
+- `assets9/` / `assets9_biref/` / `assets10/` / `assets10_biref/` — WebP assets + regions.json.
+
+## Open issues
+
+- run9 sprite cells still wrong-art on seed 41 after repair (pink rings; seek=toggle swap).
+  Root cause: model painted toggle where seek should be in the strip. Next: strip cell
+  ordering prompt fix or stronger strip-layout enforcement.
+- wild10 knob/switch alignment: gradient-fit added to extract10.py (results above) but not
+  re-verified interactively after fix.
