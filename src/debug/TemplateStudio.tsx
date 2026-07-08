@@ -33,7 +33,7 @@ export default function TemplateStudio() {
   const [regions, setRegions] = useState<SR[]>(() => layoutArch("console", DEFAULT_PARAMS) as SR[]);
   const [sel, setSel] = useState<string | null>(null);
   const [showOverlays, setShowOverlays] = useState(false);  // studio annotations on the blueprint — OFF by default (see the exact image sent to FAL); toggle on to label cells
-  const [globalDiff, setGlobalDiff] = useState(0.35);
+  const globalDiff = 0;   // diffuseness disabled for now — anchors are crisp
   const [prompt, setPrompt] = useState("a wild organic Y2K Winamp media player");
   const [llmMsg, setLlmMsg] = useState("");
   const [drag, setDrag] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export default function TemplateStudio() {
   // BAKED regions (transport buttons molded into the body) — the EXACT input the blueprint
   // uses. Shared so the studio panels colour controls the SAME way the blueprint does.
   const bakedRegs = useMemo(() => {
-    try { return bakeButtons(packed.map((r) => ({ ...r, diff: r.diff ?? globalDiff })) as Region[]); }
+    try { return bakeButtons(packed.map((r) => ({ ...r, diff: 0 })) as Region[]); }
     catch { return packed as Region[]; }
   }, [packed, globalDiff]);
   // COMBINED blueprint — real shipping function (bakeButtons → combinedBlueprint).
@@ -156,7 +156,7 @@ export default function TemplateStudio() {
     const x = r.rect.x * W, y = r.rect.y * H, w = r.rect.w * W, h = r.rect.h * H;
     const cx = x + w / 2, cy = y + h / 2;
     const col = colorOf(r);
-    const diff = r.diff ?? globalDiff;
+    const diff = 0;   // diffuseness disabled for now — crisp anchor
     const s = Math.min(w, h);
     // SAME anchor as the combined blueprint (blueprint.ts anchorMark): a soft SIZE DISC + a
     // crisp CENTROID CROSSHAIR, coloured by this component's identity. No fake silhouette
@@ -268,10 +268,6 @@ export default function TemplateStudio() {
         <div style={{ borderTop: "1px solid #26262f", paddingTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
           {sl("density", "density", 0, 1)}{sl("symmetry", "symmetry", 0, 1)}{sl("hierarchy", "hierarchy", 0, 1)}{sl("gapScale", "gapScale", 0.5, 3, 0.1)}{sl("spacing", "spacing", 0, 0.08, 0.005)}
         </div>
-        <div style={{ borderTop: "1px solid #26262f", paddingTop: 8 }}>
-          <label style={{ fontSize: 12, color: "#b8b8c4" }}>global diffuseness <b style={{ color: "#7fe0a0" }}>{globalDiff.toFixed(2)}</b>
-            <input type="range" min={0} max={1} step={0.05} value={globalDiff} onChange={(e) => setGlobalDiff(+e.target.value)} style={{ width: "100%" }} /></label>
-        </div>
         <div style={{ marginTop: "auto", fontSize: 11, color: "#66666f", borderTop: "1px solid #26262f", paddingTop: 8 }}>
           Repack is OFF — packed mirrors raw 1:1. Edit raw → packed + blueprint update live.
         </div>
@@ -340,8 +336,6 @@ export default function TemplateStudio() {
               <select value={selR.bind || ""} onChange={(e) => patchSel({ bind: e.target.value })} style={{ width: "100%", background: "#15151c", color: "#fff", border: "1px solid #2a2a34", borderRadius: 6, padding: 4 }}>
                 {(SPOTIFY_BINDS.includes(selR.bind || "") ? SPOTIFY_BINDS : [selR.bind || "", ...SPOTIFY_BINDS]).map((b) => <option key={b} value={b}>{b || "—"}</option>)}
               </select></label>
-            <label>diffuseness <b style={{ color: "#7fe0a0" }}>{(selR.diff ?? globalDiff).toFixed(2)}</b>
-              <input type="range" min={0} max={1} step={0.05} value={selR.diff ?? globalDiff} onChange={(e) => patchSel({ diff: +e.target.value })} style={{ width: "100%" }} /></label>
             <label>size <input type="range" min={0.03} max={0.4} step={0.01} value={selR.rect.w} onChange={(e) => { const w = +e.target.value; patchSel({ rect: { ...selR.rect, w, h: w * 0.7 } }); }} style={{ width: "100%" }} /></label>
             {selR.kind === "slider-arc" && (() => {
               const arc = selR.arc ?? DEF_ARC;
@@ -357,7 +351,7 @@ export default function TemplateStudio() {
             })()}
             <button style={{ ...btn, background: "#3a1c1c", borderColor: "#5a2a2a" }} onClick={delSel}>🗑 Delete</button>
           </div>
-        ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, diffuseness, or size.</div>}
+        ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, or size.</div>}
       </aside>
 
       {/* BOTTOM — LLM command bar + shortcuts */}
