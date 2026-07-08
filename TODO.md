@@ -33,7 +33,7 @@ Reusable: the Gemini-gated verification harness (`tools/align-verify/`, NOT my-e
       migration likely covers this out of the box — Moveable ships `snappable`,
       `snapGridWidth`/`snapGridHeight`, element guidelines + snap thresholds
       (verify against current react-moveable docs before hand-rolling anything).
-- [ ] **react-moveable migration — finish it (WIP, `10bd90b`, 2026-07-07).** Overlay + Moveable +
+- [ ] **react-moveable migration — finish it (WIP, `917f083`, 2026-07-07).** Overlay + Moveable +
       Selecto are wired and compile; select/move/resize + the transform box work in the browser.
       KNOWN BUG: the `updateRect` effect re-fires on every `regions` change (every drag frame) and can
       disrupt an active gesture — add a "skip while gesturing" guard. Then wire corner-radius via
@@ -44,7 +44,7 @@ Reusable: the Gemini-gated verification harness (`tools/align-verify/`, NOT my-e
 - Diffuse corner-draggable rounded-rect shape (rect↔oval, Illustrator corner handles); slider geometry = line + partial-circle arc.
 - Spotify-only control filter (drops balance / EQ / stop) + de-complexified random layouts; bind dropdown limited to Spotify-drivable binds.
 - Full-height 3-panel layout (RAW / blueprint / painted) + FAL prompt moved to a bottom strip; PACKED hidden behind a `REPACK_ENABLED` flag; blueprint overlays default off + toggleable.
-- Started the react-moveable + react-selecto migration (WIP — see above).
+- **Overlap enforcement removed** (`917f083`): `enforceZeroDiff`/`resolveOverlaps` deleted, controls can now overlap freely. `justify-content: safe center` fixed left-panel masking. Renamed `commitZeroDiff` → `commitGesture`.
 
 ## Cutout — coloured-backdrop matte: WIRED on branch `cutout-coloured-despill` (2026-06-23)
 
