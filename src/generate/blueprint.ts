@@ -561,6 +561,12 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     const col = colors.get(r.id)!.hex;   // this component's identity hex (same everywhere)
     const diff = !r.baked && typeof (r as any).diff === "number" ? (r as any).diff : 0;
     parts.push(anchorMark(x + w / 2, y + h / 2, w, h, col, diff, r.id, defs));
+    // slider TRACK guide (straight line / partial-circle arc) so the model paints the seek
+    // groove along the right geometry; same colour as the control's anchor.
+    const scx = x + w / 2, scy = y + h / 2, ss = Math.min(w, h), stw = Math.max(4, ss * 0.06);
+    if (r.kind === "slider-h") parts.push(`<line x1="${x + w * 0.12}" y1="${scy}" x2="${x + w * 0.88}" y2="${scy}" stroke="${col}" stroke-width="${stw}" stroke-linecap="round"/>`);
+    else if (r.kind === "slider-v") parts.push(`<line x1="${scx}" y1="${y + h * 0.12}" x2="${scx}" y2="${y + h * 0.88}" stroke="${col}" stroke-width="${stw}" stroke-linecap="round"/>`);
+    else if (r.kind === "slider-arc") { const a = r.arc ?? { start: 200, end: 340 }; parts.push(arcPath(scx, scy, (ss / 2) * 0.86, a.start, a.end, stw, col, "none")); }
   }
 
   // --- bottom SPRITE STRIP: each slot gets a faint MAGENTA KEYLINE anchor (outline only,

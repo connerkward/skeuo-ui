@@ -17,6 +17,15 @@ import type { Region, Kind } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
 const KINDS: Kind[] = ["button", "knob", "toggle", "slider-h", "slider-v", "slider-arc", "display"];
+const DEF_ARC = { start: 200, end: 340 };   // default partial-circle sweep for a slider-arc
+// SVG arc 'd' matching blueprint.ts arcPath (same large-arc/sweep rules) so a slider-arc reads
+// IDENTICALLY in the studio panels and the combined blueprint.
+const arcD = (cx: number, cy: number, r: number, a0: number, a1: number): string => {
+  const p = (a: number): [number, number] => [cx + r * Math.cos((a * Math.PI) / 180), cy + r * Math.sin((a * Math.PI) / 180)];
+  const [sx, sy] = p(a0), [ex, ey] = p(a1);
+  const large = a1 - a0 > 180 ? 1 : 0;
+  return `M ${sx} ${sy} A ${r} ${r} 0 ${large} 1 ${ex} ${ey}`;
+};
 
 
 export default function TemplateStudio() {
@@ -157,6 +166,16 @@ export default function TemplateStudio() {
     const op = 0.95 - diff * 0.45;
     const rx = (w / 2) * 0.74, ry = (h / 2) * 0.74;
     const arm = s * 0.27, lw = Math.max(2.5, s * 0.03), dot = Math.max(3, s * 0.05);
+    // slider TRACK: a straight line (slider-h / slider-v) or a partial-circle arc (slider-arc)
+    // — the only two slider geometries supported. Same colour + arc maths as the blueprint.
+    const tw = Math.max(3, s * 0.07);
+    const track = r.kind === "slider-h"
+      ? <line x1={x + w * 0.12} y1={cy} x2={x + w * 0.88} y2={cy} stroke={col} strokeWidth={tw} strokeLinecap="round" opacity={0.9} />
+      : r.kind === "slider-v"
+        ? <line x1={cx} y1={y + h * 0.12} x2={cx} y2={y + h * 0.88} stroke={col} strokeWidth={tw} strokeLinecap="round" opacity={0.9} />
+        : r.kind === "slider-arc"
+          ? <path d={arcD(cx, cy, (s / 2) * 0.86, (r.arc ?? DEF_ARC).start, (r.arc ?? DEF_ARC).end)} fill="none" stroke={col} strokeWidth={tw} strokeLinecap="round" opacity={0.9} />
+          : null;
     const fid = `f_${r.id}`; const selected = sel === r.id;
     return (
       <g key={r.id} onClick={() => editable && setSel(r.id)} style={{ cursor: editable ? "pointer" : "default" }}>
@@ -166,6 +185,7 @@ export default function TemplateStudio() {
           <line x1={cx - arm} y1={cy} x2={cx + arm} y2={cy} />
           <line x1={cx} y1={cy - arm} x2={cx} y2={cy + arm} />
         </g>
+        {track}
         {selected && <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="none" stroke="#fff" strokeWidth={2.5} strokeDasharray="7 5" opacity={0.7} />}
         <circle cx={cx} cy={cy} r={editable ? Math.max(dot, 12) : dot} fill={selected ? "#fff" : col} stroke="#000" strokeWidth={2} opacity={editable ? 1 : op}
           style={{ cursor: editable ? "grab" : "default" }}
@@ -320,6 +340,18 @@ export default function TemplateStudio() {
             <label>diffuseness <b style={{ color: "#7fe0a0" }}>{(selR.diff ?? globalDiff).toFixed(2)}</b>
               <input type="range" min={0} max={1} step={0.05} value={selR.diff ?? globalDiff} onChange={(e) => patchSel({ diff: +e.target.value })} style={{ width: "100%" }} /></label>
             <label>size <input type="range" min={0.03} max={0.4} step={0.01} value={selR.rect.w} onChange={(e) => { const w = +e.target.value; patchSel({ rect: { ...selR.rect, w, h: w * 0.7 } }); }} style={{ width: "100%" }} /></label>
+            {selR.kind === "slider-arc" && (() => {
+              const arc = selR.arc ?? DEF_ARC;
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, borderTop: "1px solid #26262f", paddingTop: 6 }}>
+                  <div style={{ fontSize: 11, color: "#8a8a96" }}>partial-circle arc — sweep the ends</div>
+                  <label>start <b style={{ color: "#7fe0a0" }}>{arc.start}°</b>
+                    <input type="range" min={0} max={360} step={1} value={arc.start} onChange={(e) => patchSel({ arc: { ...arc, start: +e.target.value } })} style={{ width: "100%" }} /></label>
+                  <label>end <b style={{ color: "#7fe0a0" }}>{arc.end}°</b>
+                    <input type="range" min={0} max={360} step={1} value={arc.end} onChange={(e) => patchSel({ arc: { ...arc, end: +e.target.value } })} style={{ width: "100%" }} /></label>
+                </div>
+              );
+            })()}
             <button style={{ ...btn, background: "#3a1c1c", borderColor: "#5a2a2a" }} onClick={delSel}>🗑 Delete</button>
           </div>
         ) : <div style={{ color: "#8a8a96", fontSize: 12 }}>Click a component (in the list or its centroid) to edit kind, bind, diffuseness, or size.</div>}
