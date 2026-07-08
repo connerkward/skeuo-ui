@@ -7,7 +7,7 @@
 // DIFFUSENESS (soft-guide spread). Left = raw seeded template, right = packed result.
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import {
-  layoutRandomP, layoutArch, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS, SPOTIFY_BINDS,
+  layoutRandomP, layoutArch, bakeButtons, ARCHETYPES, DEFAULT_PARAMS, SPOTIFY_BINDS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
 import { combinedBlueprint, componentColors } from "../generate/blueprint";
@@ -58,17 +58,6 @@ export default function TemplateStudio() {
   // PASS-THROUGH — packing must not rearrange a human-authored template. Generators reset it.
   const [, setAuthored] = useState(false);   // human-edit flag (setter kept; value unused while repack is off)
 
-  // HARD CONSTRAINT: components at 0 diffuseness (crisp, must-follow guides) may NEVER overlap.
-  // Enforced with the SHIPPING resolveOverlaps, scoped to only the zero-diff subset — the packer
-  // heuristic applied exactly where it makes sense, even on human-authored templates.
-  const enforceZeroDiff = useCallback((rs: SR[]): SR[] => {
-    const isZero = (r: SR) => (r.diff ?? globalDiff) <= 0.001;
-    const zero = rs.filter(isZero);
-    if (zero.length < 2) return rs;
-    const solved = resolveOverlaps(zero.map((r) => ({ ...r })) as Region[]) as SR[];
-    const byId = new Map(solved.map((r) => [r.id, r]));
-    return rs.map((r) => byId.get(r.id) ?? r);
-  }, [globalDiff]);
 
   // undo/redo history — normal expected editor UX (⌘Z / ⇧⌘Z). Snapshots on every
   // discrete mutation (and at drag START, so a whole drag undoes as one step).
@@ -130,14 +119,14 @@ export default function TemplateStudio() {
     } catch (e) { setLlmMsg("error: " + (e instanceof Error ? e.message : String(e))); }
   };
 
-  const patchSel = (patch: Partial<SR>) => { setAuthored(true); mutate((rs) => enforceZeroDiff(rs.map((r) => r.id === sel ? { ...r, ...patch } : r))); };
+  const patchSel = (patch: Partial<SR>) => { setAuthored(true); mutate((rs) => rs.map((r) => r.id === sel ? { ...r, ...patch } : r)); };
   const delSel = useCallback(() => {
     setSelIds((ids) => { if (ids.length) { setAuthored(true); mutate((rs) => rs.filter((r) => !ids.includes(r.id))); } return []; });
   }, [mutate]);
   const addComp = () => {
     const id = "c" + Math.random().toString(36).slice(2, 6);
     setAuthored(true);
-    mutate((rs) => enforceZeroDiff([...rs, { id, kind: "button", content: "sprite", layer: "components", bind: id, rect: { x: 0.44, y: 0.44, w: 0.12, h: 0.08 }, shapeKind: "auto", diff: globalDiff } as SR]));
+    mutate((rs) => [...rs, { id, kind: "button", content: "sprite", layer: "components", bind: id, rect: { x: 0.44, y: 0.44, w: 0.12, h: 0.08 }, shapeKind: "auto", diff: globalDiff } as SR]);
     setSelIds([id]);
   };
 
@@ -155,12 +144,12 @@ export default function TemplateStudio() {
       const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
       if (dx || dy) {
         e.preventDefault(); setAuthored(true);
-        mutate((rs) => enforceZeroDiff(rs.map((r) => selIds.includes(r.id) ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, r.rect.x + dx)), y: Math.max(0, Math.min(1 - r.rect.h, r.rect.y + dy)) } } : r)));
+        mutate((rs) => rs.map((r) => selIds.includes(r.id) ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, r.rect.x + dx)), y: Math.max(0, Math.min(1 - r.rect.h, r.rect.y + dy)) } } : r));
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selIds, mutate, undo, redo, delSel, enforceZeroDiff]);
+  }, [selIds, mutate, undo, redo, delSel]);
 
   // ── Moveable/Selecto plumbing ────────────────────────────────────────────────
   // Track the overlay's live pixel box (for px→normalized conversion + Moveable bounds).
@@ -222,7 +211,7 @@ export default function TemplateStudio() {
     const corner = Math.max(0, Math.min(1, borderRadius.includes("%") ? first / 50 : first / (Math.min(stagePx.w, stagePx.h) / 2)));
     setRegions((rs) => rs.map((r) => r.id === id ? { ...r, corner: +corner.toFixed(3) } as SR : r));
   };
-  const commitZeroDiff = () => { setAuthored(true); setRegions(enforceZeroDiff); setGesturing(new Set()); requestAnimationFrame(() => moveableRef.current?.updateRect()); };
+  const commitGesture = () => { setAuthored(true); setGesturing(new Set()); requestAnimationFrame(() => moveableRef.current?.updateRect()); };
   const isSliderK = (k?: Kind) => k === "slider-h" || k === "slider-v" || k === "slider-arc";
 
   const renderShape = (r: SR) => {
@@ -322,16 +311,16 @@ export default function TemplateStudio() {
             keepRatio={false}
             onDragStart={beginGesture}
             onDrag={(e) => applyDrag(e.target as HTMLElement, e.dist[0], e.dist[1])}
-            onDragEnd={commitZeroDiff}
+            onDragEnd={commitGesture}
             onDragGroupStart={beginGesture}
             onDragGroup={(e) => e.events.forEach((ev) => applyDrag(ev.target as HTMLElement, ev.dist[0], ev.dist[1]))}
-            onDragGroupEnd={commitZeroDiff}
+            onDragGroupEnd={commitGesture}
             onResizeStart={beginGesture}
             onResize={(e) => applyResize(e.target as HTMLElement, e.width, e.height, e.drag.dist[0], e.drag.dist[1])}
-            onResizeEnd={commitZeroDiff}
+            onResizeEnd={commitGesture}
             onResizeGroupStart={beginGesture}
             onResizeGroup={(e) => e.events.forEach((ev) => applyResize(ev.target as HTMLElement, ev.width, ev.height, ev.drag.dist[0], ev.drag.dist[1]))}
-            onResizeGroupEnd={commitZeroDiff}
+            onResizeGroupEnd={commitGesture}
             onRoundStart={snapshot}
             onRound={(e) => applyRound(e.target as HTMLElement, String(e.borderRadius))}
           />
@@ -379,7 +368,7 @@ export default function TemplateStudio() {
         .tsHead h1{font-size:16px;margin:0}
         .tsHead span{color:#8a8a96;font-size:11.5px}
         .tsLeft{overflow-y:auto;min-height:0;padding:10px;border-right:1px solid #1e1e26;display:flex;flex-direction:column;gap:10px}
-        .tsMain{display:flex;gap:12px;padding:8px 12px;min-width:0;min-height:0;justify-content:center;align-items:stretch;overflow-x:auto;overflow-y:hidden}
+        .tsMain{display:flex;gap:12px;padding:8px 12px;min-width:0;min-height:0;justify-content:safe center;align-items:stretch;overflow-x:auto;overflow-y:hidden}
         .tsRight{overflow-y:auto;min-height:0;padding:10px;border-left:1px solid #1e1e26;display:flex;flex-direction:column;gap:8px}
         .tsFoot{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;padding:6px 14px;border-top:1px solid #1e1e26}
         .tsCmd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
