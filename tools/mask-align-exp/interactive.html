@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skeuo.fm — full chain: template → paint → mask → cut & placed, interactive</title>
+<style>
+  :root{
+    --bg:#0b0c10;--card:#14161c;--card2:#181b22;--ink:#e9eaf0;--mut:#9aa0ac;--dim:#5c6470;
+    --line:#242a33;--acc:#5cc8ff;--ok:#7fe0a8;--warn:#ffcf5c;--bad:#ff6a6a;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.55;
+    background-image:radial-gradient(1100px 560px at 78% -12%,#141c26 0,transparent 60%)}
+  code{font-family:var(--mono);font-size:.85em;background:#00000055;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .wrap{max-width:1220px;margin:0 auto;padding:30px 22px 90px}
+  h1{font-size:clamp(22px,4vw,32px);letter-spacing:-.02em;margin:0 0 .25em;line-height:1.1}
+  .lede{color:var(--mut);max-width:78ch;font-size:14.5px;margin:0 0 8px}
+  .crumb{font:12px var(--mono);color:var(--dim);margin-bottom:12px}.crumb a{color:var(--acc)}
+  a{color:var(--acc)}
+
+  .chain{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:20px 0 8px}
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;flex:0 0 auto}
+  .stage .lab{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+  .stage img{display:block;border:1px solid var(--line);border-radius:7px;background:#0a0b0e;height:180px;width:auto;max-width:250px;object-fit:contain}
+  .stage.raw .lab{color:var(--ok)}
+  .arrow{color:var(--dim);font-size:22px;flex:0 0 auto}
+
+  .live{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start;margin-top:14px}
+  .devwrap{flex:0 0 auto}
+  .device{position:relative;width:min(480px,86vw);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    background:#0a0b0e;box-shadow:0 20px 50px #000a;touch-action:none}
+  .device>img.bg{display:block;width:100%;height:auto}
+  .btn{position:absolute;cursor:pointer}
+  /* darkening ink clipped to the button's ACTUAL mask silhouette, mapped 1:1 (mask-size 100%):
+     the element IS the silhouette's crop rect, so no contain-rescale and no drift */
+  .btn .ink{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;
+    transition:opacity .07s ease;
+    -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+    -webkit-mask-position:center;mask-position:center}
+  .btn:active .ink{opacity:1}
+  /* drop shadow lives on the NON-rotating container so it never spins with the cap */
+  .knob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
+  .knob .cap{width:100%;height:100%;border-radius:50%;background-size:cover;background-position:center}
+  /* pinned specular that READS on chrome: bright hotspot + counter-shade (normal blend —
+     screen-blend white is invisible on near-white metal, which is why it "disappeared") */
+  .knob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    background:
+      radial-gradient(42% 42% at 32% 27%, rgba(255,255,255,.9), rgba(255,255,255,.25) 55%, rgba(255,255,255,0) 75%),
+      radial-gradient(70% 70% at 72% 80%, rgba(0,0,0,.30), rgba(0,0,0,0) 65%)}
+  .knob .val{position:absolute;left:50%;top:102%;transform:translateX(-50%);font:600 10px var(--mono);color:var(--acc);white-space:nowrap}
+  .thumb{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;background-repeat:no-repeat;background-position:center;
+    filter:drop-shadow(0 1px 2px #0007)}
+  .toggle{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;background-position:center;
+    transition:filter .1s;filter:drop-shadow(0 2px 4px #0008)}
+  .toggle.on{filter:brightness(1.1) drop-shadow(0 2px 4px #0008)}
+  .tmark{position:absolute;border:2px dashed var(--warn);border-radius:50%;pointer-events:none;opacity:0;transition:opacity .2s;transform:translate(-50%,-50%)}
+  .device.showtmpl .tmark{opacity:.9}
+  .tmark span{position:absolute;left:50%;top:-15px;transform:translateX(-50%);font:600 9px var(--mono);color:var(--warn);white-space:nowrap}
+  .overlay-img{position:absolute;inset:0;width:100%;height:auto;pointer-events:none;opacity:0;transition:opacity .2s}
+  .device.showmask .overlay-img{opacity:.55}
+
+  .panel{flex:1 1 320px;min-width:280px}
+  .panel h3{font-size:13px;color:var(--acc);margin:0 0 8px;letter-spacing:.02em}
+  .row{display:flex;gap:8px;align-items:center;margin:5px 0;font-size:12.5px;color:var(--mut)}
+  .row b{color:var(--ink);font-family:var(--mono)}
+  .sw{width:13px;height:13px;border-radius:3px;flex:0 0 auto}
+  .ctl{display:flex;gap:8px;align-items:center;margin:14px 0 6px;flex-wrap:wrap}
+  button.t{background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer;font:13px var(--font)}
+  button.t[aria-pressed=true]{background:#173a2a;border-color:#2f6a48;color:#bff0d2}
+  .drift{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-top:16px}
+  .drift h3{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0}
+  td,th{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-size:10.5px;text-transform:uppercase}
+  td.n{font-family:var(--mono);text-align:right}
+  .bar{height:7px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--warn),var(--bad));position:relative;margin-top:5px}
+  .bar i{position:absolute;top:-2px;width:2px;height:11px;background:#fff;border-radius:2px}
+  .note{font-size:12px;color:var(--mut);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="/">clean</a> · <a href="/index3.html">monochrome</a> · <a href="/index4.html">4K+sprites</a> · <b style="color:var(--ink)">FULL CHAIN (interactive)</b></div>
+  <h1>Full chain: template → paint → mask → cut &amp; placed → live</h1>
+  <p class="lede">The whole pipeline in one view. The <b>painted device</b> + <b>sprite sheet</b> are the raw Gemini file; the <b>mask</b> gives every socket + cell; the sprites are <b>cut from the sheet</b> (keyed off the dark backdrop) and <b>seated into their sockets</b> here in your browser, then made interactive — drag the knobs (pinned specular), drag the seek thumb, flip the toggle (its two painted states), press the buttons. Toggle the <b>template guides</b> to see how far the model drifted from the authored layout.</p>
+
+  <div class="chain">
+    <div class="stage"><div class="lab">1 · template</div><img src="assets8/blueprint.webp"></div>
+    <div class="arrow">→</div>
+    <div class="stage raw"><div class="lab">2 · painted (raw Gemini file)</div><img src="assets8/joint-4k.webp"></div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="lab">3 · mask overlay</div><img src="assets8/overlay.webp"></div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="lab">4 · cut &amp; placed →</div><div style="height:180px;display:grid;place-items:center;color:var(--ok);font:600 12px var(--mono);width:140px">live device ↓</div></div>
+  </div>
+
+  <div class="live">
+    <div class="devwrap">
+      <div class="device" id="device">
+        <img class="bg" id="bg" alt="painted device">
+        <img class="overlay-img" src="assets8/overlay.webp" alt="">
+      </div>
+      <div class="ctl">
+        <button class="t" id="maskBtn" aria-pressed="false">show mask</button>
+        <button class="t" id="tmplBtn" aria-pressed="false">show template guides</button>
+        <span style="font-size:12px;color:var(--dim)" id="status">loading…</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--dim);max-width:60ch;margin-top:4px">the mask overlay is the <b>raw model output</b> — it includes the model's ~0.5% rightward drift (visible if you look closely). Sprite/button placement does <b>not</b> use it raw: each region is snapped onto the painted control, which cancels the drift (residual ≈0.05%).</div>
+    </div>
+    <div class="panel">
+      <h3>What's live</h3>
+      <div class="row"><span class="sw" style="background:rgb(0,190,90)"></span>volume knob — drag ↕, rotates under a pinned specular · <b id="vVol">100%</b></div>
+      <div class="row"><span class="sw" style="background:rgb(0,200,220)"></span>balance knob — drag ↕ · <b id="vBal">100%</b></div>
+      <div class="row"><span class="sw" style="background:rgb(255,140,30)"></span>seek thumb — drag ↔ · <b id="vSeek">0%</b></div>
+      <div class="row"><span class="sw" style="background:rgb(255,90,160)"></span>toggle — click to flip (two painted states) · <b id="vTog">off</b></div>
+      <div class="row" style="margin-top:6px"><span class="sw" style="background:#888"></span>prev · play · next · stop — press (darkens)</div>
+
+      <div class="drift">
+        <h3 style="color:var(--ok)">Alignment — the mask sits on the paint</h3>
+        <div class="row" style="margin:2px 0 8px"><b style="color:var(--ok);font-size:16px">≈ 0.5–2%</b><span><b>mask → skin</b> — how far the mask blob is from the actual painted control. Near-zero: the mask is a near-perfect locator (exactly what you see).</span></div>
+        <div style="font-size:12px;color:var(--mut);margin:10px 0 6px;border-top:1px solid var(--line);padding-top:10px">The table below is a <b>different</b> number — <b>template → mask</b>: how far the model moved each control from where I <em>authored</em> it in the blueprint. It's big (~26%) because <b>the model rearranges the layout freely</b> — that's wanted, and it's why placement reads the <b>mask</b>, not the template. It is <b>NOT</b> a placement error.</div>
+        <table id="driftTbl"><thead><tr><th>control</th><th style="text-align:right">model rearrangement<br>(template→mask)</th></tr></thead><tbody></tbody></table>
+        <div class="row" style="margin-top:8px"><b id="avgDrift" style="color:var(--warn)">—</b><span>avg model rearrangement (% of device width) — expected, not error</span></div>
+        <div class="bar"><i id="avgBar" style="left:0%"></i></div>
+      </div>
+      <div class="note">Sprites are cut client-side from the raw paint (dark-backdrop key) and placed by the mask — the same data a runtime would use. Knob art is the real painted cap; the specular is a fixed overlay that doesn't rotate.</div>
+    </div>
+  </div>
+
+  <footer>skeuo.fm — full-chain interactive · sprites cut from the raw nano-banana-pro paint via the mask · drift = authored template vs model-placed mask</footer>
+</div>
+
+<script>
+(async function(){
+  const R = await fetch('assets8/regions.json').then(r=>r.json());
+  const dev = document.getElementById('device'), bg = document.getElementById('bg'), status=document.getElementById('status');
+  const rr = R.regions, TMPL = R.template, DF = R.devFrac;
+  const paint = new Image(); paint.src='assets8/paint.webp'; await paint.decode();
+  const PW=paint.naturalWidth, PH=paint.naturalHeight;
+  const bgc=document.createElement('canvas'); bgc.width=PW; bgc.height=Math.round(PH*DF);
+  bgc.getContext('2d').drawImage(paint,0,0,PW,bgc.height,0,0,PW,bgc.height);
+  bg.src=bgc.toDataURL(); await bg.decode();
+  // sprite art = the CLEAN per-part BiRefNet cuts (not the crude client-side luma key),
+  // TIGHT-CROPPED to their real alpha bounds — BiRefNet returns transparent padding around the
+  // part, and any sizing math done on the padded image lies about the part's true geometry.
+  function tightCrop(im){
+    const c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight;
+    const cx=c.getContext('2d'); cx.drawImage(im,0,0);
+    const d=cx.getImageData(0,0,c.width,c.height).data;
+    let x0=c.width,y0=c.height,x1=0,y1=0,any=false;
+    for(let p=0;p<d.length;p+=4){ if(d[p+3]>12){ const i=p/4, x=i%c.width, y=(i/c.width)|0;
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; any=true; } }
+    if(!any) return {url:im.src,w:c.width,h:c.height};
+    const tw=x1-x0+1, th=y1-y0+1;
+    const t=document.createElement('canvas'); t.width=tw; t.height=th;
+    t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th);
+    return {url:t.toDataURL(),w:tw,h:th};
+  }
+  const BCUT={};
+  for(const k of ['vol','bal','seek','tog_off','tog_on']){
+    try{ const im=new Image(); im.src='assets_biref/B/'+k+'.png'; await im.decode(); BCUT[k]=tightCrop(im); }catch(e){}
+  }
+  const maskImg=new Image(); maskImg.src='assets8/mask.webp'; await maskImg.decode();
+  const MW=maskImg.naturalWidth, MH=maskImg.naturalHeight;
+  const BCOL={prev:[255,90,60],play:[0,120,255],next:[240,180,0],stop:[170,80,255]};
+  const mkc=document.createElement('canvas'); mkc.width=MW; mkc.height=MH; mkc.getContext('2d').drawImage(maskImg,0,0);
+  const MDATA=mkc.getContext('2d').getImageData(0,0,MW,MH).data;
+  // cut a button's SILHOUETTE from the mask (near-colour pixels → white) → used as a CSS mask-image
+  // cut the mask silhouette from an EXACT rect (normalized coords) — the caller positions an
+  // element of the SAME rect, so mask-size:100% maps silhouette pixels 1:1 onto the screen.
+  function cutMaskShape(rect, rgb){
+    let x=Math.max(0,Math.round(rect[0]*MW)), y=Math.max(0,Math.round(rect[1]*MH));
+    let w=Math.min(MW-x,Math.round(rect[2]*MW)), h=Math.min(MH-y,Math.round(rect[3]*MH));
+    const c=document.createElement('canvas'); c.width=w; c.height=h; const cc=c.getContext('2d');
+    const out=cc.createImageData(w,h), od=out.data;
+    for(let j=0;j<h;j++)for(let i=0;i<w;i++){ const si=((y+j)*MW+(x+i))*4, di=(j*w+i)*4;
+      const dr=MDATA[si]-rgb[0], dg=MDATA[si+1]-rgb[1], db=MDATA[si+2]-rgb[2];
+      if(dr*dr+dg*dg+db*db<7000){ od[di]=od[di+1]=od[di+2]=255; od[di+3]=255; } }
+    cc.putImageData(out,0,0); return c.toDataURL();
+  }
+
+  function cut(bbox, shape){
+    const pad=0.14;
+    let x=(bbox[0]-bbox[2]*pad)*PW, y=(bbox[1]-bbox[3]*pad)*PH, w=bbox[2]*(1+2*pad)*PW, h=bbox[3]*(1+2*pad)*PH;
+    x=Math.max(0,x); y=Math.max(0,y); w=Math.min(PW-x,w); h=Math.min(PH-y,h);
+    const c=document.createElement('canvas'); c.width=Math.round(w); c.height=Math.round(h);
+    const cx=c.getContext('2d'); cx.drawImage(paint,x,y,w,h,0,0,w,h);
+    const im=cx.getImageData(0,0,c.width,c.height), d=im.data;
+    let x0=c.width,y0=c.height,x1=0,y1=0,any=false;
+    for(let i=0;i<d.length;i+=4){
+      const mx=Math.max(d[i],d[i+1],d[i+2]);
+      if(mx<74){ d[i+3]=0; }
+      else { const p=(i/4)|0, px=p%c.width, py=(p/c.width)|0;
+        if(px<x0)x0=px; if(px>x1)x1=px; if(py<y0)y0=py; if(py>y1)y1=py; any=true; }
+    }
+    cx.putImageData(im,0,0);
+    if(!any){x0=0;y0=0;x1=c.width-1;y1=c.height-1;}
+    const tw=x1-x0+1, th=y1-y0+1;
+    const t=document.createElement('canvas'); t.width=tw; t.height=th; const tc=t.getContext('2d');
+    if(shape==='circle'){ tc.save(); tc.beginPath(); tc.arc(tw/2,th/2,Math.min(tw,th)/2,0,7); tc.clip(); }
+    tc.drawImage(c,x0,y0,tw,th,0,0,tw,th); if(shape==='circle') tc.restore();
+    return {url:t.toDataURL(), w:tw, h:th};
+  }
+  const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100;
+  const ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
+
+  function makeKnob(key,valEl){
+    const r=rr[key]; if(!r||!r.device) return;
+    // KNOBS: prefer the circle-clipped cut() — it fills the round div edge-to-edge so the pinned
+    // specular lands on the metal and there's ONE clean shadow (the BiRefNet cut has padding + a
+    // baked shadow that offsets both). BiRefNet is only better for the irregular seek/toggle.
+    const cap=(r.strip&&r.strip[0]&&cut(r.strip[0],'circle'))||BCUT[key]; if(!cap) return;
+    const [cx,cy]=ctr(r.device); const w=r.device[2]*1.14, h=r.device[3]*1.14;
+    const el=document.createElement('div'); el.className='knob';
+    el.style.left=(cx-w/2)*100+'%'; el.style.top=((cy-h/2)/DF)*100+'%'; el.style.width=w*100+'%'; el.style.height=(h/DF)*100+'%';
+    el.innerHTML='<div class="cap" style="background-image:url('+cap.url+')"></div><div class="spec"></div><div class="val"></div>';
+    const capEl=el.querySelector('.cap'), out=el.querySelector('.val'); let val=1;
+    const render=()=>{ capEl.style.transform='rotate('+(-135+val*270)+'deg)'; const p=Math.round(val*100); out.textContent=p+'%'; if(valEl)valEl.textContent=p+'%'; };
+    render(); let sy=0,sv=0,drag=false;
+    el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));render();}});
+    el.addEventListener('pointerup',()=>drag=false); el.addEventListener('pointercancel',()=>drag=false);
+    dev.appendChild(el);
+  }
+  makeKnob('vol',document.getElementById('vVol')); makeKnob('bal',document.getElementById('vBal'));
+
+  (function(){ const r=rr.seek; if(!r||!r.device) return;
+    const t=BCUT.seek||(r.strip&&r.strip[0]&&cut(r.strip[0],'rrect')); if(!t) return; const track=r.device;
+    const el=document.createElement('div'); el.className='thumb';
+    // tw is in x-units, th in y-units (different normalizers: PW vs PH) — convert by PH/PW
+    // or the thumb renders 1.6× too narrow (squashed) on screen.
+    const th=track[3]*1.35, tw=th*(t.w/t.h)*PH/PW;
+    el.style.backgroundImage='url('+t.url+')'; el.style.width=tw*100+'%'; el.style.height=(th/DF)*100+'%';
+    const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
+    let val=0; const x0=track[0], x1=track[0]+track[2]-tw;  // flush travel — thumb reaches both slot ends
+    const render=()=>{el.style.left=(x0+(x1-x0)*val)*100+'%'; document.getElementById('vSeek').textContent=Math.round(val*100)+'%';};
+    render(); let sx=0,sv=0,drag=false;
+    el.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){const bw=dev.clientWidth;val=Math.max(0,Math.min(1,sv+(e.clientX-sx)/(bw*(x1-x0))));render();}});
+    el.addEventListener('pointerup',()=>drag=false); el.addEventListener('pointercancel',()=>drag=false);
+    dev.appendChild(el);
+  })();
+
+  (function(){ const r=rr.tog; if(!r||!r.device) return;
+    const off=BCUT.tog_off||(r.strip&&r.strip[0]&&cut(r.strip[0],'rrect'));
+    const on=BCUT.tog_on||(r.strip&&r.strip[1]&&cut(r.strip[1],'rrect'))||off;
+    if(!off) return;
+    const el=document.createElement('div'); el.className='toggle';
+    el.style.backgroundImage='url('+off.url+')';
+    el.style.left=px(r.device)+'%'; el.style.top=py(r.device)+'%'; el.style.width=pw(r.device)+'%'; el.style.height=ph(r.device)+'%';
+    let ison=false;
+    el.addEventListener('click',()=>{ison=!ison; el.classList.toggle('on',ison); el.style.backgroundImage='url('+(ison?on:off).url+')'; document.getElementById('vTog').textContent=ison?'on':'off';});
+    dev.appendChild(el);
+  })();
+
+  // BUTTONS: use each button's real MASK SILHOUETTE — hit region at the mask bbox, and the press
+  // darkening is clipped to the exact painted button shape (cut from the mask), not a rough box.
+  // BUTTONS: silhouette is cropped around the RAW mask blob (maskDevice), then the element is
+  // positioned at that same rect TRANSLATED by the snap delta (paint-true centre minus mask
+  // centre). The silhouette lands exactly on the painted button — mask drift cancelled,
+  // dilated ~12% so the darkening covers the full button (the blob draws slightly inset).
+  R.buttons.forEach(b=>{ const r=rr[b]; if(!r||!r.device) return;
+    const mb=r.maskDevice||r.device, sb=r.device, D=0.12;
+    const crop=[mb[0]-mb[2]*D/2, mb[1]-mb[3]*D/2, mb[2]*(1+D), mb[3]*(1+D)];
+    const dx=(sb[0]+sb[2]/2)-(mb[0]+mb[2]/2), dy=(sb[1]+sb[3]/2)-(mb[1]+mb[3]/2);
+    const eb=[crop[0]+dx, crop[1]+dy, crop[2], crop[3]];
+    const el=document.createElement('div'); el.className='btn'; el.title=b;
+    el.style.left=px(eb)+'%'; el.style.top=py(eb)+'%'; el.style.width=pw(eb)+'%'; el.style.height=ph(eb)+'%';
+    const shape=cutMaskShape(crop, BCOL[b]||[255,255,255]);
+    const ink=document.createElement('div'); ink.className='ink';
+    ink.style.webkitMaskImage='url('+shape+')'; ink.style.maskImage='url('+shape+')';
+    el.appendChild(ink); dev.appendChild(el);
+  });
+
+  const allNames=[...R.buttons,...R.sprites];
+  const tb=document.querySelector('#driftTbl tbody'); let tot=0,n=0;
+  allNames.forEach(k=>{ const r=rr[k], t=TMPL[k]; if(!t) return;
+    const m=document.createElement('div'); m.className='tmark';
+    const sz=(r&&r.device?r.device[2]:0.08); m.style.width=sz*100+'%'; m.style.height=(sz/DF)*100+'%';
+    m.style.left=t[0]*100+'%'; m.style.top=(t[1]/DF)*100+'%'; m.innerHTML='<span>'+k+'</span>'; dev.appendChild(m);
+    if(r&&r.device){ const [cx,cy]=ctr(r.device); const dx=(cx-t[0])*100, dy=(cy-t[1])*100/DF, dr=Math.hypot(dx,dy);
+      tot+=dr; n++; const tr=document.createElement('tr'); tr.innerHTML='<td>'+k+'</td><td class="n">'+dr.toFixed(1)+'%</td>'; tb.appendChild(tr); }
+  });
+  const avg=n?tot/n:0; document.getElementById('avgDrift').textContent=avg.toFixed(1)+'%';
+  document.getElementById('avgBar').style.left=Math.min(100,avg/50*100)+'%';
+
+  const mb=document.getElementById('maskBtn'), tmb=document.getElementById('tmplBtn');
+  mb.addEventListener('click',()=>{const on=mb.getAttribute('aria-pressed')!=='true';mb.setAttribute('aria-pressed',on);dev.classList.toggle('showmask',on);mb.textContent=on?'hide mask':'show mask';});
+  tmb.addEventListener('click',()=>{const on=tmb.getAttribute('aria-pressed')!=='true';tmb.setAttribute('aria-pressed',on);dev.classList.toggle('showtmpl',on);tmb.textContent=on?'hide template guides':'show template guides';});
+  status.textContent='ready — drag knobs & thumb, flip toggle, press buttons';
+})();
+</script>
+</body>
+</html>

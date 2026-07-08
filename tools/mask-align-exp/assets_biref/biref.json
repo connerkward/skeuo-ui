@@ -1,0 +1,20 @@
+{
+  "parts": [
+    "vol",
+    "bal",
+    "seek",
+    "tog_off",
+    "tog_on"
+  ],
+  "timings": {
+    "A": {
+      "birefnet_s": 4.2,
+      "calls": 1
+    },
+    "B": {
+      "birefnet_s": 16.2,
+      "calls": 5
+    }
+  },
+  "note": "BiRefNet fal price = $0.0008/compute-second; A=1 call on full image, B=N calls on crops"
+}

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>skeuo.fm — raw global BiRefNet matte (one pass, unretouched)</title>
+<style>
+  :root{--checker:conic-gradient(#333 90deg,#222 0 180deg,#333 0 270deg,#222 0) 0 0/28px 28px}
+  body{margin:0;background:#0b0c10;color:#e9eaf0;font-family:ui-sans-serif,system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:1000px;margin:0 auto;padding:30px 22px 80px}
+  h1{font-size:24px;margin:0 0 6px} .lede{color:#9aa0ac;font-size:14px;max-width:70ch}
+  a{color:#5cc8ff}
+  .row{display:flex;flex-wrap:wrap;gap:18px;margin-top:18px}
+  figure{margin:0;flex:1 1 300px}
+  .box{border:1px solid #242a33;border-radius:12px;padding:12px;background:var(--checker)}
+  .box img{display:block;width:100%;height:auto}
+  figcaption{font:12px ui-monospace,monospace;color:#5c6470;margin-top:8px}
+  .note{color:#9aa0ac;font-size:13px;margin-top:16px;border-top:1px solid #242a33;padding-top:12px}
+</style></head><body>
+<div class="wrap">
+  <div style="font:12px ui-monospace,monospace;color:#5c6470;margin-bottom:10px"><a href="/biref-compare.html">← compare</a> · <a href="/interactive.html">interactive</a> · <b style="color:#e9eaf0">raw global matte</b></div>
+  <h1>Raw global BiRefNet matte — one pass, unretouched</h1>
+  <p class="lede">This is the actual file <code>assets_biref/global-matte.webp</code> straight from <code>fal-ai/birefnet/v2</code>, run <b>once</b> over the whole paint. Checkerboard = transparency (the removed dark backdrop). Nothing drawn on top, no cropping — the raw alpha. The whole device body + all five strip parts come out cut in a single call.</p>
+  <div class="row">
+    <figure><div class="box"><img src="assets_biref/global-matte.webp"></div>
+      <figcaption>global-matte.png · fal-ai/birefnet/v2 (Heavy, 2048) · 1 call · ~4–6s · ~$0.005</figcaption></figure>
+  </div>
+  <div class="note">Every checkerboard pixel is genuinely transparent in the PNG — open it yourself: <a href="assets_biref/global-matte.webp">assets_biref/global-matte.webp</a>. The per-part cuts on the <a href="/biref-compare.html">compare page</a> are just crops of this (approach A) vs separate per-crop calls (approach B).</div>
+</div></body></html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skeuo.fm — how correlation reads the mask, and exactly where I broke it</title>
+<style>
+  :root{--bg:#0b0c10;--card:#14161c;--card2:#181b22;--ink:#e9eaf0;--mut:#9aa0ac;--dim:#5c6470;
+    --line:#242a33;--acc:#5cc8ff;--ok:#7fe0a8;--warn:#ffcf5c;--bad:#ff6a6a;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6;
+    background-image:radial-gradient(1100px 560px at 78% -12%,#1a1420,transparent 60%)}
+  code{font-family:var(--mono);font-size:.85em;background:#00000055;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 22px 90px}
+  h1{font-size:clamp(21px,3.6vw,30px);letter-spacing:-.02em;margin:0 0 .3em;line-height:1.12}
+  .lede{color:var(--mut);max-width:76ch;font-size:15px;margin:0 0 12px}
+  .crumb{font:12px var(--mono);color:var(--dim);margin-bottom:12px}.crumb a{color:var(--acc)}
+  a{color:var(--acc)}
+  h2.sec{font-size:12.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin:36px 0 12px;font-weight:700}
+  figure{margin:0 0 8px}
+  .imgbox{border:1px solid var(--line);border-radius:11px;overflow:auto;background:#0a0b0e}
+  .imgbox img{display:block;width:100%;height:auto}
+  figcaption{font:12px var(--mono);color:var(--dim);margin-top:7px}
+  .bug{border:1px solid #4a2a2c;border-left:4px solid var(--bad);background:linear-gradient(180deg,#1a1113,#140f10);
+    border-radius:12px;padding:16px 18px;margin:18px 0;font-size:14.5px;color:#e8c8c8}
+  .bug b{color:#ffb3b3}
+  .steps{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 4px;margin:8px 0}
+  .steps li{margin:8px 14px;font-size:14px;color:var(--mut)} .steps li b{color:var(--ink)}
+  .steps li.bad::marker{color:var(--bad)} .steps li.ok::marker{color:var(--ok)}
+  .fix{border:1px solid #2a3a30;border-left:4px solid var(--ok);background:linear-gradient(180deg,#111a16,#0f1512);
+    border-radius:12px;padding:16px 18px;margin:18px 0;font-size:14.5px;color:#cfe7dc}
+  .fix b{color:var(--ok)}
+  pre{background:#0f1115;border:1px solid var(--line);border-radius:9px;padding:12px 14px;overflow-x:auto;font:12px var(--mono);color:var(--mut);margin:10px 0}
+  pre .del{color:#ff8b8b} pre .add{color:#8ff0b8}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="/interactive.html">← interactive</a> · <a href="/biref-compare.html">BiRefNet compare</a> · <b style="color:var(--ink)">how correlation works + the bug</b></div>
+  <h1>How correlation reads the mask — and exactly where I broke it</h1>
+  <p class="lede">You're right: the mask is a near-perfect locator, so a wrong sprite is inexcusable. Here is the whole thing, nothing hidden — what the mask says, what my code read, the exact line that was wrong, and the fix.</p>
+
+  <h2 class="sec">1 · The mask IS a near-perfect locator</h2>
+  <figure>
+    <div class="imgbox"><img src="explain/annotated.webp"></div>
+    <figcaption>LEFT = paint, RIGHT = mask. The SAME extracted boxes drawn on both. Every colour in the mask is one control; every box sits on its blob AND on the matching painted control. Device row + knob sockets + seek track + toggle, then the sprite strip cells below. The locator is good.</figcaption>
+  </figure>
+
+  <div class="bug">
+    <b>So how did seek get a toggle?</b> Because for the <b>sprite strip cells</b> I was <b>not reading the mask at all.</b> The device regions (buttons, sockets, seek track) were correlated by mask colour — correct. But the strip cells went through a different, worse path.
+  </div>
+
+  <h2 class="sec">2 · The exact bug</h2>
+  <ol class="steps">
+    <li>An earlier generation (run6) had the model <b>omit the strip cells from the mask</b>. To cope, I wrote a fallback: <b>detect the silver parts in the PAINT strip and assign them left-to-right by ORDER</b> — <code>parts[0]=vol, parts[1]=bal, parts[2]=seek, …</code></li>
+    <li class="bad">That fallback then kept running <b>even when the mask DID have the strip cells</b>, and it <b>overrode</b> the good mask reading. So the strip identity came from <b>column position</b>, not colour.</li>
+    <li class="bad">When the paint's part detection merged/shifted a run, the order slipped and <code>seek</code> landed on the <b>5th</b> part — a toggle. A perfect orange "seek" cell was sitting right there in the mask, ignored.</li>
+  </ol>
+  <figure>
+    <div class="imgbox"><img src="explain/seek-bug.webp"></div>
+    <figcaption><span style="color:#7fe0a8">GREEN</span> = correct seek, by MASK COLOUR (the orange cell). <span style="color:#ff8b8b">RED</span> = what the OLD left-to-right-order code grabbed: a toggle. The mask never got this wrong — my code did, by not using it.</figcaption>
+  </figure>
+
+  <div class="fix">
+    <b>The fix — correlate the strip by mask colour, like everything else.</b> Read each part's cell from its own hue (orange = seek), and only fall back to paint-detection for a cell the mask genuinely omitted:
+    <pre><span class="del">- # strip identity by left-to-right ORDER (overrode the mask)</span>
+<span class="del">- regs[name]["strip"] = [parts[i]]              # parts[2] → seek (grabbed a toggle)</span>
+<span class="add">+ # strip identity by MASK COLOUR (orange cell → seek), largest connected component</span>
+<span class="add">+ stripmask = (assign==colour_of[name]) & (y >= devFrac)</span>
+<span class="add">+ regs[name]["strip"] = [largest_cc_bbox(stripmask)]</span>
+<span class="add">+ # paint-detection kept ONLY as a fallback for a cell the mask omitted</span></pre>
+    Same fix pattern killed the <b>prev-button</b> bug (its box was inflated by stray red pixels → now <b>largest connected component</b> only) and it's why placement now lines up.
+  </div>
+
+  <h2 class="sec">3 · Why global felt more consistent (you're right)</h2>
+  <p class="lede">Global BiRefNet mattes the whole image in one pass and reads the parts as <b>connected-component islands of the actual matte</b> — so it never depended on my fragile per-cell ordering. My per-cell path had the extra assignment step that I broke. That's a real reason global was steadier here, on top of it being one cheap call. The trade is the one on the <a href="/biref-compare.html">compare page</a>: global is coarser on small parts and can clip a protrusion; per-part is cleaner but 2.4× the cost.</p>
+
+  <footer>skeuo.fm — full work shown: the mask (near-perfect), the exact wrong line (order not colour), and the fix (correlate by colour + largest-CC). No hand-waving.</footer>
+</div>
+</body>
+</html>

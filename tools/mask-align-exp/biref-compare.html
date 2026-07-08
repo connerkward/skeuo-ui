@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skeuo.fm — BiRefNet: one global pass + mask correlation vs mask correlation + per-part BiRefNet</title>
+<style>
+  :root{--bg:#0b0c10;--card:#14161c;--card2:#181b22;--ink:#e9eaf0;--mut:#9aa0ac;--dim:#5c6470;
+    --line:#242a33;--acc:#5cc8ff;--ok:#7fe0a8;--warn:#ffcf5c;--bad:#ff6a6a;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --checker:conic-gradient(#2a2a33 90deg,#20202a 0 180deg,#2a2a33 0 270deg,#20202a 0) 0 0/22px 22px;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.55;
+    background-image:radial-gradient(1100px 560px at 78% -12%,#141c26 0,transparent 60%)}
+  code{font-family:var(--mono);font-size:.85em;background:#00000055;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .wrap{max-width:1120px;margin:0 auto;padding:32px 22px 90px}
+  h1{font-size:clamp(21px,3.6vw,30px);letter-spacing:-.02em;margin:0 0 .25em;line-height:1.12}
+  .lede{color:var(--mut);max-width:76ch;font-size:14.5px;margin:0 0 12px}
+  .crumb{font:12px var(--mono);color:var(--dim);margin-bottom:12px}.crumb a{color:var(--acc)}
+  a{color:var(--acc)}
+  h2.sec{font-size:12.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin:34px 0 12px;font-weight:700}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.two{grid-template-columns:1fr}}
+  .appr{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px}
+  .appr.a{border-left:3px solid var(--acc)} .appr.b{border-left:3px solid var(--ok)}
+  .appr h3{margin:0 0 4px;font-size:15px} .appr .sub{color:var(--dim);font:11.5px var(--mono);margin-bottom:8px}
+  .appr p{font-size:13px;color:var(--mut);margin:6px 0}
+  .metric{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}
+  .m{font:12px var(--mono);border:1px solid var(--line);border-radius:7px;padding:4px 9px;background:var(--card2)}
+  .m b{color:var(--ink)} .m.good b{color:var(--ok)} .m.bad b{color:var(--bad)} .m.warn b{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-size:11px;text-transform:uppercase}
+  td.n{font-family:var(--mono)}
+  .parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:8px}
+  .part{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .part .h{padding:8px 12px;border-bottom:1px solid var(--line);background:#12141a;font:600 12.5px var(--font)}
+  .part .cmp{display:grid;grid-template-columns:1fr 1fr}
+  .cell{padding:10px;text-align:center}
+  .cell+.cell{border-left:1px solid var(--line)}
+  .cell .lab{font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+  .cell.a .lab{color:var(--acc)} .cell.b .lab{color:var(--ok)}
+  .cell .box{background:var(--checker);border-radius:8px;padding:8px;display:grid;place-items:center;min-height:120px}
+  .cell img{max-width:100%;max-height:150px;height:auto;display:block}
+  .verdict{border:1px solid #2a3a30;border-left:4px solid var(--ok);background:linear-gradient(180deg,#111a16,#0f1512);
+    border-radius:12px;padding:16px 18px;margin:22px 0;font-size:14px;color:#cfe7dc}
+  .verdict b{color:var(--ok)} .verdict .q{color:var(--warn)}
+  .note{font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="/interactive.html">← interactive chain</a> · <b style="color:var(--ink)">BiRefNet: global+correlate vs correlate+per-part</b></div>
+  <h1>Cutting sprites: one global BiRefNet + mask correlation &nbsp;vs&nbsp; mask correlation + per-part BiRefNet</h1>
+  <p class="lede">Two ways to matte the sprite parts out of the raw paint. <b>A</b>: run BiRefNet <b>once</b> over the whole paint, then use the <b>mask to correlate</b> each matte island to a control. <b>B</b>: use the <b>mask to locate</b> each region first, then run BiRefNet <b>per crop</b>. Same 5 parts (vol · bal · seek · toggle-off · toggle-on), real fal generations, checkerboard = transparency.</p>
+
+  <div class="two">
+    <div class="appr a">
+      <h3>A · one global pass → correlate</h3>
+      <div class="sub">BiRefNet(full paint) → CC islands → mask assigns identity</div>
+      <div class="metric"><span class="m good">calls <b>1</b></span><span class="m good">compute <b>6.5s</b></span><span class="m good">cost <b>~$0.005</b></span></div>
+      <p><b>+</b> one call for the WHOLE device + all parts; cheapest; the device body (large) mattes fine at global resolution.</p>
+      <p><b>−</b> small parts share the global 2048 downscale → <b>coarser edges</b>; the correlation island bbox can <b>clip</b> a protruding feature (see toggle-on's knob); needs the parts well-separated so islands don't merge.</p>
+    </div>
+    <div class="appr b">
+      <h3>B · correlate → per-part BiRefNet</h3>
+      <div class="sub">mask locates each region → BiRefNet(crop) ×5</div>
+      <div class="metric"><span class="m warn">calls <b>5</b></span><span class="m warn">compute <b>15.9s</b></span><span class="m warn">cost <b>~$0.013</b></span></div>
+      <p><b>+</b> each part fills its own 2048 matte with padding → <b>clean, complete edges</b>, no clipping; robust even if parts touch.</p>
+      <p><b>−</b> ~<b>2.4× the cost</b> and <b>5× the calls</b> (more latency); relies on the mask bbox being roughly right (it's the guide).</p>
+    </div>
+  </div>
+
+  <h2 class="sec">Cost / timing (fal BiRefNet = $0.0008 / compute-second)</h2>
+  <table>
+    <thead><tr><th>approach</th><th>calls</th><th>compute-s</th><th>cost</th><th>edge quality</th></tr></thead>
+    <tbody>
+      <tr><td>A · global + correlate</td><td class="n">1</td><td class="n">6.5</td><td class="n">$0.0052</td><td>coarser on small parts; clips protrusions</td></tr>
+      <tr><td>B · correlate + per-part</td><td class="n">5</td><td class="n">15.9</td><td class="n">$0.0127</td><td>clean, complete, per-part full-res</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec">Per-part cut — A vs B (checkerboard = alpha)</h2>
+  <div class="parts" id="parts"></div>
+
+  <div class="verdict">
+    <span class="q">Verdict:</span> <b>hybrid.</b> Use <b>A (one global pass)</b> for the <b>device body cutout</b> — it's large, mattes fine at global resolution, and it's one cheap call; let the <b>mask correlate</b> identity. Use <b>B (per-part)</b> only for the <b>small sprite parts</b>, where the global downscale is too coarse and island bboxes clip. That's global-cut-the-device + per-part-cut-the-sprites, mask-correlated throughout — cheapest where quality doesn't matter, sharp where it does. Pure-A is fine if you accept softer small-part edges and pad the island bbox to stop clipping; pure-B is the safe default if edges matter and the ~2.4× cost is acceptable.
+    <div class="note">Both are strictly better than my earlier client-side luma key (a hard <code>max&lt;74</code> threshold) — BiRefNet gives a real anti-aliased matte. The mask stays the <b>guide/correlator</b> in every case, never the pixel-exact cut (it drifts and isn't tight — the through-line of this whole experiment).</div>
+  </div>
+
+  <footer>skeuo.fm — BiRefNet cut comparison · fal-ai/birefnet/v2 (Heavy, 2048) · every cut is a real generation · A=1 call / B=5 calls</footer>
+</div>
+<script>
+  const PARTS=[["vol","volume knob"],["bal","balance knob"],["seek","seek thumb"],["tog_off","toggle · off"],["tog_on","toggle · on"]];
+  const wrap=document.getElementById('parts');
+  PARTS.forEach(([k,label])=>{
+    const d=document.createElement('div'); d.className='part';
+    d.innerHTML=`<div class="h">${label}</div><div class="cmp">
+      <div class="cell a"><div class="lab">A · global</div><div class="box"><img src="assets_biref/A/${k}.png"></div></div>
+      <div class="cell b"><div class="lab">B · per-part</div><div class="box"><img src="assets_biref/B/${k}.png"></div></div>
+    </div>`;
+    wrap.appendChild(d);
+  });
+</script>
+</body>
+</html>
