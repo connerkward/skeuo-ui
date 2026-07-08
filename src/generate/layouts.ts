@@ -23,6 +23,18 @@ const BSIZE: Record<string, number> = {
   play: 1.5, pause: 1.0, prev: 0.9, next: 0.9, stop: 0.82,
 };
 
+// ── Spotify compatibility ─────────────────────────────────────────────────────
+// Binds the Spotify Web API / SpotifyDrive can actually drive: play/pause, prev, next,
+// seek, volume, shuffle, repeat. NOT balance, EQ (eqOn/eqBand), or stop — Spotify exposes
+// no API for those. The generators may still author them; the exported layout fns filter
+// down to this set, which also DE-COMPLEXIFIES the result (no EQ bank / balance / stop).
+export const SPOTIFY_BINDS = ["play", "pause", "prev", "next", "seek", "volume", "shuffle", "repeat"];
+const SPOTIFY_BIND_SET = new Set(SPOTIFY_BINDS);
+// keep DISPLAYS (read-only from playback state) + any control with a Spotify-drivable bind.
+function spotifyOnly(regs: Region[]): Region[] {
+  return regs.filter((r) => r.kind === "display" || SPOTIFY_BIND_SET.has((r.bind || r.id || "").toLowerCase()));
+}
+
 export type LayoutVariant = "simple" | "radial" | "capsule" | "minimal";
 export const LAYOUT_VARIANTS: LayoutVariant[] = ["simple", "radial", "capsule", "minimal"];
 
@@ -332,7 +344,7 @@ export function layoutRandom(): Region[] {
   const raw = ARCH_FNS[pickArch(P)](P);
   resolveOverlapsW(raw, P);
   raw.forEach((r) => delete r.nopush);   // strip the transient repel flag
-  return raw as Region[];
+  return spotifyOnly(raw as Region[]);
 }
 
 // ---- STUDIO HOOKS: drive the SAME heuristic archetypes with explicit params, so the
@@ -348,14 +360,14 @@ export function layoutArch(arch: string, P: Params = DEFAULT_PARAMS): Region[] {
   const raw = (ARCH_FNS[arch] ?? ARCH_FNS.stack)(P);
   resolveOverlapsW(raw, P);
   raw.forEach((r) => delete r.nopush);
-  return raw as Region[];
+  return spotifyOnly(raw as Region[]);
 }
 // weighted-random archetype with explicit params.
 export function layoutRandomP(P: Params = DEFAULT_PARAMS): Region[] {
   const raw = ARCH_FNS[pickArch(P)](P);
   resolveOverlapsW(raw, P);
   raw.forEach((r) => delete r.nopush);
-  return raw as Region[];
+  return spotifyOnly(raw as Region[]);
 }
 
 // ---- radial: round dial, buttons orbiting lower rim, knobs as eyes, seek ring
