@@ -10,7 +10,7 @@ import {
   layoutRandomP, layoutArch, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
-import { combinedBlueprint, bakedButtonHues, BP_RING } from "../generate/blueprint";
+import { combinedBlueprint, componentColors } from "../generate/blueprint";
 import { PAINT_PROMPT } from "../generate/pipeline";
 import PaintedSheet from "./PaintedSheet";
 import type { Region, Kind } from "../template/schema";
@@ -87,11 +87,11 @@ export default function TemplateStudio() {
     try { return combinedBlueprint(bakedRegs, "rgb(128,128,130)"); }
     catch { return null; }
   }, [bakedRegs]);
-  // SHARED colour code with the blueprint: a baked button → its identity hue; anything else →
-  // green (BP_RING = empty well). Replaces the old kind-based KCOL so a control reads the SAME
-  // colour in the RAW / PACKED panels and the combined blueprint.
-  const hueMap = useMemo(() => bakedButtonHues(bakedRegs), [bakedRegs]);
-  const colorOf = useCallback((r: SR) => hueMap.get(r.id)?.css ?? BP_RING, [hueMap]);
+  // SHARED per-component identity colour with the blueprint (same componentColors registry):
+  // EVERY control gets its OWN distinct hex, identical in the RAW / PACKED panels, the combined
+  // blueprint, the component list, the prompt legend, and the output mask.
+  const colorMap = useMemo(() => componentColors(bakedRegs), [bakedRegs]);
+  const colorOf = useCallback((r: SR) => colorMap.get(r.id)?.hex ?? "#888888", [colorMap]);
 
   // The exact TEXT prompt that rides ALONGSIDE the blueprint image to FAL — reconstructed
   // live from the shared PAINT_PROMPT + this template's strip / bake-legend, so you can read

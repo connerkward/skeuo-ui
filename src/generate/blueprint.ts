@@ -318,7 +318,8 @@ export interface CombinedBlueprint {
   width: number;
   height: number;
   stripDesc: string;   // enumerated control list for the paint prompt (no text drawn in-image)
-  bakeLegend: string;  // colour→identity→icon map for the BAKED device buttons (each unique button its own hue)
+  bakeLegend: string;  // full colour→identity→role→icon legend for EVERY device control
+  colors: Map<string, CompColor>;  // id → its identity hex, shared across every pipeline stage
 }
 
 // The FACE ICON for a transport button, in WORDS only — NO literal glyph characters
@@ -380,7 +381,6 @@ export const BP_RING = "rgb(0,190,90)";      // bright GREEN anchor ring (empty 
                                       // not magenta: magenta was physically transmitted into translucent
                                       // bodies + bled as pink frames (2026-07-01). Green reads as a clearly
                                       // foreign guide on any neutral backdrop and removes cleanly.
-const BP_BAKE = "rgb(0,120,255)";     // blue ring = paint a REAL cohesive control here (baked, not a well)
 
 // PER-BUTTON identity hues for BAKED device buttons. The baked buttons are molded
 // into the body and are NOT in the ordered strip, so — unlike the strip — they carry
@@ -389,23 +389,50 @@ const BP_BAKE = "rgb(0,120,255)";     // blue ring = paint a REAL cohesive contr
 // button gets its OWN hue + a prose legend maps hue→control→face-icon (reusing the
 // glyph-free faceIconWords vocabulary). Hues kept MODERATE (removed guide rings, but
 // strong chroma can still tint the painted control — the magenta-bleed lesson).
-export interface BakeHue { css: string; name: string }
-const BAKE_HUES: BakeHue[] = [
-  { css: "rgb(255,90,60)",  name: "ORANGE-RED" },
-  { css: "rgb(0,120,255)",  name: "BLUE" },
-  { css: "rgb(240,180,0)",  name: "AMBER" },
-  { css: "rgb(170,80,255)", name: "VIOLET" },
-  { css: "rgb(0,200,180)",  name: "TEAL" },
-  { css: "rgb(255,130,40)", name: "ORANGE" },
+// PER-COMPONENT IDENTITY COLOUR — the ONE hex each component wears across the ENTIRE pipeline
+// (studio panels, blueprint anchors, prompt legend, output mask), so every stage identifies a
+// component by its exact colour. Deterministic per component id (FNV hash → palette slot) and
+// UNIQUE within a template (linear-probe on collision; HSL fallback past the palette). Curated,
+// high-contrast, NAMEABLE hues so the paint model can match a mark to the {legend} by name.
+export interface CompColor { hex: string; name: string }
+const PALETTE: CompColor[] = [
+  { hex: "#E23B3B", name: "RED" },     { hex: "#2E74F0", name: "BLUE" },
+  { hex: "#23BE55", name: "GREEN" },   { hex: "#F5B414", name: "AMBER" },
+  { hex: "#AA46EB", name: "VIOLET" },  { hex: "#14C3B4", name: "TEAL" },
+  { hex: "#F5781A", name: "ORANGE" },  { hex: "#F05FAF", name: "PINK" },
+  { hex: "#8CD72D", name: "LIME" },    { hex: "#23C3E6", name: "CYAN" },
+  { hex: "#E137CD", name: "MAGENTA" }, { hex: "#5F55E6", name: "INDIGO" },
+  { hex: "#B4823C", name: "BROWN" },   { hex: "#F0DC3C", name: "YELLOW" },
+  { hex: "#4FB4F5", name: "SKY" },     { hex: "#F0506E", name: "ROSE" },
+  { hex: "#78D796", name: "MINT" },    { hex: "#8C4FA0", name: "PLUM" },
+  { hex: "#F56E50", name: "CORAL" },   { hex: "#6E32B4", name: "GRAPE" },
+  { hex: "#96A03C", name: "OLIVE" },   { hex: "#3CD7C8", name: "AQUA" },
+  { hex: "#C86EF0", name: "ORCHID" },  { hex: "#A0A7B4", name: "SLATE" },
 ];
-
-// Shared source of truth for BAKED-button identity colours — the studio panels AND the
-// blueprint call THIS so their colour codes match. Each baked button → a hue by index order;
-// anything else is an empty well (BP_RING green). Keeps the two views from drifting.
-export function bakedButtonHues(regs: Region[]): Map<string, BakeHue> {
-  const baked = regs.filter((r) => r.kind === "button" && r.baked);
-  const m = new Map<string, BakeHue>();
-  baked.forEach((r, i) => m.set(r.id, BAKE_HUES[i % BAKE_HUES.length]));
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function hslHex(hue: number): CompColor {
+  const sat = 0.62, l = 0.56, c = (1 - Math.abs(2 * l - 1)) * sat, hp = hue / 60;
+  const x = c * (1 - Math.abs((hp % 2) - 1)); let r = 0, g = 0, b = 0;
+  if (hp < 1) { r = c; g = x; } else if (hp < 2) { r = x; g = c; }
+  else if (hp < 3) { g = c; b = x; } else if (hp < 4) { g = x; b = c; }
+  else if (hp < 5) { r = x; b = c; } else { r = c; b = x; }
+  const m = l - c / 2, to = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, "0");
+  return { hex: `#${to(r)}${to(g)}${to(b)}`.toUpperCase(), name: `HUE${Math.round(hue)}` };
+}
+// id → stable, unique-within-template CompColor. Every stage calls THIS with the SAME regs
+// and gets the SAME hex per component — the shared identity key across the whole pipeline.
+export function componentColors(regs: Region[]): Map<string, CompColor> {
+  const m = new Map<string, CompColor>(); const used = new Set<number>();
+  for (const r of regs) {
+    let idx = hashStr(r.id) % PALETTE.length, t = 0;
+    while (used.has(idx) && t < PALETTE.length) { idx = (idx + 1) % PALETTE.length; t++; }
+    if (t >= PALETTE.length) { m.set(r.id, hslHex(hashStr(r.id) % 360)); continue; }
+    used.add(idx); m.set(r.id, PALETTE[idx]);
+  }
   return m;
 }
 
@@ -506,13 +533,20 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   // PER-BUTTON identity: assign each BAKED button its own hue (stable region order) and
   // build a colour→identity→icon legend for the paint prompt. So the model knows which
   // scattered ring is which control + what to emboss, with no ambiguity and no drawn text.
-  const bakedButtons = regs.filter((r) => r.kind === "button" && r.baked);
-  const bakeHueOf = bakedButtonHues(regs);   // shared id → hue map (same logic the studio uses)
-  const bakeLegend = bakedButtons.map((r) => {
-    const hue = bakeHueOf.get(r.id)!;
-    const icon = faceIconWords((r.bind || r.id).toLowerCase());
+  // ONE identity hex per component, shared across every pipeline stage (panels, blueprint,
+  // this legend, output mask). Built once here from the region set.
+  const colors = componentColors(regs);
+  // FULL colour→identity legend for EVERY device-body control (not just baked buttons): the
+  // model matches each distinctly-coloured mark to exactly one control by colour + role.
+  const roleOf = (r: Region): string =>
+    r.kind === "display" ? "a recessed SCREEN — leave it blank dark glass"
+    : (r.kind === "button" && r.baked) ? "a real MOLDED BUTTON on the body"
+    : "an EMPTY recessed socket (a cut control part sits here)";
+  const bakeLegend = regs.map((r) => {
+    const cc = colors.get(r.id)!;
     const who = (r.bind || r.id).toUpperCase();
-    return `the button marked ${hue.name} is ${who}${icon ? `: emboss ${icon} on its face` : ""}`;
+    const icon = r.kind === "button" ? faceIconWords((r.bind || r.id).toLowerCase()) : "";
+    return `${cc.name} (${cc.hex}) = ${who}, ${roleOf(r)}${icon ? `: emboss ${icon}` : ""}`;
   }).join("; ");
 
   // SHAPE-AGNOSTIC anchors (no ring / rounded-rect — those implied a silhouette the prompt
@@ -524,7 +558,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   for (const r of regs) {
     const x = r.rect.x * GEN_W, y = r.rect.y * GEN_H;
     const w = r.rect.w * GEN_W, h = r.rect.h * GEN_H;
-    const col = r.baked ? (bakeHueOf.get(r.id)?.css ?? BP_BAKE) : BP_RING;
+    const col = colors.get(r.id)!.hex;   // this component's identity hex (same everywhere)
     const diff = !r.baked && typeof (r as any).diff === "number" ? (r as any).diff : 0;
     parts.push(anchorMark(x + w / 2, y + h / 2, w, h, col, diff, r.id, defs));
   }
@@ -538,7 +572,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   // is removed in the output, so nothing extra is cut into the sprite. Round anchor for
   // buttons/knobs, rounded-rect for toggles — matching the on-device socket shape so the cut
   // sprite fits its socket. TOGGLES collapse to a shared OFF/ON pair keyed switch-off/on.
-  interface StripItem { bind: string; kind: SpriteKind; desc: string }
+  interface StripItem { bind: string; kind: SpriteKind; desc: string; color: string }
   const items: StripItem[] = [];
   for (const r of spriteRegs) {
     const kind = spriteKindOf(r)!;
@@ -548,20 +582,21 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     // keep CSS for now. The cut sprite is named by r.id → SliderH reads spriteUrl(skinId, r.id).
     if (kind === "slider" && r.kind !== "slider-h") continue;
     const bind = bindOf(r);
-    items.push({ bind, kind, desc: controlDesc(r, kind) });
+    items.push({ bind, kind, desc: controlDesc(r, kind), color: colors.get(r.id)?.hex ?? "#888888" });
     // PLAY/PAUSE is a two-state control (like the toggle off/on pair): emit a paired
     // PAUSE face — the SAME button body, only the icon differs — cut to <id>__pause and
     // swapped live by the player on play state. (id===bind for transport controls.)
     const isPlay = kind === "button" && /(^|_)play(_|$)/.test(bind) && !bind.includes("playlist");
     if (isPlay) items.push({
-      bind: `${bind}__pause`, kind,
+      bind: `${bind}__pause`, kind, color: colors.get(r.id)?.hex ?? "#888888",
       desc: "the SAME push-button as the previous slot — IDENTICAL body, shape, size and material — but shown with a PAUSE icon (two vertical bars) embossed on its face instead of the play triangle",
     });
   }
-  const hasToggle = spriteRegs.some((r) => spriteKindOf(r) === "toggle");
-  if (hasToggle) {
-    items.push({ bind: "switch-off", kind: "toggle", desc: "a toggle switch shown in its OFF position (lever/rocker down)" });
-    items.push({ bind: "switch-on", kind: "toggle", desc: "the SAME toggle switch shown in its ON position (lever/rocker up)" });
+  const firstToggle = spriteRegs.find((r) => spriteKindOf(r) === "toggle");
+  if (firstToggle) {
+    const tc = colors.get(firstToggle.id)?.hex ?? "#888888";
+    items.push({ bind: "switch-off", kind: "toggle", color: tc, desc: "a toggle switch shown in its OFF position (lever/rocker down)" });
+    items.push({ bind: "switch-on", kind: "toggle", color: tc, desc: "the SAME toggle switch shown in its ON position (lever/rocker up)" });
   }
   const n = items.length;
   const cellW = n > 0 ? GEN_W / n : GEN_W;
@@ -575,7 +610,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     // shape-agnostic anchor: crosshair + soft green disc centered in the slot (crisp — strip
     // positions are deterministic). Same honest marker as the device sockets; the painter
     // fills one control per anchor and removes the mark.
-    parts.push(anchorMark(sx0 + cw / 2, sy0 + shh / 2, cw, shh, BP_RING, 0, `strip_${i}`, defs));
+    parts.push(anchorMark(sx0 + cw / 2, sy0 + shh / 2, cw, shh, it.color, 0, `strip_${i}`, defs));
     cells.push({
       bind: it.bind, kind: it.kind,
       cellRect: [sx0 / GEN_W, sy0 / H, cw / GEN_W, shh / H],
@@ -588,22 +623,27 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     bind: bindOf(r), kind: spriteKindOf(r)!,
     rect: [r.rect.x, r.rect.y, r.rect.w, r.rect.h], // normalized to the DEVICE region (GEN_H)
   }));
-  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H, stripDesc, bakeLegend };
+  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H, stripDesc, bakeLegend, colors };
 }
 
 
+// Per-component LABEL mask: each region filled with its identity hex (componentColors) on a
+// black field — so a downstream stage can key each control's pixels by its exact colour. Same
+// colour a component wears in the panels / blueprint, so the mask is consistent with them.
 export function regionMaskSvg(regs: Region[], dilate = 28): string {
+  const colors = componentColors(regs);
   const shapes = regs.map((r) => {
+    const fill = colors.get(r.id)?.hex ?? "#FFFFFF";
     const rc = r.rect;
     const x0 = rc.x * GEN_W, y0 = rc.y * GEN_H, w = rc.w * GEN_W, h = rc.h * GEN_H;
     if (r.kind === "slider-arc" && r.arc) {
       const cx = x0 + w / 2, cy = y0 + h / 2, rr = (w * 0.88) / 2;
-      return arcPath(cx, cy, rr, r.arc.start, r.arc.end, 26 + dilate, "white", "none");
+      return arcPath(cx, cy, rr, r.arc.start, r.arc.end, 26 + dilate, fill, "none");
     }
     if (r.kind === "knob" || ((r.kind === "button" || r.kind === "display") && r.shape === "ellipse")) {
-      return `<ellipse cx="${x0 + w / 2}" cy="${y0 + h / 2}" rx="${w / 2 + dilate}" ry="${h / 2 + dilate}" fill="white"/>`;
+      return `<ellipse cx="${x0 + w / 2}" cy="${y0 + h / 2}" rx="${w / 2 + dilate}" ry="${h / 2 + dilate}" fill="${fill}"/>`;
     }
-    return `<rect x="${x0 - dilate}" y="${y0 - dilate}" width="${w + 2 * dilate}" height="${h + 2 * dilate}" rx="${dilate}" fill="white"/>`;
+    return `<rect x="${x0 - dilate}" y="${y0 - dilate}" width="${w + 2 * dilate}" height="${h + 2 * dilate}" rx="${dilate}" fill="${fill}"/>`;
   }).join("\n");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${GEN_W}" height="${GEN_H}" viewBox="0 0 ${GEN_W} ${GEN_H}"><rect width="${GEN_W}" height="${GEN_H}" fill="black"/>${shapes}</svg>`;
 }
