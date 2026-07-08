@@ -376,7 +376,7 @@ const STRIP_H = COMBINED_H - DEVICE_H;
 export const DEVICE_FRAC = DEVICE_H / COMBINED_H;
 
 const BP_BODY = "rgb(218,218,224)";   // faint gray body silhouette
-const BP_RING = "rgb(0,190,90)";      // bright GREEN anchor ring (empty well → sprite overlay). Green,
+export const BP_RING = "rgb(0,190,90)";      // bright GREEN anchor ring (empty well → sprite overlay). Green,
                                       // not magenta: magenta was physically transmitted into translucent
                                       // bodies + bled as pink frames (2026-07-01). Green reads as a clearly
                                       // foreign guide on any neutral backdrop and removes cleanly.
@@ -389,7 +389,7 @@ const BP_BAKE = "rgb(0,120,255)";     // blue ring = paint a REAL cohesive contr
 // button gets its OWN hue + a prose legend maps hue→control→face-icon (reusing the
 // glyph-free faceIconWords vocabulary). Hues kept MODERATE (removed guide rings, but
 // strong chroma can still tint the painted control — the magenta-bleed lesson).
-interface BakeHue { css: string; name: string }
+export interface BakeHue { css: string; name: string }
 const BAKE_HUES: BakeHue[] = [
   { css: "rgb(255,90,60)",  name: "ORANGE-RED" },
   { css: "rgb(0,120,255)",  name: "BLUE" },
@@ -398,6 +398,16 @@ const BAKE_HUES: BakeHue[] = [
   { css: "rgb(0,200,180)",  name: "TEAL" },
   { css: "rgb(255,130,40)", name: "ORANGE" },
 ];
+
+// Shared source of truth for BAKED-button identity colours — the studio panels AND the
+// blueprint call THIS so their colour codes match. Each baked button → a hue by index order;
+// anything else is an empty well (BP_RING green). Keeps the two views from drifting.
+export function bakedButtonHues(regs: Region[]): Map<string, BakeHue> {
+  const baked = regs.filter((r) => r.kind === "button" && r.baked);
+  const m = new Map<string, BakeHue>();
+  baked.forEach((r, i) => m.set(r.id, BAKE_HUES[i % BAKE_HUES.length]));
+  return m;
+}
 
 // map a template Region kind → the sprite kind we cut, or null for non-sprite
 // (displays/decorations stay on the device and are never cut to the strip).
@@ -497,8 +507,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   // build a colour→identity→icon legend for the paint prompt. So the model knows which
   // scattered ring is which control + what to emboss, with no ambiguity and no drawn text.
   const bakedButtons = regs.filter((r) => r.kind === "button" && r.baked);
-  const bakeHueOf = new Map<string, BakeHue>();
-  bakedButtons.forEach((r, i) => bakeHueOf.set(r.id, BAKE_HUES[i % BAKE_HUES.length]));
+  const bakeHueOf = bakedButtonHues(regs);   // shared id → hue map (same logic the studio uses)
   const bakeLegend = bakedButtons.map((r) => {
     const hue = bakeHueOf.get(r.id)!;
     const icon = faceIconWords((r.bind || r.id).toLowerCase());

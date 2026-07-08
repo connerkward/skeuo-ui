@@ -10,17 +10,13 @@ import {
   layoutRandomP, layoutArch, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
-import { combinedBlueprint } from "../generate/blueprint";
+import { combinedBlueprint, bakedButtonHues, BP_RING } from "../generate/blueprint";
 import { PAINT_PROMPT } from "../generate/pipeline";
 import PaintedSheet from "./PaintedSheet";
 import type { Region, Kind } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
 const KINDS: Kind[] = ["button", "knob", "toggle", "slider-h", "slider-v", "slider-arc", "display"];
-const KCOL: Record<string, string> = {
-  button: "#ff9a3c", knob: "#3ce07f", toggle: "#40c8ff", "slider-h": "#ff6a6a",
-  "slider-v": "#c47cff", "slider-arc": "#ff6a6a", display: "#8a8a99", flourish: "#556",
-};
 
 // unit polygon (0..1 space) for an arbitrary shape centred in the component's rect. circle→null (ellipse).
 function unitPoly(kind: string): [number, number][] | null {
@@ -80,15 +76,22 @@ export default function TemplateStudio() {
   // repackTemplate rearrangement — so the blueprint reflects exactly what you edit.
   // (Zero-diff overlap prevention still runs live on edits via enforceZeroDiff.)
   const packed = useMemo(() => regions as SR[], [regions]);
-  // COMBINED blueprint — the packer's FULL output: device guides (with diffuseness blur)
-  // + the SPRITE STRIP cells. Real shipping function (bakeButtons → combinedBlueprint).
-  const combined = useMemo(() => {
-    try {
-      const withDiff = packed.map((r) => ({ ...r, diff: r.diff ?? globalDiff }));
-      return combinedBlueprint(bakeButtons(withDiff as Region[]), "rgb(128,128,130)");
-    }
-    catch { return null; }
+  // BAKED regions (transport buttons molded into the body) — the EXACT input the blueprint
+  // uses. Shared so the studio panels colour controls the SAME way the blueprint does.
+  const bakedRegs = useMemo(() => {
+    try { return bakeButtons(packed.map((r) => ({ ...r, diff: r.diff ?? globalDiff })) as Region[]); }
+    catch { return packed as Region[]; }
   }, [packed, globalDiff]);
+  // COMBINED blueprint — real shipping function (bakeButtons → combinedBlueprint).
+  const combined = useMemo(() => {
+    try { return combinedBlueprint(bakedRegs, "rgb(128,128,130)"); }
+    catch { return null; }
+  }, [bakedRegs]);
+  // SHARED colour code with the blueprint: a baked button → its identity hue; anything else →
+  // green (BP_RING = empty well). Replaces the old kind-based KCOL so a control reads the SAME
+  // colour in the RAW / PACKED panels and the combined blueprint.
+  const hueMap = useMemo(() => bakedButtonHues(bakedRegs), [bakedRegs]);
+  const colorOf = useCallback((r: SR) => hueMap.get(r.id)?.css ?? BP_RING, [hueMap]);
 
   // The exact TEXT prompt that rides ALONGSIDE the blueprint image to FAL — reconstructed
   // live from the shared PAINT_PROMPT + this template's strip / bake-legend, so you can read
@@ -158,7 +161,7 @@ export default function TemplateStudio() {
 
   const renderShape = (r: SR, editable: boolean) => {
     const W = GEN_W, H = GEN_H; const x = r.rect.x * W, y = r.rect.y * H, w = r.rect.w * W, h = r.rect.h * H;
-    const col = KCOL[r.kind] ?? "#888"; const sk = autoShape(r);
+    const col = colorOf(r); const sk = autoShape(r);
     // an LLM/human-drawn custom silhouette (schema `path`, normalized in-rect) beats the named shape
     const poly = (r.path && r.path.length >= 3) ? r.path.map((p) => [p.x, p.y] as [number, number]) : unitPoly(sk);
     const diff = r.diff ?? globalDiff; const blur = diff * Math.min(w, h) * 0.5;   // diffuseness → soft edge
@@ -309,7 +312,7 @@ export default function TemplateStudio() {
           {regions.map((r) => (
             <div key={r.id} onClick={() => setSel(r.id)}
               style={{ display: "flex", gap: 6, alignItems: "center", padding: "4px 8px", fontSize: 12, cursor: "pointer", background: sel === r.id ? "#242432" : "transparent", color: "#c8c8d2" }}>
-              <span style={{ width: 9, height: 9, borderRadius: "50%", background: KCOL[r.kind] ?? "#888", flex: "0 0 auto" }} />
+              <span style={{ width: 9, height: 9, borderRadius: "50%", background: colorOf(r), flex: "0 0 auto" }} />
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.bind || r.id}</span>
               <span style={{ color: "#8a8a96" }}>{r.kind}</span>
               <span style={{ color: "#66666f" }}>d{(r.diff ?? globalDiff).toFixed(1)}</span>
