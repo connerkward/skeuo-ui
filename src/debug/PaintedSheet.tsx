@@ -43,6 +43,7 @@ export default function PaintedSheet({ regions, prompt }: { regions: Region[]; p
   return (
     <div className="tsCanvas bp">
       <div className="tsCap">PAINTED sheet <span>{busy ? `(${stage || "…"})` : show ? "(FAL)" : "(click to paint · FAL)"}</span></div>
+      <div className="tsFit">
       <div className="tsBP" onClick={() => void gen()} title="click to paint this blueprint via the FAL API (one paid generation)"
         style={{ cursor: busy ? "wait" : "pointer", background: "#15151c", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {show
@@ -51,7 +52,7 @@ export default function PaintedSheet({ regions, prompt }: { regions: Region[]; p
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
           : <div style={{ color: "#66666f", fontSize: 12, textAlign: "center", padding: 16, lineHeight: 1.5 }}>▶ click to paint<br />this blueprint via FAL</div>}
         {busy && <div style={{ position: "absolute", inset: 0, background: "rgba(10,10,16,.5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#7fe0a0", fontSize: 12 }}>{msg || stage}</div>}
-      </div>
+      </div></div>
       <div style={{ fontSize: 11, marginTop: 4, minHeight: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: msg.startsWith("✓") ? "#7fe0a0" : msg.startsWith("error") ? "#ff8a8a" : "#9a9aa6" }}>{msg}</div>
     </div>
   );

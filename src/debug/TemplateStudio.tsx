@@ -18,6 +18,7 @@ import type { Region, Kind } from "../template/schema";
 type SR = Region & { shapeKind?: string; diff?: number };
 const KINDS: Kind[] = ["button", "knob", "toggle", "slider-h", "slider-v", "slider-arc", "display"];
 const DEF_ARC = { start: 200, end: 340 };   // default partial-circle sweep for a slider-arc
+const REPACK_ENABLED = false;   // feature flag: repack/packing is OFF — packed == raw, so the PACKED panel is hidden
 // SVG arc 'd' matching blueprint.ts arcPath (same large-arc/sweep rules) so a slider-arc reads
 // IDENTICALLY in the studio panels and the combined blueprint.
 const arcD = (cx: number, cy: number, r: number, a0: number, a1: number): string => {
@@ -38,9 +39,10 @@ export default function TemplateStudio() {
   const [llmMsg, setLlmMsg] = useState("");
   const [drag, setDrag] = useState<string | null>(null);
   const [cornerDrag, setCornerDrag] = useState<string | null>(null);  // dragging a live corner-radius handle
+  const [resize, setResize] = useState<{ id: string; h: string } | null>(null);  // dragging a bbox corner to RESIZE
   // human-authored flag: once the human edits (drag/add/patch/nudge), the packer becomes a
   // PASS-THROUGH — packing must not rearrange a human-authored template. Generators reset it.
-  const [authored, setAuthored] = useState(false);
+  const [, setAuthored] = useState(false);   // human-edit flag (setter kept; value unused while repack is off)
 
   // HARD CONSTRAINT: components at 0 diffuseness (crisp, must-follow guides) may NEVER overlap.
   // Enforced with the SHIPPING resolveOverlaps, scoped to only the zero-diff subset — the packer
@@ -146,11 +148,23 @@ export default function TemplateStudio() {
 
   // drag a centroid on the RAW canvas (pointer coords → normalized, recentre the rect)
   const onMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (!drag && !cornerDrag) return;
+    if (!drag && !cornerDrag && !resize) return;
     const svg = e.currentTarget; const b = svg.getBoundingClientRect();
     const nx = (e.clientX - b.left) / b.width, ny = (e.clientY - b.top) / b.height;
     if (drag) {
       setRegions((rs) => rs.map((r) => r.id === drag ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, nx - r.rect.w / 2)), y: Math.max(0, Math.min(1 - r.rect.h, ny - r.rect.h / 2)) } } : r));
+    } else if (resize) {
+      // grab a BBOX CORNER to resize — the opposite corner stays fixed. (normalized rect)
+      setRegions((rs) => rs.map((r) => {
+        if (r.id !== resize.id) return r;
+        const MIN = 0.03; let { x, y, w, h } = r.rect; const r2 = x + w, b2 = y + h;
+        if (resize.h === "se") { w = Math.max(MIN, nx - x); h = Math.max(MIN, ny - y); }
+        else if (resize.h === "nw") { x = Math.max(0, Math.min(nx, r2 - MIN)); y = Math.max(0, Math.min(ny, b2 - MIN)); w = r2 - x; h = b2 - y; }
+        else if (resize.h === "ne") { y = Math.max(0, Math.min(ny, b2 - MIN)); w = Math.max(MIN, nx - x); h = b2 - y; }
+        else { x = Math.max(0, Math.min(nx, r2 - MIN)); w = r2 - x; h = Math.max(MIN, ny - y); }   // sw
+        w = Math.min(w, 1 - x); h = Math.min(h, 1 - y);
+        return { ...r, rect: { x, y, w, h } } as SR;
+      }));
     } else if (cornerDrag) {
       // Illustrator-style live corner: the radius = how far the pointer is INSET from the
       // nearest corner (0 → sharp rect, half the short side → oval).
@@ -163,7 +177,7 @@ export default function TemplateStudio() {
         return { ...r, corner: half > 0 ? +(inset / half).toFixed(3) : 0 } as SR;
       }));
     }
-  }, [drag, cornerDrag]);
+  }, [drag, cornerDrag, resize]);
 
   const renderShape = (r: SR, editable: boolean) => {
     const W = GEN_W, H = GEN_H;
@@ -190,8 +204,8 @@ export default function TemplateStudio() {
           ? <path d={arcD(cx, cy, (s / 2) * 0.86, (r.arc ?? DEF_ARC).start, (r.arc ?? DEF_ARC).end)} fill="none" stroke={col} strokeWidth={tw} strokeLinecap="round" />
           : <rect x={rrx} y={rry} width={rw} height={rh} rx={rr} ry={rr} fill={col} fillOpacity={0.38} stroke={col} strokeWidth={Math.max(1.5, s * 0.022)} filter={`url(#${fid})`} />;
 
-    // live corner-radius handles (Illustrator style) — box controls only, when selected
-    const hi = Math.max(rr, s * 0.05);
+    // live corner-radius handles (Illustrator style, INSET circles) — box controls only, when selected
+    const hi = Math.max(rr, s * 0.18);
     const cornerPts: Array<[number, number]> = [
       [rrx + hi, rry + hi], [rrx + rw - hi, rry + hi],
       [rrx + hi, rry + rh - hi], [rrx + rw - hi, rry + rh - hi],
@@ -209,9 +223,16 @@ export default function TemplateStudio() {
         <circle cx={cx} cy={cy} r={editable ? Math.max(dot, 11) : dot} fill={selected ? "#fff" : col} stroke="#000" strokeWidth={2}
           style={{ cursor: editable ? "grab" : "default" }}
           onPointerDown={editable ? (e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); } : undefined} />
+        {/* INSET circles = corner RADIUS (rect↔oval) */}
         {editable && selected && !isSlider && cornerPts.map(([hx, hy], i) => (
-          <circle key={i} cx={hx} cy={hy} r={9} fill="#fff" stroke={col} strokeWidth={3} style={{ cursor: "nwse-resize" }}
+          <circle key={`rad${i}`} cx={hx} cy={hy} r={8} fill={col} stroke="#fff" strokeWidth={2.5} style={{ cursor: "pointer" }}
             onPointerDown={(e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setCornerDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); }} />
+        ))}
+        {/* BBOX-corner squares = RESIZE (grab a corner to resize the control) */}
+        {editable && selected && ([["nw", x, y], ["ne", x + w, y], ["sw", x, y + h], ["se", x + w, y + h]] as Array<[string, number, number]>).map(([k, hx, hy]) => (
+          <rect key={`rs${k}`} x={hx - 9} y={hy - 9} width={18} height={18} fill="#fff" stroke="#000" strokeWidth={2}
+            style={{ cursor: k === "nw" || k === "se" ? "nwse-resize" : "nesw-resize" }}
+            onPointerDown={(e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setResize({ id: r.id, h: k }); (e.target as Element).setPointerCapture(e.pointerId); }} />
         ))}
         <text x={cx} y={y - 6} fill={col} fontSize={26} textAnchor="middle" style={{ pointerEvents: "none", fontWeight: 700 }}>{(r.bind || r.id).slice(0, 10)}</text>
       </g>
@@ -223,12 +244,14 @@ export default function TemplateStudio() {
   const Canvas = ({ regs, editable, title }: { regs: SR[]; editable: boolean; title: string }) => (
     <div className="tsCanvas dev">
       <div className="tsCap">{title} <span>({regs.length} regions)</span></div>
-      <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`}
-        onPointerMove={editable ? onMove : undefined}
-        onPointerUp={() => { setDrag(null); setCornerDrag(null); if (editable) setRegions(enforceZeroDiff); }}
-        onPointerLeave={() => { setDrag(null); setCornerDrag(null); }}>
-        {regs.map((r) => renderShape(r, editable))}
-      </svg>
+      <div className="tsFit">
+        <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`}
+          onPointerMove={editable ? onMove : undefined}
+          onPointerUp={() => { setDrag(null); setCornerDrag(null); setResize(null); if (editable) setRegions(enforceZeroDiff); }}
+          onPointerLeave={() => { setDrag(null); setCornerDrag(null); setResize(null); }}>
+          {regs.map((r) => renderShape(r, editable))}
+        </svg>
+      </div>
     </div>
   );
 
@@ -249,17 +272,17 @@ export default function TemplateStudio() {
         .tsHead h1{font-size:16px;margin:0}
         .tsHead span{color:#8a8a96;font-size:11.5px}
         .tsLeft{overflow-y:auto;min-height:0;padding:10px;border-right:1px solid #1e1e26;display:flex;flex-direction:column;gap:10px}
-        .tsMain{display:flex;gap:12px;padding:8px 12px;min-width:0;min-height:0;justify-content:center;align-items:flex-start;overflow:hidden}
+        .tsMain{display:flex;gap:12px;padding:8px 12px;min-width:0;min-height:0;justify-content:center;align-items:stretch;overflow-x:auto;overflow-y:hidden}
         .tsRight{overflow-y:auto;min-height:0;padding:10px;border-left:1px solid #1e1e26;display:flex;flex-direction:column;gap:8px}
-        .tsFoot{grid-column:1/-1;display:flex;gap:10px;align-items:center;padding:6px 14px;border-top:1px solid #1e1e26;flex-wrap:wrap}
-        .tsCanvas{display:flex;flex-direction:column;min-width:0;align-items:stretch}
-        /* width derives from viewport HEIGHT (fit-to-height, exact aspect — no letterboxing),
-           clamped by the column's share of width. 150px ≈ header+footer+caption chrome. */
-        .tsCanvas.dev{width:min(24%,calc((100vh - 150px) * ${(GEN_W / GEN_H).toFixed(4)}))}
-        .tsCanvas.bp{width:min(24%,calc((100vh - 150px) * ${(GEN_W / 1820).toFixed(4)}))}
-        /* combined column WITH the FAL text-prompt box under it — blueprint takes ~62% of the
-           height so the scrollable prompt gets the rest; column fills the row height. */
-        .tsCanvas.bpc{width:min(23%,calc((100vh - 150px) * ${(GEN_W / 1820).toFixed(4)} * 0.62));height:100%}
+        .tsFoot{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;padding:6px 14px;border-top:1px solid #1e1e26}
+        .tsCmd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .tsPrompt{max-height:118px;overflow:auto;background:#0b0b11;border:1px solid #26262f;border-radius:8px;padding:4px 10px}
+        /* panels: FULL height, width derived from their aspect (so the svg box stays exact —
+           pointer math needs it); centred, horizontal-scroll if the three overflow. */
+        .tsCanvas{display:flex;flex-direction:column;min-width:0;min-height:0;gap:4px;flex:0 0 auto}
+        .tsCanvas.dev{width:min(94vw,calc((100vh - 240px) * ${(GEN_W / GEN_H).toFixed(4)}))}
+        .tsCanvas.bp{width:min(94vw,calc((100vh - 240px) * ${(GEN_W / 1820).toFixed(4)}))}
+        .tsFit{flex:1;min-height:0;display:grid;place-items:center;overflow:hidden}
         .tsCap{color:#cfcfe0;font-weight:600;font-size:12.5px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .tsCap span{color:#8a8a96;font-weight:400;font-size:11px}
         .tsStage{width:100%;aspect-ratio:${GEN_W}/${GEN_H};background:#15151c;border:1px solid #2a2a34;border-radius:10px;touch-action:none}
@@ -268,7 +291,7 @@ export default function TemplateStudio() {
         @media (max-width:1020px){
           .tsRoot{position:static;height:auto;grid-template-columns:1fr;grid-template-rows:auto}
           .tsMain{flex-wrap:wrap;overflow:visible}
-          .tsCanvas.dev,.tsCanvas.bp{width:min(100%,420px)}
+          .tsCanvas.dev,.tsCanvas.bp{width:min(96vw,440px)}
           .tsLeft,.tsRight{border:0}
         }
       `}</style>
@@ -299,9 +322,9 @@ export default function TemplateStudio() {
       {/* CENTER — everything at once: raw, packed, combined blueprint (height-fit) */}
       <main className="tsMain">
         <Canvas regs={regions} editable title="RAW template (seed / edit)" />
-        <Canvas regs={packed} editable={false} title={authored ? "PACKED — repack off (mirrors edited raw)" : "PACKED — repack off (mirrors raw)"} />
+        {REPACK_ENABLED && <Canvas regs={packed} editable={false} title="PACKED (repack)" />}
         {combined && (
-          <div className="tsCanvas bpc">
+          <div className="tsCanvas bp">
             <div className="tsCap" style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>COMBINED blueprint <span>(device + {combined.layout.cells.length} sprite cells)</span></span>
               <button onClick={() => setShowOverlays((v) => !v)} title="toggle studio overlays — the bind labels + divider are annotations, NOT part of the image sent to FAL"
@@ -309,7 +332,7 @@ export default function TemplateStudio() {
                 {showOverlays ? "◉" : "◯"} overlays
               </button>
             </div>
-            <div className="tsBP" style={{ flex: "0 0 auto" }}>
+            <div className="tsFit"><div className="tsBP">
               <div style={{ position: "absolute", inset: 0, lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: combined.svg.replace(/width="\d+" height="\d+"/, 'width="100%" height="100%"') }} />
               {/* STUDIO OVERLAYS — annotations drawn ON TOP of the blueprint for the human; NOT part of
                   the rasterized image sent to FAL. Always badge-labelled as such + toggleable, so it's
@@ -324,14 +347,7 @@ export default function TemplateStudio() {
                   <div style={{ position: "absolute", left: 0, right: 0, top: `${combined.layout.devFrac * 100}%`, borderTop: "2px dashed rgba(0,0,0,.45)", color: "rgba(0,0,0,.55)", fontSize: 10, paddingLeft: 4, pointerEvents: "none" }}>sprite strip ↓</div>
                 </>
               )}
-            </div>
-            {/* scrollable view of the TEXT prompt that ALSO goes to FAL with the blueprint image */}
-            <div style={{ flex: "1 1 0", minHeight: 70, marginTop: 6, overflowY: "auto", background: "#0b0b11", border: "1px solid #26262f", borderRadius: 8, padding: "0 8px 8px" }}>
-              <div style={{ position: "sticky", top: 0, background: "#0b0b11", fontSize: 10, color: "#8a8a96", fontWeight: 600, padding: "6px 0 4px", marginBottom: 4, borderBottom: "1px solid #1e1e26" }}>
-                text prompt → FAL <span style={{ color: "#66666f", fontWeight: 400 }}>(sent with the blueprint image · {promptPreview.length.toLocaleString()} chars)</span>
-              </div>
-              <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 10, lineHeight: 1.45, color: "#c2c2ce", fontFamily: "ui-monospace,SFMono-Regular,monospace" }}>{promptPreview}</pre>
-            </div>
+            </div></div>
           </div>
         )}
         {/* 4th section — click to paint the current template via the FAL API */}
@@ -383,13 +399,21 @@ export default function TemplateStudio() {
 
       {/* BOTTOM — LLM command bar + shortcuts */}
       <footer className="tsFoot">
-        <span style={{ fontSize: 13 }}>🧠</span>
-        <input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="LLM theme — e.g. a wild organic Y2K Winamp media player"
-          onKeyDown={(e) => { if (e.key === "Enter") void llmGen(); }}
-          style={{ flex: "1 1 260px", maxWidth: 560, background: "#15151c", color: "#e8e8ee", border: "1px solid #2a2a34", borderRadius: 6, padding: "5px 9px", fontSize: 12 }} />
-        <button style={btn} onClick={llmGen}>Generate (deriveLayout)</button>
-        <span style={{ fontSize: 11, color: "#8a8a96" }}>{llmMsg}</span>
-        <span style={{ marginLeft: "auto", fontSize: 11, color: "#66666f" }}>⌫ delete · arrows nudge (⇧ coarse) · esc deselect · ⌘Z undo · ⇧⌘Z redo</span>
+        <div className="tsCmd">
+          <span style={{ fontSize: 13 }}>🧠</span>
+          <input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="LLM theme — e.g. a wild organic Y2K Winamp media player"
+            onKeyDown={(e) => { if (e.key === "Enter") void llmGen(); }}
+            style={{ flex: "1 1 260px", maxWidth: 560, background: "#15151c", color: "#e8e8ee", border: "1px solid #2a2a34", borderRadius: 6, padding: "5px 9px", fontSize: 12 }} />
+          <button style={btn} onClick={llmGen}>Generate (deriveLayout)</button>
+          <span style={{ fontSize: 11, color: "#8a8a96" }}>{llmMsg}</span>
+          <span style={{ marginLeft: "auto", fontSize: 11, color: "#66666f" }}>⌫ delete · arrows nudge (⇧ coarse) · esc deselect · ⌘Z undo · ⇧⌘Z redo</span>
+        </div>
+        {combined && (
+          <div className="tsPrompt">
+            <div style={{ fontSize: 10, color: "#8a8a96", fontWeight: 600, marginBottom: 2 }}>text prompt → FAL <span style={{ color: "#66666f", fontWeight: 400 }}>(sent with the blueprint image · {promptPreview.length.toLocaleString()} chars)</span></div>
+            <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 10, lineHeight: 1.4, color: "#c2c2ce", fontFamily: "ui-monospace,SFMono-Regular,monospace" }}>{promptPreview}</pre>
+          </div>
+        )}
       </footer>
     </div>
   );
