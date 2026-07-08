@@ -18,23 +18,6 @@ import type { Region, Kind } from "../template/schema";
 type SR = Region & { shapeKind?: string; diff?: number };
 const KINDS: Kind[] = ["button", "knob", "toggle", "slider-h", "slider-v", "slider-arc", "display"];
 
-// unit polygon (0..1 space) for an arbitrary shape centred in the component's rect. circle→null (ellipse).
-function unitPoly(kind: string): [number, number][] | null {
-  switch (kind) {
-    case "square": return [[.06, .06], [.94, .06], [.94, .94], [.06, .94]];
-    case "hexagon": return [[.5, .02], [.95, .27], [.95, .73], [.5, .98], [.05, .73], [.05, .27]];
-    case "wedge": return [[.04, .16], [.72, .02], [.98, .5], [.72, .98], [.04, .84], [.24, .5]];
-    case "kidney": return [[.1, .28], [.5, .12], [.9, .3], [.82, .55], [.92, .78], [.5, .95], [.14, .76], [.24, .5]];
-    case "lozenge": return [[.5, .02], [.98, .5], [.5, .98], [.02, .5]];
-    case "teardrop": return [[.5, .03], [.86, .3], [.9, .68], [.62, .96], [.36, .96], [.1, .68], [.14, .3]];
-    case "blob": return [[.24, .1], [.62, .06], [.92, .28], [.86, .6], [.96, .84], [.56, .96], [.2, .88], [.06, .56], [.16, .3]];
-    case "arc": return [[.02, .34], [.5, .06], [.98, .34], [.86, .5], [.98, .66], [.5, .5], [.02, .66], [.14, .5]];
-    default: return null;   // circle / auto → ellipse
-  }
-}
-const autoShape = (r: SR): string => r.shapeKind && r.shapeKind !== "auto" ? r.shapeKind
-  : r.kind === "knob" ? "circle" : r.kind === "button" ? "wedge" : r.kind === "display" ? "square"
-  : r.kind === "slider-arc" ? "arc" : "square";
 
 export default function TemplateStudio() {
   const [P, setP] = useState<Params>({ ...DEFAULT_PARAMS });
@@ -160,23 +143,34 @@ export default function TemplateStudio() {
   }, [drag]);
 
   const renderShape = (r: SR, editable: boolean) => {
-    const W = GEN_W, H = GEN_H; const x = r.rect.x * W, y = r.rect.y * H, w = r.rect.w * W, h = r.rect.h * H;
-    const col = colorOf(r); const sk = autoShape(r);
-    // an LLM/human-drawn custom silhouette (schema `path`, normalized in-rect) beats the named shape
-    const poly = (r.path && r.path.length >= 3) ? r.path.map((p) => [p.x, p.y] as [number, number]) : unitPoly(sk);
-    const diff = r.diff ?? globalDiff; const blur = diff * Math.min(w, h) * 0.5;   // diffuseness → soft edge
+    const W = GEN_W, H = GEN_H;
+    const x = r.rect.x * W, y = r.rect.y * H, w = r.rect.w * W, h = r.rect.h * H;
+    const cx = x + w / 2, cy = y + h / 2;
+    const col = colorOf(r);
+    const diff = r.diff ?? globalDiff;
+    const s = Math.min(w, h);
+    // SAME anchor as the combined blueprint (blueprint.ts anchorMark): a soft SIZE DISC + a
+    // crisp CENTROID CROSSHAIR, coloured by this component's identity. No fake silhouette
+    // (shape is the model's choice — that's why there are no wedge/kidney outlines), and the
+    // diffuseness maths is IDENTICAL to the blueprint, so diff reads the same in both.
+    const blur = s * 0.10 + diff * s * 0.55;
+    const op = 0.95 - diff * 0.45;
+    const rx = (w / 2) * 0.74, ry = (h / 2) * 0.74;
+    const arm = s * 0.27, lw = Math.max(2.5, s * 0.03), dot = Math.max(3, s * 0.05);
     const fid = `f_${r.id}`; const selected = sel === r.id;
-    const shape = poly
-      ? <polygon points={poly.map(([px, py]) => `${x + px * w},${y + py * h}`).join(" ")} fill={col} fillOpacity={0.5} stroke={col} strokeWidth={selected ? 5 : 2} filter={blur > 0.6 ? `url(#${fid})` : undefined} />
-      : <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} fill={col} fillOpacity={0.5} stroke={col} strokeWidth={selected ? 5 : 2} filter={blur > 0.6 ? `url(#${fid})` : undefined} />;
     return (
       <g key={r.id} onClick={() => editable && setSel(r.id)} style={{ cursor: editable ? "pointer" : "default" }}>
-        {blur > 0.6 && <filter id={fid} x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation={blur} /></filter>}
-        {shape}
-        <circle cx={x + w / 2} cy={y + h / 2} r={editable ? 11 : 6} fill={selected ? "#fff" : col}
-          stroke="#000" strokeWidth={2} style={{ cursor: editable ? "grab" : "default" }}
+        <filter id={fid} x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation={blur} /></filter>
+        <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={col} fillOpacity={0.36} filter={`url(#${fid})`} />
+        <g stroke={col} strokeWidth={lw} strokeLinecap="round" opacity={op}>
+          <line x1={cx - arm} y1={cy} x2={cx + arm} y2={cy} />
+          <line x1={cx} y1={cy - arm} x2={cx} y2={cy + arm} />
+        </g>
+        {selected && <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="none" stroke="#fff" strokeWidth={2.5} strokeDasharray="7 5" opacity={0.7} />}
+        <circle cx={cx} cy={cy} r={editable ? Math.max(dot, 12) : dot} fill={selected ? "#fff" : col} stroke="#000" strokeWidth={2} opacity={editable ? 1 : op}
+          style={{ cursor: editable ? "grab" : "default" }}
           onPointerDown={editable ? (e) => { e.stopPropagation(); snapshot(); setAuthored(true); setSel(r.id); setDrag(r.id); (e.target as Element).setPointerCapture(e.pointerId); } : undefined} />
-        <text x={x + w / 2} y={y - 6} fill={col} fontSize={26} textAnchor="middle" style={{ pointerEvents: "none", fontWeight: 700 }}>{(r.bind || r.id).slice(0, 8)}</text>
+        <text x={cx} y={y - 6} fill={col} fontSize={26} textAnchor="middle" style={{ pointerEvents: "none", fontWeight: 700 }}>{(r.bind || r.id).slice(0, 10)}</text>
       </g>
     );
   };
@@ -314,8 +308,6 @@ export default function TemplateStudio() {
               style={{ display: "flex", gap: 6, alignItems: "center", padding: "4px 8px", fontSize: 12, cursor: "pointer", background: sel === r.id ? "#242432" : "transparent", color: "#c8c8d2" }}>
               <span style={{ width: 9, height: 9, borderRadius: "50%", background: colorOf(r), flex: "0 0 auto" }} />
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.bind || r.id}</span>
-              <span style={{ color: "#8a8a96" }}>{r.kind}</span>
-              <span style={{ color: "#66666f" }}>d{(r.diff ?? globalDiff).toFixed(1)}</span>
             </div>
           ))}
         </div>
