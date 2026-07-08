@@ -205,7 +205,7 @@ export default function App() {
   }, []);
 
   const runtimeView: RuntimeSkinView | undefined = activeRuntime
-    ? { frameUrl: activeRuntime.frameUrl, template: activeRuntime.template, style: activeRuntime.style, sprites: activeRuntime.sprites }
+    ? { frameUrl: activeRuntime.frameUrl, template: activeRuntime.template, style: activeRuntime.style, sprites: activeRuntime.sprites, maskAlign: activeRuntime.maskAlign }
     : activeCloudRuntime;
 
   // Cloud skins as minimal SkinAssets so they ride the mobile carriage alongside
@@ -230,7 +230,7 @@ export default function App() {
   // + local runtime (resolved inline — its template/frame are already in memory).
   const carriageRuntimes: Record<string, RuntimeSkinView> = { ...cloudRuntimes };
   for (const s of runtimeSkins) {
-    if (!s.hidden) carriageRuntimes[s.id] = { frameUrl: s.frameUrl, template: s.template, style: s.style, sprites: s.sprites };
+    if (!s.hidden) carriageRuntimes[s.id] = { frameUrl: s.frameUrl, template: s.template, style: s.style, sprites: s.sprites, maskAlign: s.maskAlign };
   }
 
   // Owner-only publish: the cloud gallery is curated by the owner, not open UGC.

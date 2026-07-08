@@ -55,7 +55,7 @@ export const PAINT_PROMPT =
   "FADED crosshair + LARGE soft blurry disc = the position is approximate — nudge it within that soft region.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place. Leave them BLANK dark glass: NO text, NO numbers, NO track names, NO fake UI, NO waveform, NO menu, NO icons on the screen — the screen content is added live afterwards.\n" +
   "- The legend gives each colour's ROLE — do EXACTLY that: an EMPTY recessed socket → paint a dark empty hole (no button); a MOLDED BUTTON → paint a finished tactile button; a SCREEN → a dark glassy inset. COLOUR→control→role→icon legend: {bakeLegend}.\n" +
-  "- Where a mark includes a coloured LINE or ARC (not just a crosshair + disc), that is a SLIDER TRACK — paint a recessed seek groove following that EXACT straight line or partial-circle arc; the draggable thumb is a separate part in the strip below. Keep the groove on the line/arc and remove the coloured guide itself.\n" +
+  "- Where a mark includes a coloured LINE or ARC (not just a crosshair + disc), that is a SLIDER TRACK — paint a recessed seek groove following that EXACT straight line or partial-circle arc; the draggable thumb is a separate part in the strip below. Keep the groove on the line/arc and remove the coloured guide itself. The groove is a COMPLETELY EMPTY recessed channel with ABSOLUTELY NOTHING inside it: NO thumb, NO handle, NO slider knob, NO nub, NO bead, NO bar, NO fill, NO marker — JUST an empty channel. The thumb is a SEPARATE loose part that appears ONLY in the strip below; NEVER paint a thumb or any object inside the track on the device.\n" +
   "- For every mark the legend calls a MOLDED BUTTON: paint ONE finished, tactile, pressable button MOLDED SEAMLESSLY INTO the sculpted housing, in the body material, with the icon the legend gives embossed on its face. Give each a WILD, era-correct, ORGANIC silhouette — a curved WEDGE or arc-segment (jog dial), a KIDNEY or half-oval, a TRAPEZOID or faceted polygon, a LOZENGE or teardrop lobe — like a real early-2000s Winamp / Windows-Media-Player / Sonique skin where controls are facets of the housing. The soft disc hints only at SIZE, never shape.\n" +
   "- The buttons do NOT need to be uniform: they MAY be different shapes and sizes, sit at different angles, and follow the organic contour of the body — do NOT force them into an even straight row, a uniform grid, or identical evenly-spaced keys. Where blue marks sit adjacent you MAY flow them into one sculpted housing facet with thin raised seams, but the arrangement stays organic and characterful, not a regimented row. Each button is molded into the body (it stays in the render), not a loose part on top.\n" +
   "- BUTTON COUNT IS EXACT — CRITICAL: there are EXACTLY {NBUTTONS} buttons on the ENTIRE device: the {NBUTTONS} colour-marked positions and ABSOLUTELY NO OTHERS. Do NOT hallucinate or add ANY extra button, a second/conventional transport row, another play/pause/skip cluster, jog-dial keys, or any media-control ANYWHERE else on the body — NOT EVEN if the device 'looks like it should have' a normal transport row. It does NOT. Media players you have seen have a conventional button row; THIS device's buttons are ONLY the {NBUTTONS} marked ones, wherever they sit. Count the coloured button marks, paint exactly that many buttons, and paint NONE beyond them. Every non-marked area of the body is smooth material with NO buttons.\n" +
@@ -100,13 +100,44 @@ export const PAINT_PROMPT =
   "control. This is a row of bare physical parts, not a labeled catalog — there is ZERO typography in the strip.\n" +
   "- Each control's ONLY marking is its own icon EMBOSSED ON ITS FACE (e.g. the play triangle is molded ON the button face) — " +
   "do NOT draw any separate floating icon, glyph, arrow, symbol, or text ABOVE, BELOW or beside the control. Nothing floats " +
-  "next to a part; the surrounding white is completely empty.\n\n" +
+  "next to a part; the surrounding white is completely empty.\n" +
+  "- CRITICAL — CAMERA/VIEW: render EVERY strip part from the EXACT SAME straight-down, FLAT, TOP-DOWN ORTHOGRAPHIC view " +
+  "as the device above (you are looking directly DOWN from straight overhead at 90°). A knob cap is a FLAT CIRCLE seen from " +
+  "directly above — show ONLY its round top face; you must NOT see the cylindrical SIDE of the knob at all. Sliders and " +
+  "switches likewise, seen from straight overhead, flat. ABSOLUTELY NO 3/4 perspective, NO product-shot angle, NO tilt, NO " +
+  "isometric view, NO visible sides or depth — each part must look EXACTLY as it appears when seated flat in its socket on " +
+  "the top-down device, so it drops in and lines up perfectly. And the parts sit in EXACTLY ONE SINGLE horizontal row — do " +
+  "NOT add a second row, do NOT duplicate or repeat any part.\n\n" +
   "RENDER: flat front-on product render. The top device region AND the bottom control strip both sit on the SAME " +
   "flat {BG} backdrop — perfectly clean and uniform. CRITICAL: NO shadows of any kind anywhere — " +
   "no drop shadow, no cast shadow, no contact shadow, no ambient occlusion onto the backdrop. Every element " +
   "must have clean hard edges against its backdrop so it can be perfectly masked. No reflections on the ground. " +
   "Reminder: the bottom control-parts strip carries NO text, NO labels, NO captions, NO numbers of any kind — only the " +
   "bare parts on the flat {BG} backdrop.";
+// ---- JOINT PAINT+MASK clauses (dual-output mask, docs/experiments/2026-07-07) -----
+// When the blueprint is TWO-panel (LEFT device+strip, RIGHT black mask target), these
+// ride with PAINT_PROMPT so ONE generation returns paint + a colour-keyed region mask
+// (mask costs $0 extra; 4K recovers the shared-canvas resolution). The mask colours
+// are the SAME per-component identity hexes as the {bakeLegend} — one colour system
+// across studio, blueprint, prompt and mask. Verified numbers: mask blob → painted
+// control 0.5–2% raw, ≈0.05% after the snap-X pass (maskAlign.ts).
+export const MASK_PROMPT_PREFIX =
+  "The canvas has TWO side-by-side panels of identical size. The LEFT panel is the blueprint to paint " +
+  "(all instructions below). The RIGHT panel is PURE BLACK and becomes a REGION MASK (instructions at the " +
+  "end). Fill BOTH panels, keeping the LEFT panel's device+strip layout IDENTICAL in the RIGHT panel so " +
+  "the two halves overlay pixel-for-pixel.\n\n";
+export const MASK_PROMPT =
+  "\n\nRIGHT PANEL — a REGION MASK on pure BLACK (the right half of the canvas, mirroring the left half's " +
+  "layout exactly). Fill each target with a FLAT SOLID colour blob exactly covering it, using EACH " +
+  "CONTROL'S OWN colour from the COLOUR→control legend above: every molded BUTTON facet gets its legend " +
+  "colour; every EMPTY on-device SOCKET (knob well, toggle slot, and the seek track groove) gets its " +
+  "legend colour; and every SPRITE-STRIP CELL gets its part's colour — a strip part shares its on-device " +
+  "socket's colour (BOTH toggle states = the toggle colour; the pause face = the play colour). Everything " +
+  "else in the right panel stays PURE BLACK: no gradients, no outlines, no glow, no text, no extra marks.\n" +
+  "CRITICAL — the LEFT panel (the painted device and parts) stays strictly in its OWN material colours: " +
+  "NONE of the legend guide colours may appear ANYWHERE in the left panel. The guide colours exist ONLY " +
+  "as the flat blobs of the RIGHT mask panel.";
+
 // ---- CUTOUT KEY COLOUR ----------------------------------------------------
 // The device is painted on a flat CONTRASTING backdrop (a hue OUTSIDE its own
 // palette) so the cutout keys it out unambiguously — fixing the white-key bugs
@@ -228,6 +259,10 @@ export interface GenerateInput {
   envelopeUrl?: string;   // optional fal-hosted user-uploaded envelope; paints from it directly, skipping the AI envelope pass
   regions?: Region[];     // custom authored layout (else the variant preset)
   seed?: number;          // paint base seed; absent ⇒ random-but-recorded (every gen reproducible)
+  // JOINT paint+mask: two-panel blueprint (LEFT device+strip, RIGHT black mask target),
+  // requested at 1:1 4K — the model paints the skin AND a colour-keyed region mask in
+  // ONE billed image. Gemini endpoints only (gpt-image-2 lacks the aspect controls).
+  maskPanel?: boolean;
 }
 
 export interface GenerateResult {
@@ -281,13 +316,18 @@ async function falUpload(falKey: string, png: Uint8Array): Promise<string> {
 // 31-bit non-negative seed (random-but-recorded so every generation is reproducible).
 const randomSeed = (): number => Math.floor(Math.random() * 0x7fffffff);
 
-function falSubmit(falKey: string, model: ModelId, imageUrls: string[], prompt: string, seed?: number) {
+function falSubmit(
+  falKey: string, model: ModelId, imageUrls: string[], prompt: string, seed?: number,
+  // JOINT paint+mask requests the two-panel canvas at ITS aspect (1:1) and 4K — the 4K
+  // recovers the shared-canvas resolution loss for the same per-image price.
+  fmt: { aspect: string; resolution: string } = { aspect: "9:16", resolution: "2K" },
+) {
   const body: Record<string, unknown> =
     model === "openai/gpt-image-2/edit"
       // gpt-image-2 has no seed parameter (rejects unknown keys) → its paints can't be seed-reproduced.
       ? { prompt, image_urls: imageUrls, image_size: { width: 1024, height: 1820 }, quality: "high", output_format: "png" }
       // the gemini edit endpoints accept an optional seed → pass it to fix the paint for reproducibility.
-      : { prompt, image_urls: imageUrls, resolution: "2K", aspect_ratio: "9:16", output_format: "png", ...(seed !== undefined ? { seed } : {}) };
+      : { prompt, image_urls: imageUrls, resolution: fmt.resolution, aspect_ratio: fmt.aspect, output_format: "png", ...(seed !== undefined ? { seed } : {}) };
   return falPost(falKey, `https://queue.fal.run/${model}`, body);
 }
 async function falPoll(falKey: string, job: any, timeoutMs: number): Promise<string> {
@@ -502,16 +542,25 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const keyc = pickKeyColor(matText);
   log(`[${input.id}] key colour ${keyc.css} (${keyc.phrase})`);
 
+  // JOINT paint+mask (dual-output mask, docs/experiments/2026-07-07): a two-panel
+  // blueprint (LEFT device+strip, RIGHT black mask target) painted in ONE generation.
+  // Gemini endpoints only — gpt-image-2 has no aspect_ratio/resolution controls.
+  const jointMask = !!input.maskPanel && model !== "openai/gpt-image-2/edit";
+  if (input.maskPanel && !jointMask) log(`[${input.id}] maskPanel ignored — ${modelLabel(model)} lacks aspect controls`);
+
   // 1. COMBINED blueprint PNG — device body (faint envelope + magenta-ringed
-  //    sockets) on the KEY-COLOUR backdrop + a bottom sprite strip on WHITE. ONE image.
-  const { svg, layout, width: bpW, height: bpH, stripDesc, bakeLegend } = combinedBlueprint(regs, keyc.css);
+  //    sockets) on the KEY-COLOUR backdrop + a bottom sprite strip on WHITE. ONE image
+  //    (two panels of one image in joint paint+mask mode).
+  const { svg, layout, width: bpW, height: bpH, stripDesc, bakeLegend } = combinedBlueprint(regs, keyc.css, { maskPanel: jointMask });
   // CHECK (pre-paint): the blueprint/template MUST be a model-reproducible aspect so
   // the paint returns near 1:1 — otherwise the normalized strip cells + device sockets
-  // map to the wrong place on a reshaped output (mis-cut sprites). It's built to 9:16;
-  // assert that BEFORE spending a paint call so a sizing regression fails loud, here.
+  // map to the wrong place on a reshaped output (mis-cut sprites). Built to 9:16
+  // (classic) or 1:1 (joint two-panel); assert BEFORE spending a paint call so a
+  // sizing regression fails loud, here.
+  const wantAspect = jointMask ? 1 : 9 / 16;
   const bpAspect = bpW / bpH;
-  if (Math.abs(bpAspect - 9 / 16) > 0.02) {
-    throw new Error(`blueprint aspect ${bpW}x${bpH} (${bpAspect.toFixed(3)}) is not ~9:16 (0.5625) — the paint model won't reproduce it 1:1; fix STRIP_FRAC so device+strip = 9:16`);
+  if (Math.abs(bpAspect - wantAspect) > 0.02) {
+    throw new Error(`blueprint aspect ${bpW}x${bpH} (${bpAspect.toFixed(3)}) is not ~${wantAspect.toFixed(4)} — the paint model won't reproduce it 1:1; fix the panel packing so device+strip match the requested aspect`);
   }
   const blueprintPng = await deps.rasterize(svg);
   if (deps.store) { try { await deps.store(input.id, "blueprint", blueprintPng); } catch { /* debug artifact only */ } }
@@ -532,6 +581,9 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
     .replace("{bakeLegend}", bakeLegend || "each button carries no prescribed icon — leave each face cleanly molded")  // per-button colour→identity→icon map
     .replace(/\{NBUTTONS\}/g, String(regs.filter((r) => r.kind === "button").length))  // exact button count → anti-hallucination
     .replace(/\{BG\}/g, keyc.phrase);   // device-region backdrop colour (keyed out by the cutout)
+  // JOINT paint+mask: frame the two-panel task up front and append the RIGHT-panel
+  // mask clauses (colour blobs per control, monochrome paint) after the paint rules.
+  if (jointMask) prompt = MASK_PROMPT_PREFIX + prompt + MASK_PROMPT;
   const refs = input.refImageUrls ?? [];
   if (refs.length) {
     prompt += " Borrow the palette, materials and surface-detail vocabulary of the REFERENCE " +
@@ -548,7 +600,10 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const tries = BANK_GATE_ENABLED ? MAX_BANK_TRIES : 1;
   for (let bt = 1; bt <= tries; bt++) {
     paintSeed = baseSeed + (bt - 1);
-    const paintJob = await falSubmit(deps.falKey, model, [blueprintUrl, ...refs], prompt, paintSeed);
+    const paintJob = await falSubmit(
+      deps.falKey, model, [blueprintUrl, ...refs], prompt, paintSeed,
+      jointMask ? { aspect: "1:1", resolution: "4K" } : undefined,
+    );
     paintUrl = await falPoll(deps.falKey, paintJob, 9 * 60_000);
     deps.onStage?.("paint", paintUrl);   // stream each attempt so the user watches it form
     if (!BANK_GATE_ENABLED || bt === tries) break;
@@ -559,12 +614,12 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   const paintMs = Date.now() - tPaint;
   log(`[${input.id}] paint (${modelLabel(model)}) ${(paintMs / 1000) | 0}s`);
 
-  // ASPECT CHECK: the blueprint is 9:16; if the model reshaped the output, the
-  // normalized strip cells + device sockets map to the wrong place (mis-cut sprites).
-  // Parse the PNG IHDR for dims (no full decode) and warn loudly on a mismatch.
+  // ASPECT CHECK: the blueprint is 9:16 (classic) or 1:1 (joint two-panel); if the
+  // model reshaped the output, the normalized strip cells + device sockets map to the
+  // wrong place (mis-cut sprites). Parse the PNG IHDR (no full decode); warn loudly.
   const dims = pngDims(paintPng);
-  if (dims && Math.abs(dims.w / dims.h - 9 / 16) > 0.03) {
-    log(`[${input.id}] ⚠️ ASPECT MISMATCH: paint ${dims.w}x${dims.h} (${(dims.w / dims.h).toFixed(3)}) ≠ requested 9:16 (0.5625) — sprite cells will be off.`);
+  if (dims && Math.abs(dims.w / dims.h - wantAspect) > 0.03) {
+    log(`[${input.id}] ⚠️ ASPECT MISMATCH: paint ${dims.w}x${dims.h} (${(dims.w / dims.h).toFixed(3)}) ≠ requested ${wantAspect.toFixed(4)} — sprite cells will be off.`);
   }
 
   // 3. CUTOUT is always deferred to the browser. The combined paint must be

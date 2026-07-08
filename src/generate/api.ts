@@ -19,6 +19,9 @@ export interface GenerateRequest {
   regions?: Region[];         // custom layout authored in the wizard (else the variant preset)
   avoidFonts?: string[];      // recently-used logomark fonts the Director should NOT reuse (diversity)
   seed?: number;              // paint RNG seed (gemini endpoints only); absent ⇒ a random one is generated + recorded so every gen is reproducible
+  maskPanel?: boolean;        // JOINT paint+mask: two-panel canvas (LEFT paint, RIGHT colour-keyed
+                              // region mask) in ONE billed 4K generation; the client splits at w//2
+                              // and correlates blobs via layout.maskKeys (gemini endpoints only)
 }
 
 // Live progress events streamed (NDJSON) ahead of the final GenerateResponse so the

@@ -23,6 +23,7 @@
 // (keyColor ≠ white), the BiRefNet alpha is post-cleaned — cut any backdrop pixels it
 // kept + despill the coloured fringe (see cleanDeviceFrame).
 import { cutoutColorAware, KEY_WHITE, type RGB, DEVICE_FRAC, type BlueprintLayout, type BlueprintCell, type SpriteKind } from "./blueprint";
+import { extractMaskRegions, toSkinMaskAlign, type SkinMaskAlign } from "./maskAlign";
 import type { Template } from "../template/schema";
 import { apiUrl } from "../platform";
 
@@ -107,6 +108,26 @@ function whiteKeyCanvas(canvas: HTMLCanvasElement, key: RGB = KEY_WHITE): Blob |
   cutoutColorAware(rgba, W, H, key);
   ctx.putImageData(img, 0, 0);
   return canvasToBlob(canvas);
+}
+
+// ---- generic sub-rect crop (px) --------------------------------------------------
+export function cropRect(src: HTMLCanvasElement, x: number, y: number, w: number, h: number): HTMLCanvasElement {
+  const out = document.createElement("canvas");
+  out.width = Math.max(1, Math.round(w)); out.height = Math.max(1, Math.round(h));
+  const ctx = out.getContext("2d");
+  if (!ctx) throw new Error("no 2d canvas context");
+  ctx.drawImage(src, x, y, out.width, out.height, 0, 0, out.width, out.height);
+  return out;
+}
+
+// JOINT paint+mask: the stored image is TWO panels side-by-side — split at w//2 (the
+// model draws the divider exactly there; verified in the mask-align experiment).
+export function splitJointPanels(joint: HTMLCanvasElement): { paint: HTMLCanvasElement; mask: HTMLCanvasElement } {
+  const half = Math.floor(joint.width / 2);
+  return {
+    paint: cropRect(joint, 0, 0, half, joint.height),
+    mask: cropRect(joint, half, 0, joint.width - half, joint.height),
+  };
 }
 
 // ---- device region crop --------------------------------------------------------
@@ -475,6 +496,10 @@ export interface FinishResult {
   sprites: boolean;        // true once per-skin sprites were cut + uploaded
   spriteUrls: Record<string, string>; // bind → public sprite URL
   template?: Template;     // the input blueprint template (deterministic socket positions, as-is)
+  // JOINT paint+mask generations: the model-emitted region mask, correlated + snapped
+  // (maskAlign.ts). Carries per-region placement (device-region-normalized) + baked-
+  // button press silhouettes. Absent for classic single-panel generations.
+  maskAlign?: SkinMaskAlign;
 }
 
 // Full client half of a single-pass generation, returning the rich FinishResult
@@ -495,8 +520,24 @@ export async function finishCutoutFull(
   template?: Template,
   key: RGB = KEY_WHITE,          // backdrop the device was painted on (white ⇒ no colour cleanup)
 ): Promise<FinishResult> {
-  const paint = await fetchPaintCanvas(paintUrl);
+  let paint = await fetchPaintCanvas(paintUrl);
   const isData = paintUrl.startsWith("data:");
+
+  // JOINT paint+mask: split the two-panel canvas FIRST (everything below operates on
+  // the paint panel exactly as in classic mode), then correlate the mask's colour
+  // blobs to controls + snap-X onto the painted features. Extraction is ADDITIVE —
+  // a failure never sinks the (paid) cutout.
+  let maskAlign: SkinMaskAlign | undefined;
+  if (layout?.maskPanel && paint.width >= 4) {
+    const halves = splitJointPanels(paint);
+    paint = halves.paint;
+    if (layout.maskKeys?.length) {
+      try {
+        const raw = extractMaskRegions(paint, halves.mask, layout.maskKeys, layout.devFrac);
+        maskAlign = toSkinMaskAlign(raw, halves.mask, layout.maskKeys);
+      } catch (e) { console.warn("mask extraction failed (ignored)", e); }
+    }
+  }
 
   // LEGACY / DEMO: no layout, or a data: URL with no server to call → crop the
   // device region (top devFrac — DEVICE_FRAC when no layout) and white-key it in
@@ -506,9 +547,9 @@ export async function finishCutoutFull(
     const devFrac = layout?.devFrac ?? DEVICE_FRAC;
     const deviceCanvas = cropDevice(paint, devFrac);
     const frame = await whiteKeyCanvas(deviceCanvas, key);
-    if (isData) return { frameUrl: URL.createObjectURL(frame), sprites: false, spriteUrls: {} };
+    if (isData) return { frameUrl: URL.createObjectURL(frame), sprites: false, spriteUrls: {}, maskAlign };
     await uploadFrame(id, frame);
-    return { frameUrl: apiUrl(durableFrameUrl), sprites: false, spriteUrls: {} };
+    return { frameUrl: apiUrl(durableFrameUrl), sprites: false, spriteUrls: {}, maskAlign };
   }
 
   // 1. device frame: crop the top devFrac, BiRefNet via /api/cutout, upload. HEAVY model
@@ -571,6 +612,7 @@ export async function finishCutoutFull(
     sprites: Object.keys(spriteUrls).length > 0,
     spriteUrls,
     template: snapped,
+    maskAlign,
   };
 }
 

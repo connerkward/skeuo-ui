@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { GenerateRequest, GenStageEvent } from "./api";
 import { postGenerate } from "./postGenerate";
 import { finishCutoutFull } from "./cutoutClient";
+import type { SkinMaskAlign } from "./maskAlign";
 import { apiUrl } from "../platform";
 import { MODELS, DEFAULT_MODEL, type ModelId } from "./pipeline";
 import { regionsForVariant, layoutRandom, type LayoutVariant } from "./layouts";
@@ -166,10 +167,12 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         let frameUrl = apiUrl(data.frameUrl);
         let hasSprites = false;
         let template = data.template;
+        let maskAlign: SkinMaskAlign | undefined;
         if (data.needsCutout && data.paintUrl) {
           try {
             const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template, data.keyColor);
             frameUrl = r.frameUrl; hasSprites = r.sprites; template = r.template ?? data.template;
+            maskAlign = r.maskAlign;
           } catch (e) {
             // Cutout failed (BiRefNet/upload error) — do NOT discard a paid generation.
             // Fall through with the raw painted frame (frameUrl already = the paint) and
@@ -187,6 +190,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
           template,
           sprites: hasSprites,
           font: data.font,
+          maskAlign,
         });
       }
     } catch (e) {

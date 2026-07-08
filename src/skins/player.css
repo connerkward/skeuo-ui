@@ -70,23 +70,29 @@
 
 /* sprite knob: STATIC cap art (lighting never rotates) + a live pointer that
    orbits the exact center. Both absolutely centered in the well. */
-.sp-knob { cursor: ns-resize; position: relative; }
+/* drop shadow lives on the NON-rotating container (border-radius keeps it round) so it
+   never spins with the cap — a shadow on the rotating art visibly orbits the knob. */
+.sp-knob { cursor: ns-resize; position: relative; border-radius: 50%; box-shadow: 0 6px 14px rgba(0,0,0,.7); }
 .sp-knob .knob-label { display: none; }
 .sp-knob-img {
   /* fill the allotted knob well; contain keeps the cap circular in a square box.
-     technique ②: this rotates with the value (inline transform); origin = center. */
+     technique ②: this rotates with the value (inline transform); origin = center.
+     NO drop-shadow here — it would rotate with the cap (see .sp-knob). */
   position: absolute; inset: 0; margin: auto;
   width: 100%; height: 100%; object-fit: contain; pointer-events: none;
   transform-origin: 50% 50%;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
 }
 /* technique ②: PINNED specular — a fixed light source that does NOT rotate with the cap,
-   so the knurl/notch turn beneath a static highlight (reads as a real knob turning). */
+   so the knurl/notch turn beneath a static highlight (reads as a real knob turning).
+   NORMAL blend: a bright hotspot + a dark counter-shade. Screen-blend white is invisible
+   on chrome/near-white caps (which is why the old specular "disappeared"); the paired
+   counter-shade is what makes the highlight read on bright metal. */
 .sp-knob-spec {
   position: absolute; inset: 0; margin: auto; width: 100%; height: 100%;
-  border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
-  background: radial-gradient(circle at 32% 28%,
-    rgba(255,255,255,.5), rgba(255,255,255,.08) 34%, transparent 62%);
+  border-radius: 50%; pointer-events: none;
+  background:
+    radial-gradient(42% 42% at 32% 27%, rgba(255,255,255,.9), rgba(255,255,255,.25) 55%, rgba(255,255,255,0) 75%),
+    radial-gradient(70% 70% at 72% 80%, rgba(0,0,0,.30), rgba(0,0,0,0) 65%);
 }
 .sp-knob-ptr {
   position: absolute; inset: 0; margin: auto;
@@ -388,6 +394,18 @@
 }
 /* baked buttons: transparent hit-region, no glow — darken only on press (above) */
 .tbtn.baked { border-radius: 10px; }
+/* JOINT paint+mask skins: press darkening clipped to the button's OWN mask silhouette,
+   mapped 1:1 (mask-size 100% — the element IS the silhouette's crop rect; a `contain`
+   rescale was the oversize bug). The plain rectangular darken is suppressed. */
+.tbtn.baked .press-ink {
+  position: absolute; inset: 0; pointer-events: none;
+  background: rgba(0,0,0,.45); opacity: 0; transition: opacity .07s ease;
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+}
+.tbtn.baked:active .press-ink { opacity: 1; }
+.tbtn.baked.masked:active { background: transparent; box-shadow: none; }
 .toggle.sprited[data-on="true"] {
   background: transparent;
   filter: brightness(1.12) drop-shadow(0 0 6px var(--toggle-on-spark, rgba(120,255,160,.85)));

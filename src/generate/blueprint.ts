@@ -305,11 +305,34 @@ export interface BlueprintCell {
   kind: SpriteKind;
   cellRect: [number, number, number, number];
 }
+// One MASK COLOUR KEY — the seam contract between the blueprint (which tells the paint
+// model which colour blob marks each control in the RIGHT mask panel) and maskAlign.ts
+// (which reads the blobs back out of the returned mask). `color` is the component's
+// identity hex from componentColors — the ONE colour a component wears across the whole
+// pipeline (studio, blueprint, prompt legend, mask). NEVER a parallel colour map.
+export interface MaskKey {
+  id: string;                                  // region id (== sprite key)
+  color: string;                               // identity hex (componentColors)
+  kind: SpriteKind;
+  baked?: boolean;                             // baked button → snap onto the saturated painted
+                                               // icon; unset → snap onto the dark socket well
+  rect: [number, number, number, number];      // authored prior, normalized to the DEVICE region
+  cells: string[];                             // strip-cell binds this colour owns, left→right
+                                               // (play+pause / toggle off+on SHARE one colour —
+                                               // cells are matched by COLOUR IDENTITY, never
+                                               // left-to-right order across colours)
+}
 export interface BlueprintLayout {
   // device region = the TOP `devFrac` of the combined image height.
   devFrac: number;
   controls: BlueprintControl[];
   cells: BlueprintCell[];
+  // JOINT paint+mask mode: the stored paint is a TWO-panel canvas (LEFT device+strip,
+  // RIGHT colour-keyed region mask on black) — the client splits at w//2 and runs
+  // maskAlign over the right half using maskKeys. All cellRect/controls stay normalized
+  // to the (post-split) LEFT panel, so the existing cut path is unchanged.
+  maskPanel?: boolean;
+  maskKeys?: MaskKey[];
 }
 
 export interface CombinedBlueprint {
@@ -368,13 +391,21 @@ function controlDesc(r: Region, kind: SpriteKind): string {
 // into the remainder. If GEN_H wouldn't leave room for the strip, the device shrinks
 // so the strip always fits (repack). This guarantees the blueprint is 9:16 by build.
 export const PAINT_ASPECT = 9 / 16;                          // width / height of the paint
-const COMBINED_H = Math.round(GEN_W / PAINT_ASPECT);         // 1024 / 0.5625 ≈ 1821
-const MIN_STRIP_H = Math.round(COMBINED_H * 0.14);           // strip always gets ≥14%
-const DEVICE_H = Math.min(GEN_H, COMBINED_H - MIN_STRIP_H);  // device 2:3 if it fits, else shrunk
-const STRIP_H = COMBINED_H - DEVICE_H;
+// PANEL geometry for a given panel aspect (w/h): combined height, strip height, device
+// fraction. 9:16 is the classic single-panel paint; the JOINT paint+mask mode packs each
+// panel to 1:2 so the TWO-panel canvas is exactly 1:1 (a model-native aspect) while the
+// device keeps its full 2:3 — same repack-to-the-requested-aspect rule either way.
+function panelGeom(aspect: number): { H: number; stripH: number; devFrac: number } {
+  const H = Math.round(GEN_W / aspect);
+  const minStrip = Math.round(H * 0.14);                     // strip always gets ≥14%
+  const devH = Math.min(GEN_H, H - minStrip);                // device 2:3 if it fits, else shrunk
+  return { H, stripH: H - devH, devFrac: devH / H };
+}
+// panel aspect of the JOINT (two-panel) blueprint: 1:2 per panel → 1:1 total.
+export const MASK_PANEL_ASPECT = 1 / 2;
 // device region = the TOP fraction of the combined image (the rest is the sprite
 // strip). Exported so the browser can crop the device even without a layout object.
-export const DEVICE_FRAC = DEVICE_H / COMBINED_H;
+export const DEVICE_FRAC = panelGeom(PAINT_ASPECT).devFrac;
 
 const BP_BODY = "rgb(218,218,224)";   // faint gray body silhouette
 export const BP_RING = "rgb(0,190,90)";      // bright GREEN anchor ring (empty well → sprite overlay). Green,
@@ -486,10 +517,18 @@ function anchorMark(cx: number, cy: number, w: number, h: number, col: string, d
   return disc + ch;                                        // disc behind, crosshair on top
 }
 
-export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedBlueprint {
-  const stripH = STRIP_H;         // remainder packs the control strip
-  const H = COMBINED_H;           // = DEVICE_H + stripH, exactly 9:16
-  const devFrac = DEVICE_FRAC;
+export function combinedBlueprint(
+  regs: Region[], deviceBg = "white", opts?: { maskPanel?: boolean },
+): CombinedBlueprint {
+  // JOINT paint+mask: pack each panel to 1:2 (device keeps its full 2:3; the strip gets
+  // the remainder) so the TWO-panel canvas is exactly 1:1 — the aspect we request from
+  // the model (ai-image-coords-rule: the thing sent + the coords baked into it must be
+  // the SAME aspect requested). Classic single-panel stays 9:16.
+  const maskPanel = !!opts?.maskPanel;
+  const geom = panelGeom(maskPanel ? MASK_PANEL_ASPECT : PAINT_ASPECT);
+  const stripH = geom.stripH;     // remainder packs the control strip
+  const H = geom.H;               // = DEVICE_H + stripH
+  const devFrac = geom.devFrac;
 
   // sprite controls = interactive parts only, in stable (region) order. BAKED controls
   // are EXCLUDED — they're painted cohesively into the device body, not cut to the strip.
@@ -581,7 +620,7 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   // is removed in the output, so nothing extra is cut into the sprite. Round anchor for
   // buttons/knobs, rounded-rect for toggles — matching the on-device socket shape so the cut
   // sprite fits its socket. TOGGLES collapse to a shared OFF/ON pair keyed switch-off/on.
-  interface StripItem { bind: string; kind: SpriteKind; desc: string; color: string }
+  interface StripItem { bind: string; kind: SpriteKind; desc: string; color: string; regionId: string }
   const items: StripItem[] = [];
   for (const r of spriteRegs) {
     const kind = spriteKindOf(r)!;
@@ -591,21 +630,21 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
     // keep CSS for now. The cut sprite is named by r.id → SliderH reads spriteUrl(skinId, r.id).
     if (kind === "slider" && r.kind !== "slider-h") continue;
     const bind = bindOf(r);
-    items.push({ bind, kind, desc: controlDesc(r, kind), color: colors.get(r.id)?.hex ?? "#888888" });
+    items.push({ bind, kind, desc: controlDesc(r, kind), color: colors.get(r.id)?.hex ?? "#888888", regionId: r.id });
     // PLAY/PAUSE is a two-state control (like the toggle off/on pair): emit a paired
     // PAUSE face — the SAME button body, only the icon differs — cut to <id>__pause and
     // swapped live by the player on play state. (id===bind for transport controls.)
     const isPlay = kind === "button" && /(^|_)play(_|$)/.test(bind) && !bind.includes("playlist");
     if (isPlay) items.push({
-      bind: `${bind}__pause`, kind, color: colors.get(r.id)?.hex ?? "#888888",
+      bind: `${bind}__pause`, kind, color: colors.get(r.id)?.hex ?? "#888888", regionId: r.id,
       desc: "the SAME push-button as the previous slot — IDENTICAL body, shape, size and material — but shown with a PAUSE icon (two vertical bars) embossed on its face instead of the play triangle",
     });
   }
   const firstToggle = spriteRegs.find((r) => spriteKindOf(r) === "toggle");
   if (firstToggle) {
     const tc = colors.get(firstToggle.id)?.hex ?? "#888888";
-    items.push({ bind: "switch-off", kind: "toggle", color: tc, desc: "a toggle switch shown in its OFF position (lever/rocker down)" });
-    items.push({ bind: "switch-on", kind: "toggle", color: tc, desc: "the SAME toggle switch shown in its ON position (lever/rocker up)" });
+    items.push({ bind: "switch-off", kind: "toggle", color: tc, regionId: firstToggle.id, desc: "a toggle switch shown in its OFF position (lever/rocker down)" });
+    items.push({ bind: "switch-on", kind: "toggle", color: tc, regionId: firstToggle.id, desc: "the SAME toggle switch shown in its ON position (lever/rocker up)" });
   }
   const n = items.length;
   const cellW = n > 0 ? GEN_W / n : GEN_W;
@@ -627,12 +666,37 @@ export function combinedBlueprint(regs: Region[], deviceBg = "white"): CombinedB
   });
   const stripDesc = items.map((it, i) => `slot ${i + 1}: ${it.desc}`).join("; ");
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${GEN_W}" height="${H}" viewBox="0 0 ${GEN_W} ${H}"><defs>${defs.join("")}</defs>${parts.join("")}</svg>`;
+  // JOINT paint+mask: append the RIGHT panel — pure black (the mask target) with a thin
+  // divider at the seam. The model fills it with flat colour blobs (see MASK_PROMPT);
+  // the client splits the returned image at w//2 (verified: the model draws the divider
+  // exactly there) and correlates blobs to controls by colour via maskKeys.
+  const totalW = maskPanel ? GEN_W * 2 : GEN_W;
+  if (maskPanel) {
+    parts.push(`<rect x="${GEN_W}" y="0" width="${GEN_W}" height="${H}" fill="black"/>`);
+    parts.push(`<line x1="${GEN_W}" y1="0" x2="${GEN_W}" y2="${H}" stroke="rgb(70,70,74)" stroke-width="3"/>`);
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${H}" viewBox="0 0 ${totalW} ${H}"><defs>${defs.join("")}</defs>${parts.join("")}</svg>`;
   const controls: BlueprintControl[] = spriteRegs.map((r) => ({
     bind: bindOf(r), kind: spriteKindOf(r)!,
     rect: [r.rect.x, r.rect.y, r.rect.w, r.rect.h], // normalized to the DEVICE region (GEN_H)
   }));
-  return { svg, layout: { devFrac, controls, cells }, width: GEN_W, height: H, stripDesc, bakeLegend, colors };
+  // mask colour keys — every control the mask marks (baked buttons + empty sockets +
+  // strip cells), each wearing its shared identity colour. Displays stay unkeyed.
+  const maskKeys: MaskKey[] | undefined = maskPanel
+    ? regs.filter((r) => spriteKindOf(r) !== null).map((r) => ({
+        id: r.id,
+        color: colors.get(r.id)?.hex ?? "#888888",
+        kind: spriteKindOf(r)!,
+        ...(r.kind === "button" && r.baked ? { baked: true } : {}),
+        rect: [r.rect.x, r.rect.y, r.rect.w, r.rect.h] as [number, number, number, number],
+        cells: items.filter((it) => it.regionId === r.id).map((it) => it.bind),
+      }))
+    : undefined;
+  return {
+    svg,
+    layout: { devFrac, controls, cells, ...(maskPanel ? { maskPanel: true, maskKeys } : {}) },
+    width: totalW, height: H, stripDesc, bakeLegend, colors,
+  };
 }
 
 

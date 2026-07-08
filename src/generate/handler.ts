@@ -84,7 +84,7 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     if (!regions && deps.openaiKey) {
       regions = (await deriveLayout(deps.openaiKey, prompt)) ?? undefined;
     }
-    const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions, seed: body.seed });
+    const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions, seed: body.seed, maskPanel: body.maskPanel === true });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font, name, blurb,
       template: r.template, frameUrl: r.frameUrl, layout: r.layout, sprites: r.sprites,

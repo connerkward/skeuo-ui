@@ -1,4 +1,5 @@
 import type { DonorStyle } from "./pipeline";
+import type { SkinMaskAlign } from "./maskAlign";
 import type { Template } from "../template/schema";
 
 // A skin produced at runtime by POST /api/generate — frame (public URL) + its
@@ -18,4 +19,8 @@ export interface RuntimeSkin {
   font?: string;        // logomark display font (Director pick); falls back to Cinzel
   hidden?: boolean;     // hidden from the gallery, but KEPT in storage (raw materials
                         // are never destroyed — "delete" = hide for future processing)
+  // JOINT paint+mask generations: the model-emitted region mask, snapped onto the paint
+  // (maskAlign.ts) — per-region placement + baked-button press silhouettes. The player
+  // places controls FROM THE MASK when present (never the template).
+  maskAlign?: SkinMaskAlign;
 }

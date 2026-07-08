@@ -5,6 +5,7 @@ import { usePlayer, type PlayerState } from "./usePlayer";
 import { Visualizer } from "./Visualizer";
 import { buildSpline, splineAt, splineProject } from "./spline";
 import { layerUrl, skinHas, skinBaked, skinTemplateUrl, skinStyle, skinLive, skinSprites, skinMolded, spriteUrl } from "./skins";
+import type { SkinMaskAlign } from "../generate/maskAlign";
 import type { SpotifyDrive } from "../spotify/useSpotify";
 
 // A skin created at runtime (POST /api/generate): its frame is an inline URL
@@ -17,6 +18,11 @@ export interface RuntimeSkinView {
   // (served at /api/asset/skins/<id>/sprites/<bind>.png) — render those instead
   // of the donor style's bundled sprites.
   sprites?: boolean;
+  // JOINT paint+mask skins: the model-emitted region mask, snapped onto the paint
+  // (maskAlign.ts). PLACE FROM THE MASK, NEVER THE TEMPLATE — the model rearranges
+  // the authored layout freely (~26% drift, wanted); the snapped mask box sits on
+  // the painted control to ≈0.05%. Also carries baked-button press silhouettes.
+  maskAlign?: SkinMaskAlign;
 }
 
 interface Props {
@@ -109,7 +115,9 @@ export function Composite({ template, skinId, showWireframe, runtime, templateOv
           overlay misplaced live widgets. Canonical skins overlay live content. */}
       {(!art || liveArt || showWireframe) && tpl.regions.map((r) => (
         <RegionView key={r.id} region={r} ps={ps} skinId={skinId} rtSprites={rtSprites}
-          wire={!!showWireframe} baked={baked} onTitleDown={startDrag} />
+          wire={!!showWireframe} baked={baked} onTitleDown={startDrag}
+          align={runtime?.maskAlign?.regions?.[r.id]}
+          pressMask={runtime?.maskAlign?.buttonMasks?.[r.id]} />
       ))}
     </div>
   );
@@ -122,12 +130,27 @@ function pct(r: Region["rect"]): React.CSSProperties {
     width: `${r.w * 100}%`, height: `${r.h * 100}%`,
   };
 }
+function pctBox(b: [number, number, number, number]): React.CSSProperties {
+  return {
+    position: "absolute",
+    left: `${b[0] * 100}%`, top: `${b[1] * 100}%`,
+    width: `${b[2] * 100}%`, height: `${b[3] * 100}%`,
+  };
+}
 
-function RegionView({ region: r, ps, skinId, rtSprites, wire, baked, onTitleDown }: {
+function RegionView({ region: r, ps, skinId, rtSprites, wire, baked, onTitleDown, align, pressMask }: {
   region: Region; ps: PlayerState; skinId: string; rtSprites: boolean; wire: boolean;
   baked: boolean; onTitleDown: (e: React.PointerEvent) => void;
+  align?: SkinMaskAlign["regions"][string];
+  pressMask?: SkinMaskAlign["buttonMasks"][string];
 }) {
-  const style = pct(r.rect);
+  // MASK-ALIGNED placement: when a joint paint+mask skin carries a snapped mask box
+  // for this region, that box is where the control was ACTUALLY painted — place from
+  // the mask, never the template. Baked buttons use the press-silhouette's crop rect
+  // (already snap-translated) so mask-size:100% maps its pixels 1:1. Wireframe keeps
+  // the authored template rect (that view is ABOUT the authored layout).
+  const maskBox = !wire ? (pressMask?.rect ?? align?.device) : undefined;
+  const style = maskBox ? pctBox(maskBox) : pct(r.rect);
 
   // Measure the rendered screen so the live-content clip uses a corner radius that
   // MATCHES the painted screen's rounding (the painter rounds screens far more than
@@ -177,7 +200,7 @@ function RegionView({ region: r, ps, skinId, rtSprites, wire, baked, onTitleDown
       : {};
   return (
     <div ref={dispRef} className={`region ${dyn} ${titleDown ? "draggable" : ""}`} style={{ ...style, ...clip }} onPointerDown={titleDown}>
-      {renderControl(r, ps, skinId, rtSprites)}
+      {renderControl(r, ps, skinId, rtSprites, pressMask?.url)}
     </div>
   );
 }
@@ -192,7 +215,7 @@ function atlas(skinId: string, layer: "components" | "screen", r: Region): React
   };
 }
 
-function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: boolean): React.ReactNode {
+function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: boolean, pressMaskUrl?: string): React.ReactNode {
   if (r.content === "dynamic") {
     switch (r.dynamicType) {
       case "title":
@@ -275,10 +298,20 @@ function renderControl(r: Region, ps: PlayerState, skinId: string, rtSprites: bo
     if (r.baked) {
       const isPP = rawBind === "play" || (/(^|_)play(_|$)/.test(r.id) && !r.id.includes("playlist"));
       const click = isPP ? (ps.playing ? ps.pause : ps.play) : btnHandler(r, ps);
+      // JOINT paint+mask skins: press darkening clipped to the button's OWN mask
+      // silhouette (mask-size 100% — the element IS the silhouette's crop rect, so
+      // silhouette pixels map 1:1; `contain` rescaling was the oversize bug). Without
+      // a silhouette, the plain rectangular darken (CSS .tbtn.baked:active) stands.
       return (
-        <button className="tbtn baked" onClick={click} title={r.label ?? r.id} style={{
-          width: "100%", height: "100%", background: "transparent", border: 0, borderRadius: 10, cursor: "pointer",
-        }} />
+        <button className={`tbtn baked ${pressMaskUrl ? "masked" : ""}`} onClick={click} title={r.label ?? r.id} style={{
+          width: "100%", height: "100%", background: "transparent", border: 0, borderRadius: 10, cursor: "pointer", position: "relative",
+        }}>
+          {pressMaskUrl && (
+            <span className="press-ink" style={{
+              WebkitMaskImage: `url(${pressMaskUrl})`, maskImage: `url(${pressMaskUrl})`,
+            }} />
+          )}
+        </button>
       );
     }
     // MOLDED transport faces (sprites/btn-*.png): the icon is part of the
@@ -587,13 +620,38 @@ function SliderPath({ r, ps }: { r: Region; ps: PlayerState }) {
 
 /* ---------- sliders ---------- */
 function SliderH({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; skinId: string; rtSprites: boolean }) {
-  const thumbSprite: React.CSSProperties = skinSprites(skinId, rtSprites)
+  const spriteSrc = skinSprites(skinId, rtSprites) ? spriteUrl(skinId, rtSprites ? r.id : "thumb", rtSprites) : null;
+  const thumbSprite: React.CSSProperties = spriteSrc
     // generated thumbs are arbitrary-aspect (the painter draws whatever grip suits the
     // skin), so `contain` preserves their shape; the built-in thumb.png is authored to fill.
-    ? { backgroundImage: `url(${spriteUrl(skinId, rtSprites ? r.id : "thumb", rtSprites)})`, backgroundSize: rtSprites ? "contain" : "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
+    ? { backgroundImage: `url(${spriteSrc})`, backgroundSize: rtSprites ? "contain" : "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", backgroundColor: "transparent", boxShadow: "none", borderRadius: 0 }
     : {};
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef(false);
+  // GENERATED thumbs (mask-align learnings): size the thumb from the SPRITE'S OWN
+  // aspect (the cut sprite is tight-cropped to its alpha bounds, so w/h is the part's
+  // true geometry) — th = 135% of the track height, tw = th × (w/h), all measured in
+  // px so the x/y-normalizer trap (thumb 1.6× too narrow) can't bite. Travel runs
+  // flush to the slot ends with a small overhang (trackH × 0.25) so the rounded cap
+  // fully covers the slot's rounded end at 0% / 100%.
+  const [ar, setAr] = useState<number | null>(null);       // sprite w/h
+  const [trackH, setTrackH] = useState(0);                 // rendered track height px
+  useEffect(() => {
+    if (!rtSprites || !spriteSrc) return;
+    let live = true;
+    const im = new Image();
+    im.onload = () => { if (live && im.naturalHeight > 0) setAr(im.naturalWidth / im.naturalHeight); };
+    im.src = spriteSrc;
+    return () => { live = false; };
+  }, [rtSprites, spriteSrc]);
+  useEffect(() => {
+    if (!rtSprites) return;
+    const el = ref.current; if (!el) return;
+    const measure = () => setTrackH(el.clientHeight);
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(el);
+    return () => ro.disconnect();
+  }, [rtSprites]);
   const value =
     r.bind === "volume" ? ps.volume : r.bind === "balance" ? ps.balance :
     r.bind === "seek" ? (ps.track.seconds ? ps.elapsed / ps.track.seconds : 0) : 0;
@@ -611,11 +669,22 @@ function SliderH({ r, ps, skinId, rtSprites }: { r: Region; ps: PlayerState; ski
     return () => { window.removeEventListener("pointermove", m); window.removeEventListener("pointerup", u); };
   }, []);
   const sprited = !!thumbSprite.backgroundImage;
+  // aspect-true geometry (only when both the sprite aspect + track height are known)
+  const geo = rtSprites && ar && trackH > 0
+    ? { th: trackH * 1.35, tw: trackH * 1.35 * ar, ov: trackH * 0.25 }
+    : null;
+  const thumbStyle: React.CSSProperties = geo
+    ? {
+        width: geo.tw, height: geo.th,
+        left: `calc(${value} * (100% - ${(geo.tw - 2 * geo.ov).toFixed(1)}px) - ${geo.ov.toFixed(1)}px)`,
+        ...thumbSprite,
+      }
+    : { left: `calc(${value} * (100% - var(--thumb-h, 11px)))`, ...thumbSprite };
   return (
     <div ref={ref} className={`sk-slider-h ${sprited ? "sprited" : ""}`}
       onPointerDown={(e) => { drag.current = true; set(e.clientX); }} title={r.label}>
       <div className="rail" /><div className="fill" style={{ width: `${value * 100}%` }} />
-      <div className="thumb" style={{ left: `calc(${value} * (100% - var(--thumb-h, 11px)))`, ...thumbSprite }} />
+      <div className="thumb" style={thumbStyle} />
     </div>
   );
 }
