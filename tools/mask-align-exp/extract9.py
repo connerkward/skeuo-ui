@@ -54,11 +54,16 @@ for i,name in enumerate(NAMES):
         for c in range(1,nc+1):
             ys2,xs2=np.where(lbl==c)
             if len(xs2)<120: continue
-            cells.append((xs2.min(),bb(ys2,xs2)))
+            _b=bb(ys2,xs2)
+            if _b[2]<0.01 or _b[3]<0.01: continue     # degenerate sliver ≠ a cell
+            cells.append((xs2.min(),_b))
         cells.sort(key=lambda t:t[0]); strip=[c[1] for c in cells[:2]]
         while len(strip)<2: strip.append(None)
     else:
         strip=[largest_cc_bbox(stripmask)] if stripmask.sum()>120 else []
+        # a real strip cell is 2-D. A few hue-adjacent mask pixels (e.g. seek-orange read as
+        # prev-red) can clear the 120-px count as a 1-px-tall sliver — drop degenerate boxes.
+        strip=[b for b in strip if b and b[2]>=0.01 and b[3]>=0.01]
     regs[name]={"device":dev,"strip":strip}
 
 # --- MASK IS A GUIDE, tune the cut on the ACTUAL SKIN: the model often omits the knob/seek
@@ -307,6 +312,93 @@ for k in ["vol","bal","tog"]:
     rw=d[2]/s[2]; rh=d[3]/s[3]
     flag=" ← MISMATCH >15%" if abs(1-rw)>0.15 or abs(1-rh)>0.15 else ""
     print(f"  {k:5} slot/part w={rw:.2f} h={rh:.2f}{flag}")
+
+# ---- PER-CELL RING GATE: desaturated guide-colour residue on/around each painted strip part.
+# The global leak gate only catches near-exact key colours (sat>55, RGB dist<60); a baked guide
+# ring often survives DESATURATED (dusty pink at half saturation sneaks under it). Scan each
+# strip CELL WINDOW (part + surrounding backdrop) for pixels whose HUE sits near ANY strip guide
+# hue at moderate saturation — hue survives desaturation, so this catches the washed-out rings.
+def _hue_sat_val(win):
+    f=win.astype(float); mx=f.max(2); mn=f.min(2); df=mx-mn
+    r,g,b=f[...,0],f[...,1],f[...,2]
+    hue=np.zeros_like(mx)
+    m=df>0
+    i=m&(mx==r); hue[i]=(60.0*((g-b)/np.where(df==0,1,df))%360)[i]
+    i=m&(mx==g)&(mx!=r); hue[i]=(60.0*((b-r)/np.where(df==0,1,df))+120)[i]
+    i=m&(mx==b)&(mx!=r)&(mx!=g); hue[i]=(60.0*((r-g)/np.where(df==0,1,df))+240)[i]
+    return hue,df,mx
+import colorsys
+GUIDE_HUES={k:colorsys.rgb_to_hsv(*[c/255 for c in SP[k]])[0]*360 for k in SP}
+CELL_ORDER=["vol","bal","seek","tog_off","tog_on"]
+CELL_FX=[0.11+0.195*i for i in range(5)]
+RING_SAT=35        # max-min channel spread: guide residue keeps this even when washed out
+RING_VAL=70        # ignore near-black pixels (recess shadows)
+RING_HUETOL=16.0   # degrees
+RING_MAXPX=250     # a visible ring is thousands of px at 4K; noise is tens
+print("per-cell RING gate (guide-hue residue in each strip cell window):")
+ring_fail=False; gate_ring={}
+for i,cell in enumerate(CELL_ORDER):
+    cx=int(CELL_FX[i]*PPW); hw=int(0.0975*PPW)
+    win=paint[y0strip:, max(0,cx-hw):min(PPW,cx+hw)]
+    hue,df,mx=_hue_sat_val(win)
+    cand=(df>RING_SAT)&(mx>RING_VAL)
+    worst=("-",0)
+    for gk,gh in GUIDE_HUES.items():
+        hd=np.abs(hue-gh); hd=np.minimum(hd,360-hd)
+        n=int((cand&(hd<RING_HUETOL)).sum())
+        if n>worst[1]: worst=(gk,n)
+    ok=worst[1]<=RING_MAXPX
+    gate_ring[cell]={"leak_colour":worst[0],"px":worst[1],"pass":ok}
+    if not ok: ring_fail=True
+    print(f"  cell {i+1} {cell:7} worst={worst[0]:5} {worst[1]:6d}px  {'PASS' if ok else 'FAIL — guide ring residue'}")
+print(f"[ring gate] {'FAIL — regenerate' if ring_fail else 'PASS'}")
+
+# ---- PER-CELL SHAPE GATE: each painted strip part's silhouette must match its cell's contract
+# geometry (run9 make_blueprint congruence constants). Catches the seek=toggle SWAP bug: a
+# portrait island in cell 3 = a toggle painted where the wide pill thumb belongs.
+#   vol/bal: KNOB_R=76 → round, aspect≈1, high fill;  seek: THUMB 150×92 → landscape pill;
+#   tog:     TOG 110×170 → portrait.
+SHAPE_EXPECT={"vol":("round",1.00),"bal":("round",1.00),
+              "seek":("landscape-pill",150/92),"tog_off":("portrait",110/170),"tog_on":("portrait",110/170)}
+print("per-cell SHAPE gate (painted part silhouette vs congruence contract):")
+shape_fail=False; gate_shape={}
+for i,cell in enumerate(CELL_ORDER):
+    kind,exp_ar=SHAPE_EXPECT[cell]
+    cx=int(CELL_FX[i]*PPW); hw=int(0.0975*PPW)
+    win=paint[y0strip:, max(0,cx-hw):min(PPW,cx+hw)]
+    sil=np.abs(win.astype(int)-BGC).max(2)>55
+    lbl2,n2=ndimage.label(sil)
+    # the painted DEVICE BODY often hangs below the DEVF line into the band — it enters the
+    # window as a big dark CC touching the TOP edge. Parts never touch the band top: drop those.
+    top_ids=set(np.unique(lbl2[0]))-{0}
+    sz2=[(c,(lbl2==c).sum()) for c in range(1,n2+1) if c not in top_ids]
+    sz2=[(c,s) for c,s in sz2 if s>800]
+    if not sz2:
+        gate_shape[cell]={"pass":False,"why":"no part found"}; shape_fail=True
+        print(f"  cell {i+1} {cell:7} NO PART FOUND — MISMATCH"); continue
+    cm=lbl2==max(sz2,key=lambda t:t[1])[0]
+    # pale-chrome parts on the pale backdrop silhouette as a RING (only the rim clears the
+    # colour threshold; the bright interior matches the backdrop). Close small rim gaps and
+    # fill enclosed holes so `fill` measures the part, not the rim thickness.
+    cm=ndimage.binary_fill_holes(ndimage.binary_closing(cm,iterations=3))
+    ys3,xs3=np.where(cm)
+    w3=xs3.max()-xs3.min()+1; h3=ys3.max()-ys3.min()+1
+    ar=w3/h3; fill=cm.sum()/(w3*h3)
+    if kind=="round":          ok=(0.80<=ar<=1.25) and fill>=0.65
+    elif kind=="landscape-pill": ok=ar>=1.25
+    else:                      ok=ar<=0.85          # portrait toggle
+    verdict="MATCH" if ok else f"MISMATCH — expected {kind} (ar≈{exp_ar:.2f})"
+    gate_shape[cell]={"aspect":round(float(ar),3),"fill":round(float(fill),3),
+                      "expected":kind,"pass":bool(ok)}
+    if not ok: shape_fail=True
+    print(f"  cell {i+1} {cell:7} ar={ar:.2f} fill={fill:.2f} expect {kind:14}  {verdict}")
+print(f"[shape gate] {'FAIL — regenerate' if shape_fail else 'PASS'}")
+
+# persist gate verdicts alongside the regions (regions.json was dumped above — re-dump with gates)
+_rj=os.path.join(OUT,"regions.json")
+_doc=json.load(open(_rj)); _doc["gates"]={"ring":gate_ring,"shape":gate_shape,
+    "ring_pass":not ring_fail,"shape_pass":not shape_fail}
+json.dump(_doc,open(_rj,"w"),indent=2)
 
 # drift sense: template centre vs mask device-bbox centre, in % of half-width
 print("control  template→mask drift (% of device width)")

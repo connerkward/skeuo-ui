@@ -90,8 +90,15 @@ triggers baked-part prior; vivid unusual designs pass more easily).
 
 ## Open issues
 
-- run9 sprite cells still wrong-art on seed 41 after repair (pink rings; seek=toggle swap).
-  Root cause: model painted toggle where seek should be in the strip. Next: strip cell
-  ordering prompt fix or stronger strip-layout enforcement.
-- wild10 knob/switch alignment: gradient-fit added to extract10.py (results above) but not
-  re-verified interactively after fix.
+- ~~run9 strip-cell wrong-art (pink rings; seek=toggle swap)~~ — RESOLVED 2026-07-08:
+  enumerated 5-cell legend + shape-congruence sentence + STRIP ZERO RESIDUE clause in
+  run9.py (guides stay color-coded). Neither failure recurred on seeds 41/43. Winner
+  seed 43: leak 0.0000%, ring gate 0px all 5 cells, shape gate 5×MATCH. New gates in
+  extract9.py: per-cell ring gate (HSV hue-dist <16° @ sat>35/val>70, ≤250px PASS),
+  per-cell shape gate vs congruence contract (requires binary_closing+fill_holes or
+  pale-chrome parts false-fail as rings), degenerate strip-sliver filter (w,h≥0.01).
+  Verdicts persist in regions.json under `gates`.
+- ~~wild10 knob/switch alignment~~ — RESOLVED 2026-07-08: extract10's circle-fit now writes
+  `seat` entries (vol r=123px, bal r=126px) and wild10.html seats knobs from them (no more
+  bbox ×1.10 fallback). Verified interactively at 1000px zoom: knobs centered in their
+  painted bezels, toggle seated, seek thumb flush in groove.

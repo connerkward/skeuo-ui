@@ -75,12 +75,12 @@
   <span class="modeltag">model: fal-ai/gemini-3-pro-image-preview/edit (nano-banana pro) · 4K · 5:4 · seed 41 · material: Y2K gunmetal graphite + chrome</span>
 
   <h2>a · blueprint (authored template)</h2>
-  <div class="card" style="max-width:840px"><img src="assets9/blueprint.png" alt="blueprint">
+  <div class="card" style="max-width:840px"><img src="assets9/blueprint.webp" alt="blueprint">
     <div class="cap">PIL-drawn guides. Buttons: pebble=PREV(red) · teardrop=PLAY(blue) · kidney=NEXT(amber) · crescent=STOP(violet).
     Sockets: vol(green) · bal(cyan) · seek groove(orange) · toggle(pink). Bottom band: 5 sprite anchors. No text anywhere.</div></div>
 
   <h2>b · raw 4K joint output</h2>
-  <div class="card" style="max-width:840px"><img src="assets9/joint-4k.png" alt="raw joint 4K">
+  <div class="card" style="max-width:840px"><img src="assets9/joint-4k.webp" alt="raw joint 4K">
     <div class="cap">Raw model file, 4608×3712. Left: painted device + strip. Right: region mask. The four button facets kept
     their exact organic outlines in BOTH panels; the seek groove is empty; the strip is one top-down row with toggle OFF + ON.</div></div>
 
@@ -88,7 +88,7 @@
   <div class="card" style="max-width:680px">
     <div class="ovwrap" id="ov">
       <span class="studio-badge">studio overlay · not in the artifact sent to the cutter</span>
-      <img src="assets9/overlay.png" alt="mask over paint overlay" id="ovimg">
+      <img src="assets9/overlay.webp" alt="mask over paint overlay" id="ovimg">
     </div>
     <button class="t" id="boxBtn" aria-pressed="true">boxes: on</button>
     <div class="ovnote">Overlay = paint × 50% mask (raw model output, includes the model's small rightward drift).
@@ -102,19 +102,19 @@
   over the whole paint → the matte's connected-component islands, each correlated to its identity via the mask strip cells
   (centroid match, never left-to-right order). These are the real cuts — no client-side luma key.</p>
   <div class="cells">
-    <div class="cell"><div class="chk"><img src="assets9_biref/vol.png" style="max-width:150px;height:auto;display:block"></div><div class="lab">vol cap · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/bal.png" style="max-width:150px;height:auto;display:block"></div><div class="lab">bal cap · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/seek.png" style="max-width:90px;height:auto;display:block"></div><div class="lab">seek thumb · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/tog_off.png" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle OFF · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/tog_on.png" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle ON · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/vol.webp" style="max-width:150px;height:auto;display:block"></div><div class="lab">vol cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/bal.webp" style="max-width:150px;height:auto;display:block"></div><div class="lab">bal cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/seek.webp" style="max-width:90px;height:auto;display:block"></div><div class="lab">seek thumb · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/tog_off.webp" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle OFF · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/tog_on.webp" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle ON · global-CC island</div></div>
   </div>
 
   <h2>d² · the global matte itself + segmented device island</h2>
   <p class="lede" style="font-size:13px">The raw single-pass matte (checkerboard = removed backdrop) and the largest island —
   the whole device body — from the same call. One ~$0.004 pass cuts the body AND all five parts.</p>
   <div class="cells">
-    <div class="cell" style="flex:1 1 300px;max-width:460px"><div class="chk"><img src="assets9_biref/global-matte.png" style="width:100%;height:auto;display:block"></div><div class="lab">global-matte.png · raw, unretouched</div></div>
-    <div class="cell" style="flex:1 1 220px;max-width:340px"><div class="chk"><img src="assets9_biref/device.png" style="width:100%;height:auto;display:block"></div><div class="lab">device body · largest island</div></div>
+    <div class="cell" style="flex:1 1 300px;max-width:460px"><div class="chk"><img src="assets9_biref/global-matte.webp" style="width:100%;height:auto;display:block"></div><div class="lab">global-matte.webp · raw, unretouched</div></div>
+    <div class="cell" style="flex:1 1 220px;max-width:340px"><div class="chk"><img src="assets9_biref/device.webp" style="width:100%;height:auto;display:block"></div><div class="lab">device body · largest island</div></div>
   </div>
 
   <h2>e · drift table</h2>
@@ -179,12 +179,12 @@
   const R=await fetch('assets9/regions.json').then(r=>r.json());
   const rr=R.regions, DF=R.devFrac;
   const dev=document.getElementById('phone'), bg=document.getElementById('pbg'), status=document.getElementById('pstatus');
-  const paint=new Image(); paint.src='assets9/paint.png'; await paint.decode();
+  const paint=new Image(); paint.src='assets9/paint.webp'; await paint.decode();
   const PW=paint.naturalWidth, PH=paint.naturalHeight;
   const bgc=document.createElement('canvas'); bgc.width=PW; bgc.height=Math.round(PH*DF);
   bgc.getContext('2d').drawImage(paint,0,0,PW,bgc.height,0,0,PW,bgc.height);
   bg.src=bgc.toDataURL(); await bg.decode();
-  const maskImg=new Image(); maskImg.src='assets9/mask.png'; await maskImg.decode();
+  const maskImg=new Image(); maskImg.src='assets9/mask.webp'; await maskImg.decode();
   const MW=maskImg.naturalWidth, MH=maskImg.naturalHeight;
   const mkc=document.createElement('canvas'); mkc.width=MW; mkc.height=MH; mkc.getContext('2d').drawImage(maskImg,0,0);
   const MDATA=mkc.getContext('2d').getImageData(0,0,MW,MH).data;
@@ -203,7 +203,7 @@
   }
   const CUT={};
   for(const k of ['vol','bal','seek','tog_off','tog_on']){
-    try{ const im=new Image(); im.src='assets9_biref/'+k+'.png'; await im.decode(); CUT[k]=tightCrop(im); }catch(e){}
+    try{ const im=new Image(); im.src='assets9_biref/'+k+'.webp'; await im.decode(); CUT[k]=tightCrop(im); }catch(e){}
   }
   const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100;
   const ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
@@ -306,31 +306,8 @@ fetch("assets9/regions.json").then(r=>r.json()).then(data=>{
     btn.setAttribute("aria-pressed",String(!on)); btn.textContent="boxes: "+(!on?"on":"off");
     ov.querySelectorAll(".rbox").forEach(e=>e.style.display=!on?"":"none");};
 
-  // ---- d: keyed sprite cells on checkerboard ----
-  const paint=new Image(); paint.src="assets9/paint.png";
-  paint.onload=()=>{
-    const W=paint.naturalWidth,H=paint.naturalHeight, host=document.getElementById("cells");
-    const items=[];
-    for(const k of ["vol","bal","seek","tog"]){
-      (regs[k]&&regs[k].strip||[]).forEach((b,i)=>{
-        if(b) items.push([k==="tog"?(i===0?"toggle OFF":"toggle ON"):(k==="seek"?"seek thumb":k+" knob cap"),b]);
-      });
-    }
-    for(const [name,b] of items){
-      const pad=6;
-      const x=Math.max(0,b[0]*W-pad), y=Math.max(0,b[1]*H-pad),
-            w=Math.min(W-x,b[2]*W+2*pad), h=Math.min(H-y,b[3]*H+2*pad);
-      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
-      const cx=cv.getContext("2d"); cx.drawImage(paint,x,y,w,h,0,0,w,h);
-      const im=cx.getImageData(0,0,w,h), d=im.data;
-      for(let p=0;p<d.length;p+=4){ if(Math.max(d[p],d[p+1],d[p+2])<74) d[p+3]=0; }
-      cx.putImageData(im,0,0);
-      const cell=document.createElement("div"); cell.className="cell";
-      const chk=document.createElement("div"); chk.className="chk"; chk.appendChild(cv);
-      const lab=document.createElement("div"); lab.className="lab"; lab.textContent=name;
-      cell.appendChild(chk); cell.appendChild(lab); host.appendChild(cell);
-    }
-  };
+  // (keyed sprite-cell renderer removed — section d shows the real BiRefNet island cuts as
+  //  static images; the old client-side luma-key cut is superseded and its #cells host is gone)
 
   // ---- e: drift table ----
   const tb=document.querySelector("#drift tbody");

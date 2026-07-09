@@ -199,18 +199,20 @@
     the vent pores were dotted into the mask in spring green — filtered by the largest-CC + size gates.</p>
     <p class="dead" style="margin:0">What broke outright: <b>the single-pass BiRefNet device cut + matte-hole seat
     measurement</b>. The segmenter dropped the matte-black crust as background (10+ fragment islands, no enclosed
-    socket holes), so run9's “measured painted well” seating degrades to the snapped-bbox fallback — by design,
-    <code>regions.json</code> simply carries no <code>seat</code> entries and the interactive below uses the
-    fallback path. Lesson: matte-hole seats require a body a salient-object segmenter will keep, and black wells
-    in a black body are invisible to alpha-hole detection; a known-backdrop chroma key would recover the body
-    silhouette here, but not the seats.</p>
+    socket holes) — black wells in a black body are invisible to alpha-hole detection. <b>Recovered by the
+    gradient circle-fit</b> (extract10): a mini-Hough on gradient magnitude finds each knob socket's rim directly
+    in the paint (vol r=123&#8202;px, bal r=126&#8202;px, residual &lt;3&#8202;px), and those fits are written as
+    <code>seat</code> entries in <code>regions.json</code>; the toggle slot and seek groove get the same treatment
+    via rrect-fit. Lesson: matte-hole seats need a segmenter-friendly body, but gradient fitting is
+    material-agnostic and replaces them outright on hostile materials.</p>
   </div>
 
   <h2>g · finished product — cut &amp; placed, interactive</h2>
   <p class="lede" style="font-size:13px">The end of the chain: device background from the paint, sprites = the
-  global-BiRefNet islands. No measured seats on this design (see d²), so knobs seat via the snapped mask bbox
-  ×1.10 fallback. Drag the knobs (pinned specular), drag the seek thumb along the groove, click the toggle
-  (its two painted states), press the organic buttons (mask-silhouette darkening).</p>
+  global-BiRefNet islands. Knobs seat via the <b>gradient circle-fit <code>seat</code> entries</b> (exact painted
+  socket center + radius — see d²); toggle and seek use the rrect-fitted boxes. Drag the knobs (pinned specular),
+  drag the seek thumb along the groove, click the toggle (its two painted states), press the organic buttons
+  (mask-silhouette darkening).</p>
   <div class="phone" id="phone" style="position:relative;width:min(420px,86vw);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0a0b0e;box-shadow:0 20px 50px #000a;touch-action:none">
     <img class="bg" id="pbg" alt="painted magma handheld" style="display:block;width:100%;height:auto">
   </div>
