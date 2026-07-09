@@ -291,41 +291,173 @@ for k in ([TOGGLE] if TOGGLE else []) + ([SLIDER] if SLIDER else []):
     print(f"[rrect-fit] {k}: ({fx:.0f},{fy:.0f}) {fw:.0f}x{fh:.0f}px (was {b[2] * GW:.0f}x{b[3] * GH:.0f})")
     r["device"] = [(fx - fw / 2) / GW, (fy - fh / 2) / GH, fw / GW, fh / GH]
 
-# ---- SEEK GROOVE EXTENT + TRAVEL (coverage span) ----
-# The mask/rrect groove bbox routinely UNDERSHOOTS the painted channel, so the thumb stops short
-# of the ends. Detect the painted groove's FULL x-extent directly: walk out from centre through
-# the dark recess AND its bright bezel rims, stopping only where the body turns bright-and-stays
-# (past the rim) or hits near-black backdrop. Set BOTH device x-extent and travel to it.
+# ---- DISPLAY-REGION REFIT (role "region": visualizer / album_art) ----
+# The model sometimes paints a display-region mask blob OFFSET/OVERSIZED vs the painted window
+# (ps1-wild: visualizer blob spanned body left of the glass), so mask-bbox+drift alone draws the
+# live canvas outside the painted display. Detect the ACTUAL painted window — the dark glassy
+# pane set into the body — within/around the mask bbox (pad 40%) by dark-CC region growing (see
+# region_refit docstring), snap when sane (dims within 0.5-2x of the mask bbox), keep mask bbox
+# otherwise. Material-agnostic: all levels RELATIVE to the local window stats, never absolute.
+def region_refit(b, excl=()):
+    """Detect the painted display WINDOW near mask bbox `b` (normalized rect) by region-growing
+    the dark glass directly: threshold the padded search window RELATIVE to its local body level
+    (no absolute luminance constants), label connected components, pick the CC with max pixel
+    overlap with the mask blob rect. Returns (rect, info) or (None, reason). Deterministic —
+    a freeform rect-search scorer kept finding adversarial optima (plate outlines, mid-glass
+    specular boundaries); a dark CC has no search space to go wrong in.
+    `excl` = the OTHER regions' mask-blob rects: two display regions can share ONE glass pane
+    (fallout-vault CRT: dark upper half = visualizer, amber lower = album_art) — without the
+    exclusion both refits grab the whole pane and end up overlapping. CC detection and edge
+    growth both treat the other region's blob as off-limits."""
+    x0 = max(0, int((b[0] - b[2] * 0.4) * GW)); x1 = min(GW, int((b[0] + b[2] * 1.4) * GW))
+    y0 = max(0, int((b[1] - b[3] * 0.4) * GH)); y1 = min(GH, int((b[1] + b[3] * 1.4) * GH))
+    win = paintg[y0:y1, x0:x1]
+    if win.size < 2000: return None, "tiny-window"
+    # exclude the keyed backdrop — but only backdrop-toned pixels CONNECTED TO THE WINDOW BORDER.
+    # On a dark theme the glass itself can sit within the backdrop tone (fa-pod: near-black BG,
+    # dark navy glass); real backdrop is outside the device, so border-connectivity separates them.
+    bgm = np.abs(paintrgb[y0:y1, x0:x1] - BGC).max(2) <= 45
+    lblb, nbg = ndimage.label(bgm)
+    border = sorted(set(np.unique(np.r_[lblb[0], lblb[-1], lblb[:, 0], lblb[:, -1]])) - {0})
+    notbg = ~np.isin(lblb, border) if border else np.ones(win.shape, bool)
+    vals = win[notbg]
+    if vals.size < 2000: return None, "no-body"
+    body = float(np.percentile(vals, 80)); floor = float(np.percentile(vals, 5))
+    if body - floor < 30: return None, "flat"                     # no recess contrast here
+    ex = np.zeros(win.shape, bool)
+    for e in excl:
+        ex0 = max(0, int(e[0] * GW) - x0); ey0 = max(0, int(e[1] * GH) - y0)
+        ex1 = min(win.shape[1], int((e[0] + e[2]) * GW) - x0)
+        ey1 = min(win.shape[0], int((e[1] + e[3]) * GH) - y0)
+        if ex1 > ex0 and ey1 > ey0: ex[ey0:ey1, ex0:ex1] = True
+    thr = floor + 0.35 * (body - floor)
+    darkm = ndimage.binary_opening((win < thr) & notbg & ~ex, iterations=2)
+    lbl, n = ndimage.label(darkm)
+    if n == 0: return None, "no-dark-cc"
+    bx0 = b[0] * GW - x0; by0 = b[1] * GH - y0
+    bx1 = bx0 + b[2] * GW; by1 = by0 + b[3] * GH
+    blob_area = max(1.0, b[2] * GW * b[3] * GH)
+    best = None
+    for c in range(1, n + 1):
+        ys, xs = np.where(lbl == c)
+        if len(xs) < max(1500, 0.03 * blob_area): continue
+        ov = int(((xs >= bx0) & (xs <= bx1) & (ys >= by0) & (ys <= by1)).sum())
+        if ov == 0: continue
+        if best is None or ov > best[0]: best = (ov, xs, ys)
+    if best is None: return None, "no-overlapping-cc"
+    _, xs, ys = best
+    fx0, fx1 = np.percentile(xs, [1, 99]); fy0, fy1 = np.percentile(ys, [1, 99])
+    # EXPAND from the dark CORE to the full recessed pane: a specular sweep can lift part of the
+    # glass above the core threshold while staying well below body level (fa-pod: the lower half
+    # of each window). Grow each edge while the adjacent strip is still clearly recessed.
+    loose = floor + 0.65 * (body - floor)
+    fx0, fx1, fy0, fy1 = int(fx0), int(fx1), int(fy0), int(fy1)
+    wh, ww = win.shape
+    def _rec(y0_, y1_, x0_, x1_):                      # strip is recessed (non-backdrop + below loose)
+        s = win[y0_:y1_, x0_:x1_]; nb = notbg[y0_:y1_, x0_:x1_]
+        if s.size == 0 or nb.mean() < 0.6: return False
+        if ex[y0_:y1_, x0_:x1_].mean() > 0.5: return False   # don't grow into another region's blob
+        return float(np.median(s[nb])) < loose
+    grew = True
+    while grew:
+        grew = False
+        if fy0 >= 3 and _rec(fy0 - 3, fy0, fx0, fx1): fy0 -= 3; grew = True
+        if fy1 <= wh - 4 and _rec(fy1 + 1, fy1 + 4, fx0, fx1): fy1 += 3; grew = True
+        if fx0 >= 3 and _rec(fy0, fy1, fx0 - 3, fx0): fx0 -= 3; grew = True
+        if fx1 <= ww - 4 and _rec(fy0, fy1, fx1 + 1, fx1 + 4): fx1 += 3; grew = True
+    rect = [(x0 + fx0) / GW, (y0 + fy0) / GH, (fx1 - fx0) / GW, (fy1 - fy0) / GH]
+    return rect, f"cc {len(xs)}px thr {thr:.0f} loose {loose:.0f} (body {body:.0f} floor {floor:.0f})"
+def _iou(a, b):
+    x0 = max(a[0], b[0]); y0 = max(a[1], b[1])
+    x1 = min(a[0] + a[2], b[0] + b[2]); y1 = min(a[1] + a[3], b[1] + b[3])
+    inter = max(0, x1 - x0) * max(0, y1 - y0)
+    return inter / max(1e-9, a[2] * a[3] + b[2] * b[3] - inter)
+for k in SC:
+    r = regs.get(k)
+    if not r or not r.get("device"): continue
+    b = r["device"]
+    excl = [regs[o].get("maskDevice") or regs[o]["device"] for o in SC
+            if o != k and regs.get(o) and regs[o].get("device")]
+    fit, info = region_refit(b, excl)
+    if fit is None:
+        print(f"[region-refit] {k}: kept mask bbox ({info})")
+        continue
+    ok_size = 0.5 <= fit[2] / b[2] <= 2.0 and 0.5 <= fit[3] / b[3] <= 2.0
+    if not ok_size:
+        print(f"[region-refit] {k}: kept mask bbox (fit size out of 0.5-2x sanity; {info})")
+        continue
+    r["device"] = fit
+    r["regionRefit"] = {"info": info, "iouVsMask": round(_iou(fit, r.get("maskDevice", b)), 3)}
+    print(f"[region-refit] {k}: snapped to painted window px({fit[0]*GW:.0f},{fit[1]*GH:.0f} "
+          f"{fit[2]*GW:.0f}x{fit[3]*GH:.0f}) IoU-vs-mask {r['regionRefit']['iouVsMask']} ({info})")
+
+# ---- SEEK GROOVE EXTENT + TRAVEL (coverage span, LEVEL-AWARE) ----
+# The mask/rrect groove bbox routinely UNDERSHOOTS the painted channel, and a STEPPED recess
+# (deep near-black channel inside a lighter outer trough) defeats fixed offsets from the dark
+# floor: the lighter trough sits above Dfloor+22, reads as "body", and the walk stops at the
+# dark channel's end instead of the slot's semantic end (fallout-vault). Level-aware version:
+#   * BODY plateau estimated from bands flanking OUTSIDE the slot's mask cell (same rows),
+#     backdrop + other-recess columns excluded — no absolute luminance constants.
+#   * walk outward while the column median is CLEARLY BELOW body (recessed at ANY depth —
+#     dark channel or lighter trough) OR a bright bezel rim; stop only on a sustained
+#     near-body run or the designed backdrop level (from results.json, not a percentile).
+#   * baked-handle-proof (ps1-crunchy): floor percentile over the darkest fraction of the
+#     slot (not centre-biased), walks START at the darkest column, and INSIDE the mask cell
+#     bright runs never stop the walk (an interior baked handle is slot, not body).
+#   * clamp base = the DEVICE-region slot MASK CELL: the span may extend up to +12% of the
+#     cell width beyond it (recessed-below-body spans wider than the fit bbox are allowed;
+#     runaways are not). Collapse guard unchanged.
 if SLIDER:
     r = regs.get(SLIDER)
     if r and r.get("device"):
-        b = r["device"]
+        b = r["device"]; mb = r.get("maskDevice") or b
         cyp = (b[1] + b[3] / 2) * GH; hh = max(6, int(b[3] * GH * 0.30)); by0 = int(cyp - hh); by1 = int(cyp + hh)
-        pad = int(b[2] * GW * 0.40); bx0 = max(0, int(b[0] * GW) - pad); bx1 = min(GW, int((b[0] + b[2]) * GW) + pad)
+        ux0 = min(b[0], mb[0]); ux1 = max(b[0] + b[2], mb[0] + mb[2])   # union: fit bbox + mask cell
+        pad = int((ux1 - ux0) * GW * 0.40)
+        bx0 = max(0, int(ux0 * GW) - pad); bx1 = min(GW, int(ux1 * GW) + pad)
         med = np.median(paintrgb[by0:by1, bx0:bx1].max(2), 0)
-        dx0 = max(0, int(b[0] * GW) - bx0); dx1 = min(len(med), int((b[0] + b[2]) * GW) - bx0); ctr = (dx0 + dx1) // 2
-        Dfloor = float(np.percentile(med[dx0:dx1] if dx1 > dx0 else med, 15))   # recess floor
-        bgd = float(np.percentile(med, 2))                     # near-black backdrop level
-        recess = Dfloor + 22; rim = Dfloor + 70
+        # colour DISTANCE to the known designed backdrop (median over band rows): a dark-brown
+        # channel floor is indistinguishable from a near-black backdrop in raw LUMINANCE, so the
+        # backdrop stop keys on distance-from-BGC (a relative signal), never a luminance floor.
+        cdist = np.median(np.abs(paintrgb[by0:by1, bx0:bx1] - BGC).max(2), 0)
+        gx0, gx1 = int(b[0] * GW), int((b[0] + b[2]) * GW)
+        dx0 = max(0, gx0 - bx0); dx1 = min(len(med), gx1 - bx0)
+        mx0 = max(0, int(mb[0] * GW) - bx0); mx1 = min(len(med), int((mb[0] + mb[2]) * GW) - bx0)
+        if mx1 <= mx0: mx0, mx1 = dx0, dx1
+        bgd = float(BGC.max())                                 # designed backdrop level (known)
+        slot = med[mx0:mx1]
+        Dfloor = float(np.percentile(slot, 10))                # darkest fraction, not centre-biased
+        flank = np.r_[med[:max(0, mx0 - 4)], med[mx1 + 4:]]    # body sample: outside the mask cell
+        flank = flank[flank > max(bgd + 25, Dfloor + 15)]      # drop backdrop + other recesses
+        body = float(np.median(flank)) if len(flank) >= 8 else float(np.percentile(med, 85))
+        below = body - max(14.0, 0.22 * max(0.0, body - Dfloor))   # "clearly below body"
+        rimhi = body + 20.0                                    # bright bezel above the plateau
+        start = mx0 + int(np.argmin(slot))                     # darkest column, not geometric centre
+        cap = max(8, int(max(dx1 - dx0, mx1 - mx0) * 0.06))
         def _walk(step):
-            x = ctr; last = ctr; brun = 0; cap = max(8, int((dx1 - dx0) * 0.06))
+            x = start; last = start; run = 0
             while 0 <= x < len(med):
-                if med[x] <= bgd + 8: break                    # backdrop → stop hard
-                if med[x] < recess: last = x; brun = 0         # dark recess
-                elif med[x] > rim:
-                    last = x; brun += 1                        # bright bezel rim — keep but count
-                    if brun > cap: break                       # sustained bright = past rim into body
-                else: brun = 0                                 # mid tone (rim slope) — continue
+                inside = mx0 <= x < mx1                        # interior of the slot mask cell
+                if not inside and cdist[x] < 30: break         # backdrop (colour dist) → stop hard
+                if med[x] < below: last = x; run = 0           # recessed (any depth)
+                elif med[x] > rimhi:
+                    last = x; run += 1                         # bright bezel rim — keep but count
+                    if run > cap and not inside: break         # sustained bright = past rim into body
+                else:
+                    run += 1                                   # near-body level
+                    if run > cap and not inside: break         # sustained body = past the slot
                 x += step
             return last
         lo = bx0 + _walk(-1); hi = bx0 + _walk(+1)
-        gx0, gx1 = int(b[0] * GW), int((b[0] + b[2]) * GW)
-        if hi - lo < 0.5 * (gx1 - gx0):                        # detection collapsed → keep mask bbox
+        if hi - lo < 0.5 * (gx1 - gx0):                        # detection collapsed → keep fit bbox
             lo, hi = gx0, gx1
+        cw = max(1, mx1 - mx0)                                 # clamp base: the slot mask cell
+        lo = max(lo, bx0 + mx0 - int(0.12 * cw)); hi = min(hi, bx0 + mx1 + int(0.12 * cw))
         r["device"] = [lo / GW, b[1], (hi - lo) / GW, b[3]]    # expand device to the painted groove
         M = int((hi - lo) * 0.02)
         r["travel"] = [round(max(0, lo - M) / GW, 5), round(min(GW, hi + M) / GW, 5)]
-        print(f"[travel] {SLIDER} groove {lo}..{hi}px (was bbox {gx0}..{gx1}) -> travel {r['travel']}")
+        print(f"[travel] {SLIDER} groove {lo}..{hi}px (fit bbox {gx0}..{gx1}, mask cell {bx0 + mx0}..{bx0 + mx1}, "
+              f"body {body:.0f} floor {Dfloor:.0f} below<{below:.0f}) -> travel {r['travel']}")
 
 # ---- SLOT ANGLE (rotational placement): a slot following an organic body is tilted, so the part
 # must be rotated to match. Major-axis angle from PCA on the slot's mask blob. Knobs are radial.
@@ -460,9 +592,17 @@ biref_parts = [p for p in ["vol", "seek", TOGGLE + "_off", TOGGLE + "_on"] if TO
                and os.path.exists(os.path.join(BIREF, p + ".png"))]
 need_parts = (KNOBS + ([SLIDER] if SLIDER else []) + ([TOGGLE + "_off", TOGGLE + "_on"] if TOGGLE else []))
 biref_ok = all(os.path.exists(os.path.join(BIREF, p + ".png")) for p in need_parts) if os.path.exists(BIREF) else None
+# region misplacement: refit landed far from the mask blob -> the model painted the display
+# blob off its window; the render was rescued by the refit but the generation is visually broken
+region_misplaced = []
+for k in SC:
+    r = regs.get(k)
+    if not (r and r.get("device") and r.get("maskDevice")): continue
+    if _iou(r["device"], r["maskDevice"]) < 0.5: region_misplaced.append(k)
 reasons = []
 knob_tmpl = [k for k in KNOBS if (regs.get(k) or {}).get("fromTemplate")]
 if knob_tmpl: reasons.append("knob-template-fallback:" + ",".join(knob_tmpl))
+for k in region_misplaced: reasons.append(f"region-misplaced:{k}")
 if empty_fail: reasons.append("emptiness")
 if missing: reasons.append("missing:" + ",".join(missing))
 if seek_cov is not None and seek_cov < 0.7: reasons.append(f"seek-cov={seek_cov}")
@@ -471,7 +611,8 @@ if biref_ok is False: reasons.append("biref-parts")
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "reasons": reasons,
-        "PASS": (not empty_fail) and (not missing) and (not knob_tmpl) and (seek_cov is None or seek_cov >= 0.7)
+        "PASS": (not empty_fail) and (not missing) and (not knob_tmpl) and (not region_misplaced)
+                and (seek_cov is None or seek_cov >= 0.7)
                 and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
                 and (not TOGGLE or sa is None or sa_ok)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate

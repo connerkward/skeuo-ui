@@ -2,49 +2,37 @@
   "id": "ps1-wild",
   "title": "Ps1 Wild",
   "mode": "templateless",
-  "passed": false,
-  "rolls": 5,
-  "final_seed": 252,
+  "passed": true,
+  "rolls": 2,
+  "final_seed": 265,
   "gate": {
-    "seed": 252,
-    "error": "genskin",
-    "log": "y\", line 303, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
+    "seed": 265,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.039,
+    "reasons": [],
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 200,
+      "seed": 252,
       "PASS": false,
       "controls": 10,
       "seek_cov": 1.039,
-      "reasons": [],
-      "leak": 0.006002
-    },
-    {
-      "seed": 213,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.04,
       "reasons": [
         "emptiness"
       ],
-      "leak": 0.000974
+      "leak": 0.005304
     },
     {
-      "seed": 226,
-      "error": "genskin",
-      "log": "y\", line 303, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
-    },
-    {
-      "seed": 239,
-      "error": "genskin",
-      "log": "y\", line 303, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
-    },
-    {
-      "seed": 252,
-      "error": "genskin",
-      "log": "y\", line 303, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
+      "seed": 265,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [],
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 410.2,
+  "elapsed_s": 463.6,
   "player": "assets-ps1-wild/player.html"
 }

@@ -301,6 +301,11 @@ def main():
         "SOLID FILLED blob in ITS OWN guide colour, at the EXACT same position, size and silhouette as that control "
         "on the left (the seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; "
         "the shuffle blob is a tall portrait rounded-rectangle; each knob/button blob a solid disc): " + mask_lines
+        + ". DISPLAY-WINDOW BLOBS — the visualizer and album-art blobs must EXACTLY cover their painted "
+        "window's GLASS area on the left: the SAME rectangle at the SAME position with the SAME rounded "
+        "corners, edge-to-edge with the glass — never larger than the bezel opening, never smaller, never "
+        "shifted or offset onto the surrounding body. Trace each window's glass outline precisely; a display "
+        "blob that extends past its painted window, covers body/bezel around it, or sits off the window is WRONG"
         + "; and each STRIP PART as a solid COMPACT blob of its colour (volume cap=" + kn(KNOB).lower()
         + ", seek thumb=" + kn(SLIDER).lower() + ", BOTH shuffle states=" + kn(TOGGLE).lower() + ") exactly matching "
         "its part's silhouette & position in the left strip. CRITICAL: each blob is TIGHT to its shape — NEVER let a "

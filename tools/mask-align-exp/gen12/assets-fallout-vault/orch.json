@@ -2,47 +2,27 @@
   "id": "fallout-vault",
   "title": "Fallout Vault",
   "mode": "templateless",
-  "passed": false,
-  "rolls": 4,
+  "passed": true,
+  "rolls": 1,
   "final_seed": 110,
   "gate": {
     "seed": 110,
-    "error": "genskin",
-    "log": "y\", line 303, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.039,
+    "reasons": [],
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 71,
-      "PASS": false,
-      "controls": 9,
-      "seek_cov": 1.038,
-      "reasons": [
-        "missing:queue",
-        "biref-parts"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 84,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.04,
-      "reasons": [
-        "biref-parts"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 97,
-      "error": "genskin",
-      "log": "y\", line 303, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
-    },
-    {
       "seed": 110,
-      "error": "genskin",
-      "log": "y\", line 303, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [],
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 288.7,
+  "elapsed_s": 126.1,
   "player": "assets-fallout-vault/player.html"
 }
