@@ -465,12 +465,17 @@ if SLIDER:
         def _body(sl):                                         # local plateau, recesses+backdrop out
             fl = med[sl]
             fl = fl[(fl > bgd + 25) & (fl > Dfloor + 15)]
-            return float(np.median(fl)) if len(fl) >= 8 else None
+            # 70th percentile, NOT median: the flank is often BIMODAL (a neighbour control's
+            # shadow next to the raised body plate — quicksilver: knob shadow ~94 / plate ~196).
+            # A median lands between the modes, the plate then reads as "bright bezel rim" and
+            # the walk rides it ~58px off the slot. The plateau is the RAISED level → p70.
+            return float(np.percentile(fl, 70)) if len(fl) >= 8 else None
         bodyL = _body(np.s_[max(0, mx0 - 4 - fw):max(0, mx0 - 4)])
         bodyR = _body(np.s_[mx1 + 4:mx1 + 4 + fw])
         glob = _body(np.s_[:]) or float(np.percentile(med, 85))
         bodyL = bodyL if bodyL is not None else glob; bodyR = bodyR if bodyR is not None else glob
-        rimcap = max(8, int(cw * 0.06))                        # TOTAL bright budget per walk
+        rimcap = max(8, int(cw * 0.03))                        # TOTAL bright budget per walk — a real
+        # bezel end-cap is THIN; 6% of a 950px cell (57px) let a mis-read body plate extend travel
         stopcap = max(6, int(cw * 0.02))                       # sustained near-body = past the slot
         def _walk(edge, step, body):
             below = body - max(14.0, 0.22 * max(0.0, body - Dfloor))   # "clearly below body"
@@ -478,12 +483,20 @@ if SLIDER:
             x = edge + step; last = edge; nrun = 0; rrun = 0
             while 0 <= x < len(med):
                 if cdist[x] < 30: break                        # backdrop colour → stop hard
-                if med[x] < below: last = x; nrun = 0          # recessed (any depth)
+                if med[x] < below:
+                    # RECESS CONTINUITY: a below-body run only belongs to THIS slot while it is
+                    # contiguous with the slot channel. Once the walk has crossed the bright
+                    # bezel rim (rrun>0) or a near-body ridge wider than smoothing noise
+                    # (nrun>2), a later dark run is a NEIGHBOUR's recess/shadow (quicksilver:
+                    # the adjacent knob's dark shadow re-extended travel ~78px past the left
+                    # rim) — stop, keep `last` at the rim/channel edge, never resume through.
+                    if rrun > 0 or nrun > 2: break
+                    last = x; nrun = 0                         # recessed (any depth), contiguous
                 elif med[x] > rimhi:
                     last = x; rrun += 1; nrun = 0              # bright bezel rim — keep but count
-                    # rrun is CUMULATIVE (never reset): a real bezel is ONE contiguous bright
-                    # band, but a bright carved frame alternating with shadow seams (diablo)
-                    # would ride rim→recess→rim forever if the budget reset on each shadow.
+                    # rrun is CUMULATIVE: the bright end-cap budget never resets, so a carved
+                    # frame (diablo) can't ride rim→rim forever; and with the continuity rule
+                    # above the walk hard-stops at the first dark run PAST the rim anyway.
                     if rrun > rimcap: break                    # bright budget spent = past the rim
                 else:
                     nrun += 1                                  # near-body level
