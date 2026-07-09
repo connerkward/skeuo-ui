@@ -1,7 +1,7 @@
 {
  "id": "wmp-quicksilver",
  "mode": "templated",
- "seed": 84,
+ "seed": 623,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -143,6 +143,18 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "cool blue LED accents on the brushed silver",
+  "emissive_color": [
+   90,
+   160,
+   255
+  ],
+  "pulse": "breathe",
+  "intensity": 0.6,
+  "viz_emissive": true,
+  "beat_couple": 0.04
+ },
  "template": {
   "album_art": [
    0.28,

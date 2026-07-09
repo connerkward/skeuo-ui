@@ -1,7 +1,7 @@
 {
  "id": "fa-sky",
  "mode": "templateless",
- "seed": 110,
+ "seed": 749,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -148,6 +148,14 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "soft aqua-sky glow of the translucent shell and glass glints",
+  "emissive_color": "auto",
+  "pulse": "breathe",
+  "intensity": 0.6,
+  "viz_emissive": true,
+  "beat_couple": 0.04
+ },
  "template": {},
  "dims": [
   4608,

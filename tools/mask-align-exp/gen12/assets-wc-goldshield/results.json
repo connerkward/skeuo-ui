@@ -1,7 +1,7 @@
 {
  "id": "wc-goldshield",
  "mode": "templated",
- "seed": 110,
+ "seed": 736,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -143,6 +143,14 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "glowing gems and enchanted rune engravings in the gold",
+  "emissive_color": "auto",
+  "pulse": "ember",
+  "intensity": 0.9,
+  "viz_emissive": true,
+  "beat_couple": 0.06
+ },
  "template": {
   "album_art": [
    0.5,
@@ -201,5 +209,5 @@
   4608,
   3712
  ],
- "leak": 0.000246
+ "leak": 0.0004
 }

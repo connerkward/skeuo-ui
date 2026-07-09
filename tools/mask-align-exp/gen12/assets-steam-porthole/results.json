@@ -1,7 +1,7 @@
 {
  "id": "steam-porthole",
  "mode": "templated",
- "seed": 84,
+ "seed": 623,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -143,6 +143,18 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "warm furnace glow behind the porthole glass and gauge lamps",
+  "emissive_color": [
+   255,
+   150,
+   60
+  ],
+  "pulse": "ember",
+  "intensity": 0.8,
+  "viz_emissive": true,
+  "beat_couple": 0.06
+ },
  "template": {
   "album_art": [
    0.5,

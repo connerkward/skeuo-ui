@@ -1,64 +1,62 @@
 {
-  "id": "ps1-wild",
-  "title": "Ps1 Wild",
+  "id": "fa-sky",
+  "title": "Frutiger Aero Sky (templateless)",
   "mode": "templateless",
   "passed": false,
   "rolls": 4,
-  "final_seed": 917,
+  "final_seed": 749,
   "gate": {
-    "seed": 917,
+    "seed": 749,
     "PASS": false,
     "controls": 10,
     "seek_cov": 1.04,
     "reasons": [
       "state-align"
     ],
-    "leak": 0.00739
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 878,
+      "seed": 710,
       "PASS": false,
       "controls": 10,
-      "seek_cov": 1.039,
+      "seek_cov": 1.04,
       "reasons": [
-        "region-misplaced:album_art"
+        "emptiness"
       ],
-      "leak": 0.006174
+      "leak": 0.0
     },
     {
-      "seed": 891,
+      "seed": 723,
       "PASS": false,
       "controls": 10,
-      "seek_cov": 1.038,
+      "seek_cov": 1.04,
       "reasons": [
-        "state-align"
+        "emptiness"
       ],
-      "leak": 0.001521
+      "leak": 0.0
     },
     {
-      "seed": 904,
+      "seed": 736,
       "PASS": false,
-      "controls": 9,
-      "seek_cov": 1.038,
+      "controls": 8,
+      "seek_cov": 1.04,
       "reasons": [
-        "emptiness",
-        "missing:next",
-        "state-align"
+        "missing:next,vol"
       ],
-      "leak": 0.006827
+      "leak": 0.0
     },
     {
-      "seed": 917,
+      "seed": 749,
       "PASS": false,
       "controls": 10,
       "seek_cov": 1.04,
       "reasons": [
         "state-align"
       ],
-      "leak": 0.00739
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 726.8,
-  "player": "assets-ps1-wild/player.html"
+  "elapsed_s": 745.3,
+  "player": "assets-fa-sky/player.html"
 }

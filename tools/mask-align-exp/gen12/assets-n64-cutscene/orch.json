@@ -3,36 +3,46 @@
   "title": "N64 Cutscene",
   "mode": "templateless",
   "passed": true,
-  "rolls": 2,
-  "final_seed": 84,
+  "rolls": 3,
+  "final_seed": 610,
   "gate": {
-    "seed": 84,
+    "seed": 610,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.039,
+    "seek_cov": 1.038,
     "reasons": [],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 71,
+      "seed": 584,
       "PASS": false,
-      "controls": 9,
-      "seek_cov": 1.039,
+      "controls": 10,
+      "seek_cov": 1.04,
       "reasons": [
-        "missing:visualizer"
+        "emptiness"
       ],
       "leak": 0.0
     },
     {
-      "seed": 84,
-      "PASS": true,
+      "seed": 597,
+      "PASS": false,
       "controls": 10,
       "seek_cov": 1.039,
+      "reasons": [
+        "state-align"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 610,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.038,
       "reasons": [],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 352.7,
+  "elapsed_s": 523.0,
   "player": "assets-n64-cutscene/player.html"
 }

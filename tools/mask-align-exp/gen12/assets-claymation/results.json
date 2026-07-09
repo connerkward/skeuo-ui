@@ -1,50 +1,55 @@
 {
- "id": "wmp-vario",
+ "id": "claymation",
  "mode": "templateless",
  "seed": 610,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
-  235,
-  235,
-  238
+  18,
+  18,
+  24
  ],
  "palette": {
-  "graphite": [
-   52,
-   56,
-   64
+  "clay_orange": [
+   225,
+   130,
+   70
   ],
-  "black": [
-   20,
-   20,
-   26
+  "clay_teal": [
+   70,
+   160,
+   150
   ],
-  "electric_blue": [
-   40,
-   110,
-   255
+  "clay_cream": [
+   235,
+   220,
+   195
   ],
-  "silver": [
-   168,
-   176,
-   190
+  "clay_plum": [
+   140,
+   90,
+   130
   ],
-  "steel": [
-   96,
-   104,
-   120
+  "clay_moss": [
+   130,
+   150,
+   80
+  ],
+  "warm_shadow": [
+   90,
+   60,
+   50
   ]
  },
  "keys": {
   "playpause": [
-   255,
-   255,
-   0
+   0,
+   0,
+   255
   ],
   "prev": [
    255,
    0,
-   0
+   255
   ],
   "next": [
    0,
@@ -52,52 +57,52 @@
    0
   ],
   "repeat": [
-   255,
    0,
+   255,
    255
   ],
   "queue": [
-   255,
    128,
-   0
+   0,
+   255
   ],
   "vol": [
-   128,
    255,
+   0,
    0
   ],
   "seek": [
    255,
-   0,
-   128
+   255,
+   0
   ],
   "shuffle": [
-   0,
    255,
+   0,
    128
   ],
   "visualizer": [
    0,
-   255,
-   255
+   0,
+   128
   ],
   "album_art": [
    128,
-   0,
-   255
+   255,
+   0
   ]
  },
  "keyNames": {
-  "playpause": "YELLOW",
-  "prev": "PURE RED",
+  "playpause": "PURE BLUE",
+  "prev": "MAGENTA",
   "next": "PURE GREEN",
-  "repeat": "MAGENTA",
-  "queue": "ORANGE",
-  "vol": "CHARTREUSE",
-  "seek": "ROSE PINK",
-  "shuffle": "SPRING GREEN",
-  "visualizer": "CYAN",
-  "album_art": "VIOLET-PURPLE"
+  "repeat": "CYAN",
+  "queue": "VIOLET-PURPLE",
+  "vol": "PURE RED",
+  "seek": "YELLOW",
+  "shuffle": "ROSE PINK",
+  "visualizer": "NAVY",
+  "album_art": "CHARTREUSE"
  },
  "buttons": [
   "playpause",
@@ -138,17 +143,11 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
- "lighting": {
-  "emissive_hint": "the cyan-blue display glow and LED indicators",
-  "emissive_color": [
-   70,
-   200,
-   255
-  ],
-  "pulse": "phosphor",
-  "intensity": 0.8,
-  "viz_emissive": true,
-  "beat_couple": 0.05
- },
- "template": {}
+ "lighting": {},
+ "template": {},
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 0.0
 }

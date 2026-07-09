@@ -1,7 +1,7 @@
 {
  "id": "n64-lowpoly",
  "mode": "templated",
- "seed": 71,
+ "seed": 610,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -138,6 +138,14 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "none \u2014 flat-shaded plastic; visualizer is the only light source",
+  "emissive_color": "auto",
+  "pulse": "none",
+  "intensity": 0.3,
+  "viz_emissive": true,
+  "beat_couple": 0.03
+ },
  "template": {
   "album_art": [
    0.5,
@@ -191,10 +199,5 @@
   0.21062500000000003,
   0.5333333333333333,
   0.08125
- ],
- "dims": [
-  4608,
-  3712
- ],
- "leak": 0.0
+ ]
 }

@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>skeuo.fm — fa-pod: fa-pod</title>
+<title>skeuo.fm — claymation: claymation</title>
 <style>
   :root{--mono:ui-monospace,Menlo,monospace}
   *{box-sizing:border-box}
@@ -10,7 +10,7 @@
   .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v=1783629589') no-repeat;background-size:100% auto;border-radius:12px}
+    background:url('paint.png?v=1783629114') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
   .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}
@@ -34,7 +34,7 @@
   .hint{font:11px var(--mono);color:#6b7180;max-width:460px;text-align:center}
   .badge{font:10px var(--mono);color:#7f8798;border:1px solid #ffffff18;border-radius:5px;padding:2px 6px}
 </style></head><body>
-<h1>fa-pod — fa-pod</h1>
+<h1>claymation — claymation</h1>
 <div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob
 <a id=pbrlink href="player-pbr.html" style="color:#8fb4ff;display:none">· ✨ dynamic lighting</a></div>
 <script>/* feature-flagged PBR player (WIRE-pbr.md): offer the toggle only when the sibling
@@ -47,7 +47,7 @@ fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementByI
 </div></div>
 <div class=hint id=hint>loading…</div>
 <script>
-const V='1783629589';
+const V='1783629114';
 (async function(){
   const R = await fetch('regions.json?v='+V).then(r=>r.json());
   const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
@@ -69,7 +69,7 @@ const V='1783629589';
     if(!any) return {url:im.src,w:c.width,h:c.height};
     const tw=x1-x0+1,th=y1-y0+1,t=document.createElement('canvas');t.width=tw;t.height=th;
     t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th); return {url:t.toDataURL(),w:tw,h:th}; }
-  const BREF='../assets-fa-pod_biref/';
+  const BREF='../assets-claymation_biref/';
   const parts=['vol','seek','shuffle_off','shuffle_on'];
   for(const k of parts){ try{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}catch(e){} }
   const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];

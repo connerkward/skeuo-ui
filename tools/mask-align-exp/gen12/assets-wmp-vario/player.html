@@ -10,7 +10,7 @@
   .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v=1783578449') no-repeat;background-size:100% auto;border-radius:12px}
+    background:url('paint.png?v=1783631131') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
   .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}
@@ -35,7 +35,11 @@
   .badge{font:10px var(--mono);color:#7f8798;border:1px solid #ffffff18;border-radius:5px;padding:2px 6px}
 </style></head><body>
 <h1>wmp-vario — wmp-vario</h1>
-<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob</div>
+<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob
+<a id=pbrlink href="player-pbr.html" style="color:#8fb4ff;display:none">· ✨ dynamic lighting</a></div>
+<script>/* feature-flagged PBR player (WIRE-pbr.md): offer the toggle only when the sibling
+player-pbr.html was actually built — default stays this plain player */
+fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementById('pbrlink').style.display='inline'}).catch(()=>{});</script>
 <div id=stage><div id=phone>
   <canvas class=viz id=viz></canvas>
   <div class=art id=art></div>
@@ -43,7 +47,7 @@
 </div></div>
 <div class=hint id=hint>loading…</div>
 <script>
-const V='1783578449';
+const V='1783631131';
 (async function(){
   const R = await fetch('regions.json?v='+V).then(r=>r.json());
   const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
@@ -89,26 +93,47 @@ const V='1783578449';
       if(nn){const L=v=>Math.min(255,Math.round(v/nn*0.75+255*0.25));
         el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.32), rgba(255,255,255,0) 60%)';}
     }catch(e){ el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%,#ffffff4d,#fff0 60%)'; }
-    const cap=el.querySelector('.cap');let val=0.7,sy=0,sv=0,drag=false;
+    // start at 0.5 → the -135..+135° rotation has SYMMETRIC headroom both directions
+    // (review: "goes far left but not right at all" — a 0.7 start left only 81° of CW travel)
+    const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
     const rend=()=>cap.style.transform='rotate('+(-135+val*270)+'deg)';rend();
     el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
     el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));rend();}});
     addEventListener('pointerup',()=>drag=false);
     phone.appendChild(el);
   }
-  // ---- seek thumb (coverage travel) ----
+  // ---- seek thumb (coverage travel; SLOT-SIZED, horizontal or vertical) ----
+  // Size the thumb to its GROOVE, not the raw cut scale: cross-axis seated at groove×1.15
+  // (hard cap ×1.35 so it never obscures the track), upscale capped at ×1.5 natural, and the
+  // along-axis dimension ≤45% of the travel span. Aspect always preserved (one scale factor).
   const sl = Object.keys(roles).find(k=>roles[k]==='slider');
   if(sl && regs[sl] && CUT['seek']){
-    const r=regs[sl],t=CUT['seek'],track=r.device;
+    const r=regs[sl],t=CUT['seek'],track=r.device,vert=!!r.vertical;
     const el=document.createElement('div');el.className='pthumb';
-    const tw=t.w/PW,th=t.h/PH; el.style.backgroundImage='url('+t.url+')';
+    el.style.backgroundImage='url('+t.url+')';
+    let tw=t.w/PW, th=t.h/PH;
+    const tv=r.travel||(vert?[track[1],track[1]+track[3]]:[track[0],track[0]+track[2]]);
+    const span=Math.max(1e-6,tv[1]-tv[0]);
+    const s=vert?Math.min(1.5, track[2]*1.15/tw, track[2]*1.35/tw, span*0.45/th)
+                :Math.min(1.5, track[3]*1.15/th, track[3]*1.35/th, span*0.45/tw);
+    tw*=s; th*=s;
     el.style.width=tw*100+'%';el.style.height=(th/DF)*100+'%';
-    const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
-    let val=0; const tv=r.travel||[track[0],track[0]+track[2]]; const x0=tv[0],x1=tv[1]-tw;
-    const rend=()=>el.style.left=(x0+(x1-x0)*val)*100+'%';rend();
-    let sx=0,sv=0,drag=false;
-    el.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
-    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientX-sx)/(phone.clientWidth*(x1-x0))));rend();}});
+    let val=0,sp=0,sv=0,drag=false,rend;
+    if(vert){
+      el.style.cursor='ns-resize';
+      const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%';
+      const y0=tv[0],y1=tv[1]-th;
+      rend=()=>el.style.top=((y0+(y1-y0)*val)/DF)*100+'%';
+      el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientY-sp)/(phone.clientHeight*((y1-y0)/DF))));rend();}});
+      el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    }else{
+      const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
+      const x0=tv[0],x1=tv[1]-tw;
+      rend=()=>el.style.left=(x0+(x1-x0)*val)*100+'%';
+      el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientX-sp)/(phone.clientWidth*(x1-x0))));rend();}});
+      el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    }
+    rend();
     addEventListener('pointerup',()=>drag=false);
     window.__seek=(d)=>{val=Math.max(0,Math.min(1,val+d));rend();};
     phone.appendChild(el);
@@ -119,10 +144,16 @@ const V='1783578449';
     const r=regs[tg],off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
     const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
     const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
-    // OFF sizes the box; ON is registered onto OFF by the extractor's silhouette IoU transform
-    const obw=off.w/PW, obh=off.h/PH;
-    const place=(c,isOn)=>{ let bw=c.w/PW, bh=c.h/PH, dx=0, dy=0;
-      if(isOn && sa){ bw=obw; bh=obh; dx=sa.dx/PW; dy=sa.dy/PH; }   // ON drawn at OFF's box, shifted by IoU offset
+    // SLOT-SIZED: BOTH states render in ONE box = slot rect ×1.06 (background contain keeps the
+    // cut's aspect) so the switch always fills its slot — never smaller than the slot, never the
+    // raw cut scale. Upscale capped at ×1.5 natural. ON is registered onto OFF by the extractor's
+    // silhouette-IoU transform, its px offset scaled by the OFF cut's displayed scale.
+    let bw=r.device[2]*1.06, bh=r.device[3]*1.06;
+    const natS=Math.min(bw*PW/off.w, bh*PH/off.h);
+    if(natS>1.5){ bw*=1.5/natS; bh*=1.5/natS; }
+    const offS=Math.min(bw*PW/off.w, bh*PH/off.h);   // paint px per OFF-cut px, as displayed
+    const place=(c,isOn)=>{ let dx=0, dy=0;
+      if(isOn && sa){ dx=sa.dx*offS/PW; dy=sa.dy*offS/PH; }   // ON shifted by the IoU offset, at display scale
       el.style.backgroundImage='url('+c.url+')';
       el.style.left=(tc[0]-bw/2+dx)*100+'%'; el.style.top=((tc[1]-bh/2+dy)/DF)*100+'%';
       el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%'; el.style.transform='rotate('+ang+'deg)'; };

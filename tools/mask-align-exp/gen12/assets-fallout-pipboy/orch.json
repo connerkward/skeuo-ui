@@ -4,25 +4,25 @@
   "mode": "templated",
   "passed": true,
   "rolls": 1,
-  "final_seed": 71,
+  "final_seed": 571,
   "gate": {
-    "seed": 71,
+    "seed": 571,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.039,
+    "seek_cov": 1.038,
     "reasons": [],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 71,
+      "seed": 571,
       "PASS": true,
       "controls": 10,
-      "seek_cov": 1.039,
+      "seek_cov": 1.038,
       "reasons": [],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 196.3,
+  "elapsed_s": 149.1,
   "player": "assets-fallout-pipboy/player.html"
 }

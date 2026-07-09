@@ -1,7 +1,7 @@
 {
  "id": "ps1-wild",
  "mode": "templateless",
- "seed": 265,
+ "seed": 917,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -143,5 +143,5 @@
   4608,
   3712
  ],
- "leak": 0.0
+ "leak": 0.00739
 }

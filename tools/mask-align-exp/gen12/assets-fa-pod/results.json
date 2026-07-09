@@ -1,7 +1,7 @@
 {
  "id": "fa-pod",
  "mode": "templated",
- "seed": 173,
+ "seed": 673,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -148,6 +148,14 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "soft aqua glow accents in the translucent shell",
+  "emissive_color": "auto",
+  "pulse": "breathe",
+  "intensity": 0.7,
+  "viz_emissive": true,
+  "beat_couple": 0.04
+ },
  "template": {
   "album_art": [
    0.5,
@@ -206,5 +214,5 @@
   4608,
   3712
  ],
- "leak": 0.00235
+ "leak": 0.0
 }

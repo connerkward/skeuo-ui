@@ -3,36 +3,61 @@
   "title": "Steam Porthole",
   "mode": "templated",
   "passed": true,
-  "rolls": 2,
-  "final_seed": 84,
+  "rolls": 4,
+  "final_seed": 623,
   "gate": {
-    "seed": 84,
+    "seed": 623,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.04,
+    "seek_cov": 1.039,
     "reasons": [],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 71,
+      "seed": 584,
       "PASS": false,
       "controls": 10,
-      "seek_cov": 1.035,
+      "seek_cov": 1.04,
       "reasons": [
-        "biref-parts"
+        "region-misplaced:visualizer",
+        "region-misplaced:album_art",
+        "emptiness",
+        "state-align"
       ],
-      "leak": 0.000618
+      "leak": 0.001581
     },
     {
-      "seed": 84,
-      "PASS": true,
+      "seed": 597,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.036,
+      "reasons": [
+        "knob-template-fallback:vol",
+        "emptiness"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 610,
+      "PASS": false,
       "controls": 10,
       "seek_cov": 1.04,
+      "reasons": [
+        "emptiness",
+        "state-align"
+      ],
+      "leak": 0.000174
+    },
+    {
+      "seed": 623,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.039,
       "reasons": [],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 312.9,
+  "elapsed_s": 897.5,
   "player": "assets-steam-porthole/player.html"
 }

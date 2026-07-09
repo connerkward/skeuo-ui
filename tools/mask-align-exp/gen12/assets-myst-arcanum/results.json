@@ -1,7 +1,7 @@
 {
  "id": "myst-arcanum",
  "mode": "templateless",
- "seed": 97,
+ "seed": 636,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -138,6 +138,18 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "teal glass tubes and faint arcane engravings",
+  "emissive_color": [
+   80,
+   220,
+   200
+  ],
+  "pulse": "breathe",
+  "intensity": 0.8,
+  "viz_emissive": true,
+  "beat_couple": 0.04
+ },
  "template": {},
  "dims": [
   4608,

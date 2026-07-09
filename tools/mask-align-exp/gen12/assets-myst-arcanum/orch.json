@@ -2,49 +2,64 @@
   "id": "myst-arcanum",
   "title": "Myst Arcanum",
   "mode": "templateless",
-  "passed": true,
-  "rolls": 3,
-  "final_seed": 97,
+  "passed": false,
+  "rolls": 4,
+  "final_seed": 636,
   "gate": {
-    "seed": 97,
-    "PASS": true,
-    "controls": 10,
-    "seek_cov": 1.037,
-    "reasons": [],
+    "seed": 636,
+    "PASS": false,
+    "controls": 9,
+    "seek_cov": 1.04,
+    "reasons": [
+      "missing:shuffle",
+      "state-align"
+    ],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 71,
+      "seed": 597,
       "PASS": false,
-      "controls": 7,
-      "seek_cov": null,
-      "reasons": [
-        "missing:next,seek,shuffle",
-        "biref-parts"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 84,
-      "PASS": false,
-      "controls": 7,
-      "seek_cov": null,
-      "reasons": [
-        "missing:next,seek,shuffle",
-        "biref-parts"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 97,
-      "PASS": true,
       "controls": 10,
-      "seek_cov": 1.037,
-      "reasons": [],
+      "seek_cov": 1.039,
+      "reasons": [
+        "state-align"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 610,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "state-align"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 623,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness",
+        "state-align"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 636,
+      "PASS": false,
+      "controls": 9,
+      "seek_cov": 1.04,
+      "reasons": [
+        "missing:shuffle",
+        "state-align"
+      ],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 482.7,
+  "elapsed_s": 876.6,
   "player": "assets-myst-arcanum/player.html"
 }

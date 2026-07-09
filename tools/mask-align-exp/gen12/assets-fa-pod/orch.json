@@ -3,40 +3,26 @@
   "title": "Frutiger Aero Pod",
   "mode": "templated",
   "passed": true,
-  "rolls": 2,
-  "final_seed": 173,
+  "rolls": 1,
+  "final_seed": 673,
   "gate": {
-    "seed": 173,
+    "seed": 673,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.038,
-    "reasons": [
-      "state-align"
-    ],
-    "leak": 0.00235
+    "seek_cov": 1.039,
+    "reasons": [],
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 160,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [
-        "emptiness"
-      ],
-      "leak": 0.001448
-    },
-    {
-      "seed": 173,
+      "seed": 673,
       "PASS": true,
       "controls": 10,
-      "seek_cov": 1.038,
-      "reasons": [
-        "state-align"
-      ],
-      "leak": 0.00235
+      "seek_cov": 1.039,
+      "reasons": [],
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 414.7,
+  "elapsed_s": 256.6,
   "player": "assets-fa-pod/player.html"
 }

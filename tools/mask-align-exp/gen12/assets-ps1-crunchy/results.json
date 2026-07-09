@@ -1,7 +1,7 @@
 {
  "id": "ps1-crunchy",
  "mode": "templated",
- "seed": 84,
+ "seed": 623,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -143,6 +143,14 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "dithered CRT scanline glow from the display panels",
+  "emissive_color": "auto",
+  "pulse": "phosphor",
+  "intensity": 0.5,
+  "viz_emissive": true,
+  "beat_couple": 0.05
+ },
  "template": {
   "album_art": [
    0.28,
@@ -196,10 +204,5 @@
   0.40937499999999993,
   0.5333333333333333,
   0.08125
- ],
- "dims": [
-  4608,
-  3712
- ],
- "leak": 2e-06
+ ]
 }
