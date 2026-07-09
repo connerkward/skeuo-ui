@@ -1,0 +1,41 @@
+{
+  "id": "steam-porthole",
+  "title": "Steam Porthole",
+  "mode": "templated",
+  "material_is_dark": true,
+  "seed": 84,
+  "palette": {
+    "brass": [
+      178,
+      138,
+      58
+    ],
+    "copper": [
+      158,
+      92,
+      46
+    ],
+    "bronze_dark": [
+      70,
+      52,
+      30
+    ],
+    "teal_glass": [
+      28,
+      104,
+      110
+    ],
+    "iron": [
+      58,
+      54,
+      50
+    ],
+    "cream": [
+      228,
+      214,
+      178
+    ]
+  },
+  "theme_prompt": "STEAMPUNK BRASS nautilus / diving-bell media player: riveted polished BRASS and COPPER housing with a big round porthole, pressure-gauge dials, engraved filigree, patina, glass tubes and a teal-glass display. Victorian submarine machinery \u2014 ornate, mechanical, warm metal, rich reflections.",
+  "layout": "vpod"
+}

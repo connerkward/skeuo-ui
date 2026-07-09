@@ -1,0 +1,35 @@
+{
+  "id": "ps1-wild",
+  "title": "Ps1 Wild",
+  "mode": "templateless",
+  "material_is_dark": true,
+  "seed": 213,
+  "palette": {
+    "toxic_green": [
+      90,
+      180,
+      70
+    ],
+    "magenta_pop": [
+      190,
+      60,
+      150
+    ],
+    "steel_blue": [
+      70,
+      100,
+      140
+    ],
+    "grimy_grey": [
+      96,
+      96,
+      104
+    ],
+    "deep_black": [
+      24,
+      24,
+      30
+    ]
+  },
+  "theme_prompt": "PS1 wildcard \u2014 a bold experimental early-PlayStation aesthetic of your choice (arcade racer / cyber / horror): affine-warped LOW-POLY textures, dithering, punchy saturated 90s palette with toxic-green and magenta pops, chunky polygons, CRT grit, that distinctive PS1 texture-crunch look. Go bold and weird within the PS1 vibe."
+}

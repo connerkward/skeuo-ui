@@ -1,0 +1,35 @@
+{
+  "id": "wmp-vario",
+  "title": "Wmp Vario",
+  "mode": "templateless",
+  "material_is_dark": true,
+  "seed": 71,
+  "palette": {
+    "graphite": [
+      52,
+      56,
+      64
+    ],
+    "black": [
+      20,
+      20,
+      26
+    ],
+    "electric_blue": [
+      40,
+      110,
+      255
+    ],
+    "silver": [
+      168,
+      176,
+      190
+    ],
+    "steel": [
+      96,
+      104,
+      120
+    ]
+  },
+  "theme_prompt": "Dark 'Vario' WMP visual style: a moody dark GRAPHITE and gunmetal body with an ILLUMINATED ELECTRIC-BLUE ringed control cluster, blue backlit edges, brushed metal, glossy black glass, cool neon-blue glow in the recesses. Futuristic early-2000s hi-fi remote look."
+}

@@ -1,0 +1,46 @@
+{
+  "id": "fa-pod",
+  "title": "Frutiger Aero Pod",
+  "mode": "templated",
+  "layout": "vpod",
+  "material_is_dark": false,
+  "seed": 173,
+  "palette": {
+    "aqua_blue": [
+      30,
+      120,
+      235
+    ],
+    "cyan_glass": [
+      70,
+      205,
+      230
+    ],
+    "grass_green": [
+      110,
+      200,
+      60
+    ],
+    "liquid_silver": [
+      175,
+      185,
+      200
+    ],
+    "gloss_white": [
+      240,
+      244,
+      250
+    ],
+    "sky_teal": [
+      30,
+      150,
+      170
+    ],
+    "ink_navy": [
+      20,
+      26,
+      48
+    ]
+  },
+  "theme_prompt": "Quintessential FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic): a translucent glossy media-player pod of clear aqua-blue and cyan GLASS with liquid highlights and water-droplet beads, brushed liquid-silver metal bezels, a lush grass-green glowing accent, crisp specular reflections and soft shadows, optimistic and clean. Think Windows-Vista-era glass, Apple-Aqua gel buttons, bubbles and water. Buttons are glossy gel jewels; the body is a smooth organic pebble. Vivid, saturated, dimensional \u2014 never flat, never grungy."
+}

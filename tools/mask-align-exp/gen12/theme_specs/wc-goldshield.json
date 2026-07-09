@@ -1,0 +1,41 @@
+{
+  "id": "wc-goldshield",
+  "title": "Wc Goldshield",
+  "mode": "templated",
+  "material_is_dark": true,
+  "seed": 110,
+  "palette": {
+    "gold": [
+      210,
+      168,
+      66
+    ],
+    "deep_gold": [
+      150,
+      112,
+      40
+    ],
+    "royal_blue": [
+      46,
+      86,
+      190
+    ],
+    "gem_blue": [
+      60,
+      140,
+      220
+    ],
+    "iron_dark": [
+      56,
+      52,
+      58
+    ],
+    "parchment": [
+      224,
+      208,
+      168
+    ]
+  },
+  "theme_prompt": "WARCRAFT ornate GOLD SHIELD media player: heavy engraved GOLD and bronze fantasy metal with sculpted filigree, blue GEMS, a runed crest, riveted iron, a parchment/scroll display, ornate baroque game-UI ornament. Rich, gilded, heroic \u2014 polished gold, deep shadows, jeweled accents.",
+  "layout": "vpod"
+}

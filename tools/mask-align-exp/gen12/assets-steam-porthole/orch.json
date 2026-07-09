@@ -1,0 +1,38 @@
+{
+  "id": "steam-porthole",
+  "title": "Steam Porthole",
+  "mode": "templated",
+  "passed": true,
+  "rolls": 2,
+  "final_seed": 84,
+  "gate": {
+    "seed": 84,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.04,
+    "reasons": [],
+    "leak": 0.0
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.035,
+      "reasons": [
+        "biref-parts"
+      ],
+      "leak": 0.000618
+    },
+    {
+      "seed": 84,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.04,
+      "reasons": [],
+      "leak": 0.0
+    }
+  ],
+  "elapsed_s": 312.9,
+  "player": "assets-steam-porthole/player.html"
+}

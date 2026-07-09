@@ -1,0 +1,38 @@
+{
+  "id": "ps1-crunchy",
+  "title": "Ps1 Crunchy",
+  "mode": "templated",
+  "passed": true,
+  "rolls": 2,
+  "final_seed": 84,
+  "gate": {
+    "seed": 84,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.04,
+    "reasons": [],
+    "leak": 2e-06
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.031,
+      "reasons": [
+        "biref-parts"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 84,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.04,
+      "reasons": [],
+      "leak": 2e-06
+    }
+  ],
+  "elapsed_s": 339.0,
+  "player": "assets-ps1-crunchy/player.html"
+}

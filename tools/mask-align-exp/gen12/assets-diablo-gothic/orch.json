@@ -1,0 +1,63 @@
+{
+  "id": "diablo-gothic",
+  "title": "Diablo Gothic",
+  "mode": "templateless",
+  "passed": true,
+  "rolls": 4,
+  "final_seed": 110,
+  "gate": {
+    "seed": 110,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.038,
+    "reasons": [
+      "state-align"
+    ],
+    "leak": 0.0
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.037,
+      "reasons": [
+        "biref-parts"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 84,
+      "PASS": false,
+      "controls": 8,
+      "seek_cov": null,
+      "reasons": [
+        "missing:seek,album_art"
+      ],
+      "leak": 0.000335
+    },
+    {
+      "seed": 97,
+      "PASS": false,
+      "controls": 8,
+      "seek_cov": 1.038,
+      "reasons": [
+        "emptiness",
+        "missing:queue,album_art"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 110,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "state-align"
+      ],
+      "leak": 0.0
+    }
+  ],
+  "elapsed_s": 592.2,
+  "player": "assets-diablo-gothic/player.html"
+}

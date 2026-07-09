@@ -1,0 +1,36 @@
+{
+  "id": "fallout-pipboy",
+  "title": "Fallout Pipboy",
+  "mode": "templated",
+  "material_is_dark": true,
+  "seed": 71,
+  "palette": {
+    "phosphor_green": [
+      90,
+      230,
+      120
+    ],
+    "olive_metal": [
+      86,
+      88,
+      60
+    ],
+    "dark_olive": [
+      44,
+      46,
+      32
+    ],
+    "amber": [
+      230,
+      170,
+      50
+    ],
+    "steel_grey": [
+      120,
+      124,
+      116
+    ]
+  },
+  "theme_prompt": "FALLOUT PIP-BOY: retro-industrial olive-drab painted METAL casing with chunky rivets, a glowing GREEN monochrome PHOSPHOR CRT display, worn scratched paint, amber warning accents, vacuum-tube 1950s-retrofuture styling, analog dials. Rugged, militaristic, cathode-ray glow.",
+  "layout": "vpod"
+}

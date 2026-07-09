@@ -1,0 +1,8 @@
+# heavy regenerable media — rerun the pipeline (committed) to reproduce
+assets-*/joint-4k.png
+assets-*/paint.png
+assets-*/mask.png
+assets-*/overlay.png
+assets-*/blueprint.png
+assets-*_biref/
+__pycache__/

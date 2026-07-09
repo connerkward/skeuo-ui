@@ -1,0 +1,50 @@
+{
+  "id": "myst-arcanum",
+  "title": "Myst Arcanum",
+  "mode": "templateless",
+  "passed": true,
+  "rolls": 3,
+  "final_seed": 97,
+  "gate": {
+    "seed": 97,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.037,
+    "reasons": [],
+    "leak": 0.0
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": false,
+      "controls": 7,
+      "seek_cov": null,
+      "reasons": [
+        "missing:next,seek,shuffle",
+        "biref-parts"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 84,
+      "PASS": false,
+      "controls": 7,
+      "seek_cov": null,
+      "reasons": [
+        "missing:next,seek,shuffle",
+        "biref-parts"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 97,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.037,
+      "reasons": [],
+      "leak": 0.0
+    }
+  ],
+  "elapsed_s": 482.7,
+  "player": "assets-myst-arcanum/player.html"
+}

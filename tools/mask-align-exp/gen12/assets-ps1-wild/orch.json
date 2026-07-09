@@ -1,0 +1,62 @@
+{
+  "id": "ps1-wild",
+  "title": "Ps1 Wild",
+  "mode": "templateless",
+  "passed": false,
+  "rolls": 4,
+  "final_seed": 110,
+  "gate": {
+    "seed": 110,
+    "PASS": false,
+    "controls": 10,
+    "seek_cov": 1.039,
+    "reasons": [
+      "emptiness"
+    ],
+    "leak": 0.004174
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.004689
+    },
+    {
+      "seed": 84,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.000458
+    },
+    {
+      "seed": 97,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.003984
+    },
+    {
+      "seed": 110,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.004174
+    }
+  ],
+  "elapsed_s": 756.4,
+  "player": "assets-ps1-wild/player.html"
+}

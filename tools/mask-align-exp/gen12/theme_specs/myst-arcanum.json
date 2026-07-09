@@ -1,0 +1,35 @@
+{
+  "id": "myst-arcanum",
+  "title": "Myst Arcanum",
+  "mode": "templateless",
+  "material_is_dark": true,
+  "seed": 97,
+  "palette": {
+    "stone_warm": [
+      150,
+      132,
+      100
+    ],
+    "brass": [
+      172,
+      134,
+      60
+    ],
+    "moss_teal": [
+      46,
+      96,
+      86
+    ],
+    "deep_wood": [
+      64,
+      44,
+      28
+    ],
+    "parchment": [
+      214,
+      196,
+      158
+    ]
+  },
+  "theme_prompt": "MYST / ARCANUM (2001) pre-rendered CG look: a carved weathered STONE-and-BRASS arcane mechanism, softly ray-traced painterly render, mossy patina, aged parchment, mysterious dim atmosphere, intricate clockwork ornament, warm earthy palette. Late-90s/early-2000s pre-rendered adventure-game aesthetic \u2014 soft shadows, matte stone, tarnished metal."
+}

@@ -1,0 +1,28 @@
+{
+  "id": "wmp-vario",
+  "title": "Wmp Vario",
+  "mode": "templateless",
+  "passed": true,
+  "rolls": 1,
+  "final_seed": 71,
+  "gate": {
+    "seed": 71,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.029,
+    "reasons": [],
+    "leak": 0.000481
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.029,
+      "reasons": [],
+      "leak": 0.000481
+    }
+  ],
+  "elapsed_s": 163.4,
+  "player": "assets-wmp-vario/player.html"
+}

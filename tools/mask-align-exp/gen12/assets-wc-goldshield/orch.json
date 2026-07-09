@@ -1,0 +1,58 @@
+{
+  "id": "wc-goldshield",
+  "title": "Wc Goldshield",
+  "mode": "templated",
+  "passed": true,
+  "rolls": 4,
+  "final_seed": 110,
+  "gate": {
+    "seed": 110,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.038,
+    "reasons": [],
+    "leak": 0.000246
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.000322
+    },
+    {
+      "seed": 84,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.000133
+    },
+    {
+      "seed": 97,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.000146
+    },
+    {
+      "seed": 110,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [],
+      "leak": 0.000246
+    }
+  ],
+  "elapsed_s": 679.8,
+  "player": "assets-wc-goldshield/player.html"
+}

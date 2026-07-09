@@ -1,0 +1,45 @@
+{
+  "id": "fa-sky",
+  "title": "Frutiger Aero Sky (templateless)",
+  "mode": "templateless",
+  "material_is_dark": false,
+  "seed": 110,
+  "palette": {
+    "aqua_blue": [
+      30,
+      120,
+      235
+    ],
+    "cyan_glass": [
+      70,
+      205,
+      230
+    ],
+    "grass_green": [
+      110,
+      200,
+      60
+    ],
+    "liquid_silver": [
+      175,
+      185,
+      200
+    ],
+    "gloss_white": [
+      240,
+      244,
+      250
+    ],
+    "sky_teal": [
+      30,
+      150,
+      170
+    ],
+    "ink_navy": [
+      20,
+      26,
+      48
+    ]
+  },
+  "theme_prompt": "FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic) at its most lush: a translucent glossy media-player of clear aqua-blue and cyan GLASS with water droplets, blue-sky-and-clouds and rippling-water motifs, brushed liquid-silver metal, glowing grass-green accents, crisp reflections and soft light. Optimistic, clean, dimensional. Design a beautiful ORGANIC free-form player housing of your own \u2014 a smooth glass pebble or a flowing wave shape \u2014 with the controls arranged attractively. Vivid and saturated, never flat, never grungy."
+}

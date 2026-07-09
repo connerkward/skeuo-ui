@@ -1,0 +1,28 @@
+{
+  "id": "n64-lowpoly",
+  "title": "N64 Lowpoly",
+  "mode": "templated",
+  "passed": true,
+  "rolls": 1,
+  "final_seed": 71,
+  "gate": {
+    "seed": 71,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.038,
+    "reasons": [],
+    "leak": 0.0
+  },
+  "history": [
+    {
+      "seed": 71,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [],
+      "leak": 0.0
+    }
+  ],
+  "elapsed_s": 203.5,
+  "player": "assets-n64-lowpoly/player.html"
+}

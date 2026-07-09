@@ -1,0 +1,147 @@
+{
+ "id": "myst-arcanum",
+ "mode": "templateless",
+ "seed": 97,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "stone_warm": [
+   150,
+   132,
+   100
+  ],
+  "brass": [
+   172,
+   134,
+   60
+  ],
+  "moss_teal": [
+   46,
+   96,
+   86
+  ],
+  "deep_wood": [
+   64,
+   44,
+   28
+  ],
+  "parchment": [
+   214,
+   196,
+   158
+  ]
+ },
+ "keys": {
+  "playpause": [
+   0,
+   255,
+   255
+  ],
+  "prev": [
+   255,
+   0,
+   255
+  ],
+  "next": [
+   128,
+   0,
+   255
+  ],
+  "repeat": [
+   0,
+   0,
+   255
+  ],
+  "queue": [
+   0,
+   255,
+   0
+  ],
+  "vol": [
+   0,
+   128,
+   255
+  ],
+  "seek": [
+   255,
+   0,
+   128
+  ],
+  "shuffle": [
+   0,
+   255,
+   128
+  ],
+  "visualizer": [
+   255,
+   0,
+   0
+  ],
+  "album_art": [
+   255,
+   255,
+   0
+  ]
+ },
+ "keyNames": {
+  "playpause": "CYAN",
+  "prev": "MAGENTA",
+  "next": "VIOLET-PURPLE",
+  "repeat": "PURE BLUE",
+  "queue": "PURE GREEN",
+  "vol": "AZURE BLUE",
+  "seek": "ROSE PINK",
+  "shuffle": "SPRING GREEN",
+  "visualizer": "PURE RED",
+  "album_art": "YELLOW"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "template": {},
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 0.0
+}

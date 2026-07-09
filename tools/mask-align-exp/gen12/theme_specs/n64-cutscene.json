@@ -1,0 +1,35 @@
+{
+  "id": "n64-cutscene",
+  "title": "N64 Cutscene",
+  "mode": "templateless",
+  "material_is_dark": true,
+  "seed": 84,
+  "palette": {
+    "muted_teal": [
+      60,
+      120,
+      120
+    ],
+    "clay_tan": [
+      190,
+      150,
+      110
+    ],
+    "dull_purple": [
+      120,
+      90,
+      150
+    ],
+    "flat_grey": [
+      110,
+      112,
+      120
+    ],
+    "dark_navy": [
+      36,
+      40,
+      58
+    ]
+  },
+  "theme_prompt": "N64-era pre-rendered CUTSCENE character look: a blocky LOW-POLY figure-like housing, flat-shaded faceted surfaces, muted 90s render palette, soft pre-rendered lighting, slightly plasticky mascot-character forms \u2014 like a Nintendo-64 in-engine cutscene model. Chunky polygons, smooth gouraud gradients, nostalgic low-fidelity 3D."
+}

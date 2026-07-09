@@ -1,0 +1,172 @@
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>skeuo.fm — wmp-vario: wmp-vario</title>
+<style>
+  :root{--mono:ui-monospace,Menlo,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0e0f13;color:#cdd2dc;font:14px/1.5 system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 12px 60px}
+  h1{font:600 15px var(--mono);letter-spacing:.02em;margin:0;color:#eef}
+  .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
+  #stage{width:min(96vw,460px)}
+  #phone{position:relative;width:100%;aspect-ratio:var(--ar);
+    background:url('paint.png?v=1783578449') no-repeat;background-size:100% auto;border-radius:12px}
+  .pbtn{position:absolute;cursor:pointer;border-radius:14px;touch-action:manipulation}
+  .pbtn .ink{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(closest-side,#0009,#0000);
+    opacity:0;transition:opacity .08s}
+  .pbtn:active .ink{opacity:.85}
+  .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
+  .pknob .cap{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}
+  .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    background:radial-gradient(38% 32% at 38% 30%,#ffffff85,#fff0 60%)}
+  .pthumb{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
+    background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}
+  .ptog{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;
+    background-position:center;filter:drop-shadow(0 2px 4px #0008)}
+  .viz{position:absolute;pointer-events:none}
+  .art{position:absolute;background-size:cover;background-position:center;pointer-events:none}
+  #queue{position:absolute;inset:6% 6% 8%;background:#0b0d12ee;border:1px solid #ffffff22;border-radius:10px;
+    padding:14px;display:none;flex-direction:column;gap:2px;overflow:auto;backdrop-filter:blur(3px)}
+  #queue.open{display:flex}
+  #queue .qh{font:600 12px var(--mono);color:#eef;margin-bottom:6px;display:flex;justify-content:space-between}
+  #queue .qr{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;font:12px var(--mono)}
+  #queue .qr:nth-child(odd){background:#ffffff0c} #queue .qr.now{background:#3aa0ff33;color:#cfe6ff}
+  #queue .x{cursor:pointer;color:#9aa}
+  .hint{font:11px var(--mono);color:#6b7180;max-width:460px;text-align:center}
+  .badge{font:10px var(--mono);color:#7f8798;border:1px solid #ffffff18;border-radius:5px;padding:2px 6px}
+</style></head><body>
+<h1>wmp-vario — wmp-vario</h1>
+<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob</div>
+<div id=stage><div id=phone>
+  <canvas class=viz id=viz></canvas>
+  <div class=art id=art></div>
+  <div id=queue><div class=qh><span>Queue</span><span class=x id=qx>close ✕</span></div></div>
+</div></div>
+<div class=hint id=hint>loading…</div>
+<script>
+const V='1783578449';
+(async function(){
+  const R = await fetch('regions.json?v='+V).then(r=>r.json());
+  const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
+  const phone=document.getElementById('phone'), hint=document.getElementById('hint');
+  const paint=new Image(); paint.src='paint.png?v='+V; await paint.decode();
+  const PW=paint.naturalWidth, PH=paint.naturalHeight, DEVH=Math.round(PH*DF);
+  phone.style.setProperty('--ar', PW+'/'+DEVH);
+  // background shows only the device (top DF) slice
+  const bc=document.createElement('canvas'); bc.width=PW; bc.height=DEVH;
+  bc.getContext('2d').drawImage(paint,0,0,PW,DEVH,0,0,PW,DEVH);
+  phone.style.background="url('"+bc.toDataURL()+"') no-repeat"; phone.style.backgroundSize='100% 100%';
+  // load moving-part cuts (tight-cropped, with content centroid)
+  const CUT={};
+  function tight(im){ const c=document.createElement('canvas'); c.width=im.naturalWidth;c.height=im.naturalHeight;
+    const cx=c.getContext('2d'); cx.drawImage(im,0,0); const d=cx.getImageData(0,0,c.width,c.height).data;
+    let x0=c.width,y0=c.height,x1=0,y1=0,any=false;
+    for(let p=0;p<d.length;p+=4){ if(d[p+3]>12){const i=p/4,x=i%c.width,y=(i/c.width)|0;
+      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;any=true;} }
+    if(!any) return {url:im.src,w:c.width,h:c.height};
+    const tw=x1-x0+1,th=y1-y0+1,t=document.createElement('canvas');t.width=tw;t.height=th;
+    t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th); return {url:t.toDataURL(),w:tw,h:th}; }
+  const BREF='../assets-wmp-vario_biref/';
+  const parts=['vol','seek','shuffle_off','shuffle_on'];
+  for(const k of parts){ try{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}catch(e){} }
+  const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
+  let playing=false;
+
+  // ---- knob (volume) ----
+  const kn = Object.keys(roles).find(k=>roles[k]==='knob');
+  if(kn && regs[kn] && CUT['vol']){
+    const r=regs[kn]; let cx,cy,w,h;
+    if(r.seat){cx=r.seat[0];cy=r.seat[1];w=r.seat[2]*2;h=w*PW/PH;}
+    else{const c=ctr(r.device);cx=c[0];cy=c[1];w=r.device[2]*1.1;h=r.device[3]*1.1;}
+    const el=document.createElement('div');el.className='pknob';
+    el.style.left=(cx-w/2)*100+'%';el.style.top=((cy-h/2)/DF)*100+'%';el.style.width=w*100+'%';el.style.height=(h/DF)*100+'%';
+    el.innerHTML='<div class=cap style="background-image:url('+CUT['vol'].url+')"></div><div class=spec></div>';
+    const cap=el.querySelector('.cap');let val=0.7,sy=0,sv=0,drag=false;
+    const rend=()=>cap.style.transform='rotate('+(-135+val*270)+'deg)';rend();
+    el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));rend();}});
+    addEventListener('pointerup',()=>drag=false);
+    phone.appendChild(el);
+  }
+  // ---- seek thumb (coverage travel) ----
+  const sl = Object.keys(roles).find(k=>roles[k]==='slider');
+  if(sl && regs[sl] && CUT['seek']){
+    const r=regs[sl],t=CUT['seek'],track=r.device;
+    const el=document.createElement('div');el.className='pthumb';
+    const tw=t.w/PW,th=t.h/PH; el.style.backgroundImage='url('+t.url+')';
+    el.style.width=tw*100+'%';el.style.height=(th/DF)*100+'%';
+    const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
+    let val=0; const tv=r.travel||[track[0],track[0]+track[2]]; const x0=tv[0],x1=tv[1]-tw;
+    const rend=()=>el.style.left=(x0+(x1-x0)*val)*100+'%';rend();
+    let sx=0,sv=0,drag=false;
+    el.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientX-sx)/(phone.clientWidth*(x1-x0))));rend();}});
+    addEventListener('pointerup',()=>drag=false);
+    window.__seek=(d)=>{val=Math.max(0,Math.min(1,val+d));rend();};
+    phone.appendChild(el);
+  }
+  // ---- shuffle toggle (silhouette state-registered) ----
+  const tg = Object.keys(roles).find(k=>roles[k]==='toggle');
+  if(tg && regs[tg] && CUT['shuffle_off']){
+    const r=regs[tg],off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
+    const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
+    const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
+    // OFF sizes the box; ON is registered onto OFF by the extractor's silhouette IoU transform
+    const obw=off.w/PW, obh=off.h/PH;
+    const place=(c,isOn)=>{ let bw=c.w/PW, bh=c.h/PH, dx=0, dy=0;
+      if(isOn && sa){ bw=obw; bh=obh; dx=sa.dx/PW; dy=sa.dy/PH; }   // ON drawn at OFF's box, shifted by IoU offset
+      el.style.backgroundImage='url('+c.url+')';
+      el.style.left=(tc[0]-bw/2+dx)*100+'%'; el.style.top=((tc[1]-bh/2+dy)/DF)*100+'%';
+      el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%'; el.style.transform='rotate('+ang+'deg)'; };
+    place(off,false); let ison=false;
+    el.addEventListener('click',()=>{ison=!ison;place(ison?on:off,ison);});
+    phone.appendChild(el);
+  }
+  // ---- baked icon buttons (crop the painted icon facet, transparent hotspot + ink) ----
+  const BTN=R.buttons||[];
+  for(const b of BTN){ const r=regs[b]; if(!r||!r.device) continue;
+    const el=document.createElement('div');el.className='pbtn';el.title=b;
+    el.style.left=px(r.device)+'%';el.style.top=py(r.device)+'%';el.style.width=pw(r.device)+'%';el.style.height=ph(r.device)+'%';
+    el.innerHTML='<div class=ink></div>';
+    el.addEventListener('click',()=>{ if(b==='playpause'){playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';}
+      else if(b==='queue'){document.getElementById('queue').classList.toggle('open');}
+      else if(b==='repeat'){el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];}
+      else hint.textContent=b+' ▸'; });
+    phone.appendChild(el);
+  }
+  // ---- visualizer canvas ----
+  const vzc=document.getElementById('viz'); const vz=regs['visualizer'];
+  if(vz&&vz.device){ const b=vz.device;
+    vzc.style.left=px(b)+'%';vzc.style.top=py(b)+'%';vzc.style.width=pw(b)+'%';vzc.style.height=ph(b)+'%';
+    vzc.width=Math.round(b[2]*PW); vzc.height=Math.round(b[3]*PH);
+    // sample an accent colour from the paint inside the region
+    const sc=document.createElement('canvas');sc.width=8;sc.height=1;
+    sc.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,8,1);
+    const sd=sc.getContext('2d').getImageData(0,0,8,1).data; let ar=0,ag=0,ab=0;
+    for(let i=0;i<8;i++){ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];} const acc='rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')';
+    const g=vzc.getContext('2d'),NB=28;const bars=Array.from({length:NB},()=>Math.random());
+    (function draw(){ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
+      for(let i=0;i<NB;i++){ bars[i]+= playing?(Math.random()-.5)*.4:(0.06-bars[i])*.2; bars[i]=Math.max(.04,Math.min(1,bars[i]));
+        const hh=bars[i]*vzc.height*0.92; g.fillStyle=acc; g.globalAlpha=.85;
+        g.fillRect(i*bw+bw*0.15, vzc.height-hh, bw*0.7, hh); }
+      requestAnimationFrame(draw); })();
+  }
+  // ---- album art inset (show the painted art window region, dimmed placeholder) ----
+  const aa=regs['album_art'];
+  if(aa&&aa.device){ const b=aa.device,el=document.getElementById('art');
+    el.style.left=px(b)+'%';el.style.top=py(b)+'%';el.style.width=pw(b)+'%';el.style.height=ph(b)+'%';
+    const ac=document.createElement('canvas');ac.width=Math.round(b[2]*PW);ac.height=Math.round(b[3]*PH);
+    ac.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,ac.width,ac.height);
+    el.style.backgroundImage='url('+ac.toDataURL()+')'; }
+  // ---- queue overlay ----
+  const q=document.getElementById('queue'); document.getElementById('qx').onclick=()=>q.classList.remove('open');
+  const trk=['Aphex Twin — Xtal','Boards of Canada — Roygbiv','Bonobo — Kong','Four Tet — Angel Echoes','Jon Hopkins — Open Eye Signal','Tycho — Awake'];
+  trk.forEach((t,i)=>{const d=document.createElement('div');d.className='qr'+(i===0?' now':'');d.innerHTML='<span>'+t+'</span><span>'+(3+i)+':0'+i+'</span>';q.appendChild(d);});
+  // keyboard
+  addEventListener('keydown',e=>{ if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
+    if(e.code==='Space'){e.preventDefault();playing=!playing;hint.textContent=playing?'▶ playing':'⏸ paused';}
+    else if(e.code==='ArrowRight'&&window.__seek)window.__seek(.05);
+    else if(e.code==='ArrowLeft'&&window.__seek)window.__seek(-.05); });
+  hint.textContent='live — drag the volume knob & seek thumb, click the buttons, hit space';
+})();
+</script></body></html>

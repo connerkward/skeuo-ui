@@ -1,0 +1,35 @@
+{
+  "id": "fallout-vault",
+  "title": "Fallout Vault",
+  "mode": "templateless",
+  "material_is_dark": true,
+  "seed": 84,
+  "palette": {
+    "rust": [
+      150,
+      86,
+      52
+    ],
+    "grime_steel": [
+      96,
+      92,
+      84
+    ],
+    "amber_phosphor": [
+      230,
+      168,
+      60
+    ],
+    "dark_metal": [
+      40,
+      38,
+      36
+    ],
+    "faded_yellow": [
+      200,
+      180,
+      90
+    ]
+  },
+  "theme_prompt": "FALLOUT rusted VAULT-TEC terminal: a decayed, grimy STEEL control panel with heavy RUST streaks, an AMBER phosphor screen, peeling Vault-Tec yellow paint, riveted plates, dust and wear, post-apocalyptic retro-tech. Weathered, industrial, warm amber glow in a dark grimy body."
+}
