@@ -89,12 +89,12 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
 }).catch(()=>{ document.getElementById('walk').innerHTML='<p style="color:#888">run build_explainer.py to generate the walkthrough images</p>'; });
 </script>
 <h2>Live algorithm animations <span class=alive>LIVE</span> — real pixels, real math</h2>
-<p class=animsub>Both panels re-run extract12.py's actual algorithms in-browser on the real steam-porthole artifacts
-(paint by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
+<p class=animsub>Both panels re-run extract12.py's actual algorithms in-browser on real batch artifacts
+(paint by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte/cuts by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
 <div class=animgrid>
-  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap</h4>
+  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap <span class=askin>steam-porthole · vol</span></h4>
     <canvas id=anim-knob></canvas><div class=acap id=anim-knob-cap>loading…</div></div>
-  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel</h4>
+  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel <span class=askin>ps1-crunchy · seek</span></h4>
     <canvas id=anim-travel></canvas><div class=acap id=anim-travel-cap>loading…</div></div>
 </div>
 <script src=explainer_anim.js></script>
@@ -208,6 +208,7 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .anim canvas{{width:100%;height:auto;border-radius:8px;background:#000;border:1px solid #ffffff14;display:block}}
 .acap{{font:11px ui-monospace,monospace;color:#8a90a0;margin-top:7px;min-height:42px;line-height:1.45}}
 .animsub{{font:12px ui-monospace,monospace;color:#8a90a0;margin:0 0 10px}}
+.askin{{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px;font-weight:400}}
 .alive{{color:#041;background:#6f9;border-radius:4px;padding:1px 7px;font:700 11px ui-monospace,monospace;vertical-align:2px;animation:alive-blink 1.6s ease-in-out infinite}}
 @keyframes alive-blink{{50%{{opacity:.45}}}}
 .walk{{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:14px}}

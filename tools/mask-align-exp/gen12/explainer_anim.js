@@ -15,7 +15,13 @@
 // Plain canvas + requestAnimationFrame; no build step. Loops forever.
 (function () {
   "use strict";
-  const SKIN = "assets-steam-porthole";
+  // Exemplar skins chosen where each algorithm's interesting path actually fires:
+  //  · steam-porthole: the vol knob's fit-centre → hole-centroid snap is visible.
+  //  · ps1-crunchy: the outward walk genuinely terminates at both groove ends
+  //    (on some skins the walk hits its collapse guard and keeps the bbox instead —
+  //    verified by re-running the extract12 travel block over the whole roster).
+  const KNOB_SKIN = "assets-steam-porthole";
+  const TRAVEL_SKIN = "assets-ps1-crunchy";
 
   const loadImg = (src) => new Promise((res, rej) => {
     const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src;
@@ -29,17 +35,24 @@
   }
   const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
-  // ── shared init: fetch regions + images once ────────────────────────────────
+  // ── init: each panel fetches its exemplar skin's real artifacts ─────────────
   Promise.all([
-    fetch(SKIN + "/regions.json").then((r) => r.json()),
-    loadImg(SKIN + "/paint.png"),
-    loadImg(SKIN + "_biref/global-matte.png"),
-    loadImg(SKIN + "_biref/seek.png"),
-  ]).then(([reg, paint, matte, thumbImg]) => {
-    const GW = paint.naturalWidth, GH = paint.naturalHeight;
-    try { knobAnim(reg, paint, matte, GW, GH); } catch (e) { fail("anim-knob", e); }
-    try { travelAnim(reg, paint, thumbImg, GW, GH); } catch (e) { fail("anim-travel", e); }
-  }).catch((e) => { fail("anim-knob", e); fail("anim-travel", e); });
+    fetch(KNOB_SKIN + "/regions.json").then((r) => r.json()),
+    loadImg(KNOB_SKIN + "/paint.png"),
+    loadImg(KNOB_SKIN + "_biref/global-matte.png"),
+  ]).then(([reg, paint, matte]) => {
+    try { knobAnim(reg, paint, matte, paint.naturalWidth, paint.naturalHeight); }
+    catch (e) { fail("anim-knob", e); }
+  }).catch((e) => fail("anim-knob", e));
+
+  Promise.all([
+    fetch(TRAVEL_SKIN + "/regions.json").then((r) => r.json()),
+    loadImg(TRAVEL_SKIN + "/paint.png"),
+    loadImg(TRAVEL_SKIN + "_biref/seek.png"),
+  ]).then(([reg, paint, thumbImg]) => {
+    try { travelAnim(reg, paint, thumbImg, paint.naturalWidth, paint.naturalHeight); }
+    catch (e) { fail("anim-travel", e); }
+  }).catch((e) => fail("anim-travel", e));
 
   function fail(id, e) {
     const cap = document.getElementById(id + "-cap");
@@ -216,7 +229,7 @@
   function travelAnim(reg, paint, thumbImg, GW, GH) {
     const canvas = document.getElementById("anim-travel");
     if (!canvas) return;
-    const W = 760, H = 440; canvas.width = W; canvas.height = H;
+    const W = 760, H = 470; canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
 
     const seek = reg.regions.seek;
@@ -280,7 +293,7 @@
     const srcY = Math.round(cyp - srcH / 2);
     const X = (col) => CX + col * (CW / NC);                  // band col → canvas x
     const XY = (py) => CY + (py - srcY) * (CH / srcH);        // paint y → canvas y
-    const PH_X = 10, PH_Y = 205, PH_W = 740, PH_H = 150;      // profile chart
+    const PH_X = 10, PH_Y = 248, PH_W = 740, PH_H = 150;      // profile chart
     const YV = (v) => PH_Y + PH_H - (v / 255) * PH_H;
 
     const STC = { recess: "#5af", rim: "#fd5", mid: "#9aa", "stop-body": "#f55", "stop-backdrop": "#f0f" };
@@ -372,7 +385,7 @@
           const xx = X(v * GW - bx0);
           ctx.strokeStyle = "#fff"; ctx.beginPath(); ctx.moveTo(xx, barY - 7); ctx.lineTo(xx, barY + 13); ctx.stroke();
         }
-        ctx.fillStyle = "#cdd3dd"; ctx.fillText("white ticks = regions.json travel (shipped)", X(NC * 0.55), barY + 20);
+        ctx.fillStyle = "#cdd3dd"; ctx.fillText("white ticks = regions.json travel (shipped)", PH_X + PH_W - 262, barY + 31);
         if (phase === "span") {
           cap("anim-travel", "PHASE 3/4 · span snap: travel = walked slot extent + 2% margin; white ticks are the values extract12 shipped in regions.json — they coincide");
           if (pt > 70) { phase = "slide"; pt = 0; }
