@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gen12 — ambient video loops experiment</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #101014; color: #e8e8ee; font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  header { padding: 20px clamp(12px, 3vw, 32px) 8px; border-bottom: 1px solid #26262e; }
+  h1 { margin: 0 0 4px; font-size: clamp(18px, 2.4vw, 24px); }
+  .meta { color: #9a9aa8; font-size: 13px; max-width: 90ch; }
+  .meta code { color: #c7c7d4; background: #1b1b22; padding: 1px 5px; border-radius: 4px; }
+  main { padding: 12px clamp(12px, 3vw, 32px) 48px; }
+  section.skin { margin: 28px 0; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; }
+  .cell { flex: 1 1 260px; max-width: 420px; background: #17171d; border: 1px solid #26262e; border-radius: 10px; padding: 10px; }
+  .cell img, .cell video { width: 100%; height: auto; border-radius: 6px; display: block; background: #000; }
+  .cap { font-size: 12.5px; color: #9a9aa8; margin-top: 8px; }
+  .cap b { color: #e8e8ee; }
+  .verdict { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 2px 8px; border-radius: 20px; margin-right: 6px; }
+  .pass { background: #123b1e; color: #7fe09a; }
+  .fail { background: #46141a; color: #ff8f9a; }
+  .part { background: #4a3a10; color: #ffd27f; }
+  .notes { font-size: 13px; color: #b9b9c6; margin-top: 8px; max-width: 90ch; }
+  footer { padding: 16px clamp(12px, 3vw, 32px); border-top: 1px solid #26262e; color: #9a9aa8; font-size: 13px; max-width: 100ch; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ambient video loops — image-to-video on finished gen12 paints</h1>
+  <div class="meta">
+    Question: can an i2v model add ambient life (steam, embers, droplets) to a finished skin paint while keeping the device perfectly static?
+    Subjects: device-area crop of <code>paint.png</code>, 1 gen per skin per model.<br>
+    Models: <b>A</b> <code>luma/agent/ray/v3.2/image-to-video</code> (premium; 720p, 8.75&nbsp;s out, native <code>loop=true</code>) — $0.50 per 5&nbsp;s unit ≈ <b>$1.00/gen est</b> ·
+    <b>B</b> <code>fal-ai/wan/v2.2-a14b/image-to-video/turbo</code> (cheap; 720p-tier 960×960, 5&nbsp;s, seed 1207) — <b>$0.10/gen</b>.<br>
+    Cost: 3×Luma ≈ $1.50–3.00 (unit-rounding unclear) + 3×Wan $0.30 → <b>total ≈ $1.80–$3.30</b> (3 Wan aspect-validation rejects not billed).
+    Loop post: Luma = native flag (no re-cut) · Wan = 1.0&nbsp;s ffmpeg crossfade (tail blended over head). Seam = mean |first−last| px diff (lower = cleaner loop).
+  </div>
+</header>
+<main>
+
+<section class="skin">
+  <h2>steam-porthole <span class="meta">— wanted: steam wisps from valves, gauge quiver, tube bubbles</span></h2>
+  <div class="row">
+    <div class="cell"><img src="subject-steam-porthole.png" alt="static paint crop"><div class="cap"><b>static paint</b> (input crop)</div></div>
+    <div class="cell"><video src="loop-luma-steam-porthole.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Luma Ray 3.2</b> · $≈1.00 · seam 15.8</div>
+      <div class="notes">Catastrophic: within ~2 s the model threw the device away and substituted a photoreal glass cylinder on a brass base with real smoke. First frame is faithful, then full scene replacement. Native loop flag useless here.</div>
+    </div>
+    <div class="cell"><video src="loop-wan-steam-porthole.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict pass">PASS</span><b>Wan 2.2 turbo</b> · $0.10 · seam 2.2</div>
+      <div class="notes">Device static, silhouette and every control intact. Motion is very subtle — gauge needles quiver, faint highlight breathing; the prompted steam wisps mostly didn't materialize. Under-animated but safe.</div>
+    </div>
+  </div>
+</section>
+
+<section class="skin">
+  <h2>diablo-gothic <span class="meta">— wanted: ember flicker in cracks/runes, heat shimmer</span></h2>
+  <div class="row">
+    <div class="cell"><img src="subject-diablo-gothic.png" alt="static paint crop"><div class="cap"><b>static paint</b> (input crop)</div></div>
+    <div class="cell"><video src="loop-luma-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict part">PARTIAL</span><b>Luma Ray 3.2</b> · $≈1.00 · seam 8.9</div>
+      <div class="notes">Device geometry preserved and the ember/rune flicker is the best-looking of the whole batch — but the camera slowly pushes in the entire clip despite "static camera", so it fails the brief and the "native loop" doesn't close (seam 8.9).</div>
+    </div>
+    <div class="cell"><video src="loop-wan-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict pass">PASS</span><b>Wan 2.2 turbo</b> · $0.10 · seam 1.6</div>
+      <div class="notes">Best overall result. Device perfectly static, rune/ember glow pulses and flickers on-theme, no control moved, crossfade loop is clean (tightest seam of the batch).</div>
+    </div>
+  </div>
+</section>
+
+<section class="skin">
+  <h2>fa-sky <span class="meta">— wanted: droplet glints, cloud-reflection drift</span></h2>
+  <div class="row">
+    <div class="cell"><img src="subject-fa-sky.png" alt="static paint crop"><div class="cap"><b>static paint</b> (input crop)</div></div>
+    <div class="cell"><video src="loop-luma-fa-sky.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Luma Ray 3.2</b> · $≈1.00 · seam 6.1</div>
+      <div class="notes">The translucent body "breathes" — the whole silhouette inflates/deflates and the chrome S-wave swims around. Cloud drift inside the body looks nice, but the device is visibly morphing.</div>
+    </div>
+    <div class="cell"><video src="loop-wan-fa-sky.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Wan 2.2 turbo</b> · $0.10 · seam 2.6</div>
+      <div class="notes">Silhouette holds and the internal waterline slosh + droplets are exactly the wanted effect — but by ~1.5 s the model dissolves the chrome trim (mid S-wave, bottom-left flap) into the aqua body and never brings it back. First frame faithful, then trim melts.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer>
+  <b>Honest read:</b> the cheap model won. Wan 2.2 turbo ($0.10) kept the device static on 2/3 skins and its failures are localized (dissolved chrome trim); Luma Ray 3.2 (~10× the price) kept it on 0/3 — it substituted an object, pushed the camera, or breathed the silhouette, and its native <code>loop=true</code> never produced a seam better than a 1&nbsp;s ffmpeg crossfade (2.2 vs 8.9 mean px diff on the same skin). Translucent/liquid materials are the hardest case for both. Effects that worked: ember/rune glow flicker (both models), gauge-needle quiver (Wan), internal waterline slosh (Wan). Effects that failed: steam wisps (under-generated by Wan, hallucinated a new object by Luma), any chrome/silver trim on translucent bodies.
+  <br><br>Generated 2026-07-09 · models: <code>luma/agent/ray/v3.2/image-to-video</code>, <code>fal-ai/wan/v2.2-a14b/image-to-video/turbo</code> · total spend ≈ $1.80–$3.30.
+</footer>
+</body>
+</html>

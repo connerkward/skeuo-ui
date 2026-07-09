@@ -1,0 +1,20 @@
+{
+  "luma": {
+    "endpoint": "luma/agent/ray/v3.2/image-to-video",
+    "price": "$0.50 per 5s (720p, native loop=true)",
+    "jobs": {
+      "steam-porthole": "019f4842-360e-7da1-b7d7-2cf1033c1276",
+      "diablo-gothic": "019f4842-3f78-7a52-8e21-4c087c911216",
+      "fa-sky": "019f4842-486a-7570-850f-754957e6d0a0"
+    }
+  },
+  "wan": {
+    "endpoint": "fal-ai/wan/v2.2-a14b/image-to-video/turbo",
+    "price": "$0.10 per video (720p, 5s, seed 1207)",
+    "jobs": {
+      "steam-porthole": "019f4842-5591-7691-8f01-281ba71f4bdd",
+      "diablo-gothic": "019f4842-5e86-7a73-a286-0567ab51a4fa",
+      "fa-sky": "019f4842-6740-7381-a3eb-cfbe3ac12826"
+    }
+  }
+}
