@@ -227,7 +227,7 @@
 </div>
 <style>
   .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
-  .pknob .cap{width:100%;height:100%;border-radius:50%;background-size:cover;background-position:center}
+  .pknob .cap{width:100%;height:100%;margin:0;border-radius:50%;background-size:cover;background-position:center}
   .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;
     background:radial-gradient(42% 42% at 32% 27%, rgba(255,255,255,.75), rgba(255,255,255,.18) 55%, rgba(255,255,255,0) 75%),
                radial-gradient(70% 70% at 72% 80%, rgba(0,0,0,.30), rgba(0,0,0,0) 65%)}
@@ -240,7 +240,7 @@
 </style>
 <script>
 (async function(){
-  const R=await fetch('assets10/regions.json?v=r11').then(r=>r.json());
+  const R=await fetch('assets10/regions.json?v=r13').then(r=>r.json());
   const rr=R.regions, DF=R.devFrac, KEY=R.keys;
   const dev=document.getElementById('phone'), bg=document.getElementById('pbg'), status=document.getElementById('pstatus');
   const paint=new Image(); paint.src='assets10/paint.webp?v=r10'; await paint.decode();
@@ -339,7 +339,7 @@
 </script>
 
 <script>
-fetch("assets10/regions.json?v=r11").then(r=>r.json()).then(data=>{
+fetch("assets10/regions.json?v=r13").then(r=>r.json()).then(data=>{
   const regs=data.regions, tmpl=data.template, DEVF=data.devFrac, KEY=data.keys, KN=data.keyNames||{};
   const css=k=>KEY[k]?`rgb(${KEY[k].join(",")})`:"#fff";
 

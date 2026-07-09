@@ -21,9 +21,20 @@ Pipeline (`run9.py` → `extract9.py` → `run_biref9.py` → `phone9.html`):
 3. **rrect-fit alignment** (extract9) — same gradient scoring along rounded-rect perimeter
    for seek groove and toggle slot. Measured on MAGMA CORE: tog 214×299 px, seek 904×116 px.
    NOTE: the fit can lock onto the OUTER raised plate/bezel, not the inner recess (run9:
-   bbox 1291 px vs recess 986 px). Thumb travel therefore clamps to a separately measured
-   `seek.travel` span (recess interior x-extent: dark-run for dark recesses, between bright
-   bezel rims for rimmed grooves) written into regions.json — never to the fit bbox.
+   bbox 1291 px vs recess 986 px). Thumb travel therefore clamps to a **computed** `seek.travel`
+   **coverage span** (both extractors emit it — NOT hand-authored). The span is the slot's full
+   VISUAL x-extent — dark recess core PLUS its bright bezel rim / soft rounded end-caps — so the
+   thumb's extremes visually COVER the slot ends, never stopping flush inside a rim and exposing
+   a slot crescent. Algorithm (material-agnostic, one code path for both dark grooves and rimmed
+   grooves): take the column-median luminance profile through the slot's mid-band; find the dark
+   recess core as a tight-gap dark run near centre (gap 6 px so a bright bezel rim SPLITS the run
+   and a dark background can't chain in); then per side walk outward — through a bright bezel rim
+   to its outer edge if one exists (run10 gold rim), else a small fixed cap margin ≈3.5% of core
+   width (run9 dark groove). Errs slightly WIDE (the coverage-safe side), never onto the body.
+   Verified live at both extremes on both runs: computed run9 [0.27257, 0.71658] (628..1651 px),
+   run10 [0.27821, 0.71528] (641..1648 px) — thumb covers each slot cap, no body overshoot.
+   NEVER clamp travel to the rrect/slot fit bbox (locks onto the raised plate on run9 and onto
+   the inner recess on run10 — wrong in BOTH directions).
 4. **Snap-to-paint X ONLY** — model paints mask ~+0.5% right of paint (systematic). Snap
    each region's x-center onto the painted dark well (socket) or saturated icon (button);
    keep mask's y (dark-pixel centroid biased UP by top-light shadow).
@@ -104,5 +115,14 @@ triggers baked-part prior; vivid unusual designs pass more easily).
   Verdicts persist in regions.json under `gates`.
 - ~~wild10 knob/switch alignment~~ — RESOLVED 2026-07-08: extract10's circle-fit now writes
   `seat` entries (vol r=123px, bal r=126px) and wild10.html seats knobs from them (no more
-  bbox ×1.10 fallback). Verified interactively at 1000px zoom: knobs centered in their
-  painted bezels, toggle seated, seek thumb flush in groove.
+  bbox ×1.10 fallback).
+- ~~"knobs centered" claimed but MAGMA CORE knobs read off-centre~~ — the earlier "verified at
+  1000px zoom" note was WRONG: a page-level caption rule `.cap{...;margin-top:8px}` also matched
+  the knob's inner `<div class="cap">` (the rotating cap sprite), rendering every knob cap 8 px
+  BELOW its socket centre. A DOM-layout bug, invisible to paint-space centroid checks and to a
+  VLM — provable only by comparing `getBoundingClientRect` cap-centre vs seat-centre. Fixed by
+  namespacing `.pknob .cap{...;margin:0}` in phone9.html + wild10.html (interactive.html has no
+  generic `.cap` rule, so no collision there). See `.claude/rules/placement-invariants-rule.md`.
+- ~~seek thumb stops short of the slot ends~~ — RESOLVED 2026-07-08: `seek.travel` is now a
+  COMPUTED coverage span emitted by both extractors (see pipeline step 3), replacing the earlier
+  hand-authored spans that were a per-run one-off. Verified live at both extremes on run9 + run10.

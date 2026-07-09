@@ -166,7 +166,7 @@
 </div>
 <style>
   .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
-  .pknob .cap{width:100%;height:100%;border-radius:50%;background-size:cover;background-position:center}
+  .pknob .cap{width:100%;height:100%;margin:0;border-radius:50%;background-size:cover;background-position:center}
   .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;
     background:radial-gradient(42% 42% at 32% 27%, rgba(255,255,255,.75), rgba(255,255,255,.18) 55%, rgba(255,255,255,0) 75%),
                radial-gradient(70% 70% at 72% 80%, rgba(0,0,0,.30), rgba(0,0,0,0) 65%)}
@@ -179,7 +179,7 @@
 </style>
 <script>
 (async function(){
-  const R=await fetch('assets9/regions.json?v=44').then(r=>r.json());
+  const R=await fetch('assets9/regions.json?v=46').then(r=>r.json());
   const rr=R.regions, DF=R.devFrac;
   const dev=document.getElementById('phone'), bg=document.getElementById('pbg'), status=document.getElementById('pstatus');
   const paint=new Image(); paint.src='assets9/paint.webp?v=43c'; await paint.decode();
@@ -283,7 +283,7 @@ const HB={prev:"rgb(255,90,60)",play:"rgb(0,120,255)",next:"rgb(240,180,0)",stop
 const SP={vol:"rgb(0,190,90)",bal:"rgb(0,200,220)",seek:"rgb(255,140,30)",tog:"rgb(255,90,160)"};
 const COLOR={...HB,...SP};
 
-fetch("assets9/regions.json?v=44").then(r=>r.json()).then(data=>{
+fetch("assets9/regions.json?v=46").then(r=>r.json()).then(data=>{
   const regs=data.regions, tmpl=data.template, DEVF=data.devFrac;
 
   // ---- c: labeled boxes over the overlay ----

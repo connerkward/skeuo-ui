@@ -258,6 +258,44 @@ for k in ["tog","seek"]:
     print(f"[rrect-fit] {k}: ({fx:.0f},{fy:.0f}) {fw:.0f}×{fh:.0f}px (was {b[2]*GW:.0f}×{b[3]*GH:.0f})")
     r["device"]=[(fx-fw/2)/GW,(fy-fh/2)/GH,fw/GW,fh/GH]
 
+# ---- SEEK TRAVEL (coverage span): the slider thumb's extremes must COVER the slot ends, so
+# travel is the slot's full VISUAL x-extent — dark recess core PLUS its bright bezel rim / soft
+# rounded end-caps — NOT the rrect/slot fit bbox (locks onto the raised outer plate on run9 and
+# onto the inner recess on run10 — wrong in both directions). Material-agnostic by construction:
+# find the dark recess core (a tight-gap dark run near centre so a bright rim SPLITS it and dark
+# background can't chain in), then per side walk outward — through a bright bezel rim to its
+# outer edge if one exists (rimmed grooves), else a small fixed cap margin (dark grooves).
+# Errs slightly WIDE (coverage side), never onto the body. Consumers clamp: x0=travel[0],
+# x1=travel[1]-thumbW. Reproduces the hand-measured spans (run9 628..1651, run10 641..1648).
+r=regs.get("seek")
+if r and r.get("device"):
+    b=r["device"]
+    cyp=(b[1]+b[3]/2)*GH; hh=max(6,int(b[3]*GH*0.30)); by0=int(cyp-hh); by1=int(cyp+hh)
+    pad=int(b[2]*GW*0.10); bx0=max(0,int(b[0]*GW)-pad); bx1=min(GW,int((b[0]+b[2])*GW)+pad)
+    med=np.median(paintrgb[by0:by1,bx0:bx1].max(2),0)        # column median luminance profile
+    dx0=int(b[0]*GW)-bx0; dx1=int((b[0]+b[2])*GW)-bx0; ctr=(dx0+dx1)//2
+    D=float(np.percentile(med,10))                         # recess floor level
+    def _runs(mask,gap):
+        out=[]
+        for x in np.where(mask)[0]:
+            if out and x-out[-1][1]<=gap: out[-1][1]=int(x)
+            else: out.append([int(x),int(x)])
+        return out
+    cr=[t for t in _runs(med<D+15,6) if t[1]-t[0]>10]      # gap 6: a bright bezel rim breaks the run
+    if cr:
+        core=min(cr,key=lambda t:0 if t[0]<=ctr<=t[1] else min(abs(t[0]-ctr),abs(t[1]-ctr)))
+        cw=core[1]-core[0]; rim=D+70
+        def _edge(x0,step):
+            x=x0; last=x0
+            for _ in range(max(20,int(cw*0.12))):          # search a rim within 12% of core width
+                x+=step
+                if x<0 or x>=len(med): break
+                if med[x]>rim: last=x                       # bright bezel column → extend through it
+            return (last+step*4) if last!=x0 else (x0+step*int(cw*0.035))
+        lo=bx0+_edge(core[0],-1); hi=bx0+_edge(core[1],+1)
+        r["travel"]=[round(lo/GW,5),round(hi/GW,5)]
+        print(f"[travel] seek coverage span {lo}..{hi}px (core {bx0+core[0]}..{bx0+core[1]}) -> {r['travel']}")
+
 json.dump({"devFrac":DEVF,"buttons":list(HB),"sprites":list(SP),"extras":list(SC),
            "keys":{k:list(v) for k,v in KEYS.items()},"keyNames":RES.get("keyNames",{}),
            "regions":regs,"template":template},
