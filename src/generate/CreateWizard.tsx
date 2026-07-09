@@ -11,6 +11,7 @@ import type { RuntimeSkin } from "./runtimeSkin";
 import { LayoutStage } from "../template/LayoutStage";
 import { PipelineVisualizer } from "./PipelineVisualizer";
 import { initSteps, applyStepEvent, completeSteps, type StepsState, type StepEvent } from "./pipelineViz";
+import { AgentObserver } from "./AgentObserver";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CreateWizard — ONE guided flow that replaces the old create drawer + standalone
@@ -113,6 +114,10 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   // driven by real server-stream + client cutout events (never a fake timer).
   const [steps, setSteps] = useState<StepsState>(initSteps);
   const [vizOpen, setVizOpen] = useState(false);
+  // agent-observation overlay: an autonomous reticle that scans the template
+  // canvas control-by-control, staging the circle-fit / coverage-span detection
+  // work as agent motion. Auto-starts with generation; also a manual toggle.
+  const [agentWatch, setAgentWatch] = useState(false);
   const pushStep = (ev: StepEvent) => setSteps((s) => applyStepEvent(s, ev));
   // map a server-streamed GenStageEvent (blueprint/envelope/paint) onto the visualizer
   const onServerStage = (ev: GenStageEvent) => {
@@ -171,6 +176,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         setStage(null);   // reset the live preview for this model's pass
         setSteps(initSteps());               // fresh step list for this model's pass
         setVizOpen(true);                    // open the watchable pipeline visualizer
+        setAgentWatch(true);                 // and the on-canvas agent observer
         pushStep({ stage: "blueprint", status: "running" });
         const req: GenerateRequest = {
           // envelope:true runs the extra sculpt pass (opt-in). Otherwise one pass:
@@ -249,11 +255,19 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
       <div className={`wiz-body ${step === 1 ? "wiz-body-layout" : ""}`}>
         {/* live layout preview sits beside every step so the artifact is always visible */}
         <div className="wiz-preview">
-          <LayoutStage regions={regions} onChange={setRegions} editable={step === 1} />
+          <div className="agob-host">
+            <LayoutStage regions={regions} onChange={setRegions} editable={step === 1} />
+            <AgentObserver regions={regions} active={agentWatch} onClose={() => setAgentWatch(false)} />
+          </div>
           <div className="wiz-preview-cap">
             {step === 1 ? "drag to move (snaps to align · magenta = symmetry · hold Alt to disable) · 8 handles resize · drag empty space to box-select · shift-click multi-select · arrows nudge · ⌫ deletes"
               : `${regions.length} controls · ${variant} layout`}
           </div>
+          <button type="button" className={`wiz-watch ${agentWatch ? "on" : ""}`}
+            onClick={() => setAgentWatch((v) => !v)}
+            title="Watch an agent scan the layout — the circle-fit + travel-walk detection staged on the canvas (Esc dismisses)">
+            {agentWatch ? "◉ watching agent — stop" : "👁 Watch agent"}
+          </button>
         </div>
 
         <div className="wiz-panel">

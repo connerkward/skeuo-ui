@@ -1,0 +1,34 @@
+/* AgentObserver — the agent-observation overlay drawn over the wizard's
+   LayoutStage. Pure chrome: pointer-events none so the stage stays editable;
+   the badge marks it as studio overlay; matches the wizard's near-black panel
+   (#0d0d10) + blue accent (#4a8aff). */
+
+.agob-host { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+.agob { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+.agob-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.agob-badge {
+  position: absolute; top: 6px; right: 6px;
+  font: 600 9px ui-monospace, monospace; letter-spacing: .2px;
+  color: #9fc0ff; background: #0d0d10d9; border: 1px solid #2a5cc066;
+  border-radius: 5px; padding: 2px 7px; max-width: 80%;
+}
+
+.agob-label {
+  position: absolute; left: 6px; bottom: 6px;
+  font: 600 10px ui-monospace, monospace;
+  color: #cfe1ff; background: #0d0d10d9; border: 1px solid #26262c;
+  border-radius: 5px; padding: 3px 8px; max-width: 90%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* the "watch agent" toggle under the preview */
+.wiz-watch {
+  align-self: flex-start;
+  background: #16161b; border: 1px solid #2b2b33; color: #b9b9c2;
+  border-radius: 7px; padding: 5px 11px; cursor: pointer;
+  font: 600 11px ui-monospace, monospace;
+}
+.wiz-watch:hover { background: #202028; color: #fff; }
+.wiz-watch.on { background: #101828; border-color: #2a5cc0; color: #9fc0ff; }
