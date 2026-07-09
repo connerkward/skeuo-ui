@@ -151,6 +151,11 @@ for e_sum, pts, e in comp_e[:6]:
                    "energy": round(e_sum / tot, 3)})
 
 # ---------------- 3. button id mask (drift-corrected into paint/src space) ----------------
+# WARNING: assets-diablo-gothic/regions.json was REWRITTEN by the batch re-cut
+# (86bbb3aa) AFTER diablo-meta3.json was generated (7369dc34) — its rects no longer
+# match diablo-src.png. Re-running this script against current regions.json will
+# MISPLACE everything. The 2026-07-09 switch-orientation fix was therefore applied
+# to the on-disk sprites + meta3.json directly with the same slot_walk math below.
 R = json.load(open(ASSET / "regions.json"))
 regs, keys = R["regions"], R["keys"]
 mask_im = np.asarray(Image.open(ASSET / "mask.png").convert("RGB"), np.int32)
@@ -196,13 +201,37 @@ def tight(name):
     return t
 
 sk = tight("seek"); sk.save(HERE / "sprite-seek.png")
-so = tight("shuffle_off"); so.save(HERE / "sprite-shuffle-off.png")
+so = tight("shuffle_off")
 sn = tight("shuffle_on")
-if np.array_equal(np.asarray(so), np.asarray(sn)):
-    # biref cut the two states identically -> mirror ON (same fallback the gen12
-    # pipeline uses: a switch's visible state change is the lever flipping sides)
-    sn = sn.transpose(Image.FLIP_LEFT_RIGHT)
-sn.save(HERE / "sprite-shuffle-on.png")
+mirror_on = np.array_equal(np.asarray(so), np.asarray(sn))
+
+
+# ---- switch orientation must MATCH THE PAINTED SLOT, not the biref cut frame.
+# The biref sprite is tight-cropped in whatever orientation the model painted the
+# donor strip; the slot on the body can be the other way (diablo: vertical slot,
+# horizontal strip sprite -> rendered 90° wrong). Measure the slot's long axis in
+# the PAINT with a relative rim-walk (percentile-scaled threshold, no absolute
+# luminance) and rotate the sprite to match. Per-side outer walk (dark core PLUS
+# bright bezel rim) also gives the coverage rect + true slot centre.
+def slot_walk(cx_px, cy_px, win=340):
+    lum = Image.open(SRC).convert("L").filter(ImageFilter.GaussianBlur(6))
+    sm_ = np.asarray(lum, np.float32)
+    w_ = sm_[cy_px - win:cy_px + win, cx_px - win:cx_px + win]
+    lo, hi = np.percentile(w_, 10), np.percentile(w_, 90)
+    thr = sm_[cy_px, cx_px] + 0.5 * (hi - lo)     # rim = clearly brighter than core
+
+    def outer(dx, dy):
+        d = 0; x, y = cx_px, cy_px; hit = False; inner = None
+        while d < win:
+            x += dx; y += dy; d += 1
+            bright = sm_[y, x] > thr
+            if bright and not hit: hit = True; inner = d
+            elif not bright and hit: return d    # bezel outer edge
+        return inner or d
+    ol, orr = outer(-1, 0), outer(1, 0)
+    ou, od = outer(0, -1), outer(0, 1)
+    return {"w": ol + orr, "h": ou + od,
+            "cx": cx_px + (orr - ol) // 2, "cy": cy_px + (od - ou) // 2}
 
 # ---------------- 5. placement meta (all in SRC-UV: x/W, y/src_H) ----------------
 def ctr(bx):
@@ -221,9 +250,26 @@ seek_m = {
     "track": [round(tk[0], 4), round(tk[1] * YS, 4), round(tk[2], 4), round(tk[3] * YS, 4)],
 }
 tc = ctr(shuf["device"])
-sw = so.width / W; sh_ = so.height / PAINT_H
-shuf_m = {"rect": [round(tc[0] - sw / 2, 4), round((tc[1] - sh_ / 2) * YS, 4),
-                   round(sw, 4), round(sh_ * YS, 4)]}
+slot = slot_walk(int(tc[0] * W), int(tc[1] * YS * H))
+slot_vertical = slot["h"] > slot["w"]
+sprite_vertical = so.height > so.width
+if slot_vertical != sprite_vertical:
+    # ROTATE_270 = clockwise: a right-side lever lands at the BOTTOM (off = down)
+    so = so.transpose(Image.ROTATE_270)
+    sn = sn.transpose(Image.ROTATE_270)
+if mirror_on:
+    # state change = lever flips ends, along the slot's LONG axis
+    sn = so.transpose(Image.FLIP_TOP_BOTTOM if slot_vertical else Image.FLIP_LEFT_RIGHT)
+so.save(HERE / "sprite-shuffle-off.png")
+sn.save(HERE / "sprite-shuffle-on.png")
+
+# coverage rect: sprite scaled uniformly to COVER the measured slot (never leave
+# exposed slot ends), centred on the measured slot centre — all computed, no
+# hand-authored numbers (placement-invariants-rule)
+cov = max(slot["w"] / so.width, slot["h"] / so.height)
+sw = so.width * cov / W; sh_ = so.height * cov / H
+shuf_m = {"rect": [round(slot["cx"] / W - sw / 2, 4), round(slot["cy"] / H - sh_ / 2, 4),
+                   round(sw, 4), round(sh_, 4)]}
 
 m2 = json.load(open(P2 / "diablo-meta.json"))
 viz = regs["visualizer"]["device"]; art = regs["album_art"]["device"]

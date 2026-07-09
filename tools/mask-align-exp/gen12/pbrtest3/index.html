@@ -442,7 +442,6 @@ async function boot(){
     const s = 0.9 * (l.energy / maxE);
     gl.uniform3f(U(`uPLcol[${i}]`), l.color[0]*s, l.color[1]*s, l.color[2]*s);
   }
-  gl.uniform3f(U('uZoom'), ...state.zoom);
   buildMaps();
   resize();
   document.title = 'pbrtest3 ready';
@@ -538,7 +537,16 @@ function setBadge(){
 }
 
 // ---------- pulse + viz ----------
+// ?bpm=128 -> beat-locked ember throb + viz bars (deterministic, for scripted
+// social capture); bpm=0/absent -> original free-running flicker
+const BPM = parseFloat(Q.get('bpm') ?? 0);
 function pulses(t){
+  if (BPM > 0){
+    const beat = t * BPM / 60;
+    const env = b => 0.5 + 0.85 * Math.exp(-3.5 * (b - Math.floor(b)));
+    return { global: env(beat) * 0.82,
+             per: [0,1,2,3,4,5].map(i => env(beat + (i % 3) * 0.07) * 0.9) };
+  }
   const f = p => {
     let v = 0.70 + 0.20*Math.sin(t*1.9 + p) + 0.12*Math.sin(t*4.7 + p*2.3) + 0.07*Math.sin(t*9.3 + p*4.1);
     v += Math.max(0, Math.sin(t*0.7 + p) - 0.86) * 1.4;
@@ -550,7 +558,15 @@ function pulses(t){
 function drawViz(){
   if (!vizCv) return;
   const g2 = vizCx, W2 = vizCv.width, H2 = vizCv.height;
-  if (!state.vizForce){
+  if (BPM > 0 && (state.playing || state.vizForce === 'high')){
+    // beat-locked: every bar leaps at the beat onset, decays to the next
+    // (hash of beat index x bar -> deterministic under a stepped clock)
+    const beat = lastT * BPM / 60, p = beat - Math.floor(beat), bi = Math.floor(beat);
+    for (let i = 0; i < NB; i++){
+      const h = Math.abs(Math.sin(bi * 12.9898 + i * 78.233) * 43758.5453) % 1;
+      bars[i] = 0.10 + (0.25 + 0.75 * h) * 0.9 * Math.exp(-2.5 * p);
+    }
+  } else if (!state.vizForce){
     for (let i = 0; i < NB; i++){
       bars[i] += state.playing ? (Math.random() - .5) * .4 : (0.06 - bars[i]) * .2;
       bars[i] = Math.max(.04, Math.min(1, bars[i]));
@@ -608,6 +624,7 @@ function draw(t){
   gl.uniform1f(U('uVizSpill'), state.vz);
   gl.uniform1f(U('uVizI'), 1.0);
   gl.uniform1f(U('uKnobAngle'), state.knob);
+  gl.uniform3f(U('uZoom'), ...state.zoom);   // in draw() so capture scripts can animate it
   const sm = META.seek, tx = sm.x0 + (sm.x1 - sm.x0) * state.seek;
   gl.uniform4f(U('uThumbRect'), tx, sm.cy - sm.h / 2, sm.w, sm.h);
   const tr = META.shuffle.rect;
