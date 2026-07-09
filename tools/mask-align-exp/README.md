@@ -20,6 +20,10 @@ Pipeline (`run9.py` → `extract9.py` → `run_biref9.py` → `phone9.html`):
    ALL controls (-0.5% X, +0.0% Y on run9 seed 41).
 3. **rrect-fit alignment** (extract9) — same gradient scoring along rounded-rect perimeter
    for seek groove and toggle slot. Measured on MAGMA CORE: tog 214×299 px, seek 904×116 px.
+   NOTE: the fit can lock onto the OUTER raised plate/bezel, not the inner recess (run9:
+   bbox 1291 px vs recess 986 px). Thumb travel therefore clamps to a separately measured
+   `seek.travel` span (recess interior x-extent: dark-run for dark recesses, between bright
+   bezel rims for rimmed grooves) written into regions.json — never to the fit bbox.
 4. **Snap-to-paint X ONLY** — model paints mask ~+0.5% right of paint (systematic). Snap
    each region's x-center onto the painted dark well (socket) or saturated icon (button);
    keep mask's y (dark-pixel centroid biased UP by top-light shadow).

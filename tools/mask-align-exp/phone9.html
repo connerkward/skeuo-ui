@@ -72,15 +72,16 @@
   four transport buttons are <b>organic shapes</b> — a pebble, a teardrop, a kidney bean, a crescent — deliberately
   non-circular and non-rectangular. Same contract: LEFT = monochrome painted device + sprite strip on flat charcoal;
   RIGHT = colour-keyed region mask on pure black. One generation was needed.</p>
-  <span class="modeltag">model: fal-ai/gemini-3-pro-image-preview/edit (nano-banana pro) · 4K · 5:4 · seed 41 · material: Y2K gunmetal graphite + chrome</span>
+  <span class="modeltag">model: fal-ai/gemini-3-pro-image-preview/edit (nano-banana pro) · 4K · 5:4 · seed 43 · material: Y2K gunmetal graphite + chrome · generated 2026-07-08 18:04 PDT</span>
 
   <h2>a · blueprint (authored template)</h2>
-  <div class="card" style="max-width:840px"><img src="assets9/blueprint.webp" alt="blueprint">
+  <div class="card" style="max-width:840px"><img src="assets9/blueprint.webp?v=43" alt="blueprint">
     <div class="cap">PIL-drawn guides. Buttons: pebble=PREV(red) · teardrop=PLAY(blue) · kidney=NEXT(amber) · crescent=STOP(violet).
     Sockets: vol(green) · bal(cyan) · seek groove(orange) · toggle(pink). Bottom band: 5 sprite anchors. No text anywhere.</div></div>
 
   <h2>b · raw 4K joint output</h2>
-  <div class="card" style="max-width:840px"><img src="assets9/joint-4k.webp" alt="raw joint 4K">
+  <div><span class="modeltag">output of: fal-ai/gemini-3-pro-image-preview/edit · seed 43 · one call, both panels</span></div>
+  <div class="card" style="max-width:840px"><img src="assets9/joint-4k.webp?v=43c" alt="raw joint 4K">
     <div class="cap">Raw model file, 4608×3712. Left: painted device + strip. Right: region mask. The four button facets kept
     their exact organic outlines in BOTH panels; the seek groove is empty; the strip is one top-down row with toggle OFF + ON.</div></div>
 
@@ -88,7 +89,7 @@
   <div class="card" style="max-width:680px">
     <div class="ovwrap" id="ov">
       <span class="studio-badge">studio overlay · not in the artifact sent to the cutter</span>
-      <img src="assets9/overlay.webp" alt="mask over paint overlay" id="ovimg">
+      <img src="assets9/overlay.webp?v=43" alt="mask over paint overlay" id="ovimg">
     </div>
     <button class="t" id="boxBtn" aria-pressed="true">boxes: on</button>
     <div class="ovnote">Overlay = paint × 50% mask (raw model output, includes the model's small rightward drift).
@@ -98,23 +99,24 @@
   </div>
 
   <h2>d · cut sprite cells — global BiRefNet, segmented (one pass)</h2>
+  <div><span class="modeltag">output of: fal-ai/birefnet/v2 · General Use (Heavy) · 2048</span></div>
   <p class="lede" style="font-size:13px">ONE BiRefNet call (<code>fal-ai/birefnet/v2</code> Heavy 2048, 3.9&nbsp;s, ~$0.004)
   over the whole paint → the matte's connected-component islands, each correlated to its identity via the mask strip cells
   (centroid match, never left-to-right order). These are the real cuts — no client-side luma key.</p>
   <div class="cells">
-    <div class="cell"><div class="chk"><img src="assets9_biref/vol.webp" style="max-width:150px;height:auto;display:block"></div><div class="lab">vol cap · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/bal.webp" style="max-width:150px;height:auto;display:block"></div><div class="lab">bal cap · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/seek.webp" style="max-width:90px;height:auto;display:block"></div><div class="lab">seek thumb · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/tog_off.webp" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle OFF · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets9_biref/tog_on.webp" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle ON · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/vol.webp?v=43" style="max-width:150px;height:auto;display:block"></div><div class="lab">vol cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/bal.webp?v=43" style="max-width:150px;height:auto;display:block"></div><div class="lab">bal cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/seek.webp?v=43" style="max-width:90px;height:auto;display:block"></div><div class="lab">seek thumb · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/tog_off.webp?v=43" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle OFF · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets9_biref/tog_on.webp?v=43" style="max-width:130px;height:auto;display:block"></div><div class="lab">toggle ON · global-CC island</div></div>
   </div>
 
   <h2>d² · the global matte itself + segmented device island</h2>
   <p class="lede" style="font-size:13px">The raw single-pass matte (checkerboard = removed backdrop) and the largest island —
   the whole device body — from the same call. One ~$0.004 pass cuts the body AND all five parts.</p>
   <div class="cells">
-    <div class="cell" style="flex:1 1 300px;max-width:460px"><div class="chk"><img src="assets9_biref/global-matte.webp" style="width:100%;height:auto;display:block"></div><div class="lab">global-matte.webp · raw, unretouched</div></div>
-    <div class="cell" style="flex:1 1 220px;max-width:340px"><div class="chk"><img src="assets9_biref/device.webp" style="width:100%;height:auto;display:block"></div><div class="lab">device body · largest island</div></div>
+    <div class="cell" style="flex:1 1 300px;max-width:460px"><div class="chk"><img src="assets9_biref/global-matte.webp?v=43" style="width:100%;height:auto;display:block"></div><div class="lab">global-matte.png · raw, unretouched</div></div>
+    <div class="cell" style="flex:1 1 220px;max-width:340px"><div class="chk"><img src="assets9_biref/device.webp?v=43" style="width:100%;height:auto;display:block"></div><div class="lab">device body · largest island</div></div>
   </div>
 
   <h2>e · drift table</h2>
@@ -148,6 +150,7 @@
   </div>
 
   <h2>g · finished product — cut &amp; placed, interactive</h2>
+  <div><span class="modeltag">paint: fal-ai/gemini-3-pro-image-preview/edit seed 43 · sprites: fal-ai/birefnet/v2 islands · placement: extract9 circle-fit seats + snapped mask bboxes</span></div>
   <p class="lede" style="font-size:13px">The end of the chain: device background from the paint, sprites = the global-BiRefNet
   islands. Knobs seat in the <b>measured painted wells</b> — each socket is an enclosed alpha-hole in the global matte's device
   island, whose inscribed circle (centre + radius) is the exact painted socket geometry; no bbox scale factors. Drag the knobs
@@ -158,7 +161,7 @@
   </div>
   <div style="font:12px var(--mono);color:var(--dim);margin-top:6px" id="pstatus">loading…</div>
 
-  <footer>run9 · generated with fal-ai/gemini-3-pro-image-preview/edit · assets in <code>assets9/</code> ·
+  <footer>run9 · generated with fal-ai/gemini-3-pro-image-preview/edit (seed 43) · assets in <code>assets9/</code> ·
   scripts: <code>run9.py</code>, <code>extract9.py</code>, <code>run_biref9.py</code></footer>
 </div>
 <style>
@@ -176,15 +179,15 @@
 </style>
 <script>
 (async function(){
-  const R=await fetch('assets9/regions.json').then(r=>r.json());
+  const R=await fetch('assets9/regions.json?v=44').then(r=>r.json());
   const rr=R.regions, DF=R.devFrac;
   const dev=document.getElementById('phone'), bg=document.getElementById('pbg'), status=document.getElementById('pstatus');
-  const paint=new Image(); paint.src='assets9/paint.webp'; await paint.decode();
+  const paint=new Image(); paint.src='assets9/paint.webp?v=43c'; await paint.decode();
   const PW=paint.naturalWidth, PH=paint.naturalHeight;
   const bgc=document.createElement('canvas'); bgc.width=PW; bgc.height=Math.round(PH*DF);
   bgc.getContext('2d').drawImage(paint,0,0,PW,bgc.height,0,0,PW,bgc.height);
   bg.src=bgc.toDataURL(); await bg.decode();
-  const maskImg=new Image(); maskImg.src='assets9/mask.webp'; await maskImg.decode();
+  const maskImg=new Image(); maskImg.src='assets9/mask.webp?v=43'; await maskImg.decode();
   const MW=maskImg.naturalWidth, MH=maskImg.naturalHeight;
   const mkc=document.createElement('canvas'); mkc.width=MW; mkc.height=MH; mkc.getContext('2d').drawImage(maskImg,0,0);
   const MDATA=mkc.getContext('2d').getImageData(0,0,MW,MH).data;
@@ -203,7 +206,7 @@
   }
   const CUT={};
   for(const k of ['vol','bal','seek','tog_off','tog_on']){
-    try{ const im=new Image(); im.src='assets9_biref/'+k+'.webp'; await im.decode(); CUT[k]=tightCrop(im); }catch(e){}
+    try{ const im=new Image(); im.src='assets9_biref/'+k+'.png?v=43'; await im.decode(); CUT[k]=tightCrop(im); }catch(e){}
   }
   const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100;
   const ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
@@ -228,10 +231,10 @@
   knob('vol'); knob('bal');
   (function(){ const r=rr.seek, t=CUT.seek; if(!r||!r.device||!t) return;
     const track=r.device, el=document.createElement('div'); el.className='pthumb';
-    const th=track[3]*1.5, tw=th*(t.w/t.h)*PH/PW;
+    const tw=t.w/PW, th=t.h/PH; // island is cut at 1:1 paint resolution — render at its own size
     el.style.backgroundImage='url('+t.url+')'; el.style.width=tw*100+'%'; el.style.height=(th/DF)*100+'%';
     const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
-    const ov=track[3]*0.25; let val=0; const x0=track[0]-ov, x1=track[0]+track[2]-tw+ov;
+    let val=0; const tv=r.travel||[track[0],track[0]+track[2]]; const x0=tv[0], x1=tv[1]-tw; // travel clamped inside the measured painted recess
     const render=()=>el.style.left=(x0+(x1-x0)*val)*100+'%'; render();
     let sx=0,sv=0,drag=false;
     el.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
@@ -243,7 +246,8 @@
     const off=CUT.tog_off, on=CUT.tog_on||off;
     const el=document.createElement('div'); el.className='ptog';
     el.style.backgroundImage='url('+off.url+')';
-    el.style.left=px(r.device)+'%'; el.style.top=py(r.device)+'%'; el.style.width=pw(r.device)+'%'; el.style.height=ph(r.device)+'%';
+    const S=1.06, tc=ctr(r.device), bw=off.w/PW*S, bh=off.h/PH*S; // sprite's own 1:1 painted size ×1.06 — slightly proud of the slot
+    el.style.left=(tc[0]-bw/2)*100+'%'; el.style.top=((tc[1]-bh/2)/DF)*100+'%'; el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%';
     let ison=false;
     el.addEventListener('click',()=>{ison=!ison; el.style.backgroundImage='url('+(ison?on:off).url+')';});
     dev.appendChild(el);
@@ -279,7 +283,7 @@ const HB={prev:"rgb(255,90,60)",play:"rgb(0,120,255)",next:"rgb(240,180,0)",stop
 const SP={vol:"rgb(0,190,90)",bal:"rgb(0,200,220)",seek:"rgb(255,140,30)",tog:"rgb(255,90,160)"};
 const COLOR={...HB,...SP};
 
-fetch("assets9/regions.json").then(r=>r.json()).then(data=>{
+fetch("assets9/regions.json?v=44").then(r=>r.json()).then(data=>{
   const regs=data.regions, tmpl=data.template, DEVF=data.devFrac;
 
   // ---- c: labeled boxes over the overlay ----
@@ -310,7 +314,7 @@ fetch("assets9/regions.json").then(r=>r.json()).then(data=>{
   //  static images; the old client-side luma-key cut is superseded and its #cells host is gone)
 
   // ---- e: drift table ----
-  const tb=document.querySelector("#drift tbody");
+  const tb=document.querySelector("#drift tbody"); if(!tb) return;
   let tot=0,n=0;
   for(const k of Object.keys(COLOR)){
     const r=regs[k], t=tmpl[k]; if(!r||!r.device||!t) continue;

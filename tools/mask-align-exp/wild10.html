@@ -76,7 +76,7 @@
   keys — so the guide-colour contract became <b>data</b>: 9 keys picked ≥120 RGB from each other AND from every
   palette major, written to <code>results.json</code>, and read from there by the extractor and the BiRefNet splitter.
   Zero hardcoded colours downstream. One generation was needed.</p>
-  <span class="modeltag">model: fal-ai/gemini-3-pro-image-preview/edit (nano-banana pro) · 4K · 5:4 · seed 41 ·
+  <span class="modeltag">model: fal-ai/gemini-3-pro-image-preview/edit (nano-banana pro) · 4K · 5:4 · seed 41 · generated 2026-07-07 20:25 PDT ·
   material: black volcanic rubber + molten-lava veins + gold chrome · cut: fal-ai/birefnet/v2 (Heavy 2048)</span>
 
   <h2>a₀ · the adaptive colour contract (palette → keys, all data)</h2>
@@ -107,14 +107,15 @@
   </details>
 
   <h2>a · blueprint (authored template — organic blob body)</h2>
-  <div class="card" style="max-width:840px"><img src="assets10/blueprint.png" alt="blueprint">
+  <div class="card" style="max-width:840px"><img src="assets10/blueprint.webp?v=r10" alt="blueprint">
     <div class="cap">PIL-drawn guides. Body = polar blob polygon (egg blend + horn nubs + pods), asserted to contain
     all 9 controls with an 8px erosion margin. Buttons: pebble=PREV(azure) · teardrop=PLAY(spring green) ·
     kidney=NEXT(cyan) · crescent=STOP(violet). Sockets: vol(magenta) · bal(pure blue) · seek groove(pure green) ·
     toggle(lavender) · screen(mint). Bottom band: 5 sprite anchors cloning the device slot geometry. No text anywhere.</div></div>
 
   <h2>b · raw 4K joint output — generation 1 of 1</h2>
-  <div class="card" style="max-width:840px"><img src="assets10/joint-4k.png" alt="raw joint 4K">
+  <div><span class="modeltag">output of: fal-ai/gemini-3-pro-image-preview/edit · seed 41 · one call, both panels</span></div>
+  <div class="card" style="max-width:840px"><img src="assets10/joint-4k.webp?v=r10" alt="raw joint 4K">
     <div class="cap">Raw model file, 4608×3712. Left: painted magma handheld + strip. Right: region mask.
     Horns, pods and the asymmetric silhouette survived; all four cavities are empty wells; the strip is one
     top-down row of exactly five parts with distinct toggle OFF/ON lever states. The model drew the on-device
@@ -124,7 +125,7 @@
   <div class="card" style="max-width:680px">
     <div class="ovwrap" id="ov">
       <span class="studio-badge">studio overlay · not in the artifact sent to the cutter</span>
-      <img src="assets10/overlay.png" alt="mask over paint overlay" id="ovimg">
+      <img src="assets10/overlay.webp?v=r10" alt="mask over paint overlay" id="ovimg">
     </div>
     <button class="t" id="boxBtn" aria-pressed="true">boxes: on</button>
     <div class="ovnote">Overlay = paint × 50% mask (raw model output). Solid boxes = <b>snapped</b> device regions
@@ -133,15 +134,16 @@
   </div>
 
   <h2>d · cut sprite cells — global BiRefNet, segmented (one pass)</h2>
+  <div><span class="modeltag">output of: fal-ai/birefnet/v2 · General Use (Heavy) · 2048</span></div>
   <p class="lede" style="font-size:13px">ONE BiRefNet call (<code>fal-ai/birefnet/v2</code> Heavy 2048)
   over the whole paint → the matte's connected-component islands, correlated to identity via the mask strip cells
   (centroid match, never left-to-right order). All five parts matched at ≤0.6% centroid error.</p>
   <div class="cells">
-    <div class="cell"><div class="chk"><img src="assets10_biref/vol.png"></div><div class="lab">vol cap · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets10_biref/bal.png"></div><div class="lab">bal cap · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets10_biref/seek.png" style="max-width:90px"></div><div class="lab">seek thumb · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets10_biref/tog_off.png" style="max-width:130px"></div><div class="lab">toggle OFF · global-CC island</div></div>
-    <div class="cell"><div class="chk"><img src="assets10_biref/tog_on.png" style="max-width:130px"></div><div class="lab">toggle ON · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets10_biref/vol.webp?v=r10"></div><div class="lab">vol cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets10_biref/bal.webp?v=r10"></div><div class="lab">bal cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets10_biref/seek.webp?v=r10" style="max-width:90px"></div><div class="lab">seek thumb · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets10_biref/tog_off.webp?v=r10" style="max-width:130px"></div><div class="lab">toggle OFF · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets10_biref/tog_on.webp?v=r10" style="max-width:130px"></div><div class="lab">toggle ON · global-CC island</div></div>
   </div>
 
   <h2>d² · where BiRefNet BROKE — the global matte on a matte-black body</h2>
@@ -152,8 +154,8 @@
   <b>zero measurable socket seats</b> (black wells in a black body have no alpha-hole to find). Sprite-part islands were
   unaffected. Shown raw, unretouched:</p>
   <div class="cells">
-    <div class="cell" style="flex:1 1 300px;max-width:460px"><div class="chk"><img src="assets10_biref/global-matte.png" style="max-width:100%;width:100%"></div><div class="lab">global-matte.png · raw — body dropped, controls kept</div></div>
-    <div class="cell" style="flex:1 1 220px;max-width:340px"><div class="chk"><img src="assets10_biref/device.png" style="max-width:100%;width:100%"></div><div class="lab">“device” island (largest CC) · a fragment, not the body</div></div>
+    <div class="cell" style="flex:1 1 300px;max-width:460px"><div class="chk"><img src="assets10_biref/global-matte.webp?v=r10" style="max-width:100%;width:100%"></div><div class="lab">global-matte.png · raw — body dropped, controls kept</div></div>
+    <div class="cell" style="flex:1 1 220px;max-width:340px"><div class="chk"><img src="assets10_biref/device.webp?v=r10" style="max-width:100%;width:100%"></div><div class="lab">“device” island (largest CC) · a fragment, not the body</div></div>
   </div>
 
   <h2>e · gates + drift</h2>
@@ -208,6 +210,7 @@
   </div>
 
   <h2>g · finished product — cut &amp; placed, interactive</h2>
+  <div><span class="modeltag">paint: fal-ai/gemini-3-pro-image-preview/edit seed 41 · sprites: fal-ai/birefnet/v2 islands · placement: extract10 circle-fit seats + snapped mask bboxes</span></div>
   <p class="lede" style="font-size:13px">The end of the chain: device background from the paint, sprites = the
   global-BiRefNet islands. Knobs seat via the <b>gradient circle-fit <code>seat</code> entries</b> (exact painted
   socket center + radius — see d²); toggle and seek use the rrect-fitted boxes. Drag the knobs (pinned specular),
@@ -237,15 +240,15 @@
 </style>
 <script>
 (async function(){
-  const R=await fetch('assets10/regions.json').then(r=>r.json());
+  const R=await fetch('assets10/regions.json?v=r11').then(r=>r.json());
   const rr=R.regions, DF=R.devFrac, KEY=R.keys;
   const dev=document.getElementById('phone'), bg=document.getElementById('pbg'), status=document.getElementById('pstatus');
-  const paint=new Image(); paint.src='assets10/paint.png'; await paint.decode();
+  const paint=new Image(); paint.src='assets10/paint.webp?v=r10'; await paint.decode();
   const PW=paint.naturalWidth, PH=paint.naturalHeight;
   const bgc=document.createElement('canvas'); bgc.width=PW; bgc.height=Math.round(PH*DF);
   bgc.getContext('2d').drawImage(paint,0,0,PW,bgc.height,0,0,PW,bgc.height);
   bg.src=bgc.toDataURL(); await bg.decode();
-  const maskImg=new Image(); maskImg.src='assets10/mask.png'; await maskImg.decode();
+  const maskImg=new Image(); maskImg.src='assets10/mask.webp?v=r10'; await maskImg.decode();
   const MW=maskImg.naturalWidth, MH=maskImg.naturalHeight;
   const mkc=document.createElement('canvas'); mkc.width=MW; mkc.height=MH; mkc.getContext('2d').drawImage(maskImg,0,0);
   const MDATA=mkc.getContext('2d').getImageData(0,0,MW,MH).data;
@@ -263,14 +266,14 @@
   }
   const CUT={};
   for(const k of ['vol','bal','seek','tog_off','tog_on']){
-    try{ const im=new Image(); im.src='assets10_biref/'+k+'.png'; await im.decode(); CUT[k]=tightCrop(im); }catch(e){}
+    try{ const im=new Image(); im.src='assets10_biref/'+k+'.png?v=r10'; await im.decode(); CUT[k]=tightCrop(im); }catch(e){}
   }
   const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100;
   const ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
   function knob(key){
     const r=rr[key]; if(!r||!CUT[key]) return;
     let cx,cy,w,h;
-    if(r.seat){ // measured painted-socket well — absent on run10 (see d²), kept for generality
+    if(r.seat){ // measured painted-socket well — circle-fit seats (extract10 gradient recovery)
       cx=r.seat[0]; cy=r.seat[1]; w=r.seat[2]*2; h=w*PW/PH;
     } else if(r.device){ // fallback: snapped mask bbox (the run10 path)
       const c=ctr(r.device); cx=c[0]; cy=c[1]; w=r.device[2]*1.10; h=r.device[3]*1.10;
@@ -288,10 +291,10 @@
   knob('vol'); knob('bal');
   (function(){ const r=rr.seek, t=CUT.seek; if(!r||!r.device||!t) return;
     const track=r.device, el=document.createElement('div'); el.className='pthumb';
-    const th=track[3]*1.5, tw=th*(t.w/t.h)*PH/PW;
+    const tw=t.w/PW, th=t.h/PH; // island is cut at 1:1 paint resolution — render at its own size
     el.style.backgroundImage='url('+t.url+')'; el.style.width=tw*100+'%'; el.style.height=(th/DF)*100+'%';
     const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
-    const ov=track[3]*0.25; let val=0; const x0=track[0]-ov, x1=track[0]+track[2]-tw+ov;
+    let val=0; const tv=r.travel||[track[0],track[0]+track[2]]; const x0=tv[0], x1=tv[1]-tw; // travel clamped inside the measured painted recess
     const render=()=>el.style.left=(x0+(x1-x0)*val)*100+'%'; render();
     let sx=0,sv=0,drag=false;
     el.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
@@ -303,7 +306,8 @@
     const off=CUT.tog_off, on=CUT.tog_on||off;
     const el=document.createElement('div'); el.className='ptog';
     el.style.backgroundImage='url('+off.url+')';
-    el.style.left=px(r.device)+'%'; el.style.top=py(r.device)+'%'; el.style.width=pw(r.device)+'%'; el.style.height=ph(r.device)+'%';
+    const S=1.06, tc=ctr(r.device), bw=off.w/PW*S, bh=off.h/PH*S; // sprite's own 1:1 painted size ×1.06 — slightly proud of the slot
+    el.style.left=(tc[0]-bw/2)*100+'%'; el.style.top=((tc[1]-bh/2)/DF)*100+'%'; el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%';
     let ison=false;
     el.addEventListener('click',()=>{ison=!ison; el.style.backgroundImage='url('+(ison?on:off).url+')';});
     dev.appendChild(el);
@@ -335,12 +339,12 @@
 </script>
 
 <script>
-fetch("assets10/regions.json").then(r=>r.json()).then(data=>{
+fetch("assets10/regions.json?v=r11").then(r=>r.json()).then(data=>{
   const regs=data.regions, tmpl=data.template, DEVF=data.devFrac, KEY=data.keys, KN=data.keyNames||{};
   const css=k=>KEY[k]?`rgb(${KEY[k].join(",")})`:"#fff";
 
   // ---- a₀: palette + key tables (from data, not hardcoded) ----
-  fetch("assets10/results.json").then(r=>r.json()).then(res=>{
+  fetch("assets10/results.json?v=r10").then(r=>r.json()).then(res=>{
     const pt=document.querySelector("#palTable tbody");
     for(const [k,v] of Object.entries(res.palette)){
       const tr=document.createElement("tr");
@@ -380,7 +384,7 @@ fetch("assets10/regions.json").then(r=>r.json()).then(data=>{
     ov.querySelectorAll(".rbox").forEach(e=>e.style.display=!on?"":"none");};
 
   // ---- e: drift table ----
-  const tb=document.querySelector("#drift tbody");
+  const tb=document.querySelector("#drift tbody"); if(!tb) return;
   let tot=0,n=0;
   for(const k of Object.keys(KEY)){
     const r=regs[k], t=tmpl[k]; if(!r||!r.device||!t) continue;
