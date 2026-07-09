@@ -1,0 +1,13 @@
+{
+ "roll": 1,
+ "model": "gemini-3-pro-image-preview (Vertex AI, global)",
+ "seed": 1084,
+ "resolution": "2K",
+ "aspect_ratio": "4:5",
+ "dims": [
+  1856,
+  2304
+ ],
+ "prompt": "A skeuomorphic media-player device, top-down orthographic, centered on a flat uniform pale grey-white backdrop: STEAMPUNK BRASS nautilus / diving-bell media player: riveted polished BRASS and COPPER housing with a big round porthole, pressure-gauge dials, engraved filigree, patina, glass tubes and a teal-glass display. Victorian submarine machinery \u2014 ornate, mechanical, warm metal. It has physical controls: five icon buttons (play/pause, prev, next, repeat, queue), a round volume knob, a horizontal seek slot, a small toggle switch, an album-art window and a visualizer window. No text anywhere. Rendered with FLAT EVEN DIFFUSE LIGHTING ONLY \u2014 this is a pure albedo/diffuse texture map for a PBR pipeline: ZERO specular highlights, ZERO baked shadows, no ambient occlusion, no glow, no reflections, no rim light, no gradients from lighting; every surface shows only its intrinsic flat material color, uniform studio-flat illumination as if photographed inside an integrating sphere. Depth is conveyed by shape and material color only, never by shading.",
+ "elapsed_s": 67.4
+}

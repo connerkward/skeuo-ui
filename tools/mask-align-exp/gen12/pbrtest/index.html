@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pbrtest — dynamically-lit flat-albedo skin</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #14161a; color: #d8dbe2; font: 14px/1.45 -apple-system, system-ui, sans-serif; }
+  header { padding: 10px 16px 6px; }
+  header h1 { font-size: 16px; margin: 0 0 2px; font-weight: 600; }
+  .anno { font-size: 11.5px; color: #8b93a3; max-width: 900px; }
+  .anno b { color: #b8c0d0; font-weight: 600; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 16px 24px; align-items: flex-start; }
+  .stage { flex: 1 1 420px; min-width: 280px; max-width: 780px; position: relative; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: #0c0d10; cursor: crosshair; touch-action: none; }
+  .panel { flex: 0 1 260px; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+  .panel label { display: flex; justify-content: space-between; font-size: 12px; color: #9aa2b2; }
+  .panel input[type=range] { width: 100%; }
+  .row { display: flex; gap: 8px; }
+  button, select { background: #23262e; color: #d8dbe2; border: 1px solid #3a3f4b; border-radius: 7px; padding: 7px 12px; font-size: 13px; cursor: pointer; flex: 1; }
+  button.on { background: #3b5bd9; border-color: #3b5bd9; color: #fff; }
+  .hint { font-size: 11px; color: #6b7383; }
+  .badge { position: absolute; top: 8px; left: 8px; font-size: 10px; background: rgba(0,0,0,.55); padding: 3px 7px; border-radius: 5px; color: #cfd5e0; pointer-events: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>pbrtest — flat-albedo skin, dynamically lit (move pointer over image)</h1>
+  <div class="anno">
+    <b>albedo:</b> gemini-3-pro-image-preview (Vertex AI, global) · seed 84 · 2K 4:5 · 2 rolls ×&nbsp;~$0.24&nbsp;=&nbsp;<b>~$0.48</b>
+    &nbsp;·&nbsp; <b>normal map:</b> prs-eth/marigold-normals-v1-1 (local diffusers on MPS, <b>$0</b>) + numpy Sobel height-from-luminance baseline (<b>$0</b>)
+    &nbsp;·&nbsp; <b>relight:</b> hand-rolled WebGL1 Blinn-Phong, no deps &nbsp;·&nbsp; <b>total ≈ $0.48</b>
+  </div>
+</header>
+<div class="wrap">
+  <div class="stage">
+    <canvas id="gl"></canvas>
+    <div class="badge">studio overlay: light follows pointer · knob is a separately-lit cut part</div>
+  </div>
+  <div class="panel">
+    <div class="row">
+      <button id="btnLit" class="on">Lit</button>
+      <button id="btnAlb">Albedo only</button>
+    </div>
+    <label>normal map
+      <select id="selNrm"><option value="marigold">marigold-normals-v1-1</option><option value="sobel">sobel baseline</option></select>
+    </label>
+    <label><span>light height</span><span id="vH"></span></label>
+    <input type="range" id="h" min="0.08" max="1.2" step="0.01" value="0.35">
+    <label><span>intensity</span><span id="vI"></span></label>
+    <input type="range" id="i" min="0" max="4" step="0.05" value="1.6">
+    <label><span>specular</span><span id="vS"></span></label>
+    <input type="range" id="s" min="0" max="2" step="0.05" value="0.55">
+    <label><span>ambient</span><span id="vA"></span></label>
+    <input type="range" id="a" min="0" max="1" step="0.01" value="0.22">
+    <label><span>bump strength</span><span id="vB"></span></label>
+    <input type="range" id="b" min="0" max="2.5" step="0.05" value="1.0">
+    <label><span>knob rotation (cut part)</span><span id="vK"></span></label>
+    <input type="range" id="k" min="-180" max="180" step="1" value="0">
+    <div class="hint">The volume knob is re-rendered as an independent cut component: rotate it — its texture spins but the lighting stays pinned to the light, proving per-component dynamic lighting. URL params: ?lx=&amp;ly=&amp;h=&amp;lit=&amp;nrm=&amp;knob=</div>
+  </div>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+
+const VS = `
+attribute vec2 aPos; attribute vec2 aUV;
+varying vec2 vUV;
+void main(){ vUV = aUV; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+const FS = `
+precision highp float;
+varying vec2 vUV;
+uniform sampler2D uAlb, uNrm;
+uniform vec3 uLight;        // in UV space, z = height (in image-width units)
+uniform float uIntensity, uSpec, uAmbient, uBump, uLitMix, uAspect; // aspect = h/w
+uniform vec2 uKnobC; uniform float uKnobR, uKnobAngle;
+vec3 shade(vec2 uv, float ang){
+  vec3 alb = texture2D(uAlb, uv).rgb;
+  vec3 n = texture2D(uNrm, uv).rgb * 2.0 - 1.0;
+  // rotate normal xy with the part rotation so lighting stays world-pinned
+  float c = cos(ang), s = sin(ang);
+  n.xy = vec2(c*n.x - s*n.y, s*n.x + c*n.y);
+  n.xy *= uBump;
+  n = normalize(n);
+  n.y = -n.y;                             // OpenGL G-up -> our v-down space
+  // positions in aspect-corrected UV space so distances are isotropic
+  vec2 p  = vec2(vUV.x, vUV.y * uAspect);
+  vec2 lp = vec2(uLight.x, uLight.y * uAspect);
+  vec3 L = vec3(lp - p, uLight.z);
+  float d = length(L); L /= d;
+  float att = 1.0 / (1.0 + 8.0 * d * d);
+  float diff = max(dot(n, L), 0.0);
+  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+  float spec = pow(max(dot(n, H), 0.0), 42.0) * uSpec;
+  vec3 warm = vec3(1.0, 0.93, 0.82);
+  vec3 lit = alb * (uAmbient + uIntensity * diff * att) * warm + warm * spec * att * uIntensity;
+  return mix(alb, lit, uLitMix);
+}
+void main(){
+  // knob = independently-lit cut part, rotated about its centre
+  vec2 d = vUV - uKnobC; d.y *= uAspect;
+  float r = length(d);
+  if (r < uKnobR) {
+    float c = cos(-uKnobAngle), s = sin(-uKnobAngle);
+    vec2 ruv = vec2(c*d.x - s*(d.y/uAspect), s*d.x + c*(d.y/uAspect));
+    vec2 uv2 = uKnobC + vec2(ruv.x, ruv.y);
+    float edge = smoothstep(uKnobR, uKnobR - 0.004, r);
+    vec3 part = shade(uv2, uKnobAngle);
+    vec3 body = shade(vUV, 0.0);
+    gl_FragColor = vec4(mix(body, part, edge), 1.0);
+  } else {
+    gl_FragColor = vec4(shade(vUV, 0.0), 1.0);
+  }
+}`;
+
+function sh(type, src){ const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(s); return s; }
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(prog); gl.useProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+  -1,-1, 0,1,   1,-1, 1,1,   -1,1, 0,0,   1,1, 1,0]), gl.STATIC_DRAW);
+const aPos = gl.getAttribLocation(prog, 'aPos'), aUV = gl.getAttribLocation(prog, 'aUV');
+gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
+gl.enableVertexAttribArray(aUV);  gl.vertexAttribPointer(aUV, 2, gl.FLOAT, false, 16, 8);
+
+const U = n => gl.getUniformLocation(prog, n);
+function tex(unit){ const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit);
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); return t; }
+const tAlb = tex(0), tNrm = tex(1);
+gl.uniform1i(U('uAlb'), 0); gl.uniform1i(U('uNrm'), 1);
+
+// knob centre/radius measured on albedo-roll0.png (1856x2304): cx 360, cy 1833, r 106
+// (radius stays inside the knurled outer edge so rotation doesn't drag plate texture)
+const IMG_W = 1856, IMG_H = 2304;
+gl.uniform2f(U('uKnobC'), 360/IMG_W, 1833/IMG_H);
+gl.uniform1f(U('uKnobR'), 106/IMG_W);
+gl.uniform1f(U('uAspect'), IMG_H/IMG_W);
+
+const state = {
+  lx: parseFloat(Q.get('lx') ?? 0.5), ly: parseFloat(Q.get('ly') ?? 0.35),
+  h: parseFloat(Q.get('h') ?? 0.35), i: 1.6, s: 0.55, a: 0.22, b: 1.0,
+  k: parseFloat(Q.get('knob') ?? 0) * Math.PI/180,
+  lit: (Q.get('lit') ?? '1') !== '0',
+  nrm: Q.get('nrm') ?? 'marigold',
+};
+
+function loadImg(src){ return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; }); }
+const nrmImgs = {};
+async function setNormal(which){
+  state.nrm = which;
+  if (!nrmImgs[which]) nrmImgs[which] = await loadImg(which === 'sobel' ? 'normal-sobel.png' : 'normal-marigold.png');
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tNrm);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, nrmImgs[which]);
+  draw();
+}
+
+function resize(){
+  const w = canvas.clientWidth || 600;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(w * (IMG_H/IMG_W) * dpr);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  draw();
+}
+window.addEventListener('resize', resize);
+
+function draw(){
+  gl.uniform3f(U('uLight'), state.lx, state.ly, state.h);
+  gl.uniform1f(U('uIntensity'), state.i);
+  gl.uniform1f(U('uSpec'), state.s);
+  gl.uniform1f(U('uAmbient'), state.a);
+  gl.uniform1f(U('uBump'), state.b);
+  gl.uniform1f(U('uLitMix'), state.lit ? 1 : 0);
+  gl.uniform1f(U('uKnobAngle'), state.k);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+canvas.addEventListener('pointermove', e => {
+  const r = canvas.getBoundingClientRect();
+  state.lx = (e.clientX - r.left) / r.width;
+  state.ly = (e.clientY - r.top) / r.height;
+  draw();
+});
+
+const $ = id => document.getElementById(id);
+const litB = $('btnLit'), albB = $('btnAlb');
+function setLit(v){ state.lit = v; litB.classList.toggle('on', v); albB.classList.toggle('on', !v); draw(); }
+litB.onclick = () => setLit(true);
+albB.onclick = () => setLit(false);
+setLit(state.lit);
+$('selNrm').value = state.nrm;
+$('selNrm').onchange = e => setNormal(e.target.value);
+for (const [id, key, fmt] of [['h','h',v=>v.toFixed(2)],['i','i',v=>v.toFixed(2)],['s','s',v=>v.toFixed(2)],['a','a',v=>v.toFixed(2)],['b','b',v=>v.toFixed(2)],['k','k',v=>Math.round(v*180/Math.PI)+'°']]){
+  const el = $(id), lab = $('v'+id.toUpperCase());
+  if (id === 'k') el.value = state.k*180/Math.PI; else el.value = state[key];
+  lab.textContent = fmt(state[key]);
+  el.oninput = () => { state[key] = id === 'k' ? el.value*Math.PI/180 : parseFloat(el.value); lab.textContent = fmt(state[key]); draw(); };
+}
+
+(async () => {
+  const alb = await loadImg('albedo-roll0.png');
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tAlb);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, alb);
+  await setNormal(state.nrm);
+  resize();
+  document.title = 'pbrtest ready';
+})();
+</script>
+</body>
+</html>

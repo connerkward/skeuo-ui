@@ -7,3 +7,4 @@ assets-*/blueprint.png
 assets-*_biref/
 __pycache__/
 review.json
+pbrtest/pydeps/
