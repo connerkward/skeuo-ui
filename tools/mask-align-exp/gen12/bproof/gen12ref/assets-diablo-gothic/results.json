@@ -1,0 +1,143 @@
+{
+ "id": "diablo-gothic",
+ "mode": "templateless",
+ "seed": 110,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "stone_grey": [
+   92,
+   88,
+   90
+  ],
+  "tarnished_iron": [
+   64,
+   60,
+   58
+  ],
+  "blood_red": [
+   150,
+   30,
+   30
+  ],
+  "bone": [
+   196,
+   184,
+   160
+  ],
+  "ember": [
+   210,
+   120,
+   40
+  ]
+ },
+ "keys": {
+  "playpause": [
+   0,
+   255,
+   255
+  ],
+  "prev": [
+   255,
+   0,
+   255
+  ],
+  "next": [
+   0,
+   255,
+   0
+  ],
+  "repeat": [
+   0,
+   0,
+   255
+  ],
+  "queue": [
+   0,
+   255,
+   128
+  ],
+  "vol": [
+   0,
+   128,
+   255
+  ],
+  "seek": [
+   128,
+   0,
+   255
+  ],
+  "shuffle": [
+   128,
+   255,
+   0
+  ],
+  "visualizer": [
+   255,
+   255,
+   0
+  ],
+  "album_art": [
+   255,
+   0,
+   128
+  ]
+ },
+ "keyNames": {
+  "playpause": "CYAN",
+  "prev": "MAGENTA",
+  "next": "PURE GREEN",
+  "repeat": "PURE BLUE",
+  "queue": "SPRING GREEN",
+  "vol": "AZURE BLUE",
+  "seek": "VIOLET-PURPLE",
+  "shuffle": "CHARTREUSE",
+  "visualizer": "YELLOW",
+  "album_art": "ROSE PINK"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "template": {},
+ "prompt_len": 9016
+}

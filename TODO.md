@@ -574,18 +574,27 @@ entries already under "saved for later" above — those four stand as-is.
    individually detected/cut (not merged into one blob) — per [[verify-outputs-rule]] §7,
    inspect the real rendered player, not the extractor's JSON output alone.
 
-8. **Fresh-regen re-review round — the 15-skin regen-all was RUNNING, not confirmed landed.**
-   `tools/mask-align-exp/gen12/.regen-start` timestamps the run at 2026-07-09 13:20:02 PDT;
-   `regen-monitor.log`'s only line (`13:20:02 fresh-orch=0/15 running=6`) shows it had just
-   started. As of session close, `assets-*` (18 non-biref dirs on disk) reflects SOME
-   regenerated state but no `orchestrate12`-family process was still running and no aggregate
-   commit exists yet for the full batch — the working tree shows uncommitted changes to
-   `tools/mask-align-exp/gen12/assets-fallout-vault/regions.json`,
-   `assets-steam-porthole/regions.json`, `build_dashboard.py`, and `dashboard12.html`. Next
-   session: confirm the regen actually completed for all 15 (check each `assets-*/regions.json`
-   mtime + a `built.png` render), commit the aggregate, rebuild
-   [dashboard12.html](tools/mask-align-exp/gen12/dashboard12.html) via `build_dashboard.py`, hand
-   the review URL (`http://localhost:54731/dashboard12.html` per
-   [.review-url](tools/mask-align-exp/gen12/.review-url) — re-serve if stale) to the user for the
-   human PASS/FAIL gate (`review_server` → `review.json`), then act on whatever verdicts come back
-   (including resolving item 3's n64-lowpoly question in that same pass).
+8. **Fresh-regen landed — 7/15 PASS, committed `46574f6c`.** Per-skin history/reasons:
+   `tools/mask-align-exp/gen12/assets-*/orch.json`. Follow-ups from closing this out below.
+
+9. **Gate bug fixes (user-approved 2026-07-09) — do NOT restore mirror-opposite state
+   scoring, user likes the protruding/asymmetric switch look:**
+   - `state-align` gate in [extract12.py](tools/mask-align-exp/gen12/extract12.py) scores raw
+     silhouette IoU≥0.9 between OFF/ON toggle cuts, penalizing a legitimately creative/asymmetric
+     switch (lever moved to the opposite end = different silhouette by design). Loosen or drop
+     this IoU check — user wants creative, non-mirrored switch states preserved, not gated
+     against.
+   - Gate FAILs on n64-lowpoly / ps1-crunchy / wmp-vario in the `46574f6c` regen report an
+     **empty `reasons` list** — some failure branch in `extract12.py`'s gate block isn't
+     attaching a reason string. Find it and make it emit one.
+   - `build_dashboard.py` counted 18 skins not 15 (glob picks up `abshape/assets-abshape-*`
+     experiment dirs alongside the real `assets-<theme>` roster) — exclude `abshape/` and
+     `bproof/` from its glob.
+
+10. **Human review of the 7 fresh PASSes — not yet reviewed.** diablo-gothic, fa-pod,
+    fallout-pipboy, fallout-vault, n64-cutscene, steam-porthole, wc-goldshield (seed/rolls per
+    skin in `orch.json`). User's own note closing the session: "the skins are getting uglier
+    tho" — the stricter gate may be passing technically-correct but less visually striking
+    generations; worth checking whether it's now over-constraining aesthetics, not just
+    geometry. Re-serve `tools/mask-align-exp/gen12` and open
+    [dashboard12.html](tools/mask-align-exp/gen12/dashboard12.html) for the pass/fail/notes gate.

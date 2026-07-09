@@ -1,0 +1,16 @@
+{
+ "id": "diablo-gothic",
+ "model": "gemini-3-pro-image-preview (Vertex AI, global; same model fal proxies)",
+ "seed": 110,
+ "resolution": "4K",
+ "aspect_ratio": "4:5",
+ "dims": [
+  3712,
+  4608
+ ],
+ "prompt": "A skeuomorphic media-player device, top-down orthographic, centered on a flat uniform pale grey-white backdrop: DIABLO / BALDUR'S GATE dark GOTHIC media player: carved grimdark STONE and tarnished IRON, glowing BLOOD-RED runes and ember cracks, skulls and gothic ornament, bone inlays, torchlit shadow, oppressive medieval-hell atmosphere. Weathered stone, rusted metal, red arcane glow. It has physical controls: five icon buttons (play/pause, prev, next, repeat, queue), a round volume knob, a horizontal seek slot, a small toggle switch, an album-art window and a visualizer window. No text anywhere.",
+ "prompt_chars": 603,
+ "gen12_prompt_chars": 9016,
+ "elapsed_s": 40.5,
+ "input": "flat 1200x1500 RGB(235,235,238) canvas"
+}

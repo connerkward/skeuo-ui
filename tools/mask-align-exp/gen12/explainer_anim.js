@@ -707,9 +707,24 @@
       const w = bw * padF, h = bh * (1 + (padF - 1) * 0.55);
       return { x: cx - w / 2, y: cy - h / 2, w, h };
     }
-    const V_SLOT = bboxView(reg.regions.shuffle.maskDevice, 2.4);
-    const V_VOL = bboxView(reg.regions.vol.maskDevice, 2.0);
-    const V_FULL = { x: 0, y: 0, w: MW, h: MH };
+    // mask→paint drift correction. The model's mask blobs are spatially DRIFTED from
+    // the paint; extract12 corrects this (snap_to_paint + [global drift] + fits) and
+    // ships BOTH rects: `maskDevice` = the RAW mask blob bbox, `device` = the corrected
+    // paint-space rect. PCA is translation-invariant, so the math runs on raw mask px —
+    // but to DISPLAY those px over the paint crop the same correction must be applied,
+    // or the cloud lands off the painted control (the drift, visualised by accident).
+    // We shift the PAINT source rect by the per-control centre delta so every mask-space
+    // layer (points, axis, devFrac line, mask glow) stays mutually consistent and the
+    // cloud sits ON the painted slot. Live from regions.json, like everything else here.
+    const paintDelta = (c) => {
+      const d = c.device, m = c.maskDevice || d;
+      return { pdx: ((d[0] + d[2] / 2) - (m[0] + m[2] / 2)) * MW,
+               pdy: ((d[1] + d[3] / 2) - (m[1] + m[3] / 2)) * MH };
+    };
+    const D_SLOT = paintDelta(reg.regions.shuffle);
+    const V_SLOT = { ...bboxView(reg.regions.shuffle.maskDevice, 2.4), ...D_SLOT };
+    const V_VOL = { ...bboxView(reg.regions.vol.maskDevice, 2.0), ...paintDelta(reg.regions.vol) };
+    const V_FULL = { x: 0, y: 0, w: MW, h: MH, ...D_SLOT };   // zoom-outs keep the slot's Δ
     let view = { ...V_SLOT };
     const SX = 12, SY = 16, SW = 320, SH = 436;              // left stage box
     function proj() {                                        // current mask-px → canvas transform
@@ -717,7 +732,7 @@
       const ox = SX + (SW - view.w * s) / 2, oy = SY + (SH - view.h * s) / 2;
       return { s, ox, oy, X: (x) => ox + (x - view.x) * s, Y: (y) => oy + (y - view.y) * s };
     }
-    const lerpView = (A, B, t) => { view.x = A.x + (B.x - A.x) * t; view.y = A.y + (B.y - A.y) * t; view.w = A.w + (B.w - A.w) * t; view.h = A.h + (B.h - A.h) * t; };
+    const lerpView = (A, B, t) => { view.x = A.x + (B.x - A.x) * t; view.y = A.y + (B.y - A.y) * t; view.w = A.w + (B.w - A.w) * t; view.h = A.h + (B.h - A.h) * t; view.pdx = A.pdx + (B.pdx - A.pdx) * t; view.pdy = A.pdy + (B.pdy - A.pdy) * t; };
 
     const RX = 352, RW = 396;                                 // right column
     function meterBar(y, name, val, vmax, color, note) {
@@ -742,11 +757,18 @@
     function stage(P, title) {
       ctx.save();
       ctx.beginPath(); ctx.rect(SX, SY, SW, SH); ctx.clip();
-      ctx.drawImage(paint, view.x, view.y, view.w, view.h, P.ox, P.oy, view.w * P.s, view.h * P.s);
+      // paint sampled at +Δdrift: the painted control appears where its mask blob sits,
+      // so mask-space overlays (cloud/axis/glow) land ON the painted slot — the same
+      // mask→paint correction extract12 ships as device vs maskDevice (see paintDelta).
+      ctx.drawImage(paint, view.x + view.pdx, view.y + view.pdy, view.w, view.h, P.ox, P.oy, view.w * P.s, view.h * P.s);
       ctx.globalCompositeOperation = "screen";               // mask blobs glow over the paint
       ctx.globalAlpha = 0.55;
       ctx.drawImage(mask, view.x, view.y, view.w, view.h, P.ox, P.oy, view.w * P.s, view.h * P.s);
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+      // in-stage annotation: the shift is real (regions.json), not decoration
+      ctx.fillStyle = "#000000aa"; ctx.fillRect(SX, SY + SH - 15, SW, 15);
+      ctx.fillStyle = "#8a90a0"; ctx.font = "9px ui-monospace,monospace";
+      ctx.fillText(`paint drift-aligned: Δ(device−maskDevice) = (${view.pdx.toFixed(0)}, ${view.pdy.toFixed(0)})px`, SX + 4, SY + SH - 4);
       // devFrac line (device band above, sprite strip below)
       const dy = P.Y(devY);
       if (dy > SY && dy < SY + SH) {
@@ -784,7 +806,7 @@
         ctx.fillText("assign = argmin ‖px − key‖ if <95", RX, 76);
         ctx.fillText(`shuffle DEVICE px (y < devFrac·H): ${SD.n.toLocaleString()}`, RX, 96);
         ctx.fillStyle = "#7df"; ctx.fillText("point cloud = the slot's own pixels", RX, 116);
-        cap("anim-pca", "PHASE 1/7 · point cloud: the toggle slot's mask pixels, DEVICE band only — (assign==idx) & (YY < devFrac·H) — extract12.py _pca_angle() input");
+        cap("anim-pca", "PHASE 1/7 · point cloud: the toggle slot's mask pixels, DEVICE band only — (assign==idx) & (YY < devFrac·H) — extract12.py _pca_angle() input. Paint crop drift-aligned to mask space (Δ = device−maskDevice, regions.json) so the cloud sits ON the painted slot");
         if (pt > 90) { phase = "search"; pt = 0; }
       } else if (phase === "search") {
         pt += a;
