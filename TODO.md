@@ -28,23 +28,16 @@ Reusable: the Gemini-gated verification harness (`tools/align-verify/`, NOT my-e
   `CutCompare.tsx` + the SAM/VLM arm ≈ 1,300 dead lines — see junk list, NOT yet removed).
 
 ## Template Studio
-- [ ] **Auto-snapping grid for Template Studio** (added 2026-07-07). Snap controls to a grid
-      / to each other while dragging-resizing. Library-first: the in-flight react-moveable
-      migration likely covers this out of the box — Moveable ships `snappable`,
-      `snapGridWidth`/`snapGridHeight`, element guidelines + snap thresholds
-      (verify against current react-moveable docs before hand-rolling anything).
-- [ ] **react-moveable migration — finish it (WIP, `917f083`, 2026-07-07).** Overlay + Moveable +
-      Selecto are wired and compile; select/move/resize + the transform box work in the browser.
-      KNOWN BUG: the `updateRect` effect re-fires on every `regions` change (every drag frame) and can
-      disrupt an active gesture — add a "skip while gesturing" guard. Then wire corner-radius via
-      roundable→`corner`, snapping/guidelines, and confirm multi-select drag/resize.
+- [x] **Auto-snapping grid for Template Studio** — included in the use-gesture approach (element guidelines + snap thresholds via Moveable-like config, snappable via alignment hints).
+- [x] **Template Studio gesture handling — MERGED (94bdc58, 2026-07-08).** C approach (pure SVG + @use-gesture/react) integrated as the production solution. Pointer-capture bug fixed (bind useDrag directly to control handles, not SVG root). Overlapping controls allowed. Snapping, alignment guides, corner-radius morphing, arc angle editing all working. Multi-select drag verified.
 
-### Done this session (2026-07-07)
+### Done this session (2026-07-07/08)
 - Per-component HEX identity shared across panels / blueprint / output-mask / prompt-legend (`componentColors`).
 - Diffuse corner-draggable rounded-rect shape (rect↔oval, Illustrator corner handles); slider geometry = line + partial-circle arc.
 - Spotify-only control filter (drops balance / EQ / stop) + de-complexified random layouts; bind dropdown limited to Spotify-drivable binds.
 - Full-height 3-panel layout (RAW / blueprint / painted) + FAL prompt moved to a bottom strip; PACKED hidden behind a `REPACK_ENABLED` flag; blueprint overlays default off + toggleable.
-- **Overlap enforcement removed** (`917f083`): `enforceZeroDiff`/`resolveOverlaps` deleted, controls can now overlap freely. `justify-content: safe center` fixed left-panel masking. Renamed `commitZeroDiff` → `commitGesture`.
+- **Overlap enforcement removed** (`917f083`): `enforceZeroDiff`/`resolveOverlaps` deleted, controls can now overlap freely. `justify-content: safe center` fixed left-panel masking.
+- **Three-way gesture-handling bake-off** (2026-07-07): react-moveable (A), react-konva (B), use-gesture (C) — tested across select/drag/resize/corner-morph/arc-edit. **Selected C (use-gesture)** for production (snap-grid feel, arc placement, pointer-capture fix cleanest). Merged to main, cleaned up worktrees A & B.
 
 ## Cutout — coloured-backdrop matte: WIRED on branch `cutout-coloured-despill` (2026-06-23)
 
