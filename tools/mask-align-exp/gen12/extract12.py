@@ -136,16 +136,37 @@ def missing(name, idx=0):
     r = regs.get(name); s = r and r.get("strip")
     if not (s and len(s) > idx and s[idx]): return True
     return s[idx][2] > MAXW
-for i, name in enumerate(order):
-    if i >= len(parts): continue
+# OVERLAP-AWARE fallback assignment. Blind index-pairing (parts[i] -> order[i]) misassigns the
+# moment the paint band has an extra/merged bright run (a stray glint shifts every later part ->
+# the player gets "a switch that isn't on the sprite sheet"). Instead: trusted mask cells CLAIM
+# their overlapping paint parts; only unclaimed parts fill the MISSING cells, left-to-right.
+def _xov(a, c):
+    return max(0.0, min(a[0] + a[2], c[0] + c[2]) - max(a[0], c[0]))
+claimed = []
+for name in order:
+    if TOGGLE and name.startswith(TOGGLE):
+        idx = 0 if name.endswith("_off") else 1
+        s = (regs.get(TOGGLE) or {}).get("strip") or []
+        if len(s) > idx and s[idx] and not missing(TOGGLE, idx): claimed.append(s[idx])
+    else:
+        s = (regs.get(name) or {}).get("strip") or []
+        if s and s[0] and not missing(name): claimed.append(s[0])
+free = [p for p in parts if not any(_xov(p, c) > 0.5 * min(p[2], c[2]) for c in claimed)]
+free.sort(key=lambda p: p[0]); fi = 0
+for name in order:
+    if fi >= len(free): break
     if TOGGLE and name.startswith(TOGGLE):
         regs[TOGGLE] = regs.get(TOGGLE) or {"device": None, "strip": [None, None]}
         idx = 0 if name.endswith("_off") else 1
         while len(regs[TOGGLE]["strip"]) < 2: regs[TOGGLE]["strip"].append(None)
-        if missing(TOGGLE, idx): regs[TOGGLE]["strip"][idx] = parts[i]
+        if missing(TOGGLE, idx):
+            regs[TOGGLE]["strip"][idx] = free[fi]; fi += 1
+            print(f"[strip-fallback] {TOGGLE}[{idx}] <- paint part at x={free[fi-1][0]:.3f}")
     else:
         regs[name] = regs.get(name) or {"device": None, "strip": []}
-        if missing(name): regs[name]["strip"] = [parts[i]]
+        if missing(name):
+            regs[name]["strip"] = [free[fi]]; fi += 1
+            print(f"[strip-fallback] {name} <- paint part at x={free[fi-1][0]:.3f}")
 
 # SNAP-TO-PAINT (X only). Vivid-body distrust: if >55% of the window is saturated, no icon to snap.
 paintrgb = np.asarray(Image.open(os.path.join(OUT, "paint.png")).convert("RGB")).astype(int)
@@ -415,16 +436,26 @@ if SLIDER:
     r = regs.get(SLIDER)
     if r and r.get("device"):
         b = r["device"]; mb = r.get("maskDevice") or b
-        cyp = (b[1] + b[3] / 2) * GH; hh = max(6, int(b[3] * GH * 0.30)); by0 = int(cyp - hh); by1 = int(cyp + hh)
-        ux0 = min(b[0], mb[0]); ux1 = max(b[0] + b[2], mb[0] + mb[2])   # union: fit bbox + mask cell
-        pad = int((ux1 - ux0) * GW * 0.40)
-        bx0 = max(0, int(ux0 * GW) - pad); bx1 = min(GW, int(ux1 * GW) + pad)
-        med = np.median(paintrgb[by0:by1, bx0:bx1].max(2), 0)
+        # PORTRAIT slot (h > w*1.3) => VERTICAL slider (wmp-vario "seek goes up and down"):
+        # run the identical level-aware walk along Y by transposing the paint + swapping the
+        # rect axes; travel is then emitted as a Y-range + "vertical": true for the player.
+        VERT = (b[3] * GH) > (b[2] * GW) * 1.3
+        if VERT:
+            _prgb = np.ascontiguousarray(paintrgb.transpose(1, 0, 2))
+            _W, _H = GH, GW
+            _b = [b[1], b[0], b[3], b[2]]; _mb = [mb[1], mb[0], mb[3], mb[2]]
+        else:
+            _prgb = paintrgb; _W, _H = GW, GH; _b = b; _mb = mb
+        cyp = (_b[1] + _b[3] / 2) * _H; hh = max(6, int(_b[3] * _H * 0.30)); by0 = int(cyp - hh); by1 = int(cyp + hh)
+        ux0 = min(_b[0], _mb[0]); ux1 = max(_b[0] + _b[2], _mb[0] + _mb[2])   # union: fit bbox + mask cell
+        pad = int((ux1 - ux0) * _W * 0.40)
+        bx0 = max(0, int(ux0 * _W) - pad); bx1 = min(_W, int(ux1 * _W) + pad)
+        med = np.median(_prgb[by0:by1, bx0:bx1].max(2), 0)
         med = np.convolve(med, np.ones(7) / 7, mode="same")    # smooth: kill 1-col noise dips
-        cdist = np.median(np.abs(paintrgb[by0:by1, bx0:bx1] - BGC).max(2), 0)
-        gx0, gx1 = int(b[0] * GW), int((b[0] + b[2]) * GW)
+        cdist = np.median(np.abs(_prgb[by0:by1, bx0:bx1] - BGC).max(2), 0)
+        gx0, gx1 = int(_b[0] * _W), int((_b[0] + _b[2]) * _W)
         dx0 = max(0, gx0 - bx0); dx1 = min(len(med), gx1 - bx0)
-        mx0 = max(0, int(mb[0] * GW) - bx0); mx1 = min(len(med), int((mb[0] + mb[2]) * GW) - bx0)
+        mx0 = max(0, int(_mb[0] * _W) - bx0); mx1 = min(len(med), int((_mb[0] + _mb[2]) * _W) - bx0)
         if mx1 <= mx0: mx0, mx1 = dx0, dx1
         cw = max(1, mx1 - mx0)
         bgd = float(BGC.max())                                 # designed backdrop level (known)
@@ -463,10 +494,16 @@ if SLIDER:
         if hi - lo < 0.5 * (gx1 - gx0):                        # detection collapsed → keep fit bbox
             lo, hi = gx0, gx1
         lo = max(lo, bx0 + mx0 - int(0.12 * cw)); hi = min(hi, bx0 + mx1 + int(0.12 * cw))
-        r["device"] = [lo / GW, b[1], (hi - lo) / GW, b[3]]    # expand device to the painted groove
         M = int((hi - lo) * 0.02)
-        r["travel"] = [round(max(0, lo - M) / GW, 5), round(min(GW, hi + M) / GW, 5)]
-        print(f"[travel] {SLIDER} groove {lo}..{hi}px (fit bbox {gx0}..{gx1}, mask cell {bx0 + mx0}..{bx0 + mx1}, "
+        tvv = [round(max(0, lo - M) / _W, 5), round(min(_W, hi + M) / _W, 5)]
+        if VERT:
+            r["device"] = [b[0], lo / _W, b[2], (hi - lo) / _W]   # expand device to the painted groove (Y)
+            r["travel"] = tvv; r["vertical"] = True
+        else:
+            r["device"] = [lo / _W, b[1], (hi - lo) / _W, b[3]]   # expand device to the painted groove (X)
+            r["travel"] = tvv; r.pop("vertical", None)
+        print(f"[travel] {SLIDER} {'VERTICAL ' if VERT else ''}groove {lo}..{hi}px "
+              f"(fit bbox {gx0}..{gx1}, mask cell {bx0 + mx0}..{bx0 + mx1}, "
               f"body L{bodyL:.0f}/R{bodyR:.0f} floor {Dfloor:.0f}) -> travel {r['travel']}")
 
 # ---- SLOT ANGLE (rotational placement): a slot following an organic body is tilted, so the part
@@ -593,7 +630,8 @@ missing = [k for k in NAMES if not (regs.get(k) and regs[k].get("device"))]
 seek_cov = None
 if SLIDER and regs.get(SLIDER) and regs[SLIDER].get("travel") and regs[SLIDER].get("device"):
     tv = regs[SLIDER]["travel"]; gb = regs[SLIDER]["device"]
-    seek_cov = round((tv[1] - tv[0]) / max(1e-6, gb[2]), 3)   # travel span / groove width (~1.0 good)
+    gext = gb[3] if regs[SLIDER].get("vertical") else gb[2]   # groove extent along the travel axis
+    seek_cov = round((tv[1] - tv[0]) / max(1e-6, gext), 3)    # travel span / groove extent (~1.0 good)
 # state-align sanity
 sa = (regs.get(TOGGLE) or {}).get("stateAlign") if TOGGLE else None
 sa_ok = bool(sa and 0.7 <= sa.get("scaleX", 0) <= 1.4 and 0.7 <= sa.get("scaleY", 0) <= 1.4 and sa.get("iou", 0) >= 0.9)
