@@ -1,0 +1,40 @@
+{
+ "skin": "steam-porthole",
+ "steps": [
+  {
+   "img": "01-blueprint.png",
+   "t": "1 \u00b7 Blueprint / scaffold",
+   "d": "What WE draw and send (free, PIL): LEFT a placeholder body with one coloured OUTLINE per control (the colour is the control's identity), RIGHT pure black where the model must paint the colour-by-numbers mask. Templateless mode sends just the flat backdrop + strip divider."
+  },
+  {
+   "img": "02-joint.png",
+   "t": "2 \u00b7 One generation, two panels",
+   "d": "ONE image-edit call (fal-ai/gemini-3-pro-image-preview/edit, ~$0.15) returns both panels in a single 4K canvas: the painted skin on the left, the flat-colour region mask on the right \u2014 pixel-aligned because they were generated together. We split it down the middle."
+  },
+  {
+   "img": "03-detection.png",
+   "t": "3 \u00b7 Detection \u2014 read the mask like a map",
+   "d": "Every pixel of the RIGHT panel is compared to the known guide colours (nearest-colour within a distance gate); the largest connected blob of each colour = that control's location. Boxes here are drawn from regions.json onto the real paint \u2014 identity comes from COLOUR, never from guessing shapes."
+  },
+  {
+   "img": "04-matte.png",
+   "t": "4 \u00b7 Matting \u2014 BiRefNet cuts everything at once",
+   "d": "One BiRefNet v2 pass (~$0.005) over the paint returns an alpha matte: device body and each loose strip part become separate opaque ISLANDS; empty sockets punch HOLES through the device island (we use those holes' centroids as knob seats in step 6)."
+  },
+  {
+   "img": "05-miscut.png",
+   "t": "5 \u00b7 The mis-cut bug \u2014 why we stopped trusting a bad mask blindly",
+   "d": "Diablo case study. TOP: the painted strip really has knob \u00b7 thumb \u00b7 two landscape switches. BOTTOM: the model's MASK put the shuffle cells at the wrong size/position (red boxes \u2014 compare where they land on the paint). The old code then matched BiRefNet islands to parts by NEAREST CENTROID, so a wrong-shaped island got labelled 'switch' \u2014 the phantom part you saw. The fix: a part is assigned ONLY to the island that OVERLAPS its colour-coded mask cell (identity from colour, geometry from BiRefNet), and a mask this broken now FAILS the gate and re-rolls instead of shipping."
+  },
+  {
+   "img": "06-alignment.png",
+   "t": "6 \u00b7 Alignment \u2014 computed placement, drawn on the real paint",
+   "d": "Green: knob seat (gradient circle-fit radius, centre snapped to the matte hole's centroid). Yellow: seek travel span (pixel-walk to the slot's visual ends, clamped to the groove). Blue: toggle slot; its two states are silhouette-registered so the housing never jumps. These are the ACTUAL numbers from regions.json rendered back onto the paint \u2014 studio overlay, not part of the artifact."
+  },
+  {
+   "img": "07-parts.png",
+   "t": "7 \u00b7 The cut parts \u2014 ready to seat",
+   "d": "The final loose sprites, cut by BiRefNet and IDENTIFIED by mask-cell overlap (fix from step 5). The player seats these live: knob rotates under drag (pinned screen-blend specular), thumb slides the travel span, switch swaps its registered states."
+  }
+ ]
+}
