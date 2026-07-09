@@ -1,0 +1,170 @@
+<!doctype html>
+<!-- capture harness for exporting the gen12 explainer animations as shareable video.
+     Renders ONE panel at a time into a fixed-size stage with a title bar and a live
+     step-caption strip that mirrors the panel's own phase captions (explainer_anim.js
+     writes them to #anim-<id>-cap every frame — we style that element AS the strip,
+     so captions are always faithful to the real phase logic, never re-derived).
+     Query params:  ?anim=knob|travel|pca|iou   &aspect=16x9|3x4
+     Recorder flow: page builds DOM → window.__ready=true → recorder calls
+     window.__start() (injects explainer_anim.js so the animation begins on camera)
+     → window.__loops counts completed loops (caption returning to "PHASE 1") so the
+     recorder can stop after ≥2 full loops regardless of the achieved rAF rate. -->
+<html>
+<head>
+<meta charset="utf-8">
+<!-- resolve explainer_anim.js's page-relative asset fetches (assets-*/…) against gen12/ -->
+<base href="../">
+<title>gen12 anim export</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0a0c10;
+              font-family:ui-monospace,'SF Mono',Menlo,monospace; }
+  #frame { display:flex; flex-direction:column; background:#0a0c10; }
+
+  /* ── title bar ── */
+  #titlebar { flex:0 0 auto; padding:22px 44px 14px;
+              border-bottom:1px solid #1c2230; background:#0d0f14; }
+  #title  { color:#e8ecf4; font-weight:700; letter-spacing:.01em; }
+  #title .accent { color:#6f9; }
+  #sub    { color:#8a90a0; margin-top:8px; }
+
+  /* ── stage (the live canvas, CSS-upscaled) ── */
+  #stage  { flex:1 1 auto; display:flex; align-items:center; justify-content:center;
+            min-height:0; padding:18px; }
+  #stage canvas { border:1px solid #232b3c; border-radius:6px; background:#0d0f14; }
+
+  /* ── caption strip = the panel's own live cap element, styled big ── */
+  #capwrap { flex:0 0 auto; background:#0d0f14; border-top:1px solid #1c2230;
+             padding:20px 44px; display:flex; align-items:center; gap:20px; }
+  #capdot  { flex:0 0 auto; width:14px; height:14px; border-radius:50%;
+             background:#6f9; box-shadow:0 0 12px #6f96; }
+  .livecap { color:#cdd3dd; line-height:1.42; }
+  .livecap:empty::before { content:"loading real artifacts…"; color:#5a6070; }
+
+  /* ── footer: models + cost (dev-facing annotation) ── */
+  #foot { flex:0 0 auto; padding:10px 44px 14px; background:#0d0f14;
+          color:#5a6070; display:flex; justify-content:space-between; gap:16px; }
+
+  /* ════ 16:9 · 1920×1080 — caption at the BOTTOM ════ */
+  body[data-aspect="16x9"] #frame   { width:1920px; height:1080px; }
+  body[data-aspect="16x9"] #title   { font-size:38px; }
+  body[data-aspect="16x9"] #sub     { font-size:19px; }
+  body[data-aspect="16x9"] #stage canvas { width:1180px; height:auto; }
+  body[data-aspect="16x9"] #capwrap { min-height:158px; order:5; }
+  body[data-aspect="16x9"] .livecap { font-size:27px; }
+  body[data-aspect="16x9"] #foot    { order:6; font-size:15px; }
+
+  /* ════ 3:4 · 1080×1440 — caption directly BELOW the title ════ */
+  body[data-aspect="3x4"] #frame   { width:1080px; height:1440px; }
+  body[data-aspect="3x4"] #titlebar{ padding:26px 36px 16px; }
+  body[data-aspect="3x4"] #title   { font-size:34px; }
+  body[data-aspect="3x4"] #sub     { font-size:17px; }
+  body[data-aspect="3x4"] #capwrap { min-height:236px; order:2; padding:22px 36px;
+                                     border-top:none; border-bottom:1px solid #1c2230; }
+  body[data-aspect="3x4"] .livecap { font-size:26px; }
+  body[data-aspect="3x4"] #stage   { order:3; }
+  body[data-aspect="3x4"] #stage canvas { width:1010px; height:auto; }
+  body[data-aspect="3x4"] #foot    { order:6; font-size:14px; padding:10px 36px 16px; }
+</style>
+</head>
+<body>
+<div id="frame">
+  <div id="titlebar">
+    <div id="title"></div>
+    <div id="sub"></div>
+  </div>
+  <div id="capwrap"><div id="capdot"></div><!-- livecap injected here --></div>
+  <div id="stage"><!-- canvas injected here --></div>
+  <div id="foot">
+    <span>artifacts: paint+mask <b style="color:#8a90a0">fal-ai/gemini-3-pro-image-preview/edit</b> ·
+          matte/cuts <b style="color:#8a90a0">fal-ai/birefnet/v2</b> · algorithm replay = local, $0</span>
+    <span>skeuo-ui gen12 · extract12.py · LIVE recompute, not a cartoon</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── 60Hz rAF throttle ────────────────────────────────────────────────────
+  // Headless Chromium under Playwright video recording ticks rAF at the host
+  // display's rate (~118Hz on this box), which would make the frame-counted
+  // animations play ~2× their designed pacing. The panels advance by frames,
+  // so capping the callback rate at 60Hz restores 1× pacing exactly.
+  // Queued single-pump shim: every caller's callback fires on the same throttled
+  // 60Hz beat (a naive per-caller throttle starves whichever caller loses the
+  // race to update lastTs — Playwright's own rAF-based pollers included).
+  const nativeRAF = window.requestAnimationFrame.bind(window);
+  let rafQueue = [], rafScheduled = false, lastTs = -1e9;
+  function rafPump(ts) {
+    if (ts - lastTs >= 1000 / 60 - 1.5) {
+      lastTs = ts;
+      const q = rafQueue; rafQueue = []; rafScheduled = false;
+      for (const cb of q) cb(ts);
+      if (rafQueue.length && !rafScheduled) { rafScheduled = true; nativeRAF(rafPump); }
+    } else nativeRAF(rafPump);
+  }
+  window.requestAnimationFrame = (cb) => {
+    rafQueue.push(cb);
+    if (!rafScheduled) { rafScheduled = true; nativeRAF(rafPump); }
+    return 0;
+  };
+
+  const q = new URLSearchParams(location.search);
+  const anim = q.get("anim") || "knob";
+  const aspect = q.get("aspect") === "3x4" ? "3x4" : "16x9";
+  document.body.dataset.aspect = aspect;
+
+  const META = {
+    knob:   { id: "anim-knob",   w: 720, h: 430,
+              title: 'Knob seat — <span class="accent">gradient circle-fit → matte-hole centroid snap</span>',
+              sub:   "extract12.py circle_fit() · steam-porthole vol knob · real paint px, real gradient math" },
+    travel: { id: "anim-travel", w: 760, h: 470,
+              title: 'Seek travel — <span class="accent">coverage-span luminance walk</span>',
+              sub:   "extract12.py [travel] · ps1-crunchy seek slot · per-column median profile, outward walk" },
+    pca:    { id: "anim-pca",    w: 760, h: 470,
+              title: 'Slot rotation — <span class="accent">device-only PCA axis + elongation gate</span>',
+              sub:   "extract12.py _pca_angle() · diablo-gothic shuffle slot · real mask px, real covariance" },
+    iou:    { id: "anim-iou",    w: 760, h: 450,
+              title: 'Switch state align — <span class="accent">silhouette-IoU registration</span>',
+              sub:   "extract12.py [state-align] · steam-porthole shuffle OFF/ON cuts · (dx,dy)∈[−12,12]² search" },
+  };
+  const m = META[anim];
+  document.getElementById("title").innerHTML = m.title;
+  document.getElementById("sub").textContent = m.sub;
+
+  // the canvas explainer_anim.js looks up, and the cap element it writes captions to —
+  // the cap element IS our big caption strip (faithful by construction)
+  const cv = document.createElement("canvas");
+  cv.id = m.id;
+  document.getElementById("stage").appendChild(cv);
+  const capEl = document.createElement("div");
+  capEl.id = m.id + "-cap";
+  capEl.className = "livecap";
+  document.getElementById("capwrap").appendChild(capEl);
+
+  // loop counter: a caption transition back into "PHASE 1" after a later phase = one
+  // completed loop. Counted on real caption changes so it works at any rAF rate.
+  window.__loops = 0;
+  let sawLater = false, last = "";
+  new MutationObserver(() => {
+    const t = capEl.textContent || "";
+    if (t === last) return;
+    last = t;
+    if (/^PHASE 1\//.test(t)) { if (sawLater) { window.__loops++; sawLater = false; } }
+    else if (/^PHASE \d/.test(t)) sawLater = true;
+  }).observe(capEl, { childList: true, characterData: true, subtree: true });
+
+  // recorder handshake: inject the REAL explainer script only when told to,
+  // so the recording starts at the animation's own t=0 (no edit to the source file).
+  window.__started = false;
+  window.__start = function () {
+    if (window.__started) return;
+    window.__started = true;
+    const s = document.createElement("script");
+    s.src = "explainer_anim.js";        // resolves via <base href="../"> → gen12/
+    document.body.appendChild(s);
+  };
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
