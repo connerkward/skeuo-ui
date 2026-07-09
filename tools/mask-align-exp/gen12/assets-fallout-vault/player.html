@@ -11,9 +11,9 @@
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
     background:url('paint.png?v=1783580036') no-repeat;background-size:100% auto;border-radius:12px}
-  .pbtn{position:absolute;cursor:pointer;border-radius:14px;touch-action:manipulation}
-  .pbtn .ink{position:absolute;inset:-9%;border-radius:inherit;background:radial-gradient(closest-side,#000d 0%,#000a 65%,#0000 100%);
-    mix-blend-mode:multiply;opacity:0;transition:opacity .08s}
+  .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
+  .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
+    opacity:0;transition:opacity .06s}
   .pbtn:active .ink{opacity:1}
   .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
   .pknob .cap{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}
@@ -86,9 +86,9 @@ const V='1783580036';
       const ci=new Image();ci.src=CUT['vol'].url;await ci.decode();sg.drawImage(ci,0,0,12,12);
       const dd=sg.getImageData(0,0,12,12).data;let rr=0,gg=0,bb=0,nn=0;
       for(let i=0;i<dd.length;i+=4){if(dd[i+3]>60){rr+=dd[i];gg+=dd[i+1];bb+=dd[i+2];nn++;}}
-      if(nn){const L=v=>Math.min(255,Math.round(v/nn*0.45+255*0.55));
-        el.querySelector('.spec').style.background='radial-gradient(42% 34% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.75), rgba(255,255,255,0) 60%)';}
-    }catch(e){ el.querySelector('.spec').style.background='radial-gradient(42% 34% at 38% 30%,#ffffff99,#fff0 60%)'; }
+      if(nn){const L=v=>Math.min(255,Math.round(v/nn*0.75+255*0.25));
+        el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.32), rgba(255,255,255,0) 60%)';}
+    }catch(e){ el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%,#ffffff4d,#fff0 60%)'; }
     const cap=el.querySelector('.cap');let val=0.7,sy=0,sv=0,drag=false;
     const rend=()=>cap.style.transform='rotate('+(-135+val*270)+'deg)';rend();
     el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
@@ -130,12 +130,73 @@ const V='1783580036';
     el.addEventListener('click',()=>{ison=!ison;place(ison?on:off,ison);});
     phone.appendChild(el);
   }
-  // ---- baked icon buttons (crop the painted icon facet, transparent hotspot + ink) ----
-  const BTN=R.buttons||[];
+  // ---- baked icon buttons: pressed state = the button's OWN pixels redrawn darkened +
+  // shifted down (physical travel), clipped to its EXACT silhouette from the colour mask
+  // (cutMaskShape-style). No bbox ellipse, no gradient wash.
+  const BTN=R.buttons||[], KEY=R.keys||{};
+  let MC=null,MW=0,MH=0;
+  try{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
+    MW=mi.naturalWidth; MH=mi.naturalHeight;
+    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
+    MC.getContext('2d').drawImage(mi,0,0); }catch(e){}
   for(const b of BTN){ const r=regs[b]; if(!r||!r.device) continue;
+    const db=r.device, mb=r.maskDevice||db;
     const el=document.createElement('div');el.className='pbtn';el.title=b;
-    el.style.left=px(r.device)+'%';el.style.top=py(r.device)+'%';el.style.width=pw(r.device)+'%';el.style.height=ph(r.device)+'%';
-    el.innerHTML='<div class=ink></div>';
+    el.style.left=px(db)+'%';el.style.top=py(db)+'%';el.style.width=pw(db)+'%';el.style.height=ph(db)+'%';
+    const ink=document.createElement('div'); ink.className='ink'; el.appendChild(ink);
+    try{
+      // crop the mask around the button blob (small pad), then the same rect in PAINT space
+      // is the mask rect shifted by the mask→paint drift (device vs maskDevice centres)
+      const PAD=0.10;
+      const crop=[mb[0]-mb[2]*PAD, mb[1]-mb[3]*PAD, mb[2]*(1+2*PAD), mb[3]*(1+2*PAD)];
+      const dx=(db[0]+db[2]/2)-(mb[0]+mb[2]/2), dy=(db[1]+db[3]/2)-(mb[1]+mb[3]/2);
+      const eb=[crop[0]+dx, crop[1]+dy, crop[2], crop[3]];
+      const cw=Math.max(4,Math.round(crop[2]*PW)), ch=Math.max(4,Math.round(crop[3]*PH));
+      // exact silhouette: threshold the mask crop near this button's guide colour
+      const sc=document.createElement('canvas'); sc.width=cw; sc.height=ch;
+      const sg=sc.getContext('2d'); let cov=0;
+      if(MC){ sg.drawImage(MC, crop[0]*MW, crop[1]*MH, crop[2]*MW, crop[3]*MH, 0,0,cw,ch);
+        const idat=sg.getImageData(0,0,cw,ch), dd=idat.data, k=KEY[b]||[255,255,255];
+        for(let i=0;i<dd.length;i+=4){ const d0=dd[i]-k[0],d1=dd[i+1]-k[1],d2=dd[i+2]-k[2];
+          if(d0*d0+d1*d1+d2*d2<7000){ dd[i]=dd[i+1]=dd[i+2]=dd[i+3]=255; cov++; } else dd[i+3]=0; }
+        sg.putImageData(idat,0,0); }
+      if(cov < cw*ch*0.02){ // mask blob missing → rounded-rect of the bbox (still no ellipse)
+        sg.clearRect(0,0,cw,ch); sg.fillStyle='#fff';
+        const ix=cw*PAD/(1+2*PAD), iy=ch*PAD/(1+2*PAD);
+        sg.beginPath(); sg.roundRect(ix,iy,cw-2*ix,ch-2*iy,Math.min(cw,ch)*0.18); sg.fill(); }
+      // material-aware press strength from the button's own luminance
+      const s8=document.createElement('canvas');s8.width=s8.height=8;
+      s8.getContext('2d').drawImage(paint,db[0]*PW,db[1]*PH,db[2]*PW,db[3]*PH,0,0,8,8);
+      const dl=s8.getContext('2d').getImageData(0,0,8,8).data;let lum=0;
+      for(let i=0;i<dl.length;i+=4)lum+=0.299*dl[i]+0.587*dl[i+1]+0.114*dl[i+2]; lum/=64;
+      const dk=1-lum/255;                      // 0 light … 1 dark
+      const dA=0.12+0.16*dk;                   // 0.12 light glass → ~0.28 dark stone
+      // pressed image: paint crop shifted DOWN slightly (travel) + modest darken + contrast lift
+      const pc=document.createElement('canvas'); pc.width=cw; pc.height=ch;
+      const pg=pc.getContext('2d');
+      const shift=Math.max(1,Math.round(ch*0.03));
+      pg.filter='contrast(1.06)';
+      pg.drawImage(paint, eb[0]*PW, eb[1]*PH, eb[2]*PW, eb[3]*PH, 0, shift, cw, ch);
+      pg.filter='none';
+      pg.fillStyle='rgba(0,0,0,'+dA.toFixed(3)+')'; pg.fillRect(0,0,cw,ch);
+      // light flips on press: top edge darkens, bottom edge lightens — rims FOLLOW the shape
+      const rimW=Math.max(2,Math.round(ch*0.07));
+      const rim=(offY,col,alpha)=>{ const rc=document.createElement('canvas');rc.width=cw;rc.height=ch;
+        const rg=rc.getContext('2d'); rg.drawImage(sc,0,0);
+        rg.globalCompositeOperation='destination-out'; rg.drawImage(sc,0,offY);
+        rg.globalCompositeOperation='source-in'; rg.fillStyle=col; rg.fillRect(0,0,cw,ch);
+        pg.save(); pg.globalAlpha=alpha; pg.filter='blur('+(rimW*0.35).toFixed(1)+'px)';
+        pg.drawImage(rc,0,0); pg.restore(); };
+      rim(rimW,'#000',0.40);          // top inner shadow
+      rim(-Math.round(rimW*0.7),'#fff',0.10+0.18*dk); // bottom catch-light — the visible cue on dark stone
+      // clip everything to the exact silhouette — crisp edge, the shape does the shaping
+      pg.globalCompositeOperation='destination-in'; pg.drawImage(sc,0,0);
+      ink.style.left=((eb[0]-db[0])/db[2]*100)+'%';
+      ink.style.top=((eb[1]-db[1])/db[3]*100)+'%';
+      ink.style.width=(eb[2]/db[2]*100)+'%';
+      ink.style.height=(eb[3]/db[3]*100)+'%';
+      ink.style.backgroundImage='url('+pc.toDataURL()+')';
+    }catch(e){}
     el.addEventListener('click',()=>{ if(b==='playpause'){playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';}
       else if(b==='queue'){document.getElementById('queue').classList.toggle('open');}
       else if(b==='repeat'){el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];}

@@ -35,6 +35,12 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
 .animsub{font:12px ui-monospace,monospace;color:#8a90a0;margin:0 0 10px}
 .askin{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px;font-weight:400}
 .alive{color:#041;background:#6f9;border-radius:4px;padding:1px 7px;font:700 11px ui-monospace,monospace;vertical-align:2px;animation:alive-blink 1.6s ease-in-out infinite}
+.animctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px;font:11px ui-monospace,monospace;color:#8a90a0}
+.animctl button{background:#161a22;border:1px solid #ffffff22;color:#cdd3dd;border-radius:5px;font:11px ui-monospace,monospace;padding:2px 9px;cursor:pointer}
+.animctl button:hover{border-color:#6f9}
+.animctl button.on{background:#6f9;color:#041;border-color:#6f9;font-weight:700}
+.arst{float:right;background:#161a22;border:1px solid #ffffff22;color:#cdd3dd;border-radius:5px;font:12px ui-monospace,monospace;padding:0 7px;cursor:pointer;line-height:18px}
+.arst:hover{border-color:#6f9;color:#6f9}
 @keyframes alive-blink{50%{opacity:.45}}
 .walk{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:14px}
 .wnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -54,7 +60,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <button class=btn onclick="localStorage.clear();location.reload()">reset</button>
 </div>
 <h2>Overview</h2>
-<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody><tr class="rp"><td><a href="#c-diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="diablo-gothic">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fa-pod">fa-pod</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fa-pod">—</td><td>2</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fa-sky">fa-sky</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fa-sky">—</td><td>?</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fallout-pipboy">—</td><td>1</td><td>knob-template-fallback:vol</td></tr><tr class="rf"><td><a href="#c-fallout-vault">fallout-vault</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="fallout-vault">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="myst-arcanum">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="n64-cutscene">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-lowpoly">n64-lowpoly</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="n64-lowpoly">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="ps1-crunchy">—</td><td>2</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="ps1-wild">—</td><td>5</td><td>emptiness</td></tr><tr class="rp"><td><a href="#c-steam-porthole">steam-porthole</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="steam-porthole">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wc-goldshield">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wmp-quicksilver">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-vario">wmp-vario</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="wmp-vario">—</td><td>1</td><td>—</td></tr></tbody></table>
+<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody><tr class="rp"><td><a href="#c-diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="diablo-gothic">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fa-pod">fa-pod</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fa-pod">—</td><td>2</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fa-sky">fa-sky</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fa-sky">—</td><td>?</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fallout-pipboy">—</td><td>1</td><td>—</td></tr><tr class="rf"><td><a href="#c-fallout-vault">fallout-vault</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="fallout-vault">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="myst-arcanum">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="n64-cutscene">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-lowpoly">n64-lowpoly</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="n64-lowpoly">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="ps1-crunchy">—</td><td>2</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="ps1-wild">—</td><td>5</td><td>emptiness</td></tr><tr class="rp"><td><a href="#c-steam-porthole">steam-porthole</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="steam-porthole">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wc-goldshield">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wmp-quicksilver">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-vario">wmp-vario</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="wmp-vario">—</td><td>1</td><td>—</td></tr></tbody></table>
 <h2>Per-skin review</h2>
 <section class=card id="c-diablo-gothic" data-id="diablo-gothic">
   <div class=chead><h3>Diablo Gothic <span class=mode>templateless</span></h3>
@@ -93,7 +99,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=live><iframe src="assets-fallout-pipboy/player.html" loading=lazy title="fallout-pipboy player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="fallout-pipboy" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 71</span><br><span class=rz>reasons: knob-template-fallback:vol</span></div>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 71</span><br><span class=rz>all checks green</span></div>
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-fallout-pipboy/blueprint.png" target=_blank><figure><img src="assets-fallout-pipboy/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-fallout-pipboy/paint.png" target=_blank><figure><img src="assets-fallout-pipboy/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-fallout-pipboy/mask.png" target=_blank><figure><img src="assets-fallout-pipboy/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-fallout-pipboy/overlay.png" target=_blank><figure><img src="assets-fallout-pipboy/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-fallout-vault" data-id="fallout-vault">
@@ -220,13 +226,20 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
 }).catch(()=>{ document.getElementById('walk').innerHTML='<p style="color:#888">run build_explainer.py to generate the walkthrough images</p>'; });
 </script>
 <h2>Live algorithm animations <span class=alive>LIVE</span> — real pixels, real math</h2>
-<p class=animsub>Both panels re-run extract12.py's actual algorithms in-browser on real batch artifacts
-(paint by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte/cuts by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
+<p class=animsub>All four panels re-run extract12.py's actual algorithms in-browser on real batch artifacts
+(paint+mask by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte/cuts by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
+<div class=animctl id=animctl><span>speed</span>
+  <button data-sp=0.25>0.25×</button><button data-sp=0.5>0.5×</button><button data-sp=1 class=on>1×</button><button data-sp=2>2×</button><button data-sp=4>4×</button>
+  <button id=anim-pause>⏸ pause</button></div>
 <div class=animgrid>
-  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap <span class=askin>steam-porthole · vol</span></h4>
+  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap <span class=askin>steam-porthole · vol</span><button class=arst data-anim=anim-knob title="restart animation">⟲</button></h4>
     <canvas id=anim-knob></canvas><div class=acap id=anim-knob-cap>loading…</div></div>
-  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel <span class=askin>ps1-crunchy · seek</span></h4>
+  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel <span class=askin>ps1-crunchy · seek</span><button class=arst data-anim=anim-travel title="restart animation">⟲</button></h4>
     <canvas id=anim-travel></canvas><div class=acap id=anim-travel-cap>loading…</div></div>
+  <div class=anim><h4>Slot rotation — device-only PCA axis + elongation gate <span class=askin>diablo-gothic · shuffle</span><button class=arst data-anim=anim-pca title="restart animation">⟲</button></h4>
+    <canvas id=anim-pca></canvas><div class=acap id=anim-pca-cap>loading…</div></div>
+  <div class=anim><h4>Switch state registration — silhouette-IoU (dx,dy) search <span class=askin>steam-porthole · shuffle</span><button class=arst data-anim=anim-iou title="restart animation">⟲</button></h4>
+    <canvas id=anim-iou></canvas><div class=acap id=anim-iou-cap>loading…</div></div>
 </div>
 <script src=explainer_anim.js></script>
 <h2>Concepts — for someone new to this</h2>
