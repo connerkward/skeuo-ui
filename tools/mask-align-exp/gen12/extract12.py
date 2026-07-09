@@ -84,6 +84,26 @@ for i, name in enumerate(NAMES):
         strip = [largest_cc_bbox(stripmask)] if stripmask.sum() > 120 else []
     regs[name] = {"device": dev, "strip": strip}
 
+# --- HUE-RECOVERY: the model sometimes paints a guide blob DESATURATED/lightened (pipboy vol:
+# (255,0,128) requested, (219,121,149) painted -> euclidean dist 128 > the 95 gate, blob dropped).
+# HUE survives desaturation, so for any control with NO device blob, re-search unclaimed saturated
+# mask pixels by hue distance to the key and take the largest connected component.
+import colorsys
+_unclaimed = (assign == -1)
+_mh = np.asarray(Image.fromarray(m.astype("uint8")).convert("HSV")).astype(int)
+for i, name in enumerate(NAMES):
+    r = regs.get(name)
+    if r and r.get("device"): continue
+    kh = int(colorsys.rgb_to_hsv(*[v / 255 for v in KEYS[name]])[0] * 255)
+    hd = np.minimum(np.abs(_mh[:, :, 0] - kh), 255 - np.abs(_mh[:, :, 0] - kh))
+    cand = _unclaimed & (hd < 18) & (_mh[:, :, 1] > 60) & (_mh[:, :, 2] > 80) & (YY < DEVF * MH)
+    if cand.sum() < 400: continue
+    bbx = largest_cc_bbox(cand)
+    if not bbx: continue
+    regs[name] = regs.get(name) or {"device": None, "strip": []}
+    regs[name]["device"] = bbx; regs[name]["hueRecovered"] = True
+    print(f"[hue-recover] {name}: found desaturated blob (hue-dist search) at {[round(v,3) for v in bbx]}")
+
 # --- MASK IS A GUIDE: detect real painted PARTS in the strip band as fallback for omitted cells
 paint = np.asarray(Image.open(os.path.join(OUT, "paint.png")).convert("RGB"))
 PPH, PPW = paint.shape[:2]; y0strip = int(PPH * DEVF)
