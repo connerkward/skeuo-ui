@@ -396,17 +396,21 @@ for k in SC:
 # (deep near-black channel inside a lighter outer trough) defeats fixed offsets from the dark
 # floor: the lighter trough sits above Dfloor+22, reads as "body", and the walk stops at the
 # dark channel's end instead of the slot's semantic end (fallout-vault). Level-aware version:
-#   * BODY plateau estimated from bands flanking OUTSIDE the slot's mask cell (same rows),
-#     backdrop + other-recess columns excluded — no absolute luminance constants.
-#   * walk outward while the column median is CLEARLY BELOW body (recessed at ANY depth —
-#     dark channel or lighter trough) OR a bright bezel rim; stop only on a sustained
-#     near-body run or the designed backdrop level (from results.json, not a percentile).
-#   * baked-handle-proof (ps1-crunchy): floor percentile over the darkest fraction of the
-#     slot (not centre-biased), walks START at the darkest column, and INSIDE the mask cell
-#     bright runs never stop the walk (an interior baked handle is slot, not body).
-#   * clamp base = the DEVICE-region slot MASK CELL: the span may extend up to +12% of the
-#     cell width beyond it (recessed-below-body spans wider than the fit bbox are allowed;
-#     runaways are not). Collapse guard unchanged.
+#   * base span = the DEVICE-region slot MASK CELL (the model's own declaration of the slot).
+#     Walking never happens INSIDE it, which makes the algorithm baked-handle-proof for free
+#     (ps1-crunchy, n64-lowpoly: an interior bright handle is never even visited) and immune
+#     to dark-channel-vs-backdrop confusion inside the slot.
+#   * from each cell edge walk OUTWARD to complete the visual end caps: continue while the
+#     smoothed column median is CLEARLY BELOW the LOCAL body plateau (recessed at ANY depth —
+#     dark channel or lighter trough) or is a bright bezel rim; stop on a short sustained
+#     near-body run, a sustained bright run past the rim, or the designed backdrop COLOUR
+#     (distance-from-BGC — a dark channel floor is indistinguishable from a near-black
+#     backdrop in raw luminance).
+#   * body plateau is PER-SIDE, from the band flanking just outside that end (same rows,
+#     backdrop + deep-recess columns excluded) — a darker neighbouring material (porthole's
+#     bronze ring beside a brass plate) would poison a single global estimate.
+#   * clamp: at most +12% of the cell width beyond the cell per side (wider-than-bbox
+#     recessed spans are allowed; textured-body creep is not). Collapse guard unchanged.
 if SLIDER:
     r = regs.get(SLIDER)
     if r and r.get("device"):
@@ -416,48 +420,54 @@ if SLIDER:
         pad = int((ux1 - ux0) * GW * 0.40)
         bx0 = max(0, int(ux0 * GW) - pad); bx1 = min(GW, int(ux1 * GW) + pad)
         med = np.median(paintrgb[by0:by1, bx0:bx1].max(2), 0)
-        # colour DISTANCE to the known designed backdrop (median over band rows): a dark-brown
-        # channel floor is indistinguishable from a near-black backdrop in raw LUMINANCE, so the
-        # backdrop stop keys on distance-from-BGC (a relative signal), never a luminance floor.
+        med = np.convolve(med, np.ones(7) / 7, mode="same")    # smooth: kill 1-col noise dips
         cdist = np.median(np.abs(paintrgb[by0:by1, bx0:bx1] - BGC).max(2), 0)
         gx0, gx1 = int(b[0] * GW), int((b[0] + b[2]) * GW)
         dx0 = max(0, gx0 - bx0); dx1 = min(len(med), gx1 - bx0)
         mx0 = max(0, int(mb[0] * GW) - bx0); mx1 = min(len(med), int((mb[0] + mb[2]) * GW) - bx0)
         if mx1 <= mx0: mx0, mx1 = dx0, dx1
+        cw = max(1, mx1 - mx0)
         bgd = float(BGC.max())                                 # designed backdrop level (known)
         slot = med[mx0:mx1]
         Dfloor = float(np.percentile(slot, 10))                # darkest fraction, not centre-biased
-        flank = np.r_[med[:max(0, mx0 - 4)], med[mx1 + 4:]]    # body sample: outside the mask cell
-        flank = flank[flank > max(bgd + 25, Dfloor + 15)]      # drop backdrop + other recesses
-        body = float(np.median(flank)) if len(flank) >= 8 else float(np.percentile(med, 85))
-        below = body - max(14.0, 0.22 * max(0.0, body - Dfloor))   # "clearly below body"
-        rimhi = body + 20.0                                    # bright bezel above the plateau
-        start = mx0 + int(np.argmin(slot))                     # darkest column, not geometric centre
-        cap = max(8, int(max(dx1 - dx0, mx1 - mx0) * 0.06))
-        def _walk(step):
-            x = start; last = start; run = 0
+        fw = max(30, int(cw * 0.20))                           # per-side flank window
+        def _body(sl):                                         # local plateau, recesses+backdrop out
+            fl = med[sl]
+            fl = fl[(fl > bgd + 25) & (fl > Dfloor + 15)]
+            return float(np.median(fl)) if len(fl) >= 8 else None
+        bodyL = _body(np.s_[max(0, mx0 - 4 - fw):max(0, mx0 - 4)])
+        bodyR = _body(np.s_[mx1 + 4:mx1 + 4 + fw])
+        glob = _body(np.s_[:]) or float(np.percentile(med, 85))
+        bodyL = bodyL if bodyL is not None else glob; bodyR = bodyR if bodyR is not None else glob
+        rimcap = max(8, int(cw * 0.06))                        # TOTAL bright budget per walk
+        stopcap = max(6, int(cw * 0.02))                       # sustained near-body = past the slot
+        def _walk(edge, step, body):
+            below = body - max(14.0, 0.22 * max(0.0, body - Dfloor))   # "clearly below body"
+            rimhi = body + 20.0                                # bright bezel above the plateau
+            x = edge + step; last = edge; nrun = 0; rrun = 0
             while 0 <= x < len(med):
-                inside = mx0 <= x < mx1                        # interior of the slot mask cell
-                if not inside and cdist[x] < 30: break         # backdrop (colour dist) → stop hard
-                if med[x] < below: last = x; run = 0           # recessed (any depth)
+                if cdist[x] < 30: break                        # backdrop colour → stop hard
+                if med[x] < below: last = x; nrun = 0          # recessed (any depth)
                 elif med[x] > rimhi:
-                    last = x; run += 1                         # bright bezel rim — keep but count
-                    if run > cap and not inside: break         # sustained bright = past rim into body
+                    last = x; rrun += 1; nrun = 0              # bright bezel rim — keep but count
+                    # rrun is CUMULATIVE (never reset): a real bezel is ONE contiguous bright
+                    # band, but a bright carved frame alternating with shadow seams (diablo)
+                    # would ride rim→recess→rim forever if the budget reset on each shadow.
+                    if rrun > rimcap: break                    # bright budget spent = past the rim
                 else:
-                    run += 1                                   # near-body level
-                    if run > cap and not inside: break         # sustained body = past the slot
+                    nrun += 1                                  # near-body level
+                    if nrun > stopcap: break                   # sustained body = past the slot
                 x += step
             return last
-        lo = bx0 + _walk(-1); hi = bx0 + _walk(+1)
+        lo = bx0 + _walk(mx0, -1, bodyL); hi = bx0 + _walk(mx1 - 1, +1, bodyR)
         if hi - lo < 0.5 * (gx1 - gx0):                        # detection collapsed → keep fit bbox
             lo, hi = gx0, gx1
-        cw = max(1, mx1 - mx0)                                 # clamp base: the slot mask cell
         lo = max(lo, bx0 + mx0 - int(0.12 * cw)); hi = min(hi, bx0 + mx1 + int(0.12 * cw))
         r["device"] = [lo / GW, b[1], (hi - lo) / GW, b[3]]    # expand device to the painted groove
         M = int((hi - lo) * 0.02)
         r["travel"] = [round(max(0, lo - M) / GW, 5), round(min(GW, hi + M) / GW, 5)]
         print(f"[travel] {SLIDER} groove {lo}..{hi}px (fit bbox {gx0}..{gx1}, mask cell {bx0 + mx0}..{bx0 + mx1}, "
-              f"body {body:.0f} floor {Dfloor:.0f} below<{below:.0f}) -> travel {r['travel']}")
+              f"body L{bodyL:.0f}/R{bodyR:.0f} floor {Dfloor:.0f}) -> travel {r['travel']}")
 
 # ---- SLOT ANGLE (rotational placement): a slot following an organic body is tilted, so the part
 # must be rotated to match. Major-axis angle from PCA on the slot's mask blob. Knobs are radial.

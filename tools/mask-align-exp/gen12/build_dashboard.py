@@ -97,7 +97,7 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
 <div class=animgrid>
   <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap <span class=askin>steam-porthole · vol</span><button class=arst data-anim=anim-knob title="restart animation">⟲</button></h4>
     <canvas id=anim-knob></canvas><div class=acap id=anim-knob-cap>loading…</div></div>
-  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel <span class=askin>ps1-crunchy · seek</span><button class=arst data-anim=anim-travel title="restart animation">⟲</button></h4>
+  <div class=anim><h4>Coverage-span seek travel — level-aware walk → thumb travel <span class=askin>wmp-quicksilver · seek</span><button class=arst data-anim=anim-travel title="restart animation">⟲</button></h4>
     <canvas id=anim-travel></canvas><div class=acap id=anim-travel-cap>loading…</div></div>
   <div class=anim><h4>Slot rotation — device-only PCA axis + elongation gate <span class=askin>diablo-gothic · shuffle</span><button class=arst data-anim=anim-pca title="restart animation">⟲</button></h4>
     <canvas id=anim-pca></canvas><div class=acap id=anim-pca-cap>loading…</div></div>
@@ -130,9 +130,9 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
       <rect x="58" y="34" width="30" height="12" rx="6" fill="#6aa0ff"/>
       <line x1="52" y1="64" x2="268" y2="64" stroke="#5f7" stroke-width="2"/><text x="160" y="78" fill="#8fa" font-size="10" text-anchor="middle">travel = end-cap → end-cap (recess + bezel rims)</text>
       <text x="160" y="20" fill="#789" font-size="9" text-anchor="middle">walk out until solid body / background</text></svg>
-    <p><b>Problem.</b> The thumb must slide the whole length of the groove. The mask's rough rectangle for the groove is usually a little short, so the thumb would stop before the ends.</p>
-    <p><b>How.</b> The groove is a dark <span class=kt>recess</span> cut into a brighter body. We read one horizontal line of pixels through its centre and look at their <span class=kt>luminance</span> (brightness). Starting at the middle we <b>walk outward one pixel at a time</b>: keep going while pixels are dark (the channel floor) <em>or</em> bright (the metal <span class=kt>bezel</span> rim that frames the slot); <b>stop</b> only when we hit the solid body (bright for many pixels in a row → we've left the slot) or the near-black background. The distance between the left-stop and right-stop is the slot's true visual width — that becomes the thumb's <b>travel range</b>.</p>
-    <p class=kt-defs><b>luminance</b> = perceived brightness · <b>recess</b> = the sunken channel · <b>bezel</b> = the raised rim around a slot.</p></div>
+    <p><b>Problem.</b> The thumb must slide the whole length of the groove. The mask's rough rectangle is usually a little short — and many slots are <em>stepped</em>: a near-black channel sits inside a lighter recessed trough, so a fixed "dark = slot" threshold stops at the channel's end instead of the slot's real end.</p>
+    <p><b>How (level-aware).</b> The mask cell — the model's own declaration of the slot — is the base span; we never walk inside it (a baked-in handle can't derail anything). From <b>each cell edge we walk outward</b> comparing every pixel column against the <b>local body level</b>, measured from the flanking material just outside that end: keep going while columns sit <em>clearly below body</em> (recessed at <b>any</b> depth — dark channel or lighter trough) or are a bright <span class=kt>bezel</span> rim; <b>stop</b> on a short sustained run at body level, a long bright run, or the known backdrop <em>colour</em>. The result — cell plus walked end caps, clamped to ±12% of the cell — is the thumb's <b>travel range</b>.</p>
+    <p class=kt-defs><b>luminance</b> = perceived brightness · <b>recess</b> = the sunken channel · <b>bezel</b> = the raised rim around a slot · <b>body level</b> = the surrounding material's typical brightness, estimated per side.</p></div>
 
   <div class=ex><h4>2 · Matte-hole knob seat</h4>
     <svg viewBox="0 0 200 84"><rect width="200" height="84" fill="#0d0f14"/>
@@ -169,6 +169,32 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
     <p class=kt-defs><b>post-hoc detection</b> = figuring out positions <em>after</em> generation, from the output, rather than dictating them up front.</p></div>
 
   <div class=ex><h4>5b · Material-aware silhouette press</h4>
+    <svg viewBox="0 0 320 96"><rect width="320" height="96" fill="#0d0f14"/>
+      <!-- 1: silhouette clipped from the mask -->
+      <path d="M28 38 C26 26 40 18 54 20 C70 16 82 24 80 36 C84 48 72 58 56 56 C42 60 30 52 28 38 Z"
+            fill="#1b2230" stroke="#5af"/>
+      <text x="54" y="74" fill="#5af" font-size="8" text-anchor="middle">silhouette clip</text>
+      <text x="54" y="84" fill="#789" font-size="8" text-anchor="middle">from mask</text>
+      <!-- 2: same silhouette, own pixels shifted down + darkened -->
+      <g transform="translate(90 0)">
+        <path d="M28 38 C26 26 40 18 54 20 C70 16 82 24 80 36 C84 48 72 58 56 56 C42 60 30 52 28 38 Z"
+              fill="none" stroke="#3a4a63" stroke-dasharray="3 2"/>
+        <path d="M28 41 C26 29 40 21 54 23 C70 19 82 27 80 39 C84 51 72 61 56 59 C42 63 30 55 28 41 Z"
+              fill="#141922" stroke="#8ab"/>
+        <text x="54" y="74" fill="#9ab" font-size="8" text-anchor="middle">own pixels,</text>
+        <text x="54" y="84" fill="#789" font-size="8" text-anchor="middle">shifted + −15% luminance</text>
+      </g>
+      <!-- 3: re-shade — top inner shadow + bottom catch-light -->
+      <g transform="translate(180 0)">
+        <path d="M28 41 C26 29 40 21 54 23 C70 19 82 27 80 39 C84 51 72 61 56 59 C42 63 30 55 28 41 Z"
+              fill="#141922" stroke="#3a4a63"/>
+        <path d="M30 34 C32 25 42 20 54 22 C66 19 76 24 79 32" fill="none" stroke="#000" stroke-width="4" opacity="0.55" stroke-linecap="round"/>
+        <path d="M33 52 C42 59 66 60 76 51" fill="none" stroke="#cfe6ff" stroke-width="2" opacity="0.8" stroke-linecap="round"/>
+        <text x="54" y="74" fill="#cdd3dd" font-size="8" text-anchor="middle">top shadow /</text>
+        <text x="54" y="84" fill="#789" font-size="8" text-anchor="middle">bottom catch-light</text>
+      </g>
+      <path d="M82 40 h6" stroke="#5a7" marker-end="url(#p5b)"/><path d="M172 40 h6" stroke="#5a7" marker-end="url(#p5b)"/>
+      <defs><marker id="p5b" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#8ab"/></marker></defs></svg>
     <p><b>Problem.</b> A dark gradient blob over a pressed button looks fake: wrong shape, too dark on glass, invisible on stone.</p>
     <p><b>How.</b> The pressed state is built from the button's <span class=kt>own pixels</span>: its exact <span class=kt>silhouette</span> is cut from the colour mask and used to clip a copy of the paint that is shifted down ~3% (physical travel), darkened in proportion to the material's measured luminance (subtle on light glass, stronger on dark stone), and re-shaded the way real light flips when a part sinks — a shape-following inner shadow on the top edge, a faint catch-light on the bottom edge. No black wash; glass stays glassy, stone stays stone.</p>
     <p class=kt-defs><b>silhouette clip</b> = restrict drawing to the exact blob shape · <b>catch-light</b> = the thin bright edge where a sunken surface still faces the light.</p></div>

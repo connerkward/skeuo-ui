@@ -7,10 +7,14 @@
 //    [0.7,1.3]·r0, 72 ring samples) scored by mean gradient magnitude; best ring locks
 //    the RADIUS; the fit CENTRE then snaps to the matte alpha-hole centroid (the
 //    regions.json `seat`, which extract12 computed exactly that way).
-//  Panel 2 (seek travel) = extract12.py's coverage-span [travel] block: per-column
-//    median of max(R,G,B) through the groove band; walk outward from the slot centre
-//    through dark recess AND bright bezel rim, stop on sustained-bright body (brun>cap)
-//    or near-black backdrop; span (±2% margin) becomes the thumb travel.
+//  Panel 2 (seek travel) = extract12.py's LEVEL-AWARE coverage-span [travel] block:
+//    per-column median of max(R,G,B) through the groove band (box-smoothed); base span =
+//    the slot's MASK CELL (never walked inside — baked-handle-proof); from each cell edge
+//    walk OUTWARD while columns stay clearly below the PER-SIDE local body plateau
+//    (recessed at any depth — dark channel or lighter stepped trough) or are a bright
+//    bezel rim; stop on a short sustained near-body run, a sustained bright run, or the
+//    designed backdrop COLOUR (distance-from-BGC); clamp ±12% of cell width; span (±2%
+//    margin) becomes the thumb travel.
 //  Panel 3 (slot angle)  = extract12.py _pca_angle(): the toggle slot's mask pixels
 //    (device band ONLY — (assign==idx)&(YY<devFrac·H)) as a point cloud; principal-axis
 //    search (trial axis + variance meter) → eigen lock → elongation gate ≥2.0.
@@ -30,14 +34,17 @@
   // Exemplar skins chosen where each algorithm's interesting path actually fires:
   //  · steam-porthole: the vol knob's fit-centre → hole-centroid snap is visible,
   //    and its shuffle cuts differ enough that state-registration is non-trivial.
-  //  · ps1-crunchy: the outward walk genuinely terminates at both groove ends
-  //    (on some skins the walk hits its collapse guard and keeps the bbox instead —
-  //    verified by re-running the extract12 travel block over the whole roster).
+  //  · wmp-quicksilver: a CLEAN slot (no baked handle in the paint) with a textbook
+  //    STEPPED recess — near-black channel + pink rim inside a lighter recessed
+  //    trough — exactly the geometry the level-aware walk exists for: the outward
+  //    walks extend past the mask cell through the below-body trough to the visual
+  //    end caps. (ps1-crunchy, the previous exemplar, has a BAKED seek handle in the
+  //    slot — a generation defect, not a good showcase of the travel algorithm.)
   //  · diablo-gothic: the shuffle slot is strongly VERTICAL (elong 2.8 → axis real),
   //    its strip cells sit far below-right (combined axis = garbage diagonal), and
   //    its vol knob blob is near-round (elong 1.1 → the gate fires).
   const KNOB_SKIN = "assets-steam-porthole";
-  const TRAVEL_SKIN = "assets-ps1-crunchy";
+  const TRAVEL_SKIN = "assets-wmp-quicksilver";
   const PCA_SKIN = "assets-diablo-gothic";
   const IOU_SKIN = "assets-steam-porthole";
 
@@ -93,10 +100,11 @@
 
   Promise.all([
     fetch(TRAVEL_SKIN + "/regions.json").then((r) => r.json()),
+    fetch(TRAVEL_SKIN + "/results.json").then((r) => r.json()),   // backdrop colour for cdist
     loadImg(TRAVEL_SKIN + "/paint.png"),
     loadImg(TRAVEL_SKIN + "_biref/seek.png"),
-  ]).then(([reg, paint, thumbImg]) => {
-    try { travelAnim(reg, paint, thumbImg, paint.naturalWidth, paint.naturalHeight); }
+  ]).then(([reg, res, paint, thumbImg]) => {
+    try { travelAnim(reg, res, paint, thumbImg, paint.naturalWidth, paint.naturalHeight); }
     catch (e) { fail("anim-travel", e); }
   }).catch((e) => fail("anim-travel", e));
 
@@ -295,64 +303,96 @@
   // ════════════════════════════════════════════════════════════════════════════
   // Panel 2 — coverage-span seek travel (column median-luminance walk)
   // ════════════════════════════════════════════════════════════════════════════
-  function travelAnim(reg, paint, thumbImg, GW, GH) {
+  function travelAnim(reg, res, paint, thumbImg, GW, GH) {
     const canvas = document.getElementById("anim-travel");
     if (!canvas) return;
     const W = 760, H = 470; canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
 
     const seek = reg.regions.seek;
-    const b = seek.device, storedTv = seek.travel;   // extract12's shipped travel span
-    // EXACT window construction from extract12.py's [travel] block
+    const b = seek.device, mb = seek.maskDevice || b, storedTv = seek.travel;
+    const BGC = res.backdrop;                        // designed backdrop colour (results.json)
+    // EXACT window construction from extract12.py's LEVEL-AWARE [travel] block
     const cyp = (b[1] + b[3] / 2) * GH;
     const hh = Math.max(6, Math.round(b[3] * GH * 0.30));
     const by0 = Math.round(cyp - hh), by1 = Math.round(cyp + hh);
-    const pad = Math.round(b[2] * GW * 0.40);
-    const bx0 = Math.max(0, Math.round(b[0] * GW) - pad);
-    const bx1 = Math.min(GW, Math.round((b[0] + b[2]) * GW) + pad);
+    const ux0 = Math.min(b[0], mb[0]), ux1 = Math.max(b[0] + b[2], mb[0] + mb[2]);
+    const pad = Math.round((ux1 - ux0) * GW * 0.40);
+    const bx0 = Math.max(0, Math.round(ux0 * GW) - pad);
+    const bx1 = Math.min(GW, Math.round(ux1 * GW) + pad);
     const NC = bx1 - bx0;
 
-    // med[x] = median over band rows of per-pixel max(R,G,B)
+    // med[x] = median over band rows of per-pixel max(R,G,B), box-smoothed (7)
+    // cdist[x] = median over band rows of max-channel |rgb − backdrop|
     const off = document.createElement("canvas"); off.width = NC; off.height = by1 - by0;
     const octx = off.getContext("2d", { willReadFrequently: true });
     octx.drawImage(paint, bx0, by0, NC, by1 - by0, 0, 0, NC, by1 - by0);
     const data = octx.getImageData(0, 0, NC, by1 - by0).data;
     const rows = by1 - by0;
-    const med = new Float64Array(NC);
-    const colv = new Float64Array(rows);
+    const medRaw = new Float64Array(NC), cdist = new Float64Array(NC);
+    const colv = new Float64Array(rows), cdv = new Float64Array(rows);
     for (let x = 0; x < NC; x++) {
       for (let y = 0; y < rows; y++) {
         const j = (y * NC + x) * 4;
         colv[y] = Math.max(data[j], data[j + 1], data[j + 2]);
+        cdv[y] = Math.max(Math.abs(data[j] - BGC[0]), Math.abs(data[j + 1] - BGC[1]), Math.abs(data[j + 2] - BGC[2]));
       }
-      med[x] = percentile(colv, 50);
+      medRaw[x] = percentile(colv, 50);
+      cdist[x] = percentile(cdv, 50);
+    }
+    const med = new Float64Array(NC);                // np.convolve(·, ones(7)/7, "same")
+    for (let x = 0; x < NC; x++) {
+      let s = 0;
+      for (let k = x - 3; k <= x + 3; k++) if (k >= 0 && k < NC) s += medRaw[k];
+      med[x] = s / 7;
     }
     const dx0 = Math.max(0, Math.round(b[0] * GW) - bx0);
     const dx1 = Math.min(NC, Math.round((b[0] + b[2]) * GW) - bx0);
-    const ctr = (dx0 + dx1) >> 1;
-    const Dfloor = percentile(med.slice(dx0, dx1), 15);
-    const bgd = percentile(med, 2);
-    const recess = Dfloor + 22, rim = Dfloor + 70;
-    const capRun = Math.max(8, Math.trunc((dx1 - dx0) * 0.06));
+    let mx0 = Math.max(0, Math.round(mb[0] * GW) - bx0);
+    let mx1 = Math.min(NC, Math.round((mb[0] + mb[2]) * GW) - bx0);
+    if (mx1 <= mx0) { mx0 = dx0; mx1 = dx1; }
+    const cw = Math.max(1, mx1 - mx0);
+    const bgd = Math.max(BGC[0], BGC[1], BGC[2]);
+    const Dfloor = percentile(med.slice(mx0, mx1), 10);   // darkest fraction of the CELL
+    const fw = Math.max(30, Math.trunc(cw * 0.20));       // per-side flank window
+    const bodyOf = (arr) => {                             // local plateau, recess+backdrop excluded
+      const fl = Array.from(arr).filter((v) => v > bgd + 25 && v > Dfloor + 15);
+      return fl.length >= 8 ? percentile(fl, 50) : null;
+    };
+    const bodyGlob = bodyOf(med) ?? percentile(med, 85);
+    const bodyL = bodyOf(med.slice(Math.max(0, mx0 - 4 - fw), Math.max(0, mx0 - 4))) ?? bodyGlob;
+    const bodyR = bodyOf(med.slice(mx1 + 4, mx1 + 4 + fw)) ?? bodyGlob;
+    const belowOf = (body) => body - Math.max(14, 0.22 * Math.max(0, body - Dfloor));
+    const rimcap = Math.max(8, Math.trunc(cw * 0.06));    // TOTAL bright budget per walk
+    const stopcap = Math.max(6, Math.trunc(cw * 0.02));
 
-    // _walk with a per-step trace: state ∈ recess|rim|mid|stop-body|stop-backdrop
-    function walk(step) {
-      const trace = []; let x = ctr, last = ctr, brun = 0;
+    // outward walk from a CELL EDGE with a per-step trace:
+    // state ∈ recess|rim|body|stop-body|stop-rim|stop-backdrop
+    // rrun is CUMULATIVE (never reset): a real bezel is ONE contiguous bright band; a bright
+    // carved frame alternating with shadow seams would ride rim→recess→rim forever otherwise.
+    function walk(edge, step, body) {
+      const below = belowOf(body), rimhi = body + 20;
+      const trace = []; let x = edge + step, last = edge, nrun = 0, rrun = 0;
       while (x >= 0 && x < NC) {
-        if (med[x] <= bgd + 8) { trace.push({ x, st: "stop-backdrop" }); break; }
-        if (med[x] < recess) { last = x; brun = 0; trace.push({ x, st: "recess" }); }
-        else if (med[x] > rim) {
-          last = x; brun++; trace.push({ x, st: "rim" });
-          if (brun > capRun) { trace[trace.length - 1].st = "stop-body"; break; }
-        } else { brun = 0; trace.push({ x, st: "mid" }); }
+        if (cdist[x] < 30) { trace.push({ x, st: "stop-backdrop" }); break; }
+        if (med[x] < below) { last = x; nrun = 0; trace.push({ x, st: "recess" }); }
+        else if (med[x] > rimhi) {
+          last = x; rrun++; nrun = 0; trace.push({ x, st: "rim" });
+          if (rrun > rimcap) { trace[trace.length - 1].st = "stop-rim"; break; }
+        } else {
+          nrun++; trace.push({ x, st: "body" });
+          if (nrun > stopcap) { trace[trace.length - 1].st = "stop-body"; break; }
+        }
         x += step;
       }
       return { trace, last };
     }
-    const L = walk(-1), R = walk(+1);
+    const L = walk(mx0, -1, bodyL), R = walk(mx1 - 1, +1, bodyR);
     let lo = bx0 + L.last, hi = bx0 + R.last;
     const gx0 = Math.round(b[0] * GW), gx1 = Math.round((b[0] + b[2]) * GW);
     if (hi - lo < 0.5 * (gx1 - gx0)) { lo = gx0; hi = gx1; }   // collapse guard (same as extract12)
+    lo = Math.max(lo, bx0 + mx0 - Math.trunc(0.12 * cw));      // clamp: mask cell ±12%
+    hi = Math.min(hi, bx0 + mx1 + Math.trunc(0.12 * cw));
     const M = Math.trunc((hi - lo) * 0.02);
     const tvLo = Math.max(0, lo - M), tvHi = Math.min(GW, hi + M);
 
@@ -365,7 +405,8 @@
     const PH_X = 10, PH_Y = 248, PH_W = 740, PH_H = 150;      // profile chart
     const YV = (v) => PH_Y + PH_H - (v / 255) * PH_H;
 
-    const STC = { recess: "#5af", rim: "#fd5", mid: "#9aa", "stop-body": "#f55", "stop-backdrop": "#f0f" };
+    const STC = { recess: "#5af", rim: "#fd5", body: "#9aa",
+                  "stop-body": "#f55", "stop-rim": "#fa0", "stop-backdrop": "#f0f" };
     // thumb draw size (aspect-true, height ≈ groove for a readable slide)
     const kx = CW / NC;
     const thumbH = 54, thumbW = thumbH * thumbImg.naturalWidth / thumbImg.naturalHeight;
@@ -377,16 +418,34 @@
     const WALK_FRAMES = 150;                                   // both walkers finish together
     const perFrameL = L.trace.length / WALK_FRAMES, perFrameR = R.trace.length / WALK_FRAMES;
 
-    function thresholds() {
-      for (const [v, name, c] of [[recess, `recess < ${recess.toFixed(0)}`, "#5af"],
-                                  [rim, `rim > ${rim.toFixed(0)}`, "#fd5"],
-                                  [bgd + 8, `backdrop ≤ ${(bgd + 8).toFixed(0)}`, "#f0f"]]) {
-        ctx.strokeStyle = c + "66"; ctx.setLineDash([4, 4]);
-        ctx.beginPath(); ctx.moveTo(PH_X, YV(v)); ctx.lineTo(PH_X + PH_W, YV(v)); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = c; ctx.font = "10px ui-monospace,monospace"; ctx.fillText(name, PH_X + PH_W - 118, YV(v) - 3);
+    function cellShade() {                                     // the mask cell = base span
+      ctx.fillStyle = "#5a7cff18";
+      ctx.fillRect(X(mx0), CY, X(mx1) - X(mx0), CH);
+      ctx.fillRect(X(mx0), PH_Y, X(mx1) - X(mx0), PH_H);
+      ctx.strokeStyle = "#5a7cff66";
+      for (const mx of [mx0, mx1]) {
+        ctx.beginPath(); ctx.moveTo(X(mx), CY); ctx.lineTo(X(mx), PH_Y + PH_H); ctx.stroke();
+      }
+      ctx.fillStyle = "#7a9cff"; ctx.font = "10px ui-monospace,monospace";
+      ctx.fillText("mask cell (model's slot declaration — walks start at its edges)", X(mx0) + 4, PH_Y + PH_H + 12);
+    }
+    function thresholds() {                                    // PER-SIDE body + below lines
+      const segs = [[PH_X, X(mx0), bodyL, "L"], [X(mx1), PH_X + PH_W, bodyR, "R"]];
+      for (const [xa, xb, body, tag] of segs) {
+        const below = belowOf(body);
+        ctx.strokeStyle = "#ccbb9966"; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(xa, YV(body)); ctx.lineTo(xb, YV(body)); ctx.stroke();
+        ctx.strokeStyle = "#55aaff66";
+        ctx.beginPath(); ctx.moveTo(xa, YV(below)); ctx.lineTo(xb, YV(below)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = "10px ui-monospace,monospace";
+        ctx.fillStyle = "#cb9";
+        ctx.fillText(`body ${tag} ${body.toFixed(0)}`, tag === "L" ? xa + 2 : xb - 74, YV(body) - 3);
+        ctx.fillStyle = "#5af";
+        ctx.fillText(`below < ${below.toFixed(0)}`, tag === "L" ? xa + 2 : xb - 74, YV(below) + 11);
       }
     }
-    function curve(color, upTo) {
+    function curve(color) {
       ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.beginPath();
       for (let x = 0; x < NC; x++) { const X1 = X(x), Y1 = YV(med[x]); x ? ctx.lineTo(X1, Y1) : ctx.moveTo(X1, Y1); }
       ctx.stroke();
@@ -400,13 +459,14 @@
       }
     }
     function walker(trace, n, lbl) {
+      if (!trace.length) return;
       const i = Math.min(trace.length, Math.max(1, Math.round(n))) - 1;
       const t = trace[i];
       ctx.strokeStyle = STC[t.st]; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(X(t.x), CY); ctx.lineTo(X(t.x), CY + CH); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(X(t.x), YV(med[t.x]) - 8); ctx.lineTo(X(t.x), YV(med[t.x]) + 8); ctx.stroke();
       ctx.fillStyle = STC[t.st]; ctx.font = "10px ui-monospace,monospace";
-      ctx.fillText(lbl + (t.st.startsWith("stop") ? " · " + t.st : " · " + t.st), X(t.x) - 20, CY + CH + 12);
+      ctx.fillText(lbl + " · " + t.st, X(t.x) - 20, CY + CH + 12);
     }
 
     function frame() {
@@ -417,27 +477,25 @@
       ctx.strokeStyle = "#3a4a63"; ctx.strokeRect(CX, CY, CW, CH);
       ctx.fillStyle = "#8a90a0"; ctx.font = "11px ui-monospace,monospace";
       ctx.fillText("seek slot crop · real paint px (groove band ±" + hh + "px sampled)", CX, CY - 6);
-      // groove-band guides + centre
+      // groove-band guides
       ctx.strokeStyle = "#5a7cff44";
       ctx.strokeRect(CX, XY(by0), CW, XY(by1) - XY(by0));
-      ctx.strokeStyle = "#8a90a0"; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(X(ctr), CY); ctx.lineTo(X(ctr), PH_Y + PH_H); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = "#8a90a0"; ctx.fillText("centre", X(ctr) - 17, PH_Y + PH_H + 12);
       // chart frame
       ctx.strokeStyle = "#2a3345"; ctx.strokeRect(PH_X, PH_Y, PH_W, PH_H);
-      ctx.fillStyle = "#8a90a0"; ctx.fillText("per-column MEDIAN luminance (max RGB) — the profile the walker reads", PH_X, PH_Y - 6);
+      ctx.fillStyle = "#8a90a0"; ctx.fillText("per-column MEDIAN luminance (max RGB, smoothed) — the profile the walkers read", PH_X, PH_Y - 6);
+      cellShade();
       thresholds();
       curve("#3d4658");
 
       if (phase === "profile") {
         pt += a;
-        cap("anim-travel", "PHASE 1/4 · profile: median of max(R,G,B) per column through the groove band; floors from percentiles → recess/rim/backdrop thresholds — extract12.py [travel]");
+        cap("anim-travel", "PHASE 1/4 · profile: median of max(R,G,B) per column through the groove band (box-smoothed 7px). Base span = the slot's MASK CELL (shaded) — never walked inside, so a baked handle can't derail anything. Body plateau per SIDE from the flanking band (dashed) — extract12.py [travel]");
         if (pt > 50) { phase = "walk"; pt = 0; wi = 0; }
       } else if (phase === "walk") {
         wi += a;
         tracePaint(L.trace, wi * perFrameL); tracePaint(R.trace, wi * perFrameR);
         walker(L.trace, wi * perFrameL, "◀"); walker(R.trace, wi * perFrameR, "▶");
-        cap("anim-travel", "PHASE 2/4 · walk outward BOTH ways from centre: dark recess (blue) and bright bezel rim (yellow) both count as slot; sustained-bright body (red, brun>cap) or near-black backdrop stops the walk");
+        cap("anim-travel", "PHASE 2/4 · walk OUTWARD from both cell edges: clearly-below-LOCAL-body (blue — dark channel OR lighter stepped trough) and bright bezel rim (yellow) both count as slot; a short sustained near-body run (red), sustained bright (orange), or backdrop COLOUR (magenta, |rgb−BGC|) stops the walk");
         if (wi >= WALK_FRAMES + 20) { phase = "span"; pt = 0; }
       } else {
         // keep the full coloured trace visible
@@ -445,14 +503,14 @@
         walker(L.trace, L.trace.length, "◀"); walker(R.trace, R.trace.length, "▶");
         const t = phase === "span" ? ease(Math.min(1, pt / 40)) : 1;
         pt += a;
-        // travel bar grows out from centre to the ±2% padded span
-        const c = X(ctr);
-        const xl = c + (X(tvLo - bx0) - c) * t, xr = c + (X(tvHi - bx0) - c) * t;
+        // travel bar grows out from the cell to the clamped ±2%-padded span
+        const cl = X(mx0), cr = X(mx1);
+        const xl = cl + (X(tvLo - bx0) - cl) * t, xr = cr + (X(tvHi - bx0) - cr) * t;
         const barY = CY + CH + 22;
         ctx.fillStyle = "#5f7"; ctx.fillRect(xl, barY, xr - xl, 6);
         ctx.fillRect(xl, barY - 4, 2, 14); ctx.fillRect(xr - 2, barY - 4, 2, 14);
         ctx.fillStyle = "#8fa"; ctx.font = "10px ui-monospace,monospace";
-        ctx.fillText(`travel = [${(tvLo / GW).toFixed(4)}, ${(tvHi / GW).toFixed(4)}] (walk span ± 2%)`, xl, barY + 20);
+        ctx.fillText(`travel = [${(tvLo / GW).toFixed(4)}, ${(tvHi / GW).toFixed(4)}] (cell ∪ walked caps, clamped ±12% of cell, ±2% margin)`, xl, barY + 20);
         // cross-check ticks: the travel extract12 actually shipped in regions.json
         for (const v of storedTv) {
           const xx = X(v * GW - bx0);
@@ -460,7 +518,7 @@
         }
         ctx.fillStyle = "#cdd3dd"; ctx.fillText("white ticks = regions.json travel (shipped)", PH_X + PH_W - 262, barY + 31);
         if (phase === "span") {
-          cap("anim-travel", "PHASE 3/4 · span snap: travel = walked slot extent + 2% margin; white ticks are the values extract12 shipped in regions.json — they coincide");
+          cap("anim-travel", "PHASE 3/4 · span snap: travel = mask cell ∪ walked end caps, clamped to ±12% of the cell width, + 2% margin; white ticks are the values extract12 shipped in regions.json — they coincide");
           if (pt > 70) { phase = "slide"; pt = 0; }
         } else if (phase === "slide" || phase === "hold") {
           // thumb slides end-to-end: x0 = travel[0], x1 = travel[1] − thumbW (consumer clamp)
@@ -470,15 +528,15 @@
           const tx = x0c + (x1c - x0c) * uu;
           ctx.drawImage(thumbImg, tx, CY + CH / 2 - thumbH / 2, thumbW, thumbH);
           ctx.strokeStyle = "#5f7"; ctx.strokeRect(tx, CY + CH / 2 - thumbH / 2, thumbW, thumbH);
-          cap("anim-travel", "PHASE 4/4 · coverage: the real cut thumb (BiRefNet seek.png) slides x∈[travel₀, travel₁−thumbW] — its extremes visually COVER the slot ends incl. bezel rims");
+          cap("anim-travel", "PHASE 4/4 · coverage: the real cut thumb (BiRefNet seek.png) slides x∈[travel₀, travel₁−thumbW] — its extremes visually COVER the slot ends incl. the stepped outer trough and bezel rims");
           if (phase === "slide" && pt > 170) { phase = "hold"; pt = 0; }
           if (phase === "hold" && pt > 60) reset();
         }
       }
       // legend
       ctx.font = "10px ui-monospace,monospace";
-      const leg = [["dark recess", "#5af"], ["bright bezel rim", "#fd5"], ["mid (rim slope)", "#9aa"],
-                   ["STOP: sustained-bright body", "#f55"], ["STOP: backdrop", "#f0f"]];
+      const leg = [["below local body (trough)", "#5af"], ["bright bezel rim", "#fd5"], ["near-body", "#9aa"],
+                   ["STOP: sustained body", "#f55"], ["STOP: sustained bright", "#fa0"], ["STOP: backdrop colour", "#f0f"]];
       let lx = 12;
       for (const [name, c] of leg) {
         ctx.fillStyle = c; ctx.fillRect(lx, H - 20, 8, 8);
