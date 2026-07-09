@@ -379,7 +379,7 @@ function controlDesc(r: Region, kind: SpriteKind): string {
     return icon ? `${sh} with ${icon} embossed ON ITS FACE` : sh;
   }
   if (kind === "knob") return `a round rotary knob cap, smooth or knurled, with NO painted pointer/notch/indicator line — a plain symmetric cap (the app draws the rotating indicator on top)${r.label ? ` (${r.label})` : ""}`;
-  if (kind === "slider") return `a small slider THUMB/grip — JUST the compact movable handle that rides along a track (a knurled cap / grip button), matching the device's material and era; NOT the whole track, NOT the groove — only the little part the finger drags`;
+  if (kind === "slider") return `a small slider THUMB/grip — JUST the compact movable handle that rides along a track (a knurled cap / grip button), a WIDE LOW pill-shaped grip clearly WIDER than it is tall, matching the device's material and era; it is NOT a switch, NOT a toggle, NOT tall, has NO frame or slot around it, NOT the whole track, NOT the groove — only the little part the finger drags`;
   return "a control part";
 }
 
@@ -643,8 +643,8 @@ export function combinedBlueprint(
   const firstToggle = spriteRegs.find((r) => spriteKindOf(r) === "toggle");
   if (firstToggle) {
     const tc = colors.get(firstToggle.id)?.hex ?? "#888888";
-    items.push({ bind: "switch-off", kind: "toggle", color: tc, regionId: firstToggle.id, desc: "a toggle switch shown in its OFF position (lever/rocker down)" });
-    items.push({ bind: "switch-on", kind: "toggle", color: tc, regionId: firstToggle.id, desc: "the SAME toggle switch shown in its ON position (lever/rocker up)" });
+    items.push({ bind: "switch-off", kind: "toggle", color: tc, regionId: firstToggle.id, desc: "a TALL portrait toggle switch — clearly TALLER than it is wide — shown in its OFF position (lever/rocker down)" });
+    items.push({ bind: "switch-on", kind: "toggle", color: tc, regionId: firstToggle.id, desc: "the SAME TALL toggle switch shown in its ON position (lever/rocker up)" });
   }
   const n = items.length;
   const cellW = n > 0 ? GEN_W / n : GEN_W;

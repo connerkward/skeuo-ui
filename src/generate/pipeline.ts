@@ -55,12 +55,14 @@ export const PAINT_PROMPT =
   "FADED crosshair + LARGE soft blurry disc = the position is approximate — nudge it within that soft region.\n" +
   "- The big dark rounded rectangles / bars are recessed SCREENS — paint them as dark glassy inset displays, in place. Leave them BLANK dark glass: NO text, NO numbers, NO track names, NO fake UI, NO waveform, NO menu, NO icons on the screen — the screen content is added live afterwards.\n" +
   "- The legend gives each colour's ROLE — do EXACTLY that: an EMPTY recessed socket → paint a dark empty hole (no button); a MOLDED BUTTON → paint a finished tactile button; a SCREEN → a dark glassy inset. COLOUR→control→role→icon legend: {bakeLegend}.\n" +
+  "- EVERY socket the legend calls EMPTY is truly EMPTY — a hollow, dark recessed well/groove cut into the body with ABSOLUTELY NOTHING inside it: NO knob, NO dome, NO nub, NO cap, NO dial, NO thumb, NO handle, NO bead, NO lever, NO switch, NO button — a bare empty hole showing only its dark recessed floor. This device is photographed BEFORE ASSEMBLY: the loose parts exist ONLY in the parts strip at the bottom and have NOT been installed yet. If ANY empty socket or groove on the device contains ANY part, the output is WRONG.\n" +
   "- Where a mark includes a coloured LINE or ARC (not just a crosshair + disc), that is a SLIDER TRACK — paint a recessed seek groove following that EXACT straight line or partial-circle arc; the draggable thumb is a separate part in the strip below. Keep the groove on the line/arc and remove the coloured guide itself. The groove is a COMPLETELY EMPTY recessed channel with ABSOLUTELY NOTHING inside it: NO thumb, NO handle, NO slider knob, NO nub, NO bead, NO bar, NO fill, NO marker — JUST an empty channel. The thumb is a SEPARATE loose part that appears ONLY in the strip below; NEVER paint a thumb or any object inside the track on the device.\n" +
   "- For every mark the legend calls a MOLDED BUTTON: paint ONE finished, tactile, pressable button MOLDED SEAMLESSLY INTO the sculpted housing, in the body material, with the icon the legend gives embossed on its face. Give each a WILD, era-correct, ORGANIC silhouette — a curved WEDGE or arc-segment (jog dial), a KIDNEY or half-oval, a TRAPEZOID or faceted polygon, a LOZENGE or teardrop lobe — like a real early-2000s Winamp / Windows-Media-Player / Sonique skin where controls are facets of the housing. The soft disc hints only at SIZE, never shape.\n" +
   "- The buttons do NOT need to be uniform: they MAY be different shapes and sizes, sit at different angles, and follow the organic contour of the body — do NOT force them into an even straight row, a uniform grid, or identical evenly-spaced keys. Where blue marks sit adjacent you MAY flow them into one sculpted housing facet with thin raised seams, but the arrangement stays organic and characterful, not a regimented row. Each button is molded into the body (it stays in the render), not a loose part on top.\n" +
   "- BUTTON COUNT IS EXACT — CRITICAL: there are EXACTLY {NBUTTONS} buttons on the ENTIRE device: the {NBUTTONS} colour-marked positions and ABSOLUTELY NO OTHERS. Do NOT hallucinate or add ANY extra button, a second/conventional transport row, another play/pause/skip cluster, jog-dial keys, or any media-control ANYWHERE else on the body — NOT EVEN if the device 'looks like it should have' a normal transport row. It does NOT. Media players you have seen have a conventional button row; THIS device's buttons are ONLY the {NBUTTONS} marked ones, wherever they sit. Count the coloured button marks, paint exactly that many buttons, and paint NONE beyond them. Every non-marked area of the body is smooth material with NO buttons.\n" +
   "- The set of controls is EXACTLY the set of coloured marks — do NOT invent a control that has no mark, and do NOT skip any mark.\n" +
-  "- REMOVE every coloured crosshair and soft disc from your output completely (guides only, not part of the device); the painted control they marked stays exactly where it was.\n" +
+  "- The coloured crosshairs, discs and lines are ALIGNMENT MARKINGS on a technical drawing — like masking tape on a workpiece — they are NOT part of the product's design and must be COMPLETELY removed in the finished paint; the painted control they marked stays exactly where it was.\n" +
+  "- ZERO RESIDUE — where a coloured guide mark was, paint the body material seamlessly over it. Do NOT leave ANY thin coloured rim, ring, halo, edge tint or glow around ANY socket, button, slot or part. Inspect every socket edge: if even a sliver of guide colour survives, the output is WRONG.\n" +
   "- ABSOLUTELY DO NOT invent or paint ANY extra control — no button, knob, dial, switch, toggle, slider, key, jack, port, " +
   "vent/grille that reads as a button, badge, or label — ANYWHERE on the body except the defined sockets above. The body " +
   "BETWEEN and AROUND the sockets must be SMOOTH, continuous material only (seams, sheen, bevels are fine; anything that " +
@@ -82,12 +84,12 @@ export const PAINT_PROMPT =
   "goes and the disc ROUGHLY HOW BIG — it does NOT dictate the part's SHAPE. Do NOT fill a box: give each part its own sculpted, era-correct " +
   "SILHOUETTE (often NON-rectangular — a half-oval, D-shape, wedge / arc-segment, lozenge, curved trapezoid — matching real hardware of this device), " +
   "centered on its crosshair; it may be smaller than the soft disc. Paint ONE finished, " +
-  "glossy control PART per green slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
-  "exactly ONE part per green slot: paint a part in EVERY slot, fill ALL of them, do NOT leave a slot empty, do NOT merge two " +
-  "parts into one slot, and do NOT omit or add any. Count the green slots and match them one-to-one with the list below:\n" +
+  "glossy control PART per marked slot, in the SAME material as the body, in this EXACT left-to-right order. There is " +
+  "exactly ONE part per marked slot: paint a part in EVERY slot, fill ALL of them, do NOT leave a slot empty, do NOT merge two " +
+  "parts into one slot, and do NOT omit or add any. Count the coloured slot marks and match them one-to-one with the list below:\n" +
   "    {strip}\n" +
-  "- REMOVE the coloured crosshairs + discs in your output (guides ONLY, exactly like the device sockets' marks) — only the finished " +
-  "part remains, on the flat {BG} backdrop; the green must be completely gone.\n" +
+  "- Each cell's part must be the EXACT part its mark colour names in the list above — match the mark's colour to the legend and paint THAT part in THAT cell. NEVER swap cell contents, NEVER paint one part type where a different part's mark is.\n" +
+  "- STRIP ZERO RESIDUE — every strip part is a finished PRODUCT PHOTO of the bare part alone on the backdrop. NO coloured crosshair, disc, outline, ring, rim, halo, frame, border or tint of the guide colour may remain ANYWHERE on or around ANY strip part — not encircling the part, not underneath it, not as a faint washed-out ring. The coloured mark in each strip cell is a POSITIONING MARK ONLY: paint it completely away, leaving only the flat {BG} backdrop and the part's own material — the guide colours must be completely gone.\n" +
   "- THE STRIP BACKGROUND MUST BE A SINGLE FLAT {BG}, perfectly uniform across the whole band: NO gradient, " +
   "NO texture, NO vignette, NO panel, NO tray, NO surface markings, NO grid, NO shading — just that flat uniform {BG} behind " +
   "and between every part. This is REQUIRED so each control can be cleanly isolated and cut out. (The device body above keeps " +
@@ -133,7 +135,10 @@ export const MASK_PROMPT =
   "colour; every EMPTY on-device SOCKET (knob well, toggle slot, and the seek track groove) gets its " +
   "legend colour; and every SPRITE-STRIP CELL gets its part's colour — a strip part shares its on-device " +
   "socket's colour (BOTH toggle states = the toggle colour; the pause face = the play colour). Everything " +
-  "else in the right panel stays PURE BLACK: no gradients, no outlines, no glow, no text, no extra marks.\n" +
+  "else in the right panel stays PURE BLACK: no gradients, no outlines, no glow, no text, no extra marks. " +
+  "Each blob EXACTLY matches its target's SILHOUETTE in the left panel — same shape, same size, same position. " +
+  "NEVER flood a whole strip cell or any rectangle of background with colour; NEVER draw outlines or hollow " +
+  "shapes — every blob is ONE solid filled silhouette, no interior holes.\n" +
   "CRITICAL — the LEFT panel (the painted device and parts) stays strictly in its OWN material colours: " +
   "NONE of the legend guide colours may appear ANYWHERE in the left panel. The guide colours exist ONLY " +
   "as the flat blobs of the RIGHT mask panel.";
