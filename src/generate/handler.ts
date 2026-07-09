@@ -81,10 +81,13 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     // (the prompt drives the control set, varied per theme) → constant variant preset.
     let regions: Region[] | undefined =
       Array.isArray(body.regions) && body.regions.length ? (body.regions as Region[]) : undefined;
+    // body.regions = HUMAN-authored (wizard drag / Template Studio) → pipeline uses them as-is;
+    // Director-derived regions below are messy LLM output → pipeline repacks them.
+    const authored = !!regions;
     if (!regions && deps.openaiKey) {
       regions = (await deriveLayout(deps.openaiKey, prompt)) ?? undefined;
     }
-    const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions, seed: body.seed, maskPanel: body.maskPanel === true });
+    const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions, authored, seed: body.seed, maskPanel: body.maskPanel === true });
     return {
       status: "done", id: r.id, style: r.style, variant: r.variant, model: r.model, font, name, blurb,
       template: r.template, frameUrl: r.frameUrl, layout: r.layout, sprites: r.sprites,

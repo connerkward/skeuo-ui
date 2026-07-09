@@ -258,6 +258,8 @@ export interface GenerateInput {
   envelope?: boolean;     // run the AI envelope pass first (default true)
   envelopeUrl?: string;   // optional fal-hosted user-uploaded envelope; paints from it directly, skipping the AI envelope pass
   regions?: Region[];     // custom authored layout (else the variant preset)
+  authored?: boolean;     // regions came from a HUMAN (wizard drag / Template Studio) → use AS-IS,
+                          // never repackTemplate'd; only Director-derived regions get repacked
   seed?: number;          // paint base seed; absent ⇒ random-but-recorded (every gen reproducible)
   // JOINT paint+mask: two-panel blueprint (LEFT device+strip, RIGHT black mask target),
   // requested at 1:1 4K — the model paints the skin AND a colour-keyed region mask in
@@ -514,13 +516,17 @@ export async function generateSkin(deps: RuntimeDeps, input: GenerateInput): Pro
   // "trust the clean procedural baseline, don't run a noisy mangling step on it" lesson
   // (ai-image-coords-rule): repackTemplate is for the DIRECTOR's raw rects (often
   // slivers/oversized/overlapping), NOT for the hand-authored presets.
-  //   • custom regions (input.regions, from the wizard/Director) → repack as before.
+  //   • Director-derived regions (input.regions, authored:false) → repack as before.
+  //   • human-authored regions (wizard/studio, authored:true) → use AS-IS.
   //   • preset variant → use AS-IS (it's the load-bearing truth). Then bakeButtons
   //     (bake ALL buttons in place — no snapping; the layout's organic arrangement stands).
   // maybeCdScreen: cd-visualizer feature — swap the first screen → spinning CD for
   // music/disc-themed prompts (mostly) or rarely at random.
   const baseRegs: Region[] = input.regions?.length
-    ? repackTemplate(input.regions)            // messy Director input → sane + de-overlap
+    ? (input.authored
+        ? input.regions                        // human-authored (wizard/studio) → pass through UNTOUCHED
+                                               // (sizes + overlaps are intentional; studio allows overlap)
+        : repackTemplate(input.regions))       // messy Director input → sane + de-overlap
     : regionsForVariant(input.variant);        // clean authored preset → keep its geometry
   const regs: Region[] = maybeCdScreen(bakeButtons(baseRegs), input.brief);
   const template: Template = { id: input.id, name: "wild-sculpt", canvas: { w: GEN_W, h: GEN_H }, regions: regs };

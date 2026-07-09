@@ -19,7 +19,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useDrag } from "@use-gesture/react";
 import {
-  layoutRandomP, layoutArch, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS, SPOTIFY_BINDS,
+  layoutRandomP, layoutArch, bakeButtons, ARCHETYPES, DEFAULT_PARAMS, SPOTIFY_BINDS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
 import { combinedBlueprint, componentColors } from "../generate/blueprint";
@@ -68,16 +68,6 @@ export default function TemplateStudio() {
   // human-authored flag: once the human edits (drag/add/patch/nudge), the packer becomes a
   // PASS-THROUGH — packing must not rearrange a human-authored template. Generators reset it.
   const [, setAuthored] = useState(false);   // human-edit flag (setter kept; value unused while repack is off)
-
-  // HARD CONSTRAINT: components at 0 diffuseness (crisp, must-follow guides) may NEVER overlap.
-  const enforceZeroDiff = useCallback((rs: SR[]): SR[] => {
-    const isZero = (r: SR) => (r.diff ?? globalDiff) <= 0.001;
-    const zero = rs.filter(isZero);
-    if (zero.length < 2) return rs;
-    const solved = resolveOverlaps(zero.map((r) => ({ ...r })) as Region[]) as SR[];
-    const byId = new Map(solved.map((r) => [r.id, r]));
-    return rs.map((r) => byId.get(r.id) ?? r);
-  }, [globalDiff]);
 
   // undo/redo history — normal expected editor UX (⌘Z / ⇧⌘Z). Snapshots on every discrete
   // mutation (and at the FIRST MOVE of a drag, so a whole drag undoes as one step and a bare
@@ -128,14 +118,14 @@ export default function TemplateStudio() {
     } catch (e) { setLlmMsg("error: " + (e instanceof Error ? e.message : String(e))); }
   };
 
-  const patchSel = (patch: Partial<SR>) => { setAuthored(true); mutate((rs) => enforceZeroDiff(rs.map((r) => r.id === sel ? { ...r, ...patch } : r))); };
+  const patchSel = (patch: Partial<SR>) => { setAuthored(true); mutate((rs) => rs.map((r) => r.id === sel ? { ...r, ...patch } : r)); };
   const delSel = useCallback(() => {
     setSelIds((ids) => { if (ids.length) { setAuthored(true); mutate((rs) => rs.filter((r) => !ids.includes(r.id))); } return []; });
   }, [mutate]);
   const addComp = () => {
     const id = "c" + Math.random().toString(36).slice(2, 6);
     setAuthored(true);
-    mutate((rs) => enforceZeroDiff([...rs, { id, kind: "button", content: "sprite", layer: "components", bind: id, rect: { x: 0.44, y: 0.44, w: 0.12, h: 0.08 }, shapeKind: "auto", diff: globalDiff } as SR]));
+    mutate((rs) => [...rs, { id, kind: "button", content: "sprite", layer: "components", bind: id, rect: { x: 0.44, y: 0.44, w: 0.12, h: 0.08 }, shapeKind: "auto", diff: globalDiff } as SR]);
     setSelIds([id]);
   };
 
@@ -153,12 +143,12 @@ export default function TemplateStudio() {
       const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
       if (dx || dy) {
         e.preventDefault(); setAuthored(true);
-        mutate((rs) => enforceZeroDiff(rs.map((r) => selIds.includes(r.id) ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, r.rect.x + dx)), y: Math.max(0, Math.min(1 - r.rect.h, r.rect.y + dy)) } } : r)));
+        mutate((rs) => rs.map((r) => selIds.includes(r.id) ? { ...r, rect: { ...r.rect, x: Math.max(0, Math.min(1 - r.rect.w, r.rect.x + dx)), y: Math.max(0, Math.min(1 - r.rect.h, r.rect.y + dy)) } } : r));
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selIds, mutate, undo, redo, delSel, enforceZeroDiff]);
+  }, [selIds, mutate, undo, redo, delSel]);
 
   // Track the editable SVG stage's live displayed pixel box (movement→normalized conversion).
   useEffect(() => {
@@ -180,7 +170,7 @@ export default function TemplateStudio() {
     const r = p.matrixTransform(m.inverse());
     return { x: r.x, y: r.y };
   }, []);
-  const commitEdit = useCallback(() => { setAuthored(true); setRegions(enforceZeroDiff); setGuides({ v: [], h: [] }); }, [enforceZeroDiff]);
+  const commitEdit = useCallback(() => { setAuthored(true); setGuides({ v: [], h: [] }); }, []);
   const isSliderK = (k?: Kind) => k === "slider-h" || k === "slider-v" || k === "slider-arc";
 
   // ── SNAP: nudge a moving rect's edges/centers onto sibling controls' edges/centers. Operates
