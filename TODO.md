@@ -439,3 +439,6 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
   allowed-motion masks (reuse PBR glass/region masks). Seedance 1.0 pro fast = current winner.
 - **Benchmark LTX-2.3 Cinemagraph LoRA** (HF terms accepted) vs round-2 Seedance/Wan results —
   same subjects + region-scoped prompts via fal ltx lora endpoint (~$0.10-0.15/clip).
+- **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
+  across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
+  featured path for skins with strong emissive themes.
