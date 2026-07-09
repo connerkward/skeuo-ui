@@ -4,7 +4,7 @@ The dashboard POSTs {id:{gate,notes}} to /save on every change; we write it to g
 which the agent can read on demand ("pull the review data"). Static-serves everything else.
 Usage: python3 review_server.py [port]   (default 0 = OS picks a free port; prints the URL)
 """
-import http.server, socketserver, os, sys, json
+import http.server, socketserver, threading, os, sys, json
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 REVIEW = os.path.join(DIR, "review.json")
@@ -35,8 +35,12 @@ class H(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 
 
-socketserver.TCPServer.allow_reuse_address = True
-with socketserver.TCPServer(("0.0.0.0", PORT), H) as httpd:
+class ThreadingServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    daemon_threads = True                 # one slow client must never wedge the dashboard
+    allow_reuse_address = True
+
+
+with ThreadingServer(("0.0.0.0", PORT), H) as httpd:
     port = httpd.server_address[1]
     url = f"http://localhost:{port}/dashboard12.html"
     open(os.path.join(DIR, ".review-url"), "w").write(url)
