@@ -442,3 +442,150 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
 - **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
   across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
   featured path for skins with strong emissive themes.
+
+## 2026-07-09 — session close-out backlog
+
+Open/missed/unreviewed items from today's gen12 session (2026-07-09), each written to be
+executed cold. Does not duplicate the moiré / ambient-masking / LTX-LoRA / emissivity-mainline
+entries already under "saved for later" above — those four stand as-is.
+
+1. **PBR social video re-record — spec locked, NOT executed (user deferred).**
+   Prior video (BPM-locked lighting, rotation knob broken) is at
+   [~/Desktop/cc-skeuo/2026-07-09-pbr-social-9x16.mp4](file:///Users/conner/Desktop/cc-skeuo/2026-07-09-pbr-social-9x16.mp4)
+   (commit `0a8d7512`). Verbatim re-record requirements, in order:
+   - **Lighting: non-BPM.** Replace the 128-BPM beat-locked pulse with organic FIRELIGHT —
+     1/f-style (pink-noise) flicker, not a metronome. Beat-clock code to remove/bypass lives in
+     [tools/mask-align-exp/gen12/pbrtest3/social.html](tools/mask-align-exp/gen12/pbrtest3/social.html)
+     (introduced in `0a8d7512`).
+   - **Fix the rotation knob FIRST** — it currently renders broken. Likely cause: a stale
+     seat/cut computed against an earlier diablo paint, while the diablo assets have since been
+     regenerated twice. Root-cause against the drift-correction warning in
+     [tools/mask-align-exp/gen12/pbrtest3/extract3.py](tools/mask-align-exp/gen12/pbrtest3/extract3.py)
+     (see the `drift-corrected` comments around line 13 / 153 / 177 — device-centre-vs-mask-centre
+     drift is computed there; confirm it's being applied against the CURRENT paint, not a cached one).
+   - **Add a second knob** — the paint (`diablo-emissive3.png`) has an empty second round socket
+     that the current build never fills. Detect + seat it the same way as the first knob (reuse
+     the circle-fit + matte-centroid snap already in `extract3.py`), don't hand-place it.
+   - **Choreography order**: (1) press play FIRST, (2) move the cursor light around, (3) rotate
+     the knob, (4) zoom into the TOP region — must show both the skeleton motif AND the central
+     play/pause emissive glow in frame.
+   - **Capture mechanism**: reuse
+     [tools/mask-align-exp/gen12/animexport/record_social.mjs](tools/mask-align-exp/gen12/animexport/record_social.mjs)
+     — stepped frame-by-frame capture per the shipped `animexport` harness (central
+     `video-convert`/capture discipline: deterministic per-frame render, not realtime screen-grab).
+   - Source assets: `tools/mask-align-exp/gen12/pbrtest3/diablo-emissive3.png`,
+     `diablo-meta3.json`, `btn-ids.png`.
+
+2. **Outline-vs-solid template A/B — finish the results page + deliver a verdict.**
+   4 test generations already exist and were never scored/compared:
+   [tools/mask-align-exp/gen12/abshape/assets-abshape-a-121](tools/mask-align-exp/gen12/abshape/assets-abshape-a-121),
+   `assets-abshape-a-134`, `assets-abshape-b-121`, `assets-abshape-b-134` — generated via
+   [genskin_ab.py](tools/mask-align-exp/gen12/abshape/genskin_ab.py). A partial
+   [build_index.py](tools/mask-align-exp/gen12/abshape/build_index.py) and
+   [score_ab.py](tools/mask-align-exp/gen12/abshape/score_ab.py) /
+   [scores.json](tools/mask-align-exp/gen12/abshape/scores.json) exist but the agent stalled
+   before finishing the page — no served comparison, no verdict delivered.
+   - **To finish**: score all 4 via `extract12.py` (leak / emptiness / control-detection
+     rate — the same independent metrics used elsewhere in gen12, not a self-fulfilling
+     shape-fit check per [[verify-outputs-rule]] §6), build
+     `tools/mask-align-exp/gen12/abshape/index.html` as a served side-by-side (full-res crops +
+     score table per condition, per [[review-in-browser-rule]] — NOT a flat PNG contact sheet),
+     serve it, and record the actual A-vs-B conclusion in a new
+     `docs/experiments/2026-07-1X-abshape-outline-vs-solid.md` per [[empirical-testing-rule]].
+
+3. **n64-lowpoly disposition — ASK USER before acting.**
+   [tools/mask-align-exp/gen12/review-2026-07-09.json](tools/mask-align-exp/gen12/review-2026-07-09.json)
+   line 34 has `"n64-lowpoly": {"gate": "fail", "notes": "delete this"}` — an explicit
+   human-labeled verdict to delete the theme (per [[human-labeled-data-rule]], this verdict must
+   not be silently discarded). But the later 15-skin regen-all run
+   (`tools/mask-align-exp/gen12/.regen-start`, `regen-monitor.log`) produced a FRESH
+   `assets-n64-lowpoly` (+ `assets-n64-lowpoly_biref`) alongside the pre-existing
+   `assets-n64-cutscene` theme. Before deleting anything: confirm with the user whether the
+   fresh n64-lowpoly regen supersedes the "delete this" verdict (i.e. keep the new one, the
+   complaint was about the OLD render) or whether the whole theme should still be cut. Do not
+   delete unilaterally either way.
+
+4. **B-pivot decision + its own experiment record.**
+   [tools/mask-align-exp/gen12/bproof/](tools/mask-align-exp/gen12/bproof/) (commit `e8546e22`,
+   "B-proof harness") CONFIRMED that heavy constraint-laden prompts measurably degrade paint
+   quality — same model/seed/theme, comparing a lean froggo-style prompt (~618 chars,
+   `froggo-diablo-gothic.png` / `froggo-steam-porthole.png`) against gen12's constraint-heavy
+   prompt (~9k chars, `gen12-diablo-gothic-device.png` / `gen12-steam-porthole-device.png`); see
+   the crop pairs (`crop-*-froggo.png` vs `crop-*-gen12.png`) and
+   [run_bproof.py](tools/mask-align-exp/gen12/bproof/run_bproof.py) /
+   `run_bproof_vertex.py` for the exact method. This was mitigated within gen12's existing
+   architecture but the actual architectural fork was never decided or built:
+   - **Decide**: adopt a froggo-style **two-pass architecture** — (1) one lean, unconstrained
+     "beautiful" paint pass with no socket/legend clutter in the prompt, then (2) a SEPARATE
+     detection/mask pass (VLM or CV) that finds control positions on the clean paint — vs
+     staying single-pass with prompt engineering as the only lever.
+   - **Write it up**: this result is currently only folded partially into
+     [docs/experiments/2026-07-09-pbr-delight-emissive.md](docs/experiments/2026-07-09-pbr-delight-emissive.md)
+     (which does NOT actually mention it — checked, no `B-proof`/`bproof`/char-count hits in that
+     file). Write a standalone `docs/experiments/2026-07-09-bproof-prompt-length.md` per
+     [[empirical-testing-rule]]: question, method (model/seed/char-counts), the crop comparisons
+     as evidence, and the verdict once decided above.
+
+5. **Dashboard PBR-player link hook — 2-line wire-up, blocked on the regen commit landing.**
+   [tools/mask-align-exp/gen12/WIRE-pbr.md](tools/mask-align-exp/gen12/WIRE-pbr.md) documents the
+   exact hook (`PBR_PASS_ENABLED` in `pbr_pass.py`, gate in `genskin.py` per lines 26-37). Once
+   the in-flight 15-skin regen aggregate commit lands (see item 8), add the PBR-player card link
+   into [build_dashboard.py](tools/mask-align-exp/gen12/build_dashboard.py) (confirmed today: it
+   currently has ZERO `pbr`/`PBR` references — the hook is fully unwired).
+
+6. **User reviews pending (nothing acted on yet):**
+   - **Vizlab visualizer lookdev pick** —
+     [tools/mask-align-exp/gen12/vizlab/index.html](tools/mask-align-exp/gen12/vizlab/index.html)
+     (commit `302a6cf3`, served at the time via `http://localhost:54731/vizlab/index.html` — reserve
+     with `~/dev/central/scripts/serve tools/mask-align-exp/gen12 --bg` if the port is dead).
+     8 theme-connected visualizer styles built (phosphor CRT, ember/lava sparks, fluid/ripple,
+     brass steam gauges, low-poly dither, oscilloscope, emissive-bezel [PBR-coupled], aurora).
+     Top-3 recommendation given but NOT confirmed: steam gauges → porthole theme, ember → diablo
+     theme, emissive-bezel → universal (any PBR-enabled skin). Needs the user's actual pick before
+     wiring a style into `build_player.py`.
+   - **Template Studio agentic-canvas mode** — [src/generate/AgentObserver.tsx](src/generate/AgentObserver.tsx)
+     + [src/generate/agentObserver.css](src/generate/agentObserver.css) (commit `4c7c177a`): a
+     glowing-cursor reticle that stages the circle-fit knob snap and slider coverage-span walk as
+     live "agent motion" on the template canvas, auto-opens with generation, manual "👁 Watch agent"
+     toggle under the preview. Verified headless at 1400px/420px only — needs a live `npm run dev`
+     look in the real app before calling it reviewed.
+   - **ComfyUI workflow visibility confirm** — two workflows were exported this session into
+     `~/ComfyUI-Installs/Local/ComfyUI/user/default/workflows/`:
+     `jul0926-0914-skeuo-gen12.workflow.json` and `jul0926-1014-skeuo-gen12-local.workflow.json`
+     (confirmed present on disk, graph-format). Per the `comfyui` skill/rule, verify against
+     whichever ComfyUI install is actually the LIVE one (port 8188 `lsof` check) — this session
+     did not confirm that install is the one the user has running, only that the files exist.
+   - **3rd-pass specular subtlety verdict** — [build_player.py](tools/mask-align-exp/gen12/build_player.py)
+     received successive specular/press-ink passes across commits `e8546e22` → `f80484b8` →
+     `55d2dfcd` (material-tinted specular → luminance-adaptive press ink → subtler knob specular +
+     exact-silhouette pressed-button depression). No recorded user sign-off on whether the 3rd pass
+     (`55d2dfcd`, "subtler knob specular") actually reads correctly across the roster — needs a
+     fresh-eyes look at rendered players, not just the commit log.
+
+7. **wmp-vario fresh-gen review — verify vertical seek + d-pad detection.**
+   Vertical-seek support landed in
+   [tools/mask-align-exp/gen12/extract12.py](tools/mask-align-exp/gen12/extract12.py) and
+   [build_player.py](tools/mask-align-exp/gen12/build_player.py) (commits `8f8c38e5`
+   "slot-sized moving parts, vertical-slider support" / `7b5d0f22` "travel walk — recess
+   continuity + bimodal-flank body estimate"). `assets-wmp-vario` /
+   `assets-wmp-vario_biref` exist on disk from the fresh regen. NOT yet verified: open the
+   rendered `wmp-vario` player and confirm (a) the seek control actually renders/drags
+   VERTICALLY (not silently falling back to horizontal), and (b) the d-pad buttons are
+   individually detected/cut (not merged into one blob) — per [[verify-outputs-rule]] §7,
+   inspect the real rendered player, not the extractor's JSON output alone.
+
+8. **Fresh-regen re-review round — the 15-skin regen-all was RUNNING, not confirmed landed.**
+   `tools/mask-align-exp/gen12/.regen-start` timestamps the run at 2026-07-09 13:20:02 PDT;
+   `regen-monitor.log`'s only line (`13:20:02 fresh-orch=0/15 running=6`) shows it had just
+   started. As of session close, `assets-*` (18 non-biref dirs on disk) reflects SOME
+   regenerated state but no `orchestrate12`-family process was still running and no aggregate
+   commit exists yet for the full batch — the working tree shows uncommitted changes to
+   `tools/mask-align-exp/gen12/assets-fallout-vault/regions.json`,
+   `assets-steam-porthole/regions.json`, `build_dashboard.py`, and `dashboard12.html`. Next
+   session: confirm the regen actually completed for all 15 (check each `assets-*/regions.json`
+   mtime + a `built.png` render), commit the aggregate, rebuild
+   [dashboard12.html](tools/mask-align-exp/gen12/dashboard12.html) via `build_dashboard.py`, hand
+   the review URL (`http://localhost:54731/dashboard12.html` per
+   [.review-url](tools/mask-align-exp/gen12/.review-url) — re-serve if stale) to the user for the
+   human PASS/FAIL gate (`review_server` → `review.json`), then act on whatever verdicts come back
+   (including resolving item 3's n64-lowpoly question in that same pass).
