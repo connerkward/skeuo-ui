@@ -5,9 +5,9 @@
 //   • packer                      → repackTemplate (canon-size + resolveOverlaps), live
 // Each component has a CENTROID (draggable), an ARBITRARY SHAPE connected to it, and a modular
 // DIFFUSENESS (soft-guide spread). Left = raw seeded template, right = packed result.
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { useMemo, useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import {
-  layoutRandomP, layoutArch, bakeButtons, resolveOverlaps, ARCHETYPES, DEFAULT_PARAMS, SPOTIFY_BINDS,
+  layoutRandomP, layoutArch, bakeButtons, ARCHETYPES, DEFAULT_PARAMS, SPOTIFY_BINDS,
   GEN_W, GEN_H, type Params,
 } from "../generate/layouts";
 import { combinedBlueprint, componentColors } from "../generate/blueprint";
@@ -15,7 +15,7 @@ import { PAINT_PROMPT } from "../generate/pipeline";
 import PaintedSheet from "./PaintedSheet";
 import Moveable from "react-moveable";
 import Selecto from "react-selecto";
-import type { Region, Kind } from "../template/schema";
+import type { Region, Kind, Rect } from "../template/schema";
 
 type SR = Region & { shapeKind?: string; diff?: number };
 const KINDS: Kind[] = ["button", "knob", "toggle", "slider-h", "slider-v", "slider-arc", "display"];
@@ -53,22 +53,24 @@ export default function TemplateStudio() {
   // Ids under an ACTIVE Moveable gesture — while set, the transparent target div is frozen at its
   // gesture-start rect so Moveable's gesto sees a STABLE target (moving its own target mid-drag
   // corrupts the pointer baseline). The visible SVG shape still tracks the live model underneath.
-  const [gesturing, setGesturing] = useState<Set<string>>(new Set());
+  // A REF (not state) so the guard is SYNCHRONOUS from frame 0 of the gesture: while it holds ids,
+  // Moveable OWNS those target divs (imperative transform/size) and the model→element layout sync
+  // (useLayoutEffect) leaves them alone. Cleared on gesture end → the sync re-applies clean geometry.
+  const gesturingRef = useRef<Set<string>>(new Set());
+  // Live normalized rects during an active gesture — the SVG projection reads these so the visible
+  // control tracks the drag/resize in real time; committed to the model on gesture end. `liveV`
+  // bumps a re-render each frame (the model itself is untouched mid-gesture, so nothing else would).
+  const liveRects = useRef<Map<string, Rect>>(new Map());
+  const [, setLiveV] = useState(0);   // value unused; the setter's state bump re-renders the SVG from liveRects
   // human-authored flag: once the human edits (drag/add/patch/nudge), the packer becomes a
   // PASS-THROUGH — packing must not rearrange a human-authored template. Generators reset it.
   const [, setAuthored] = useState(false);   // human-edit flag (setter kept; value unused while repack is off)
 
-  // HARD CONSTRAINT: components at 0 diffuseness (crisp, must-follow guides) may NEVER overlap.
-  // Enforced with the SHIPPING resolveOverlaps, scoped to only the zero-diff subset — the packer
-  // heuristic applied exactly where it makes sense, even on human-authored templates.
-  const enforceZeroDiff = useCallback((rs: SR[]): SR[] => {
-    const isZero = (r: SR) => (r.diff ?? globalDiff) <= 0.001;
-    const zero = rs.filter(isZero);
-    if (zero.length < 2) return rs;
-    const solved = resolveOverlaps(zero.map((r) => ({ ...r })) as Region[]) as SR[];
-    const byId = new Map(solved.map((r) => [r.id, r]));
-    return rs.map((r) => byId.get(r.id) ?? r);
-  }, [globalDiff]);
+  // OVERLAP ALLOWED (was: HARD no-overlap constraint on zero-diff controls). Overlap prevention
+  // (resolveOverlaps on the zero-diff subset) is intentionally REMOVED so controls may be dragged
+  // / resized over each other and that persists. enforceZeroDiff is now a PASS-THROUGH; keep-in-
+  // bounds (0..1 clamp in applyDrag/applyResize/nudge) still applies, only overlap prevention went.
+  const enforceZeroDiff = useCallback((rs: SR[]): SR[] => rs, []);
 
   // undo/redo history — normal expected editor UX (⌘Z / ⇧⌘Z). Snapshots on every
   // discrete mutation (and at drag START, so a whole drag undoes as one step).
@@ -182,38 +184,55 @@ export default function TemplateStudio() {
   }, [selIds, regions.length]);
   // Model changed (inspector edit, nudge, generator) → re-sync Moveable's control box to the divs.
   // Skip WHILE a gesture is active (updateRect mid-drag would reset Moveable's in-progress state).
-  useEffect(() => { if (gesturing.size === 0) moveableRef.current?.updateRect(); }, [regions, targets, stagePx, gesturing]);
+  useEffect(() => { if (gesturingRef.current.size === 0) moveableRef.current?.updateRect(); }, [regions, targets, stagePx]);
 
-  const px2n = () => { const b = overlayRef.current?.getBoundingClientRect(); return { w: b?.width || stagePx.w, h: b?.height || stagePx.h }; };
-  const clampPos = (v: number, size: number) => Math.max(0, Math.min(1 - size, v));
   const MIN_N = 0.03;
-  // Capture each target's START rect so drag/resize are DELTA-based off Moveable's px distance
-  // (e.dist), NOT its re-measured absolute e.left/e.top — which drift, because the .ctrl divs are
-  // repositioned live from the model every frame and that feeds a runaway back into e.left.
-  const gestureStart = useRef<Map<string, { x: number; y: number; w: number; h: number }>>(new Map());
-  const beginGesture = useCallback(() => {
-    snapshot();
-    const m = new Map<string, { x: number; y: number; w: number; h: number }>();
-    regions.forEach((r) => m.set(r.id, { ...r.rect }));
-    gestureStart.current = m;
-    setGesturing(new Set(selIds));   // freeze the active target divs for the gesture's duration
-  }, [snapshot, regions, selIds]);
-  // MOVE: dist = total px drag from gesture start → normalized delta added to the captured start rect.
-  const applyDrag = (t: HTMLElement, distX: number, distY: number) => {
-    const id = t.dataset.id, s = id ? gestureStart.current.get(id) : undefined; if (!s) return;
-    const { w, h } = px2n();
-    const nx = clampPos(s.x + distX / w, s.w), ny = clampPos(s.y + distY / h, s.h);
-    setRegions((rs) => rs.map((r) => r.id === id ? { ...r, rect: { ...r.rect, x: nx, y: ny } } : r));
+  const clampRect = (x: number, y: number, w: number, h: number): Rect => {
+    w = Math.min(Math.max(MIN_N, w), 1); h = Math.min(Math.max(MIN_N, h), 1);
+    x = Math.min(Math.max(0, x), 1 - w); y = Math.min(Math.max(0, y), 1 - h);
+    return { x, y, w, h };
   };
-  // RESIZE: absolute e.width/e.height (start-cached in Moveable → safe) for size; the moving corner's
-  // position via delta (opposite corner fixed → its drag dist is 0). Clamped to [0,1] + MIN size.
-  const applyResize = (t: HTMLElement, width: number, height: number, distX: number, distY: number) => {
-    const id = t.dataset.id, s = id ? gestureStart.current.get(id) : undefined; if (!s) return;
-    const { w, h } = px2n();
-    let nx = Math.max(0, s.x + distX / w), ny = Math.max(0, s.y + distY / h);
-    let nw = Math.max(MIN_N, width / w), nh = Math.max(MIN_N, height / h);
-    nw = Math.min(nw, 1 - nx); nh = Math.min(nh, 1 - ny);
-    setRegions((rs) => rs.map((r) => r.id === id ? { ...r, rect: { x: nx, y: ny, w: nw, h: nh } } as SR : r));
+  // Model → element geometry sync. Runs whenever the model (or stage size) changes, EXCEPT for ids
+  // under an active gesture — Moveable owns those imperatively (transform/width/height) for the
+  // duration, so we must not stomp them. This is what removes the React-inline-style ⇄ Moveable
+  // fight that made drag run away: React never writes these divs' geometry directly.
+  useLayoutEffect(() => {
+    regions.forEach((r) => {
+      const el = ctrlEls.current.get(r.id); if (!el || gesturingRef.current.has(r.id)) return;
+      el.style.left = `${r.rect.x * 100}%`; el.style.top = `${r.rect.y * 100}%`;
+      el.style.width = `${r.rect.w * 100}%`; el.style.height = `${r.rect.h * 100}%`;
+      el.style.transform = ""; el.style.borderRadius = "";
+    });
+  }, [regions, stagePx]);
+
+  // GESTURE lifecycle — Moveable owns the pointer/transform lifecycle (the whole reason to use it);
+  // we translate its live element box back to the normalized model. syncFromEl reads the element's
+  // REAL rendered box (transform included) vs the overlay → immune to accumulation/feedback.
+  const startGesture = (ids: string[]) => {
+    snapshot();
+    gesturingRef.current = new Set(ids);
+    liveRects.current = new Map();
+  };
+  const syncFromEl = (t: HTMLElement) => {
+    const id = t.dataset.id; if (!id) return;
+    const ob = overlayRef.current?.getBoundingClientRect(); if (!ob || !ob.width) return;
+    const br = t.getBoundingClientRect();
+    liveRects.current.set(id, clampRect((br.left - ob.left) / ob.width, (br.top - ob.top) / ob.height, br.width / ob.width, br.height / ob.height));
+  };
+  const onDragEl = (t: HTMLElement, transform: string) => { t.style.transform = transform; syncFromEl(t); };
+  const onResizeEl = (t: HTMLElement, width: number, height: number, transform: string) => {
+    t.style.width = `${width}px`; t.style.height = `${height}px`; t.style.transform = transform; syncFromEl(t);
+  };
+  const endGesture = () => {
+    setAuthored(true);
+    const live = liveRects.current;
+    // undo snapshot already pushed at startGesture → commit WITHOUT a second snapshot (a whole
+    // drag = one undo step). Invalidate the redo stack, as any mutation does.
+    if (live.size) setRegions((rs) => { future.current = []; return rs.map((r) => live.has(r.id) ? ({ ...r, rect: live.get(r.id)! } as SR) : r); });
+    gesturingRef.current = new Set();
+    liveRects.current = new Map();
+    setLiveV((v) => v + 1);   // drop the SVG's live-rect override; re-render from committed model
+    requestAnimationFrame(() => moveableRef.current?.updateRect());
   };
   // CORNER RADIUS: roundable emits a % border-radius (roundRelative) → scalar corner 0..1 (50%=oval→1).
   const applyRound = (t: HTMLElement, borderRadius: string) => {
@@ -222,8 +241,41 @@ export default function TemplateStudio() {
     const corner = Math.max(0, Math.min(1, borderRadius.includes("%") ? first / 50 : first / (Math.min(stagePx.w, stagePx.h) / 2)));
     setRegions((rs) => rs.map((r) => r.id === id ? { ...r, corner: +corner.toFixed(3) } as SR : r));
   };
-  const commitZeroDiff = () => { setAuthored(true); setRegions(enforceZeroDiff); setGesturing(new Set()); requestAnimationFrame(() => moveableRef.current?.updateRect()); };
   const isSliderK = (k?: Kind) => k === "slider-h" || k === "slider-v" || k === "slider-arc";
+
+  // ── ARC on-canvas editing ─────────────────────────────────────────────────────
+  // Pixel geometry of a slider-arc's ring in the overlay's coordinate space — matches
+  // renderShape (radius = min(w,h)/2 * 0.86, centred on the rect). Used to place the two
+  // draggable endpoint handles AND to convert a pointer position back to a sweep angle.
+  const arcGeom = (r: SR) => {
+    const b = overlayRef.current?.getBoundingClientRect();
+    const W = b?.width || stagePx.w, H = b?.height || stagePx.h;
+    const cx = (r.rect.x + r.rect.w / 2) * W, cy = (r.rect.y + r.rect.h / 2) * H;
+    const rad = (Math.min(r.rect.w * W, r.rect.h * H) / 2) * 0.86;
+    return { W, H, cx, cy, rad };
+  };
+  const arcPtOf = (r: SR, angleDeg: number) => {
+    const { cx, cy, rad } = arcGeom(r);
+    return { x: cx + rad * Math.cos((angleDeg * Math.PI) / 180), y: cy + rad * Math.sin((angleDeg * Math.PI) / 180) };
+  };
+  // Drag a start/end endpoint → write region.arc[which] (deg, y-down). Center is captured at
+  // pointer-down (position doesn't change during an angle drag) so the angle read stays stable.
+  const dragArcHandle = (id: string, which: "start" | "end") => (e: React.PointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const r0 = regions.find((r) => r.id === id); if (!r0) return;
+    snapshot(); setAuthored(true);
+    const b = overlayRef.current!.getBoundingClientRect();
+    const { cx, cy } = arcGeom(r0);
+    const move = (ev: PointerEvent) => {
+      const px = ev.clientX - b.left, py = ev.clientY - b.top;
+      let deg = (Math.atan2(py - cy, px - cx) * 180) / Math.PI;
+      deg = Math.round((deg + 360) % 360);
+      setRegions((rs) => rs.map((r) => r.id === id ? { ...r, arc: { ...(r.arc ?? DEF_ARC), [which]: deg } } as SR : r));
+    };
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
 
   const renderShape = (r: SR) => {
     const W = GEN_W, H = GEN_H;
@@ -283,6 +335,11 @@ export default function TemplateStudio() {
 
   const selRegion = regions.find((r) => r.id === sel);
   const roundable = selIds.length === 1 && !!selRegion && !isSliderK(selRegion.kind);
+  // Snap/align guidelines = the OTHER controls' target divs (never the ones being dragged, or they
+  // self-snap). Recomputed when selection / membership changes; the .ctrl elements are stable refs.
+  const ctrlGuidelines = useMemo(() => [...ctrlEls.current.values()].filter((el) => !targets.includes(el)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [targets, selIds, regions.length]);
   // EDITABLE stage — SVG visual layer (pointer-events:none) UNDER a transparent HTML overlay of
   // .ctrl divs (Moveable targets), driven by react-moveable (drag/resize/round) + react-selecto
   // (marquee + click select). Inlined (NOT a nested component) so Moveable/Selecto persist across
@@ -291,21 +348,22 @@ export default function TemplateStudio() {
     <div className="tsCanvas dev">
       <div className="tsCap">RAW template (seed / edit) <span>({regions.length} regions)</span></div>
       <div className="tsFit">
-        <div className="tsStageWrap" ref={overlayRef}>
+        <div className="tsStageWrap" ref={overlayRef} data-selcount={selIds.length} data-selids={selIds.join(",")}>
           <svg className="tsStage" viewBox={`0 0 ${GEN_W} ${GEN_H}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
-            {regions.map((r) => renderShape(r))}
+            {/* live-rect override: while a control is under an active gesture the SVG shape tracks the
+                real-time box (liveRects), so the visible control follows the drag/resize frame-by-frame.
+                liveV forces this re-render each frame; committed to the model on gesture end. */}
+            {regions.map((r) => { const lv = liveRects.current.get(r.id); return renderShape(lv ? ({ ...r, rect: lv } as SR) : r); })}
           </svg>
-          {/* transparent Moveable targets — projections of the normalized rects, FROZEN at the
-              gesture-start rect while under active drag/resize so gesto's baseline stays stable. */}
-          {regions.map((r) => {
-            const g = gesturing.has(r.id) ? gestureStart.current.get(r.id) : undefined;
-            const rc = g ?? r.rect;
-            return (
-              <div key={r.id} className="ctrl" data-id={r.id}
-                ref={(el) => { if (el) ctrlEls.current.set(r.id, el); else ctrlEls.current.delete(r.id); }}
-                style={{ position: "absolute", left: `${rc.x * 100}%`, top: `${rc.y * 100}%`, width: `${rc.w * 100}%`, height: `${rc.h * 100}%`, boxSizing: "border-box", background: "transparent" }} />
-            );
-          })}
+          {/* Transparent Moveable target divs — one per region. Geometry is written IMPERATIVELY by
+              the model→element useLayoutEffect (and by Moveable during a gesture); React never sets
+              their left/top/width/height, so there is no inline-style ⇄ Moveable conflict. */}
+          {regions.map((r) => (
+            <div key={r.id} className="ctrl" data-id={r.id}
+              data-kind={r.kind} data-corner={r.corner ?? ""} data-astart={r.arc?.start ?? ""} data-aend={r.arc?.end ?? ""}
+              ref={(el) => { if (el) ctrlEls.current.set(r.id, el); else ctrlEls.current.delete(r.id); }}
+              style={{ position: "absolute", boxSizing: "border-box", background: "transparent" }} />
+          ))}
           <Moveable
             ref={moveableRef}
             target={targets}
@@ -313,27 +371,30 @@ export default function TemplateStudio() {
             resizable
             roundable={roundable}
             roundRelative
-            snappable
             origin={false}
-            elementGuidelines={[".ctrl"]}
-            bounds={{ left: 0, top: 0, right: stagePx.w, bottom: stagePx.h, position: "css" }}
+            snappable
+            snapDirections={{ top: true, left: true, bottom: true, right: true, center: true, middle: true }}
+            elementSnapDirections={{ top: true, left: true, bottom: true, right: true, center: true, middle: true }}
+            elementGuidelines={ctrlGuidelines}
+            snapThreshold={6}
             throttleDrag={0}
             throttleResize={0}
             keepRatio={false}
-            onDragStart={beginGesture}
-            onDrag={(e) => applyDrag(e.target as HTMLElement, e.dist[0], e.dist[1])}
-            onDragEnd={commitZeroDiff}
-            onDragGroupStart={beginGesture}
-            onDragGroup={(e) => e.events.forEach((ev) => applyDrag(ev.target as HTMLElement, ev.dist[0], ev.dist[1]))}
-            onDragGroupEnd={commitZeroDiff}
-            onResizeStart={beginGesture}
-            onResize={(e) => applyResize(e.target as HTMLElement, e.width, e.height, e.drag.dist[0], e.drag.dist[1])}
-            onResizeEnd={commitZeroDiff}
-            onResizeGroupStart={beginGesture}
-            onResizeGroup={(e) => e.events.forEach((ev) => applyResize(ev.target as HTMLElement, ev.width, ev.height, ev.drag.dist[0], ev.drag.dist[1]))}
-            onResizeGroupEnd={commitZeroDiff}
-            onRoundStart={snapshot}
+            onDragStart={() => startGesture(selIds)}
+            onDrag={(e) => { onDragEl(e.target as HTMLElement, e.transform); setLiveV((v) => v + 1); }}
+            onDragEnd={endGesture}
+            onDragGroupStart={() => startGesture(selIds)}
+            onDragGroup={(e) => { e.events.forEach((ev) => onDragEl(ev.target as HTMLElement, ev.transform)); setLiveV((v) => v + 1); }}
+            onDragGroupEnd={endGesture}
+            onResizeStart={() => startGesture(selIds)}
+            onResize={(e) => { onResizeEl(e.target as HTMLElement, e.width, e.height, e.drag.transform); setLiveV((v) => v + 1); }}
+            onResizeEnd={endGesture}
+            onResizeGroupStart={() => startGesture(selIds)}
+            onResizeGroup={(e) => { e.events.forEach((ev) => onResizeEl(ev.target as HTMLElement, ev.width, ev.height, ev.drag.transform)); setLiveV((v) => v + 1); }}
+            onResizeGroupEnd={endGesture}
+            onRoundStart={() => { snapshot(); gesturingRef.current = new Set(selIds); }}
             onRound={(e) => applyRound(e.target as HTMLElement, String(e.borderRadius))}
+            onRoundEnd={() => { gesturingRef.current = new Set(); requestAnimationFrame(() => moveableRef.current?.updateRect()); }}
           />
           <Selecto
             ref={selectoRef}
@@ -346,17 +407,34 @@ export default function TemplateStudio() {
             onDragStart={(e) => {
               const mv = moveableRef.current;
               const t = e.inputEvent.target as HTMLElement;
+              if (t.classList.contains("arcHandle")) { e.stop(); return; }   // arc endpoint handle owns this drag
               if (mv && (mv.isMoveableElement(t) || targets.some((tg) => tg === t || tg.contains(t)))) e.stop();
             }}
             onSelect={(e) => setSelIds((e.selected as HTMLElement[]).map((el) => el.dataset.id!).filter(Boolean))}
             onSelectEnd={(e) => {
               setSelIds((e.selected as HTMLElement[]).map((el) => el.dataset.id!).filter(Boolean));
-              if (e.isDragStart) {
-                e.inputEvent.preventDefault();
-                requestAnimationFrame(() => requestAnimationFrame(() => moveableRef.current?.dragStart(e.inputEvent)));
-              }
+              // click-and-drag in ONE gesture: hand the SAME input event straight to Moveable so its
+              // drag-start pointer baseline is the real down position (NOT a stale, rAF-delayed one —
+              // that delay was the runaway-drag bug). Synchronous handoff, the documented pattern.
+              if (e.isDragStart) { e.inputEvent.preventDefault(); moveableRef.current?.dragStart(e.inputEvent); }
             }}
           />
+          {/* ARC endpoint handles — real on-canvas editing for a single selected slider-arc.
+              Green = start, red = end; drag around the ring to sweep region.arc.start/end.
+              Rendered ABOVE Moveable (high z-index) so they own their own pointer gesture;
+              radius = resize the box, position = drag the box (Moveable). */}
+          {selIds.length === 1 && selRegion?.kind === "slider-arc" && (() => {
+            const r = selRegion, arc = r.arc ?? DEF_ARC;
+            const ends: Array<["start" | "end", number, string]> = [["start", arc.start, "#7fe0a0"], ["end", arc.end, "#ff6b6b"]];
+            return ends.map(([which, ang, col]) => {
+              const p = arcPtOf(r, ang);
+              return (
+                <div key={which} className="arcHandle" data-arc={which} onPointerDown={dragArcHandle(r.id, which)}
+                  title={`arc ${which} ${ang}°`}
+                  style={{ position: "absolute", left: p.x, top: p.y, transform: "translate(-50%,-50%)", width: 20, height: 20, borderRadius: "50%", background: col, border: "2px solid #0a0a0a", boxShadow: "0 0 0 2px rgba(255,255,255,.65)", cursor: "grab", zIndex: 9999, touchAction: "none" }} />
+              );
+            });
+          })()}
         </div>
       </div>
     </div>
@@ -379,7 +457,10 @@ export default function TemplateStudio() {
         .tsHead h1{font-size:16px;margin:0}
         .tsHead span{color:#8a8a96;font-size:11.5px}
         .tsLeft{overflow-y:auto;min-height:0;padding:10px;border-right:1px solid #1e1e26;display:flex;flex-direction:column;gap:10px}
-        .tsMain{display:flex;gap:12px;padding:8px 12px;min-width:0;min-height:0;justify-content:center;align-items:stretch;overflow-x:auto;overflow-y:hidden}
+        /* safe center: centre the panels when they fit, but fall back to flex-start when they
+           overflow — plain 'center' clips the FIRST panel's left edge UNDER the left sidebar
+           and scroll can't reach it (left-edge controls became unclickable). */
+        .tsMain{display:flex;gap:12px;padding:8px 12px;min-width:0;min-height:0;justify-content:safe center;align-items:stretch;overflow-x:auto;overflow-y:hidden}
         .tsRight{overflow-y:auto;min-height:0;padding:10px;border-left:1px solid #1e1e26;display:flex;flex-direction:column;gap:8px}
         .tsFoot{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;padding:6px 14px;border-top:1px solid #1e1e26}
         .tsCmd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
