@@ -19,8 +19,8 @@ mkdirSync(OUT, { recursive: true });
 const FPS = 30, TICKS_PER_FRAME = 2;          // panels are designed at 60Hz
 const PANELS = [
   { anim: "knob",   loopSec: 8 },
-  { anim: "travel", loopSec: 10 },
-  { anim: "pca",    loopSec: 18 },
+  { anim: "travel", loopSec: 12 },
+  { anim: "pca",    loopSec: 20 },
   { anim: "iou",    loopSec: 14 },
 ].filter((p) => !ONLY.length || ONLY.includes(p.anim));
 const ASPECTS = [

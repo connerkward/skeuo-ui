@@ -14,13 +14,16 @@
 //    (recessed at any depth — dark channel or lighter stepped trough) or are a bright
 //    bezel rim; stop on a short sustained near-body run, a sustained bright run, or the
 //    designed backdrop COLOUR (distance-from-BGC); clamp ±12% of cell width; span (±2%
-//    margin) becomes the thumb travel.
+//    margin) becomes the thumb travel. The loop ENDS on a green "SHIPPED ✓" beat that
+//    checks the recomputed span against the live regions.json travel (⚠ if they drift).
 //  Panel 3 (slot angle)  = extract12.py _pca_angle(): the toggle slot's mask pixels
 //    (device band ONLY — (assign==idx)&(YY<devFrac·H)) as a point cloud; principal-axis
-//    search (trial axis + variance meter) → eigen lock → elongation gate ≥2.0.
-//    CONTRAST: flash the strip-cell pixels in → the combined cloud's axis is the
-//    slot→strip line (the actual bug the device-only filter fixed). Then a near-round
-//    knob blob whose weak elongation trips the gate → "no rotation".
+//    search (trial axis + variance meter) → eigen lock (success). Then two BANNER-
+//    LABELLED asides: a red "OLD BUG (fixed)" re-enactment (strip-cell pixels flash in
+//    → combined axis = slot→strip diagonal), the green "FIX" (device-only), an amber
+//    "SAFETY GATE" demo (near-round knob blob → refuse rotation, by design) — and the
+//    loop ENDS on a green "SHIPPED ✓" hold that recomputes the full rot decision
+//    (slot − part axis, cardinal snap, gates) and verifies it against live regions.json.
 //  Panel 4 (state align) = extract12.py silhouette state-registration: scale the ON
 //    cut's alpha to the OFF bbox, slide it over a (dx,dy)∈[-12,12]² grid maximising
 //    silhouette IoU (heat-trail + live meter), lock at max → regions.json stateAlign;
@@ -31,21 +34,28 @@
 // each panel registers a restart in RESTARTS (wired to its ⟲ button).
 (function () {
   "use strict";
-  // Exemplar skins chosen where each algorithm's interesting path actually fires:
+  // Exemplar skins chosen where each algorithm's interesting path actually fires,
+  // AND whose CURRENT shipped regions.json is demonstrably correct (the panels re-run
+  // the real math on the live served assets, so a regenerated exemplar can silently
+  // invalidate the narrative — validate after every batch regen):
   //  · steam-porthole: the vol knob's fit-centre → hole-centroid snap is visible,
   //    and its shuffle cuts differ enough that state-registration is non-trivial.
-  //  · wmp-quicksilver: a CLEAN slot (no baked handle in the paint) with a textbook
-  //    STEPPED recess — near-black channel + pink rim inside a lighter recessed
-  //    trough — exactly the geometry the level-aware walk exists for: the outward
-  //    walks extend past the mask cell through the below-body trough to the visual
-  //    end caps. (ps1-crunchy, the previous exemplar, has a BAKED seek handle in the
-  //    slot — a generation defect, not a good showcase of the travel algorithm.)
-  //  · diablo-gothic: the shuffle slot is strongly VERTICAL (elong 2.8 → axis real),
-  //    its strip cells sit far below-right (combined axis = garbage diagonal), and
-  //    its vol knob blob is near-round (elong 1.1 → the gate fires).
+  //  · wc-goldshield: a CLEAN dark groove whose pointed end caps the mask cell
+  //    UNDERSHOOTS — the outward walks extend ~50px past both cell edges through the
+  //    below-body recess and stop cleanly on body; the shipped travel lands exactly on
+  //    the visual tips (recompute == regions.json to 1e-5, verified on the paint crop).
+  //    (wmp-quicksilver, the previous exemplar, over-walks LEFT into the neighbouring
+  //    knob's shadow — shipped travel_lo sits ~78px onto the body, so the thumb's left
+  //    extreme visibly hangs off the slot; ps1-crunchy has a BAKED handle in the slot.)
+  //  · n64-cutscene: the shuffle slot is strongly VERTICAL (elong 2.9 → axis real),
+  //    its strip cells drag the combined axis to a +48° garbage diagonal (the old-bug
+  //    re-enactment shows a REAL failure), and its vol knob blob is near-round
+  //    (elong 1.0 → the safety gate fires). (diablo-gothic, the previous exemplar,
+  //    was regenerated 2026-07-09: its slot blob now reads elong 1.86 < the 2.0 gate
+  //    and its strip cells sit directly below → no garbage contrast. Unsuitable.)
   const KNOB_SKIN = "assets-steam-porthole";
-  const TRAVEL_SKIN = "assets-wmp-quicksilver";
-  const PCA_SKIN = "assets-diablo-gothic";
+  const TRAVEL_SKIN = "assets-wc-goldshield";
+  const PCA_SKIN = "assets-n64-cutscene";
   const IOU_SKIN = "assets-steam-porthole";
 
   // ── shared speed control ────────────────────────────────────────────────────
@@ -87,6 +97,19 @@
     return a[lo] + (a[hi] - a[lo]) * (idx - lo);
   }
   const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  // full-width banner strip across the canvas top — used to UNAMBIGUOUSLY frame a
+  // phase as history ("OLD BUG (fixed)"), shipped fix, safety demo, or final success,
+  // so a re-enacted failure can never be mistaken for the algorithm failing live.
+  // Drawn along the BOTTOM edge (over the legend/footer strip) so it never covers
+  // the live crop/stage pixels the phase is actually about.
+  function banner(ctx, W, H, txt, bg, fg) {
+    ctx.fillStyle = bg; ctx.fillRect(0, H - 32, W, 32);
+    ctx.fillStyle = fg;
+    let fs = 15;                                   // auto-fit: never clip the banner text
+    do { ctx.font = "bold " + fs + "px ui-monospace,monospace"; fs--; }
+    while (fs > 9 && ctx.measureText(txt).width > W - 16);
+    ctx.textAlign = "center"; ctx.fillText(txt, W / 2, H - 11); ctx.textAlign = "left";
+  }
 
   // ── init: each panel fetches its exemplar skin's real artifacts ─────────────
   Promise.all([
@@ -112,8 +135,9 @@
     fetch(PCA_SKIN + "/regions.json").then((r) => r.json()),
     loadImg(PCA_SKIN + "/mask.png"),
     loadImg(PCA_SKIN + "/paint.png"),
-  ]).then(([reg, mask, paint]) => {
-    try { pcaAnim(reg, mask, paint); }
+    loadImg(PCA_SKIN + "_biref/shuffle_off.png"),   // part axis (rot is RELATIVE to it)
+  ]).then(([reg, mask, paint, partImg]) => {
+    try { pcaAnim(reg, mask, paint, partImg); }
     catch (e) { fail("anim-pca", e); }
   }).catch((e) => fail("anim-pca", e));
 
@@ -489,13 +513,13 @@
 
       if (phase === "profile") {
         pt += a;
-        cap("anim-travel", "PHASE 1/4 · profile: median of max(R,G,B) per column through the groove band (box-smoothed 7px). Base span = the slot's MASK CELL (shaded) — never walked inside, so a baked handle can't derail anything. Body plateau per SIDE from the flanking band (dashed) — extract12.py [travel]");
+        cap("anim-travel", "PHASE 1/5 · profile: median of max(R,G,B) per column through the groove band (box-smoothed 7px). Base span = the slot's MASK CELL (shaded) — never walked inside, so a baked handle can't derail anything. Body plateau per SIDE from the flanking band (dashed) — extract12.py [travel]");
         if (pt > 50) { phase = "walk"; pt = 0; wi = 0; }
       } else if (phase === "walk") {
         wi += a;
         tracePaint(L.trace, wi * perFrameL); tracePaint(R.trace, wi * perFrameR);
         walker(L.trace, wi * perFrameL, "◀"); walker(R.trace, wi * perFrameR, "▶");
-        cap("anim-travel", "PHASE 2/4 · walk OUTWARD from both cell edges: clearly-below-LOCAL-body (blue — dark channel OR lighter stepped trough) and bright bezel rim (yellow) both count as slot; a short sustained near-body run (red), sustained bright (orange), or backdrop COLOUR (magenta, |rgb−BGC|) stops the walk");
+        cap("anim-travel", "PHASE 2/5 · walk OUTWARD from both cell edges: clearly-below-LOCAL-body (blue — dark channel OR lighter stepped trough) and bright bezel rim (yellow) both count as slot; a short sustained near-body run (red), sustained bright (orange), or backdrop COLOUR (magenta, |rgb−BGC|) is the DESIGNED stop — the end of the slot found");
         if (wi >= WALK_FRAMES + 20) { phase = "span"; pt = 0; }
       } else {
         // keep the full coloured trace visible
@@ -518,30 +542,52 @@
         }
         ctx.fillStyle = "#cdd3dd"; ctx.fillText("white ticks = regions.json travel (shipped)", PH_X + PH_W - 262, barY + 31);
         if (phase === "span") {
-          cap("anim-travel", "PHASE 3/4 · span snap: travel = mask cell ∪ walked end caps, clamped to ±12% of the cell width, + 2% margin; white ticks are the values extract12 shipped in regions.json — they coincide");
+          cap("anim-travel", "PHASE 3/5 · span snap: travel = mask cell ∪ walked end caps, clamped to ±12% of the cell width, + 2% margin; white ticks are the values extract12 shipped in regions.json — they coincide");
           if (pt > 70) { phase = "slide"; pt = 0; }
-        } else if (phase === "slide" || phase === "hold") {
+        } else if (phase === "slide") {
           // thumb slides end-to-end: x0 = travel[0], x1 = travel[1] − thumbW (consumer clamp)
           const x0c = X(tvLo - bx0), x1c = X(tvHi - bx0) - thumbW;
-          let u = phase === "slide" ? Math.min(1, pt / 170) : 1;
+          const u = Math.min(1, pt / 170);
           const uu = u < 0.5 ? ease(u * 2) : ease(2 - u * 2);      // there and back
           const tx = x0c + (x1c - x0c) * uu;
           ctx.drawImage(thumbImg, tx, CY + CH / 2 - thumbH / 2, thumbW, thumbH);
           ctx.strokeStyle = "#5f7"; ctx.strokeRect(tx, CY + CH / 2 - thumbH / 2, thumbW, thumbH);
-          cap("anim-travel", "PHASE 4/4 · coverage: the real cut thumb (BiRefNet seek.png) slides x∈[travel₀, travel₁−thumbW] — its extremes visually COVER the slot ends incl. the stepped outer trough and bezel rims");
-          if (phase === "slide" && pt > 170) { phase = "hold"; pt = 0; }
-          if (phase === "hold" && pt > 60) reset();
+          cap("anim-travel", "PHASE 4/5 · coverage: the real cut thumb (BiRefNet seek.png) slides x∈[travel₀, travel₁−thumbW] — its extremes visually COVER the slot ends incl. the end caps the mask cell undershot");
+          if (pt > 170) { phase = "success"; pt = 0; }
+        } else if (phase === "success") {
+          // SUCCESS BEAT (loop always ends here): park the thumb mid-slot and verify the
+          // LIVE recompute against the shipped regions.json travel — an honest check, not
+          // an assertion: if the served assets drift, this turns into an amber warning.
+          const x0c = X(tvLo - bx0), x1c = X(tvHi - bx0) - thumbW;
+          const tx = (x0c + x1c) / 2;
+          ctx.drawImage(thumbImg, tx, CY + CH / 2 - thumbH / 2, thumbW, thumbH);
+          ctx.strokeStyle = "#5f7"; ctx.strokeRect(tx, CY + CH / 2 - thumbH / 2, thumbW, thumbH);
+          const okL = Math.abs(tvLo / GW - storedTv[0]) < 0.005;
+          const okR = Math.abs(tvHi / GW - storedTv[1]) < 0.005;
+          if (okL && okR) {
+            banner(ctx, W, H, "✓ SHIPPED RESULT — recomputed travel = regions.json [" +
+              storedTv[0].toFixed(4) + ", " + storedTv[1].toFixed(4) + "] · slot covered end-to-end",
+              "#0d2f1a", "#5f7");
+            cap("anim-travel", "PHASE 5/5 · shipped ✓ — the live recompute equals the regions.json travel extract12 shipped (" + storedTv[0].toFixed(4) + " – " + storedTv[1].toFixed(4) + "); the thumb's extremes cover the slot end-to-end. Loop restarts.");
+          } else {
+            banner(ctx, W, H, "⚠ RECOMPUTE ≠ SHIPPED regions.json — served assets drifted; re-run extract12.py",
+              "#332008", "#fd5");
+            cap("anim-travel", "PHASE 5/5 · ⚠ MISMATCH: live recompute [" + (tvLo / GW).toFixed(4) + ", " + (tvHi / GW).toFixed(4) + "] ≠ shipped [" + storedTv[0].toFixed(4) + ", " + storedTv[1].toFixed(4) + "] — the served paint/regions pair is stale; re-run extract12.py on this skin");
+          }
+          if (pt > 120) reset();
         }
       }
-      // legend
-      ctx.font = "10px ui-monospace,monospace";
-      const leg = [["below local body (trough)", "#5af"], ["bright bezel rim", "#fd5"], ["near-body", "#9aa"],
-                   ["STOP: sustained body", "#f55"], ["STOP: sustained bright", "#fa0"], ["STOP: backdrop colour", "#f0f"]];
-      let lx = 12;
-      for (const [name, c] of leg) {
-        ctx.fillStyle = c; ctx.fillRect(lx, H - 20, 8, 8);
-        ctx.fillStyle = "#8a90a0"; ctx.fillText(name, lx + 11, H - 12);
-        lx += ctx.measureText(name).width + 34;
+      // legend (suppressed during the success beat — the banner owns the bottom strip)
+      if (phase !== "success") {
+        ctx.font = "10px ui-monospace,monospace";
+        const leg = [["below local body (trough)", "#5af"], ["bright bezel rim", "#fd5"], ["near-body", "#9aa"],
+                     ["STOP: sustained body", "#f55"], ["STOP: sustained bright", "#fa0"], ["STOP: backdrop colour", "#f0f"]];
+        let lx = 12;
+        for (const [name, c] of leg) {
+          ctx.fillStyle = c; ctx.fillRect(lx, H - 20, 8, 8);
+          ctx.fillStyle = "#8a90a0"; ctx.fillText(name, lx + 11, H - 12);
+          lx += ctx.measureText(name).width + 34;
+        }
       }
       requestAnimationFrame(frame);
     }
@@ -553,13 +599,37 @@
   // Re-runs extract12.py's mask-colour assignment and _pca_angle() covariance math
   // on the real diablo-gothic mask, at native resolution.
   // ════════════════════════════════════════════════════════════════════════════
-  function pcaAnim(reg, mask, paint) {
+  function pcaAnim(reg, mask, paint, partImg) {
     const canvas = document.getElementById("anim-pca");
     if (!canvas) return;
     const W = 760, H = 470; canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
     const MW = mask.naturalWidth, MH = mask.naturalHeight;
     const DEVF = reg.devFrac, devY = DEVF * MH;
+
+    // part's own principal axis from the biref OFF cut's alpha (α>30), same math as
+    // extract12's _pca_angle on the part — rot shipped is slot MINUS part, not absolute.
+    function alphaPCA(img) {
+      const c = document.createElement("canvas");
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const cc = c.getContext("2d", { willReadFrequently: true });
+      cc.drawImage(img, 0, 0);
+      const d = cc.getImageData(0, 0, c.width, c.height).data;
+      let n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0, syy = 0;
+      for (let y = 0, i = 3; y < c.height; y++) for (let x = 0; x < c.width; x++, i += 4)
+        if (d[i] > 30) { n++; sx += x; sy += y; sxx += x * x; sxy += x * y; syy += y * y; }
+      if (n < 200) return null;
+      const mx = sx / n, my = sy / n;
+      const Sxx = sxx / n - mx * mx, Sxy = sxy / n - mx * my, Syy = syy / n - my * my;
+      const T = Sxx + Syy, D2 = Sxx * Syy - Sxy * Sxy;
+      const l1 = (T + Math.sqrt(Math.max(0, T * T - 4 * D2))) / 2, l2 = T - l1;
+      let vx = Sxy, vy = l1 - Sxx;
+      if (Math.abs(vx) < 1e-9 && Math.abs(vy) < 1e-9) { vx = 1; vy = 0; }
+      let ang = Math.atan2(vy, vx) * 180 / Math.PI;
+      if (ang > 90) ang -= 180; else if (ang < -90) ang += 180;
+      return { ang, elong: Math.sqrt(l1 / Math.max(1e-9, l2)) };
+    }
+    const partSt = alphaPCA(partImg);
 
     // ── mask-colour assignment, EXACT extract12 rule:
     //    sat = (max-min)>55 & max>90 ; assign = argmin dist to key colours if min<95
@@ -611,6 +681,20 @@
       return { n, mx, my, Sxx, Sxy, Syy, l1, l2, ang, elong: Math.sqrt(l1 / Math.max(1e-9, l2)) };
     }
     const stSlot = stats(SD), stBoth = stats(SD, SS), stVol = stats(VD);
+    // full shipped rot decision, EXACT extract12 [angle] rule: elongation gate on BOTH
+    // blobs, relative angle, wrap to (−90,90], snap near-cardinal to exact 0/±90.
+    let rotShip;
+    if (!partSt || stSlot.elong < 2.0 || partSt.elong < 2.0) {
+      rotShip = { rot: 0, why: "gate" };
+    } else {
+      let rr = stSlot.ang - partSt.ang;
+      rr = ((rr + 90) % 180 + 180) % 180 - 90;
+      if (Math.abs(rr) <= 20) rr = 0; else if (Math.abs(rr - 90) <= 20) rr = 90;
+      else if (Math.abs(rr + 90) <= 20) rr = -90;
+      rotShip = { rot: rr, why: "pca" };
+    }
+    const shippedAngle = (reg.regions.shuffle || {}).angle;   // absent = 0° shipped
+    const shipOk = Math.abs((shippedAngle === undefined ? 0 : shippedAngle) - rotShip.rot) < 0.15;
     const varAt = (st, th) => {  // variance of projections onto trial axis θ — the search meter
       const c = Math.cos(th), s = Math.sin(th);
       return c * c * st.Sxx + 2 * c * s * st.Sxy + s * s * st.Syy;
@@ -700,7 +784,7 @@
         ctx.fillText("assign = argmin ‖px − key‖ if <95", RX, 76);
         ctx.fillText(`shuffle DEVICE px (y < devFrac·H): ${SD.n.toLocaleString()}`, RX, 96);
         ctx.fillStyle = "#7df"; ctx.fillText("point cloud = the slot's own pixels", RX, 116);
-        cap("anim-pca", "PHASE 1/6 · point cloud: the toggle slot's mask pixels, DEVICE band only — (assign==idx) & (YY < devFrac·H) — extract12.py _pca_angle() input");
+        cap("anim-pca", "PHASE 1/7 · point cloud: the toggle slot's mask pixels, DEVICE band only — (assign==idx) & (YY < devFrac·H) — extract12.py _pca_angle() input");
         if (pt > 90) { phase = "search"; pt = 0; }
       } else if (phase === "search") {
         pt += a;
@@ -718,7 +802,7 @@
         ctx.fillText("(the real code solves this in closed form:", RX, 152);
         ctx.fillText(" eigenvector of the 2×2 covariance — this", RX, 166);
         ctx.fillText(" sweep is that same variance surface)", RX, 180);
-        cap("anim-pca", "PHASE 2/6 · axis search: rotate a trial axis through the cloud's centroid; variance of the projections peaks along the slot's long direction — PCA's major eigenvector");
+        cap("anim-pca", "PHASE 2/7 · axis search: rotate a trial axis through the cloud's centroid; variance of the projections peaks along the slot's long direction — PCA's major eigenvector");
         if (pt > SEARCH_F + 25) { phase = "lock"; pt = 0; }
       } else if (phase === "lock") {
         pt += a;
@@ -734,17 +818,22 @@
         ctx.fillStyle = "#cdd3dd"; ctx.font = "11px ui-monospace,monospace";
         ctx.fillText(`elongation ${stSlot.elong.toFixed(2)} ≥ 2.0 → axis TRUSTED`, RX, 136);
         ctx.fillStyle = "#8a90a0";
-        ctx.fillText("part's own axis (OFF cut alpha) is also", RX, 158);
-        ctx.fillText("vertical → relative rot ≈ 0, snapped to", RX, 172);
+        if (partSt) {
+          ctx.fillText(`part's own axis (OFF cut alpha): ${partSt.ang.toFixed(1)}°`, RX, 158);
+          ctx.fillText(`→ relative rot ≈ ${(((stSlot.ang - partSt.ang + 90) % 180 + 180) % 180 - 90).toFixed(1)}°, snapped to`, RX, 172);
+        } else {
+          ctx.fillText("part axis unavailable → rot defaults 0", RX, 158);
+          ctx.fillText("→ relative rot ≈ 0, snapped to", RX, 172);
+        }
         ctx.fillText("cardinal → no rotation shipped. Only true", RX, 186);
         ctx.fillText("diagonals (>20° off-cardinal) rotate.", RX, 200);
-        cap("anim-pca", "PHASE 3/6 · lock: eigen angle " + stSlot.ang.toFixed(1) + "°, elongation " + stSlot.elong.toFixed(2) + " passes the ≥2.0 gate. rot = slot − part axis, wrapped and snapped to cardinal — extract12.py [angle]");
+        cap("anim-pca", "PHASE 3/7 · lock ✓: eigen angle " + stSlot.ang.toFixed(1) + "°, elongation " + stSlot.elong.toFixed(2) + " passes the ≥2.0 gate. rot = slot − part axis, wrapped and snapped to cardinal — extract12.py [angle]. Next: a replay of the OLD bug this code fixed.");
         if (pt > 130) { phase = "smear"; pt = 0; }
       } else if (phase === "smear") {
         pt += a;
         const t = ease(Math.min(1, pt / 55));
         lerpView(V_SLOT, V_FULL, t);
-        stage(P, "THE BUG · strip cells included in the blob");
+        stage(P, "OLD BUG replay · strip cells included in the blob");
         drawPts(P, SD.pts, "#7df");
         const flash = 0.55 + 0.4 * Math.sin(pt / 5);
         ctx.globalAlpha = Math.min(1, t * 1.5) * flash;
@@ -765,13 +854,14 @@
           ctx.fillText("a vertical slot reading " + stBoth.ang.toFixed(0) + "° would rotate", RX, 200);
           ctx.fillText("the part diagonally — the bug we fixed.", RX, 214);
         }
-        cap("anim-pca", "PHASE 4/6 · CONTRAST — the actual bug: the sprite-strip cells (below devFrac) share the slot's mask colour; including them smears the cloud and the axis becomes the slot→strip diagonal (" + stBoth.ang.toFixed(1) + "°)");
+        banner(ctx, W, H, "⚠ HISTORY — THE OLD BUG (ALREADY FIXED) · re-enacted for contrast, not the shipping code", "#3a0f12", "#f88");
+        cap("anim-pca", "PHASE 4/7 · OLD BUG replay (fixed in extract12.py): the sprite-strip cells (below devFrac) share the slot's mask colour; including them smears the cloud and the axis becomes the slot→strip diagonal (" + stBoth.ang.toFixed(1) + "°). This is HISTORY — the fix is next.");
         if (pt > 170) { phase = "fixup"; pt = 0; }
       } else if (phase === "fixup") {
         pt += a;
         const t = ease(Math.min(1, pt / 55));
         lerpView(V_FULL, V_SLOT, t);
-        stage(P, "FIX · device band only");
+        stage(P, "THE FIX (shipped) · device band only");
         drawPts(P, SD.pts, "#7df");
         ctx.globalAlpha = (1 - t) * 0.35;
         drawPts(P, SS.pts, "#f55");
@@ -785,7 +875,8 @@
         ctx.fillText("(assign == idx) & (YY < DEVF·MH)", RX, 104);
         ctx.fillStyle = "#8a90a0";
         ctx.fillText("# DEVICE slot only (exclude strip cells!)", RX, 122);
-        cap("anim-pca", "PHASE 5/6 · fix: mask the blob to the device band before PCA — strip cells excluded, the axis is the slot's own again");
+        banner(ctx, W, H, "✓ THE FIX — SHIPPING CODE: device-only pixels (assign==idx) & (YY < devFrac·H)", "#0d2f1a", "#5f7");
+        cap("anim-pca", "PHASE 5/7 · the fix (shipping in extract12.py): mask the blob to the device band before PCA — strip cells excluded, the axis is the slot's own again");
         if (pt > 110) { phase = "gate"; pt = 0; bestVar = -1; bestTh = 0; view = { ...V_VOL }; }
       } else if (phase === "gate") {
         pt += a;
@@ -805,16 +896,52 @@
         if (pt > 120) {
           ctx.fillStyle = "#fd5"; ctx.font = "12px ui-monospace,monospace";
           ctx.fillText(`elongation ${stVol.elong.toFixed(2)} < 2.0 → axis is NOISE`, RX, 196);
-          ctx.fillText("→ NO ROTATION applied", RX, 214);
+          ctx.fillText("→ NO ROTATION applied (CORRECT refusal)", RX, 214);
           ctx.fillStyle = "#8a90a0"; ctx.font = "11px ui-monospace,monospace";
           ctx.fillText("(myst once read +71° of pure noise off a", RX, 236);
           ctx.fillText(" ragged blob — this gate is why it can't now)", RX, 250);
         }
-        cap("anim-pca", "PHASE 6/6 · elongation gate: a near-round blob (vol knob, elongation " + stVol.elong.toFixed(2) + ") keeps a flat variance meter — its axis is meaningless, so extract12 refuses to rotate: \"elongation too weak → no rotation\"");
-        if (pt > 260) reset();
+        banner(ctx, W, H, "SAFETY GATE DEMO — refusing to rotate a round blob is the CORRECT, designed behaviour", "#33270a", "#fd5");
+        cap("anim-pca", "PHASE 6/7 · safety-gate demo (by design): a near-round blob (vol knob, elongation " + stVol.elong.toFixed(2) + ") keeps a flat variance meter — its axis is meaningless, so extract12 correctly refuses to rotate: \"elongation too weak → no rotation\"");
+        if (pt > 240) { phase = "ship"; pt = 0; view = { ...V_SLOT }; }
+      } else if (phase === "ship") {
+        // FINAL SUCCESS HOLD — every loop ends here: the correct locked axis plus the
+        // full shipped rot decision, verified live against regions.json (⚠ on drift).
+        pt += a;
+        stage(P, "shuffle slot · SHIPPED result");
+        drawPts(P, SD.pts, "#7df");
+        axisLine(P, stSlot, stSlot.ang, "#5f7", view.h * 0.52, 2.6);
+        ctx.fillStyle = "#cdd3dd"; ctx.font = "11px ui-monospace,monospace";
+        ctx.fillText(`slot axis ${stSlot.ang.toFixed(1)}°  elong ${stSlot.elong.toFixed(2)}` + (stSlot.elong >= 2 ? " ✓ real" : " (weak)"), RX, 56);
+        if (partSt)
+          ctx.fillText(`part axis ${partSt.ang.toFixed(1)}°  elong ${partSt.elong.toFixed(2)}` + (partSt.elong < 2 ? " → squat" : ""), RX, 74);
+        ctx.fillStyle = "#8a90a0";
+        ctx.fillText(rotShip.why === "gate"
+          ? "elongation gate → NO rotation (the safe call:"
+          : "rot = slot − part, wrapped + cardinal-snapped:", RX, 96);
+        ctx.fillText(rotShip.why === "gate"
+          ? " slot is cardinal + part upright, nothing to rotate)"
+          : ` → ${rotShip.rot.toFixed(1)}° applied to the part`, RX, 112);
+        const shippedTxt = shippedAngle === undefined ? "none (= 0°)" : shippedAngle + "°";
+        if (shipOk) {
+          ctx.fillStyle = "#5f7"; ctx.font = "13px ui-monospace,monospace";
+          ctx.fillText(`✓ SHIPPED  regions.json angle: ${shippedTxt}`, RX, 148);
+          ctx.fillText(`  recomputed decision ${rotShip.rot.toFixed(0)}° — MATCH`, RX, 168);
+          banner(ctx, W, H, "✓ SHIPPED RESULT — recomputed rotation " + rotShip.rot.toFixed(0) + "° = regions.json (angle: " + shippedTxt + ")", "#0d2f1a", "#5f7");
+          cap("anim-pca", "PHASE 7/7 · shipped ✓ — device-only axis " + stSlot.ang.toFixed(1) + "° (elong " + stSlot.elong.toFixed(2) + "), rot decision " + rotShip.rot.toFixed(0) + "° matches the live regions.json (angle: " + shippedTxt + "). Loop restarts.");
+        } else {
+          ctx.fillStyle = "#fd5"; ctx.font = "13px ui-monospace,monospace";
+          ctx.fillText(`⚠ MISMATCH  regions.json angle: ${shippedTxt}`, RX, 148);
+          ctx.fillText(`  recomputed decision ${rotShip.rot.toFixed(0)}°`, RX, 168);
+          banner(ctx, W, H, "⚠ RECOMPUTE ≠ SHIPPED regions.json — served assets drifted; re-run extract12.py", "#332008", "#fd5");
+          cap("anim-pca", "PHASE 7/7 · ⚠ MISMATCH: recomputed rot " + rotShip.rot.toFixed(0) + "° ≠ shipped regions.json angle (" + shippedTxt + ") — the served mask/regions pair is stale; re-run extract12.py on this skin");
+        }
+        if (pt > 150) reset();
       }
-      ctx.fillStyle = "#6a7080"; ctx.font = "10px ui-monospace,monospace";
-      ctx.fillText("LIVE — real covariance math on the real mask px · loops", RX, H - 12);
+      if (phase !== "smear" && phase !== "fixup" && phase !== "gate" && phase !== "ship") {
+        ctx.fillStyle = "#6a7080"; ctx.font = "10px ui-monospace,monospace";
+        ctx.fillText("LIVE — real covariance math on the real mask px · loops", RX, H - 12);
+      }
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

@@ -97,9 +97,9 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
 <div class=animgrid>
   <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap <span class=askin>steam-porthole · vol</span><button class=arst data-anim=anim-knob title="restart animation">⟲</button></h4>
     <canvas id=anim-knob></canvas><div class=acap id=anim-knob-cap>loading…</div></div>
-  <div class=anim><h4>Coverage-span seek travel — level-aware walk → thumb travel <span class=askin>wmp-quicksilver · seek</span><button class=arst data-anim=anim-travel title="restart animation">⟲</button></h4>
+  <div class=anim><h4>Coverage-span seek travel — level-aware walk → thumb travel <span class=askin>wc-goldshield · seek</span><button class=arst data-anim=anim-travel title="restart animation">⟲</button></h4>
     <canvas id=anim-travel></canvas><div class=acap id=anim-travel-cap>loading…</div></div>
-  <div class=anim><h4>Slot rotation — device-only PCA axis + elongation gate <span class=askin>diablo-gothic · shuffle</span><button class=arst data-anim=anim-pca title="restart animation">⟲</button></h4>
+  <div class=anim><h4>Slot rotation — device-only PCA axis + elongation gate <span class=askin>n64-cutscene · shuffle</span><button class=arst data-anim=anim-pca title="restart animation">⟲</button></h4>
     <canvas id=anim-pca></canvas><div class=acap id=anim-pca-cap>loading…</div></div>
   <div class=anim><h4>Switch state registration — silhouette-IoU (dx,dy) search <span class=askin>steam-porthole · shuffle</span><button class=arst data-anim=anim-iou title="restart animation">⟲</button></h4>
     <canvas id=anim-iou></canvas><div class=acap id=anim-iou-cap>loading…</div></div>
