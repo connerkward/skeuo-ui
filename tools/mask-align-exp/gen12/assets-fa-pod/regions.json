@@ -263,6 +263,7 @@
         0.11805555555555555,
         0.05118534482758621
       ],
+      "angle": -89.9,
       "stateAlign": {
         "scaleX": 0.5324,
         "scaleY": 1.6009,
@@ -352,10 +353,10 @@
     "seek_cov": 1.038,
     "state_align_ok": false,
     "biref_ok": true,
-    "leak": 0.00235,
+    "leak": null,
     "reasons": [
       "state-align"
     ],
-    "PASS": true
+    "PASS": false
   }
 }

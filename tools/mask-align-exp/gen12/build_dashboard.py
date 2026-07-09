@@ -88,6 +88,16 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
   show(0);
 }).catch(()=>{ document.getElementById('walk').innerHTML='<p style="color:#888">run build_explainer.py to generate the walkthrough images</p>'; });
 </script>
+<h2>Live algorithm animations <span class=alive>LIVE</span> — real pixels, real math</h2>
+<p class=animsub>Both panels re-run extract12.py's actual algorithms in-browser on the real steam-porthole artifacts
+(paint by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
+<div class=animgrid>
+  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap</h4>
+    <canvas id=anim-knob></canvas><div class=acap id=anim-knob-cap>loading…</div></div>
+  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel</h4>
+    <canvas id=anim-travel></canvas><div class=acap id=anim-travel-cap>loading…</div></div>
+</div>
+<script src=explainer_anim.js></script>
 <h2>Concepts — for someone new to this</h2>
 
 <div class=ex ex-wide>
@@ -192,6 +202,14 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .proc summary{{cursor:pointer;color:#8ab;font:11px ui-monospace,monospace}}
 .strip{{display:flex;gap:8px;overflow-x:auto;padding-top:8px}}.strip figure{{margin:0;flex:0 0 auto;width:120px}}.strip img{{width:120px;border-radius:6px;border:1px solid #ffffff14;background:#000}}.strip figcaption{{font:10px ui-monospace,monospace;color:#8a90a0;text-align:center;margin-top:3px}}
 .exgrid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}}.ex{{background:#0e1116;border:1px solid #ffffff14;border-radius:10px;padding:12px}}.ex h4{{margin:0 0 6px;font-size:13px}}.ex p{{font-size:12.5px;color:#9aa;margin:0}}
+.animgrid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}}
+.anim{{background:#0e1116;border:1px solid #ffffff14;border-radius:10px;padding:12px;min-width:0}}
+.anim h4{{margin:0 0 8px;font-size:13px}}
+.anim canvas{{width:100%;height:auto;border-radius:8px;background:#000;border:1px solid #ffffff14;display:block}}
+.acap{{font:11px ui-monospace,monospace;color:#8a90a0;margin-top:7px;min-height:42px;line-height:1.45}}
+.animsub{{font:12px ui-monospace,monospace;color:#8a90a0;margin:0 0 10px}}
+.alive{{color:#041;background:#6f9;border-radius:4px;padding:1px 7px;font:700 11px ui-monospace,monospace;vertical-align:2px;animation:alive-blink 1.6s ease-in-out infinite}}
+@keyframes alive-blink{{50%{{opacity:.45}}}}
 .walk{{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:14px}}
 .wnav{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}}
 .wstep{{background:#161a22;border:1px solid #ffffff22;color:#9ab;border-radius:8px;padding:6px 12px;font:12px ui-monospace,monospace;cursor:pointer}}

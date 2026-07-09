@@ -12,13 +12,12 @@
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
     background:url('paint.png?v=1783578449') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;border-radius:14px;touch-action:manipulation}
-  .pbtn .ink{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(closest-side,#0009,#0000);
-    opacity:0;transition:opacity .08s}
-  .pbtn:active .ink{opacity:.85}
+  .pbtn .ink{position:absolute;inset:-9%;border-radius:inherit;background:radial-gradient(closest-side,#000d 0%,#000a 65%,#0000 100%);
+    mix-blend-mode:multiply;opacity:0;transition:opacity .08s}
+  .pbtn:active .ink{opacity:1}
   .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
   .pknob .cap{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}
-  .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;
-    background:radial-gradient(38% 32% at 38% 30%,#ffffff85,#fff0 60%)}
+  .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen}
   .pthumb{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
     background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}
   .ptog{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;
@@ -81,6 +80,15 @@ const V='1783578449';
     const el=document.createElement('div');el.className='pknob';
     el.style.left=(cx-w/2)*100+'%';el.style.top=((cy-h/2)/DF)*100+'%';el.style.width=w*100+'%';el.style.height=(h/DF)*100+'%';
     el.innerHTML='<div class=cap style="background-image:url('+CUT['vol'].url+')"></div><div class=spec></div>';
+    // tint the pinned specular from the CAP'S OWN pixels (avg opaque colour, lightened) so the
+    // highlight matches the material (brass stays warm, chrome cool) instead of a white wash
+    try{ const sc=document.createElement('canvas');sc.width=sc.height=12;const sg=sc.getContext('2d');
+      const ci=new Image();ci.src=CUT['vol'].url;await ci.decode();sg.drawImage(ci,0,0,12,12);
+      const dd=sg.getImageData(0,0,12,12).data;let rr=0,gg=0,bb=0,nn=0;
+      for(let i=0;i<dd.length;i+=4){if(dd[i+3]>60){rr+=dd[i];gg+=dd[i+1];bb+=dd[i+2];nn++;}}
+      if(nn){const L=v=>Math.min(255,Math.round(v/nn*0.45+255*0.55));
+        el.querySelector('.spec').style.background='radial-gradient(42% 34% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.75), rgba(255,255,255,0) 60%)';}
+    }catch(e){ el.querySelector('.spec').style.background='radial-gradient(42% 34% at 38% 30%,#ffffff99,#fff0 60%)'; }
     const cap=el.querySelector('.cap');let val=0.7,sy=0,sv=0,drag=false;
     const rend=()=>cap.style.transform='rotate('+(-135+val*270)+'deg)';rend();
     el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});

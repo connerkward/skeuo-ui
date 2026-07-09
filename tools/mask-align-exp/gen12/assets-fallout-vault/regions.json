@@ -249,7 +249,14 @@
         0.07855902777777778,
         0.12122844827586207
       ],
-      "angle": 82.6
+      "angle": -7.3,
+      "stateAlign": {
+        "scaleX": 1.0041,
+        "scaleY": 0.9981,
+        "dx": 0,
+        "dy": 0,
+        "iou": 0.9979
+      }
     },
     "visualizer": {
       "device": [
@@ -289,12 +296,10 @@
     "controls_total": 10,
     "missing": [],
     "seek_cov": 1.04,
-    "state_align_ok": false,
-    "biref_ok": false,
-    "leak": 0.0,
-    "reasons": [
-      "biref-parts"
-    ],
-    "PASS": false
+    "state_align_ok": true,
+    "biref_ok": true,
+    "leak": null,
+    "reasons": [],
+    "PASS": true
   }
 }

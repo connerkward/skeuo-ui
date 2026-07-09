@@ -1,180 +1,327 @@
 <!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>gen12 — skin batch oversight</title><style>
+<title>gen12 — human review</title><style>
 :root{color-scheme:dark}*{box-sizing:border-box}
-body{margin:0;background:#0a0b0e;color:#cdd3dd;font:14px/1.55 system-ui,sans-serif;padding:24px;max-width:1200px;margin:auto}
-h1{font-size:22px;margin:0 0 4px}.sub{color:#8a90a0;font:12px ui-monospace,monospace;margin-bottom:18px}
-h2{margin:34px 0 12px;font-size:17px;border-bottom:1px solid #ffffff18;padding-bottom:6px}
-table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace;margin-bottom:10px}
-th,td{text-align:left;padding:6px 9px;border-bottom:1px solid #ffffff12}th{color:#9aa}
-tr.rp td:nth-child(3){color:#6f9}tr.rf td:nth-child(3){color:#f77}
+body{margin:0;background:#0a0b0e;color:#cdd3dd;font:14px/1.55 system-ui,sans-serif;padding:22px;max-width:1180px;margin:auto}
+h1{font-size:22px;margin:0 0 4px}.sub{color:#8a90a0;font:12px ui-monospace,monospace;margin-bottom:14px}
+h2{margin:32px 0 12px;font-size:17px;border-bottom:1px solid #ffffff18;padding-bottom:6px}
 a{color:#7ab7ff;text-decoration:none}a:hover{text-decoration:underline}
-.stat{display:inline-block;background:#12161d;border:1px solid #ffffff14;border-radius:8px;padding:8px 14px;margin:0 8px 8px 0;font:13px ui-monospace,monospace}
-.card{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:16px;margin:16px 0}
-.chead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;font:12px ui-monospace,monospace}
-.chead h3{margin:0;font-size:16px}.mode{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px}
-.pass{color:#0a0;background:#6f9;border-radius:5px;padding:2px 8px;font-weight:700}.fail{color:#300;background:#f88;border-radius:5px;padding:2px 8px;font-weight:700}
-.strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
-.strip figure{margin:0;flex:0 0 auto;width:150px}.strip img{width:150px;height:auto;border-radius:6px;border:1px solid #ffffff14;background:#000}
-.strip figcaption{font:10px ui-monospace,monospace;color:#8a90a0;margin-top:4px;text-align:center}
-.play{width:110px!important}.pl{width:110px;height:150px;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(160deg,#16324e,#0d1c2e);border:1px solid #2a6;border-radius:6px;color:#8fd;font:700 13px ui-monospace,monospace}
-.gate{font:11.5px ui-monospace,monospace;color:#9ab;margin-top:10px}.rz{color:#8a90a0}
-.exgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.ex{background:#0e1116;border:1px solid #ffffff14;border-radius:10px;padding:12px}.ex h4{margin:0 0 8px;font-size:13px}.ex svg{width:100%;height:auto;border-radius:6px;margin-bottom:8px}.ex p{font-size:12.5px;color:#9aa;margin:0}
-.roster{font:12px ui-monospace,monospace;color:#9ab;background:#12161d;border:1px solid #ffffff14;border-radius:8px;padding:12px}
-@media (prefers-color-scheme:light){body{background:#f6f7f9;color:#1a1d22}.card,.ex,.stat,.roster{background:#fff;border-color:#00000015}}
+.bar{position:sticky;top:0;z-index:20;background:#0a0b0eee;backdrop-filter:blur(6px);padding:10px 0;border-bottom:1px solid #ffffff14;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stat{background:#12161d;border:1px solid #ffffff14;border-radius:8px;padding:6px 12px;font:12px ui-monospace,monospace}
+.btn{background:#1b3a5c;border:1px solid #2a6cff55;color:#bfe;border-radius:8px;padding:7px 13px;font:12px ui-monospace,monospace;cursor:pointer}.btn:hover{background:#245}
+table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,td{text-align:left;padding:5px 9px;border-bottom:1px solid #ffffff12}th{color:#9aa}
+.hcell.hp{color:#6f9;font-weight:700}.hcell.hf{color:#f77;font-weight:700}
+.card{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:16px;margin:18px 0;scroll-margin-top:70px}
+.card.hp{border-color:#2a6}.card.hf{border-color:#a33}
+.chead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.chead h3{margin:0;font-size:17px}.mode{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px}
+.hverdict{display:flex;align-items:center;gap:8px}.hlabel{font:11px ui-monospace,monospace;color:#8a90a0}
+.htoggle{border:1px solid #ffffff26;background:#161a22;color:#9aa;border-radius:8px;padding:7px 16px;font:700 12px ui-monospace,monospace;cursor:pointer;min-width:120px}
+.htoggle.hp{background:#153;border-color:#3a7;color:#7fe}.htoggle.hf{background:#511;border-color:#a44;color:#f99}
+.live{display:flex;gap:16px;flex-wrap:wrap}
+.live iframe{flex:0 0 auto;width:320px;height:520px;border:1px solid #ffffff18;border-radius:10px;background:#0c0d10}
+.side{flex:1 1 300px;display:flex;flex-direction:column;gap:10px;min-width:280px}
+.hnotes{width:100%;min-height:120px;resize:vertical;background:#0b0d12;border:1px solid #ffffff20;border-radius:8px;color:#dde;padding:10px;font:13px ui-monospace,monospace}
+.hnotes:focus{outline:1px solid #3a6cff88}
+.auto{font:11px ui-monospace,monospace;color:#9ab}.det{color:#8a90a0}.rz{color:#7a8090}
+.pass{color:#062;background:#6f9;border-radius:4px;padding:1px 6px;font-weight:700}.fail{color:#400;background:#f88;border-radius:4px;padding:1px 6px;font-weight:700}
+.proc summary{cursor:pointer;color:#8ab;font:11px ui-monospace,monospace}
+.strip{display:flex;gap:8px;overflow-x:auto;padding-top:8px}.strip figure{margin:0;flex:0 0 auto;width:120px}.strip img{width:120px;border-radius:6px;border:1px solid #ffffff14;background:#000}.strip figcaption{font:10px ui-monospace,monospace;color:#8a90a0;text-align:center;margin-top:3px}
+.exgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.ex{background:#0e1116;border:1px solid #ffffff14;border-radius:10px;padding:12px}.ex h4{margin:0 0 6px;font-size:13px}.ex p{font-size:12.5px;color:#9aa;margin:0}
+.animgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.anim{background:#0e1116;border:1px solid #ffffff14;border-radius:10px;padding:12px;min-width:0}
+.anim h4{margin:0 0 8px;font-size:13px}
+.anim canvas{width:100%;height:auto;border-radius:8px;background:#000;border:1px solid #ffffff14;display:block}
+.acap{font:11px ui-monospace,monospace;color:#8a90a0;margin-top:7px;min-height:42px;line-height:1.45}
+.animsub{font:12px ui-monospace,monospace;color:#8a90a0;margin:0 0 10px}
+.alive{color:#041;background:#6f9;border-radius:4px;padding:1px 7px;font:700 11px ui-monospace,monospace;vertical-align:2px;animation:alive-blink 1.6s ease-in-out infinite}
+@keyframes alive-blink{50%{opacity:.45}}
+.walk{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:14px}
+.wnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.wstep{background:#161a22;border:1px solid #ffffff22;color:#9ab;border-radius:8px;padding:6px 12px;font:12px ui-monospace,monospace;cursor:pointer}
+.wstep.on{background:#1b3a5c;border-color:#3a7cff88;color:#cfe6ff}
+.wbody img{width:100%;height:auto;border-radius:8px;border:1px solid #ffffff14;background:#000}
+.wcap h4{margin:10px 0 4px;font-size:15px}.wcap p{margin:0;color:#9ab;font-size:13.5px;max-width:90ch}
+@media (prefers-color-scheme:light){body{background:#f6f7f9;color:#1a1d22}.card,.ex,.stat,.hnotes,.htoggle{background:#fff;border-color:#00000018}.bar{background:#f6f7f9ee}}
 </style></head><body>
-<h1>gen12 — media-player skin batch</h1>
-<div class=sub>12/14 skins passed the auto-regen gate · Spotify-roster · one nano-banana-pro gen + BiRefNet per roll · fully local extraction</div>
-<div><span class=stat>14 skins</span><span class=stat>12 gate-pass</span><span class=stat>7 templated</span><span class=stat>7 templateless</span></div>
-<h2>Overview</h2>
-<table><thead><tr><th>skin</th><th>mode</th><th>gate</th><th>rolls</th><th>seed</th><th>controls</th><th>seek-cov</th><th>fail reasons</th></tr></thead>
-<tbody><tr class="rp"><td><a href="#diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓ PASS</td><td>4</td><td>110</td><td>10/10</td><td>1.038</td><td>state-align</td></tr><tr class="rp"><td><a href="#fa-pod">fa-pod</a></td><td>templated</td><td>✓ PASS</td><td>2</td><td>173</td><td>10/10</td><td>1.038</td><td>state-align</td></tr><tr class="rp"><td><a href="#fa-sky">fa-sky</a></td><td>templateless</td><td>✓ PASS</td><td>?</td><td>110</td><td>10/10</td><td>1.039</td><td>—</td></tr><tr class="rp"><td><a href="#fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓ PASS</td><td>1</td><td>71</td><td>10/10</td><td>1.039</td><td>—</td></tr><tr class="rf"><td><a href="#fallout-vault">fallout-vault</a></td><td>templateless</td><td>✗ FAIL</td><td>4</td><td>110</td><td>10/10</td><td>1.04</td><td>biref-parts</td></tr><tr class="rp"><td><a href="#myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✓ PASS</td><td>3</td><td>97</td><td>10/10</td><td>1.037</td><td>—</td></tr><tr class="rp"><td><a href="#n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓ PASS</td><td>2</td><td>84</td><td>10/10</td><td>1.039</td><td>—</td></tr><tr class="rp"><td><a href="#n64-lowpoly">n64-lowpoly</a></td><td>templated</td><td>✓ PASS</td><td>1</td><td>71</td><td>10/10</td><td>1.038</td><td>—</td></tr><tr class="rp"><td><a href="#ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✓ PASS</td><td>2</td><td>84</td><td>10/10</td><td>1.04</td><td>—</td></tr><tr class="rf"><td><a href="#ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗ FAIL</td><td>4</td><td>110</td><td>10/10</td><td>1.04</td><td>emptiness</td></tr><tr class="rp"><td><a href="#steam-porthole">steam-porthole</a></td><td>templated</td><td>✓ PASS</td><td>2</td><td>84</td><td>10/10</td><td>1.04</td><td>—</td></tr><tr class="rp"><td><a href="#wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓ PASS</td><td>4</td><td>110</td><td>10/10</td><td>1.038</td><td>—</td></tr><tr class="rp"><td><a href="#wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✓ PASS</td><td>2</td><td>84</td><td>10/10</td><td>1.038</td><td>—</td></tr><tr class="rp"><td><a href="#wmp-vario">wmp-vario</a></td><td>templateless</td><td>✓ PASS</td><td>1</td><td>71</td><td>10/10</td><td>1.029</td><td>—</td></tr></tbody></table>
-<h2>Per-skin process</h2>
-<section class=card id="diablo-gothic">
-  <div class=chead><h3>Diablo Gothic <span class=mode>templateless</span></h3>
-    <div><span class="pass">GATE PASS</span> · 4 roll(s) · seed 110</div></div>
-  <div class=strip><a href="assets-diablo-gothic/blueprint.png" target=_blank><figure><img src="assets-diablo-gothic/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-diablo-gothic/joint-4k.png" target=_blank><figure><img src="assets-diablo-gothic/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-diablo-gothic/paint.png" target=_blank><figure><img src="assets-diablo-gothic/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-diablo-gothic/mask.png" target=_blank><figure><img src="assets-diablo-gothic/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-diablo-gothic/overlay.png" target=_blank><figure><img src="assets-diablo-gothic/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-diablo-gothic/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.038 · empty ok · align x · leak 0.0<br><span class=rz><b>reasons:</b> state-align</span></div>
-</section><section class=card id="fa-pod">
-  <div class=chead><h3>Frutiger Aero Pod <span class=mode>templated</span></h3>
-    <div><span class="pass">GATE PASS</span> · 2 roll(s) · seed 173</div></div>
-  <div class=strip><a href="assets-fa-pod/blueprint.png" target=_blank><figure><img src="assets-fa-pod/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-fa-pod/joint-4k.png" target=_blank><figure><img src="assets-fa-pod/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-fa-pod/paint.png" target=_blank><figure><img src="assets-fa-pod/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-fa-pod/mask.png" target=_blank><figure><img src="assets-fa-pod/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-fa-pod/overlay.png" target=_blank><figure><img src="assets-fa-pod/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-fa-pod/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.038 · empty ok · align x · leak 0.00235<br><span class=rz><b>reasons:</b> state-align</span></div>
-</section><section class=card id="fa-sky">
-  <div class=chead><h3>fa-sky <span class=mode>templateless</span></h3>
-    <div><span class="pass">GATE PASS</span> · ? roll(s) · seed 110</div></div>
-  <div class=strip><a href="assets-fa-sky/blueprint.png" target=_blank><figure><img src="assets-fa-sky/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-fa-sky/joint-4k.png" target=_blank><figure><img src="assets-fa-sky/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-fa-sky/paint.png" target=_blank><figure><img src="assets-fa-sky/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-fa-sky/mask.png" target=_blank><figure><img src="assets-fa-sky/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-fa-sky/overlay.png" target=_blank><figure><img src="assets-fa-sky/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-fa-sky/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="fallout-pipboy">
-  <div class=chead><h3>Fallout Pipboy <span class=mode>templated</span></h3>
-    <div><span class="pass">GATE PASS</span> · 1 roll(s) · seed 71</div></div>
-  <div class=strip><a href="assets-fallout-pipboy/blueprint.png" target=_blank><figure><img src="assets-fallout-pipboy/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-fallout-pipboy/joint-4k.png" target=_blank><figure><img src="assets-fallout-pipboy/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-fallout-pipboy/paint.png" target=_blank><figure><img src="assets-fallout-pipboy/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-fallout-pipboy/mask.png" target=_blank><figure><img src="assets-fallout-pipboy/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-fallout-pipboy/overlay.png" target=_blank><figure><img src="assets-fallout-pipboy/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-fallout-pipboy/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="fallout-vault">
-  <div class=chead><h3>Fallout Vault <span class=mode>templateless</span></h3>
-    <div><span class="fail">GATE FAIL</span> · 4 roll(s) · seed 110</div></div>
-  <div class=strip><a href="assets-fallout-vault/blueprint.png" target=_blank><figure><img src="assets-fallout-vault/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-fallout-vault/joint-4k.png" target=_blank><figure><img src="assets-fallout-vault/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-fallout-vault/paint.png" target=_blank><figure><img src="assets-fallout-vault/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-fallout-vault/mask.png" target=_blank><figure><img src="assets-fallout-vault/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-fallout-vault/overlay.png" target=_blank><figure><img src="assets-fallout-vault/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-fallout-vault/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.04 · empty ok · align x · leak None<br><span class=rz><b>reasons:</b> biref-parts</span></div>
-</section><section class=card id="myst-arcanum">
-  <div class=chead><h3>Myst Arcanum <span class=mode>templateless</span></h3>
-    <div><span class="pass">GATE PASS</span> · 3 roll(s) · seed 97</div></div>
-  <div class=strip><a href="assets-myst-arcanum/blueprint.png" target=_blank><figure><img src="assets-myst-arcanum/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-myst-arcanum/joint-4k.png" target=_blank><figure><img src="assets-myst-arcanum/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-myst-arcanum/paint.png" target=_blank><figure><img src="assets-myst-arcanum/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-myst-arcanum/mask.png" target=_blank><figure><img src="assets-myst-arcanum/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-myst-arcanum/overlay.png" target=_blank><figure><img src="assets-myst-arcanum/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-myst-arcanum/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.037 · empty ok · align ok · leak 0.0<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="n64-cutscene">
-  <div class=chead><h3>N64 Cutscene <span class=mode>templateless</span></h3>
-    <div><span class="pass">GATE PASS</span> · 2 roll(s) · seed 84</div></div>
-  <div class=strip><a href="assets-n64-cutscene/blueprint.png" target=_blank><figure><img src="assets-n64-cutscene/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-n64-cutscene/joint-4k.png" target=_blank><figure><img src="assets-n64-cutscene/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-n64-cutscene/paint.png" target=_blank><figure><img src="assets-n64-cutscene/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-n64-cutscene/mask.png" target=_blank><figure><img src="assets-n64-cutscene/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-n64-cutscene/overlay.png" target=_blank><figure><img src="assets-n64-cutscene/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-n64-cutscene/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="n64-lowpoly">
-  <div class=chead><h3>N64 Lowpoly <span class=mode>templated</span></h3>
-    <div><span class="pass">GATE PASS</span> · 1 roll(s) · seed 71</div></div>
-  <div class=strip><a href="assets-n64-lowpoly/blueprint.png" target=_blank><figure><img src="assets-n64-lowpoly/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-n64-lowpoly/joint-4k.png" target=_blank><figure><img src="assets-n64-lowpoly/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-n64-lowpoly/paint.png" target=_blank><figure><img src="assets-n64-lowpoly/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-n64-lowpoly/mask.png" target=_blank><figure><img src="assets-n64-lowpoly/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-n64-lowpoly/overlay.png" target=_blank><figure><img src="assets-n64-lowpoly/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-n64-lowpoly/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.0<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="ps1-crunchy">
-  <div class=chead><h3>Ps1 Crunchy <span class=mode>templated</span></h3>
-    <div><span class="pass">GATE PASS</span> · 2 roll(s) · seed 84</div></div>
-  <div class=strip><a href="assets-ps1-crunchy/blueprint.png" target=_blank><figure><img src="assets-ps1-crunchy/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-ps1-crunchy/joint-4k.png" target=_blank><figure><img src="assets-ps1-crunchy/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-ps1-crunchy/paint.png" target=_blank><figure><img src="assets-ps1-crunchy/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-ps1-crunchy/mask.png" target=_blank><figure><img src="assets-ps1-crunchy/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-ps1-crunchy/overlay.png" target=_blank><figure><img src="assets-ps1-crunchy/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-ps1-crunchy/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak 2e-06<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="ps1-wild">
-  <div class=chead><h3>Ps1 Wild <span class=mode>templateless</span></h3>
-    <div><span class="fail">GATE FAIL</span> · 4 roll(s) · seed 110</div></div>
-  <div class=strip><a href="assets-ps1-wild/blueprint.png" target=_blank><figure><img src="assets-ps1-wild/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-ps1-wild/joint-4k.png" target=_blank><figure><img src="assets-ps1-wild/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-ps1-wild/paint.png" target=_blank><figure><img src="assets-ps1-wild/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-ps1-wild/mask.png" target=_blank><figure><img src="assets-ps1-wild/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-ps1-wild/overlay.png" target=_blank><figure><img src="assets-ps1-wild/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-ps1-wild/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.04 · empty FAIL · align ok · leak 0.000974<br><span class=rz><b>reasons:</b> emptiness</span></div>
-</section><section class=card id="steam-porthole">
-  <div class=chead><h3>Steam Porthole <span class=mode>templated</span></h3>
-    <div><span class="pass">GATE PASS</span> · 2 roll(s) · seed 84</div></div>
-  <div class=strip><a href="assets-steam-porthole/blueprint.png" target=_blank><figure><img src="assets-steam-porthole/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-steam-porthole/joint-4k.png" target=_blank><figure><img src="assets-steam-porthole/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-steam-porthole/paint.png" target=_blank><figure><img src="assets-steam-porthole/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-steam-porthole/mask.png" target=_blank><figure><img src="assets-steam-porthole/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-steam-porthole/overlay.png" target=_blank><figure><img src="assets-steam-porthole/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-steam-porthole/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak 0.0<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="wc-goldshield">
-  <div class=chead><h3>Wc Goldshield <span class=mode>templated</span></h3>
-    <div><span class="pass">GATE PASS</span> · 4 roll(s) · seed 110</div></div>
-  <div class=strip><a href="assets-wc-goldshield/blueprint.png" target=_blank><figure><img src="assets-wc-goldshield/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-wc-goldshield/joint-4k.png" target=_blank><figure><img src="assets-wc-goldshield/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-wc-goldshield/paint.png" target=_blank><figure><img src="assets-wc-goldshield/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-wc-goldshield/mask.png" target=_blank><figure><img src="assets-wc-goldshield/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-wc-goldshield/overlay.png" target=_blank><figure><img src="assets-wc-goldshield/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-wc-goldshield/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.000246<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="wmp-quicksilver">
-  <div class=chead><h3>Wmp Quicksilver <span class=mode>templated</span></h3>
-    <div><span class="pass">GATE PASS</span> · 2 roll(s) · seed 84</div></div>
-  <div class=strip><a href="assets-wmp-quicksilver/blueprint.png" target=_blank><figure><img src="assets-wmp-quicksilver/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-wmp-quicksilver/joint-4k.png" target=_blank><figure><img src="assets-wmp-quicksilver/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-wmp-quicksilver/paint.png" target=_blank><figure><img src="assets-wmp-quicksilver/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-wmp-quicksilver/mask.png" target=_blank><figure><img src="assets-wmp-quicksilver/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-wmp-quicksilver/overlay.png" target=_blank><figure><img src="assets-wmp-quicksilver/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-wmp-quicksilver/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.0<br><span class=rz>clean — all checks green</span></div>
-</section><section class=card id="wmp-vario">
-  <div class=chead><h3>Wmp Vario <span class=mode>templateless</span></h3>
-    <div><span class="pass">GATE PASS</span> · 1 roll(s) · seed 71</div></div>
-  <div class=strip><a href="assets-wmp-vario/blueprint.png" target=_blank><figure><img src="assets-wmp-vario/blueprint.png" loading=lazy><figcaption>blueprint / scaffold</figcaption></figure></a><a href="assets-wmp-vario/joint-4k.png" target=_blank><figure><img src="assets-wmp-vario/joint-4k.png" loading=lazy><figcaption>joint 4K (fal)</figcaption></figure></a><a href="assets-wmp-vario/paint.png" target=_blank><figure><img src="assets-wmp-vario/paint.png" loading=lazy><figcaption>paint (device+strip)</figcaption></figure></a><a href="assets-wmp-vario/mask.png" target=_blank><figure><img src="assets-wmp-vario/mask.png" loading=lazy><figcaption>region mask</figcaption></figure></a><a href="assets-wmp-vario/overlay.png" target=_blank><figure><img src="assets-wmp-vario/overlay.png" loading=lazy><figcaption>mask×paint overlay</figcaption></figure></a>
-    <a href="assets-wmp-vario/player.html" target=_blank><figure class=play><div class=pl>▶ LIVE<br>PLAYER</div>
-      <figcaption>interactive</figcaption></figure></a></div>
-  <div class=gate>controls 10/10 · seek-cov 1.029 · empty ok · align ok · leak 0.000481<br><span class=rz>clean — all checks green</span></div>
-</section>
-
-<h2>How the novel steps work</h2>
-<div class=exgrid>
-  <div class=ex><h4>Coverage-span seek travel</h4>
-    <svg viewBox="0 0 320 90"><rect x="0" y="0" width="320" height="90" fill="#0d0f14"/>
-      <rect x="40" y="35" width="240" height="20" rx="10" fill="#1b2230" stroke="#3a4a63"/>
-      <rect x="40" y="35" width="20" height="20" rx="10" fill="#2a3345"/><rect x="260" y="35" width="20" height="20" rx="10" fill="#2a3345"/>
-      <rect x="46" y="38" width="34" height="14" rx="7" fill="#6aa0ff"/>
-      <line x1="40" y1="70" x2="280" y2="70" stroke="#5f7" stroke-width="2"/><text x="150" y="84" fill="#8fa" font-size="11" text-anchor="middle">travel = full painted groove (rim→rim)</text>
-      <text x="150" y="22" fill="#9ab" font-size="11" text-anchor="middle">walk out through recess + bezel rims; stop at body/backdrop</text></svg>
-    <p>The mask bbox undershoots the painted channel, so the extractor walks the paint outward from centre through the dark recess AND its bright bezel rims, stopping only at solid body or backdrop — the thumb then covers the whole slot end-to-end.</p></div>
-  <div class=ex><h4>Matte-hole-centroid knob seat</h4>
-    <svg viewBox="0 0 200 90"><rect width="200" height="90" fill="#0d0f14"/>
-      <circle cx="100" cy="45" r="34" fill="#12161d" stroke="#3a4a63"/>
-      <circle cx="108" cy="41" r="30" fill="none" stroke="#f55" stroke-dasharray="4 3"/><text x="150" y="30" fill="#f88" font-size="10">gradient fit</text>
-      <circle cx="100" cy="45" r="30" fill="none" stroke="#5f7"/><text x="150" y="66" fill="#8fa" font-size="10">hole centroid</text></svg>
-    <p>A gradient circle-fit nails the socket radius but its centre drifts on an asymmetric specular arc. The centre is snapped to the BiRefNet matte alpha-hole centroid (geometric, no lighting bias); radius kept.</p></div>
-  <div class=ex><h4>Silhouette-IoU switch registration</h4>
-    <svg viewBox="0 0 220 90"><rect width="220" height="90" fill="#0d0f14"/>
-      <rect x="30" y="30" width="70" height="34" rx="17" fill="#243" stroke="#5f7"/><text x="65" y="80" fill="#8fa" font-size="10" text-anchor="middle">OFF</text>
-      <rect x="120" y="30" width="70" height="34" rx="17" fill="#234" stroke="#6af"/><text x="155" y="80" fill="#9bf" font-size="10" text-anchor="middle">ON → scaled+shifted to OFF box (IoU max)</text></svg>
-    <p>The OFF and ON cut silhouettes are registered by scale + (dx,dy) that maximise their IoU, so the housing sits at the same spot in both states — only the lever moves. Rendered box shift &lt;1px.</p></div>
-  <div class=ex><h4>Rotational placement</h4>
-    <svg viewBox="0 0 200 90"><rect width="200" height="90" fill="#0d0f14"/>
-      <g transform="rotate(-25 100 45)"><rect x="55" y="34" width="90" height="22" rx="11" fill="#243" stroke="#5f7"/>
-        <circle cx="72" cy="45" r="13" fill="#8ab"/></g><text x="100" y="82" fill="#8fa" font-size="10" text-anchor="middle">PCA angle of device-slot pixels → rotate the part</text></svg>
-    <p>A slot following an organic body is tilted. Its major-axis angle (PCA over the device-region mask pixels only — excluding strip cells) rotates the placed part to seat along the slot.</p></div>
-  <div class=ex><h4>Templated vs templateless</h4>
-    <svg viewBox="0 0 300 90"><rect width="300" height="90" fill="#0d0f14"/>
-      <rect x="14" y="18" width="120" height="54" rx="8" fill="#12161d" stroke="#3a4a63"/><text x="74" y="14" fill="#9ab" font-size="10" text-anchor="middle">TEMPLATED</text>
-      <circle cx="44" cy="40" r="8" fill="none" stroke="#f5a"/><circle cx="74" cy="40" r="8" fill="none" stroke="#5af"/><circle cx="104" cy="40" r="8" fill="none" stroke="#fd5"/>
-      <text x="74" y="64" fill="#789" font-size="9" text-anchor="middle">positions locked, model styles</text>
-      <rect x="166" y="18" width="120" height="54" rx="8" fill="#12161d" stroke="#3a4a63"/><text x="226" y="14" fill="#9ab" font-size="10" text-anchor="middle">TEMPLATELESS</text>
-      <text x="226" y="44" fill="#789" font-size="9" text-anchor="middle">blank scaffold → model</text><text x="226" y="58" fill="#789" font-size="9" text-anchor="middle">designs; post-hoc detect</text></svg>
-    <p>Templated locks control POSITIONS (model restyles surface + sculpts a bold outer housing). Templateless gives a blank scaffold — the model designs the whole player and the extractor recovers every control post-hoc from the returned mask.</p></div>
-  <div class=ex><h4>Auto-regen gate loop</h4>
-    <svg viewBox="0 0 300 90"><rect width="300" height="90" fill="#0d0f14"/>
-      <rect x="14" y="34" width="60" height="24" rx="4" fill="#1b2230" stroke="#3a4a63"/><text x="44" y="50" fill="#9ab" font-size="9" text-anchor="middle">gen+extract</text>
-      <path d="M74 46 h30" stroke="#5a7" fill="none" marker-end="url(#a)"/><rect x="104" y="34" width="44" height="24" rx="4" fill="#1b2230" stroke="#3a4a63"/><text x="126" y="50" fill="#9ab" font-size="9" text-anchor="middle">GATE?</text>
-      <path d="M148 46 h34" stroke="#5f7" fill="none" marker-end="url(#a)"/><rect x="182" y="34" width="50" height="24" rx="4" fill="#152" stroke="#5f7"/><text x="207" y="50" fill="#8fa" font-size="9" text-anchor="middle">player</text>
-      <path d="M126 58 v16 h-82 v-28" stroke="#f85" fill="none" marker-end="url(#a)"/><text x="150" y="86" fill="#f96" font-size="9">FAIL → reseed (≤4)</text>
-      <defs><marker id="a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#8ab"/></marker></defs></svg>
-    <p>Each skin rolls seeds through the full pipeline until the structured GATE passes (empty sockets · 10/10 controls · seek coverage · biref parts · leak) or 4 tries — auto-selecting a clean generation without human babysitting.</p></div>
+<h1>gen12 — human review</h1>
+<div class=sub>auto-gate 12/14 · set YOUR pass/fail per skin, note what's wrong; verdicts autosave. Live players are embedded — drag knobs/seek, click buttons.</div>
+<div class=sub>models: <b>fal-ai/gemini-3-pro-image-preview/edit</b> (paint+mask, ~$0.15/roll) + <b>fal-ai/birefnet/v2</b> (~$0.005/roll) · extraction/player = local $0 · est. total ≈ <b>$5.12</b> (33 rolls × ~$0.155)</div>
+<div class=bar>
+  <span class=stat id=hsum>your gate: 0 pass · 0 fail · 14 unset</span>
+  <button class=btn onclick=exportFb()>⬇ download verdicts JSON</button>
+  <button class=btn onclick=copyFb()>⧉ copy JSON</button>
+  <button class=btn onclick="localStorage.clear();location.reload()">reset</button>
 </div>
-<h2>Roster → Spotify Web API</h2>
-<p class=roster>play/pause · prev · next · repeat · queue (baked icon buttons) · volume (knob) · seek (slider) · shuffle (2-state toggle) · album-art + visualizer (display regions). All map to Spotify Web API capabilities; the visualizer is decorative (audio-analysis is deprecated for new apps — confirm at wiring time).</p>
+<h2>Overview</h2>
+<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody><tr class="rp"><td><a href="#c-diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="diablo-gothic">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fa-pod">fa-pod</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fa-pod">—</td><td>2</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fa-sky">fa-sky</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fa-sky">—</td><td>?</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fallout-pipboy">—</td><td>1</td><td>—</td></tr><tr class="rf"><td><a href="#c-fallout-vault">fallout-vault</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="fallout-vault">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="myst-arcanum">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="n64-cutscene">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-lowpoly">n64-lowpoly</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="n64-lowpoly">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="ps1-crunchy">—</td><td>2</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="ps1-wild">—</td><td>5</td><td>emptiness</td></tr><tr class="rp"><td><a href="#c-steam-porthole">steam-porthole</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="steam-porthole">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wc-goldshield">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wmp-quicksilver">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-vario">wmp-vario</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="wmp-vario">—</td><td>1</td><td>—</td></tr></tbody></table>
+<h2>Per-skin review</h2>
+<section class=card id="c-diablo-gothic" data-id="diablo-gothic">
+  <div class=chead><h3>Diablo Gothic <span class=mode>templateless</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="diablo-gothic">— unset —</button></div></div>
+  <div class=live><iframe src="assets-diablo-gothic/player.html" loading=lazy title="diablo-gothic player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="diablo-gothic" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.0 · 4 roll(s) · seed 110</span><br><span class=rz>reasons: state-align</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-diablo-gothic/blueprint.png" target=_blank><figure><img src="assets-diablo-gothic/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-diablo-gothic/paint.png" target=_blank><figure><img src="assets-diablo-gothic/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-diablo-gothic/mask.png" target=_blank><figure><img src="assets-diablo-gothic/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-diablo-gothic/overlay.png" target=_blank><figure><img src="assets-diablo-gothic/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-fa-pod" data-id="fa-pod">
+  <div class=chead><h3>Frutiger Aero Pod <span class=mode>templated</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="fa-pod">— unset —</button></div></div>
+  <div class=live><iframe src="assets-fa-pod/player.html" loading=lazy title="fa-pod player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="fa-pod" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.038 · empty ok · align x · leak None · 2 roll(s) · seed 173</span><br><span class=rz>reasons: state-align</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-fa-pod/blueprint.png" target=_blank><figure><img src="assets-fa-pod/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-fa-pod/paint.png" target=_blank><figure><img src="assets-fa-pod/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-fa-pod/mask.png" target=_blank><figure><img src="assets-fa-pod/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-fa-pod/overlay.png" target=_blank><figure><img src="assets-fa-pod/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-fa-sky" data-id="fa-sky">
+  <div class=chead><h3>fa-sky <span class=mode>templateless</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="fa-sky">— unset —</button></div></div>
+  <div class=live><iframe src="assets-fa-sky/player.html" loading=lazy title="fa-sky player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="fa-sky" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · ? roll(s) · seed 110</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-fa-sky/blueprint.png" target=_blank><figure><img src="assets-fa-sky/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-fa-sky/paint.png" target=_blank><figure><img src="assets-fa-sky/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-fa-sky/mask.png" target=_blank><figure><img src="assets-fa-sky/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-fa-sky/overlay.png" target=_blank><figure><img src="assets-fa-sky/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-fallout-pipboy" data-id="fallout-pipboy">
+  <div class=chead><h3>Fallout Pipboy <span class=mode>templated</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="fallout-pipboy">— unset —</button></div></div>
+  <div class=live><iframe src="assets-fallout-pipboy/player.html" loading=lazy title="fallout-pipboy player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="fallout-pipboy" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 71</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-fallout-pipboy/blueprint.png" target=_blank><figure><img src="assets-fallout-pipboy/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-fallout-pipboy/paint.png" target=_blank><figure><img src="assets-fallout-pipboy/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-fallout-pipboy/mask.png" target=_blank><figure><img src="assets-fallout-pipboy/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-fallout-pipboy/overlay.png" target=_blank><figure><img src="assets-fallout-pipboy/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-fallout-vault" data-id="fallout-vault">
+  <div class=chead><h3>Fallout Vault <span class=mode>templateless</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="fallout-vault">— unset —</button></div></div>
+  <div class=live><iframe src="assets-fallout-vault/player.html" loading=lazy title="fallout-vault player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="fallout-vault" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="fail">auto FAIL</span> · <span class=det>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak None · 4 roll(s) · seed 110</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-fallout-vault/blueprint.png" target=_blank><figure><img src="assets-fallout-vault/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-fallout-vault/paint.png" target=_blank><figure><img src="assets-fallout-vault/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-fallout-vault/mask.png" target=_blank><figure><img src="assets-fallout-vault/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-fallout-vault/overlay.png" target=_blank><figure><img src="assets-fallout-vault/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-myst-arcanum" data-id="myst-arcanum">
+  <div class=chead><h3>Myst Arcanum <span class=mode>templateless</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="myst-arcanum">— unset —</button></div></div>
+  <div class=live><iframe src="assets-myst-arcanum/player.html" loading=lazy title="myst-arcanum player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="myst-arcanum" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.037 · empty ok · align ok · leak 0.0 · 3 roll(s) · seed 97</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-myst-arcanum/blueprint.png" target=_blank><figure><img src="assets-myst-arcanum/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-myst-arcanum/paint.png" target=_blank><figure><img src="assets-myst-arcanum/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-myst-arcanum/mask.png" target=_blank><figure><img src="assets-myst-arcanum/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-myst-arcanum/overlay.png" target=_blank><figure><img src="assets-myst-arcanum/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-n64-cutscene" data-id="n64-cutscene">
+  <div class=chead><h3>N64 Cutscene <span class=mode>templateless</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="n64-cutscene">— unset —</button></div></div>
+  <div class=live><iframe src="assets-n64-cutscene/player.html" loading=lazy title="n64-cutscene player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="n64-cutscene" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 2 roll(s) · seed 84</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-n64-cutscene/blueprint.png" target=_blank><figure><img src="assets-n64-cutscene/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-n64-cutscene/paint.png" target=_blank><figure><img src="assets-n64-cutscene/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-n64-cutscene/mask.png" target=_blank><figure><img src="assets-n64-cutscene/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-n64-cutscene/overlay.png" target=_blank><figure><img src="assets-n64-cutscene/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-n64-lowpoly" data-id="n64-lowpoly">
+  <div class=chead><h3>N64 Lowpoly <span class=mode>templated</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="n64-lowpoly">— unset —</button></div></div>
+  <div class=live><iframe src="assets-n64-lowpoly/player.html" loading=lazy title="n64-lowpoly player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="n64-lowpoly" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 71</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-n64-lowpoly/blueprint.png" target=_blank><figure><img src="assets-n64-lowpoly/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-n64-lowpoly/paint.png" target=_blank><figure><img src="assets-n64-lowpoly/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-n64-lowpoly/mask.png" target=_blank><figure><img src="assets-n64-lowpoly/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-n64-lowpoly/overlay.png" target=_blank><figure><img src="assets-n64-lowpoly/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-ps1-crunchy" data-id="ps1-crunchy">
+  <div class=chead><h3>Ps1 Crunchy <span class=mode>templated</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="ps1-crunchy">— unset —</button></div></div>
+  <div class=live><iframe src="assets-ps1-crunchy/player.html" loading=lazy title="ps1-crunchy player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="ps1-crunchy" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak 2e-06 · 2 roll(s) · seed 84</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-ps1-crunchy/blueprint.png" target=_blank><figure><img src="assets-ps1-crunchy/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-ps1-crunchy/paint.png" target=_blank><figure><img src="assets-ps1-crunchy/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-ps1-crunchy/mask.png" target=_blank><figure><img src="assets-ps1-crunchy/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-ps1-crunchy/overlay.png" target=_blank><figure><img src="assets-ps1-crunchy/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-ps1-wild" data-id="ps1-wild">
+  <div class=chead><h3>Ps1 Wild <span class=mode>templateless</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="ps1-wild">— unset —</button></div></div>
+  <div class=live><iframe src="assets-ps1-wild/player.html" loading=lazy title="ps1-wild player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="ps1-wild" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="fail">auto FAIL</span> · <span class=det>controls 10/10 · seek-cov 1.04 · empty FAIL · align ok · leak None · 5 roll(s) · seed 252</span><br><span class=rz>reasons: emptiness</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-ps1-wild/blueprint.png" target=_blank><figure><img src="assets-ps1-wild/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-ps1-wild/paint.png" target=_blank><figure><img src="assets-ps1-wild/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-ps1-wild/mask.png" target=_blank><figure><img src="assets-ps1-wild/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-ps1-wild/overlay.png" target=_blank><figure><img src="assets-ps1-wild/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-steam-porthole" data-id="steam-porthole">
+  <div class=chead><h3>Steam Porthole <span class=mode>templated</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="steam-porthole">— unset —</button></div></div>
+  <div class=live><iframe src="assets-steam-porthole/player.html" loading=lazy title="steam-porthole player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="steam-porthole" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak 0.0 · 2 roll(s) · seed 84</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-steam-porthole/blueprint.png" target=_blank><figure><img src="assets-steam-porthole/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-steam-porthole/paint.png" target=_blank><figure><img src="assets-steam-porthole/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-steam-porthole/mask.png" target=_blank><figure><img src="assets-steam-porthole/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-steam-porthole/overlay.png" target=_blank><figure><img src="assets-steam-porthole/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-wc-goldshield" data-id="wc-goldshield">
+  <div class=chead><h3>Wc Goldshield <span class=mode>templated</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="wc-goldshield">— unset —</button></div></div>
+  <div class=live><iframe src="assets-wc-goldshield/player.html" loading=lazy title="wc-goldshield player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="wc-goldshield" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.000246 · 4 roll(s) · seed 110</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-wc-goldshield/blueprint.png" target=_blank><figure><img src="assets-wc-goldshield/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-wc-goldshield/paint.png" target=_blank><figure><img src="assets-wc-goldshield/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-wc-goldshield/mask.png" target=_blank><figure><img src="assets-wc-goldshield/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-wc-goldshield/overlay.png" target=_blank><figure><img src="assets-wc-goldshield/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-wmp-quicksilver" data-id="wmp-quicksilver">
+  <div class=chead><h3>Wmp Quicksilver <span class=mode>templated</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="wmp-quicksilver">— unset —</button></div></div>
+  <div class=live><iframe src="assets-wmp-quicksilver/player.html" loading=lazy title="wmp-quicksilver player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="wmp-quicksilver" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.0 · 2 roll(s) · seed 84</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-wmp-quicksilver/blueprint.png" target=_blank><figure><img src="assets-wmp-quicksilver/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-wmp-quicksilver/paint.png" target=_blank><figure><img src="assets-wmp-quicksilver/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-wmp-quicksilver/mask.png" target=_blank><figure><img src="assets-wmp-quicksilver/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-wmp-quicksilver/overlay.png" target=_blank><figure><img src="assets-wmp-quicksilver/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section><section class=card id="c-wmp-vario" data-id="wmp-vario">
+  <div class=chead><h3>Wmp Vario <span class=mode>templateless</span></h3>
+    <div class=hverdict><span class=hlabel>your gate:</span>
+      <button class="htoggle" data-id="wmp-vario">— unset —</button></div></div>
+  <div class=live><iframe src="assets-wmp-vario/player.html" loading=lazy title="wmp-vario player"></iframe>
+    <div class=side>
+      <textarea class=hnotes data-id="wmp-vario" placeholder="what's wrong with this skin? (autosaves)"></textarea>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.029 · empty ok · align ok · leak 0.000481 · 1 roll(s) · seed 71</span><br><span class=rz>all checks green</span></div>
+      <details class=proc><summary>process images</summary><div class=strip><a href="assets-wmp-vario/blueprint.png" target=_blank><figure><img src="assets-wmp-vario/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-wmp-vario/paint.png" target=_blank><figure><img src="assets-wmp-vario/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-wmp-vario/mask.png" target=_blank><figure><img src="assets-wmp-vario/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-wmp-vario/overlay.png" target=_blank><figure><img src="assets-wmp-vario/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
+    </div></div>
+</section>
+<h2>How it works — interactive walkthrough (real artifacts)</h2>
+<div id=walk class=walk>
+  <div class=wnav id=wnav></div>
+  <div class=wbody><a id=wlink target=_blank><img id=wimg alt="pipeline step"></a>
+    <div class=wcap><h4 id=wtitle></h4><p id=wdesc></p></div></div>
+</div>
+<script>
+fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
+  const nav=document.getElementById('wnav'); let cur=0;
+  function show(i){ cur=i; const s=d.steps[i];
+    document.getElementById('wimg').src='explainer/'+s.img;
+    document.getElementById('wlink').href='explainer/'+s.img;
+    document.getElementById('wtitle').textContent=s.t;
+    document.getElementById('wdesc').textContent=s.d;
+    [...nav.children].forEach((b,j)=>b.classList.toggle('on',j===i)); }
+  d.steps.forEach((s,i)=>{ const b=document.createElement('button'); b.className='wstep';
+    b.textContent=s.t.split('·')[0].trim(); b.title=s.t; b.onclick=()=>show(i); nav.appendChild(b); });
+  document.addEventListener('keydown',e=>{ if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
+    if(e.key==='ArrowRight'&&cur<d.steps.length-1)show(cur+1); if(e.key==='ArrowLeft'&&cur>0)show(cur-1); });
+  show(0);
+}).catch(()=>{ document.getElementById('walk').innerHTML='<p style="color:#888">run build_explainer.py to generate the walkthrough images</p>'; });
+</script>
+<h2>Live algorithm animations <span class=alive>LIVE</span> — real pixels, real math</h2>
+<p class=animsub>Both panels re-run extract12.py's actual algorithms in-browser on the real steam-porthole artifacts
+(paint by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
+<div class=animgrid>
+  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap</h4>
+    <canvas id=anim-knob></canvas><div class=acap id=anim-knob-cap>loading…</div></div>
+  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel</h4>
+    <canvas id=anim-travel></canvas><div class=acap id=anim-travel-cap>loading…</div></div>
+</div>
+<script src=explainer_anim.js></script>
+<h2>Concepts — for someone new to this</h2>
 
-<div class=sub style="margin-top:30px">gen12 pipeline: genskin.py · extract12.py · biref12.py · build_player.py · orchestrate12.py — tools/mask-align-exp/gen12/</div>
-</body></html>
+<div class=ex ex-wide>
+  <h4>0 · The big picture: why a "mask" makes this reliable</h4>
+  <svg viewBox="0 0 460 120"><rect width="460" height="120" fill="#0d0f14"/>
+    <rect x="14" y="16" width="120" height="88" rx="6" fill="#161a22" stroke="#3a4a63"/><text x="74" y="12" fill="#9ab" font-size="10" text-anchor="middle">blueprint (we draw)</text>
+    <circle cx="44" cy="45" r="9" fill="none" stroke="#f5a"/><circle cx="74" cy="45" r="9" fill="none" stroke="#5af"/><circle cx="104" cy="45" r="9" fill="none" stroke="#fd5"/><rect x="34" y="72" width="80" height="14" rx="7" fill="none" stroke="#7f7"/>
+    <path d="M140 60 h26" stroke="#5a7" fill="none" marker-end="url(#a)"/><text x="153" y="54" fill="#789" font-size="8">gen</text>
+    <rect x="172" y="16" width="120" height="88" rx="6" fill="#12202e" stroke="#3a4a63"/><text x="232" y="12" fill="#9ab" font-size="10" text-anchor="middle">LEFT: finished skin</text>
+    <circle cx="202" cy="45" r="9" fill="#6ad"/><circle cx="232" cy="45" r="11" fill="#e55"/><circle cx="262" cy="45" r="9" fill="#dd6"/><rect x="192" y="72" width="80" height="14" rx="7" fill="#334"/>
+    <rect x="300" y="16" width="120" height="88" rx="6" fill="#000" stroke="#3a4a63"/><text x="360" y="12" fill="#9ab" font-size="10" text-anchor="middle">RIGHT: colour mask</text>
+    <circle cx="330" cy="45" r="9" fill="#f5a"/><circle cx="360" cy="45" r="11" fill="#5af"/><circle cx="390" cy="45" r="9" fill="#fd5"/><rect x="320" y="72" width="80" height="14" rx="7" fill="#7f7"/>
+    <defs><marker id="a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#8ab"/></marker></defs></svg>
+  <p><b>The problem.</b> Detecting buttons in a finished image ("computer vision on a screenshot") is fragile and famously unreliable. <b>The trick.</b> We hand the image model a <span class=kt>blueprint</span> — a technical drawing where every control is a coloured outline at a fixed spot — beside a black panel, and ask for <em>two</em> pictures that line up pixel-for-pixel: the <b>LEFT</b> is the finished skin, the <b>RIGHT</b> is a <span class=kt>mask</span> (a "colour-by-numbers" map where each control is one flat solid colour). Because the halves are aligned, the coloured blobs on the right are an exact <em>coordinate cheat-sheet</em> for the left — we never guess where a control is, the model literally labels it for us. Everything below is how we turn that cheat-sheet into a working, draggable player.</p>
+  <p class=kt-defs><b>Key terms —</b> <b>image-edit model:</b> an AI (here nano-banana / Gemini image) that redraws an input image following a prompt · <b>mask / segmentation map:</b> an image where pixel colour = which object that pixel belongs to · <b>guide colour:</b> a unique colour we assign to each control, chosen far from the skin's real colours so it can't be confused.</p>
+</div>
+
+<div class=exgrid>
+  <div class=ex><h4>1 · Coverage-span seek travel</h4>
+    <svg viewBox="0 0 320 84"><rect width="320" height="84" fill="#0d0f14"/>
+      <rect x="20" y="30" width="280" height="20" rx="10" fill="#161a22"/><rect x="52" y="32" width="216" height="16" rx="8" fill="#1b2230" stroke="#3a4a63"/>
+      <rect x="52" y="32" width="14" height="16" rx="7" fill="#2a3345"/><rect x="254" y="32" width="14" height="16" rx="7" fill="#2a3345"/>
+      <rect x="58" y="34" width="30" height="12" rx="6" fill="#6aa0ff"/>
+      <line x1="52" y1="64" x2="268" y2="64" stroke="#5f7" stroke-width="2"/><text x="160" y="78" fill="#8fa" font-size="10" text-anchor="middle">travel = end-cap → end-cap (recess + bezel rims)</text>
+      <text x="160" y="20" fill="#789" font-size="9" text-anchor="middle">walk out until solid body / background</text></svg>
+    <p><b>Problem.</b> The thumb must slide the whole length of the groove. The mask's rough rectangle for the groove is usually a little short, so the thumb would stop before the ends.</p>
+    <p><b>How.</b> The groove is a dark <span class=kt>recess</span> cut into a brighter body. We read one horizontal line of pixels through its centre and look at their <span class=kt>luminance</span> (brightness). Starting at the middle we <b>walk outward one pixel at a time</b>: keep going while pixels are dark (the channel floor) <em>or</em> bright (the metal <span class=kt>bezel</span> rim that frames the slot); <b>stop</b> only when we hit the solid body (bright for many pixels in a row → we've left the slot) or the near-black background. The distance between the left-stop and right-stop is the slot's true visual width — that becomes the thumb's <b>travel range</b>.</p>
+    <p class=kt-defs><b>luminance</b> = perceived brightness · <b>recess</b> = the sunken channel · <b>bezel</b> = the raised rim around a slot.</p></div>
+
+  <div class=ex><h4>2 · Matte-hole knob seat</h4>
+    <svg viewBox="0 0 200 84"><rect width="200" height="84" fill="#0d0f14"/>
+      <circle cx="90" cy="42" r="30" fill="#12161d" stroke="#3a4a63"/>
+      <circle cx="98" cy="38" r="27" fill="none" stroke="#f55" stroke-dasharray="4 3"/><text x="150" y="26" fill="#f88" font-size="9">gradient fit</text><text x="150" y="37" fill="#a77" font-size="8">(radius ✓, centre drifts)</text>
+      <circle cx="90" cy="42" r="27" fill="none" stroke="#5f7"/><circle cx="90" cy="42" r="2" fill="#5f7"/><text x="150" y="58" fill="#8fa" font-size="9">hole centroid</text><text x="150" y="69" fill="#7a7" font-size="8">(true centre)</text></svg>
+    <p><b>Problem.</b> A round knob must sit dead-centre in its socket, but a bright glare on one side fools simple centre-finding.</p>
+    <p><b>How.</b> Two signals combined. <b>(a) Circle fit</b> (a mini <span class=kt>Hough transform</span>): try thousands of candidate circles — centre (x,y) and radius r — and score each by how much <span class=kt>gradient</span> (edge strength) lies along its outline. The socket's rim is a strong edge, so the best-scoring circle locks onto the rim and gives a trustworthy <b>radius</b>. But its <em>centre</em> slides toward a glary side. <b>(b)</b> So we take the centre from elsewhere: <span class=kt>BiRefNet</span> (a background-removal network) outputs an <span class=kt>alpha matte</span> — a transparency map of the device — in which an <em>empty</em> socket appears as a HOLE. The geometric <span class=kt>centroid</span> (average of all the hole's pixel positions) is the socket's true centre, immune to lighting. Final seat = <b>fit radius + hole centroid</b>.</p>
+    <p class=kt-defs><b>gradient</b> = how fast brightness changes (big at edges) · <b>Hough transform</b> = vote over many candidate shapes, keep the best · <b>alpha matte</b> = per-pixel opacity · <b>centroid</b> = average position.</p></div>
+
+  <div class=ex><h4>3 · Silhouette-IoU switch registration</h4>
+    <svg viewBox="0 0 220 84"><rect width="220" height="84" fill="#0d0f14"/>
+      <rect x="24" y="28" width="66" height="30" rx="15" fill="#243" stroke="#5f7"/><circle cx="42" cy="43" r="10" fill="#8fa"/><text x="57" y="74" fill="#8fa" font-size="9" text-anchor="middle">OFF</text>
+      <rect x="118" y="28" width="66" height="30" rx="15" fill="#234" stroke="#6af"/><circle cx="166" cy="43" r="10" fill="#9bf"/><text x="151" y="74" fill="#9bf" font-size="9" text-anchor="middle">ON — slid to max overlap</text></svg>
+    <p><b>Problem.</b> A toggle has two states drawn as two separate cut-outs. Flipping it should move only the lever — but the two cut-outs are trimmed slightly differently, so naively centring them makes the whole switch jump.</p>
+    <p><b>How.</b> We <span class=kt>register</span> (align) the ON cut-out onto the OFF one. Reduce each to a black-and-white <span class=kt>silhouette</span> (shape only, ignore colour). Scale ON to OFF's size, then <b>slide it over a grid of offsets</b> (dx, dy); at each position compute <span class=kt>IoU</span> = <b>Intersection over Union</b> = (area where both shapes overlap) ÷ (area covered by either). The offset with the <b>highest IoU</b> is where the two housings line up best. We save that scale+shift; the player applies it so the housing stays frozen and only the lever slides.</p>
+    <p class=kt-defs><b>register</b> = align two images · <b>silhouette</b> = filled outline shape · <b>IoU</b> = overlap ÷ union, a 0–1 similarity score (1 = identical).</p></div>
+
+  <div class=ex><h4>4 · Device-only PCA slot rotation</h4>
+    <svg viewBox="0 0 220 84"><rect width="220" height="84" fill="#0d0f14"/>
+      <g transform="rotate(-24 110 42)"><rect x="62" y="31" width="96" height="22" rx="11" fill="#243" stroke="#5f7"/><circle cx="80" cy="42" r="12" fill="#8ab"/></g>
+      <line x1="70" y1="58" x2="150" y2="26" stroke="#fd5" stroke-dasharray="3 3"/><text x="110" y="78" fill="#8fa" font-size="9" text-anchor="middle">principal axis → tilt angle → rotate part</text></svg>
+    <p><b>Problem.</b> On a curvy organic body a slot may be tilted (e.g. 30°). The switch/thumb image is drawn flat, so it looks wrong unless rotated to match.</p>
+    <p><b>How.</b> Find the slot's orientation with <span class=kt>PCA</span> (Principal Component Analysis). Take every pixel belonging to that slot (from the mask) as a cloud of (x,y) <span class=kt>points</span>; PCA returns the direction the cloud is most stretched along — its <span class=kt>principal axis</span> — and the angle of that axis is the tilt. We rotate the placed part by it. <b>The bug we fixed:</b> that slot's colour appears in THREE places in the mask (the slot itself + the two strip cells at the bottom of the sheet). Feeding all of them to PCA smears the cloud between top and bottom and yields a nonsense 48°. Restricting to the <b>device-region pixels only</b> (top of the image, excluding the strip band) gives the real angle.</p>
+    <p class=kt-defs><b>PCA</b> = finds the axis a point-cloud varies most along · <b>principal axis / eigenvector</b> = that direction · <b>point cloud</b> = a set of (x,y) locations.</p></div>
+
+  <div class=ex><h4>5 · Templated vs templateless</h4>
+    <svg viewBox="0 0 300 84"><rect width="300" height="84" fill="#0d0f14"/>
+      <rect x="12" y="14" width="126" height="56" rx="8" fill="#12161d" stroke="#3a4a63"/><text x="75" y="10" fill="#9ab" font-size="10" text-anchor="middle">TEMPLATED</text>
+      <circle cx="42" cy="38" r="8" fill="none" stroke="#f5a"/><circle cx="72" cy="38" r="8" fill="none" stroke="#5af"/><circle cx="102" cy="38" r="8" fill="none" stroke="#fd5"/><text x="75" y="62" fill="#789" font-size="8" text-anchor="middle">positions locked, model styles + sculpts</text>
+      <rect x="162" y="14" width="126" height="56" rx="8" fill="#12161d" stroke="#3a4a63"/><text x="225" y="10" fill="#9ab" font-size="10" text-anchor="middle">TEMPLATELESS</text>
+      <text x="225" y="40" fill="#789" font-size="8" text-anchor="middle">blank canvas → model designs</text><text x="225" y="54" fill="#789" font-size="8" text-anchor="middle">→ we detect it afterwards</text></svg>
+    <p><b>Two generation modes we compare.</b> <b>Templated</b>: the blueprint fixes WHERE each control sits (coloured outlines at set spots); the model must keep those positions and only restyle the surface + sculpt the bold outer housing. Reliable layout, but the model can still drift. <b>Templateless</b>: we give a nearly-blank canvas and let the model design the whole player wherever it likes; then the extractor recovers every control purely from the colour mask the model drew — <span class=kt>post-hoc detection</span>. More creative freedom, more variance. Running both lets us see which wins per theme (templateless often produced the boldest clean results).</p>
+    <p class=kt-defs><b>post-hoc detection</b> = figuring out positions <em>after</em> generation, from the output, rather than dictating them up front.</p></div>
+
+  <div class=ex><h4>6 · Auto-regen gate loop</h4>
+    <svg viewBox="0 0 300 84"><rect width="300" height="84" fill="#0d0f14"/>
+      <rect x="12" y="30" width="60" height="24" rx="4" fill="#1b2230" stroke="#3a4a63"/><text x="42" y="45" fill="#9ab" font-size="8" text-anchor="middle">generate+extract</text>
+      <path d="M72 42 h26" stroke="#5a7" fill="none" marker-end="url(#b)"/><rect x="100" y="30" width="44" height="24" rx="4" fill="#1b2230" stroke="#3a4a63"/><text x="122" y="45" fill="#9ab" font-size="9" text-anchor="middle">GATE?</text>
+      <path d="M144 42 h34" stroke="#5f7" fill="none" marker-end="url(#b)"/><rect x="178" y="30" width="54" height="24" rx="4" fill="#152" stroke="#5f7"/><text x="205" y="45" fill="#8fa" font-size="9" text-anchor="middle">keep it</text>
+      <path d="M122 54 v14 h-80 v-12" stroke="#f85" fill="none" marker-end="url(#b)"/><text x="150" y="80" fill="#f96" font-size="9">FAIL → new seed (≤4×)</text>
+      <defs><marker id="b" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#8ab"/></marker></defs></svg>
+    <p><b>Problem.</b> Image models are <span class=kt>stochastic</span> — the same prompt gives a different picture each time. One roll might install a knob where the socket should be empty, or forget a control.</p>
+    <p><b>How.</b> We never trust one roll. After each generation the <span class=kt>gate</span> runs an automatic checklist: are all 10 controls found? are the sockets actually empty (no baked-in parts)? does the slider cover its groove? did we successfully cut every moving part? is any leftover guide-colour bleeding through? If <em>any</em> check fails, we change the random <span class=kt>seed</span> and generate again — up to 4 tries — keeping the first roll that passes. That's why 12/14 skins came out clean with no human babysitting each attempt.</p>
+    <p class=kt-defs><b>stochastic</b> = randomised, non-repeatable · <b>seed</b> = the number that fixes the model's randomness (change it → a different image) · <b>gate</b> = an automatic accept/reject test.</p></div>
+</div>
+<script>
+const KEY='gen12-review';
+function load(){ try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}} }
+let _pt=null;
+function pushServer(){ clearTimeout(_pt); _pt=setTimeout(()=>{ fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:fbJSON()}).catch(()=>{}); },400); }
+function save(o){ localStorage.setItem(KEY, JSON.stringify(o)); pushServer(); }
+function applyToggle(btn, v){ btn.classList.remove('hp','hf'); btn.textContent = v==='pass'?'✓ PASS':v==='fail'?'✗ FAIL':'— unset —';
+  if(v==='pass')btn.classList.add('hp'); if(v==='fail')btn.classList.add('hf');
+  const card=document.getElementById('c-'+btn.dataset.id); card.classList.remove('hp','hf'); if(v)card.classList.add(v==='pass'?'hp':'hf');
+  const cell=document.querySelector('.hcell[data-id="'+btn.dataset.id+'"]'); if(cell){cell.classList.remove('hp','hf');cell.textContent=v==='pass'?'PASS':v==='fail'?'FAIL':'—';if(v)cell.classList.add(v==='pass'?'hp':'hf');}
+}
+function summary(){ const o=load(); let p=0,f=0,u=0; document.querySelectorAll('.htoggle').forEach(b=>{const v=(o[b.dataset.id]||{}).gate; if(v==='pass')p++;else if(v==='fail')f++;else u++;});
+  document.getElementById('hsum').textContent='your gate: '+p+' pass · '+f+' fail · '+u+' unset'; }
+const store=load();
+document.querySelectorAll('.htoggle').forEach(btn=>{ const id=btn.dataset.id; applyToggle(btn,(store[id]||{}).gate||'');
+  btn.onclick=()=>{ const o=load(); const cur=(o[id]||{}).gate||''; const nxt=cur===''?'pass':cur==='pass'?'fail':''; o[id]={...(o[id]||{}),gate:nxt}; save(o); applyToggle(btn,nxt); summary(); }; });
+document.querySelectorAll('.hnotes').forEach(ta=>{ const id=ta.dataset.id; ta.value=(store[id]||{}).notes||'';
+  ta.oninput=()=>{ const o=load(); o[id]={...(o[id]||{}),notes:ta.value}; save(o); }; });
+summary();
+function fbJSON(){ const o=load(); const out={}; document.querySelectorAll('.htoggle').forEach(b=>{const id=b.dataset.id;const e=o[id]||{};out[id]={gate:e.gate||'unset',notes:e.notes||''};}); return JSON.stringify(out,null,2); }
+function exportFb(){ const blob=new Blob([fbJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='gen12-review.json'; a.click(); }
+function copyFb(){ navigator.clipboard.writeText(fbJSON()).then(()=>alert('verdicts copied to clipboard')); }
+</script></body></html>
