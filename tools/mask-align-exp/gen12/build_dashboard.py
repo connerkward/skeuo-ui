@@ -89,13 +89,20 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
 }).catch(()=>{ document.getElementById('walk').innerHTML='<p style="color:#888">run build_explainer.py to generate the walkthrough images</p>'; });
 </script>
 <h2>Live algorithm animations <span class=alive>LIVE</span> — real pixels, real math</h2>
-<p class=animsub>Both panels re-run extract12.py's actual algorithms in-browser on real batch artifacts
-(paint by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte/cuts by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
+<p class=animsub>All four panels re-run extract12.py's actual algorithms in-browser on real batch artifacts
+(paint+mask by <b>fal-ai/gemini-3-pro-image-preview/edit</b>, matte/cuts by <b>fal-ai/birefnet/v2</b> — already paid for above; animation compute = local $0).</p>
+<div class=animctl id=animctl><span>speed</span>
+  <button data-sp=0.25>0.25×</button><button data-sp=0.5>0.5×</button><button data-sp=1 class=on>1×</button><button data-sp=2>2×</button><button data-sp=4>4×</button>
+  <button id=anim-pause>⏸ pause</button></div>
 <div class=animgrid>
-  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap <span class=askin>steam-porthole · vol</span></h4>
+  <div class=anim><h4>Matte-hole knob seat — gradient circle-fit → centroid snap <span class=askin>steam-porthole · vol</span><button class=arst data-anim=anim-knob title="restart animation">⟲</button></h4>
     <canvas id=anim-knob></canvas><div class=acap id=anim-knob-cap>loading…</div></div>
-  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel <span class=askin>ps1-crunchy · seek</span></h4>
+  <div class=anim><h4>Coverage-span seek travel — luminance walk → thumb travel <span class=askin>ps1-crunchy · seek</span><button class=arst data-anim=anim-travel title="restart animation">⟲</button></h4>
     <canvas id=anim-travel></canvas><div class=acap id=anim-travel-cap>loading…</div></div>
+  <div class=anim><h4>Slot rotation — device-only PCA axis + elongation gate <span class=askin>diablo-gothic · shuffle</span><button class=arst data-anim=anim-pca title="restart animation">⟲</button></h4>
+    <canvas id=anim-pca></canvas><div class=acap id=anim-pca-cap>loading…</div></div>
+  <div class=anim><h4>Switch state registration — silhouette-IoU (dx,dy) search <span class=askin>steam-porthole · shuffle</span><button class=arst data-anim=anim-iou title="restart animation">⟲</button></h4>
+    <canvas id=anim-iou></canvas><div class=acap id=anim-iou-cap>loading…</div></div>
 </div>
 <script src=explainer_anim.js></script>
 <h2>Concepts — for someone new to this</h2>
@@ -210,6 +217,12 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .animsub{{font:12px ui-monospace,monospace;color:#8a90a0;margin:0 0 10px}}
 .askin{{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px;font-weight:400}}
 .alive{{color:#041;background:#6f9;border-radius:4px;padding:1px 7px;font:700 11px ui-monospace,monospace;vertical-align:2px;animation:alive-blink 1.6s ease-in-out infinite}}
+.animctl{{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px;font:11px ui-monospace,monospace;color:#8a90a0}}
+.animctl button{{background:#161a22;border:1px solid #ffffff22;color:#cdd3dd;border-radius:5px;font:11px ui-monospace,monospace;padding:2px 9px;cursor:pointer}}
+.animctl button:hover{{border-color:#6f9}}
+.animctl button.on{{background:#6f9;color:#041;border-color:#6f9;font-weight:700}}
+.arst{{float:right;background:#161a22;border:1px solid #ffffff22;color:#cdd3dd;border-radius:5px;font:12px ui-monospace,monospace;padding:0 7px;cursor:pointer;line-height:18px}}
+.arst:hover{{border-color:#6f9;color:#6f9}}
 @keyframes alive-blink{{50%{{opacity:.45}}}}
 .walk{{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:14px}}
 .wnav{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}}
