@@ -7,12 +7,24 @@ that **subprocesses the real, unmodified gen12 scripts** in
 ## Nodes
 | Node | Wraps | In → Out |
 |------|-------|----------|
-| Skeuo Blueprint | `genskin.py --blueprint-only` (free, no fal) | spec → blueprint IMAGE, keys json, job |
-| Skeuo Nano-Banana Edit | `genskin.py` (fal gemini-3-pro-image edit) | job → joint, paint, mask, job |
+| Skeuo Blueprint | `genskin.py` via `prompt_capture.py` (fal stubbed — free, no network) | spec → blueprint IMAGE, keys json, job, **prompt STRING** |
+| Skeuo Nano-Banana Edit | `genskin.py` (fal gemini-3-pro-image edit) — ALT path | job → joint, paint, mask, job |
 | Skeuo Split Joint | width//2 crop | joint → paint, mask, job |
-| Skeuo BiRefNet Matte | `extract12.py` (pass-1) + `biref12.py` (fal birefnet/v2) | job → matte, job |
+| Skeuo Island Split (`SkeuoBiRefNet`) | `extract12.py` (pass-1) + `biref12.py` | job (+ optional **matte IMAGE**) → matte, job |
 | Skeuo Extract Regions | `extract12.py` (pass-2, gate) | job → overlay, regions_json, gate, job |
 | Skeuo Build Player | `build_player.py` | job → player.html path |
+
+### Local / native paths (jul0926-1014-skeuo-gen12-local workflow)
+- **Prompt output**: `prompt_capture.py` imports the unmodified `genskin.py`, stubs its fal
+  helpers, and captures the verbatim structural prompt — so ComfyUI's **native**
+  `GeminiImage2Node` ("Nano Banana Pro", `gemini-3-pro-image-preview`, comfy.org login +
+  credits) can perform the edit: blueprint IMAGE + prompt STRING → joint. 5:4 / 4K / seed
+  match the fal call.
+- **Local matte**: paint → `ComfyUI_BiRefNet_ll` (`LoadRembgByBiRefNetModel` General.safetensors
+  → `GetMaskByBiRefNet` → `MaskToImage`) → `SkeuoBiRefNet.matte`. The node composes
+  paint+matte into `assets-<id>_biref/global-matte.png`; `biref12.py` detects the existing
+  matte and **skips its fal call** ("reused existing matte"), running only the skeuo-specific
+  island split. With `matte` unconnected the legacy fal path is used unchanged.
 
 The `job` (SKEUO_JOB) edge carries the shared spec path + assets dir between stages — the same
 on-disk `assets-<id>/` contract the standalone pipeline uses.

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B-proof — gen12 constraint load vs froggo-style light prompt</title>
+<style>
+  :root { --bg:#101014; --panel:#1a1a20; --ink:#e8e8ee; --dim:#9a9aa6; --acc:#7fd8c8; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,'Helvetica Neue',sans-serif; padding:24px clamp(12px,3vw,40px) 80px; }
+  h1 { font-size:clamp(18px,2.6vw,26px); margin-bottom:6px; }
+  h2 { font-size:clamp(16px,2.2vw,21px); margin:38px 0 4px; color:var(--acc); }
+  .sub { color:var(--dim); font-size:13px; max-width:110ch; }
+  .costbar { background:var(--panel); border:1px solid #2c2c34; border-radius:10px; padding:10px 14px; margin:14px 0 4px; font-size:13px; color:var(--dim); }
+  .costbar b { color:var(--ink); }
+  .grid2 { display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; }
+  .cell { flex:1 1 380px; min-width:300px; background:var(--panel); border:1px solid #2c2c34; border-radius:12px; padding:12px; }
+  .cell img { width:100%; height:auto; border-radius:8px; display:block; cursor:zoom-in; }
+  .cap { font-size:12.5px; color:var(--dim); margin-top:8px; }
+  .cap b { color:var(--ink); }
+  .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:99px; margin-bottom:8px; letter-spacing:.4px; }
+  .tag.g12 { background:#3a2b4d; color:#cfaaff; }
+  .tag.frg { background:#173d33; color:#7fd8c8; }
+  .crops { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; }
+  .croppair { flex:1 1 300px; min-width:260px; background:var(--panel); border:1px solid #2c2c34; border-radius:12px; padding:10px; }
+  .croppair .duo { display:flex; gap:8px; }
+  .croppair .duo > div { flex:1 1 0; min-width:0; }
+  .croppair img { width:100%; height:auto; border-radius:6px; display:block; cursor:zoom-in; }
+  .croppair .lbl { font-size:11px; color:var(--dim); text-align:center; margin-top:4px; }
+  .croppair h4 { font-size:13px; margin-bottom:8px; font-weight:600; }
+  .confound { background:#241d12; border:1px solid #4d3d1f; border-radius:10px; padding:12px 16px; margin-top:30px; font-size:13.5px; max-width:120ch; }
+  .confound h3 { font-size:14px; color:#e8c471; margin-bottom:6px; }
+  .confound li { margin:4px 0 4px 18px; color:#cbb98e; }
+  .verdict { background:#12241d; border:1px solid #1f4d3a; border-radius:10px; padding:12px 16px; margin-top:16px; font-size:13.5px; max-width:120ch; }
+  .verdict h3 { font-size:14px; color:var(--acc); margin-bottom:6px; }
+  .verdict li { margin:4px 0 4px 18px; color:#a9d8c9; }
+  #lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:9; cursor:zoom-out; overflow:auto; }
+  #lightbox.on { display:block; }
+  #lightbox img { display:block; margin:0 auto; min-width:60%; max-width:none; width:max(100%, 1200px); height:auto; }
+  #lbhint { position:fixed; top:10px; right:16px; color:#fff8; font-size:12px; z-index:10; display:none; }
+  #lightbox.on + #lbhint { display:block; }
+</style>
+</head>
+<body>
+<h1>B-proof: does gen12's constraint load degrade paint quality?</h1>
+<p class="sub">One variable changed: the prompt. Same base model, same seed as the gen12 final roll, same 4K
+resolution, same theme_prompt text verbatim, flat pale backdrop matching gen12's. The froggo-style condition
+states the control roster once (~600 chars) with zero mask / sprite-strip / empty-socket / exact-fit /
+zero-residue / two-panel clauses; gen12's shipping prompt is ~9,000 chars of hard constraints.</p>
+
+<div class="costbar">
+  models: <b>fal-ai/gemini-3-pro-image-preview/edit</b> (gen12 rolls, ~$0.15/roll via fal) ·
+  <b>gemini-3-pro-image-preview</b> via Vertex AI <code>global</code> (froggo-style rolls — same base model;
+  fal balance was exhausted, so the light-prompt rolls went through Google directly, ~$0.24/4K image) ·
+  crops/page = local $0 · <b>this experiment's new spend: 2 rolls × ~$0.24 ≈ $0.48</b>
+  (gen12 comparison paints were pre-existing, no re-spend).
+</div>
+
+<!-- ============================ STEAM PORTHOLE ============================ -->
+<h2>steam-porthole <span style="color:var(--dim);font-weight:400;font-size:13px">(templated mode · seed 84)</span></h2>
+<div class="grid2">
+  <div class="cell">
+    <span class="tag g12">gen12 — heavy constraints</span>
+    <img src="gen12-steam-porthole-device-disp.jpg" data-full="gen12-steam-porthole-device.png" alt="gen12 steam-porthole paint (device area)">
+    <div class="cap"><b>gen12 pipeline paint</b> (device area of paint.png) · model fal-ai/gemini-3-pro-image-preview/edit ·
+    seed <b>84</b> · res 4K 5:4 two-panel joint (device column ≈ 2304×2784 px of a 4608×3712 canvas) ·
+    prompt <b>9,161 chars</b> · input: grey placeholder blueprint + colored guide outlines.</div>
+  </div>
+  <div class="cell">
+    <span class="tag frg">froggo-style — light prompt</span>
+    <img src="froggo-steam-porthole-disp.jpg" data-full="froggo-steam-porthole.png" alt="froggo-style steam-porthole render">
+    <div class="cap"><b>froggo-style render</b> · model gemini-3-pro-image-preview (Vertex, same base model) ·
+    seed <b>84</b> · res 4K 4:5 single panel (3712×4608 px) · prompt <b>618 chars</b> ·
+    input: flat 1200×1500 RGB(235,235,238) canvas.</div>
+  </div>
+</div>
+<div class="crops">
+  <div class="croppair"><h4>transport button cluster</h4><div class="duo">
+    <div><img src="crop-steam-porthole-buttons-gen12.png" alt=""><div class="lbl">gen12</div></div>
+    <div><img src="crop-steam-porthole-buttons-froggo.png" alt=""><div class="lbl">froggo-style</div></div>
+  </div></div>
+  <div class="croppair"><h4>volume knob area</h4><div class="duo">
+    <div><img src="crop-steam-porthole-knob-gen12.png" alt=""><div class="lbl">gen12 (socket kept empty by design)</div></div>
+    <div><img src="crop-steam-porthole-knob-froggo.png" alt=""><div class="lbl">froggo-style (knob installed)</div></div>
+  </div></div>
+  <div class="croppair"><h4>porthole / display</h4><div class="duo">
+    <div><img src="crop-steam-porthole-screen-gen12.png" alt=""><div class="lbl">gen12 (blank screens by design)</div></div>
+    <div><img src="crop-steam-porthole-screen-froggo.png" alt=""><div class="lbl">froggo-style</div></div>
+  </div></div>
+</div>
+
+<!-- ============================ DIABLO GOTHIC ============================ -->
+<h2>diablo-gothic <span style="color:var(--dim);font-weight:400;font-size:13px">(templateless mode · seed 110)</span></h2>
+<div class="grid2">
+  <div class="cell">
+    <span class="tag g12">gen12 — heavy constraints</span>
+    <img src="gen12-diablo-gothic-device-disp.jpg" data-full="gen12-diablo-gothic-device.png" alt="gen12 diablo-gothic paint (device area)">
+    <div class="cap"><b>gen12 pipeline paint</b> (device area of paint.png) · model fal-ai/gemini-3-pro-image-preview/edit ·
+    seed <b>110</b> · res 4K 5:4 two-panel joint (device column ≈ 2304×2784 px) ·
+    prompt <b>9,016 chars</b> · input: scaffold canvas (flat backdrop + dividers, no control geometry).</div>
+  </div>
+  <div class="cell">
+    <span class="tag frg">froggo-style — light prompt</span>
+    <img src="froggo-diablo-gothic-disp.jpg" data-full="froggo-diablo-gothic.png" alt="froggo-style diablo-gothic render">
+    <div class="cap"><b>froggo-style render</b> · model gemini-3-pro-image-preview (Vertex, same base model) ·
+    seed <b>110</b> · res 4K 4:5 single panel (3712×4608 px) · prompt <b>603 chars</b> ·
+    input: flat 1200×1500 RGB(235,235,238) canvas.</div>
+  </div>
+</div>
+<div class="crops">
+  <div class="croppair"><h4>transport button cluster</h4><div class="duo">
+    <div><img src="crop-diablo-gothic-buttons-gen12.png" alt=""><div class="lbl">gen12</div></div>
+    <div><img src="crop-diablo-gothic-buttons-froggo.png" alt=""><div class="lbl">froggo-style</div></div>
+  </div></div>
+  <div class="croppair"><h4>volume knob area</h4><div class="duo">
+    <div><img src="crop-diablo-gothic-knob-gen12.png" alt=""><div class="lbl">gen12 (socket kept empty by design)</div></div>
+    <div><img src="crop-diablo-gothic-knob-froggo.png" alt=""><div class="lbl">froggo-style (knob installed)</div></div>
+  </div></div>
+  <div class="croppair"><h4>seek slider</h4><div class="duo">
+    <div><img src="crop-diablo-gothic-slider-gen12.png" alt=""><div class="lbl">gen12</div></div>
+    <div><img src="crop-diablo-gothic-slider-froggo.png" alt=""><div class="lbl">froggo-style (thumb installed)</div></div>
+  </div></div>
+</div>
+
+<div class="confound">
+  <h3>Confounds we could NOT fully control (read before concluding)</h3>
+  <li><b>Serving path:</b> gen12 rolls went through fal's proxy of the model; froggo-style rolls went through
+  Vertex AI directly (fal balance was exhausted mid-experiment). Same published base model
+  (gemini-3-pro-image-preview), and the same seed integer was passed — but seed→RNG mapping across the two
+  serving stacks is not proven identical, so "same seed" is nominal, not bit-exact.</li>
+  <li><b>Canvas area per device:</b> gen12's device shares a 5:4 4K canvas with the mask panel and sprite strip
+  (device ≈ 2304×2784 px ≈ 6.4 MP); the froggo-style device gets the whole 4:5 4K canvas (3712×4608 ≈ 17 MP,
+  of which the device occupies most). The light condition has roughly 2× the pixel budget on the device itself.</li>
+  <li><b>Input image differs by construction:</b> blueprint/scaffold vs flat canvas. This is part of the
+  "constraint load" variable, but it means layout freedom differs too — the froggo rolls chose landscape
+  bodies while gen12's vpod is portrait, so composition is not matched.</li>
+  <li><b>The froggo renders are NOT pipeline-usable:</b> screens have baked content, knob/thumb/toggle are
+  installed, no mask panel, no sprite strip. The comparison isolates <i>paint beauty</i>, not usability.</li>
+</div>
+
+<div class="verdict">
+  <h3>Assessor's read (visual, both full-res inspected)</h3>
+  <li><b>The light-prompt renders are clearly richer on both themes.</b> Steam: real patina and hammered-copper
+  variation, bubbling glass tubes, refractive porthole dome, gear-toothed button bezels, steam wisps. Diablo:
+  volumetric ember glow, lava-lit crack displacement, sculpted chain/bone frame, higher specular energy.</li>
+  <li><b>The gap persists on surfaces both conditions were allowed to render freely</b> — button facets, body
+  panels, engraving. gen12's paint is flatter, more evenly lit, more "clean illustration"; the light-prompt
+  render reads as a photographed object. That is the B-proof signal: constraint load costs quality even where
+  no constraint applies.</li>
+  <li><b>Part of the froggo beauty is doing forbidden things</b> (populated screens, installed parts, free
+  landscape layout) — discount those regions when judging.</li>
+</div>
+
+<div id="lightbox"><img id="lbimg" alt=""></div>
+<div id="lbhint">click or Esc to close · full-res</div>
+
+<script>
+  const lb = document.getElementById('lightbox'), lbimg = document.getElementById('lbimg');
+  document.querySelectorAll('img[data-full], .croppair img').forEach(img => {
+    img.addEventListener('click', () => { lbimg.src = img.dataset.full || img.src; lb.classList.add('on'); });
+  });
+  lb.addEventListener('click', () => lb.classList.remove('on'));
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input,textarea,select') || e.target.isContentEditable) return;
+    if (e.key === 'Escape') lb.classList.remove('on');
+  });
+</script>
+</body>
+</html>

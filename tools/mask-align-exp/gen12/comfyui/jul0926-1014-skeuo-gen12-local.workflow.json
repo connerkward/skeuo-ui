@@ -1,0 +1,1000 @@
+{
+  "last_node_id": 20,
+  "last_link_id": 19,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "SkeuoBlueprint",
+      "pos": [
+        40,
+        160
+      ],
+      "size": [
+        380,
+        220
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "blueprint",
+          "type": "IMAGE",
+          "links": [
+            1,
+            2
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "keys_json",
+          "type": "STRING",
+          "links": null,
+          "slot_index": 1
+        },
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "links": [
+            4,
+            5
+          ],
+          "slot_index": 2
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "links": [
+            3
+          ],
+          "slot_index": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SkeuoBlueprint"
+      },
+      "widgets_values": [
+        "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/theme_specs/fa-pod.json",
+        "",
+        -1,
+        "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "PreviewImage",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        380,
+        300
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [],
+      "title": "blueprint"
+    },
+    {
+      "id": 3,
+      "type": "GeminiImage2Node",
+      "pos": [
+        500,
+        160
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "link": 3,
+          "widget": {
+            "name": "prompt"
+          }
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "name": "files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            6,
+            7
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiImage2Node"
+      },
+      "widgets_values": [
+        "",
+        "gemini-3-pro-image-preview",
+        42,
+        "fixed",
+        "5:4",
+        "4K",
+        "IMAGE",
+        ""
+      ],
+      "title": "Nano Banana Pro \u2014 NATIVE API (needs comfy.org login)"
+    },
+    {
+      "id": 4,
+      "type": "PreviewImage",
+      "pos": [
+        500,
+        600
+      ],
+      "size": [
+        420,
+        300
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [],
+      "title": "joint (paint|mask)"
+    },
+    {
+      "id": 5,
+      "type": "Note",
+      "pos": [
+        500,
+        20
+      ],
+      "size": [
+        420,
+        110
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "Note"
+      },
+      "widgets_values": [
+        "NATIVE PATH \u2014 GeminiImage2Node ('Nano Banana Pro', gemini-3-pro-image-preview): the same model genskin.py calls via fal, but through ComfyUI's official API nodes. Requires being logged into comfy.org with API credits (Settings -> User). No FAL_KEY involved. Cost: per comfy.org credit badge on the node (~$0.13-0.24/4K image). If you'd rather burn fal credits, mute this group and un-mute the ALT fal group below."
+      ],
+      "title": "native API auth",
+      "color": "#432",
+      "bgcolor": "#432"
+    },
+    {
+      "id": 6,
+      "type": "SkeuoNanoBananaEdit",
+      "pos": [
+        500,
+        980
+      ],
+      "size": [
+        320,
+        160
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 2,
+      "inputs": [
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "joint",
+          "type": "IMAGE",
+          "links": [
+            19
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "paint",
+          "type": "IMAGE",
+          "links": null,
+          "slot_index": 1
+        },
+        {
+          "name": "mask",
+          "type": "IMAGE",
+          "links": null,
+          "slot_index": 2
+        },
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "links": null,
+          "slot_index": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SkeuoNanoBananaEdit"
+      },
+      "widgets_values": [],
+      "title": "ALT: fal nano-banana (MUTED \u2014 needs FAL_KEY)"
+    },
+    {
+      "id": 7,
+      "type": "PreviewImage",
+      "pos": [
+        860,
+        980
+      ],
+      "size": [
+        300,
+        240
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 2,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 19
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [],
+      "title": "alt joint (fal)"
+    },
+    {
+      "id": 8,
+      "type": "Note",
+      "pos": [
+        40,
+        980
+      ],
+      "size": [
+        420,
+        140
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "Note"
+      },
+      "widgets_values": [
+        "ALT PATH (muted): SkeuoNanoBananaEdit wraps the full genskin.py fal call (fal-ai/gemini-3-pro-image-preview/edit, FAL_KEY from ~/dev/central/.env). To use it: un-mute these two nodes, mute the native Gemini node, and re-wire its 'joint' output into Skeuo Split Joint. It writes paint/mask itself, so the downstream chain is identical."
+      ],
+      "title": "alternate: fal",
+      "color": "#353",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 9,
+      "type": "SkeuoSplitJoint",
+      "pos": [
+        980,
+        160
+      ],
+      "size": [
+        300,
+        120
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "joint",
+          "type": "IMAGE",
+          "link": 6
+        },
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "paint",
+          "type": "IMAGE",
+          "links": [
+            8,
+            9
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "mask",
+          "type": "IMAGE",
+          "links": [
+            10
+          ],
+          "slot_index": 1
+        },
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "links": [
+            11
+          ],
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SkeuoSplitJoint"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "PreviewImage",
+      "pos": [
+        980,
+        340
+      ],
+      "size": [
+        300,
+        240
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [],
+      "title": "paint"
+    },
+    {
+      "id": 11,
+      "type": "PreviewImage",
+      "pos": [
+        980,
+        640
+      ],
+      "size": [
+        300,
+        240
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 10
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [],
+      "title": "mask strip"
+    },
+    {
+      "id": 12,
+      "type": "LoadRembgByBiRefNetModel",
+      "pos": [
+        1340,
+        160
+      ],
+      "size": [
+        320,
+        130
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "BIREFNET",
+          "links": [
+            12
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadRembgByBiRefNetModel"
+      },
+      "widgets_values": [
+        "General.safetensors",
+        "AUTO",
+        false,
+        "float32"
+      ],
+      "title": "BiRefNet \u2014 LOCAL weights (models/BiRefNet)"
+    },
+    {
+      "id": 13,
+      "type": "GetMaskByBiRefNet",
+      "pos": [
+        1340,
+        340
+      ],
+      "size": [
+        320,
+        200
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "BIREFNET",
+          "link": 12
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            13
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GetMaskByBiRefNet"
+      },
+      "widgets_values": [
+        1024,
+        1024,
+        "bilinear",
+        0.0
+      ]
+    },
+    {
+      "id": 14,
+      "type": "MaskToImage",
+      "pos": [
+        1340,
+        600
+      ],
+      "size": [
+        320,
+        60
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            14
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MaskToImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 15,
+      "type": "SkeuoBiRefNet",
+      "pos": [
+        1340,
+        720
+      ],
+      "size": [
+        320,
+        120
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "link": 11
+        },
+        {
+          "name": "matte",
+          "type": "IMAGE",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "matte",
+          "type": "IMAGE",
+          "links": [
+            15
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "links": [
+            16
+          ],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SkeuoBiRefNet"
+      },
+      "widgets_values": [],
+      "title": "Skeuo Island Split (matte in -> NO fal)"
+    },
+    {
+      "id": 16,
+      "type": "PreviewImage",
+      "pos": [
+        1340,
+        900
+      ],
+      "size": [
+        320,
+        240
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 15
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [],
+      "title": "global matte (local)"
+    },
+    {
+      "id": 17,
+      "type": "Note",
+      "pos": [
+        1340,
+        20
+      ],
+      "size": [
+        320,
+        110
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "Note"
+      },
+      "widgets_values": [
+        "LOCAL BiRefNet: ComfyUI_BiRefNet_ll pack, General.safetensors (444 MB, models/BiRefNet), runs on MPS ~4-9 s, $0. SkeuoBiRefNet writes the matte as assets_biref/global-matte.png; biref12.py detects + reuses it, so its fal call is skipped and only the skeuo island split (mask-cell overlap) runs."
+      ],
+      "title": "local matting",
+      "color": "#233",
+      "bgcolor": "#233"
+    },
+    {
+      "id": 18,
+      "type": "SkeuoExtractRegions",
+      "pos": [
+        1740,
+        160
+      ],
+      "size": [
+        320,
+        140
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "overlay",
+          "type": "IMAGE",
+          "links": [
+            17
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "regions_json",
+          "type": "STRING",
+          "links": null,
+          "slot_index": 1
+        },
+        {
+          "name": "gate",
+          "type": "STRING",
+          "links": null,
+          "slot_index": 2
+        },
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "links": [
+            18
+          ],
+          "slot_index": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SkeuoExtractRegions"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 19,
+      "type": "PreviewImage",
+      "pos": [
+        1740,
+        380
+      ],
+      "size": [
+        320,
+        260
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 17
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [],
+      "title": "regions overlay"
+    },
+    {
+      "id": 20,
+      "type": "SkeuoBuildPlayer",
+      "pos": [
+        1740,
+        720
+      ],
+      "size": [
+        320,
+        90
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "job",
+          "type": "SKEUO_JOB",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "name": "player_path",
+          "type": "STRING",
+          "links": null,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SkeuoBuildPlayer"
+      },
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      1,
+      0,
+      3,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      1,
+      3,
+      3,
+      0,
+      "STRING"
+    ],
+    [
+      4,
+      1,
+      2,
+      9,
+      1,
+      "SKEUO_JOB"
+    ],
+    [
+      5,
+      1,
+      2,
+      6,
+      0,
+      "SKEUO_JOB"
+    ],
+    [
+      6,
+      3,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      7,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      9,
+      0,
+      13,
+      1,
+      "IMAGE"
+    ],
+    [
+      9,
+      9,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      9,
+      1,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      11,
+      9,
+      2,
+      15,
+      0,
+      "SKEUO_JOB"
+    ],
+    [
+      12,
+      12,
+      0,
+      13,
+      0,
+      "BIREFNET"
+    ],
+    [
+      13,
+      13,
+      0,
+      14,
+      0,
+      "MASK"
+    ],
+    [
+      14,
+      14,
+      0,
+      15,
+      1,
+      "IMAGE"
+    ],
+    [
+      15,
+      15,
+      0,
+      16,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      15,
+      1,
+      18,
+      0,
+      "SKEUO_JOB"
+    ],
+    [
+      17,
+      18,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      18,
+      18,
+      3,
+      20,
+      0,
+      "SKEUO_JOB"
+    ],
+    [
+      19,
+      6,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "1 \u00b7 Blueprint + prompt (local, $0)",
+      "bounding": [
+        20,
+        80,
+        440,
+        700
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "2 \u00b7 Gemini edit \u2014 COMFY NATIVE API node",
+      "bounding": [
+        480,
+        -60,
+        480,
+        1000
+      ],
+      "color": "#a1309b",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "ALT \u00b7 fal nano-banana (muted)",
+      "bounding": [
+        20,
+        900,
+        1160,
+        340
+      ],
+      "color": "#653",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "3 \u00b7 LOCAL BiRefNet matte + skeuo island split ($0)",
+      "bounding": [
+        960,
+        -60,
+        740,
+        1220
+      ],
+      "color": "#2a5",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "4 \u00b7 Extract regions + build player (local, $0)",
+      "bounding": [
+        1720,
+        80,
+        360,
+        760
+      ],
+      "color": "#b06634",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "info": {
+      "name": "skeuo gen12 \u2014 local BiRefNet + native Gemini API",
+      "notes": "models: gemini-3-pro-image-preview (comfy.org native API node, ~$0.13-0.24/4K image) OR fal-ai/gemini-3-pro-image-preview/edit (muted alt); BiRefNet General.safetensors LOCAL on MPS ($0). Typical cost/skin: 1 gen \u2248 $0.15-0.25 total; everything else local."
+    }
+  },
+  "version": 0.4
+}

@@ -111,8 +111,10 @@ def _effective_spec(spec_path, spec_json, seed, gen12_dir):
 # ================================================================= NODES
 class SkeuoBlueprint:
     """Theme spec -> technical-drawing blueprint (grey placeholder body + coloured control
-    outline guides + sprite-strip band) + guide-key json. Wraps `genskin.py --blueprint-only`
-    (no fal call, so it is free to run and preview before generating)."""
+    outline guides + sprite-strip band) + guide-key json + the EXACT structural prompt.
+    Runs the unmodified genskin.py via prompt_capture.py (fal helpers stubbed), so the
+    blueprint AND the verbatim prompt genskin would send are produced with zero API calls.
+    The prompt output feeds ComfyUI's native Gemini/Nano-Banana API node directly."""
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -126,20 +128,29 @@ class SkeuoBlueprint:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "SKEUO_JOB")
-    RETURN_NAMES = ("blueprint", "keys_json", "job")
+    RETURN_TYPES = ("IMAGE", "STRING", "SKEUO_JOB", "STRING")
+    RETURN_NAMES = ("blueprint", "keys_json", "job", "prompt")
     FUNCTION = "run"
     CATEGORY = CATEGORY
 
     def run(self, spec_path, spec_json="", seed_override=-1, gen12_dir=DEFAULT_GEN12_DIR):
         eff, assets, sid = _effective_spec(spec_path, spec_json, seed_override, gen12_dir)
-        _run("genskin.py", [eff, "--blueprint-only"], gen12_dir)
+        # run the REAL genskin.py with fal helpers stubbed: writes blueprint.png +
+        # results.json and captures the verbatim structural prompt (no network).
+        ptmp = os.path.join(tempfile.gettempdir(), f"skeuo_prompt_{sid}.txt")
+        driver = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompt_capture.py")
+        r = subprocess.run([PYBIN, driver, eff, gen12_dir, ptmp], cwd=gen12_dir,
+                           capture_output=True, text=True, timeout=300, env=os.environ.copy())
+        if r.returncode != 0:
+            raise RuntimeError(f"[skeuo] prompt_capture exit {r.returncode}\n"
+                               f"{((r.stdout or '') + (r.stderr or ''))[-3000:]}")
+        prompt = open(ptmp).read()
         bp = _to_image(os.path.join(assets, "blueprint.png"))
         res = json.load(open(os.path.join(assets, "results.json")))
         keys_json = json.dumps({"keys": res.get("keys"), "keyNames": res.get("keyNames"),
                                 "mode": res.get("mode"), "id": sid}, indent=2)
         job = {"spec_path": eff, "assets_dir": assets, "gen12_dir": gen12_dir, "sid": sid}
-        return (bp, keys_json, job)
+        return (bp, keys_json, job, prompt)
 
 
 class SkeuoNanoBananaEdit:
@@ -192,31 +203,52 @@ class SkeuoSplitJoint:
 
 
 class SkeuoBiRefNet:
-    """Global BiRefNet matte over the paint, then split into device + moving-part islands.
-    Wraps the real `biref12.py` (fal-ai/birefnet/v2 + connected-component island split
-    correlated to the strip cells). biref12 needs regions.json, so an extract pass-1 is run
-    first as its dependency (the graph's Extract node is the authoritative pass-2).
+    """Island split (+ matting). Wraps the real `biref12.py` (connected-component island
+    split correlated to the mask strip cells by overlap). biref12 needs regions.json, so an
+    extract pass-1 is run first as its dependency (the graph's Extract node is pass-2).
 
-    Note: generic ComfyUI BiRefNet nodes exist but only produce the matte — they do NOT do the
-    strip-island correlation gen12 requires — so the real biref12 is wrapped instead."""
+    TWO matte sources:
+    * `matte` input CONNECTED (a LOCAL BiRefNet mask, e.g. ComfyUI_BiRefNet_ll ->
+      MaskToImage): the matte is composed with paint.png into an RGBA cutout and written to
+      assets_biref/global-matte.png BEFORE biref12 runs — biref12 detects the existing matte
+      and reuses it ("[global] reused existing matte"), so NO fal call is made. This is the
+      local path; only the skeuo-specific island split runs.
+    * `matte` input EMPTY: legacy behaviour — biref12 calls fal-ai/birefnet/v2 for the
+      matte (needs FAL_KEY in ~/dev/central/.env, read by biref12 itself, never here)."""
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {"job": ("SKEUO_JOB",)}}
+        return {
+            "required": {"job": ("SKEUO_JOB",)},
+            "optional": {"matte": ("IMAGE",)},
+        }
 
     RETURN_TYPES = ("IMAGE", "SKEUO_JOB")
     RETURN_NAMES = ("matte", "job")
     FUNCTION = "run"
     CATEGORY = CATEGORY
 
-    def run(self, job):
+    def run(self, job, matte=None):
         gen12_dir = job["gen12_dir"]
         assets = job["assets_dir"]
+        if matte is not None:
+            # write the externally-computed matte where biref12 reuses it (skips fal)
+            out = assets + "_biref"
+            os.makedirs(out, exist_ok=True)
+            paint = Image.open(os.path.join(assets, "paint.png")).convert("RGB")
+            t = matte[0]
+            arr = t.cpu().numpy() if hasattr(t, "cpu") else np.asarray(t)
+            gray = arr.mean(axis=-1) if arr.ndim == 3 else arr
+            a8 = (gray * 255.0).clip(0, 255).astype(np.uint8)
+            alpha = Image.fromarray(a8, "L").resize(paint.size)
+            rgba = paint.copy()
+            rgba.putalpha(alpha)
+            rgba.save(os.path.join(out, "global-matte.png"))
         # pass-1 extract produces regions.json that biref12 correlates islands against
         if not os.path.exists(os.path.join(assets, "regions.json")):
             _run("extract12.py", [assets], gen12_dir)
         _run("biref12.py", [assets], gen12_dir)
-        matte = _to_image(os.path.join(assets + "_biref", "global-matte.png"), alpha_as_gray=True)
-        return (matte, job)
+        matte_img = _to_image(os.path.join(assets + "_biref", "global-matte.png"), alpha_as_gray=True)
+        return (matte_img, job)
 
 
 class SkeuoExtractRegions:
@@ -278,7 +310,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "SkeuoBlueprint": "Skeuo Blueprint (gen12)",
     "SkeuoNanoBananaEdit": "Skeuo Nano-Banana Edit (gen12)",
     "SkeuoSplitJoint": "Skeuo Split Joint (gen12)",
-    "SkeuoBiRefNet": "Skeuo BiRefNet Matte (gen12)",
+    "SkeuoBiRefNet": "Skeuo Island Split — local matte in / fal fallback (gen12)",
     "SkeuoExtractRegions": "Skeuo Extract Regions (gen12)",
     "SkeuoBuildPlayer": "Skeuo Build Player (gen12)",
 }
