@@ -32,7 +32,12 @@ def upload(b):
 
 paint = Image.open(os.path.join(SRC, "paint.png")).convert("RGB"); PW, PH = paint.size
 _mp = os.path.join(OUT, "global-matte.png")
-if os.path.exists(_mp) and "--force" not in sys.argv:
+_paint_p = os.path.join(SRC, "paint.png")
+_fresh = os.path.exists(_mp) and os.path.getmtime(_mp) >= os.path.getmtime(_paint_p)
+# STALE-MATTE GUARD: after a REGEN the paint is new but the old matte lingers — reusing it cuts
+# parts from the PREVIOUS generation (phantom switches "not on the sprite sheet"). Reuse only a
+# matte at least as new as the paint.
+if _fresh and "--force" not in sys.argv:
     raw = open(_mp, "rb").read(); print("[global] reused existing matte", flush=True)   # re-cut for free
 else:
     buf = io.BytesIO(); paint.save(buf, "PNG")

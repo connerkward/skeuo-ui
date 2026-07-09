@@ -1,0 +1,62 @@
+{
+  "claymation": {
+    "gate": "fail",
+    "notes": "switch is wrong rotation. slider doenst go to left end. "
+  },
+  "diablo-gothic": {
+    "gate": "fail",
+    "notes": "siwtch isnt really two distict states. switch is wrong orientation. "
+  },
+  "fa-pod": {
+    "gate": "fail",
+    "notes": "buttons are colors of template. slider doesnt go far enough left end. switch is completely wrong. again where did you evne get that switch its not even preset on this sheet. there must be some code issues going on. the siwtch here is very cleary and easy problem. something si really wrong. "
+  },
+  "fa-sky": {
+    "gate": "fail",
+    "notes": "slider doesnt go far enough left. switch doesnt have two states / smaller than slot. "
+  },
+  "fallout-pipboy": {
+    "gate": "pass",
+    "notes": ""
+  },
+  "fallout-vault": {
+    "gate": "fail",
+    "notes": "button depression shadows are not aligned correctly. switch does not change states. siwtch not aligned with slot. also again looks like you created a new switch that isnt evne on this sprite sheet. unacceptialbe, do not do this. "
+  },
+  "myst-arcanum": {
+    "gate": "fail",
+    "notes": "only small but forgivable issue is slider thumb is a bit large, obscures whole seek track."
+  },
+  "n64-cutscene": {
+    "gate": "fail",
+    "notes": "i wanted you to regen this. has a baked siwtch thats not real, also baked slider handle. pasted slider handle is way too large. "
+  },
+  "n64-lowpoly": {
+    "gate": "fail",
+    "notes": "delete this"
+  },
+  "ps1-crunchy": {
+    "gate": "fail",
+    "notes": "baked slider handle, pasted sldier handle go too far left. switch is not clearly two states. buttons are following template colors. "
+  },
+  "ps1-wild": {
+    "gate": "fail",
+    "notes": "baked slider handle, pasted sldier handle go too far left. buttons are following template colors. rotatior knob has wrong rotation amount, goes far left but not right at atll. "
+  },
+  "steam-porthole": {
+    "gate": "fail",
+    "notes": "perfect except switch doesnt appear two states just text change. slider sprite also came with its own slot, so fail."
+  },
+  "wc-goldshield": {
+    "gate": "fail",
+    "notes": "slider knob is just a bit too large, obscures other controls. on off swithc is fine but obscures another control, that shoud not be case. ,"
+  },
+  "wmp-quicksilver": {
+    "gate": "fail",
+    "notes": "siwtch is ever so slightly misaliengd, slider and rotator knob take colors from tempalte. "
+  },
+  "wmp-vario": {
+    "gate": "fail",
+    "notes": "compelte failure of skin. rotator has play pause on it, seek goes up and down, rather than side to side. only play pause button is real, the others on d pad were not detected at all. "
+  }
+}
