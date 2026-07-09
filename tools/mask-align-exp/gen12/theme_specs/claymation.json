@@ -1,0 +1,16 @@
+{
+  "id": "claymation",
+  "title": "Claymation (templateless)",
+  "mode": "templateless",
+  "material_is_dark": false,
+  "seed": 71,
+  "palette": {
+    "clay_orange": [225, 130, 70],
+    "clay_teal": [70, 160, 150],
+    "clay_cream": [235, 220, 195],
+    "clay_plum": [140, 90, 130],
+    "clay_moss": [130, 150, 80],
+    "warm_shadow": [90, 60, 50]
+  },
+  "theme_prompt": "CLAYMATION / stop-motion plasticine media player: hand-sculpted modelling clay with visible FINGERPRINTS, thumb-press dents, tool marks and slightly wobbly hand-made edges — like an Aardman / Wallace-and-Gromit prop. Soft matte plasticine in warm hand-mixed colours with subtle marbling where colours were kneaded together, rounded squashy forms, slightly irregular buttons like pressed clay pellets, a screen like a smoothed clay slab. Soft studio lighting with gentle clay sheen. Charming, tactile, imperfect — clearly sculpted by hand, NOT plastic, NOT glossy, NOT digital-smooth."
+}
