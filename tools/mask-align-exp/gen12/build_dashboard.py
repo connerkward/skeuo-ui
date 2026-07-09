@@ -168,6 +168,10 @@ fetch('explainer/steps.json').then(r=>r.json()).then(d=>{
     <p><b>Two generation modes we compare.</b> <b>Templated</b>: the blueprint fixes WHERE each control sits (coloured outlines at set spots); the model must keep those positions and only restyle the surface + sculpt the bold outer housing. Reliable layout, but the model can still drift. <b>Templateless</b>: we give a nearly-blank canvas and let the model design the whole player wherever it likes; then the extractor recovers every control purely from the colour mask the model drew — <span class=kt>post-hoc detection</span>. More creative freedom, more variance. Running both lets us see which wins per theme (templateless often produced the boldest clean results).</p>
     <p class=kt-defs><b>post-hoc detection</b> = figuring out positions <em>after</em> generation, from the output, rather than dictating them up front.</p></div>
 
+  <div class=ex><h4>5b · Material-aware silhouette press</h4>
+    <p><b>Problem.</b> A dark gradient blob over a pressed button looks fake: wrong shape, too dark on glass, invisible on stone.</p>
+    <p><b>How.</b> The pressed state is built from the button's <span class=kt>own pixels</span>: its exact <span class=kt>silhouette</span> is cut from the colour mask and used to clip a copy of the paint that is shifted down ~3% (physical travel), darkened in proportion to the material's measured luminance (subtle on light glass, stronger on dark stone), and re-shaded the way real light flips when a part sinks — a shape-following inner shadow on the top edge, a faint catch-light on the bottom edge. No black wash; glass stays glassy, stone stays stone.</p>
+    <p class=kt-defs><b>silhouette clip</b> = restrict drawing to the exact blob shape · <b>catch-light</b> = the thin bright edge where a sunken surface still faces the light.</p></div>
   <div class=ex><h4>6 · Auto-regen gate loop</h4>
     <svg viewBox="0 0 300 84"><rect width="300" height="84" fill="#0d0f14"/>
       <rect x="12" y="30" width="60" height="24" rx="4" fill="#1b2230" stroke="#3a4a63"/><text x="42" y="45" fill="#9ab" font-size="8" text-anchor="middle">generate+extract</text>

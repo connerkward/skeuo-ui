@@ -138,5 +138,28 @@ if imgs:
     steps.append({"img": save(board, "07-parts.png"), "t": "7 · The cut parts — ready to seat",
         "d": "The final loose sprites, cut by BiRefNet and IDENTIFIED by mask-cell overlap (fix from step 5). The player seats these live: knob rotates under drag (pinned screen-blend specular), thumb slides the travel span, switch swaps its registered states."})
 
+# 8 material-aware silhouette press (composed from the real before/after verification pairs)
+import glob as _g
+prs = sorted(_g.glob(os.path.expanduser("~/Desktop/cc-skeuo/2026-07-09-press-*-up-vs-down.png")))
+if prs:
+    boards = [Image.open(p).convert("RGB") for p in prs[:3]]
+    w = max(b.width for b in boards)
+    boards = [b.resize((w, int(b.height * w / b.width)), Image.LANCZOS) for b in boards]
+    gap = 26
+    canvas = Image.new("RGB", (w, sum(b.height for b in boards) + gap * (len(boards) + 1) + 40), (14, 15, 18))
+    dd = ImageDraw.Draw(canvas); y = gap
+    names = ["light glass (fa-sky)", "dark stone (diablo)", "brass (steam)"]
+    for i, b in enumerate(boards):
+        canvas.paste(b, (0, y)); label(dd, (18, y + 10), f"unpressed | pressed — {names[i] if i < len(names) else ''}", 30, (200, 230, 255))
+        y += b.height + gap
+    steps.append({"img": save(canvas, "08-press.png", 1500), "t": "8 · Material-aware silhouette press",
+        "d": "How a button 'presses' without a fake black blob: the press overlay is the button's OWN paint pixels, "
+             "clipped to its EXACT silhouette from the colour mask (no bounding-box ellipse), shifted down ~3% "
+             "(physical travel — the icon moves too), darkened proportionally to the material's brightness "
+             "(12% on light glass up to ~28% on dark stone, with a slight contrast lift), then shaded the way real "
+             "light flips on a pressed part: a shape-following inner shadow at the TOP edge and a faint catch-light "
+             "at the BOTTOM edge (the visible cue on dark materials where extra darkness would vanish). "
+             "Every layer derives from the button's own pixels, so glass stays glassy and stone stays stone."})
+
 json.dump({"skin": SID, "steps": steps}, open(os.path.join(OUT, "steps.json"), "w"), indent=1)
 print(f"[explainer] {len(steps)} steps -> explainer/ (exemplar {SID})")
