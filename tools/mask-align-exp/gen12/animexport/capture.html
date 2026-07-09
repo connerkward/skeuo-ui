@@ -84,31 +84,51 @@
 
 <script>
 (function () {
-  // ── 60Hz rAF throttle ────────────────────────────────────────────────────
-  // Headless Chromium under Playwright video recording ticks rAF at the host
-  // display's rate (~118Hz on this box), which would make the frame-counted
-  // animations play ~2× their designed pacing. The panels advance by frames,
-  // so capping the callback rate at 60Hz restores 1× pacing exactly.
-  // Queued single-pump shim: every caller's callback fires on the same throttled
-  // 60Hz beat (a naive per-caller throttle starves whichever caller loses the
-  // race to update lastTs — Playwright's own rAF-based pollers included).
-  const nativeRAF = window.requestAnimationFrame.bind(window);
-  let rafQueue = [], rafScheduled = false, lastTs = -1e9;
-  function rafPump(ts) {
-    if (ts - lastTs >= 1000 / 60 - 1.5) {
-      lastTs = ts;
-      const q = rafQueue; rafQueue = []; rafScheduled = false;
-      for (const cb of q) cb(ts);
-      if (rafQueue.length && !rafScheduled) { rafScheduled = true; nativeRAF(rafPump); }
-    } else nativeRAF(rafPump);
-  }
-  window.requestAnimationFrame = (cb) => {
-    rafQueue.push(cb);
-    if (!rafScheduled) { rafScheduled = true; nativeRAF(rafPump); }
-    return 0;
-  };
-
   const q = new URLSearchParams(location.search);
+  const stepped = q.has("stepped");
+
+  if (stepped) {
+    // ── stepped clock (frame-by-frame capture) ───────────────────────────────
+    // The recorder owns time: rAF callbacks queue instead of firing, and each
+    // window.__tick(n) pumps the queue n times at exactly 1000/60 ms per tick.
+    // The panels are frame-counted and designed for 60Hz, so a 30fps video
+    // advances 2 ticks (= 33.33 ms of designed time) per captured frame —
+    // true 1× pacing with zero dropped frames regardless of capture speed.
+    let rafQueue = [];
+    window.requestAnimationFrame = (cb) => { rafQueue.push(cb); return rafQueue.length; };
+    let vt = 0;
+    window.__tick = function (n) {
+      for (let i = 0; i < (n || 1); i++) {
+        vt += 1000 / 60;
+        const cbs = rafQueue; rafQueue = [];
+        for (const cb of cbs) cb(vt);
+      }
+      return vt;
+    };
+  } else {
+    // ── 60Hz rAF throttle (live viewing) ─────────────────────────────────────
+    // Headless Chromium ticks rAF at the host display's rate (~118Hz on this
+    // box), which would make the frame-counted animations play ~2× their
+    // designed pacing. Queued single-pump shim: every caller's callback fires
+    // on the same throttled 60Hz beat (a naive per-caller throttle starves
+    // whichever caller loses the race to update lastTs).
+    const nativeRAF = window.requestAnimationFrame.bind(window);
+    let rafQueue = [], rafScheduled = false, lastTs = -1e9;
+    function rafPump(ts) {
+      if (ts - lastTs >= 1000 / 60 - 1.5) {
+        lastTs = ts;
+        const qq = rafQueue; rafQueue = []; rafScheduled = false;
+        for (const cb of qq) cb(ts);
+        if (rafQueue.length && !rafScheduled) { rafScheduled = true; nativeRAF(rafPump); }
+      } else nativeRAF(rafPump);
+    }
+    window.requestAnimationFrame = (cb) => {
+      rafQueue.push(cb);
+      if (!rafScheduled) { rafScheduled = true; nativeRAF(rafPump); }
+      return 0;
+    };
+  }
+
   const anim = q.get("anim") || "knob";
   const aspect = q.get("aspect") === "3x4" ? "3x4" : "16x9";
   document.body.dataset.aspect = aspect;
@@ -118,8 +138,8 @@
               title: 'Knob seat — <span class="accent">gradient circle-fit → matte-hole centroid snap</span>',
               sub:   "extract12.py circle_fit() · steam-porthole vol knob · real paint px, real gradient math" },
     travel: { id: "anim-travel", w: 760, h: 470,
-              title: 'Seek travel — <span class="accent">coverage-span luminance walk</span>',
-              sub:   "extract12.py [travel] · ps1-crunchy seek slot · per-column median profile, outward walk" },
+              title: 'Seek travel — <span class="accent">level-aware coverage-span walk</span>',
+              sub:   "extract12.py [travel] · wmp-quicksilver seek slot · per-column median profile, level-aware outward walk" },
     pca:    { id: "anim-pca",    w: 760, h: 470,
               title: 'Slot rotation — <span class="accent">device-only PCA axis + elongation gate</span>',
               sub:   "extract12.py _pca_angle() · diablo-gothic shuffle slot · real mask px, real covariance" },
@@ -136,6 +156,29 @@
   const cv = document.createElement("canvas");
   cv.id = m.id;
   document.getElementById("stage").appendChild(cv);
+
+  // ── canvas supersample (stepped capture) ──────────────────────────────────
+  // The panels hardcode ~720–760 px backing stores, but the stage displays the
+  // canvas at 1010–1180 CSS px — a soft UPSCALE in the recording. Intercept the
+  // width/height setters on this one canvas so the backing store is SS× larger
+  // and the 2d context is base-scaled to match: the panel keeps drawing in its
+  // own logical coordinates, the browser DOWNscales to the display size → crisp.
+  // Safe because the panels never call setTransform/getImageData on the main
+  // canvas and never read canvas.width back (they use local W/H constants).
+  const SS = stepped ? (parseFloat(q.get("ss")) || 2) : 1;
+  if (SS !== 1) {
+    const dW = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, "width");
+    const dH = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, "height");
+    const rescale = (el) => el.getContext("2d").setTransform(SS, 0, 0, SS, 0, 0);
+    Object.defineProperty(cv, "width", {
+      get() { return dW.get.call(this) / SS; },
+      set(v) { dW.set.call(this, v * SS); rescale(this); },
+    });
+    Object.defineProperty(cv, "height", {
+      get() { return dH.get.call(this) / SS; },
+      set(v) { dH.set.call(this, v * SS); rescale(this); },
+    });
+  }
   const capEl = document.createElement("div");
   capEl.id = m.id + "-cap";
   capEl.className = "livecap";
