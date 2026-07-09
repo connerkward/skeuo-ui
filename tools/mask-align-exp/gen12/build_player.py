@@ -28,13 +28,13 @@ HTML = f"""<!doctype html><html><head><meta charset=utf-8>
   #phone{{position:relative;width:100%;aspect-ratio:var(--ar);
     background:url('paint.png?v={V}') no-repeat;background-size:100% auto;border-radius:12px}}
   .pbtn{{position:absolute;cursor:pointer;border-radius:14px;touch-action:manipulation}}
-  .pbtn .ink{{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(closest-side,#0009,#0000);
-    opacity:0;transition:opacity .08s}}
-  .pbtn:active .ink{{opacity:.85}}
+  .pbtn .ink{{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(farthest-side,#000c,#0004);
+    mix-blend-mode:multiply;opacity:0;transition:opacity .08s}}
+  .pbtn:active .ink{{opacity:1}}
   .pknob{{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}}
   .pknob .cap{{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}}
-  .pknob .spec{{position:absolute;inset:0;border-radius:50%;pointer-events:none;
-    background:radial-gradient(38% 32% at 38% 30%,#ffffff85,#fff0 60%)}}
+  .pknob .spec{{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen;
+    background:radial-gradient(42% 34% at 38% 30%,#ffffffcc,#fff0 60%)}}
   .pthumb{{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
     background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}}
   .ptog{{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;

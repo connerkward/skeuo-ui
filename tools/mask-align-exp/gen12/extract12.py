@@ -309,21 +309,28 @@ if SLIDER:
 
 # ---- SLOT ANGLE (rotational placement): a slot following an organic body is tilted, so the part
 # must be rotated to match. Major-axis angle from PCA on the slot's mask blob. Knobs are radial.
+def _pca_angle(mask2d):
+    ys, xs = np.where(mask2d)
+    if len(xs) < 200: return None
+    xs2 = xs - xs.mean(); ys2 = ys - ys.mean()
+    cov = np.array([[(xs2 * xs2).mean(), (xs2 * ys2).mean()], [(xs2 * ys2).mean(), (ys2 * ys2).mean()]])
+    w, v = np.linalg.eigh(cov); ax = v[:, int(np.argmax(w))]
+    a = float(np.degrees(np.arctan2(ax[1], ax[0])))
+    return (a - 180) if a > 90 else (a + 180) if a < -90 else a
 for k in ([TOGGLE] if TOGGLE else []):
     idx = NAMES.index(k) if k in NAMES else -1
     if idx < 0: continue
-    ys, xs = np.where((assign == idx) & (YY < DEVF * MH))   # DEVICE slot only (exclude strip cells!)
-    if len(xs) < 200: continue
-    xs2 = xs - xs.mean(); ys2 = ys - ys.mean()
-    cov = np.array([[(xs2 * xs2).mean(), (xs2 * ys2).mean()], [(xs2 * ys2).mean(), (ys2 * ys2).mean()]])
-    w, v = np.linalg.eigh(cov)
-    ax = v[:, int(np.argmax(w))]
-    ang = float(np.degrees(np.arctan2(ax[1], ax[0])))
-    if ang > 90: ang -= 180
-    if ang < -90: ang += 180
-    if abs(ang) > 4 and regs.get(k):
-        regs[k]["angle"] = round(ang, 1)
-        print(f"[angle] {k}: {ang:+.1f}deg")
+    slot_ang = _pca_angle((assign == idx) & (YY < DEVF * MH))   # DEVICE slot only (exclude strip cells!)
+    if slot_ang is None or not regs.get(k): continue
+    # rotate the PART so ITS OWN long axis lines up with the SLOT's — relative, not absolute. A vertical
+    # part in a vertical slot then needs ~0deg (not 90). part axis from the biref OFF cut's alpha.
+    poff = os.path.join(BIREF, k + "_off.png")
+    part_ang = _pca_angle(np.asarray(Image.open(poff).convert("RGBA"))[:, :, 3] > 30) if os.path.exists(poff) else 0.0
+    rot = slot_ang - (part_ang or 0.0)
+    rot = (rot + 90) % 180 - 90            # wrap to (-90, 90]
+    if abs(rot) > 4:
+        regs[k]["angle"] = round(rot, 1)
+        print(f"[angle] {k}: slot={slot_ang:+.0f} part={part_ang or 0:+.0f} -> rotate {rot:+.1f}deg")
 
 # ---- SILHOUETTE STATE-REGISTRATION for the toggle (align ON cut onto OFF cut) ----
 def _alpha(path):
@@ -424,7 +431,8 @@ gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "cont
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "reasons": reasons,
         "PASS": (not empty_fail) and (not missing) and (seek_cov is None or seek_cov >= 0.7)
-                and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)}
+                and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
+                and (not TOGGLE or sa is None or sa_ok)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate
 json.dump(R2, open(os.path.join(OUT, "regions.json"), "w"), indent=2)
 print(f"[GATE] {'PASS' if gate['PASS'] else 'FAIL'} "

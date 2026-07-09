@@ -1,0 +1,6 @@
+# The node code itself needs only numpy + Pillow + torch (all provided by ComfyUI).
+# The wrapped gen12 scripts (run as a subprocess in a deps-complete interpreter) need:
+numpy
+Pillow
+scipy
+requests
