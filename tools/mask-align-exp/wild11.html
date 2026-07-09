@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skeuo.fm — run11: AQUA GLASS (wild Y2K frutiger-aero, model-designed)</title>
+<style>
+  :root{
+    --bg:#0b0c10;--card:#14161c;--card2:#181b22;--ink:#e9eaf0;--mut:#9aa0ac;--dim:#5c6470;
+    --line:#242a33;--acc:#ff9d5c;--ok:#7fe0a8;--warn:#ffcf5c;--bad:#ff6a6a;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.55;
+    background-image:radial-gradient(1100px 560px at 78% -12%,#26160e 0,transparent 60%)}
+  code{font-family:var(--mono);font-size:.85em;background:#00000055;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .wrap{max-width:1220px;margin:0 auto;padding:30px 22px 90px}
+  h1{font-size:clamp(22px,4vw,32px);letter-spacing:-.02em;margin:0 0 .25em;line-height:1.1}
+  h2{font-size:16px;color:var(--acc);margin:38px 0 10px;letter-spacing:.01em}
+  .lede{color:var(--mut);max-width:80ch;font-size:14.5px;margin:0 0 8px}
+  .crumb{font:12px var(--mono);color:var(--dim);margin-bottom:12px}.crumb a{color:var(--acc)}
+  a{color:var(--acc)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .card img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#0a0b0e}
+  .grid2{display:flex;flex-wrap:wrap;gap:18px}
+  .grid2>.card{flex:1 1 340px;min-width:280px}
+  .cap{font:11.5px var(--mono);color:var(--dim);margin-top:8px}
+  .modeltag{font:11px var(--mono);color:var(--dim);border:1px solid var(--line);border-radius:6px;
+    padding:3px 8px;display:inline-block;margin-top:6px}
+  .ovwrap{position:relative;max-width:640px}
+  .ovwrap img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px}
+  .rbox{position:absolute;border:2px solid;border-radius:3px;pointer-events:none}
+  .rbox .tag{position:absolute;left:-2px;top:-20px;font:600 10px var(--mono);color:#fff;
+    background:#000000d0;border-radius:4px;padding:1px 6px;white-space:nowrap;line-height:16px}
+  .rbox.below .tag{top:auto;bottom:-20px}
+  .ovnote{font-size:11.5px;color:var(--dim);margin-top:8px;max-width:64ch}
+  .studio-badge{font:600 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--warn);
+    background:#00000090;border:1px solid #3a3320;border-radius:4px;padding:2px 7px;
+    position:absolute;right:8px;top:8px;z-index:5}
+  button.t{background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:8px;
+    padding:6px 12px;cursor:pointer;font:13px var(--font);margin-top:10px}
+  button.t[aria-pressed=false]{color:var(--mut)}
+  .cells{display:flex;flex-wrap:wrap;gap:14px}
+  .cell{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;flex:0 1 auto}
+  .cell .chk{background:
+      conic-gradient(#2a2d35 25%,#1b1e24 0 50%,#2a2d35 0 75%,#1b1e24 0) 0 0/20px 20px;
+    border-radius:6px;display:grid;place-items:center;padding:8px}
+  .cell img{max-width:150px;height:auto;display:block}
+  .cell .lab{font:600 10.5px var(--mono);color:var(--mut);margin-top:7px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}
+  td,th{text-align:left;padding:5px 9px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-size:10.5px;text-transform:uppercase}
+  td.n{font-family:var(--mono);text-align:right}
+  tr.avg td{color:var(--warn);font-weight:600}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px;vertical-align:-1px;border:1px solid #0008}
+  .verdict{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--ok);
+    border-radius:11px;padding:16px 18px;font-size:14px;max-width:84ch}
+  .verdict b{color:var(--ok)}
+  .verdict .broke b{color:var(--warn)}
+  .verdict .dead b{color:var(--bad)}
+  pre.mx{font:10.5px/1.5 var(--mono);color:var(--mut);background:#00000060;border:1px solid var(--line);
+    border-radius:8px;padding:10px;overflow-x:auto}
+  .gate{font-family:var(--mono);font-size:12px}
+  .gate .ok{color:var(--ok)} .gate .bad{color:var(--bad)}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="/">clean</a> · <a href="/interactive.html">run8</a> · <a href="/phone9.html">run9</a> · <b style="color:var(--ink)">RUN10 — AQUA GLASS (WILD)</b></div>
+  <h1>run10 — “AQUA GLASS”: wild Y2K game handheld, adaptive colour contract</h1>
+  <p class="lede">Stress test of the run9 pipeline on a deliberately hostile design: an early-2000s alien game
+  handheld whose housing is an <b>organic asymmetric magma blob</b> (horn nubs, side pod — the blueprint body is a
+  PIL polygon, not a rounded rect) in <b>cooling black volcanic rubber with glowing lava-orange veins and gold-chrome
+  piercings</b>. The design palette is vivid and warm — it would collide with run9's fixed red/amber/orange/pink guide
+  keys — so the guide-colour contract became <b>data</b>: 9 keys picked ≥120 RGB from each other AND from every
+  palette major, written to <code>results.json</code>, and read from there by the extractor and the BiRefNet splitter.
+  Zero hardcoded colours downstream. One generation was needed.</p>
+  <span class="modeltag">model: fal-ai/gemini-3-pro-image-preview/edit (nano-banana pro) · 4K · 5:4 · seed 41 · generated 2026-07-07 20:25 PDT ·
+  material: black volcanic rubber + molten-lava veins + gold chrome · cut: fal-ai/birefnet/v2 (Heavy 2048)</span>
+
+  <h2>a₀ · the adaptive colour contract (palette → keys, all data)</h2>
+  <div class="grid2">
+    <div class="card" style="flex:1 1 300px">
+      <table id="palTable"><thead><tr><th>design palette major</th><th>rgb</th></tr></thead><tbody></tbody></table>
+      <div class="cap">Declared FIRST in run10.py. Keys must stay ≥120 from every row (and from each other).
+      Backdrop picked opposite the material lightness: black crust body → pale grey-white.</div>
+    </div>
+    <div class="card" style="flex:1 1 300px">
+      <table id="keyTable"><thead><tr><th>control</th><th>guide key</th><th>rgb</th></tr></thead><tbody></tbody></table>
+      <div class="cap">Picked from the {0,128,255}³ lattice (any two lattice points are ≥127 apart — pairwise distance
+      by construction), filtered by the extractor gates (sat&gt;55, max&gt;90) and the ≥120-from-palette rule, ranked by
+      distance-from-palette. Note: no red, no orange, no amber, no pink — the warm half of the wheel is the design's.</div>
+    </div>
+  </div>
+  <details style="margin-top:10px"><summary style="cursor:pointer;font:12px var(--mono);color:var(--dim)">distance matrix (printed + asserted by run10.py)</summary>
+  <pre class="mx">                         AZURE   SPRING    CYAN  VIOLET  MAGENT  PURE B  PURE G  LAVEND  PALE M  magma_  lava_r  ember_  gold_c  crust_  rubber  backdr
+          AZURE SKY-BLUE       0     180     127     181     285     128     285     128     221     347     337     331     305     259     238     259
+            SPRING GREEN     180       0     127     312     382     285     128     221     128     313     331     268     245     258     237     260
+                    CYAN     127     127       0     285     361     255     255     180     180     376     390     324     314     332     309     236
+           VIOLET-PURPLE     181     312     285       0     127     128     383     128     285     289     255     313     287     258     236     259
+                 MAGENTA     285     382     361     127       0     255     442     180     312     259     235     287     277     330     305     236
+               PURE BLUE     128     285     255     128     255       0     361     181     312     364     328     384     347     237     225     333
+              PURE GREEN     285     128     255     383     442     361       0     312     181     294     316     266     232     235     223     335
+     LAVENDER-PERIWINKLE     128     221     180     128     180     181     312       0     180     268     267     247     235     278     248     152
+         PALE MINT-GREEN     221     128     180     285     312     312     181     180       0     221     259     151     148     277     247     155</pre>
+  </details>
+
+  <h2>a · blueprint (authored template — organic blob body)</h2>
+  <div class="card" style="max-width:840px"><img src="assets11/blueprint.png?v=a1" alt="blueprint">
+    <div class="cap">PIL-drawn guides. Body = polar blob polygon (egg blend + horn nubs + pods), asserted to contain
+    all 9 controls with an 8px erosion margin. Buttons: pebble=PREV(azure) · teardrop=PLAY(spring green) ·
+    kidney=NEXT(cyan) · crescent=STOP(violet). Sockets: vol(magenta) · bal(pure blue) · seek groove(pure green) ·
+    toggle(lavender) · screen(mint). Bottom band: 5 sprite anchors cloning the device slot geometry. No text anywhere.</div></div>
+
+  <h2>b · raw 4K joint output — generation 1 of 1</h2>
+  <div><span class="modeltag">output of: fal-ai/gemini-3-pro-image-preview/edit · seed 41 · one call, both panels</span></div>
+  <div class="card" style="max-width:840px"><img src="assets11/joint-4k.png?v=a1" alt="raw joint 4K">
+    <div class="cap">Raw model file, 4608×3712. Left: painted magma handheld + strip. Right: region mask.
+    Horns, pods and the asymmetric silhouette survived; all four cavities are empty wells; the strip is one
+    top-down row of exactly five parts with distinct toggle OFF/ON lever states. The model drew the on-device
+    socket mask blobs as RINGS (it echoed the blueprint's outline style) — handled downstream, see verdict.</div></div>
+
+  <h2>c · mask ⊕ paint overlay — every region, labeled</h2>
+  <div class="card" style="max-width:680px">
+    <div class="ovwrap" id="ov">
+      <span class="studio-badge">studio overlay · not in the artifact sent to the cutter</span>
+      <img src="assets11/overlay.png?v=a1" alt="mask over paint overlay" id="ovimg">
+    </div>
+    <button class="t" id="boxBtn" aria-pressed="true">boxes: on</button>
+    <div class="ovnote">Overlay = paint × 50% mask (raw model output). Solid boxes = <b>snapped</b> device regions
+    (placement truth) + strip cells, coloured per control's guide key, each labeled with its control name.
+    Boxes/labels are studio annotations drawn by this page — toggle them off to see the exact artifact.</div>
+  </div>
+
+  <h2>d · cut sprite cells — global BiRefNet, segmented (one pass)</h2>
+  <div><span class="modeltag">output of: fal-ai/birefnet/v2 · General Use (Heavy) · 2048</span></div>
+  <p class="lede" style="font-size:13px">ONE BiRefNet call (<code>fal-ai/birefnet/v2</code> Heavy 2048)
+  over the whole paint → the matte's connected-component islands, correlated to identity via the mask strip cells
+  (centroid match, never left-to-right order). All five parts matched at ≤0.6% centroid error.</p>
+  <div class="cells">
+    <div class="cell"><div class="chk"><img src="assets11_biref/vol.png?v=a1"></div><div class="lab">vol cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets11_biref/bal.png?v=a1"></div><div class="lab">bal cap · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets11_biref/seek.png?v=a1" style="max-width:90px"></div><div class="lab">seek thumb · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets11_biref/tog_off.png?v=a1" style="max-width:130px"></div><div class="lab">toggle OFF · global-CC island</div></div>
+    <div class="cell"><div class="chk"><img src="assets11_biref/tog_on.png?v=a1" style="max-width:130px"></div><div class="lab">toggle ON · global-CC island</div></div>
+  </div>
+
+  <h2>d² · where BiRefNet BROKE — the global matte on a matte-black body</h2>
+  <p class="lede" style="font-size:13px">On run9's graphite phone the single global matte kept the whole body opaque
+  and every open socket became an enclosed alpha-hole (= a measured seat). On the magma design <b>BiRefNet refused the
+  matte-black crust</b> — it kept the gold controls, screen, horns and lava veins and dropped most of the black body as
+  background, shattering the matte into 10+ “extra” islands. Consequences: no device island worth cutting, and
+  <b>zero measurable socket seats</b> (black wells in a black body have no alpha-hole to find). Sprite-part islands were
+  unaffected. Shown raw, unretouched:</p>
+  <div class="cells">
+    <div class="cell" style="flex:1 1 300px;max-width:460px"><div class="chk"><img src="assets11_biref/global-matte.png?v=a1" style="max-width:100%;width:100%"></div><div class="lab">global-matte.png · raw — body dropped, controls kept</div></div>
+    <div class="cell" style="flex:1 1 220px;max-width:340px"><div class="chk"><img src="assets11_biref/device.png?v=a1" style="max-width:100%;width:100%"></div><div class="lab">“device” island (largest CC) · a fragment, not the body</div></div>
+  </div>
+
+  <h2>e · gates + drift</h2>
+  <div class="grid2">
+    <div class="card" style="flex:1 1 300px">
+      <div class="gate">
+        [leak gate] worst=none 0.0000% → <span class="ok">ok</span> — zero guide-colour residue in the paint<br><br>
+        emptiness gate (bright-part px inside must-be-empty wells):<br>
+        &nbsp;&nbsp;vol&nbsp;&nbsp;0.9% <span class="ok">ok</span> · bal&nbsp;&nbsp;3.3% <span class="ok">ok</span> ·
+        seek 0.0% <span class="ok">ok</span> · tog&nbsp;&nbsp;4.5% <span class="ok">ok</span><br><br>
+        fit check (device slot vs strip part):<br>
+        &nbsp;&nbsp;vol w=1.08 h=1.08 · bal w=1.08 h=1.08 · tog w=1.04 h=1.04 — all within the 15% gate
+      </div>
+      <div class="cap">The ≥120 key-vs-palette rule is what keeps the leak gate valid on a vivid paint: no legitimate
+      design colour can come within the 60-distance leak radius of a guide key.</div>
+    </div>
+    <div class="card" style="flex:1 1 340px">
+      <table id="drift">
+        <thead><tr><th>control</th><th style="text-align:right">template→mask drift %</th><th style="text-align:right">mask→skin residual % (x)</th><th>snap</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="cap">template→mask = how far the model moved each control from the authored blueprint.
+      mask→skin residual = the snap-x-only refinement cancelling the model's systematic horizontal mask drift.
+      NEW for vivid bodies: the button snap distrusts itself when &gt;55% of its window is saturated
+      (lava veins everywhere ≠ an icon) and keeps the raw mask bbox.</div>
+    </div>
+  </div>
+
+  <h2>f · verdict — what survived, what broke</h2>
+  <div class="verdict" id="verdict">
+    <p style="margin:0 0 10px"><b>The two-panel contract + adaptive keys held on a wild design — 1 generation,
+    all gates green.</b> The organic blob silhouette (horns, pods) survived into both panels; the four irregular
+    button outlines were preserved well enough for tight mask↔paint registration (avg template→mask drift 0.8%,
+    max 2.1% on the crescent); every cavity came back as an empty dark well (emptiness gate 0.0–4.5%, all ok);
+    the strip is exactly five top-down parts with distinct toggle states; leak gate 0.0000% — the data-driven
+    key pick (no warm keys against a warm palette) worked exactly as designed, and the extractor ran with zero
+    hardcoded colours.</p>
+    <p class="broke" style="margin:0 0 10px">What bent: <b>(1) the model echoed the blueprint's outline style in the
+    mask</b> — on-device socket regions came back as RINGS rather than solid fills (bbox extraction is
+    outline-tolerant, so no harm, but a solid-fill mask would be more robust); <b>(2) button shapes were
+    simplified</b> (the pebble tended toward an octagon, the kidney lost its bite) — mask matched paint so
+    alignment held, but shape fidelity is a real casualty of the busy material; <b>(3) stray mask blobs</b>:
+    the vent pores were dotted into the mask in spring green — filtered by the largest-CC + size gates.</p>
+    <p class="dead" style="margin:0">What broke outright: <b>the single-pass BiRefNet device cut + matte-hole seat
+    measurement</b>. The segmenter dropped the matte-black crust as background (10+ fragment islands, no enclosed
+    socket holes) — black wells in a black body are invisible to alpha-hole detection. <b>Recovered by the
+    gradient circle-fit</b> (extract10): a mini-Hough on gradient magnitude finds each knob socket's rim directly
+    in the paint (vol r=123&#8202;px, bal r=126&#8202;px, residual &lt;3&#8202;px), and those fits are written as
+    <code>seat</code> entries in <code>regions.json</code>; the toggle slot and seek groove get the same treatment
+    via rrect-fit. Lesson: matte-hole seats need a segmenter-friendly body, but gradient fitting is
+    material-agnostic and replaces them outright on hostile materials.</p>
+  </div>
+
+  <h2>g · finished product — cut &amp; placed, interactive</h2>
+  <div><span class="modeltag">paint: fal-ai/gemini-3-pro-image-preview/edit seed 41 · sprites: fal-ai/birefnet/v2 islands · placement: extract10 circle-fit seats + snapped mask bboxes</span></div>
+  <p class="lede" style="font-size:13px">The end of the chain: device background from the paint, sprites = the
+  global-BiRefNet islands. Knobs seat via the <b>gradient circle-fit <code>seat</code> entries</b> (exact painted
+  socket center + radius — see d²); toggle and seek use the rrect-fitted boxes. Drag the knobs (pinned specular),
+  drag the seek thumb along the groove, click the toggle (its two painted states), press the organic buttons
+  (mask-silhouette darkening).</p>
+  <div class="phone" id="phone" style="position:relative;width:min(420px,86vw);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0a0b0e;box-shadow:0 20px 50px #000a;touch-action:none">
+    <img class="bg" id="pbg" alt="painted magma handheld" style="display:block;width:100%;height:auto">
+  </div>
+  <div style="font:12px var(--mono);color:var(--dim);margin-top:6px" id="pstatus">loading…</div>
+
+  <footer>run10 · paint+mask generated with <code>fal-ai/gemini-3-pro-image-preview/edit</code> (seed 41, 4K, 5:4) ·
+  cuts with <code>fal-ai/birefnet/v2</code> · assets in <code>assets11/</code> + <code>assets11_biref/</code> ·
+  scripts: <code>run10.py</code>, <code>extract10.py</code>, <code>run_biref10.py</code></footer>
+</div>
+<style>
+  .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
+  .pknob .cap{width:100%;height:100%;margin:0;border-radius:50%;background-size:cover;background-position:center}
+  .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    background:radial-gradient(42% 42% at 32% 27%, rgba(255,255,255,.75), rgba(255,255,255,.18) 55%, rgba(255,255,255,0) 75%),
+               radial-gradient(70% 70% at 72% 80%, rgba(0,0,0,.30), rgba(0,0,0,0) 65%)}
+  .pthumb{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}
+  .ptog{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 4px #0008)}
+  .pbtn{position:absolute;cursor:pointer}
+  .pbtn .ink{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;transition:opacity .07s ease;
+    -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+  .pbtn:active .ink{opacity:1}
+</style>
+<script>
+(async function(){
+  const R=await fetch('assets11/regions.json?v=a1').then(r=>r.json());
+  const rr=R.regions, DF=R.devFrac, KEY=R.keys;
+  const dev=document.getElementById('phone'), bg=document.getElementById('pbg'), status=document.getElementById('pstatus');
+  const paint=new Image(); paint.src='assets11/paint.png?v=a1'; await paint.decode();
+  const PW=paint.naturalWidth, PH=paint.naturalHeight;
+  const bgc=document.createElement('canvas'); bgc.width=PW; bgc.height=Math.round(PH*DF);
+  bgc.getContext('2d').drawImage(paint,0,0,PW,bgc.height,0,0,PW,bgc.height);
+  bg.src=bgc.toDataURL(); await bg.decode();
+  const maskImg=new Image(); maskImg.src='assets11/mask.png?v=a1'; await maskImg.decode();
+  const MW=maskImg.naturalWidth, MH=maskImg.naturalHeight;
+  const mkc=document.createElement('canvas'); mkc.width=MW; mkc.height=MH; mkc.getContext('2d').drawImage(maskImg,0,0);
+  const MDATA=mkc.getContext('2d').getImageData(0,0,MW,MH).data;
+  function tightCrop(im){
+    const c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight;
+    const cx=c.getContext('2d'); cx.drawImage(im,0,0);
+    const d=cx.getImageData(0,0,c.width,c.height).data;
+    let x0=c.width,y0=c.height,x1=0,y1=0,any=false,sx=0,sy=0,sn=0;
+    for(let p=0;p<d.length;p+=4){ if(d[p+3]>12){ const i=p/4,x=i%c.width,y=(i/c.width)|0;
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; any=true;
+      if(Math.max(d[p],d[p+1],d[p+2])>110){ sx+=x; sy+=y; sn++; } } }   // bright metallic-FACE centroid
+    if(!any) return {url:im.src,w:c.width,h:c.height,cx:0.5,cy:0.5};
+    const tw=x1-x0+1, th=y1-y0+1, t=document.createElement('canvas'); t.width=tw; t.height=th;
+    t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th);
+    const fcx=sn?((sx/sn)-x0)/tw:0.5, fcy=sn?((sy/sn)-y0)/th:0.5;   // face centroid as fraction of trimmed cut
+    return {url:t.toDataURL(),w:tw,h:th,cx:fcx,cy:fcy};
+  }
+  const CUT={};
+  for(const k of ['vol','bal','seek','tog_off','tog_on']){
+    try{ const im=new Image(); im.src='assets11_biref/'+k+'.png?v=a1'; await im.decode(); CUT[k]=tightCrop(im); }catch(e){}
+  }
+  const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100;
+  const ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
+  function knob(key){
+    const r=rr[key]; if(!r||!CUT[key]) return;
+    let cx,cy,w,h;
+    if(r.seat){ // measured painted-socket well — circle-fit seats (extract10 gradient recovery)
+      cx=r.seat[0]; cy=r.seat[1]; w=r.seat[2]*2; h=w*PW/PH;
+    } else if(r.device){ // fallback: snapped mask bbox (the run10 path)
+      const c=ctr(r.device); cx=c[0]; cy=c[1]; w=r.device[2]*1.10; h=r.device[3]*1.10;
+    } else return;
+    const el=document.createElement('div'); el.className='pknob';
+    el.style.left=(cx-w/2)*100+'%'; el.style.top=((cy-h/2)/DF)*100+'%'; el.style.width=w*100+'%'; el.style.height=(h/DF)*100+'%';
+    el.innerHTML='<div class="cap" style="background-image:url('+CUT[key].url+')"></div><div class="spec"></div>';
+    const cap=el.querySelector('.cap'); let val=0.7,sy=0,sv=0,drag=false;
+    const render=()=>cap.style.transform='rotate('+(-135+val*270)+'deg)'; render();
+    el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));render();}});
+    el.addEventListener('pointerup',()=>drag=false); el.addEventListener('pointercancel',()=>drag=false);
+    dev.appendChild(el);
+  }
+  knob('vol'); knob('bal');
+  (function(){ const r=rr.seek, t=CUT.seek; if(!r||!r.device||!t) return;
+    const track=r.device, el=document.createElement('div'); el.className='pthumb';
+    const tw=t.w/PW, th=t.h/PH; // island is cut at 1:1 paint resolution — render at its own size
+    el.style.backgroundImage='url('+t.url+')'; el.style.width=tw*100+'%'; el.style.height=(th/DF)*100+'%';
+    const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
+    let val=0; const tv=r.travel||[track[0],track[0]+track[2]]; const x0=tv[0], x1=tv[1]-tw; // travel clamped inside the measured painted recess
+    const render=()=>el.style.left=(x0+(x1-x0)*val)*100+'%'; render();
+    let sx=0,sv=0,drag=false;
+    el.addEventListener('pointerdown',e=>{drag=true;sx=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientX-sx)/(dev.clientWidth*(x1-x0))));render();}});
+    el.addEventListener('pointerup',()=>drag=false); el.addEventListener('pointercancel',()=>drag=false);
+    dev.appendChild(el);
+  })();
+  (function(){ const r=rr.tog; if(!r||!r.device||!CUT.tog_off) return;
+    const off=CUT.tog_off, on=CUT.tog_on||off;
+    const el=document.createElement('div'); el.className='ptog';
+    const S=1.06, tc=ctr(r.device);
+    // Place each state by its metallic-FACE centroid (not the cut bbox), so the switch HOUSING
+    // sits at the SAME device point in both states — BiRefNet trims off/on slightly differently,
+    // and centring the raw cut made the switch appear to jump between states.
+    const place=(c)=>{ const bw=c.w/PW*S, bh=c.h/PH*S;
+      el.style.backgroundImage='url('+c.url+')';
+      el.style.left=(tc[0]-c.cx*bw)*100+'%'; el.style.top=((tc[1]-c.cy*bh)/DF)*100+'%';
+      el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%'; };
+    place(off); let ison=false;
+    el.addEventListener('click',()=>{ison=!ison; place(ison?on:off);});
+    dev.appendChild(el);
+  })();
+  function cutMaskShape(rect,rgb){
+    let x=Math.max(0,Math.round(rect[0]*MW)), y=Math.max(0,Math.round(rect[1]*MH));
+    let w=Math.min(MW-x,Math.round(rect[2]*MW)), h=Math.min(MH-y,Math.round(rect[3]*MH));
+    const c=document.createElement('canvas'); c.width=w; c.height=h; const cc=c.getContext('2d');
+    const out=cc.createImageData(w,h), od=out.data;
+    for(let j=0;j<h;j++)for(let i=0;i<w;i++){ const si=((y+j)*MW+(x+i))*4, di=(j*w+i)*4;
+      const dr=MDATA[si]-rgb[0], dg=MDATA[si+1]-rgb[1], db=MDATA[si+2]-rgb[2];
+      if(dr*dr+dg*dg+db*db<7000){ od[di]=od[di+1]=od[di+2]=255; od[di+3]=255; } }
+    cc.putImageData(out,0,0); return c.toDataURL();
+  }
+  (R.buttons||[]).forEach(b=>{ const r=rr[b]; if(!r||!r.device) return;
+    const mb=r.maskDevice||r.device, sb=r.device, D=0.12;
+    const crop=[mb[0]-mb[2]*D/2, mb[1]-mb[3]*D/2, mb[2]*(1+D), mb[3]*(1+D)];
+    const dx=(sb[0]+sb[2]/2)-(mb[0]+mb[2]/2), dy=(sb[1]+sb[3]/2)-(mb[1]+mb[3]/2);
+    const eb=[crop[0]+dx, crop[1]+dy, crop[2], crop[3]];
+    const el=document.createElement('div'); el.className='pbtn'; el.title=b;
+    el.style.left=px(eb)+'%'; el.style.top=py(eb)+'%'; el.style.width=pw(eb)+'%'; el.style.height=ph(eb)+'%';
+    const ink=document.createElement('div'); ink.className='ink';
+    const shape=cutMaskShape(crop,KEY[b]||[255,255,255]);
+    ink.style.webkitMaskImage='url('+shape+')'; ink.style.maskImage='url('+shape+')';
+    el.appendChild(ink); dev.appendChild(el);
+  });
+  status.textContent='live — drag knobs & thumb, click toggle, press the organic buttons';
+})();
+</script>
+
+<script>
+fetch("assets11/regions.json?v=a1").then(r=>r.json()).then(data=>{
+  const regs=data.regions, tmpl=data.template, DEVF=data.devFrac, KEY=data.keys, KN=data.keyNames||{};
+  const css=k=>KEY[k]?`rgb(${KEY[k].join(",")})`:"#fff";
+
+  // ---- a₀: palette + key tables (from data, not hardcoded) ----
+  fetch("assets11/results.json?v=a1").then(r=>r.json()).then(res=>{
+    const pt=document.querySelector("#palTable tbody");
+    for(const [k,v] of Object.entries(res.palette)){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td><span class="sw" style="background:rgb(${v.join(",")})"></span>${k}</td><td class="n">${v.join(",")}</td>`;
+      pt.appendChild(tr);
+    }
+    const kt=document.querySelector("#keyTable tbody");
+    for(const [k,v] of Object.entries(res.keys)){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${k}</td><td><span class="sw" style="background:rgb(${v.join(",")})"></span>${(res.keyNames||{})[k]||""}</td><td class="n">${v.join(",")}</td>`;
+      kt.appendChild(tr);
+    }
+  });
+
+  // ---- c: labeled boxes over the overlay ----
+  const ov=document.getElementById("ov");
+  const addBox=(b,name,below)=>{
+    if(!b) return;
+    const el=document.createElement("div"); el.className="rbox"+(below?" below":"");
+    el.style.left=(b[0]*100)+"%"; el.style.top=(b[1]*100)+"%";
+    el.style.width=(b[2]*100)+"%"; el.style.height=(b[3]*100)+"%";
+    el.style.borderColor=css(name.replace(/ .*/,""));
+    const t=document.createElement("span"); t.className="tag"; t.textContent=name; el.appendChild(t);
+    ov.appendChild(el);
+  };
+  for(const [k,v] of Object.entries(regs)){
+    if(!v) continue;
+    if(v.device) addBox(v.device,k,false);
+    (v.strip||[]).forEach((b,i)=>{
+      const nm = k==="tog" ? (i===0?"tog off":"tog on") : k+" cap";
+      addBox(b, k==="seek"?"seek thumb":nm, true);
+    });
+  }
+  const btn=document.getElementById("boxBtn");
+  btn.onclick=()=>{const on=btn.getAttribute("aria-pressed")==="true";
+    btn.setAttribute("aria-pressed",String(!on)); btn.textContent="boxes: "+(!on?"on":"off");
+    ov.querySelectorAll(".rbox").forEach(e=>e.style.display=!on?"":"none");};
+
+  // ---- e: drift table ----
+  const tb=document.querySelector("#drift tbody"); if(!tb) return;
+  let tot=0,n=0;
+  for(const k of Object.keys(KEY)){
+    const r=regs[k], t=tmpl[k]; if(!r||!r.device||!t) continue;
+    const cx=r.device[0]+r.device[2]/2, cy=r.device[1]+r.device[3]/2;
+    const dpx=(cx-t[0])*100, dpy=(cy-t[1])*100/DEVF, drift=Math.hypot(dpx,dpy);
+    let resid=0, snapped=false;
+    if(r.maskDevice){ resid=Math.abs((r.device[0]+r.device[2]/2)-(r.maskDevice[0]+r.maskDevice[2]/2))*100;
+      snapped=resid>0.005; }
+    tot+=drift; n++;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><span class="sw" style="background:${css(k)}"></span>${k}</td>
+      <td class="n">${drift.toFixed(1)}%</td><td class="n">${resid.toFixed(2)}%</td>
+      <td style="color:${snapped?"var(--ok)":"var(--dim)"}">${snapped?"snapped to paint":"mask bbox kept"}</td>`;
+    tb.appendChild(tr);
+  }
+  const tr=document.createElement("tr"); tr.className="avg";
+  tr.innerHTML=`<td>AVG</td><td class="n">${(tot/Math.max(1,n)).toFixed(1)}%</td><td class="n">—</td><td></td>`;
+  tb.appendChild(tr);
+});
+</script>
+</body>
+</html>

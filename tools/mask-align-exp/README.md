@@ -54,6 +54,28 @@ Pipeline (`run9.py` → `extract9.py` → `run_biref9.py` → `phone9.html`):
 11. **Screen as mask region** — lime (100,255,0) key, verified min dist 149 from all other
     keys. `extras:["screen"]` in regions.json.
 
+## run11 — AQUA GLASS (model-designed, layout-only template)
+
+Proof the pipeline generalizes to a brand-new skin with the template carrying **only the
+component layout** — no material/colour art. `run11.py` reuses run10's blueprint geometry
+(organic placeholder silhouette + control outlines) but hands ALL look-design to the model:
+the prompt keeps every *structural* clause (backdrop keying, ZERO RESIDUE, empty-before-assembly
+sockets, EXACT FIT, top-down orthographic, no guide colours in paint) and replaces the magma
+material dictation with an open "wild Y2K / Frutiger-Aero, YOU are the designer — glossy
+translucent glass + brushed metal + backlit accents, NOT chrome-on-grey, NOT lava". The design
+palette in `PALETTE` is only there to keep the guide-key contract valid (keys are pushed to warm
+corners far from the cool design hues), not to constrain the art.
+
+Result (seed 71, one $0.15 gen): a glossy aqua translucent-glass body with silver bezels,
+water-droplet jewel buttons, empty glass sockets, matching blue-glass strip parts. The
+generalized alignment pipeline aligned it **clean on the first try** — leak gate 0.0000%; knob
+seats concentric with the painted sockets (circle-fit radius + matte-hole-centroid centre, the
+run9 fix); seek thumb covers both slot ends (computed coverage travel); toggle + thumb seated.
+A Gemini VLM pass FAILed it (knobs "offset", slider/toggle "empty", pentagon "halo") — **all
+four false positives** on the glossy monochrome-glass look, each overruled by deterministic
+measurement (seat-vs-socket concentric, cap dx/dy=0, leak 0.0000%) per verify-rule §1b. Player:
+`wild11.html`.
+
 ## Adaptive color contract (run10 — wild/stress test)
 
 `run10.py` builds the color key contract FIRST (9 keys from the {0,128,255}³ lattice,
