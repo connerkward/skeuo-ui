@@ -87,10 +87,91 @@
   </div>
 </section>
 
+<hr style="border:0;border-top:2px solid #26262e;margin:40px 0">
+
+<section class="skin">
+  <h2>ROUND 2 — cheap-model sweep with region-scoped prompts <span class="meta">(2026-07-09, later)</span></h2>
+  <div class="meta" style="margin-bottom:14px">
+    New prompt discipline: <b>name the exact regions allowed to move, freeze everything else</b>
+    (&ldquo;…is a rigid, perfectly static photograph — housing/buttons/trim NEVER move… ONLY these regions animate: (1)… (2)… (3)… Nothing else moves. Locked static camera. Seamless ambient loop.&rdquo;).
+    Models (all ≤$0.15/clip target): <b>C</b> <code>fal-ai/bytedance/seedance/v1/pro/fast/image-to-video</code> (720p 5s, <code>camera_fixed=true</code>, seed 1207) ≈ <b>$0.11/gen</b> ·
+    <b>D</b> <code>fal-ai/pixverse/v6/image-to-video</code> (720p 5s, seed, neg-prompt, thinking off) ≈ <b>$0.03–0.15/gen</b> ·
+    <b>E</b> <code>fal-ai/minimax/hailuo-02/standard/image-to-video</code> (512P 6s, <code>[Static shot]</code>, optimizer off) ≤ <b>$0.27/gen</b> ·
+    <b>B</b> Wan 2.2 turbo re-run with the new prompt (<b>$0.10</b>) ·
+    <b>F</b> <code>fal-ai/ltx-2.3-22b/distilled/image-to-video</code> (736×896 5s, <code>camera_lora=static</code>) ≈ <b>$0.10/gen</b>.
+    Round-2 spend ≈ <b>$1.4–1.9</b> (13 gens, 1 unbilled 422). All loops = 1&nbsp;s ffmpeg crossfade.
+  </div>
+
+  <h2 style="font-size:15px">steam-porthole — round 2</h2>
+  <div class="row">
+    <div class="cell"><img src="subject-steam-porthole.png" alt="static paint crop"><div class="cap"><b>static paint</b> (input crop)</div></div>
+    <div class="cell"><video src="loop2-seedancefast-steam-porthole.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict pass">PASS</span><b>Seedance 1.0 pro fast</b> · $0.11 · seam 1.3</div>
+      <div class="notes"><b>Winner.</b> Motion heatmap is black everywhere except the three named regions: the fan-gear visibly rotates in place (teeth advance), both gauge needles swing, one steam wisp rises at the right edge. Housing, rivets, buttons pixel-stable; background untouched.</div>
+    </div>
+    <div class="cell"><video src="loop2-wanturbo-steam-porthole.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Wan 2.2 turbo</b> · $0.10 · seam 1.2</div>
+      <div class="notes">Region-scoped prompt did NOT fix round 1's flaw: whole-body micro-shimmer, and the copper coil physically deforms (wraps reshape, a new clamp fitting materializes). The rigid-metal-moving failure is the model, not the prompt.</div>
+    </div>
+    <div class="cell"><video src="loop2-pixverse6-steam-porthole.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>PixVerse v6</b> · ~$0.03–0.15 · seam 4.4</div>
+      <div class="notes">Device geometry holds and steam appears — but the model relights the entire scene, fading the pale background to black and warming the grade. Global change disqualifies it as a background layer.</div>
+    </div>
+    <div class="cell"><video src="loop2-hailuo02-steam-porthole.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Hailuo-02 std 512P</b> · ≤$0.27 · seam 2.8</div>
+      <div class="notes">Slow zoom-in the whole clip despite <code>[Static shot]</code> + optimizer off; gauge faces and gears smear as the crop drifts.</div>
+    </div>
+    <div class="cell"><video src="loop2-ltx23dist-steam-porthole.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>LTX-2.3 22B distilled</b> · ~$0.10 · seam 1.6</div>
+      <div class="notes">Best steam plume of the batch, but whole-device re-synthesis shimmer: button icons morph into glyphs, gears redraw. (This is the base model WITHOUT the gated Lightricks cinemagraph LoRA — see footer.)</div>
+    </div>
+  </div>
+
+  <h2 style="font-size:15px;margin-top:22px">diablo-gothic — round 2</h2>
+  <div class="row">
+    <div class="cell"><img src="subject-diablo-gothic.png" alt="static paint crop"><div class="cap"><b>static paint</b> (input crop)</div></div>
+    <div class="cell"><video src="loop2-seedancefast-diablo-gothic-v2.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict pass">PASS</span><b>Seedance fast, glow-only prompt</b> · $0.11 · seam 0.9</div>
+      <div class="notes"><b>Winner</b> (2nd attempt). Prompt lesson: &ldquo;sparks drift up, cracks flicker like embers&rdquo; made seedance ignite the whole tablet (see next cell); rewriting to &ldquo;existing runes/cracks gently pulse; no fire appears, nothing ignites, glow never spreads&rdquo; produced exactly the wanted rune-pulse with a frozen tablet. Tightest seam of both rounds.</div>
+    </div>
+    <div class="cell"><video src="loop2-seedancefast-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Seedance fast, 1st prompt</b> · $0.11 · seam 1.1</div>
+      <div class="notes">The cautionary tale: same model, same seed — the ember/spark wording erupted into full flames, orange-lit buttons, runes stamped into the speaker wells, glowing text in the slider. Region-scoping isn't enough; effect verbs must be conservative.</div>
+    </div>
+    <div class="cell"><video src="loop2-wanturbo-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Wan 2.2 turbo</b> · $0.10 · seam 1.4</div>
+      <div class="notes">Runes pulse nicely and the interior is stable, but the motion heatmap shows a bright halo around the entire silhouette — the tablet sways ~1–2px against the background the whole clip.</div>
+    </div>
+    <div class="cell"><video src="loop2-pixverse6-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>PixVerse v6</b> · ~$0.03–0.15 · seam 1.4</div>
+      <div class="notes">Background fades to black, big flames grow at the edges, the slider is redrawn as a ribbed bar and a color-swatch column is invented. Heavy redraw.</div>
+    </div>
+    <div class="cell"><video src="loop2-hailuo02-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>Hailuo-02 std 512P</b> · ≤$0.27 · seam 2.9</div>
+      <div class="notes">Strong zoom-in plus a lava eruption; the rune cross re-lights as a solid red diamond.</div>
+    </div>
+    <div class="cell"><video src="loop2-ltx23dist-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict fail">FAIL</span><b>LTX-2.3 22B distilled</b> · ~$0.10 · seam 2.0</div>
+      <div class="notes">Total ignition: lava veins crawl across the whole tablet, candle flames sprout from every crack — the exact opposite of the &ldquo;no fire appears&rdquo; clause.</div>
+    </div>
+  </div>
+
+  <h2 style="font-size:15px;margin-top:22px">fa-sky — round 2 (winner-only, hard translucent case)</h2>
+  <div class="row">
+    <div class="cell"><img src="subject-fa-sky.png" alt="static paint crop"><div class="cap"><b>static paint</b> (input crop)</div></div>
+    <div class="cell"><video src="loop2-seedancefast-fa-sky.mp4" autoplay muted loop playsinline></video>
+      <div class="cap"><span class="verdict part">PARTIAL</span><b>Seedance 1.0 pro fast</b> · $0.11 · seam 1.2</div>
+      <div class="notes">Big improvement over round 1: silhouette frozen, chrome trim survives (Wan melted it permanently). But the internal waterline migrates upward and the whole body brightens/cools over the clip — usable at low opacity, not a clean pass. Translucent+liquid remains the hardest material.</div>
+    </div>
+  </div>
+</section>
+
 </main>
 <footer>
   <b>Honest read:</b> the cheap model won. Wan 2.2 turbo ($0.10) kept the device static on 2/3 skins and its failures are localized (dissolved chrome trim); Luma Ray 3.2 (~10× the price) kept it on 0/3 — it substituted an object, pushed the camera, or breathed the silhouette, and its native <code>loop=true</code> never produced a seam better than a 1&nbsp;s ffmpeg crossfade (2.2 vs 8.9 mean px diff on the same skin). Translucent/liquid materials are the hardest case for both. Effects that worked: ember/rune glow flicker (both models), gauge-needle quiver (Wan), internal waterline slosh (Wan). Effects that failed: steam wisps (under-generated by Wan, hallucinated a new object by Luma), any chrome/silver trim on translucent bodies.
-  <br><br>Generated 2026-07-09 · models: <code>luma/agent/ray/v3.2/image-to-video</code>, <code>fal-ai/wan/v2.2-a14b/image-to-video/turbo</code> · total spend ≈ $1.80–$3.30.
+  <br><br><b>Round 2 verdict:</b> <code>fal-ai/bytedance/seedance/v1/pro/fast/image-to-video</code> ($0.11/clip, 720p 5s, <code>camera_fixed=true</code>, seeded) is the new champion — the only model whose motion heatmap is confined to the named regions; it passed steam-porthole and diablo-gothic outright and beat every model on fa-sky. Wan 2.2 turbo's rigid-metal shimmer/deform is intrinsic (region-scoped prompt didn't fix it); PixVerse v6 relights the scene; Hailuo-02 zooms despite <code>[Static shot]</code>; LTX-2.3 re-synthesizes the device (icons morph). Prompt template that worked: <i>&ldquo;X is a rigid, perfectly static photograph — [parts] NEVER move/deform/breathe/shimmer[; lighting and grade NEVER change]. ONLY these regions animate: (1)… (2)… (3)…. Nothing else moves. Locked static camera, no zoom, no pan, no parallax. Seamless ambient loop.&rdquo;</i> — with <b>conservative effect verbs</b> (&ldquo;existing glow gently pulses; no fire appears, nothing ignites&rdquo;), because dramatic verbs (&ldquo;sparks, flicker like embers&rdquo;) made even the winner erupt.
+  <br><br><b>Cinemagraph LoRA lead (untested, gated):</b> <code>Lightricks/LTX-2.3-22b-LoRA-Cinemagraph</code> on HF (official, published 2026-07-05, 201&nbsp;MB, tag &ldquo;selective-motion&rdquo;) is conceptually the exact fit. It is <b>gate-restricted</b>: fal's <code>fal-ai/ltx-2.3-22b/distilled/image-to-video/lora</code> endpoint accepts custom LoRA URLs but got 403 fetching it (verified, unbilled 422). Unlock path: accept the gate on HF → download with token → <code>upload_file</code> to fal CDN → pass in <code>loras</code>; ≈$0.10–0.15/clip. Local ComfyUI is not pragmatic: the base is a single 46&nbsp;GB LTX-2.3-22B safetensors on MPS.
+  <br><br>Generated 2026-07-09 · round 1: <code>luma/agent/ray/v3.2/image-to-video</code>, <code>fal-ai/wan/v2.2-a14b/image-to-video/turbo</code> ≈ $1.80–3.30 · round 2: seedance-v1-pro-fast ×4, pixverse-v6 ×2, wan-turbo ×2, hailuo-02 ×2, ltx-2.3-22b-distilled ×2 ≈ $1.4–1.9 · <b>total ≈ $3.2–5.2</b>.
 </footer>
 </body>
 </html>

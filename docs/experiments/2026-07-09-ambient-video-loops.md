@@ -69,3 +69,95 @@ the served side-by-side page). Picks copied to `~/Desktop/cc-skeuo/`:
   (raw model outputs kept as `raw-*.mp4`; input crops `subject-*.png`; job ids `jobs.json`).
 - Re-run: `postloop.sh` + `jobs.json` + prompts recorded above; Wan seeded (1207), Luma has
   no seed parameter — its outputs are kept precisely because they can't be re-rolled.
+
+---
+
+## Round 2 (same day) — cheap-model sweep with region-scoped prompts
+
+### Question
+
+Round 1 left two problems: Wan 2.2 turbo (the $0.10 champion) still moved rigid metal, and steam
+wisps under-generated. Can (a) a **region-scoped prompt** — name the exact regions allowed to move,
+freeze everything else — and/or (b) a different **cheap** model (≤$0.15 target, $0.25 hard cap)
+produce strictly region-limited ambient motion?
+
+### Method
+
+- Same subjects/seed (1207) and crossfade loop post as round 1. 13 gens, ≈$1.4–1.9.
+- **Prompt template** (the deliverable): *"The [material] device is a rigid, perfectly static
+  photograph — the [housing, buttons, trim…] NEVER move, deform, breathe or shimmer[; the lighting
+  and color grade NEVER change]. ONLY these regions animate: (1) [region + verb]; (2) …; (3) ….
+  Nothing else moves. Locked static camera, no zoom, no pan, no parallax. Seamless ambient loop."*
+- Models × params:
+  | model | per-clip | knobs used |
+  |---|---|---|
+  | `fal-ai/bytedance/seedance/v1/pro/fast/image-to-video` | **$0.108** (720p 5s ≈ 108k tok @ $1/1M) | `camera_fixed=true`, seed, aspect 3:4 |
+  | `fal-ai/pixverse/v6/image-to-video` | ~$0.03–0.15 (listed $0.005/s; multiplier unclear) | seed, `negative_prompt`, `thinking_type=disabled` |
+  | `fal-ai/wan/v2.2-a14b/image-to-video/turbo` (control re-run) | $0.10 | seed, `enable_prompt_expansion=false` |
+  | `fal-ai/minimax/hailuo-02/standard/image-to-video` | ≤$0.27 (512P 6s; $0.045/s listed) | `[Static shot]` prefix, `prompt_optimizer=false` |
+  | `fal-ai/ltx-2.3-22b/distilled/image-to-video` | ~$0.10 (736×896×121f @ $0.001205/MP) | `camera_lora="static"`, seed, neg-prompt, expansion off |
+- Rejected on price: wan 2.7 ($0.50/5s), kling 2.1 std ($0.28/5s), kling v3 turbo ($0.56/5s),
+  ltx-2.3 fast ($0.36/6s min), seedance-2.0 mini (token math ambiguous, risked >$0.25).
+- Verification: ffprobe + 4 full-res frames per clip + **per-pixel temporal-std motion heatmaps**
+  (fps=5, 480px) — the heatmap makes "did ONLY the named regions move" a visual check — plus 3–5×
+  close-up seam crops (gears, gauges, coil, speaker well) per verify-rule §1b.
+
+### Results
+
+| model | steam-porthole | diablo-gothic | notes |
+|---|---|---|---|
+| **Seedance 1.0 pro fast** | **PASS** — heatmap black outside the 3 named regions; fan-gear rotates in place, needles swing, steam wisp at right edge; housing pixel-stable | **PASS** (2nd prompt) — runes/cracks pulse, tablet frozen, seam 0.9 (best of both rounds). 1st prompt FAIL: "sparks/embers" verbs ignited the whole tablet | fa-sky PARTIAL: silhouette + chrome hold (Wan had melted the trim) but waterline migrates and body brightens |
+| Wan 2.2 turbo (re-run) | FAIL — copper coil deforms (wraps reshape, new clamp materializes), whole-body micro-shimmer | FAIL — 1–2px silhouette sway (bright halo in heatmap) | region-scoped prompt did NOT fix it → the flaw is the model |
+| PixVerse v6 | FAIL — relights scene: background fades to black, grade warms | FAIL — same + slider redrawn, invents a swatch column, edge flames | device geometry itself held well |
+| Hailuo-02 std 512P | FAIL — slow zoom-in despite `[Static shot]` + optimizer off | FAIL — zoom + lava eruption | |
+| LTX-2.3 22B distilled | FAIL — best steam plume but whole-device re-synthesis: button icons morph | FAIL — total ignition, lava veins everywhere | base model without the cinemagraph LoRA |
+
+Loop seams (crossfade, mean |first−last| px): seedance 0.9–1.3 · wan 1.2–1.4 · pixverse 1.4–4.4 ·
+ltx 1.6–2.0 · hailuo 2.8–2.9. Crossfade loop remains the method; no native-loop flags used.
+
+### Key findings
+
+1. **Winner: `fal-ai/bytedance/seedance/v1/pro/fast/image-to-video`** — $0.108/clip, 720p 5s,
+   `camera_fixed=true`, real seed support. The only model whose motion heatmap is confined to the
+   prompt-named regions. It also finally produced the steam wisps and mechanical gear rotation
+   Wan under-generated.
+2. **Region-scoped prompting works only on a model that already respects object identity.** It fixed
+   nothing on Wan (metal still deforms), PixVerse (relights), Hailuo (zooms). Prompt + `camera_fixed`
+   flag on Seedance is the working combination.
+3. **Effect verbs must be conservative.** "A few tiny sparks drift upward; cracks flicker like
+   embers" → Seedance erupted the whole tablet. "The existing runes gently pulse; no fire appears,
+   nothing ignites, the glow never spreads" → clean pass. Same model, same seed.
+4. **Temporal-std heatmap is the right cheap judge** for "did only the named regions move" —
+   frame diffs alone conflate intended motion with drift; the heatmap localizes it.
+5. LTX default `negative_prompt` contains "static" — must be overridden for this use case or it
+   actively fights the brief.
+6. Hailuo-02 512P listed $0.045/s is the shared endpoint price; treat 6s std as up to $0.27 — over
+   the cheap cap anyway on top of failing.
+
+### Cinemagraph LoRA lead (blocked on a gate, worth one click)
+
+`Lightricks/LTX-2.3-22b-LoRA-Cinemagraph` (official, 2026-07-05, 201 MB safetensors, tags
+"selective-motion, cinemagraph") is conceptually the exact tool for this task.
+- fal hosts `fal-ai/ltx-2.3-22b/distilled/image-to-video/lora` (custom `loras` array, ~$0.09–0.15/clip
+  at 736×896×121f) — but the HF repo is **gated**: fal's fetch got 403 (verified empirically; 422
+  validation error, unbilled).
+- **Unlock path:** accept the gate at https://huggingface.co/Lightricks/LTX-2.3-22b-LoRA-Cinemagraph
+  (one click, LTX community license) → download the 201 MB file with the account token → `upload_file`
+  to fal CDN → pass as `loras=[{"path": <cdn-url>, "scale": 1}]` with `camera_lora="static"`.
+- **Local ComfyUI is not pragmatic:** base model is a single 46 GB `ltx-2.3-22b-distilled.safetensors`;
+  22B video DiT on MPS is not a realistic $0 path.
+
+### Human verdict
+
+Agent-judged from heatmaps + full-res frames + seam crops; user review via the served page
+(`ambientvid/index.html`, round-2 section). Picks in `~/Desktop/cc-skeuo/`:
+`2026-07-09-ambient2-steam-porthole-seedance-fast.mp4`,
+`2026-07-09-ambient2-diablo-gothic-seedance-fast.mp4`,
+`2026-07-09-ambient2-fa-sky-seedance-fast.mp4`.
+
+### Artifacts (round 2)
+
+- Clips: `tools/mask-align-exp/gen12/ambientvid/raw2-<model>-<skin>.mp4` +
+  `loop2-<model>-<skin>.{mp4,webm}` (12 loops; diablo has `-v2` = glow-only prompt).
+- Jobs/params/prompts: `ambientvid/jobs2.json` (all request ids, seeds, per-model params).
+- Total spend both rounds ≈ $3.2–5.2 (round 2 alone ≈ $1.4–1.9).

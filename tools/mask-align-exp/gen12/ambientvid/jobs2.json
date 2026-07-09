@@ -1,0 +1,22 @@
+{
+  "round": 2,
+  "date": "2026-07-09",
+  "seed": 1207,
+  "note": "Round 2: region-scoped prompts (name the exact regions allowed to move, freeze all else). 4 cheap models x 2 skins.",
+  "prompts": {
+    "steam-porthole": "The brass and copper device is a rigid, perfectly static photograph — the metal housing, porthole screen, control buttons, slider, hinge, rivets and pipes NEVER move, deform, breathe or shimmer. ONLY these three regions animate: (1) the exposed brass gear train on the lower-left rotates slowly and mechanically in place; (2) the needles on the two round pressure gauges at the upper-left quiver slightly; (3) one thin wisp of steam rises gently from behind the coiled copper pipe at the right edge. Nothing else moves. Locked static camera, no zoom, no pan, no parallax. Seamless ambient loop.",
+    "diablo-gothic": "The carved dark stone tablet is a rigid, perfectly static photograph — the stone housing, skull and skeleton carvings, buttons, slider and glass screens NEVER move, deform, breathe or shimmer; the silhouette stays frozen. ONLY these regions animate: (1) the red glowing runes around the central control cross pulse slowly brighter and dimmer; (2) the molten orange cracks along the left and right edges flicker like embers; (3) a few tiny sparks drift upward from the lava glow at the bottom. Nothing else moves. Locked static camera, no zoom, no pan, no parallax. Seamless ambient loop.",
+    "negative_prompt_pixverse": "camera movement, zoom, pan, dolly, tilt, parallax, camera shake, morphing, melting, warping, deformation, breathing motion, moving buttons, moving slider, rotating device, object replacement, hands, people, text, watermark",
+    "hailuo_prefix": "[Static shot] ... (prompt_optimizer=false)"
+  },
+  "jobs": [
+    {"model": "fal-ai/bytedance/seedance/v1/pro/fast/image-to-video", "skin": "steam-porthole", "request_id": "019f4889-49fd-75c1-a190-f363172c435b", "params": {"resolution": "720p", "duration": "5", "aspect_ratio": "3:4", "camera_fixed": true, "seed": 1207}, "est_cost": 0.11},
+    {"model": "fal-ai/bytedance/seedance/v1/pro/fast/image-to-video", "skin": "diablo-gothic", "request_id": "019f4889-5389-7900-a74c-ea3e0a3f6370", "params": {"resolution": "720p", "duration": "5", "aspect_ratio": "3:4", "camera_fixed": true, "seed": 1207}, "est_cost": 0.11},
+    {"model": "fal-ai/pixverse/v6/image-to-video", "skin": "steam-porthole", "request_id": "019f4889-641c-7a93-8497-6845a8adbe6e", "params": {"resolution": "720p", "duration": 5, "seed": 1207, "thinking_type": "disabled", "negative_prompt": true}, "est_cost": 0.15},
+    {"model": "fal-ai/pixverse/v6/image-to-video", "skin": "diablo-gothic", "request_id": "019f4889-74ae-7f13-844a-d32a811a2769", "params": {"resolution": "720p", "duration": 5, "seed": 1207, "thinking_type": "disabled", "negative_prompt": true}, "est_cost": 0.15},
+    {"model": "fal-ai/wan/v2.2-a14b/image-to-video/turbo", "skin": "steam-porthole", "request_id": "019f4889-8364-7450-9f5b-80779da28ec8", "params": {"resolution": "720p", "aspect_ratio": "1:1", "seed": 1207, "enable_prompt_expansion": false}, "est_cost": 0.10},
+    {"model": "fal-ai/wan/v2.2-a14b/image-to-video/turbo", "skin": "diablo-gothic", "request_id": "019f4889-9054-7571-a958-ae6d12373444", "params": {"resolution": "720p", "aspect_ratio": "1:1", "seed": 1207, "enable_prompt_expansion": false}, "est_cost": 0.10},
+    {"model": "fal-ai/minimax/hailuo-02/standard/image-to-video", "skin": "steam-porthole", "request_id": "019f4889-9d21-7662-bca2-5f24388e0dd0", "params": {"resolution": "512P", "duration": "6", "prompt_optimizer": false}, "est_cost": 0.27},
+    {"model": "fal-ai/minimax/hailuo-02/standard/image-to-video", "skin": "diablo-gothic", "request_id": "019f4889-a77e-7f72-abc6-58bb4e0b3e8c", "params": {"resolution": "512P", "duration": "6", "prompt_optimizer": false}, "est_cost": 0.27}
+  ]
+}
