@@ -35,3 +35,16 @@ round 2 ≈ $0.22; local stages $0.
 
 ## Artifacts
 pbrtest/, pbrtest2/ (pages, maps, extraction scripts, shots) — committed f47c88cc etc.
+
+## Round 3 (pbrtest3) — RESULTS (human verdict: "great")
+- **Glyph emissive solved**: chroma×luminance gated by two-scale morphological TOP-HAT (only thin
+  locally-bright features survive) + erode + area cap → the emissive mask is literally the rune
+  strokes / crack shapes; tight 2-level glow gather + 6 cluster point-lights, fast falloff.
+  v2-vs-v3 close-ups verified: crisp glowing glyphs, localized spill (no splatter).
+- **Patina single-pass CONFIRMED**: one call returns all 5 maps (basecolor/normal/roughness/
+  metalness/height) at $0.01/MP — Marigold dropped from the pipeline (kept as $0 fallback).
+- **No emissive model exists** on fal or HF (intrinsic models bury emission in residual+specular);
+  classical extraction is the right tool.
+- **Fully interactive one-shader player**: draggable knob with rotating bump normals, silhouette-
+  press buttons re-shaded by live light, VISUALIZER AS EMISSIVE SOURCE (bars light bezel 6.5×),
+  shuffle, seek with in-shader groove resample. $0 new spend. Page: gen12/pbrtest3/.
