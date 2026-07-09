@@ -310,27 +310,46 @@ if SLIDER:
 # ---- SLOT ANGLE (rotational placement): a slot following an organic body is tilted, so the part
 # must be rotated to match. Major-axis angle from PCA on the slot's mask blob. Knobs are radial.
 def _pca_angle(mask2d):
+    # returns (angle_deg, elongation_ratio). A near-round or ragged blob has a MEANINGLESS axis —
+    # callers must require strong elongation before trusting the angle (myst read +71deg noise).
     ys, xs = np.where(mask2d)
     if len(xs) < 200: return None
     xs2 = xs - xs.mean(); ys2 = ys - ys.mean()
     cov = np.array([[(xs2 * xs2).mean(), (xs2 * ys2).mean()], [(xs2 * ys2).mean(), (ys2 * ys2).mean()]])
     w, v = np.linalg.eigh(cov); ax = v[:, int(np.argmax(w))]
     a = float(np.degrees(np.arctan2(ax[1], ax[0])))
-    return (a - 180) if a > 90 else (a + 180) if a < -90 else a
+    a = (a - 180) if a > 90 else (a + 180) if a < -90 else a
+    elong = float(np.sqrt(max(w) / max(1e-9, min(w))))
+    return a, elong
 for k in ([TOGGLE] if TOGGLE else []):
     idx = NAMES.index(k) if k in NAMES else -1
     if idx < 0: continue
-    slot_ang = _pca_angle((assign == idx) & (YY < DEVF * MH))   # DEVICE slot only (exclude strip cells!)
-    if slot_ang is None or not regs.get(k): continue
+    slot_r = _pca_angle((assign == idx) & (YY < DEVF * MH))   # DEVICE slot only (exclude strip cells!)
+    if slot_r is None or not regs.get(k): continue
+    slot_ang, slot_el = slot_r
     # rotate the PART so ITS OWN long axis lines up with the SLOT's — relative, not absolute. A vertical
     # part in a vertical slot then needs ~0deg (not 90). part axis from the biref OFF cut's alpha.
     poff = os.path.join(BIREF, k + "_off.png")
-    part_ang = _pca_angle(np.asarray(Image.open(poff).convert("RGBA"))[:, :, 3] > 30) if os.path.exists(poff) else 0.0
+    part_r = _pca_angle(np.asarray(Image.open(poff).convert("RGBA"))[:, :, 3] > 30) if os.path.exists(poff) else None
+    part_ang, part_el = part_r if part_r else (0.0, 0.0)
+    # ELONGATION GATE: a weak axis (ratio < 2.0) on EITHER blob means the angle is noise → no rotation
+    if slot_el < 2.0 or part_el < 2.0:
+        regs[k].pop("angle", None)
+        print(f"[angle] {k}: elongation too weak (slot {slot_el:.1f}, part {part_el:.1f}) -> no rotation")
+        continue
     rot = slot_ang - (part_ang or 0.0)
     rot = (rot + 90) % 180 - 90            # wrap to (-90, 90]
-    if abs(rot) > 4:
+    # PCA on rough painted blobs is noisy (+-10deg): snap near-cardinal to EXACT 0/90 so a vertical
+    # part in a vertical slot never gets a bogus partial rotation. Only true diagonals (>12deg off
+    # cardinal) rotate.
+    if abs(rot) <= 20: rot = 0.0
+    elif abs(rot - 90) <= 20: rot = 90.0
+    elif abs(rot + 90) <= 20: rot = -90.0
+    if abs(rot) > 0 and regs.get(k):
         regs[k]["angle"] = round(rot, 1)
         print(f"[angle] {k}: slot={slot_ang:+.0f} part={part_ang or 0:+.0f} -> rotate {rot:+.1f}deg")
+    elif regs.get(k):
+        regs[k].pop("angle", None)
 
 # ---- SILHOUETTE STATE-REGISTRATION for the toggle (align ON cut onto OFF cut) ----
 def _alpha(path):
@@ -422,6 +441,8 @@ biref_parts = [p for p in ["vol", "seek", TOGGLE + "_off", TOGGLE + "_on"] if TO
 need_parts = (KNOBS + ([SLIDER] if SLIDER else []) + ([TOGGLE + "_off", TOGGLE + "_on"] if TOGGLE else []))
 biref_ok = all(os.path.exists(os.path.join(BIREF, p + ".png")) for p in need_parts) if os.path.exists(BIREF) else None
 reasons = []
+knob_tmpl = [k for k in KNOBS if (regs.get(k) or {}).get("fromTemplate")]
+if knob_tmpl: reasons.append("knob-template-fallback:" + ",".join(knob_tmpl))
 if empty_fail: reasons.append("emptiness")
 if missing: reasons.append("missing:" + ",".join(missing))
 if seek_cov is not None and seek_cov < 0.7: reasons.append(f"seek-cov={seek_cov}")
@@ -430,7 +451,7 @@ if biref_ok is False: reasons.append("biref-parts")
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "reasons": reasons,
-        "PASS": (not empty_fail) and (not missing) and (seek_cov is None or seek_cov >= 0.7)
+        "PASS": (not empty_fail) and (not missing) and (not knob_tmpl) and (seek_cov is None or seek_cov >= 0.7)
                 and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
                 and (not TOGGLE or sa is None or sa_ok)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate

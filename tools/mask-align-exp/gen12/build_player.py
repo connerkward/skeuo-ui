@@ -28,7 +28,7 @@ HTML = f"""<!doctype html><html><head><meta charset=utf-8>
   #phone{{position:relative;width:100%;aspect-ratio:var(--ar);
     background:url('paint.png?v={V}') no-repeat;background-size:100% auto;border-radius:12px}}
   .pbtn{{position:absolute;cursor:pointer;border-radius:14px;touch-action:manipulation}}
-  .pbtn .ink{{position:absolute;inset:-9%;border-radius:inherit;background:radial-gradient(closest-side,#000d 0%,#000a 65%,#0000 100%);
+  .pbtn .ink{{position:absolute;inset:-9%;border-radius:inherit;background:radial-gradient(closest-side,rgba(0,0,0,var(--inkA,0.8)) 0%,rgba(0,0,0,calc(var(--inkA,0.8)*0.75)) 65%,#0000 100%);
     mix-blend-mode:multiply;opacity:0;transition:opacity .08s}}
   .pbtn:active .ink{{opacity:1}}
   .pknob{{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}}
@@ -102,8 +102,8 @@ const V='{V}';
       const ci=new Image();ci.src=CUT['vol'].url;await ci.decode();sg.drawImage(ci,0,0,12,12);
       const dd=sg.getImageData(0,0,12,12).data;let rr=0,gg=0,bb=0,nn=0;
       for(let i=0;i<dd.length;i+=4){{if(dd[i+3]>60){{rr+=dd[i];gg+=dd[i+1];bb+=dd[i+2];nn++;}}}}
-      if(nn){{const L=v=>Math.min(255,Math.round(v/nn*0.45+255*0.55));
-        el.querySelector('.spec').style.background='radial-gradient(42% 34% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.75), rgba(255,255,255,0) 60%)';}}
+      if(nn){{const L=v=>Math.min(255,Math.round(v/nn*0.62+255*0.38));
+        el.querySelector('.spec').style.background='radial-gradient(42% 34% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.6), rgba(255,255,255,0) 60%)';}}
     }}catch(e){{ el.querySelector('.spec').style.background='radial-gradient(42% 34% at 38% 30%,#ffffff99,#fff0 60%)'; }}
     const cap=el.querySelector('.cap');let val=0.7,sy=0,sv=0,drag=false;
     const rend=()=>cap.style.transform='rotate('+(-135+val*270)+'deg)';rend();
@@ -152,6 +152,13 @@ const V='{V}';
     const el=document.createElement('div');el.className='pbtn';el.title=b;
     el.style.left=px(r.device)+'%';el.style.top=py(r.device)+'%';el.style.width=pw(r.device)+'%';el.style.height=ph(r.device)+'%';
     el.innerHTML='<div class=ink></div>';
+    // press-shadow strength adapts to the button's own material: light glass dims gently,
+    // dark stone presses hard (sample the paint under the button)
+    try{{ const bx=r.device; const c2=document.createElement('canvas');c2.width=c2.height=8;
+      c2.getContext('2d').drawImage(paint,bx[0]*PW,bx[1]*PH,bx[2]*PW,bx[3]*PH,0,0,8,8);
+      const dd2=c2.getContext('2d').getImageData(0,0,8,8).data;let lum=0;
+      for(let i=0;i<dd2.length;i+=4)lum+=0.299*dd2[i]+0.587*dd2[i+1]+0.114*dd2[i+2];
+      lum/=64; el.style.setProperty('--inkA',(0.28+0.55*(1-lum/255)).toFixed(2)); }}catch(e){{}}
     el.addEventListener('click',()=>{{ if(b==='playpause'){{playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';}}
       else if(b==='queue'){{document.getElementById('queue').classList.toggle('open');}}
       else if(b==='repeat'){{el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];}}
