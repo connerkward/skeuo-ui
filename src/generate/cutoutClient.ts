@@ -25,7 +25,23 @@
 import { cutoutColorAware, KEY_WHITE, type RGB, DEVICE_FRAC, type BlueprintLayout, type BlueprintCell, type SpriteKind } from "./blueprint";
 import { extractMaskRegions, toSkinMaskAlign, type SkinMaskAlign } from "./maskAlign";
 import type { Template } from "../template/schema";
+import type { StepEvent } from "./pipelineViz";
 import { apiUrl } from "../platform";
+
+// Small downscaled data-URL snapshot of a canvas, for the live pipeline visualizer's
+// per-step thumbnail. Cheap: draws once into a ≤max box. Never throws (returns "").
+export function canvasThumb(src: HTMLCanvasElement, max = 200): string {
+  try {
+    const s = Math.min(1, max / Math.max(src.width, src.height));
+    const w = Math.max(1, Math.round(src.width * s)), h = Math.max(1, Math.round(src.height * s));
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    if (!ctx) return "";
+    ctx.drawImage(src, 0, 0, w, h);
+    return c.toDataURL("image/png");
+  } catch { return ""; }
+}
 
 // Decode raw image bytes into something drawable, robustly across engines.
 // createImageBitmap is the fast path, but in real WKWebView (the iOS app + macOS
@@ -519,6 +535,7 @@ export async function finishCutoutFull(
   layout?: BlueprintLayout,
   template?: Template,
   key: RGB = KEY_WHITE,          // backdrop the device was painted on (white ⇒ no colour cleanup)
+  onStep?: (ev: StepEvent) => void,   // live pipeline-visualizer events at the real await-points
 ): Promise<FinishResult> {
   let paint = await fetchPaintCanvas(paintUrl);
   const isData = paintUrl.startsWith("data:");
@@ -533,9 +550,16 @@ export async function finishCutoutFull(
     paint = halves.paint;
     if (layout.maskKeys?.length) {
       try {
+        onStep?.({ stage: "detect", status: "running" });
         const raw = extractMaskRegions(paint, halves.mask, layout.maskKeys, layout.devFrac);
+        onStep?.({ stage: "detect", status: "done", artifact: canvasThumb(halves.mask), note: `${Object.keys(raw.regions).length} mask regions` });
+        onStep?.({ stage: "align", status: "running" });
         maskAlign = toSkinMaskAlign(raw, halves.mask, layout.maskKeys);
-      } catch (e) { console.warn("mask extraction failed (ignored)", e); }
+        onStep?.({ stage: "align", status: "done", note: `${Object.keys(maskAlign.regions).length} seated (mask-align)` });
+      } catch (e) {
+        console.warn("mask extraction failed (ignored)", e);
+        onStep?.({ stage: "detect", status: "failed", note: "mask extraction failed" });
+      }
     }
   }
 
@@ -560,6 +584,7 @@ export async function finishCutoutFull(
   // BiRefNet has the figure-ground contrast it needs — a light body sits on a dark backdrop and
   // vice-versa. We DROPPED the colour key: a neutral key would eat grey/chrome device parts, and
   // a saturated key tinted translucent bodies + bled pink frames. `key` is now unused here.
+  onStep?.({ stage: "cut", status: "running", artifact: canvasThumb(deviceCanvas), note: "matting device" });
   const frameBlob = await serverCutout(deviceCanvas, "General Use (Heavy)");
   await uploadFrame(id, frameBlob);
 
@@ -590,22 +615,35 @@ export async function finishCutoutFull(
   // light-first pass. (Per request: heavy every time, even before any contrast tune.)
   let tstrip: HTMLCanvasElement | null = null;
   try { tstrip = await blobToCanvas(await serverCutout(strip, "General Use (Heavy)")); } catch { tstrip = null; }
+  onStep?.({ stage: "cut", status: "done", artifact: tstrip ? canvasThumb(tstrip) : canvasThumb(strip), note: tstrip ? "body + strip matted" : "strip matte failed — geometric fallback" });
   // PRIMARY: connected-component segmentation of the whole matted strip (assign each blob
   // to the nearest control cell, union per cell). Robust to off-centre paint + multi-part
   // controls; uses where controls actually landed, not an assumed grid.
+  onStep?.({ stage: "detect", status: "running" });
   const sprites: Record<string, HTMLCanvasElement | null> =
     tstrip ? segmentStripByComponents(tstrip, layout.cells) : {};
+  const foundCount = Object.values(sprites).filter((s) => !cutLooksFailed(s)).length;
+  onStep?.({ stage: "detect", status: "done", artifact: tstrip ? canvasThumb(tstrip) : undefined, note: `${foundCount}/${layout.cells.length} controls located` });
+  // Placement = the blueprint sockets, AS-IS (deterministic template rects are the truth).
+  onStep?.({ stage: "align", status: "done", note: `${layout.cells.length} sockets (blueprint-seated)` });
   // Upload: prefer the component-segmented sprite; fall back to the per-cell grid crop, then
   // the geometric cut, if a control captured no component / looks failed.
+  onStep?.({ stage: "fit", status: "running" });
+  let repaired = 0;               // controls that needed a fallback cut (correction stage)
+  let firstSprite: HTMLCanvasElement | null = null;
   for (const cell of layout.cells) {
     try {
       let sprite = sprites[cell.bind] ?? null;
-      if (cutLooksFailed(sprite)) sprite = tstrip ? cutFrom(tstrip, cell.cellRect) : null;
-      if (cutLooksFailed(sprite)) sprite = cutSprite(paint, cell.cellRect, cell.kind);
+      if (cutLooksFailed(sprite)) { sprite = tstrip ? cutFrom(tstrip, cell.cellRect) : null; repaired++; }
+      if (cutLooksFailed(sprite)) { sprite = cutSprite(paint, cell.cellRect, cell.kind); }
       if (!sprite) continue;
+      if (!firstSprite) firstSprite = sprite;
       spriteUrls[cell.bind] = await uploadSprite(id, cell.bind, await canvasToBlob(sprite));
     } catch { /* skip this sprite; app falls back to donor for this bind */ }
   }
+  const fitted = Object.keys(spriteUrls).length;
+  onStep?.({ stage: "fit", status: "done", artifact: firstSprite ? canvasThumb(firstSprite) : undefined, note: `${fitted} sprites sized to slots` });
+  onStep?.({ stage: "correct", status: repaired && fitted === 0 ? "failed" : "done", note: repaired ? `${repaired} repaired via fallback` : "no repair needed" });
 
   return {
     frameUrl: apiUrl(durableFrameUrl),

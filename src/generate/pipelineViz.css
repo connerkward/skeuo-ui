@@ -1,0 +1,117 @@
+/* Live pipeline step visualizer — a non-blocking, dismissible overlay that animates
+   through the real generation stages while a template is sent to fal. Matches the
+   wizard's near-black panel (#0d0d10) + blue accent (#2a5cc0/#4a8aff). Fluid width. */
+
+.pviz-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: stretch; justify-content: flex-end;
+  background: rgba(0, 0, 0, .5); backdrop-filter: blur(3px);
+  animation: pviz-scrim-in .18s ease both;
+}
+@keyframes pviz-scrim-in { from { opacity: 0 } to { opacity: 1 } }
+
+.pviz {
+  width: min(440px, 100%);
+  max-width: 100%;
+  height: 100%;
+  display: flex; flex-direction: column;
+  background: #0d0d10;
+  border-left: 1px solid #26262c;
+  box-shadow: -18px 0 48px rgba(0, 0, 0, .55);
+  color: #e6e6ea;
+  font: 13px/1.4 system-ui, -apple-system, sans-serif;
+  animation: pviz-slide-in .28s cubic-bezier(.2, .7, .3, 1) both;
+}
+@keyframes pviz-slide-in { from { transform: translateX(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+/* narrow screens: dock to bottom as a sheet instead of a right rail */
+@media (max-width: 560px) {
+  .pviz-scrim { align-items: flex-end; justify-content: stretch; }
+  .pviz { width: 100%; height: min(80vh, 640px); border-left: none; border-top: 1px solid #26262c; border-radius: 14px 14px 0 0; animation: pviz-sheet-in .28s cubic-bezier(.2, .7, .3, 1) both; }
+  @keyframes pviz-sheet-in { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+}
+
+.pviz-head { padding: 14px 16px 10px; border-bottom: 1px solid #1c1c22; }
+.pviz-head-row { display: flex; align-items: center; gap: 10px; }
+.pviz-title { font-weight: 700; font-size: 14px; letter-spacing: .2px; }
+.pviz-model { color: #8a8a95; font-size: 11px; margin-left: auto; }
+.pviz-x {
+  appearance: none; border: 1px solid #2b2b33; background: #16161b; color: #b9b9c2;
+  width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-size: 15px; line-height: 1;
+}
+.pviz-x:hover { background: #202028; color: #fff; }
+
+/* header progress bar */
+.pviz-bar { margin-top: 10px; height: 5px; border-radius: 999px; background: #17171d; overflow: hidden; }
+.pviz-bar-fill { height: 100%; background: linear-gradient(90deg, #2a5cc0, #4a8aff); border-radius: 999px; transition: width .5s cubic-bezier(.3, .7, .3, 1); }
+
+.pviz-list { list-style: none; margin: 0; padding: 8px 12px 14px; overflow-y: auto; flex: 1; }
+
+.pviz-step { display: grid; grid-template-columns: 30px 62px minmax(0, 1fr); gap: 10px; padding: 8px 4px; position: relative; }
+/* connector rail down the left node column */
+.pviz-step::before {
+  content: ""; position: absolute; left: 15px; top: 30px; bottom: -8px; width: 2px;
+  background: #22222a; transition: background .4s ease;
+}
+.pviz-step:last-child::before { display: none; }
+.pviz-step.done::before { background: linear-gradient(#3ad07a, #2a8f57); }
+
+/* node */
+.pviz-node {
+  grid-column: 1; grid-row: 1 / span 2;
+  width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 13px;
+  border: 2px solid #33333d; background: #14141a; color: #6f6f7a;
+  transition: border-color .3s ease, color .3s ease, background .3s ease;
+}
+.pviz-step.running .pviz-node { border-color: #4a8aff; color: #cfe1ff; background: #101828; animation: pviz-pulse 1.3s ease-in-out infinite; }
+.pviz-step.done .pviz-node { border-color: #3ad07a; color: #071; background: #0f2418; }
+.pviz-step.failed .pviz-node { border-color: #ff5a6e; color: #ffd7dc; background: #2a1216; }
+@keyframes pviz-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 138, 255, .45); }
+  50% { box-shadow: 0 0 0 7px rgba(74, 138, 255, 0); }
+}
+
+.pviz-node .pviz-check { animation: pviz-pop .28s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes pviz-pop { from { transform: scale(.2); opacity: 0 } to { transform: none; opacity: 1 } }
+
+/* spinner for running */
+.pviz-spin { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(207, 225, 255, .3); border-top-color: #cfe1ff; animation: pviz-spin 0.7s linear infinite; }
+@keyframes pviz-spin { to { transform: rotate(360deg) } }
+
+.pviz-txt { grid-column: 3; min-width: 0; align-self: center; }
+.pviz-lbl { font-weight: 600; }
+.pviz-step.pending .pviz-lbl { color: #7a7a85; }
+.pviz-step.running .pviz-lbl { color: #eaf1ff; }
+.pviz-blurb { color: #83838e; font-size: 11.5px; margin-top: 1px; }
+.pviz-step.running .pviz-blurb { color: #a9bde4; }
+.pviz-note { color: #6fce9a; font-size: 11px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.pviz-step.failed .pviz-note { color: #ff8a97; }
+
+/* running dots */
+.pviz-dots::after { content: ""; animation: pviz-dots 1.2s steps(4, end) infinite; }
+@keyframes pviz-dots { 0% { content: "" } 25% { content: "·" } 50% { content: "··" } 75% { content: "···" } }
+
+/* artifact thumbnail */
+.pviz-thumb {
+  grid-column: 2; grid-row: 1 / span 2; align-self: center;
+  width: 62px; height: 62px; border-radius: 8px; overflow: hidden; position: relative;
+  border: 1px solid #26262c; background:
+    repeating-conic-gradient(#1a1a20 0% 25%, #131318 0% 50%) 0 / 12px 12px;
+}
+.pviz-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; animation: pviz-fade .45s ease both; }
+@keyframes pviz-fade { from { opacity: 0; transform: scale(.94) } to { opacity: 1; transform: none } }
+/* scanning sweep while a step is running */
+.pviz-step.running .pviz-thumb::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(74, 138, 255, .5) 50%, transparent 80%);
+  transform: translateX(-100%); animation: pviz-scan 1.15s ease-in-out infinite;
+}
+@keyframes pviz-scan { to { transform: translateX(100%) } }
+/* empty placeholder box keeps the grid column stable before an artifact arrives */
+.pviz-thumb.empty { opacity: .5; }
+.pviz-thumb.empty.running { opacity: 1; }
+
+.pviz-foot { padding: 9px 16px; border-top: 1px solid #1c1c22; color: #74747f; font-size: 11px; display: flex; gap: 8px; align-items: center; }
+.pviz-foot .pviz-live { color: #6fce9a; }
+.pviz-foot.done .pviz-live { color: #4a8aff; }

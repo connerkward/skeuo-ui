@@ -9,6 +9,8 @@ import { regionsForVariant, layoutRandom, type LayoutVariant } from "./layouts";
 import type { Region, Kind, DynamicType } from "../template/schema";
 import type { RuntimeSkin } from "./runtimeSkin";
 import { LayoutStage } from "../template/LayoutStage";
+import { PipelineVisualizer } from "./PipelineVisualizer";
+import { initSteps, applyStepEvent, completeSteps, type StepsState, type StepEvent } from "./pipelineViz";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CreateWizard — ONE guided flow that replaces the old create drawer + standalone
@@ -106,6 +108,19 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
   // live preview of the user's ACTUAL skin forming, streamed from the server as each
   // pass completes (blueprint → grown body → painted skin)
   const [stage, setStage] = useState<GenStageEvent | null>(null);
+  // live pipeline STEP visualizer — the watchable, agent-like panel that animates
+  // through the real stages (blueprint → paint → cut → detect → align → fit → correct),
+  // driven by real server-stream + client cutout events (never a fake timer).
+  const [steps, setSteps] = useState<StepsState>(initSteps);
+  const [vizOpen, setVizOpen] = useState(false);
+  const pushStep = (ev: StepEvent) => setSteps((s) => applyStepEvent(s, ev));
+  // map a server-streamed GenStageEvent (blueprint/envelope/paint) onto the visualizer
+  const onServerStage = (ev: GenStageEvent) => {
+    setStage(ev);
+    if (ev.stage === "blueprint") { pushStep({ stage: "blueprint", status: "done", artifact: ev.url }); pushStep({ stage: "paint", status: "running" }); }
+    else if (ev.stage === "envelope") { pushStep({ stage: "paint", status: "running", artifact: ev.url, note: "growing body" }); }
+    else if (ev.stage === "paint") { pushStep({ stage: "paint", status: "done", artifact: ev.url }); pushStep({ stage: "cut", status: "running" }); }
+  };
 
   const usePreset = (v: LayoutVariant) => { setVariant(v); setRegions(regionsForVariant(v)); };
 
@@ -154,14 +169,20 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         const model = models[i];
         setProgress({ idx: i, total: models.length, model, startedAt: Date.now() });
         setStage(null);   // reset the live preview for this model's pass
+        setSteps(initSteps());               // fresh step list for this model's pass
+        setVizOpen(true);                    // open the watchable pipeline visualizer
+        pushStep({ stage: "blueprint", status: "running" });
         const req: GenerateRequest = {
           // envelope:true runs the extra sculpt pass (opt-in). Otherwise one pass:
           // the model expands its own shape. An uploaded body is used directly.
           prompt: prompt.trim(), variant, refImage, model, envelope: grows, envelopeImage: envImage, regions,
         };
-        const data = await postGenerate(req, (ev) => setStage(ev));
-        if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); continue; }
+        const data = await postGenerate(req, onServerStage);
+        if (data.status === "error") { setErr(`${modelLabel(model)}: ${data.error}`); pushStep({ stage: "paint", status: "failed", note: "generation failed" }); continue; }
         if (data.status !== "done") { setErr("unexpected pending response"); continue; }
+        // paint resolved server-side → cut begins client-side
+        pushStep({ stage: "paint", status: "done", artifact: data.paintUrl ? apiUrl(data.paintUrl) : undefined });
+        pushStep({ stage: "cut", status: "running" });
         // The CF Worker defers the alpha cutout to here (CPU ceiling) — cut the raw
         // paint in-browser and upload the finished frame.png back. No-op server-side.
         let frameUrl = apiUrl(data.frameUrl);
@@ -170,7 +191,7 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
         let maskAlign: SkinMaskAlign | undefined;
         if (data.needsCutout && data.paintUrl) {
           try {
-            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template, data.keyColor);
+            const r = await finishCutoutFull(data.id, data.paintUrl, data.frameUrl, data.layout, data.template, data.keyColor, pushStep);
             frameUrl = r.frameUrl; hasSprites = r.sprites; template = r.template ?? data.template;
             maskAlign = r.maskAlign;
           } catch (e) {
@@ -179,8 +200,12 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
             // no sprites, so the user still gets the skin instead of nothing.
             console.warn("cutout failed, falling back to raw paint frame", e);
             setErr(`${modelLabel(model)}: cutout failed — showing raw paint (${e instanceof Error ? e.message : String(e)})`);
+            pushStep({ stage: "cut", status: "failed", note: "cutout failed — raw paint kept" });
           }
         }
+        // whatever stages produced no event (legacy data-URL path, or a skipped step)
+        // resolve to done so the visualizer settles on all-checks.
+        setSteps((s) => completeSteps(s));
         onCreated({
           id: data.id,
           name: data.name?.trim() || prompt.trim().slice(0, 24),
@@ -372,6 +397,19 @@ export function CreateWizard({ onCreated }: { onCreated: (s: RuntimeSkin) => voi
           </button>
         )}
       </div>
+
+      {/* watchable step-by-step pipeline animation — non-blocking + dismissible */}
+      <PipelineVisualizer
+        steps={steps}
+        open={vizOpen}
+        onClose={() => setVizOpen(false)}
+        current={prompt.trim().slice(0, 40)}
+        modelLabel={progress
+          ? (progress.total > 1
+              ? `model ${progress.idx + 1}/${progress.total} · ${modelLabel(progress.model)}`
+              : modelLabel(progress.model))
+          : undefined}
+      />
     </div>
   );
 }
