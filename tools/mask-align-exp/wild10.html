@@ -256,13 +256,15 @@
     const c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight;
     const cx=c.getContext('2d'); cx.drawImage(im,0,0);
     const d=cx.getImageData(0,0,c.width,c.height).data;
-    let x0=c.width,y0=c.height,x1=0,y1=0,any=false;
+    let x0=c.width,y0=c.height,x1=0,y1=0,any=false,sx=0,sy=0,sn=0;
     for(let p=0;p<d.length;p+=4){ if(d[p+3]>12){ const i=p/4,x=i%c.width,y=(i/c.width)|0;
-      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; any=true; } }
-    if(!any) return {url:im.src,w:c.width,h:c.height};
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; any=true;
+      if(Math.max(d[p],d[p+1],d[p+2])>110){ sx+=x; sy+=y; sn++; } } }   // bright metallic-FACE centroid
+    if(!any) return {url:im.src,w:c.width,h:c.height,cx:0.5,cy:0.5};
     const tw=x1-x0+1, th=y1-y0+1, t=document.createElement('canvas'); t.width=tw; t.height=th;
     t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th);
-    return {url:t.toDataURL(),w:tw,h:th};
+    const fcx=sn?((sx/sn)-x0)/tw:0.5, fcy=sn?((sy/sn)-y0)/th:0.5;   // face centroid as fraction of trimmed cut
+    return {url:t.toDataURL(),w:tw,h:th,cx:fcx,cy:fcy};
   }
   const CUT={};
   for(const k of ['vol','bal','seek','tog_off','tog_on']){
@@ -305,11 +307,16 @@
   (function(){ const r=rr.tog; if(!r||!r.device||!CUT.tog_off) return;
     const off=CUT.tog_off, on=CUT.tog_on||off;
     const el=document.createElement('div'); el.className='ptog';
-    el.style.backgroundImage='url('+off.url+')';
-    const S=1.06, tc=ctr(r.device), bw=off.w/PW*S, bh=off.h/PH*S; // sprite's own 1:1 painted size ×1.06 — slightly proud of the slot
-    el.style.left=(tc[0]-bw/2)*100+'%'; el.style.top=((tc[1]-bh/2)/DF)*100+'%'; el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%';
-    let ison=false;
-    el.addEventListener('click',()=>{ison=!ison; el.style.backgroundImage='url('+(ison?on:off).url+')';});
+    const S=1.06, tc=ctr(r.device);
+    // Place each state by its metallic-FACE centroid (not the cut bbox), so the switch HOUSING
+    // sits at the SAME device point in both states — BiRefNet trims off/on slightly differently,
+    // and centring the raw cut made the switch appear to jump between states.
+    const place=(c)=>{ const bw=c.w/PW*S, bh=c.h/PH*S;
+      el.style.backgroundImage='url('+c.url+')';
+      el.style.left=(tc[0]-c.cx*bw)*100+'%'; el.style.top=((tc[1]-c.cy*bh)/DF)*100+'%';
+      el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%'; };
+    place(off); let ison=false;
+    el.addEventListener('click',()=>{ison=!ison; place(ison?on:off);});
     dev.appendChild(el);
   })();
   function cutMaskShape(rect,rgb){

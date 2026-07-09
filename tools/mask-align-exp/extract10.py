@@ -128,6 +128,7 @@ for name in NAMES:
 
 # --- SEAT: measured painted-socket geometry from the global matte's alpha holes
 _mp = os.path.join(os.path.dirname(__file__), "assets10_biref", "global-matte.png")
+_holes = []                                                          # (cx, cy, r) socket wells; centre = hole CENTROID
 if os.path.exists(_mp):
     _gm = np.asarray(Image.open(_mp).convert("RGBA").resize((PPW2, PPH2)))[:, :, 3] > 90
     _lbl, _n = ndimage.label(_gm)
@@ -144,8 +145,8 @@ if os.path.exists(_mp):
             _ring = ndimage.binary_dilation(_hm, iterations=2) & ~_hm
             if _dev[_ring].mean() < 0.5: continue
             _dt = ndimage.distance_transform_edt(_hm)
-            _cy, _cx = np.unravel_index(int(np.argmax(_dt)), _dt.shape)
-            _holes.append((float(_cx), float(_cy), float(_dt.max())))
+            _hys, _hxs = np.where(_hm)                               # hole CENTROID = geometric socket centre
+            _holes.append((float(_hxs.mean()), float(_hys.mean()), float(_dt.max())))   # (no top-light bias)
         print("socket seats (painted wells via matte alpha-holes):")
         for name in SP:
             r = regs.get(name)
@@ -237,6 +238,11 @@ for k in ["vol","bal"]:
     if not r or not r.get("maskDevice"): continue
     sc,fx,fy,fr=circle_fit(r["maskDevice"])
     mb=r["maskDevice"]; mcx=(mb[0]+mb[2]/2)*GW; mcy=(mb[1]+mb[3]/2)*GH
+    # snap the fit CENTRE to the matte alpha-hole CENTROID (geometric socket centre, no specular
+    # bias); keep the fit radius. No-op when they already agree. (Same as extract9.)
+    bw=mb[2]*GW; bh=mb[3]*GH
+    hc=[h for h in _holes if abs(h[0]-fx)<bw and abs(h[1]-fy)<bh and 0.4*fr < h[2] < 1.4*fr]
+    if hc: fx,fy=min(hc,key=lambda t:(t[0]-fx)**2+(t[1]-fy)**2)[:2]
     drift_samples.append((fx-mcx,fy-mcy))
     r["device"]=[(fx-fr)/GW,(fy-fr)/GH,2*fr/GW,2*fr/GH]
     r["seat"]=[fx/GW,fy/GH,fr/GW]

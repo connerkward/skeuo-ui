@@ -35,6 +35,16 @@ hand to make ONE run look right is the anti-pattern: it silently breaks on the n
 - **Validate a recompute by diffing:** rerun the extractor and diff `regions.json` — ONLY the
   intended field may change (everything else is deterministic from the same inputs). A computed
   span must reproduce the hand-measured target within a few px before you trust it.
+- **A socket CENTRE is the matte alpha-hole CENTROID** — geometric, no luminance bias. Do NOT
+  use the dark-well luminance centroid (top-light shadow drags it up ~50px) and do NOT trust a
+  gradient circle-fit's centre alone (an asymmetric specular arc pulls it toward the bright
+  side ~10px — the bal-knob burn). Fit the RADIUS by gradient, snap the CENTRE to the hole
+  centroid; it's a no-op when they already agree (vol, magma) and recentres the asymmetric case.
+- **A multi-state widget (toggle off/on, any sprite that swaps) must align its STATES by their
+  content, not their cut frame.** Independently-cut sprites (BiRefNet islands) trim each state
+  slightly differently, so centring the raw cut makes the housing appear to jump between states.
+  Place each state by its content (bright-face) centroid so the fixed housing coincides and only
+  the moving part (rocker/lever) changes — verify by measuring the rendered box across states.
 
 ## 2. Verify placement in the REAL DOM by centre-vs-centre, not paint-space math alone
 
