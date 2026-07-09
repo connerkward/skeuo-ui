@@ -3,7 +3,7 @@
   "title": "Wmp Quicksilver",
   "mode": "templated",
   "material_is_dark": false,
-  "seed": 84,
+  "seed": 584,
   "palette": {
     "silver": [
       190,
@@ -37,5 +37,17 @@
     ]
   },
   "theme_prompt": "Windows-Media-Player-9 era 'QuickSilver' skin: a sleek brushed-and-polished SILVER capsule with a rounded chrome bezel, a glowing BLUE glass LCD, subtle blue reflections, crisp bevels and soft studio highlights. Clean early-2000s Microsoft consumer-electronics look \u2014 metallic, glossy, understated blue accents.",
-  "layout": "hcapsule"
+  "layout": "hcapsule",
+  "lighting": {
+    "emissive_hint": "cool blue LED accents on the brushed silver",
+    "emissive_color": [
+      90,
+      160,
+      255
+    ],
+    "pulse": "breathe",
+    "intensity": 0.6,
+    "viz_emissive": true,
+    "beat_couple": 0.04
+  }
 }

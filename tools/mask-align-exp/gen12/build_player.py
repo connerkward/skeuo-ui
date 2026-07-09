@@ -51,7 +51,11 @@ HTML = f"""<!doctype html><html><head><meta charset=utf-8>
   .badge{{font:10px var(--mono);color:#7f8798;border:1px solid #ffffff18;border-radius:5px;padding:2px 6px}}
 </style></head><body>
 <h1>{SID} — {TITLE}</h1>
-<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob</div>
+<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob
+<a id=pbrlink href="player-pbr.html" style="color:#8fb4ff;display:none">· ✨ dynamic lighting</a></div>
+<script>/* feature-flagged PBR player (WIRE-pbr.md): offer the toggle only when the sibling
+player-pbr.html was actually built — default stays this plain player */
+fetch('player-pbr.html',{{method:'HEAD'}}).then(r=>{{if(r.ok)document.getElementById('pbrlink').style.display='inline'}}).catch(()=>{{}});</script>
 <div id=stage><div id=phone>
   <canvas class=viz id=viz></canvas>
   <div class=art id=art></div>

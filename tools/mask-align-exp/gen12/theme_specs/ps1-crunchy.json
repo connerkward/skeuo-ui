@@ -3,7 +3,7 @@
   "title": "Ps1 Crunchy",
   "mode": "templated",
   "material_is_dark": true,
-  "seed": 84,
+  "seed": 584,
   "palette": {
     "grimy_steel": [
       100,
@@ -37,5 +37,13 @@
     ]
   },
   "theme_prompt": "PS1-era CRUNCHY low-poly game look: affine-textured grungy LOW-POLY surfaces, dithered gradients, warping wobbly textures, muddy 90s PlayStation-1 palette, industrial survival-horror grime, low-res texture crunch, dark atmospheric lighting. That gritty early-3D Resident-Evil / Metal-Gear texture-mapped aesthetic.",
-  "layout": "hcapsule"
+  "layout": "hcapsule",
+  "lighting": {
+    "emissive_hint": "dithered CRT scanline glow from the display panels",
+    "emissive_color": "auto",
+    "pulse": "phosphor",
+    "intensity": 0.5,
+    "viz_emissive": true,
+    "beat_couple": 0.05
+  }
 }

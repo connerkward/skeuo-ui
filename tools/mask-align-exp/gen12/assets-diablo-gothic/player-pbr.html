@@ -1,0 +1,745 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>skeuo.fm — diablo-gothic (PBR lit)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0e0f13; color: #cdd2dc; font: 14px/1.5 system-ui, sans-serif; }
+  header { padding: 12px 16px 4px; }
+  header h1 { font: 600 15px ui-monospace, Menlo, monospace; margin: 0; color: #eef; }
+  .anno { font-size: 11px; color: #7f8798; max-width: 980px; overflow-wrap: anywhere; }
+  .anno a { color: #8fb4ff; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 16px 30px; align-items: flex-start; }
+  .stage { flex: 1 1 400px; min-width: 280px; max-width: 640px; position: relative; }
+  canvas.gl { width: 100%; height: auto; display: block; border-radius: 12px; background: #0c0d10; touch-action: none; }
+  .badge { position: absolute; top: 8px; left: 8px; font-size: 10px; background: rgba(0,0,0,.55);
+    padding: 3px 7px; border-radius: 5px; color: #cfd5e0; pointer-events: none; }
+  .panel { flex: 0 1 260px; min-width: 220px; display: flex; flex-direction: column; gap: 7px; }
+  .panel label { display: flex; justify-content: space-between; font-size: 12px; color: #9aa2b2; }
+  .panel input[type=range] { width: 100%; margin: 0; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button, select { background: #23262e; color: #d8dbe2; border: 1px solid #3a3f4b; border-radius: 7px;
+    padding: 6px 11px; font-size: 12.5px; cursor: pointer; flex: 1; }
+  button.on { background: #3b5bd9; border-color: #3b5bd9; color: #fff; }
+  .hint { font-size: 11px; color: #6b7383; overflow-wrap: anywhere; }
+</style></head><body>
+<header>
+  <h1>diablo-gothic — diablo-gothic · ✨ dynamic lighting (PBR)</h1>
+  <div class="anno">paint: fal-ai/gemini-3-pro-image-preview/edit · PBR maps: fal-ai/patina (1 call = 5 maps, ~$0.02/skin) · emissive + relight: local $0 · <a href="player.html">← plain player</a>
+  · beat clock <b id="bpmLab"></b> bpm (?bpm=) · pulse: <b>ember</b> — “the glowing blood-red runes and ember cracks in the stone”</div>
+</header>
+<div class="wrap">
+  <div class="stage"><canvas id="gl" class="gl"></canvas>
+    <div class="badge" id="badge">drag knob/seek · click buttons/shuffle · empty space drags the light</div></div>
+  <div class="panel">
+    <div class="row"><button id="btnLit" class="on">Lit</button><button id="btnAlb">Albedo</button>
+      <button id="btnAnim" class="on">Pulse ▶</button></div>
+    <label>albedo <select id="selAlb"><option value="paint">original paint</option>
+      <option value="patina">patina basecolor (delit)</option></select></label>
+    <label><span>emissive intensity</span><span id="vEm"></span></label>
+    <input type="range" id="em" min="0" max="3" step="0.05">
+    <label><span>viz / dynamic-source spill</span><span id="vVz"></span></label>
+    <input type="range" id="vz" min="0" max="4" step="0.05">
+    <label><span>beat coupling</span><span id="vBc"></span></label>
+    <input type="range" id="bc" min="0" max="0.3" step="0.01">
+    <label><span>ambient</span><span id="vA"></span></label>
+    <input type="range" id="a" min="0" max="1" step="0.01">
+    <label><span>light intensity</span><span id="vI"></span></label>
+    <input type="range" id="i" min="0" max="4" step="0.05">
+    <label><span>light height</span><span id="vH"></span></label>
+    <input type="range" id="h" min="0.08" max="1.2" step="0.01">
+    <label><span>bump strength</span><span id="vB"></span></label>
+    <input type="range" id="b" min="0" max="2.5" step="0.05">
+    <label><span>glass reflectivity</span><span id="vG"></span></label>
+    <input type="range" id="g" min="0" max="2" step="0.05">
+    <div class="hint">Space = play/pause (bars pump at the beat clock and light the bezel).
+    Arrows nudge the light (Shift = coarse). P pauses the pulse.
+    ?emdemo=1 registers demo emissive sources (seek-slot underglow, knob-pointer glow) via
+    <b>registerEmissiveSource()</b>. URL: ?bpm=&amp;freeze=&amp;lx=&amp;ly=&amp;seek=&amp;knob=&amp;shuffle=&amp;press=&amp;viz=high|low&amp;zx=&amp;zy=&amp;zs=</div>
+  </div>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const V = '1783629270';
+const PBRD = '../assets-diablo-gothic_pbr/', BREF = '../assets-diablo-gothic_biref/';
+const META = {"id": "diablo-gothic", "size": [2304, 2784], "paintSize": [2304, 3712], "devFrac": 0.75, "lighting": {"emissive_hint": "the glowing blood-red runes and ember cracks in the stone", "emissive_color": [255, 90, 40], "pulse": "ember", "intensity": 1.3, "viz_emissive": true, "beat_couple": 0.07, "enabled": true}, "glassFill": [0.1317, 0.1244, 0.1302], "regions": {"visualizer": {"rect": [0.6241, 0.4792, 0.2166, 0.1318], "mask": "viz-mask.png", "maskRect": [0.5981, 0.463, 0.2682, 0.1638]}, "album_art": {"rect": [0.1467, 0.3725, 0.23, 0.2536], "mask": "art-mask.png", "maskRect": [0.1189, 0.342, 0.2852, 0.3143]}}, "knob": {"c": [0.497, 0.5781], "r": 0.056}, "seek": {"track": [0.2682, 0.6883, 0.4848, 0.0598], "vertical": false, "travel": [0.2587, 0.7626]}, "shuffle": {"rect": [0.4158, 0.7949, 0.1562, 0.0758], "angle": 0, "stateAlign": {"dx": 0, "dy": 0}}, "buttons": [{"name": "playpause", "id": 36, "rect": [0.424, 0.2094, 0.1463, 0.121]}, {"name": "prev", "id": 72, "rect": [0.2617, 0.2313, 0.0955, 0.0801]}, {"name": "next", "id": 108, "rect": [0.6372, 0.2324, 0.0938, 0.0783]}, {"name": "repeat", "id": 144, "rect": [0.4742, 0.3847, 0.061, 0.0142]}, {"name": "queue", "id": 180, "rect": [0.6311, 0.2496, 0.0382, 0.0647]}], "lights": [{"uv": [0.766, 0.3475], "color": [1.0, 0.511, 0.247], "energy": 0.199}, {"uv": [0.7078, 0.8619], "color": [1.0, 0.49, 0.25], "energy": 0.093}, {"uv": [0.3996, 0.1933], "color": [1.0, 0.504, 0.263], "energy": 0.069}, {"uv": [0.5958, 0.195], "color": [1.0, 0.432, 0.225], "energy": 0.05}, {"uv": [0.8006, 0.6675], "color": [1.0, 0.417, 0.231], "energy": 0.05}, {"uv": [0.1939, 0.3122], "color": [1.0, 0.481, 0.234], "energy": 0.044}], "emissiveCoverage": 0.02268, "emissiveHue": {"mode": "director", "center": 14.0, "half_width": 45}, "cost": {"patina_model": "fal-ai/patina", "patina_usd": 0.016, "paint_model": "fal-ai/gemini-3-pro-image-preview/edit", "emissive": "classical local $0"}, "src": {"sha1": "fe3edd90a573", "paint_mtime": 1783629270}};
+const LT = META.lighting || {};
+const PULSE = LT.pulse || 'breathe';
+const BPM = Math.max(30, Math.min(240, parseFloat(Q.get('bpm') ?? 118)));
+document.getElementById('bpmLab').textContent = BPM;
+const CFG = { w: META.size[0], h: META.size[1] };
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+
+const VS = `
+attribute vec2 aPos; attribute vec2 aUV;
+varying vec2 vUV;
+void main(){ vUV = aUV; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+const FS = `
+precision highp float;
+varying vec2 vUV;
+uniform sampler2D uAlb, uNrm, uEmis, uGlass, uRough, uMetal, uEm1, uEm2, uBtnIds, uThumb, uTog, uKnob, uViz, uDyn1, uDyn2;
+uniform vec3 uLight;
+uniform float uIntensity, uSpec, uAmbient, uBump, uLitMix, uAspect;
+uniform float uEmI, uEmPulse, uEmSuppress, uHalo;
+uniform vec3 uPLpos[6]; uniform vec3 uPLcol[6]; uniform float uPLpulse[6]; uniform float uPLn;
+uniform float uGlassAmt, uGlassClean; uniform vec3 uGlassFill;
+uniform vec2 uKnobC; uniform float uKnobR, uKnobAngle;
+uniform vec4 uThumbRect, uTogRect, uVizRect;
+uniform float uPressId, uPressAmt, uVizSpill, uVizI;
+uniform vec3 uZoom;
+const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+vec3 spriteN(sampler2D tex, vec2 lo, float k){
+  float e = 0.012;
+  float lR = dot(texture2D(tex, lo + vec2(e, 0.)).rgb, LUMA);
+  float lL = dot(texture2D(tex, lo - vec2(e, 0.)).rgb, LUMA);
+  float lD = dot(texture2D(tex, lo + vec2(0., e)).rgb, LUMA);
+  float lU = dot(texture2D(tex, lo - vec2(0., e)).rgb, LUMA);
+  return normalize(vec3(-(lR - lL) * k, -(lD - lU) * k, 1.0));
+}
+void main(){
+  vec2 uv = uZoom.z > 0.0 ? uZoom.xy + (vUV - 0.5) / uZoom.z : vUV;
+  float bid = texture2D(uBtnIds, uv).r * 255.0;
+  float prs = (uPressId > 0.5 && abs(bid - uPressId) < 14.0) ? uPressAmt : 0.0;
+  vec2 uvS = uv - vec2(0.0, 0.0045 * prs);
+  vec3 albRaw = texture2D(uAlb, uvS).rgb;
+  vec4 em4 = texture2D(uEmis, uvS);
+  float g = texture2D(uGlass, uv).r;
+  float rough = texture2D(uRough, uvS).r;
+  float metal = texture2D(uMetal, uvS).r;
+  vec3 n = texture2D(uNrm, uvS).rgb * 2.0 - 1.0;
+  n.xy *= uBump * (1.0 - g * 0.65);
+  n = normalize(n); n.y = -n.y;
+  vec3 alb = mix(albRaw, albRaw * 0.30, em4.a * uEmSuppress);
+  alb *= (1.0 - 0.22 * prs);
+  float specMul = (1.0 - 0.45 * prs) * mix(1.0, 2.3, metal);
+  // sprite parts composited in-shader so they receive ALL lighting
+  vec2 dd = uv - uKnobC; dd.y *= uAspect;
+  float kr = length(dd);
+  if (uKnobR > 0.0 && kr < uKnobR * 1.02){
+    float c = cos(-uKnobAngle), s = sin(-uKnobAngle);
+    vec2 rd = vec2(c*dd.x - s*dd.y, s*dd.x + c*dd.y);
+    vec2 lo = vec2(rd.x, rd.y) / (uKnobR * 2.0) + 0.5;
+    vec4 ks = texture2D(uKnob, lo);
+    float a = ks.a * smoothstep(uKnobR * 1.02, uKnobR * 0.98, kr);
+    if (a > 0.003){
+      vec3 sn = spriteN(uKnob, lo, 5.0);
+      float c2 = cos(uKnobAngle), s2 = sin(uKnobAngle);
+      sn.xy = vec2(c2*sn.x - s2*sn.y, s2*sn.x + c2*sn.y);
+      alb = mix(alb, ks.rgb, a);
+      n = normalize(mix(n, sn, a * 0.85));
+      em4.a *= (1.0 - a); rough = mix(rough, 0.5, a * 0.5);
+    }
+  }
+  vec2 th = (uv - uThumbRect.xy) / uThumbRect.zw;
+  if (th.x > 0.0 && th.x < 1.0 && th.y > 0.0 && th.y < 1.0){
+    vec4 ts = texture2D(uThumb, th);
+    if (ts.a > 0.003){
+      vec3 sn = spriteN(uThumb, th, 4.0);
+      alb = mix(alb, ts.rgb, ts.a);
+      n = normalize(mix(n, sn, ts.a * 0.8));
+      em4.a *= (1.0 - ts.a); rough = mix(rough, 0.55, ts.a * 0.5);
+    }
+  }
+  vec2 tg = (uv - uTogRect.xy) / uTogRect.zw;
+  if (tg.x > 0.0 && tg.x < 1.0 && tg.y > 0.0 && tg.y < 1.0){
+    vec4 ts = texture2D(uTog, tg);
+    if (ts.a > 0.003){
+      vec3 sn = spriteN(uTog, tg, 4.0);
+      alb = mix(alb, ts.rgb, ts.a);
+      n = normalize(mix(n, sn, ts.a * 0.8));
+      em4.a *= (1.0 - ts.a); rough = mix(rough, 0.55, ts.a * 0.5);
+    }
+  }
+  // key light (pointer)
+  vec2 p  = vec2(uv.x, uv.y * uAspect);
+  vec2 lp = vec2(uLight.x, uLight.y * uAspect);
+  vec3 V = normalize(vec3((vec2(0.5, 0.5 * uAspect) - p) * 0.9, 1.0));
+  vec3 L = vec3(lp - p, uLight.z);
+  float d = length(L); L /= d;
+  float att = 1.0 / (1.0 + 8.0 * d * d);
+  float diff = max(dot(n, L), 0.0);
+  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+  float gloss = mix(160.0, 14.0, clamp(rough, 0.0, 1.0));
+  float spec = pow(max(dot(n, H), 0.0), gloss) * uSpec * specMul * (1.0 - rough * 0.7);
+  vec3 warm = vec3(1.0, 0.93, 0.82);
+  vec3 specCol = mix(warm, normalize(alb + 0.02) * 1.4, metal * 0.85);
+  vec3 col = alb * (uAmbient + uIntensity * diff * att) * warm + specCol * spec * att * uIntensity;
+  // static glyph emissive -> neighbour light (tight two-scale gather)
+  vec3 eg = (texture2D(uEm1, uv).rgb * 0.85 + texture2D(uEm2, uv).rgb * 0.30) * uHalo;
+  float e = 0.004;
+  float exR = dot(texture2D(uEm1, uv + vec2(e, 0.)).rgb, LUMA);
+  float exL = dot(texture2D(uEm1, uv - vec2(e, 0.)).rgb, LUMA);
+  float eyD = dot(texture2D(uEm1, uv + vec2(0., e)).rgb, LUMA);
+  float eyU = dot(texture2D(uEm1, uv - vec2(0., e)).rgb, LUMA);
+  vec3 eDir = normalize(vec3(exR - exL, eyD - eyU, 0.0) * 14.0 + vec3(0., 0., 0.30));
+  float ewrap = max(dot(n, eDir), 0.0) * 0.65 + 0.35;
+  col += alb * eg * ewrap * uEmI * uEmPulse * (1.0 - em4.a * 0.5) * 1.5;
+  // DYNAMIC emissive sources (registry): two-level gather — tight + wide spill
+  vec3 dg = texture2D(uDyn1, uv).rgb + texture2D(uDyn2, uv).rgb * 0.9;
+  col += alb * dg * (max(dot(n, vec3(0., 0., 1.)), 0.0) * 0.5 + 0.5) * uVizSpill;
+  // extracted glyph point-lights
+  for (int i = 0; i < 6; i++){
+    if (float(i) >= uPLn) break;
+    vec3 pl = uPLpos[i];
+    vec3 Li = vec3(vec2(pl.x, pl.y * uAspect) - p, pl.z);
+    float di = length(Li); Li /= di;
+    float ai = 1.0 / (1.0 + 90.0 * di * di);
+    float dfi = max(dot(n, Li), 0.0);
+    vec3 Hi = normalize(Li + vec3(0., 0., 1.));
+    float spi = pow(max(dot(n, Hi), 0.0), gloss) * (1.0 - rough * 0.7);
+    col += (alb * dfi + spi * 0.6) * uPLcol[i] * ai * uEmI * uPLpulse[i];
+  }
+  // self glow
+  col += em4.rgb * pow(em4.a, 0.75) * uEmI * uEmPulse * 2.3;
+  // glass: fresnel + procedural env + emissive/dyn reflection
+  if (g > 0.004){
+    vec3 albG = mix(alb, uGlassFill, g * uGlassClean);
+    vec3 ng = normalize(mix(n, vec3(0., 0., 1.), 0.55));
+    float F = pow(1.0 - max(dot(ng, V), 0.0), 2.2);
+    vec3 R = reflect(-V, ng);
+    vec2 eq = (uv * 2.0 - 1.0) + R.xy * 3.0;
+    float diag = pow(max(0.0, 1.0 - abs(dot(normalize(eq + vec2(0.001)), vec2(0.707, -0.707)))), 7.0);
+    vec3 env = mix(vec3(0.06, 0.07, 0.09), vec3(0.38, 0.42, 0.50), smoothstep(-0.6, 0.9, R.y))
+             + vec3(0.9, 0.95, 1.0) * diag * 0.5;
+    float specG = pow(max(dot(ng, H), 0.0), 46.0) * 2.6 * att * uIntensity;
+    vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse
+               + texture2D(uDyn1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.8;
+    vec3 glass = albG * (uAmbient * 0.85 + 0.3 * diff * att * uIntensity)
+               + (F * 0.75 + 0.10) * env * uGlassAmt
+               + vec3(1.0, 0.97, 0.9) * specG * uGlassAmt
+               + emRef;
+    col = mix(col, glass, g);
+  }
+  // visualizer screen content (an emitter drawn into the lit result)
+  vec2 vzl = (uv - uVizRect.xy) / uVizRect.zw;
+  if (uVizRect.z > 0.0 && vzl.x > 0.0 && vzl.x < 1.0 && vzl.y > 0.0 && vzl.y < 1.0){
+    col += texture2D(uViz, vzl).rgb * uVizI;
+  }
+  gl_FragColor = vec4(mix(albRaw, col, uLitMix), 1.0);
+}`;
+
+function sh(type, src){ const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(s); return s; }
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(prog); gl.useProgram(prog);
+const U = n => gl.getUniformLocation(prog, n);
+const UNITS = { uAlb:0, uNrm:1, uEmis:2, uGlass:3, uRough:4, uMetal:5, uEm1:6, uEm2:7,
+                uBtnIds:8, uThumb:9, uTog:10, uKnob:11, uViz:12, uDyn1:13, uDyn2:14 };
+const TEX = {};
+for (const [name, unit] of Object.entries(UNITS)){
+  const t = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0 + unit);
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  TEX[name] = t; gl.uniform1i(U(name), unit);
+}
+function upload(name, source, fmt){
+  gl.activeTexture(gl.TEXTURE0 + UNITS[name]);
+  gl.bindTexture(gl.TEXTURE_2D, TEX[name]);
+  gl.texImage2D(gl.TEXTURE_2D, 0, fmt, fmt, gl.UNSIGNED_BYTE, source);
+}
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,0,1, 1,-1,1,1, -1,1,0,0, 1,1,1,0]), gl.STATIC_DRAW);
+const aPos = gl.getAttribLocation(prog, 'aPos'), aUV = gl.getAttribLocation(prog, 'aUV');
+gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
+gl.enableVertexAttribArray(aUV);  gl.vertexAttribPointer(aUV, 2, gl.FLOAT, false, 16, 8);
+
+const state = {
+  alb: Q.get('alb') || 'paint',
+  lx: parseFloat(Q.get('lx') ?? 0.5), ly: parseFloat(Q.get('ly') ?? 0.30),
+  h: parseFloat(Q.get('h') ?? 0.32), i: parseFloat(Q.get('i') ?? 1.3),
+  s: 0.6, a: parseFloat(Q.get('amb') ?? 0.16), b: 1.1,
+  em: parseFloat(Q.get('em') ?? (LT.intensity ?? 1.0)),
+  halo: parseFloat(Q.get('halo') ?? 1),
+  vz: parseFloat(Q.get('spill') ?? ((LT.viz_emissive ?? true) ? 1.7 : 0)),
+  bc: parseFloat(Q.get('beat') ?? (LT.beat_couple ?? 0.05)),
+  g: parseFloat(Q.get('glass') ?? 0.9), gc: 0.65,
+  knob: parseFloat(Q.get('knob') ?? 0) * Math.PI / 180,
+  seek: parseFloat(Q.get('seek') ?? 0),
+  shuffle: Q.get('shuffle') === '1',
+  playing: (Q.get('viz') || '') === 'high',
+  vizForce: Q.get('viz'),
+  pressName: Q.get('press'),
+  lit: (Q.get('lit') ?? '1') !== '0',
+  anim: !Q.has('freeze'),
+  freezeT: parseFloat(Q.get('freeze') ?? 2.5),
+  emSuppress: parseFloat(Q.get('sup') ?? 0.8),
+  zoom: [parseFloat(Q.get('zx') ?? 0), parseFloat(Q.get('zy') ?? 0), parseFloat(Q.get('zs') ?? 0)],
+};
+
+function loadImg(src){ return new Promise((res, rej) => { const im = new Image();
+  im.onload = () => res(im); im.onerror = () => rej(new Error(src)); im.src = src; }); }
+function blurLevel(img, scale, blurPx){
+  const c = document.createElement('canvas');
+  c.width = Math.max(2, Math.round(CFG.w * scale / 4));
+  c.height = Math.max(2, Math.round(CFG.h * scale / 4));
+  const x = c.getContext('2d');
+  x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
+  x.filter = `blur(${blurPx}px)`;
+  x.drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+function tight(im){ // tight-crop a sprite png -> canvas (same as build_player)
+  const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+  const cx = c.getContext('2d'); cx.drawImage(im, 0, 0);
+  const d = cx.getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0, any = false;
+  for (let p = 0; p < d.length; p += 4){ if (d[p+3] > 12){ const i = p/4, x = i % c.width, y = (i / c.width) | 0;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; any = true; } }
+  if (!any) return c;
+  const t = document.createElement('canvas'); t.width = x1-x0+1; t.height = y1-y0+1;
+  t.getContext('2d').drawImage(c, x0, y0, t.width, t.height, 0, 0, t.width, t.height);
+  return t;
+}
+
+// ---------- generic dynamic-emissive-source registry ----------
+// registerEmissiveSource({name, rect:[x,y,w,h] (src-uv), canvas | draw(ctx,w,h,t),
+//                         mask:{img, rect:[x,y,w,h]}?, intensity=1, enabled=true})
+// All enabled sources are composited into a two-level low-res gather (tight+wide blur)
+// each frame; the shader lights the whole body from it. The visualizer is just the first
+// registered source; anything (seek underglow, LED accents, future CSS/canvas elements)
+// can register.
+const EMSRC = [];
+function registerEmissiveSource(s){
+  s = Object.assign({ intensity: 1, enabled: true }, s);
+  EMSRC.push(s); return s;
+}
+window.registerEmissiveSource = registerEmissiveSource;
+let dyn1, dyn1x, dyn2, dyn2x;
+function srcCanvas(s, t){
+  if (s.canvas) return s.canvas;
+  if (!s._cv){ s._cv = document.createElement('canvas');
+    s._cv.width = 200; s._cv.height = Math.max(8, Math.round(200 * (s.rect[3]*CFG.h) / (s.rect[2]*CFG.w))); }
+  const x = s._cv.getContext('2d');
+  x.clearRect(0, 0, s._cv.width, s._cv.height);
+  s.draw(x, s._cv.width, s._cv.height, t);
+  if (s.mask){ // clip to the region's paint-derived glass shape
+    const m = s.mask, sx = (s.rect[0]-m.rect[0])/m.rect[2]*m.img.width,
+      sy = (s.rect[1]-m.rect[1])/m.rect[3]*m.img.height,
+      sw = s.rect[2]/m.rect[2]*m.img.width, sh = s.rect[3]/m.rect[3]*m.img.height;
+    x.globalCompositeOperation = 'destination-in';
+    x.drawImage(m.img, sx, sy, sw, sh, 0, 0, s._cv.width, s._cv.height);
+    x.globalCompositeOperation = 'source-over';
+  }
+  return s._cv;
+}
+function drawDyn(t){
+  for (const [cv, cx, blur] of [[dyn1, dyn1x, 3], [dyn2, dyn2x, 9]]){
+    cx.filter = 'none';
+    cx.fillStyle = '#000'; cx.fillRect(0, 0, cv.width, cv.height);
+    cx.filter = 'blur(' + blur + 'px)';
+    for (const s of EMSRC){
+      if (!s.enabled || s.intensity <= 0) continue;
+      cx.globalAlpha = Math.min(1, s.intensity);
+      cx.drawImage(srcCanvas(s, t), s.rect[0]*cv.width, s.rect[1]*cv.height,
+                   s.rect[2]*cv.width, s.rect[3]*cv.height);
+    }
+    cx.globalAlpha = 1; cx.filter = 'none';
+  }
+  upload('uDyn1', dyn1, gl.RGB);
+  upload('uDyn2', dyn2, gl.RGB);
+}
+
+// ---------- beat clock (shared by viz bars AND emissive pulse) ----------
+const beatHz = BPM / 60;
+const kickAt = t => Math.pow(1 - (t * beatHz) % 1, 2.4);
+function themePulse(t, kick){
+  let base;
+  if (PULSE === 'ember'){
+    base = 0.70 + 0.20*Math.sin(t*1.9 + 0.7) + 0.12*Math.sin(t*4.7 + 1.6) + 0.07*Math.sin(t*9.3 + 2.9);
+    base += Math.max(0, Math.sin(t*0.7 + 0.7) - 0.86) * 1.4;
+    base = Math.max(0.22, base);
+  } else if (PULSE === 'phosphor'){
+    base = 0.93 + 0.045*Math.sin(t*21.0) + 0.025*Math.sin(t*6.3 + 1.2);
+  } else if (PULSE === 'breathe'){
+    base = 0.82 + 0.18*Math.sin(t*0.85);
+  } else base = 1.0;
+  return base * (1 + state.bc * kick);   // SUBTLE beat-coupled component (a few %)
+}
+function perLightPulse(t, i, kick){
+  if (PULSE === 'ember'){
+    const p = i * 2.1;
+    let v = 0.70 + 0.20*Math.sin(t*1.9 + p) + 0.12*Math.sin(t*4.7 + p*2.3) + 0.07*Math.sin(t*9.3 + p*4.1);
+    v += Math.max(0, Math.sin(t*0.7 + p) - 0.86) * 1.4;
+    return Math.max(0.22, v) * (1 + state.bc * kick);
+  }
+  return themePulse(t, kick);
+}
+
+let IDS = null, IDW = 0, IDH = 0;
+let vizCv, vizCx, bars = [], NB = 14, vizAcc = '#ff7030', vizMask = null;
+let togOff, togOn, THUMB = null, SEEKG = null;
+
+async function boot(){
+  const loads = {
+    paint: loadImg('paint.png?v=' + V),
+    base: loadImg(PBRD + 'basecolor.png'), nrm: loadImg(PBRD + 'normal.png'),
+    rough: loadImg(PBRD + 'roughness.png'), metal: loadImg(PBRD + 'metalness.png'),
+    emis: loadImg(PBRD + 'emissive.png'), glass: loadImg(PBRD + 'glass.png'),
+    ids: loadImg(PBRD + 'btn-ids.png'),
+  };
+  for (const [rn, r] of Object.entries(META.regions || {}))
+    if (r.mask) loads['rmask_' + rn] = loadImg(PBRD + r.mask);
+  for (const p of ['vol', 'seek', 'shuffle_off', 'shuffle_on'])
+    loads['cut_' + p] = loadImg(BREF + p + '.png?v=' + V).catch(() => null);
+  const IM = {};
+  await Promise.all(Object.entries(loads).map(async ([k, p]) => IM[k] = await p.catch(() => null)));
+
+  // device slice of paint -> uAlb
+  const dc = document.createElement('canvas'); dc.width = CFG.w; dc.height = CFG.h;
+  dc.getContext('2d').drawImage(IM.paint, 0, 0, CFG.w, CFG.h, 0, 0, CFG.w, CFG.h);
+  window.IMGS = { paint: dc, patina: IM.base };
+  applyAlb();
+  upload('uNrm', IM.nrm, gl.RGB);
+  upload('uRough', IM.rough, gl.LUMINANCE);
+  upload('uMetal', IM.metal, gl.LUMINANCE);
+  upload('uEmis', IM.emis, gl.RGBA);
+  upload('uGlass', IM.glass, gl.LUMINANCE);
+  upload('uEm1', blurLevel(IM.emis, 2.0, 3), gl.RGB);
+  upload('uEm2', blurLevel(IM.emis, 0.5, 8), gl.RGB);
+  upload('uBtnIds', IM.ids, gl.LUMINANCE);
+
+  // moving parts (tight-cropped at runtime from the biref cuts)
+  if (IM.cut_vol){ upload('uKnob', tight(IM.cut_vol), gl.RGBA); }
+  if (IM.cut_seek && META.seek){
+    THUMB = tight(IM.cut_seek);
+    upload('uThumb', THUMB, gl.RGBA);
+    const sm = META.seek, tk = sm.track, vert = sm.vertical;
+    let tw = THUMB.width / CFG.w, th = THUMB.height / CFG.h;
+    const span = Math.max(1e-6, sm.travel[1] - sm.travel[0]);
+    const s = vert ? Math.min(1.5, tk[2]*1.15/tw, tk[2]*1.35/tw, span*0.45/th)
+                   : Math.min(1.5, tk[3]*1.15/th, tk[3]*1.35/th, span*0.45/tw);
+    tw *= s; th *= s;
+    SEEKG = { vert, tw, th,
+      cx: tk[0] + tk[2]/2, cy: tk[1] + tk[3]/2,
+      p0: sm.travel[0], p1: sm.travel[1] - (vert ? th : tw) };
+  }
+  togOff = IM.cut_shuffle_off ? tight(IM.cut_shuffle_off) : null;
+  togOn = IM.cut_shuffle_on ? tight(IM.cut_shuffle_on) : togOff;
+  if (togOff && togOn && togOff.width === togOn.width && togOff.height === togOn.height){
+    // biref cut the two states identically? mirror ON (same fallback as the gen12 player)
+    const a = togOff.getContext('2d').getImageData(0,0,4,4).data.join();
+    const b2 = togOn.getContext('2d').getImageData(0,0,4,4).data.join();
+    if (a === b2){ const m = document.createElement('canvas'); m.width = togOn.width; m.height = togOn.height;
+      const mx = m.getContext('2d'); mx.scale(-1, 1); mx.drawImage(togOn, -m.width, 0); togOn = m; }
+  }
+  if (togOff) upload('uTog', state.shuffle ? togOn : togOff, gl.RGBA);
+
+  // button-id hit-test buffer
+  IDW = 576; IDH = Math.round(576 * CFG.h / CFG.w);
+  const ic = document.createElement('canvas'); ic.width = IDW; ic.height = IDH;
+  const icx = ic.getContext('2d', { willReadFrequently: true });
+  icx.drawImage(IM.ids, 0, 0, IDW, IDH);
+  IDS = icx.getImageData(0, 0, IDW, IDH).data;
+  if (state.pressName){
+    const b = (META.buttons || []).find(x => x.name === state.pressName);
+    PRESS.id = b ? b.id : 0; PRESS.amt = 1;
+  }
+
+  // ---- visualizer: bars canvas CLIPPED by the paint-derived glass mask ----
+  const vizR = (META.regions || {}).visualizer;
+  if (vizR){
+    vizCv = document.createElement('canvas');
+    vizCv.width = Math.max(8, Math.round(vizR.rect[2] * CFG.w / 3));
+    vizCv.height = Math.max(8, Math.round(vizR.rect[3] * CFG.h / 3));
+    vizCx = vizCv.getContext('2d');
+    if (IM['rmask_visualizer']) vizMask = { img: IM['rmask_visualizer'], rect: vizR.maskRect };
+    // accent colour: paint sampled inside the window, pushed toward the theme emissive
+    const sc = document.createElement('canvas'); sc.width = 8; sc.height = 1;
+    sc.getContext('2d').drawImage(dc, vizR.rect[0]*CFG.w, vizR.rect[1]*CFG.h,
+      vizR.rect[2]*CFG.w, vizR.rect[3]*CFG.h, 0, 0, 8, 1);
+    const sd = sc.getContext('2d').getImageData(0, 0, 8, 1).data;
+    let ar = 0, ag = 0, ab = 0;
+    for (let i = 0; i < 8; i++){ ar += sd[i*4]; ag += sd[i*4+1]; ab += sd[i*4+2]; }
+    const EC = Array.isArray(LT.emissive_color) ? LT.emissive_color : [255, 160, 80];
+    vizAcc = 'rgb(' + [ar, ag, ab].map((v, i) =>
+      Math.min(255, Math.round((v/8)*1.2*0.35 + EC[i]*0.75))).join(',') + ')';
+    bars = Array.from({ length: NB }, (_, i) =>
+      state.vizForce === 'high' ? 0.55 + 0.4*Math.abs(Math.sin(i*1.7 + 0.9)) :
+      state.vizForce === 'low'  ? 0.05 + 0.03*Math.abs(Math.sin(i*1.3)) : 0.06);
+    gl.uniform4f(U('uVizRect'), ...vizR.rect);
+    // FIRST registered dynamic emissive source — the visualizer (shape = its glass mask)
+    registerEmissiveSource({ name: 'visualizer', rect: vizR.rect, canvas: vizCv,
+      intensity: (LT.viz_emissive ?? true) ? 1.35 : 0 });
+  } else gl.uniform4f(U('uVizRect'), 0, 0, 0, 0);
+
+  // ---- demo dynamic sources (?emdemo=1): seek-slot underglow + knob-pointer glow ----
+  if (Q.get('emdemo') === '1'){
+    if (META.seek){
+      const tk = META.seek.track;
+      registerEmissiveSource({ name: 'seek-underglow', intensity: 0.9,
+        rect: [tk[0]-tk[2]*0.02, tk[1]-tk[3]*0.3, tk[2]*1.04, tk[3]*1.6],
+        draw: (x, w, h) => { const px = w * state.seek;
+          const g2 = x.createRadialGradient(px, h/2, 0, px, h/2, w*0.18);
+          g2.addColorStop(0, vizAcc); g2.addColorStop(1, 'rgba(0,0,0,0)');
+          x.fillStyle = g2; x.fillRect(0, 0, w, h); } });
+    }
+    if (META.knob){
+      const k = META.knob, kh = k.r * CFG.w / CFG.h;
+      registerEmissiveSource({ name: 'knob-pointer', intensity: 0.8,
+        rect: [k.c[0]-k.r, k.c[1]-kh, k.r*2, kh*2],
+        draw: (x, w, h) => { const a = state.knob - Math.PI/2;
+          const px = w/2 + Math.cos(a)*w*0.38, py = h/2 + Math.sin(a)*h*0.38;
+          const g2 = x.createRadialGradient(px, py, 0, px, py, w*0.14);
+          g2.addColorStop(0, vizAcc); g2.addColorStop(1, 'rgba(0,0,0,0)');
+          x.fillStyle = g2; x.fillRect(0, 0, w, h); } });
+    }
+  }
+
+  // dyn gather canvases (low-res full-frame, two blur levels)
+  dyn1 = document.createElement('canvas'); dyn1.width = 288; dyn1.height = Math.round(288*CFG.h/CFG.w);
+  dyn1x = dyn1.getContext('2d');
+  dyn2 = document.createElement('canvas'); dyn2.width = 144; dyn2.height = Math.round(144*CFG.h/CFG.w);
+  dyn2x = dyn2.getContext('2d');
+
+  // static uniforms
+  gl.uniform1f(U('uAspect'), CFG.h / CFG.w);
+  gl.uniform3f(U('uGlassFill'), ...META.glassFill);
+  if (META.knob){ gl.uniform2f(U('uKnobC'), ...META.knob.c); gl.uniform1f(U('uKnobR'), META.knob.r); }
+  else gl.uniform1f(U('uKnobR'), 0);
+  if (!SEEKG) gl.uniform4f(U('uThumbRect'), -2, -2, 0.001, 0.001);
+  if (!togOff) gl.uniform4f(U('uTogRect'), -2, -2, 0.001, 0.001);
+  else {
+    const tr = META.shuffle.rect;
+    let bw = tr[2]*1.06, bh = tr[3]*1.06;
+    const natS = Math.min(bw*CFG.w/togOff.width, bh*CFG.h/togOff.height);
+    if (natS > 1.5){ bw *= 1.5/natS; bh *= 1.5/natS; }
+    // aspect-contain: shrink the box to the cut's aspect so the texture isn't stretched
+    const s2 = Math.min(bw*CFG.w/togOff.width, bh*CFG.h/togOff.height);
+    TOGB = { cx: tr[0]+tr[2]/2, cy: tr[1]+tr[3]/2,
+             w: togOff.width*s2/CFG.w, h: togOff.height*s2/CFG.h,
+             offS: s2, sa: META.shuffle.stateAlign || {dx:0, dy:0} };
+    setTog();
+  }
+  const L = META.lights || [];
+  const maxE = Math.max(...L.map(l => l.energy), 1e-6);
+  gl.uniform1f(U('uPLn'), Math.min(L.length, 6));
+  for (let i = 0; i < 6; i++){
+    const l = L[i] || { uv: [0, 0], color: [0, 0, 0], energy: 0 };
+    gl.uniform3f(U(`uPLpos[${i}]`), l.uv[0], l.uv[1], 0.05);
+    const s3 = 0.9 * (l.energy / maxE);
+    gl.uniform3f(U(`uPLcol[${i}]`), l.color[0]*s3, l.color[1]*s3, l.color[2]*s3);
+  }
+  gl.uniform3f(U('uZoom'), ...state.zoom);
+  resize();
+  document.title = 'player-pbr ready';
+}
+let TOGB = null;
+function setTog(){
+  if (!TOGB) return;
+  const dx = state.shuffle ? TOGB.sa.dx*TOGB.offS/CFG.w : 0;
+  const dy = state.shuffle ? TOGB.sa.dy*TOGB.offS/CFG.h : 0;
+  gl.uniform4f(U('uTogRect'), TOGB.cx-TOGB.w/2+dx, TOGB.cy-TOGB.h/2+dy, TOGB.w, TOGB.h);
+  upload('uTog', state.shuffle ? togOn : togOff, gl.RGBA);
+}
+function applyAlb(){
+  upload('uAlb', state.alb === 'patina' && IMGS.patina ? IMGS.patina : IMGS.paint, gl.RGB);
+  document.getElementById('selAlb').value = state.alb;
+}
+
+// ---------- interaction ----------
+const PRESS = { id: 0, amt: 0, target: 0, name: null };
+let drag = null;
+function uvOf(e){ const r = canvas.getBoundingClientRect();
+  return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
+function thumbRect(){
+  if (!SEEKG) return [-2, -2, 0.001, 0.001];
+  const p = SEEKG.p0 + (SEEKG.p1 - SEEKG.p0) * state.seek;
+  return SEEKG.vert ? [SEEKG.cx - SEEKG.tw/2, p, SEEKG.tw, SEEKG.th]
+                    : [p, SEEKG.cy - SEEKG.th/2, SEEKG.tw, SEEKG.th];
+}
+function hit(uv){
+  const asp = CFG.h / CFG.w;
+  if (META.knob){
+    const dx = uv[0] - META.knob.c[0], dy = (uv[1] - META.knob.c[1]) * asp;
+    if (Math.hypot(dx, dy) < META.knob.r * 1.05) return { kind: 'knob' };
+  }
+  if (SEEKG){
+    const tr = thumbRect();
+    if (uv[0] > tr[0]-tr[2]*0.2 && uv[0] < tr[0]+tr[2]*1.2 &&
+        uv[1] > tr[1]-tr[3]*0.2 && uv[1] < tr[1]+tr[3]*1.2) return { kind: 'seek' };
+  }
+  if (TOGB){
+    if (uv[0] > TOGB.cx-TOGB.w/2 && uv[0] < TOGB.cx+TOGB.w/2 &&
+        uv[1] > TOGB.cy-TOGB.h/2 && uv[1] < TOGB.cy+TOGB.h/2) return { kind: 'shuffle' };
+  }
+  const ix = Math.min(IDW-1, Math.max(0, Math.round(uv[0]*IDW)));
+  const iy = Math.min(IDH-1, Math.max(0, Math.round(uv[1]*IDH)));
+  const id = IDS ? IDS[(iy*IDW + ix)*4] : 0;
+  if (id > 18){
+    const b = (META.buttons || []).find(x => Math.abs(x.id - id) < 14);
+    if (b) return { kind: 'button', b };
+  }
+  return { kind: 'light' };
+}
+canvas.addEventListener('pointerdown', e => {
+  const uv = uvOf(e); const h2 = hit(uv);
+  canvas.setPointerCapture(e.pointerId);
+  if (h2.kind === 'knob') drag = { kind: 'knob', y0: e.clientY, v0: state.knob };
+  else if (h2.kind === 'seek') drag = { kind: 'seek', p0: SEEKG.vert ? e.clientY : e.clientX, v0: state.seek };
+  else if (h2.kind === 'shuffle'){ state.shuffle = !state.shuffle; setTog(); drag = { kind: 'none' }; }
+  else if (h2.kind === 'button'){ PRESS.id = h2.b.id; PRESS.name = h2.b.name; PRESS.target = 1; drag = { kind: 'press' }; }
+  else drag = { kind: 'light' };
+  if (drag.kind === 'light'){ state.lx = uv[0]; state.ly = uv[1]; }
+  e.preventDefault();
+  if (!state.anim) draw(lastT);
+});
+canvas.addEventListener('pointermove', e => {
+  const uv = uvOf(e);
+  if (drag){
+    if (drag.kind === 'knob') state.knob = Math.max(-2.36, Math.min(2.36, drag.v0 + (drag.y0 - e.clientY)/160*2.36));
+    else if (drag.kind === 'seek'){
+      const span = SEEKG.p1 - SEEKG.p0;
+      const dpx = (SEEKG.vert ? e.clientY : e.clientX) - drag.p0;
+      const dim = SEEKG.vert ? canvas.clientHeight : canvas.clientWidth;
+      state.seek = Math.max(0, Math.min(1, drag.v0 + dpx/(dim*span)));
+    }
+    else if (drag.kind === 'light'){ state.lx = uv[0]; state.ly = uv[1]; }
+  } else {
+    const h2 = hit(uv);
+    canvas.style.cursor = h2.kind === 'knob' ? 'ns-resize' : h2.kind === 'seek' ? 'ew-resize'
+      : (h2.kind === 'button' || h2.kind === 'shuffle') ? 'pointer' : 'crosshair';
+  }
+  if (!state.anim && drag) draw(lastT);
+});
+window.addEventListener('pointerup', () => {
+  if (drag && drag.kind === 'press'){
+    PRESS.target = 0;
+    if (PRESS.name === 'playpause'){ state.playing = !state.playing; setBadge(); }
+  }
+  drag = null;
+});
+function setBadge(){
+  document.getElementById('badge').textContent =
+    state.playing ? '▶ playing @ ' + BPM + 'bpm — the bars are casting light'
+                  : 'drag knob/seek · click buttons/shuffle · empty space drags the light';
+}
+
+// ---------- viz bars: driven by the shared beat clock ----------
+function drawViz(t){
+  if (!vizCv) return;
+  const kick = kickAt(t);
+  if (!state.vizForce){
+    const snare = Math.pow(1 - ((t*beatHz + 0.5) % 1), 3);
+    for (let i = 0; i < NB; i++){
+      const f = i / NB;
+      const target = state.playing
+        ? Math.min(1, Math.exp(-f*6)*kick*1.1 + (0.25 + 0.30*Math.abs(Math.sin(t*1.3 + i*1.9)))*Math.exp(-Math.abs(f-0.45)*3)
+                     + Math.exp(-(1-f)*7)*snare*0.5 + 0.05)
+        : 0.05;
+      bars[i] += (target - bars[i]) * (target > bars[i] ? 0.55 : 0.18);
+    }
+  }
+  const g2 = vizCx, W2 = vizCv.width, H2 = vizCv.height;
+  g2.globalCompositeOperation = 'source-over';
+  g2.clearRect(0, 0, W2, H2);
+  const bw = W2 / NB;
+  for (let i = 0; i < NB; i++){
+    const hh = Math.max(1, bars[i] * H2 * 0.92);
+    g2.fillStyle = vizAcc; g2.globalAlpha = 0.9;
+    g2.fillRect(i*bw + bw*0.15, H2 - hh, bw*0.7, hh);
+  }
+  g2.globalAlpha = 1;
+  if (vizMask){ // clip to the paint-derived glass shape — bars can never cross the bezel
+    const r = (META.regions || {}).visualizer, m = vizMask;
+    const sx = (r.rect[0]-m.rect[0])/m.rect[2]*m.img.width,
+          sy = (r.rect[1]-m.rect[1])/m.rect[3]*m.img.height,
+          sw = r.rect[2]/m.rect[2]*m.img.width, sh = r.rect[3]/m.rect[3]*m.img.height;
+    g2.globalCompositeOperation = 'destination-in';
+    g2.drawImage(m.img, sx, sy, sw, sh, 0, 0, W2, H2);
+    g2.globalCompositeOperation = 'source-over';
+  }
+  upload('uViz', vizCv, gl.RGBA);
+}
+
+function resize(){
+  const w = canvas.clientWidth || 600;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(w * (CFG.h / CFG.w) * dpr);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  if (IDS) draw(lastT);
+}
+window.addEventListener('resize', resize);
+
+let lastT = state.freezeT;
+function draw(t){
+  if (!IDS) return;
+  lastT = t;
+  PRESS.amt += (PRESS.target - PRESS.amt) * 0.5;
+  if (state.pressName) PRESS.amt = 1;
+  const kick = kickAt(t);
+  drawViz(t);
+  drawDyn(t);
+  gl.uniform3f(U('uLight'), state.lx, state.ly, state.h);
+  gl.uniform1f(U('uIntensity'), state.i);
+  gl.uniform1f(U('uSpec'), state.s);
+  gl.uniform1f(U('uAmbient'), state.a);
+  gl.uniform1f(U('uBump'), state.b);
+  gl.uniform1f(U('uLitMix'), state.lit ? 1 : 0);
+  gl.uniform1f(U('uEmI'), state.em);
+  gl.uniform1f(U('uHalo'), state.halo);
+  gl.uniform1f(U('uEmPulse'), themePulse(t, kick));
+  gl.uniform1f(U('uEmSuppress'), state.emSuppress);
+  gl.uniform1f(U('uGlassAmt'), state.g);
+  gl.uniform1f(U('uGlassClean'), state.gc);
+  gl.uniform1f(U('uVizSpill'), state.vz);
+  gl.uniform1f(U('uVizI'), 1.0);
+  gl.uniform1f(U('uKnobAngle'), state.knob);
+  gl.uniform4f(U('uThumbRect'), ...thumbRect());
+  gl.uniform1f(U('uPressId'), PRESS.id);
+  gl.uniform1f(U('uPressAmt'), PRESS.amt);
+  for (let i = 0; i < 6; i++) gl.uniform1f(U(`uPLpulse[${i}]`), perLightPulse(t, i, kick));
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+let t0 = performance.now();
+function loop(now){
+  requestAnimationFrame(loop);
+  if (!state.anim){ if (drag || Math.abs(PRESS.amt - PRESS.target) > 0.01) draw(lastT); return; }
+  draw(state.freezeT + (now - t0) / 1000);
+}
+requestAnimationFrame(loop);
+
+// ---------- UI wiring ----------
+const $ = id => document.getElementById(id);
+const litB = $('btnLit'), albB = $('btnAlb'), animB = $('btnAnim');
+function setLit(v){ state.lit = v; litB.classList.toggle('on', v); albB.classList.toggle('on', !v); if (!state.anim) draw(lastT); }
+litB.onclick = () => setLit(true);
+albB.onclick = () => setLit(false);
+setLit(state.lit);
+function setAnim(v){ state.anim = v; animB.classList.toggle('on', v); animB.textContent = v ? 'Pulse ▶' : 'Pulse ⏸'; if (!v) draw(lastT); }
+animB.onclick = () => setAnim(!state.anim);
+setAnim(state.anim);
+$('selAlb').onchange = e => { state.alb = e.target.value; applyAlb(); if (!state.anim) draw(lastT); };
+for (const [id, key, fmt] of [['em','em',v=>v.toFixed(2)], ['vz','vz',v=>v.toFixed(2)],
+    ['bc','bc',v=>v.toFixed(2)], ['a','a',v=>v.toFixed(2)], ['i','i',v=>v.toFixed(2)],
+    ['h','h',v=>v.toFixed(2)], ['b','b',v=>v.toFixed(2)], ['g','g',v=>v.toFixed(2)]]){
+  const el = $(id), lab = $('v' + id.charAt(0).toUpperCase() + id.slice(1));
+  el.value = state[key]; lab.textContent = fmt(state[key]);
+  el.oninput = () => { state[key] = parseFloat(el.value); lab.textContent = fmt(state[key]); if (!state.anim) draw(lastT); };
+}
+window.addEventListener('keydown', e => {
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+  const step = e.shiftKey ? 0.05 : 0.01;
+  let used = true;
+  if (e.key === 'ArrowLeft') state.lx -= step;
+  else if (e.key === 'ArrowRight') state.lx += step;
+  else if (e.key === 'ArrowUp') state.ly -= step;
+  else if (e.key === 'ArrowDown') state.ly += step;
+  else if (e.key === ' '){ state.playing = !state.playing; setBadge(); }
+  else if (e.key === 'p' || e.key === 'P') setAnim(!state.anim);
+  else used = false;
+  if (used){ e.preventDefault(); if (!state.anim) draw(lastT); }
+});
+window.__state = state; window.__press = PRESS; window.__emsrc = EMSRC;  // test hooks
+boot();
+</script></body></html>

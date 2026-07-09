@@ -3,7 +3,7 @@
   "title": "Ps1 Wild",
   "mode": "templateless",
   "material_is_dark": true,
-  "seed": 265,
+  "seed": 917,
   "palette": {
     "toxic_green": [
       90,
@@ -31,5 +31,13 @@
       30
     ]
   },
-  "theme_prompt": "PS1 wildcard \u2014 a bold experimental early-PlayStation aesthetic of your choice (arcade racer / cyber / horror): affine-warped LOW-POLY textures, dithering, punchy saturated 90s palette with toxic-green and magenta pops, chunky polygons, CRT grit, that distinctive PS1 texture-crunch look. Go bold and weird within the PS1 vibe."
+  "theme_prompt": "PS1 wildcard \u2014 a bold experimental early-PlayStation aesthetic of your choice (arcade racer / cyber / horror): affine-warped LOW-POLY textures, dithering, punchy saturated 90s palette with toxic-green and magenta pops, chunky polygons, CRT grit, that distinctive PS1 texture-crunch look. Go bold and weird within the PS1 vibe.",
+  "lighting": {
+    "emissive_hint": "whatever the wildcard skin painted as glowing accents",
+    "emissive_color": "auto",
+    "pulse": "breathe",
+    "intensity": 0.7,
+    "viz_emissive": true,
+    "beat_couple": 0.05
+  }
 }

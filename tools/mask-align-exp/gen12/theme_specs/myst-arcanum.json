@@ -3,7 +3,7 @@
   "title": "Myst Arcanum",
   "mode": "templateless",
   "material_is_dark": true,
-  "seed": 97,
+  "seed": 636,
   "palette": {
     "stone_warm": [
       150,
@@ -31,5 +31,17 @@
       158
     ]
   },
-  "theme_prompt": "MYST / ARCANUM (2001) pre-rendered CG look: a carved weathered STONE-and-BRASS arcane mechanism, softly ray-traced painterly render, mossy patina, aged parchment, mysterious dim atmosphere, intricate clockwork ornament, warm earthy palette. Late-90s/early-2000s pre-rendered adventure-game aesthetic \u2014 soft shadows, matte stone, tarnished metal."
+  "theme_prompt": "MYST / ARCANUM (2001) pre-rendered CG look: a carved weathered STONE-and-BRASS arcane mechanism, softly ray-traced painterly render, mossy patina, aged parchment, mysterious dim atmosphere, intricate clockwork ornament, warm earthy palette. Late-90s/early-2000s pre-rendered adventure-game aesthetic \u2014 soft shadows, matte stone, tarnished metal.",
+  "lighting": {
+    "emissive_hint": "teal glass tubes and faint arcane engravings",
+    "emissive_color": [
+      80,
+      220,
+      200
+    ],
+    "pulse": "breathe",
+    "intensity": 0.8,
+    "viz_emissive": true,
+    "beat_couple": 0.04
+  }
 }

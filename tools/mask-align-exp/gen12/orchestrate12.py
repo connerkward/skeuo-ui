@@ -47,6 +47,14 @@ for i in range(MAX):
         break
 
 run(["python3", "build_player.py", ASSETS])
+# ✨ PBR/emissive dynamic-lighting pass (pbr_pass.py + player-pbr.html) — feature-flagged
+# OFF until proven across the roster: it adds ~$0.02-0.03/skin hosted patina spend and
+# ~1min per roll. Flip here to enable; per-skin kill switch: spec "lighting.enabled": false.
+# Details: WIRE-pbr.md.
+PBR_PASS_ENABLED = False
+if PBR_PASS_ENABLED:
+    run(["python3", "pbr_pass.py", ASSETS])
+    run(["python3", "build_player_pbr.py", ASSETS])
 final = history[-1] if history else {}
 result = {"id": sid, "title": spec.get("title", sid), "mode": spec["mode"],
           "passed": bool(final.get("PASS")), "rolls": len(history), "final_seed": final.get("seed"),

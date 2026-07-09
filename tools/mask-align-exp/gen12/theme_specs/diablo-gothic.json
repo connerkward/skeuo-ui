@@ -3,7 +3,7 @@
   "title": "Diablo Gothic",
   "mode": "templateless",
   "material_is_dark": true,
-  "seed": 110,
+  "seed": 710,
   "palette": {
     "stone_grey": [
       92,
@@ -31,5 +31,17 @@
       40
     ]
   },
-  "theme_prompt": "DIABLO / BALDUR'S GATE dark GOTHIC media player: carved grimdark STONE and tarnished IRON, glowing BLOOD-RED runes and ember cracks, skulls and gothic ornament, bone inlays, torchlit shadow, oppressive medieval-hell atmosphere. Weathered stone, rusted metal, red arcane glow."
+  "theme_prompt": "DIABLO / BALDUR'S GATE dark GOTHIC media player: carved grimdark STONE and tarnished IRON, glowing BLOOD-RED runes and ember cracks, skulls and gothic ornament, bone inlays, torchlit shadow, oppressive medieval-hell atmosphere. Weathered stone, rusted metal, red arcane glow.",
+  "lighting": {
+    "emissive_hint": "the glowing blood-red runes and ember cracks in the stone",
+    "emissive_color": [
+      255,
+      90,
+      40
+    ],
+    "pulse": "ember",
+    "intensity": 1.3,
+    "viz_emissive": true,
+    "beat_couple": 0.07
+  }
 }

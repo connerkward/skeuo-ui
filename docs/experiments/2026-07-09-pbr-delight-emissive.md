@@ -48,3 +48,16 @@ pbrtest/, pbrtest2/ (pages, maps, extraction scripts, shots) — committed f47c8
 - **Fully interactive one-shader player**: draggable knob with rotating bump normals, silhouette-
   press buttons re-shaded by live light, VISUALIZER AS EMISSIVE SOURCE (bars light bezel 6.5×),
   shuffle, seek with in-shader groove resample. $0 new spend. Page: gen12/pbrtest3/.
+
+## Mainline integration (same day)
+Promoted to gen12 mainline as `pbr_pass.py` (patina 5-map call ~$0.016/skin at 1.6MP, spec-driven
+glyph emissive, paint-derived per-region glass masks, btn-ids, point lights → assets-<id>_pbr/) +
+`build_player_pbr.py` (player-pbr.html: one-shader relight, generic registerEmissiveSource()
+registry with two-level gather — viz is source #0, ?emdemo=1 adds seek-underglow + knob-pointer —
+and a shared ?bpm= beat clock coupling viz bars + emissive pulse). Director-authored `lighting`
+sections added to all 15 theme specs. Feature-flagged OFF (orchestrate12 PBR_PASS_ENABLED;
+opt-in link from player.html). New guard from verification: RING/RIM rejector — polished bezel
+rims pass every pixel gate; shape separates (glyphs fill .30-.57 of bbox ≤0.3% img; rim ring
+fill .074 at 5.9% img). Verified live on diablo-gothic (lava/rune ember), fallout-vault
+(amber lamps, mask-clipped bars, +3.1% on-beat frame luminance at beat=0.35), steam-porthole
+(teal glass masks via seeded colour-grow; dark-CC alone failed). See WIRE-pbr.md. Spend: ~$0.08.

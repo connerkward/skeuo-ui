@@ -3,7 +3,7 @@
   "title": "Fallout Vault",
   "mode": "templateless",
   "material_is_dark": true,
-  "seed": 110,
+  "seed": 649,
   "palette": {
     "rust": [
       150,
@@ -31,5 +31,17 @@
       90
     ]
   },
-  "theme_prompt": "FALLOUT rusted VAULT-TEC terminal: a decayed, grimy STEEL control panel with heavy RUST streaks, an AMBER phosphor screen, peeling Vault-Tec yellow paint, riveted plates, dust and wear, post-apocalyptic retro-tech. Weathered, industrial, warm amber glow in a dark grimy body."
+  "theme_prompt": "FALLOUT rusted VAULT-TEC terminal: a decayed, grimy STEEL control panel with heavy RUST streaks, an AMBER phosphor screen, peeling Vault-Tec yellow paint, riveted plates, dust and wear, post-apocalyptic retro-tech. Weathered, industrial, warm amber glow in a dark grimy body.",
+  "lighting": {
+    "emissive_hint": "amber warning lamps and dim phosphor terminal glow",
+    "emissive_color": [
+      255,
+      180,
+      60
+    ],
+    "pulse": "phosphor",
+    "intensity": 0.9,
+    "viz_emissive": true,
+    "beat_couple": 0.05
+  }
 }

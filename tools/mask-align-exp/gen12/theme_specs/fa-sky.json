@@ -3,7 +3,7 @@
   "title": "Frutiger Aero Sky (templateless)",
   "mode": "templateless",
   "material_is_dark": false,
-  "seed": 110,
+  "seed": 723,
   "palette": {
     "aqua_blue": [
       30,
@@ -41,5 +41,13 @@
       48
     ]
   },
-  "theme_prompt": "FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic) at its most lush: a translucent glossy media-player of clear aqua-blue and cyan GLASS with water droplets, blue-sky-and-clouds and rippling-water motifs, brushed liquid-silver metal, glowing grass-green accents, crisp reflections and soft light. Optimistic, clean, dimensional. Design a beautiful ORGANIC free-form player housing of your own \u2014 a smooth glass pebble or a flowing wave shape \u2014 with the controls arranged attractively. Vivid and saturated, never flat, never grungy."
+  "theme_prompt": "FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic) at its most lush: a translucent glossy media-player of clear aqua-blue and cyan GLASS with water droplets, blue-sky-and-clouds and rippling-water motifs, brushed liquid-silver metal, glowing grass-green accents, crisp reflections and soft light. Optimistic, clean, dimensional. Design a beautiful ORGANIC free-form player housing of your own \u2014 a smooth glass pebble or a flowing wave shape \u2014 with the controls arranged attractively. Vivid and saturated, never flat, never grungy.",
+  "lighting": {
+    "emissive_hint": "soft aqua-sky glow of the translucent shell and glass glints",
+    "emissive_color": "auto",
+    "pulse": "breathe",
+    "intensity": 0.6,
+    "viz_emissive": true,
+    "beat_couple": 0.04
+  }
 }

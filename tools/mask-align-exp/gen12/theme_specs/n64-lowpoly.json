@@ -3,7 +3,7 @@
   "title": "N64 Lowpoly",
   "mode": "templated",
   "material_is_dark": false,
-  "seed": 71,
+  "seed": 571,
   "palette": {
     "plastic_blue": [
       60,
@@ -32,5 +32,13 @@
     ]
   },
   "theme_prompt": "N64 CUTSCENE low-poly character-render look: flat/gouraud-shaded LOW-POLY plastic surfaces, blocky faceted geometry, simple vertex lighting, matte primary-colour plastics, that unmistakable mid-90s Nintendo-64 pre-rendered CG cutscene aesthetic \u2014 smooth flat shading, chunky forms, plasticky, slightly toy-like.",
-  "layout": "vpod"
+  "layout": "vpod",
+  "lighting": {
+    "emissive_hint": "none \u2014 flat-shaded plastic; visualizer is the only light source",
+    "emissive_color": "auto",
+    "pulse": "none",
+    "intensity": 0.3,
+    "viz_emissive": true,
+    "beat_couple": 0.03
+  }
 }

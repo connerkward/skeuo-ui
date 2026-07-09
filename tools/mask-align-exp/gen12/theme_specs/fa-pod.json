@@ -4,7 +4,7 @@
   "mode": "templated",
   "layout": "vpod",
   "material_is_dark": false,
-  "seed": 173,
+  "seed": 673,
   "palette": {
     "aqua_blue": [
       30,
@@ -42,5 +42,13 @@
       48
     ]
   },
-  "theme_prompt": "Quintessential FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic): a translucent glossy media-player pod of clear aqua-blue and cyan GLASS with liquid highlights and water-droplet beads, brushed liquid-silver metal bezels, a lush grass-green glowing accent, crisp specular reflections and soft shadows, optimistic and clean. Think Windows-Vista-era glass, Apple-Aqua gel buttons, bubbles and water. Buttons are glossy gel jewels; the body is a smooth organic pebble. Vivid, saturated, dimensional \u2014 never flat, never grungy."
+  "theme_prompt": "Quintessential FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic): a translucent glossy media-player pod of clear aqua-blue and cyan GLASS with liquid highlights and water-droplet beads, brushed liquid-silver metal bezels, a lush grass-green glowing accent, crisp specular reflections and soft shadows, optimistic and clean. Think Windows-Vista-era glass, Apple-Aqua gel buttons, bubbles and water. Buttons are glossy gel jewels; the body is a smooth organic pebble. Vivid, saturated, dimensional \u2014 never flat, never grungy.",
+  "lighting": {
+    "emissive_hint": "soft aqua glow accents in the translucent shell",
+    "emissive_color": "auto",
+    "pulse": "breathe",
+    "intensity": 0.7,
+    "viz_emissive": true,
+    "beat_couple": 0.04
+  }
 }

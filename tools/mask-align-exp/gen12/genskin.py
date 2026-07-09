@@ -194,6 +194,7 @@ def main():
            "keyNames": {k: cname(v) for k, v in KEYS.items()},
            "buttons": BUTTONS, "sprites": [KNOB, SLIDER, TOGGLE], "extras": REGIONS,
            "roles": ROLES, "defsz": defsz, "devFrac": DEVF,
+           "lighting": spec.get("lighting", {}),  # director-authored emissive/lighting (pbr_pass)
            "template": template if mode == "templated" else {}}
     if mode == "templated":
         aa = layout["album_art"]; res["album_art_rect"] = [aa[0] - aa[3] / COL_W / 2, (aa[1] - aa[4] / DEV_H / 2) * DEVF, aa[3] / COL_W, aa[4] / DEV_H * DEVF]

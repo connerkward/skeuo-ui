@@ -3,7 +3,7 @@
   "title": "Fallout Pipboy",
   "mode": "templated",
   "material_is_dark": true,
-  "seed": 71,
+  "seed": 571,
   "palette": {
     "phosphor_green": [
       90,
@@ -32,5 +32,17 @@
     ]
   },
   "theme_prompt": "FALLOUT PIP-BOY: retro-industrial olive-drab painted METAL casing with chunky rivets, a glowing GREEN monochrome PHOSPHOR CRT display, worn scratched paint, amber warning accents, vacuum-tube 1950s-retrofuture styling, analog dials. Rugged, militaristic, cathode-ray glow.",
-  "layout": "vpod"
+  "layout": "vpod",
+  "lighting": {
+    "emissive_hint": "the green phosphor CRT display glow and indicator lamps",
+    "emissive_color": [
+      110,
+      255,
+      140
+    ],
+    "pulse": "phosphor",
+    "intensity": 1.1,
+    "viz_emissive": true,
+    "beat_couple": 0.05
+  }
 }
