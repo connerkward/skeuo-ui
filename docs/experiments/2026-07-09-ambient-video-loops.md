@@ -161,3 +161,14 @@ Agent-judged from heatmaps + full-res frames + seam crops; user review via the s
   `loop2-<model>-<skin>.{mp4,webm}` (12 loops; diablo has `-v2` = glow-only prompt).
 - Jobs/params/prompts: `ambientvid/jobs2.json` (all request ids, seeds, per-model params).
 - Total spend both rounds ≈ $3.2–5.2 (round 2 alone ≈ $1.4–1.9).
+
+## Human verdicts (Conner, 2026-07-09, round 2)
+- **Seedance 1.0 pro fast is really good** — adopted as the ambient-loop model of choice
+  ($0.108/clip, camera_fixed, motion confined to prompt-named regions).
+- **NEW PROBLEM identified: reliably masking modified areas.** Even a good gen changes pixels
+  outside the intended regions subtly; we need a dependable way to (a) detect which pixels the
+  video model actually modified vs the source frame, and/or (b) hard-composite: static source
+  frame everywhere + video only inside allowed-motion masks (paint-derived region masks exist in
+  the PBR pass — natural fit). Unsolved; saved for later.
+- **TODO (terms now accepted on HF):** benchmark `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph`
+  against the round-2 results (same subjects, same region-scoped prompts, fal LTX lora endpoint).

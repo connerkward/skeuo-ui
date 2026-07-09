@@ -434,3 +434,8 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
   frequency). Terms: moiré pattern, lattice undersampling aliasing, ordered dithering. Replicable:
   sample every k-th pixel of a filled shape, draw at floor(x*s) with k*s non-integer. Consider as a
   deliberate visual style (viz mode / loading states / brand texture).
+- **Ambient-video masking problem**: find a reliable way to mask/limit modified areas in i2v
+  ambient loops — diff-detect changed pixels vs source frame + hard-composite video only inside
+  allowed-motion masks (reuse PBR glass/region masks). Seedance 1.0 pro fast = current winner.
+- **Benchmark LTX-2.3 Cinemagraph LoRA** (HF terms accepted) vs round-2 Seedance/Wan results —
+  same subjects + region-scoped prompts via fal ltx lora endpoint (~$0.10-0.15/clip).
