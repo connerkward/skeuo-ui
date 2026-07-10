@@ -1,25 +1,34 @@
 # gen12 TODO
 
-## Flip BIREF_LOCAL / PAINT_VERTEX between batches
+## BIREF_LOCAL / PAINT_VERTEX flags
 
-Both land as flag-gated OFF (default matches current behaviour exactly — see
-`.claude/rules/generation-spend-rule.md` and `.claude/rules/feature-flag-rule.md`).
+Both landed flag-gated OFF, then were flipped ON 2026-07-10 (user call, batch drained —
+see `.claude/rules/generation-spend-rule.md` and `.claude/rules/feature-flag-rule.md`).
 Flip only **between** batches, never while `orchestrate12.py` is mid-run.
 
-### `biref12.py: BIREF_LOCAL` (default `False`)
+### `biref12.py: BIREF_LOCAL` (now `True`)
 
 - **What it does when `True`:** runs BiRefNet locally via `transformers`
-  (`ZhengPeng7/BiRefNet`, `trust_remote_code=True`) on MPS instead of the fal
+  (`trust_remote_code=True`) on MPS instead of the fal
   `fal-ai/birefnet/v2` endpoint. $0/matte, no fal dependency.
 - **Requires:** the `.venv-biref/` venv in this dir (torch/torchvision/transformers/
   huggingface-hub/accelerate/scipy/pillow/requests/numpy — already created + populated
   on this machine). `biref12.py` auto-re-execs itself under `.venv-biref/bin/python3`
   if the current interpreter lacks `torch`, so `orchestrate12.py`'s
   `["python3", "biref12.py", ASSETS]` call keeps working unmodified.
-- **Verified:** `True` — alpha IoU 0.9973 vs the live fal matte on
-  `assets-fallout-vault/paint.png` (2304x3712), all 4 strip parts (vol/seek/shuffle
-  off+on) matched at 99–100% mask-cell overlap, visually identical side-by-side.
-  13.1–19.2s per matte on MPS (M-series, warm HF cache).
+- **Checkpoint: `ZhengPeng7/BiRefNet_HR` @ 2048 input** (switched from general@1024
+  after a bench, 2026-07-10). What fal's "General Use (Heavy)" actually is: fal's own
+  schema maps it to `BiRefNet_lite`, but the same schema describes Heavy as "slower
+  but more accurate" (lite is the 44M fast model) — the Light/Heavy rows are almost
+  certainly swapped in fal's doc, and the bench can't discriminate. IoU vs the fal
+  Heavy matte on fallout-vault: HR@2048 **0.9978**, general@2048 0.9979, lite@1024
+  0.9976, general@1024 0.9973 — all within 0.0006 (noise). HR chosen: full 220.7M
+  checkpoint TRAINED at the 2048 operating resolution the fal call uses, IoU ≥ the
+  previously shipped general@1024.
+- **Verified:** `True` — end-to-end via the real shipped biref12.py: IoU 0.9978,
+  all 4 strip parts (vol/seek/shuffle off+on) matched at 98–100% mask-cell overlap,
+  visually identical side-by-side. ~31s/matte at 2048 on MPS incl. model load
+  (~5s inference once warm).
 
 ### `genskin.py: PAINT_VERTEX` (default `False`)
 

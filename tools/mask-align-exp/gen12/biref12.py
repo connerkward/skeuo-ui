@@ -31,22 +31,29 @@ if BIREF_LOCAL:
 
 _LOCAL_MODEL = None  # cached (model, device) — loaded once per invocation, reused across islands
 
+# BiRefNet_HR: the 2048-trained full (220.7M) checkpoint — matches the 2048x2048 operating
+# resolution the fal call below requests, and scored best-equal on the fallout-vault bench
+# (IoU vs fal matte: HR@2048 0.9978, general@2048 0.9979, general@1024 0.9973, lite@1024
+# 0.9976 — all candidates within noise; HR is the one TRAINED for 2048 inference).
+_LOCAL_CKPT, _LOCAL_RES = "ZhengPeng7/BiRefNet_HR", 2048
+
 
 def _local_matte(png_bytes):
-    """BiRefNet ZhengPeng7/BiRefNet via transformers, on MPS when available. Same contract as the
-    fal path: PNG bytes in, RGBA PNG bytes out (mask resized back to the input's native size)."""
+    """BiRefNet via transformers (checkpoint/res: _LOCAL_CKPT/_LOCAL_RES), on MPS when available.
+    Same contract as the fal path: PNG bytes in, RGBA PNG bytes out (mask resized back to the
+    input's native size)."""
     global _LOCAL_MODEL
     import torch
     from torchvision import transforms
     from transformers import AutoModelForImageSegmentation
     if _LOCAL_MODEL is None:
         dev = "mps" if torch.backends.mps.is_available() else "cpu"
-        model = AutoModelForImageSegmentation.from_pretrained("ZhengPeng7/BiRefNet", trust_remote_code=True)
+        model = AutoModelForImageSegmentation.from_pretrained(_LOCAL_CKPT, trust_remote_code=True)
         model.to(dev, dtype=torch.float32).eval()  # checkpoint loads as fp16 by default; fp32 avoids a dtype mismatch vs the fp32 input tensor
         _LOCAL_MODEL = (model, dev)
     model, dev = _LOCAL_MODEL
     im = Image.open(io.BytesIO(png_bytes)).convert("RGB"); W0, H0 = im.size
-    tfm = transforms.Compose([transforms.Resize((1024, 1024)), transforms.ToTensor(),
+    tfm = transforms.Compose([transforms.Resize((_LOCAL_RES, _LOCAL_RES)), transforms.ToTensor(),
                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
     x = tfm(im).unsqueeze(0).to(dev)
     with torch.no_grad():
@@ -91,7 +98,7 @@ elif BIREF_LOCAL:
     t0 = time.time()
     raw = _local_matte(buf.getvalue())
     open(_mp, "wb").write(raw)
-    print(f"[global-local] {time.time() - t0:.1f}s (BiRefNet ZhengPeng7, {_LOCAL_MODEL[1]})", flush=True)
+    print(f"[global-local] {time.time() - t0:.1f}s ({_LOCAL_CKPT} @{_LOCAL_RES}, {_LOCAL_MODEL[1]})", flush=True)
 else:
     buf = io.BytesIO(); paint.save(buf, "PNG")
     job = requests.post("https://queue.fal.run/fal-ai/birefnet/v2",
