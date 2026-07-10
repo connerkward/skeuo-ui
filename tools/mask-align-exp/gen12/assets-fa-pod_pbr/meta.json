@@ -1,0 +1,234 @@
+{
+ "id": "fa-pod",
+ "size": [
+  2304,
+  2784
+ ],
+ "paintSize": [
+  2304,
+  3712
+ ],
+ "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "soft aqua glow accents in the translucent shell",
+  "emissive_color": "auto",
+  "pulse": "breathe",
+  "intensity": 0.7,
+  "viz_emissive": true,
+  "beat_couple": 0.04,
+  "enabled": true
+ },
+ "glassFill": [
+  0.191,
+  0.2786,
+  0.3296
+ ],
+ "regions": {
+  "visualizer": {
+   "rect": [
+    0.5308,
+    0.1404,
+    0.2595,
+    0.2324
+   ],
+   "mask": "viz-mask.png",
+   "maskRect": [
+    0.4996,
+    0.1124,
+    0.3216,
+    0.2881
+   ]
+  },
+  "album_art": {
+   "rect": [
+    0.1892,
+    0.1394,
+    0.2843,
+    0.2338
+   ],
+   "mask": "art-mask.png",
+   "maskRect": [
+    0.1549,
+    0.111,
+    0.3524,
+    0.2902
+   ]
+  }
+ },
+ "knob": {
+  "c": [
+   0.2576,
+   0.72
+  ],
+  "r": 0.0893
+ },
+ "seek": {
+  "track": [
+   0.4297,
+   0.7089,
+   0.3576,
+   0.0473
+  ],
+  "vertical": false,
+  "travel": [
+   0.4227,
+   0.7943
+  ]
+ },
+ "shuffle": {
+  "rect": [
+   0.4442,
+   0.7818,
+   0.2157,
+   0.0879
+  ],
+  "angle": -90.0,
+  "stateAlign": {
+   "dx": 0,
+   "dy": -1
+  }
+ },
+ "buttons": [
+  {
+   "name": "playpause",
+   "id": 36,
+   "rect": [
+    0.1866,
+    0.4188,
+    0.1445,
+    0.1203
+   ]
+  },
+  {
+   "name": "prev",
+   "id": 72,
+   "rect": [
+    0.398,
+    0.4274,
+    0.1628,
+    0.1002
+   ]
+  },
+  {
+   "name": "next",
+   "id": 108,
+   "rect": [
+    0.622,
+    0.4274,
+    0.1623,
+    0.1002
+   ]
+  },
+  {
+   "name": "repeat",
+   "id": 144,
+   "rect": [
+    0.4792,
+    0.57,
+    0.1176,
+    0.0981
+   ]
+  },
+  {
+   "name": "queue",
+   "id": 180,
+   "rect": [
+    0.6593,
+    0.57,
+    0.1172,
+    0.0977
+   ]
+  }
+ ],
+ "lights": [
+  {
+   "uv": [
+    0.366,
+    0.8516
+   ],
+   "color": [
+    0.236,
+    0.673,
+    1.0
+   ],
+   "energy": 0.12
+  },
+  {
+   "uv": [
+    0.6686,
+    0.4043
+   ],
+   "color": [
+    0.366,
+    0.884,
+    1.0
+   ],
+   "energy": 0.072
+  },
+  {
+   "uv": [
+    0.5438,
+    0.7775
+   ],
+   "color": [
+    0.261,
+    0.85,
+    1.0
+   ],
+   "energy": 0.069
+  },
+  {
+   "uv": [
+    0.3717,
+    0.7074
+   ],
+   "color": [
+    0.246,
+    0.727,
+    1.0
+   ],
+   "energy": 0.064
+  },
+  {
+   "uv": [
+    0.7891,
+    0.6037
+   ],
+   "color": [
+    0.267,
+    0.747,
+    1.0
+   ],
+   "energy": 0.055
+  },
+  {
+   "uv": [
+    0.5154,
+    0.6185
+   ],
+   "color": [
+    0.297,
+    0.921,
+    0.997
+   ],
+   "energy": 0.046
+  }
+ ],
+ "emissiveCoverage": 0.0364,
+ "emissiveHue": {
+  "mode": "auto",
+  "center": 195.0,
+  "half_width": 40,
+  "px": 502590
+ },
+ "cost": {
+  "patina_model": "fal-ai/patina",
+  "patina_usd": 0.016,
+  "paint_model": "fal-ai/gemini-3-pro-image-preview/edit",
+  "emissive": "classical local $0"
+ },
+ "src": {
+  "sha1": "cece3a9f3ae9",
+  "paint_mtime": 1783629589
+ }
+}

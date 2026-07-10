@@ -54,8 +54,8 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
 @media (prefers-color-scheme:light){body{background:#f6f7f9;color:#1a1d22}.card,.ex,.stat,.hnotes,.htoggle{background:#fff;border-color:#00000018}.bar{background:#f6f7f9ee}}
 </style></head><body>
 <h1>gen12 — human review</h1>
-<div class=sub>auto-gate 7/14 · set YOUR pass/fail per skin, note what's wrong; verdicts autosave. Live players are embedded — drag knobs/seek, click buttons.</div>
-<div class=sub>models: <b>fal-ai/gemini-3-pro-image-preview/edit</b> (paint+mask, ~$0.15/roll) + <b>fal-ai/birefnet/v2</b> (~$0.005/roll) · extraction/player = local $0 · est. total ≈ <b>$6.97</b> (45 rolls × ~$0.155)</div>
+<div class=sub>auto-gate 8/14 · set YOUR pass/fail per skin, note what's wrong; verdicts autosave. Live players are embedded — drag knobs/seek, click buttons.</div>
+<div class=sub>models: <b>fal-ai/gemini-3-pro-image-preview/edit</b> (paint+mask, ~$0.15/roll) + <b>fal-ai/birefnet/v2</b> (~$0.005/roll) · extraction/player = local $0 · est. total ≈ <b>$6.51</b> (42 rolls × ~$0.155)</div>
 <div class=bar>
   <span class=stat id=hsum>your gate: 0 pass · 0 fail · 14 unset</span>
   <button class=btn onclick=exportFb()>⬇ download verdicts JSON</button>
@@ -63,17 +63,17 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <button class=btn onclick="localStorage.clear();location.reload()">reset</button>
 </div>
 <h2>Overview</h2>
-<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody><tr class="rf"><td><a href="#c-claymation">claymation</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="claymation">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="diablo-gothic">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fa-pod">fa-pod</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fa-pod">—</td><td>1</td><td>—</td></tr><tr class="rf"><td><a href="#c-fa-sky">fa-sky</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="fa-sky">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fallout-pipboy">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-vault">fallout-vault</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fallout-vault">—</td><td>4</td><td>—</td></tr><tr class="rf"><td><a href="#c-myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="myst-arcanum">—</td><td>4</td><td>missing:shuffle, state-align</td></tr><tr class="rp"><td><a href="#c-n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="n64-cutscene">—</td><td>3</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✗</td><td class="hcell" data-id="ps1-crunchy">—</td><td>4</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="ps1-wild">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-steam-porthole">steam-porthole</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="steam-porthole">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wc-goldshield">—</td><td>3</td><td>—</td></tr><tr class="rf"><td><a href="#c-wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✗</td><td class="hcell" data-id="wmp-quicksilver">—</td><td>4</td><td>emptiness, state-align</td></tr><tr class="rf"><td><a href="#c-wmp-vario">wmp-vario</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="wmp-vario">—</td><td>4</td><td>region-misplaced:album_art</td></tr></tbody></table>
+<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody><tr class="rf"><td><a href="#c-claymation">claymation</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="claymation">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="diablo-gothic">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fa-pod">fa-pod</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fa-pod">—</td><td>1</td><td>—</td></tr><tr class="rf"><td><a href="#c-fa-sky">fa-sky</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="fa-sky">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fallout-pipboy">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-vault">fallout-vault</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fallout-vault">—</td><td>4</td><td>—</td></tr><tr class="rf"><td><a href="#c-myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="myst-arcanum">—</td><td>4</td><td>missing:shuffle, state-align</td></tr><tr class="rp"><td><a href="#c-n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="n64-cutscene">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="ps1-crunchy">—</td><td>1</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="ps1-wild">—</td><td>4</td><td>state-align</td></tr><tr class="rp"><td><a href="#c-steam-porthole">steam-porthole</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="steam-porthole">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wc-goldshield">—</td><td>3</td><td>—</td></tr><tr class="rf"><td><a href="#c-wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✗</td><td class="hcell" data-id="wmp-quicksilver">—</td><td>4</td><td>emptiness, state-align</td></tr><tr class="rf"><td><a href="#c-wmp-vario">wmp-vario</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="wmp-vario">—</td><td>4</td><td>region-misplaced:album_art</td></tr></tbody></table>
 <h2>Per-skin review</h2>
 <section class=card id="c-claymation" data-id="claymation">
   <div class=chead><h3>Claymation (templateless) <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="claymation">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 610 · roll 4/4 · painted 2026-07-09 13:31</div>
+  <div class=runid>gen12 · seed 610 · roll 4/4 · painted 2026-07-10 11:03 <span class=midregen title="paint.png mtime is newer than orch.json — this card may be showing a mid-regeneration or a manual roll not yet aggregated into orch.json">&#9888; paint newer than orch — mid-regen/unaggregated</span></div>
   <div class=live><iframe src="assets-claymation/player.html" loading=lazy title="claymation player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="claymation" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto><span class="fail">auto FAIL</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 4 roll(s) · seed 610</span><br><span class=rz>reasons: state-align</span></div>
+      <div class=auto><span class="fail">auto FAIL</span> · <span class=det>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak 0.0 · 4 roll(s) · seed 610</span><br><span class=rz>reasons: state-align</span></div>
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-claymation/blueprint.png" target=_blank><figure><img src="assets-claymation/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-claymation/paint.png" target=_blank><figure><img src="assets-claymation/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-claymation/mask.png" target=_blank><figure><img src="assets-claymation/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-claymation/overlay.png" target=_blank><figure><img src="assets-claymation/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-diablo-gothic" data-id="diablo-gothic">
@@ -88,7 +88,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-diablo-gothic/blueprint.png" target=_blank><figure><img src="assets-diablo-gothic/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-diablo-gothic/paint.png" target=_blank><figure><img src="assets-diablo-gothic/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-diablo-gothic/mask.png" target=_blank><figure><img src="assets-diablo-gothic/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-diablo-gothic/overlay.png" target=_blank><figure><img src="assets-diablo-gothic/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-fa-pod" data-id="fa-pod">
-  <div class=chead><h3>Frutiger Aero Pod <span class=mode>templated</span></h3>
+  <div class=chead><h3>Frutiger Aero Pod <span class=mode>templated</span> · <a class=pbrlink href="assets-fa-pod/player-pbr.html" target=_blank>&#10024; dynamic lighting</a></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="fa-pod">— unset —</button></div></div>
   <div class=runid>gen12 · seed 673 · roll 1/4 · painted 2026-07-09 13:39</div>
@@ -102,7 +102,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Frutiger Aero Sky (templateless) <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="fa-sky">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 749 · roll 4/4 · painted 2026-07-09 13:53</div>
+  <div class=runid>gen12 · seed 749 · roll 4/4 · painted 2026-07-10 11:03 <span class=midregen title="paint.png mtime is newer than orch.json — this card may be showing a mid-regeneration or a manual roll not yet aggregated into orch.json">&#9888; paint newer than orch — mid-regen/unaggregated</span></div>
   <div class=live><iframe src="assets-fa-sky/player.html" loading=lazy title="fa-sky player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="fa-sky" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -135,11 +135,11 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Myst Arcanum <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="myst-arcanum">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 636 · roll 4/4 · painted 2026-07-09 13:46</div>
+  <div class=runid>gen12 · seed 636 · roll 4/4 · painted 2026-07-10 11:08 <span class=midregen title="paint.png mtime is newer than orch.json — this card may be showing a mid-regeneration or a manual roll not yet aggregated into orch.json">&#9888; paint newer than orch — mid-regen/unaggregated</span></div>
   <div class=live><iframe src="assets-myst-arcanum/player.html" loading=lazy title="myst-arcanum player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="myst-arcanum" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto><span class="fail">auto FAIL</span> · <span class=det>controls 9/10 · seek-cov 1.04 · empty ok · align ok · leak 0.0 · 4 roll(s) · seed 636</span><br><span class=rz>reasons: missing:shuffle, state-align</span></div>
+      <div class=auto><span class="fail">auto FAIL</span> · <span class=det>controls 9/10 · seek-cov 1.04 · empty ok · align x · leak 0.0 · 4 roll(s) · seed 636</span><br><span class=rz>reasons: missing:shuffle, state-align</span></div>
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-myst-arcanum/blueprint.png" target=_blank><figure><img src="assets-myst-arcanum/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-myst-arcanum/paint.png" target=_blank><figure><img src="assets-myst-arcanum/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-myst-arcanum/mask.png" target=_blank><figure><img src="assets-myst-arcanum/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-myst-arcanum/overlay.png" target=_blank><figure><img src="assets-myst-arcanum/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-n64-cutscene" data-id="n64-cutscene">
@@ -157,11 +157,11 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Ps1 Crunchy <span class=mode>templated</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="ps1-crunchy">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 623 · roll 4/4 · painted 2026-07-08 23:31</div>
+  <div class=runid>gen12 · seed 623 · roll 1/4 · painted 2026-07-10 11:03</div>
   <div class=live><iframe src="assets-ps1-crunchy/player.html" loading=lazy title="ps1-crunchy player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="ps1-crunchy" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto><span class="fail">auto FAIL</span> · <span class=det>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak None · 4 roll(s) · seed 623</span><br><span class=rz>all checks green</span></div>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.04 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 623</span><br><span class=rz>all checks green</span></div>
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-ps1-crunchy/blueprint.png" target=_blank><figure><img src="assets-ps1-crunchy/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-ps1-crunchy/paint.png" target=_blank><figure><img src="assets-ps1-crunchy/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-ps1-crunchy/mask.png" target=_blank><figure><img src="assets-ps1-crunchy/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-ps1-crunchy/overlay.png" target=_blank><figure><img src="assets-ps1-crunchy/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-ps1-wild" data-id="ps1-wild">
@@ -187,7 +187,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-steam-porthole/blueprint.png" target=_blank><figure><img src="assets-steam-porthole/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-steam-porthole/paint.png" target=_blank><figure><img src="assets-steam-porthole/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-steam-porthole/mask.png" target=_blank><figure><img src="assets-steam-porthole/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-steam-porthole/overlay.png" target=_blank><figure><img src="assets-steam-porthole/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-wc-goldshield" data-id="wc-goldshield">
-  <div class=chead><h3>Wc Goldshield <span class=mode>templated</span></h3>
+  <div class=chead><h3>Wc Goldshield <span class=mode>templated</span> · <a class=pbrlink href="assets-wc-goldshield/player-pbr.html" target=_blank>&#10024; dynamic lighting</a></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="wc-goldshield">— unset —</button></div></div>
   <div class=runid>gen12 · seed 736 · roll 3/4 · painted 2026-07-09 13:52</div>

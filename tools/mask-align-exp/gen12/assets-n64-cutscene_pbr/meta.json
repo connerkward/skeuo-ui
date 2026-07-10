@@ -1,0 +1,160 @@
+{
+ "id": "n64-cutscene",
+ "size": [
+  2304,
+  2784
+ ],
+ "paintSize": [
+  2304,
+  3712
+ ],
+ "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "subtle screen glow only \u2014 matte low-poly plastic does not emit",
+  "emissive_color": "auto",
+  "pulse": "breathe",
+  "intensity": 0.4,
+  "viz_emissive": true,
+  "beat_couple": 0.03,
+  "enabled": true
+ },
+ "glassFill": [
+  0.11,
+  0.1306,
+  0.1515
+ ],
+ "regions": {
+  "visualizer": {
+   "rect": [
+    0.477,
+    0.5823,
+    0.1832,
+    0.1433
+   ],
+   "mask": "viz-mask.png",
+   "maskRect": [
+    0.4549,
+    0.565,
+    0.227,
+    0.1774
+   ]
+  },
+  "album_art": {
+   "rect": [
+    0.1753,
+    0.5614,
+    0.2708,
+    0.217
+   ],
+   "mask": "art-mask.png",
+   "maskRect": [
+    0.1428,
+    0.5352,
+    0.3355,
+    0.269
+   ]
+  }
+ },
+ "knob": {
+  "c": [
+   0.804,
+   0.6291
+  ],
+  "r": 0.0994
+ },
+ "seek": {
+  "track": [
+   0.2014,
+   0.8071,
+   0.4518,
+   0.0693
+  ],
+  "vertical": false,
+  "travel": [
+   0.1927,
+   0.6619
+  ]
+ },
+ "shuffle": {
+  "rect": [
+   0.6976,
+   0.8036,
+   0.1455,
+   0.1292
+  ],
+  "angle": 0,
+  "stateAlign": {
+   "dx": 0,
+   "dy": 0
+  }
+ },
+ "buttons": [
+  {
+   "name": "playpause",
+   "id": 36,
+   "rect": [
+    0.3789,
+    0.1505,
+    0.2144,
+    0.1088
+   ]
+  },
+  {
+   "name": "prev",
+   "id": 72,
+   "rect": [
+    0.276,
+    0.2141,
+    0.1315,
+    0.1631
+   ]
+  },
+  {
+   "name": "next",
+   "id": 108,
+   "rect": [
+    0.5647,
+    0.2141,
+    0.1311,
+    0.1627
+   ]
+  },
+  {
+   "name": "repeat",
+   "id": 144,
+   "rect": [
+    0.3147,
+    0.3775,
+    0.1562,
+    0.1214
+   ]
+  },
+  {
+   "name": "queue",
+   "id": 180,
+   "rect": [
+    0.5013,
+    0.3772,
+    0.1562,
+    0.1218
+   ]
+  }
+ ],
+ "lights": [],
+ "emissiveCoverage": 0.0,
+ "emissiveHue": {
+  "mode": "auto",
+  "center": null,
+  "px": 0
+ },
+ "cost": {
+  "patina_model": "fal-ai/patina",
+  "patina_usd": 0.016,
+  "paint_model": "fal-ai/gemini-3-pro-image-preview/edit",
+  "emissive": "classical local $0"
+ },
+ "src": {
+  "sha1": "2fe501294920",
+  "paint_mtime": 1783630445
+ }
+}
