@@ -1,5 +1,51 @@
 # gen12 TODO
 
+## Review the longitudinal blueprint-conditioning randomization study (once n accumulates)
+
+Wired 2026-07-10: mainline `genskin.py` now randomly draws a blueprint guide-STYLE arm on every
+**templated**-mode generation — `solid` (75%) vs `outline` (25%), weighted toward the incumbent
+(abshape A/B winner, `abshape/verdict.json`) per generation-spend-rule, so more evidence
+accumulates on the arm already ahead while `outline` stays in rotation because the user isn't
+yet convinced it's categorically worse (small n=4/arm sample). The draw is deterministic —
+seeded from the generation's own `seed` via `pick_blueprint_arm()` — so re-running the same seed
+reproduces the same arm; no separate stored draw-seed, no Math.random-style nondeterminism.
+
+**Where it's logged:** additively in each skin's `results.json` (genskin's own persisted meta):
+`blueprint_trial_enabled`, `blueprint_arm` (what the draw picked: solid|outline),
+`blueprint_arm_draw_seed` (== the generation seed), `blueprint_twoimg` (bool, see below),
+`blueprint_conditioning` (the arm ACTUALLY used to build the blueprint — equals `blueprint_arm`
+unless twoimg overrode it). **Caveat:** `extract12.py`'s `regions.json` writer builds its output
+from a fixed literal field list (devFrac/buttons/sprites/extras/roles/templated/keys/keyNames/
+regions/template) — it does NOT passthrough arbitrary `results.json` keys, so the arm currently
+lives ONLY in `results.json`, not in `regions.json`/the dashboard. Wiring it into `regions.json`
+needs a small additive line in `extract12.py` (owned by another lane, not touched here) before
+the dashboard can show it directly — until then, cross-reference `assets-<id>/results.json`.
+
+**What to analyze once enough n has accumulated across future batches** (auto-reroll is OFF, so
+each generation = 1 roll unless someone explicitly retries — n grows slowly, for real):
+- per-arm **gate pass rate** (extract12's emptiness gate + genskin's own leak gate)
+- per-arm **emptiness-fail rate** specifically (the abshape-verdict discriminating signal:
+  solid won emptiness 3:1 pooled over outline in the small sample — does that hold at scale?)
+- per-arm **guide-hue residue** (the coloured-ring-around-a-button defect outline produced in
+  3/4 abshape gens) — visual spot-check, the automated leak-gate% doesn't discriminate reliably
+- per-arm **layout/registration drift** (region-misplaced flags, template drift metric)
+
+**Two-image conditioning (`BLUEPRINT_TWOIMG` / spec `"conditioning":"twoimg"`) is NOT part of
+this trial arm draw** — scope changed mid-implementation: the twoimg construction code (clean
+edit-target canvas + a second solid-filled guide-layout reference image, via `edit_vertex_multi`)
+is ported into mainline `genskin.py` and ready to flip, but stays a separate opt-in flag
+(default `False`) since the `twoimg/` experiment already FALSIFIED it as a bleed fix (see below)
+and a further raw-vs-neutral-reference variant decision is still pending.
+
+Verified 2026-07-10 (dry run, zero spend — `--blueprint-only` against 3 seeded specs, then
+deleted the throwaway `assets-drytest-*/` dirs): `solid` arm blueprint has filled guide shapes
+(23.4% saturated-guide-pixel coverage of the device column); `outline` arm has stroked outlines
+only (5.3% coverage, same positions/sizes); `twoimg` mode's edit-target `blueprint.png` has ZERO
+guide-coloured pixels (0.00%) while its separate `blueprint-guided.png` reference exactly
+reproduces the solid arm's guide pixels (538794 px both) — confirms the twoimg guided reference
+is built with the proven solid guide style, matching `twoimg/genskin_twoimg.py`'s design. Arm
+logging into `results.json` confirmed present and correct across all 3 dry runs.
+
 ## Ambient video loops — round 5: Cinemagraph LoRA used CORRECTLY + anti-glow brief — DONE 2026-07-10
 
 Round 4's diablo "PASS" was overruled by the user. Root cause: rounds 3–4 used the Lightricks
