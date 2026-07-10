@@ -11,7 +11,10 @@ import os, sys, json, subprocess, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = os.path.abspath(sys.argv[1])
-MAX = int(sys.argv[2]) if len(sys.argv) > 2 else 4
+# AUTO-REROLL DISABLED 2026-07-10 (user call): default is ONE roll — a gate FAIL surfaces on the
+# dashboard for human triage instead of burning seeds. Pass an explicit max_tries argv to re-enable
+# per-run (e.g. `orchestrate12.py spec.json 4`); spend discipline: generation-spend-rule.
+MAX = int(sys.argv[2]) if len(sys.argv) > 2 else 1
 spec = json.load(open(SPEC))
 sid = spec["id"]; base = spec.get("seed", 71)
 ASSETS = os.path.join(HERE, f"assets-{sid}")
