@@ -3,7 +3,7 @@
   "title": "Ps1 Wild",
   "mode": "templateless",
   "material_is_dark": true,
-  "seed": 917,
+  "seed": 956,
   "palette": {
     "toxic_green": [
       90,
@@ -39,5 +39,11 @@
     "intensity": 0.7,
     "viz_emissive": true,
     "beat_couple": 0.05
+  },
+  "css": {
+    "track": "#16161b",
+    "fill": "#5ab446",
+    "accent": "#be3c96",
+    "glow": "#e448b4"
   }
 }

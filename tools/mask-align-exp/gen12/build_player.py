@@ -14,9 +14,34 @@ RES = json.load(open(os.path.join(OUT, "results.json")))
 TITLE = RES.get("title", SID)
 V = str(int(os.path.getmtime(os.path.join(OUT, "paint.png"))))  # dynamic buster → no stale-asset caching
 
+# Director-specified CSS chrome colors (WIRE-pbr.md "css" schema, sibling of "lighting"):
+# {"track","fill","accent","glow"} hexes chosen by the director from the theme's own palette.
+# results.json doesn't carry a "css" passthrough (genskin.py is out of scope here), so fall back
+# to reading the theme spec directly — same pattern pbr_pass.py already uses for "lighting".
+SPEC_PATH = os.path.join(os.path.dirname(OUT), "theme_specs", f"{SID}.json")
+CSS_SPEC = RES.get("css") or {}
+if not CSS_SPEC and os.path.exists(SPEC_PATH):
+    try:
+        CSS_SPEC = json.load(open(SPEC_PATH)).get("css", {}) or {}
+    except Exception:
+        CSS_SPEC = {}
+
+
+def _hex_to_rgba(hexcolor, alpha):
+    h = hexcolor.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
+# JS literals: a director hex (preferred) or the JS keyword `null` (paint-sampling fallback below)
+SPEC_TRACK_JS = json.dumps(_hex_to_rgba(CSS_SPEC["track"], 0.55)) if CSS_SPEC.get("track") else "null"
+SPEC_FILL_JS = json.dumps(_hex_to_rgba(CSS_SPEC["fill"], 0.60)) if CSS_SPEC.get("fill") else "null"
+SPEC_ACCENT_JS = json.dumps(CSS_SPEC["accent"]) if CSS_SPEC.get("accent") else "null"
+
 # feature flag: CSS-rendered progress track+fill INSIDE the seek groove, UNDER the sprite thumb,
-# colored by sampling the paint itself (theme-aware, no hardcoded palette). Off = sprite-only seek
-# (prior behavior). Gates both the DOM element emission (CSS+JS below) and the live position wiring.
+# colored by the director's spec `css` block when present, else sampled from the paint itself
+# (theme-aware, no hardcoded palette). Off = sprite-only seek (prior behavior). Gates both the
+# DOM element emission (CSS+JS below) and the live position wiring.
 SEEK_TRACK_CSS_ENABLED = True
 
 SEEK_TRACK_CSS = (
@@ -30,15 +55,17 @@ SEEK_TRACK_CSS = (
 # spans the full travel extent (never wider than the groove — matches the thumb's own travel
 # domain). Appended to `phone` BEFORE the thumb `el`, so it paints underneath it (DOM order =
 # stacking order here; no z-index is used anywhere in this template).
-TRACK_SETUP_JS = """
+TRACK_SETUP_JS = ("""
       const _gs=document.createElement('canvas'); _gs.width=6; _gs.height=6;
       _gs.getContext('2d').drawImage(paint, track[0]*PW, track[1]*PH, track[2]*PW, track[3]*PH, 0,0,6,6);
       const _gd=_gs.getContext('2d').getImageData(0,0,6,6).data; let _gr=0,_gg=0,_gb=0,_gn=0;
       for(let i=0;i<_gd.length;i+=4){ if(_gd[i+3]>40){_gr+=_gd[i];_gg+=_gd[i+1];_gb+=_gd[i+2];_gn++;} }
       if(!_gn)_gn=1;
       const _gAvg=[_gr/_gn,_gg/_gn,_gb/_gn];
-      const trackCol='rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)';
-      const fillCol='rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)';
+      // director spec css.track/css.fill (WIRE-pbr.md) win when the theme spec supplies them;
+      // paint-sampling is the fallback for a spec without a css block.
+      const trackCol=%%SPEC_TRACK%%||('rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)');
+      const fillCol=%%SPEC_FILL%%||('rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)');
       // adaptive cross-axis band height: sample a luminance PROFILE across the groove's cross
       // axis (in the middle half of the travel span, away from the thumb's home position at the
       // travel start) and grow the darkest CONTIGUOUS run outward from the centre sample. A
@@ -80,7 +107,7 @@ TRACK_SETUP_JS = """
         fillEl.style.left=trackEl.style.left; fillEl.style.width='0%';
       }
       phone.appendChild(trackEl); phone.appendChild(fillEl);
-""" if SEEK_TRACK_CSS_ENABLED else ""
+""" if SEEK_TRACK_CSS_ENABLED else "").replace("%%SPEC_TRACK%%", SPEC_TRACK_JS).replace("%%SPEC_FILL%%", SPEC_FILL_JS)
 
 # live fill update, spliced into the vertical/horizontal `rend` closures (same val/x0/x1/y0/y1
 # already in scope there) — fires on every drag move AND on window.__seek (arrow-key nudges).
@@ -338,7 +365,10 @@ const V='{V}';
     const sc=document.createElement('canvas');sc.width=8;sc.height=1;
     sc.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,8,1);
     const sd=sc.getContext('2d').getImageData(0,0,8,1).data; let ar=0,ag=0,ab=0;
-    for(let i=0;i<8;i++){{ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];}} const acc='rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')';
+    for(let i=0;i<8;i++){{ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];}}
+    // director spec css.accent (WIRE-pbr.md) wins when the theme spec supplies it; paint-sampled
+    // accent is the fallback for a spec without a css block.
+    const acc={SPEC_ACCENT_JS}||('rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')');
     const g=vzc.getContext('2d'),NB=28;const bars=Array.from({{length:NB}},()=>Math.random());
     (function draw(){{ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
       for(let i=0;i<NB;i++){{ bars[i]+= playing?(Math.random()-.5)*.4:(0.06-bars[i])*.2; bars[i]=Math.max(.04,Math.min(1,bars[i]));

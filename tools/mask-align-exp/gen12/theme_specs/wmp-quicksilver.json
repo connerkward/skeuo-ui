@@ -3,7 +3,7 @@
   "title": "Wmp Quicksilver",
   "mode": "templated",
   "material_is_dark": false,
-  "seed": 623,
+  "seed": 662,
   "palette": {
     "silver": [
       190,
@@ -49,5 +49,11 @@
     "intensity": 0.6,
     "viz_emissive": true,
     "beat_couple": 0.04
+  },
+  "css": {
+    "track": "#13161f",
+    "fill": "#3778d7",
+    "accent": "#bec6d2",
+    "glow": "#5aa0ff"
   }
 }

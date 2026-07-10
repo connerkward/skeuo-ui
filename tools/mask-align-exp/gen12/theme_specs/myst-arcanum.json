@@ -3,7 +3,7 @@
   "title": "Myst Arcanum",
   "mode": "templateless",
   "material_is_dark": true,
-  "seed": 636,
+  "seed": 649,
   "palette": {
     "stone_warm": [
       150,
@@ -43,5 +43,11 @@
     "intensity": 0.8,
     "viz_emissive": true,
     "beat_couple": 0.04
+  },
+  "css": {
+    "track": "#362518",
+    "fill": "#ac863c",
+    "accent": "#336a5f",
+    "glow": "#50dcc8"
   }
 }

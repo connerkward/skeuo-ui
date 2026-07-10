@@ -1,5 +1,29 @@
 # gen12 TODO
 
+## Director-specified CSS chrome colors (`css` schema, sibling of `lighting`) — DONE 2026-07-10
+
+Added a `"css": {"track","fill","accent","glow"}` block to the theme-spec schema (documented
+in `WIRE-pbr.md` next to `lighting`) and populated it in all 15 `theme_specs/*.json`, hex-picked
+from each theme's own `palette`/`lighting.emissive_color` so the seek-track/fill/visualizer-accent
+read as part of the device instead of a generic slider. `build_player.py` now prefers
+`css.track`/`css.fill`/`css.accent` (falling back to reading `theme_specs/<id>.json` directly
+since `results.json` carries no `css` passthrough — same fallback pattern `pbr_pass.py` already
+uses for `lighting`); paint-sampling remains the fallback for a spec without the block.
+
+Verified deterministically across all 13 currently auto-passing skins (`orch.json.passed`;
+`fa-sky`/`ps1-wild` excluded, auto-fail on unrelated defects): rebuilt `player.html`,
+`getComputedStyle(.pseek-track/.pseek-fill).backgroundColor` and the embedded `const acc=`
+literal exact-match the spec hex on every skin, and DOM order always has `.pthumb` appended
+after `.pseek-track`/`.pseek-fill` (thumb stays on top, no z-order regression). SOTA-eye
+(Gemini 2.5 Pro via fal `openrouter/router/vision`) reviewed screenshots + seek close-up crops
+per skin; two early FAIL calls were refuted by the deterministic check + a direct look at the
+raw paint (diablo-gothic's "purple fill" and wmp-quicksilver's "pink outline" are a
+baked-in decorative ring in the ORIGINAL sprite art around the seek slot, not the CSS layer —
+same class of thing for fallout-pipboy's "rusty" read, which was the paint showing through the
+semi-transparent near-black track). Several other early FAILs were a screenshot-methodology
+artifact (thumb parked at 0% progress hides the fill sliver under itself) — re-shot at 50%
+progress, confirmed PASS on wmp-vario.
+
 ## observe12.py --vlm will break: fal vision endpoint now requires `reasoning: true`
 
 Verified live 2026-07-10 (twoimg experiment): every `openrouter/router/vision` call with

@@ -65,6 +65,39 @@ The pass itself is self-contained in **new files** (built while a full roster re
 }
 ```
 
+## Theme-spec `css` schema (director-authored, CSS-rendered player chrome)
+
+Sibling of `lighting` — the director's spec also fixes the **flat CSS colors** the plain
+player (`build_player.py`, `SEEK_TRACK_CSS_ENABLED`) paints for chrome it renders itself
+(no sprite/paint pixels involved): the recessed seek track, its progress fill, and the
+canvas visualizer's accent. Additive to every `theme_specs/<id>.json` — a spec without
+this block still works (see fallback below).
+
+```json
+"css": {
+  "track": "#232120",   // recessed seek-groove tone — dark, low-chroma; the "shadow" the
+                         // thumb rides in. Usually a darkened tarnished/dark-metal/ink palette entry.
+  "fill":  "#d27828",    // progress-fill tone — the theme's signature material/metal color
+                         // (brass, ember, phosphor-green, gold…), read at full saturation.
+  "accent":"#961e1e",    // visualizer-bar / highlight accent — a contrasting pop color from
+                         // the palette, distinct from `fill` so the bars read against the track.
+  "glow":  "#ff5a28"     // glow/pulse tint — matches `lighting.emissive_color` when the spec
+                         // defines one (ember, phosphor, LED…), else a lightened palette entry.
+                         // Reserved for future glow/pulse effects in the plain player and for
+                         // pbr_pass's dynamic-lighting pass to consume as a director-fixed hue.
+}
+```
+
+Choose each hex from the spec's own `palette` (or `lighting.emissive_color` for `glow`) so
+the chrome reads as *part of the device*, not a generic UI overlay — e.g. diablo-gothic's
+`fill` is its `ember` palette entry, fallout-pipboy's `fill` is `phosphor_green` (its CRT
+color), wc-goldshield's `accent` is `royal_blue` against a `gold` fill.
+
+**Fallback (no build_player.py hard-require):** when a spec has no `css` block (or a key is
+missing), `build_player.py` samples the groove/visualizer-region paint pixels itself (the
+prior behavior) — same avg-pixel-tint mechanism as the knob specular tint. Director colors
+are preferred; paint-sampling is the safety net, never a silent break.
+
 ## Player-side dynamic-emissive-source registry (for future director-declared sources)
 
 ```js

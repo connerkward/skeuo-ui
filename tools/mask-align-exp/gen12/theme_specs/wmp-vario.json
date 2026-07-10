@@ -43,5 +43,11 @@
     "intensity": 0.8,
     "viz_emissive": true,
     "beat_couple": 0.05
+  },
+  "css": {
+    "track": "#121217",
+    "fill": "#286eff",
+    "accent": "#a8b0be",
+    "glow": "#46c8ff"
   }
 }

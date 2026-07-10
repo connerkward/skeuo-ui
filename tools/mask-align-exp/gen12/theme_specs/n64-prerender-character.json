@@ -3,7 +3,7 @@
   "title": "90s Pre-Rendered Character CG",
   "mode": "templateless",
   "material_is_dark": false,
-  "seed": 810,
+  "seed": 823,
   "palette": {
     "glossy_red": [
       175,
@@ -43,5 +43,11 @@
     "intensity": 0.5,
     "viz_emissive": true,
     "beat_couple": 0.03
+  },
+  "css": {
+    "track": "#242229",
+    "fill": "#c8965a",
+    "accent": "#466496",
+    "glow": "#ffc85a"
   }
 }

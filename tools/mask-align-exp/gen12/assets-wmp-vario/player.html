@@ -126,8 +126,10 @@ const V='1783707401';
       for(let i=0;i<_gd.length;i+=4){ if(_gd[i+3]>40){_gr+=_gd[i];_gg+=_gd[i+1];_gb+=_gd[i+2];_gn++;} }
       if(!_gn)_gn=1;
       const _gAvg=[_gr/_gn,_gg/_gn,_gb/_gn];
-      const trackCol='rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)';
-      const fillCol='rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)';
+      // director spec css.track/css.fill (WIRE-pbr.md) win when the theme spec supplies them;
+      // paint-sampling is the fallback for a spec without a css block.
+      const trackCol="rgba(18,18,23,0.55)"||('rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)');
+      const fillCol="rgba(40,110,255,0.6)"||('rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)');
       // adaptive cross-axis band height: sample a luminance PROFILE across the groove's cross
       // axis (in the middle half of the travel span, away from the thumb's home position at the
       // travel start) and grow the darkest CONTIGUOUS run outward from the centre sample. A
@@ -296,7 +298,10 @@ const V='1783707401';
     const sc=document.createElement('canvas');sc.width=8;sc.height=1;
     sc.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,8,1);
     const sd=sc.getContext('2d').getImageData(0,0,8,1).data; let ar=0,ag=0,ab=0;
-    for(let i=0;i<8;i++){ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];} const acc='rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')';
+    for(let i=0;i<8;i++){ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];}
+    // director spec css.accent (WIRE-pbr.md) wins when the theme spec supplies it; paint-sampled
+    // accent is the fallback for a spec without a css block.
+    const acc="#a8b0be"||('rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')');
     const g=vzc.getContext('2d'),NB=28;const bars=Array.from({length:NB},()=>Math.random());
     (function draw(){ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
       for(let i=0;i<NB;i++){ bars[i]+= playing?(Math.random()-.5)*.4:(0.06-bars[i])*.2; bars[i]=Math.max(.04,Math.min(1,bars[i]));
