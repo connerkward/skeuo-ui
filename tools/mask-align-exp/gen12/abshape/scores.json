@@ -1,5 +1,6 @@
 {
  "a-121": {
+  "theme": "fa-pod",
   "cond": "A",
   "seed": 121,
   "leak_pct": 0.4063,
@@ -12,14 +13,17 @@
   "controls": 10,
   "controls_total": 10,
   "missing": [],
-  "seek_cov": 1.039,
-  "reasons": [],
+  "seek_cov": 1.038,
+  "reasons": [
+   "leak=0.004063"
+  ],
   "dims": [
    4608,
    3712
   ]
  },
  "a-134": {
+  "theme": "fa-pod",
   "cond": "A",
   "seed": 134,
   "leak_pct": 0,
@@ -32,7 +36,7 @@
   "controls": 10,
   "controls_total": 10,
   "missing": [],
-  "seek_cov": 1.038,
+  "seek_cov": 1.04,
   "reasons": [
    "emptiness"
   ],
@@ -42,6 +46,7 @@
   ]
  },
  "b-121": {
+  "theme": "fa-pod",
   "cond": "B",
   "seed": 121,
   "leak_pct": 0.3361,
@@ -54,9 +59,10 @@
   "controls": 10,
   "controls_total": 10,
   "missing": [],
-  "seek_cov": 1.031,
+  "seek_cov": 1.038,
   "reasons": [
-   "emptiness"
+   "emptiness",
+   "leak=0.003361"
   ],
   "dims": [
    4608,
@@ -64,6 +70,7 @@
   ]
  },
  "b-134": {
+  "theme": "fa-pod",
   "cond": "B",
   "seed": 134,
   "leak_pct": 0,
@@ -72,6 +79,96 @@
    "vol": 0.0,
    "seek": 0.0,
    "shuffle": 6.9
+  },
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.037,
+  "reasons": [],
+  "dims": [
+   4608,
+   3712
+  ]
+ },
+ "wc-goldshield-a-121": {
+  "theme": "wc-goldshield",
+  "cond": "A",
+  "seed": 121,
+  "leak_pct": 0.0429,
+  "empty_ok": false,
+  "empt_interior_pct": {
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 10.2
+  },
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.039,
+  "reasons": [
+   "emptiness"
+  ],
+  "dims": [
+   4608,
+   3712
+  ]
+ },
+ "wc-goldshield-a-134": {
+  "theme": "wc-goldshield",
+  "cond": "A",
+  "seed": 134,
+  "leak_pct": 0.1219,
+  "empty_ok": false,
+  "empt_interior_pct": {
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 23.4
+  },
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.04,
+  "reasons": [
+   "emptiness"
+  ],
+  "dims": [
+   4608,
+   3712
+  ]
+ },
+ "wc-goldshield-b-121": {
+  "theme": "wc-goldshield",
+  "cond": "B",
+  "seed": 121,
+  "leak_pct": 0.1905,
+  "empty_ok": true,
+  "empt_interior_pct": {
+   "vol": 0.5,
+   "seek": 0.0,
+   "shuffle": 0.0
+  },
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.039,
+  "reasons": [
+   "region-misplaced:album_art"
+  ],
+  "dims": [
+   4608,
+   3712
+  ]
+ },
+ "wc-goldshield-b-134": {
+  "theme": "wc-goldshield",
+  "cond": "B",
+  "seed": 134,
+  "leak_pct": 0.0335,
+  "empty_ok": true,
+  "empt_interior_pct": {
+   "vol": 0.0,
+   "seek": 0.1,
+   "shuffle": 0.0
   },
   "controls": 10,
   "controls_total": 10,

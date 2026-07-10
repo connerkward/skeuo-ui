@@ -177,7 +177,11 @@ def main():
     palette = {k: tuple(v) for k, v in spec["palette"].items()}
     dark = spec.get("material_is_dark", False)
     BG = (235, 235, 238) if dark else (18, 18, 24)
-    OUT = os.path.join(HERE, f"assets-abshape-{cond.lower()}-{seed}"); os.makedirs(OUT, exist_ok=True)
+    # round-1 (fa-pod) kept its original bare dirname for back-compat with already-scored
+    # assets; any OTHER theme (round 2+) gets the theme id folded into the dirname so
+    # multiple themes' same seeds don't collide/overwrite each other.
+    tag = f"{cond.lower()}-{seed}" if sid == "fa-pod" else f"{sid}-{cond.lower()}-{seed}"
+    OUT = os.path.join(HERE, f"assets-abshape-{tag}"); os.makedirs(OUT, exist_ok=True)
     keys = pick_keys(palette)
     KEYS = dict(zip(CONTROLS, keys))
     layout = LAYOUTS[spec.get("layout", "vpod")]() if mode == "templated" else None

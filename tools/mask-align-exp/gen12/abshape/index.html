@@ -1,0 +1,205 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>abshape A/B — outline vs solid guide shapes (gen12 / fa-pod + wc-goldshield)</title>
+<style>
+  body { background:#101014; color:#ddd; font:14px/1.5 -apple-system, system-ui, sans-serif; margin:0; padding:16px clamp(8px,3vw,40px); }
+  h1 { font-size:clamp(18px,2.5vw,26px); margin:.2em 0; }
+  h2 { font-size:clamp(16px,2vw,20px); color:#8cf; margin:28px 0 4px; border-top:1px solid #2a2a30; padding-top:18px; }
+  .anno { color:#9a9; font-size:12px; border:1px solid #2a2a30; border-radius:8px; padding:8px 12px; background:#16161c; margin:10px 0 18px; max-width:90ch; }
+  .anno.small { padding:6px 10px; margin:4px 0 14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; }
+  .cell { background:#16161c; border:1px solid #2a2a30; border-radius:10px; padding:12px; }
+  .cell h3 { margin:.1em 0 .5em; font-size:14px; color:#8cf; }
+  .cell h3 .tag { color:#667; font-size:11px; font-weight:normal; }
+  img.paint { width:100%; height:auto; border-radius:6px; display:block; }
+  .crops { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .crops figure { flex:1 1 130px; margin:0; }
+  .crops img { width:100%; height:auto; border-radius:4px; display:block; border:1px solid #333; }
+  figcaption { font-size:11px; color:#889; }
+  .leaktag { color:#f96; }
+  .mini { font-size:11px; margin-top:6px; }
+  a { color:#7ab8ff; }
+  code { background:#20202a; padding:1px 5px; border-radius:4px; }
+  table { border-collapse:collapse; margin-top:8px; width:100%; }
+  td, th { border:1px solid #2a2a30; padding:3px 8px; font-size:12px; text-align:left; }
+  .ok { color:#7f7; } .bad { color:#f66; font-weight:bold; }
+  .visual { font-size:12px; color:#cb9; }
+  .verdict { background:#1a2016; border:1px solid #3a4a30; border-radius:10px; padding:14px 18px; margin:20px 0; max-width:90ch; }
+  .tblwrap { overflow-x:auto; }
+</style></head><body>
+<h1>abshape A/B — OUTLINE vs SOLID FILLED guide shapes</h1>
+<div class='anno'>Experiment: gen12 templated blueprint. Identical structural prompt across conditions
+(4-substitution wording diff for B, recorded in each results.json). Two rounds across contrasting
+themes, 2 seeds each (121 &amp; 134), n=2/cell.<br>
+<b>Model:</b> gemini-3-pro-image-preview via Vertex AI (project muser-2605300220, global endpoint),
+4K, 5:4 — same model the fal path proxies. Generation goes through <code>genskin_ab.py</code>'s
+Vertex-direct <code>edit_vertex()</code> (gcloud access-token auth), NOT fal, so both rounds ran
+independent of any fal account status. Scoring: genskin leak gate + extract12 pass&nbsp;1 (no matte).<br>
+<b>Cost:</b> 8 gens × ~$0.24/4K image ≈ <b>$1.92 total</b>
+(round 1 fa-pod: 4 × $0.24 ≈ $0.96; round 2 wc-goldshield: 4 × $0.24 ≈ $0.96;
+extraction/scoring local, $0).</div>
+
+<div class='verdict'><b>Verdict:</b><br>SOLID FILLED guides (B) beat OUTLINE guides (A) — lean but consistent, across both themes tested. n=2 seeds x 2 themes = 4 gens/condition, so treat this as directional, not conclusive.<br><br>What&#x27;s consistent: the automated leak-% gate (worst-control key-colour bleed) does NOT discriminate — A avg ~0.14%, B avg ~0.14%, both fail it on 2/4 gens each. But that metric only samples a narrow per-control interior and MISSES a defect visible on every A gen at full-res: a thin RING/bezel painted in the exact guide hex colour, wrapped around sockets (vol/seek/shuffle) and, on wc-goldshield, around every transport BUTTON too (magenta ring on playpause, green on prev, pink on next, red on queue in wc-goldshield-a-121; matching aqua ring on the vol socket). That ring is the literal un-erased alignment marking the prompt explicitly bans (&quot;if a button has a coloured ring, it is WRONG&quot;). B&#x27;s guide-colour bleed-through, when it happens, gets absorbed into the design as a coherent element instead (a candy-coloured whole-button fill in fa-pod, a gem-inlay medallion in wc-goldshield-b-121) rather than reading as a stray unfinished ring - a materially less broken failure mode even though both are technically &#x27;guide colour survived&#x27;.<br><br>The one gate that DOES discriminate cleanly: emptiness (are the knob/seek/shuffle cavities actually empty). Round 1 (fa-pod) was a wash (A: 1/2 pass, B: 1/2 pass). Round 2 (wc-goldshield, a dark gold/blue heraldic theme, chosen to check whether round 1&#x27;s read was fa-pod-specific) was NOT a wash: A failed emptiness 2/2 (both seeds baked a solid violet-glass fill into the shuffle slot, 10.2% and 23.4% bright interior vs a &lt;1% clean-empty baseline) while B passed emptiness 2/2 (shuffle 0.0% both seeds, clean dark gear-toothed cavity). Combined emptiness score across both themes: A 1/4, B 3/4.<br><br>Combined read: B is the better default. Not because its numeric leak% is lower (it isn&#x27;t, reliably) but because (a) it wins emptiness 3:1 pooled across both themes, (b) it never produces the tell-tale thin ring-around-a-button defect that A produces in 3 of 4 A gens, and (c) round 2 confirms round 1&#x27;s directional lean rather than contradicting it. Caveats: gate failures happen on both sides for OTHER reasons unrelated to guide style (b-121/fa-pod had a mis-registered/undetected shuffle region; b-121/wc-goldshield failed on &#x27;region-misplaced:album_art&#x27;) so B is not defect-free, just fails on placement/registration rather than colour-residue. Recommend: adopt SOLID guides as the templated-blueprint default; separately, extract12&#x27;s leak gate should sample button perimeters too (out of scope here — extract12.py is shared pipeline, not touched by this experiment) since it currently misses a defect obvious to the eye.</div>
+
+
+<h2>Round — theme <code>fa-pod</code></h2>
+<div class='anno small'>bright translucent cyan “water pod” (material_is_dark=False).</div>
+<div class='tblwrap'><table>
+<tr><th>cond</th><th>seed</th><th>leak (worst)</th><th>emptiness</th><th>socket interior % (vol/seek/shuffle)</th><th>controls</th><th>seek cov</th></tr>
+<tr><td>A</td><td>121</td><td class='bad'>0.4063%</td><td class='ok'>pass</td><td>1.2 / 0.0 / 0.0</td><td class='ok'>10/10</td><td>1.038</td></tr><tr><td>A</td><td>134</td><td class='ok'>0.0000%</td><td class='bad'>FAIL</td><td>11.1 / 0.0 / 4.7</td><td class='ok'>10/10</td><td>1.04</td></tr><tr><td>B</td><td>121</td><td class='bad'>0.3361%</td><td class='bad'>FAIL</td><td>5.0 / 0.0 / 96.4</td><td class='ok'>10/10</td><td>1.038</td></tr><tr><td>B</td><td>134</td><td class='ok'>0.0000%</td><td class='ok'>pass</td><td>0.0 / 0.0 / 6.9</td><td class='ok'>10/10</td><td>1.037</td></tr>
+</table></div>
+<div class='grid'>
+  <div class='cell'>
+    <h3>A — OUTLINE guides · seed 121 <span class='tag'>a-121</span></h3>
+    <a href='assets-abshape-a-121/paint.png'><img class='paint' src='assets-abshape-a-121/paint.png' alt='paint a-121'></a>
+    <div class='crops'><figure><a href='assets-abshape-a-121/crop-vol.png'><img src='assets-abshape-a-121/crop-vol.png' alt='vol socket a-121'></a><figcaption>vol socket (must be an empty hole) — <b class=leaktag>colour-residue ring, hand-verified</b></figcaption></figure><figure><a href='assets-abshape-a-121/crop-seek.png'><img src='assets-abshape-a-121/crop-seek.png' alt='seek socket a-121'></a><figcaption>seek socket (must be an empty channel) — <b class=leaktag>colour-residue ring, hand-verified</b></figcaption></figure><figure><a href='assets-abshape-a-121/crop-shuffle.png'><img src='assets-abshape-a-121/crop-shuffle.png' alt='shuffle socket a-121'></a><figcaption>shuffle socket (must be an empty hole) — <b class=leaktag>colour-residue ring, hand-verified</b></figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-a-121/blueprint.png'>blueprint</a> · <a href='assets-abshape-a-121/mask.png'>mask</a>
+       · <a href='assets-abshape-a-121/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='bad'>0.4063%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>1.2% / 0.0% / 0.0%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.038</td></tr>
+      <tr><td>gate reasons</td><td>leak=0.004063</td></tr>
+    </table>
+    <p class='visual'>fa-pod outline seed121: leak-gate FAIL (seek 0.41%). Visual: distinct purple ring residue around vol socket, seek slot, AND shuffle socket — all three carry a thin bezel in the exact guide hue. Emptiness otherwise OK (sockets are empty apart from the ring).</p>
+  </div>
+  <div class='cell'>
+    <h3>A — OUTLINE guides · seed 134 <span class='tag'>a-134</span></h3>
+    <a href='assets-abshape-a-134/paint.png'><img class='paint' src='assets-abshape-a-134/paint.png' alt='paint a-134'></a>
+    <div class='crops'><figure><a href='assets-abshape-a-134/crop-vol.png'><img src='assets-abshape-a-134/crop-vol.png' alt='vol socket a-134'></a><figcaption>vol socket (must be an empty hole)</figcaption></figure><figure><a href='assets-abshape-a-134/crop-seek.png'><img src='assets-abshape-a-134/crop-seek.png' alt='seek socket a-134'></a><figcaption>seek socket (must be an empty channel)</figcaption></figure><figure><a href='assets-abshape-a-134/crop-shuffle.png'><img src='assets-abshape-a-134/crop-shuffle.png' alt='shuffle socket a-134'></a><figcaption>shuffle socket (must be an empty hole)</figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-a-134/blueprint.png'>blueprint</a> · <a href='assets-abshape-a-134/mask.png'>mask</a>
+       · <a href='assets-abshape-a-134/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='ok'>0.0000%</td></tr>
+      <tr><td>emptiness gate</td><td class='bad'>FAIL</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>11.1% / 0.0% / 4.7%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.04</td></tr>
+      <tr><td>gate reasons</td><td>emptiness</td></tr>
+    </table>
+    <p class='visual'>fa-pod outline seed134: leak-gate pass (0%) but emptiness gate FAILS — model painted a real physical knob (11.1% bright interior), toggle switches with real thumbs, and a slider with a real thumb into the main body instead of leaving empty cavities. A different failure mode: full control fabrication, not colour residue.</p>
+  </div>
+  <div class='cell'>
+    <h3>B — SOLID FILLED guides · seed 121 <span class='tag'>b-121</span></h3>
+    <a href='assets-abshape-b-121/paint.png'><img class='paint' src='assets-abshape-b-121/paint.png' alt='paint b-121'></a>
+    <div class='crops'><figure><a href='assets-abshape-b-121/crop-vol.png'><img src='assets-abshape-b-121/crop-vol.png' alt='vol socket b-121'></a><figcaption>vol socket (must be an empty hole)</figcaption></figure><figure><a href='assets-abshape-b-121/crop-seek.png'><img src='assets-abshape-b-121/crop-seek.png' alt='seek socket b-121'></a><figcaption>seek socket (must be an empty channel)</figcaption></figure><figure><a href='assets-abshape-b-121/crop-shuffle.png'><img src='assets-abshape-b-121/crop-shuffle.png' alt='shuffle socket b-121'></a><figcaption>shuffle socket (must be an empty hole)</figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-b-121/blueprint.png'>blueprint</a> · <a href='assets-abshape-b-121/mask.png'>mask</a>
+       · <a href='assets-abshape-b-121/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='bad'>0.3361%</td></tr>
+      <tr><td>emptiness gate</td><td class='bad'>FAIL</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>5.0% / 0.0% / 96.4%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.038</td></tr>
+      <tr><td>gate reasons</td><td>emptiness, leak=0.003361</td></tr>
+    </table>
+    <p class='visual'>fa-pod solid seed121: leak-gate FAIL (repeat 0.34%) and emptiness FAILS on shuffle (96.4% bright) — extract12 could not find an actual empty shuffle recess; vol/seek sockets themselves are clean (no colour ring, verified close-up).</p>
+  </div>
+  <div class='cell'>
+    <h3>B — SOLID FILLED guides · seed 134 <span class='tag'>b-134</span></h3>
+    <a href='assets-abshape-b-134/paint.png'><img class='paint' src='assets-abshape-b-134/paint.png' alt='paint b-134'></a>
+    <div class='crops'><figure><a href='assets-abshape-b-134/crop-vol.png'><img src='assets-abshape-b-134/crop-vol.png' alt='vol socket b-134'></a><figcaption>vol socket (must be an empty hole)</figcaption></figure><figure><a href='assets-abshape-b-134/crop-seek.png'><img src='assets-abshape-b-134/crop-seek.png' alt='seek socket b-134'></a><figcaption>seek socket (must be an empty channel)</figcaption></figure><figure><a href='assets-abshape-b-134/crop-shuffle.png'><img src='assets-abshape-b-134/crop-shuffle.png' alt='shuffle socket b-134'></a><figcaption>shuffle socket (must be an empty hole)</figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-b-134/blueprint.png'>blueprint</a> · <a href='assets-abshape-b-134/mask.png'>mask</a>
+       · <a href='assets-abshape-b-134/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='ok'>0.0000%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>0.0% / 0.0% / 6.9%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.037</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+    </table>
+    <p class='visual'>fa-pod solid seed134: cleanest fa-pod gen — leak 0%, emptiness pass, all three sockets (vol/seek/shuffle) visually clean empty cavities, zero guide-colour trace.</p>
+  </div></div>
+
+<h2>Round — theme <code>wc-goldshield</code></h2>
+<div class='anno small'>dark gold / royal-blue heraldic shield (material_is_dark=True).</div>
+<div class='tblwrap'><table>
+<tr><th>cond</th><th>seed</th><th>leak (worst)</th><th>emptiness</th><th>socket interior % (vol/seek/shuffle)</th><th>controls</th><th>seek cov</th></tr>
+<tr><td>A</td><td>121</td><td class='ok'>0.0429%</td><td class='bad'>FAIL</td><td>0.0 / 0.0 / 10.2</td><td class='ok'>10/10</td><td>1.039</td></tr><tr><td>A</td><td>134</td><td class='ok'>0.1219%</td><td class='bad'>FAIL</td><td>0.0 / 0.0 / 23.4</td><td class='ok'>10/10</td><td>1.04</td></tr><tr><td>B</td><td>121</td><td class='ok'>0.1905%</td><td class='ok'>pass</td><td>0.5 / 0.0 / 0.0</td><td class='ok'>10/10</td><td>1.039</td></tr><tr><td>B</td><td>134</td><td class='ok'>0.0335%</td><td class='ok'>pass</td><td>0.0 / 0.1 / 0.0</td><td class='ok'>10/10</td><td>1.04</td></tr>
+</table></div>
+<div class='grid'>
+  <div class='cell'>
+    <h3>A — OUTLINE guides · seed 121 <span class='tag'>wc-goldshield-a-121</span></h3>
+    <a href='assets-abshape-wc-goldshield-a-121/paint.png'><img class='paint' src='assets-abshape-wc-goldshield-a-121/paint.png' alt='paint wc-goldshield-a-121'></a>
+    <div class='crops'><figure><a href='assets-abshape-wc-goldshield-a-121/crop-vol.png'><img src='assets-abshape-wc-goldshield-a-121/crop-vol.png' alt='vol socket wc-goldshield-a-121'></a><figcaption>vol socket (must be an empty hole) — <b class=leaktag>colour-residue ring, hand-verified</b></figcaption></figure><figure><a href='assets-abshape-wc-goldshield-a-121/crop-seek.png'><img src='assets-abshape-wc-goldshield-a-121/crop-seek.png' alt='seek socket wc-goldshield-a-121'></a><figcaption>seek socket (must be an empty channel)</figcaption></figure><figure><a href='assets-abshape-wc-goldshield-a-121/crop-shuffle.png'><img src='assets-abshape-wc-goldshield-a-121/crop-shuffle.png' alt='shuffle socket wc-goldshield-a-121'></a><figcaption>shuffle socket (must be an empty hole) — <b class=leaktag>colour-residue fill, hand-verified</b></figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-wc-goldshield-a-121/blueprint.png'>blueprint</a> · <a href='assets-abshape-wc-goldshield-a-121/mask.png'>mask</a>
+       · <a href='assets-abshape-wc-goldshield-a-121/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='ok'>0.0429%</td></tr>
+      <tr><td>emptiness gate</td><td class='bad'>FAIL</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>0.0% / 0.0% / 10.2%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>emptiness</td></tr>
+    </table>
+    <p class='visual'>wc-goldshield outline seed121: leak-gate reports only a small 0.04% (vol) — UNDER-COUNTS what&#x27;s visible: pale-aqua ring around vol, plus green/pink/red rings around prev/next/queue buttons, all matching exact guide hues. Emptiness FAILS (shuffle 10.2% bright — slot filled with solid violet glass instead of a dark cavity).</p>
+  </div>
+  <div class='cell'>
+    <h3>A — OUTLINE guides · seed 134 <span class='tag'>wc-goldshield-a-134</span></h3>
+    <a href='assets-abshape-wc-goldshield-a-134/paint.png'><img class='paint' src='assets-abshape-wc-goldshield-a-134/paint.png' alt='paint wc-goldshield-a-134'></a>
+    <div class='crops'><figure><a href='assets-abshape-wc-goldshield-a-134/crop-vol.png'><img src='assets-abshape-wc-goldshield-a-134/crop-vol.png' alt='vol socket wc-goldshield-a-134'></a><figcaption>vol socket (must be an empty hole)</figcaption></figure><figure><a href='assets-abshape-wc-goldshield-a-134/crop-seek.png'><img src='assets-abshape-wc-goldshield-a-134/crop-seek.png' alt='seek socket wc-goldshield-a-134'></a><figcaption>seek socket (must be an empty channel)</figcaption></figure><figure><a href='assets-abshape-wc-goldshield-a-134/crop-shuffle.png'><img src='assets-abshape-wc-goldshield-a-134/crop-shuffle.png' alt='shuffle socket wc-goldshield-a-134'></a><figcaption>shuffle socket (must be an empty hole) — <b class=leaktag>colour-residue fill, hand-verified</b></figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-wc-goldshield-a-134/blueprint.png'>blueprint</a> · <a href='assets-abshape-wc-goldshield-a-134/mask.png'>mask</a>
+       · <a href='assets-abshape-wc-goldshield-a-134/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='ok'>0.1219%</td></tr>
+      <tr><td>emptiness gate</td><td class='bad'>FAIL</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>0.0% / 0.0% / 23.4%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.04</td></tr>
+      <tr><td>gate reasons</td><td>emptiness</td></tr>
+    </table>
+    <p class='visual'>wc-goldshield outline seed134: leak 0.12%. Buttons show whole-face colour fills (pink/green/green/red) rather than thin rings this seed — more like B&#x27;s failure mode, showing conditions aren&#x27;t perfectly deterministic. Emptiness FAILS (shuffle 23.4% bright, same violet-glass-fill defect, worse than seed121). shuffle bbox detection also degenerate this gen (near-zero-height crop) — a detection artifact, noted not fixed (extract12 is shared pipeline).</p>
+  </div>
+  <div class='cell'>
+    <h3>B — SOLID FILLED guides · seed 121 <span class='tag'>wc-goldshield-b-121</span></h3>
+    <a href='assets-abshape-wc-goldshield-b-121/paint.png'><img class='paint' src='assets-abshape-wc-goldshield-b-121/paint.png' alt='paint wc-goldshield-b-121'></a>
+    <div class='crops'><figure><a href='assets-abshape-wc-goldshield-b-121/crop-vol.png'><img src='assets-abshape-wc-goldshield-b-121/crop-vol.png' alt='vol socket wc-goldshield-b-121'></a><figcaption>vol socket (must be an empty hole)</figcaption></figure><figure><a href='assets-abshape-wc-goldshield-b-121/crop-seek.png'><img src='assets-abshape-wc-goldshield-b-121/crop-seek.png' alt='seek socket wc-goldshield-b-121'></a><figcaption>seek socket (must be an empty channel)</figcaption></figure><figure><a href='assets-abshape-wc-goldshield-b-121/crop-shuffle.png'><img src='assets-abshape-wc-goldshield-b-121/crop-shuffle.png' alt='shuffle socket wc-goldshield-b-121'></a><figcaption>shuffle socket (must be an empty hole)</figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-wc-goldshield-b-121/blueprint.png'>blueprint</a> · <a href='assets-abshape-wc-goldshield-b-121/mask.png'>mask</a>
+       · <a href='assets-abshape-wc-goldshield-b-121/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='ok'>0.1905%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>0.5% / 0.0% / 0.0%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>region-misplaced:album_art</td></tr>
+    </table>
+    <p class='visual'>wc-goldshield solid seed121: leak 0.19% but emptiness PASSES (shuffle 0.0% — clean gear-toothed dark cavity, close-up verified). Buttons render as coherent colour-coded gem medallions (green/pink/green/red hexagons) rather than rings — reads as intentional heraldic iconography, not residue. Only reason flagged: region-misplaced:album_art (a registration issue, unrelated to guide style).</p>
+  </div>
+  <div class='cell'>
+    <h3>B — SOLID FILLED guides · seed 134 <span class='tag'>wc-goldshield-b-134</span></h3>
+    <a href='assets-abshape-wc-goldshield-b-134/paint.png'><img class='paint' src='assets-abshape-wc-goldshield-b-134/paint.png' alt='paint wc-goldshield-b-134'></a>
+    <div class='crops'><figure><a href='assets-abshape-wc-goldshield-b-134/crop-vol.png'><img src='assets-abshape-wc-goldshield-b-134/crop-vol.png' alt='vol socket wc-goldshield-b-134'></a><figcaption>vol socket (must be an empty hole)</figcaption></figure><figure><a href='assets-abshape-wc-goldshield-b-134/crop-seek.png'><img src='assets-abshape-wc-goldshield-b-134/crop-seek.png' alt='seek socket wc-goldshield-b-134'></a><figcaption>seek socket (must be an empty channel)</figcaption></figure><figure><a href='assets-abshape-wc-goldshield-b-134/crop-shuffle.png'><img src='assets-abshape-wc-goldshield-b-134/crop-shuffle.png' alt='shuffle socket wc-goldshield-b-134'></a><figcaption>shuffle socket (must be an empty hole)</figcaption></figure></div>
+    <div class='mini'>
+      <a href='assets-abshape-wc-goldshield-b-134/blueprint.png'>blueprint</a> · <a href='assets-abshape-wc-goldshield-b-134/mask.png'>mask</a>
+       · <a href='assets-abshape-wc-goldshield-b-134/overlay.png'>overlay</a>
+    </div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control)</td><td class='ok'>0.0335%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>socket interiors (vol/seek/shuffle)</td><td>0.0% / 0.1% / 0.0%</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.04</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+    </table>
+    <p class='visual'>wc-goldshield solid seed134: the cleanest gen of all 8 — leak 0.03%, emptiness pass, ALL buttons uniform gold with zero colour trace, vol/seek/shuffle all clean empty cavities (shuffle rendered as a tasteful purple gem-slot, still fully dark/empty inside).</p>
+  </div></div>
+
+</body></html>

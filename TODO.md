@@ -493,22 +493,49 @@ entries already under "saved for later" above — those four stand as-is.
    - Source assets: `tools/mask-align-exp/gen12/pbrtest3/diablo-emissive3.png`,
      `diablo-meta3.json`, `btn-ids.png`.
 
-2. **Outline-vs-solid template A/B — finish the results page + deliver a verdict.**
-   4 test generations already exist and were never scored/compared:
-   [tools/mask-align-exp/gen12/abshape/assets-abshape-a-121](tools/mask-align-exp/gen12/abshape/assets-abshape-a-121),
-   `assets-abshape-a-134`, `assets-abshape-b-121`, `assets-abshape-b-134` — generated via
-   [genskin_ab.py](tools/mask-align-exp/gen12/abshape/genskin_ab.py). A partial
-   [build_index.py](tools/mask-align-exp/gen12/abshape/build_index.py) and
-   [score_ab.py](tools/mask-align-exp/gen12/abshape/score_ab.py) /
-   [scores.json](tools/mask-align-exp/gen12/abshape/scores.json) exist but the agent stalled
-   before finishing the page — no served comparison, no verdict delivered.
-   - **To finish**: score all 4 via `extract12.py` (leak / emptiness / control-detection
-     rate — the same independent metrics used elsewhere in gen12, not a self-fulfilling
-     shape-fit check per [[verify-outputs-rule]] §6), build
-     `tools/mask-align-exp/gen12/abshape/index.html` as a served side-by-side (full-res crops +
-     score table per condition, per [[review-in-browser-rule]] — NOT a flat PNG contact sheet),
-     serve it, and record the actual A-vs-B conclusion in a new
-     `docs/experiments/2026-07-1X-abshape-outline-vs-solid.md` per [[empirical-testing-rule]].
+2. **Outline-vs-solid template A/B — DONE, two rounds, verdict delivered.** (2026-07-10)
+   Scored + built a served results page across TWO themes (round 2 added on top of the
+   original 4-gen round 1, to check whether the finding held on a visually contrasting
+   theme):
+   - **Round 1 — fa-pod** (bright translucent cyan, `material_is_dark=False`):
+     [assets-abshape-a-121](tools/mask-align-exp/gen12/abshape/assets-abshape-a-121),
+     `assets-abshape-a-134`, `assets-abshape-b-121`, `assets-abshape-b-134`.
+   - **Round 2 — wc-goldshield** (dark gold/royal-blue heraldic shield,
+     `material_is_dark=True`): `assets-abshape-wc-goldshield-{a,b}-{121,134}`. Generated via
+     `python3 genskin_ab.py ../theme_specs/wc-goldshield.json --cond {A|B} --seed {121|134}`
+     from `abshape/` — runs through `genskin_ab.py`'s Vertex-direct `edit_vertex()`
+     (gcloud access-token auth), **NOT fal**, so this round is unaffected by any fal
+     account lock/unlock status either way.
+   - Fixed a real bug in [score_ab.py](tools/mask-align-exp/gen12/abshape/score_ab.py):
+     crop coordinates were pulled from the raw per-theme TEMPLATE fraction, but the paint
+     model freely rearranges the whole device per generation, so crops landed on the wrong
+     control entirely (e.g. "vol" crop showing the repeat button). Fixed to crop from
+     `regions.json`'s extract12-DETECTED device bbox instead. Also made both
+     `score_ab.py`/`genskin_ab.py` round-aware (theme id folds into dirname/scores-key for
+     any non-fa-pod theme, so multiple themes' same seeds don't collide).
+   - Served page: [tools/mask-align-exp/gen12/abshape/index.html](tools/mask-align-exp/gen12/abshape/index.html)
+     (full-res paint + per-socket close-up crops + score table + verdict, both rounds,
+     responsive, model+cost header) — served at
+     [http://localhost:54966/abshape/index.html](http://localhost:54966/abshape/index.html),
+     verified rendering via headless Playwright at 1400px and 390px.
+   - **Verdict** (full text in [verdict.json](tools/mask-align-exp/gen12/abshape/verdict.json)):
+     SOLID FILLED guides (B) beat OUTLINE guides (A) — a lean but consistent signal across
+     both themes (n=2 seeds × 2 themes = 4 gens/condition; directional, not conclusive). The
+     automated leak-% gate doesn't discriminate (~0.14% avg both sides) and MISSES a defect
+     visible on every A generation at full-res: a thin ring/bezel in the exact guide hue
+     wrapped around sockets and (on wc-goldshield) around transport buttons too — the literal
+     un-erased alignment marking the prompt bans. B's guide-colour bleed-through, when it
+     happens, gets absorbed as a coherent design element (candy-coloured button, gem medallion)
+     instead of reading as a broken ring. The gate that DOES discriminate — emptiness — was a
+     wash on fa-pod (1/2 each) but not on wc-goldshield (A 0/2, B 2/2; A baked a solid
+     violet-glass fill into the shuffle slot both seeds). Combined emptiness: A 1/4, B 3/4.
+     Recommend adopting SOLID guides as the templated-blueprint default. Separately,
+     extract12's leak gate should sample button perimeters too (missed a defect obvious to
+     the eye) — out of scope here, extract12.py is shared pipeline and wasn't touched.
+   - **Not yet done** (left for a follow-up, outside this task's declared abshape/-only
+     scope): a `docs/experiments/2026-07-10-abshape-outline-vs-solid.md` writeup per
+     [[empirical-testing-rule]] — `verdict.json` + this TODO entry carry the full record for
+     now; promote to `docs/experiments/` when next touching this area.
 
 3. **n64-lowpoly disposition — ASK USER before acting.**
    [tools/mask-align-exp/gen12/review-2026-07-09.json](tools/mask-align-exp/gen12/review-2026-07-09.json)
@@ -581,36 +608,88 @@ entries already under "saved for later" above — those four stand as-is.
      (`55d2dfcd`, "subtler knob specular") actually reads correctly across the roster — needs a
      fresh-eyes look at rendered players, not just the commit log.
 
-7. **wmp-vario fresh-gen review — verify vertical seek + d-pad detection.**
-   Vertical-seek support landed in
-   [tools/mask-align-exp/gen12/extract12.py](tools/mask-align-exp/gen12/extract12.py) and
-   [build_player.py](tools/mask-align-exp/gen12/build_player.py) (commits `8f8c38e5`
-   "slot-sized moving parts, vertical-slider support" / `7b5d0f22` "travel walk — recess
-   continuity + bimodal-flank body estimate"). `assets-wmp-vario` /
-   `assets-wmp-vario_biref` exist on disk from the fresh regen. NOT yet verified: open the
-   rendered `wmp-vario` player and confirm (a) the seek control actually renders/drags
-   VERTICALLY (not silently falling back to horizontal), and (b) the d-pad buttons are
-   individually detected/cut (not merged into one blob) — per [[verify-outputs-rule]] §7,
-   inspect the real rendered player, not the extractor's JSON output alone.
+7. [x] **wmp-vario fresh-gen review — verify vertical seek + d-pad detection. DONE 2026-07-10,
+   mixed result.** Verified against the REAL rendered `wmp-vario/player.html` (headless
+   Playwright, not the extractor JSON alone): (a) **d-pad PASS** — playpause/prev/next/repeat/
+   queue are 5 distinct detected regions with distinct icons, not merged into one blob; (b)
+   **seek is HORIZONTAL in this committed generation, not vertical** — `regions.json`'s `seek`
+   region has no `vertical` key (device bbox is wide/short: w=0.535 h=0.038), so it legitimately
+   fell back to horizontal — the `templateless` theme_prompt never requested a vertical layout
+   and this seed just didn't paint one; the tall vertical pill visible in the render is the
+   `shuffle` toggle, not seek. This is NOT a code bug: `extract12.py`'s `VERT = (h>w*1.3)`
+   detector correctly read the painted groove's real aspect. **No committed skin currently has
+   `vertical: true` on its seek** — the vertical-slider code path (commits `8f8c38e5`/`7b5d0f22`)
+   has never been exercised by a real generation. Sanity-checked the CODE PATH itself with a
+   synthetic `regions.json` (fabricated `vertical: true` + tall device rect, scratch copy in
+   `/tmp`, cleaned up after) — the thumb rendered on the vertical groove and `window.__seek(d)`
+   moved it along Y correctly, so the rendering/drag logic works; it's just never been triggered
+   by a real paint. Getting a real vertical-seek exemplar needs a regen with a prompt nudge
+   toward a vertical layout (or luck) — blocked on fal billing like everything else below.
 
 8. **Fresh-regen landed — 7/15 PASS, committed `46574f6c`.** Per-skin history/reasons:
    `tools/mask-align-exp/gen12/assets-*/orch.json`. Follow-ups from closing this out below.
 
-9. **Gate bug fixes (user-approved 2026-07-09) — do NOT restore mirror-opposite state
-   scoring, user likes the protruding/asymmetric switch look:**
-   - `state-align` gate in [extract12.py](tools/mask-align-exp/gen12/extract12.py) scores raw
-     silhouette IoU≥0.9 between OFF/ON toggle cuts, penalizing a legitimately creative/asymmetric
-     switch (lever moved to the opposite end = different silhouette by design). Loosen or drop
-     this IoU check — user wants creative, non-mirrored switch states preserved, not gated
-     against.
-   - Gate FAILs on n64-lowpoly / ps1-crunchy / wmp-vario in the `46574f6c` regen report an
-     **empty `reasons` list** — some failure branch in `extract12.py`'s gate block isn't
-     attaching a reason string. Find it and make it emit one.
-   - `build_dashboard.py` counted 18 skins not 15 (glob picks up `abshape/assets-abshape-*`
-     experiment dirs alongside the real `assets-<theme>` roster) — exclude `abshape/` and
-     `bproof/` from its glob.
+9. [x] **Gate bug fixes (user-approved 2026-07-09) — DONE 2026-07-10, commit pending push.**
+   Do NOT restore mirror-opposite state scoring, user likes the protruding/asymmetric switch look:
+   - **Fixed.** `state-align` gate in [extract12.py](tools/mask-align-exp/gen12/extract12.py)
+     scored raw silhouette IoU≥0.9 between OFF/ON toggle cuts, penalizing legitimately
+     creative/asymmetric switches (lever moved to the opposite end = different silhouette by
+     design). Dropped the IoU floor to 0.05 (only catches near-total-disjoint/broken states);
+     kept the existing scale-ratio bounds (0.7–1.4) as the "wildly different scale / collapsed
+     speck" check — verified this still correctly fails `wmp-quicksilver` (scaleX 1.90/scaleY
+     0.56, a genuinely broken ON-state render, confirmed by eye) while now correctly passing
+     `claymation`/`fa-sky`/`ps1-crunchy` (legit asymmetric designs, IoU 0.58–0.79). Re-ran
+     `extract12.py` against the existing committed assets (no fal spend) to confirm: 3 of the
+     8 original FAILs (claymation, fa-sky, ps1-crunchy) now gate-PASS on their EXISTING paint —
+     no regeneration needed.
+   - **Fixed.** The gross-leak check (`leak > 0.003`) could set `PASS=False` with no matching
+     `reasons.append` — added `reasons.append(f"leak={leak_val}")`. Confirmed live: re-extracting
+     `ps1-wild` now reports `reasons=['leak=0.00739']` instead of an empty list.
+   - `build_dashboard.py` 18-vs-15 glob fix is NOT mine (owned by another agent, out of scope
+     for this pass — noting it's still open).
 
-10. **Human review of the 7 fresh PASSes — not yet reviewed.** diablo-gothic, fa-pod,
+10. [x] **N64 respec — DONE 2026-07-10.** User verdict: the old `n64-lowpoly` was "crap... i
+    meant n64 cutscene render, not lowpoly n64 garbage... make it more a character stylized in
+    that render style, not literally just n64 as the prompt." Retired `n64-lowpoly` entirely
+    (`theme_specs/n64-lowpoly.json` + `assets-n64-lowpoly` + `assets-n64-lowpoly_biref`, via
+    `trash`). Authored
+    [theme_specs/n64-prerender-character.json](tools/mask-align-exp/gen12/theme_specs/n64-prerender-character.json)
+    (id `n64-prerender-character`, templateless, same 10-control roster/lighting-block shape as
+    siblings): a CHARACTER-CENTRIC mid-90s pre-rendered promotional CG look (Rare Ltd. Donkey
+    Kong Country / Killer Instinct box-art register, SGI-workstation-cutscene register) — a
+    stylized creature/animal-mascot bust sculpted into the top of the housing as the dominant
+    feature, glossy injection-molded-plastic shading with soft raytraced highlight streaks,
+    chunky gouraud-faceted forms. Prompt never uses the literal token "N64". Palette validated
+    via `genskin.py --blueprint-only` (had to retune the 5 guide-key majors once — the first
+    draft's saturated red/blue/near-white trio only left 7/10 usable guide keys; muted them
+    to 14/10 survivors). **Not yet generated** — blocked on fal billing (below), needs a real
+    roll through `orchestrate12.py theme_specs/n64-prerender-character.json 4`.
+
+11. **BLOCKED ON BILLING — fal account balance exhausted, confirmed 2026-07-10.**
+    `POST https://rest.alpha.fal.ai/storage/upload/initiate` returns
+    `{"detail":"User is locked. Reason: Exhausted balance. Top up your balance at
+    fal.ai/dashboard/billing"}` for the project's `FAL_KEY` — reproduced both via direct curl
+    and via one real `orchestrate12.py` roll (immediate `KeyError: 'upload_url'` in
+    `genskin.py:121`, since the error response has no `upload_url` field). This blocks ALL new
+    generation project-wide, not just gen12. **Action needed: top up the fal.ai account balance**
+    (financial transaction — human-only, not agent-executable) at
+    [fal.ai/dashboard/billing](https://fal.ai/dashboard/billing).
+    **Resume command once topped up** — re-roll the 5 skins that still need a real regen
+    (gate-fix alone did NOT recover these; myst-arcanum is missing a control, ps1-wild leaks,
+    wmp-quicksilver has a genuinely broken toggle render + baked-in emptiness, wmp-vario has a
+    misplaced album_art region, plus the new n64 character spec has never been rolled):
+    ```bash
+    cd tools/mask-align-exp/gen12
+    for s in myst-arcanum ps1-wild wmp-quicksilver wmp-vario n64-prerender-character; do
+      python3 orchestrate12.py theme_specs/$s.json 4 &
+    done; wait
+    python3 build_dashboard.py
+    ```
+    Run in batches of ≤4 concurrent (as already sized above) to avoid hammering the API the
+    moment it's unlocked. claymation / fa-sky / ps1-crunchy do NOT need re-rolling — they now
+    gate-PASS on their existing paint per item 9 above.
+
+12. **Human review of the 7 fresh PASSes — not yet reviewed.** diablo-gothic, fa-pod,
     fallout-pipboy, fallout-vault, n64-cutscene, steam-porthole, wc-goldshield (seed/rolls per
     skin in `orch.json`). User's own note closing the session: "the skins are getting uglier
     tho" — the stricter gate may be passing technically-correct but less visually striking
