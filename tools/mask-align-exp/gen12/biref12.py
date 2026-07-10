@@ -11,9 +11,9 @@ from scipy import ndimage
 
 # BIREF_LOCAL: run BiRefNet locally (torch/transformers, MPS) instead of the fal endpoint —
 # $0/matte, no rate limits, no billing-lock dependency (see .claude/rules/generation-spend-rule.md).
-# DEFAULT FALSE — preserves current fal-ai/birefnet/v2 behaviour exactly. Flip only BETWEEN
-# batches, never mid-batch (a concurrent agent may be running this file right now).
-BIREF_LOCAL = False
+# Flip only BETWEEN batches, never mid-batch (a concurrent agent may be running this file
+# right now). ON since 2026-07-10 (user call; verified IoU 0.9973 vs fal, 13-19s/matte MPS).
+BIREF_LOCAL = True
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 _VENV_PY = os.path.join(HERE, ".venv-biref", "bin", "python3")  # torch+transformers venv (not the global python3)

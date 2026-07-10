@@ -31,8 +31,8 @@ MODEL = "fal-ai/gemini-3-pro-image-preview/edit"
 # fal charges $0.30/img at 4K (verified live on fal.ai, 2x its $0.15 1K/2K rate) vs Vertex's
 # $0.24/img at 4K (2000 output tokens x $120/1M, verified on the Vertex AI pricing page) — Vertex
 # is ~20% cheaper AND removes the dependency on fal's billing state (see generation-spend-rule).
-# DEFAULT FALSE — preserves current fal-wrapped behaviour exactly. Flip only BETWEEN batches.
-PAINT_VERTEX = False
+# Flip only BETWEEN batches. ON since 2026-07-10 (user call; verified live gen, ~20% cheaper).
+PAINT_VERTEX = True
 VERTEX_PROJECT = os.environ.get("VERTEX_PROJECT", "muser-2605300220")  # same project proven working by bproof/run_bproof_vertex.py
 VERTEX_MODEL = "gemini-3-pro-image-preview"  # same underlying model fal proxies at MODEL above
 VERTEX_URL = (f"https://aiplatform.googleapis.com/v1/projects/{VERTEX_PROJECT}/locations/global/"
