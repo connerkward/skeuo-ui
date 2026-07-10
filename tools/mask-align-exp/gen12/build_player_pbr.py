@@ -29,6 +29,16 @@ import json
 import os
 import sys
 
+# EMISSIVE_ENABLED — user verdict 2026-07-10: even after the relative-gate fix (commit
+# 29b961e9), the baked-glyph emissive layer "randomly makes parts of the image glow in
+# nonsensical ways" — disabled. The rest of the relight stack (pointer light, patina
+# normal/roughness/metalness, specular, glass, and the visualizer-as-dynamic-emissive-source
+# for the live canvas) stays on; only the baked emissive.png-derived glow (self-glow, glyph
+# neighbour bleed, extracted point lights, its glass reflection term) is gated off below via
+# the uEmisEnabled shader uniform + JS-side load/upload skip. TODO: emissivity needs a better
+# model/approach before re-enabling.
+EMISSIVE_ENABLED = False
+
 OUT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
 SID = os.path.basename(OUT).replace("assets-", "")
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -42,8 +52,9 @@ RES = json.load(open(os.path.join(OUT, "results.json")))
 TITLE = RES.get("title", SID)
 V = str(int(os.path.getmtime(os.path.join(OUT, "paint.png"))))
 COST = META.get("cost", {})
+relight_note = "relight: local $0" if EMISSIVE_ENABLED else "relight: local $0 (baked emissive disabled — TODO better model)"
 cost_line = (f"paint: {COST.get('paint_model','?')} · PBR maps: {COST.get('patina_model','fal-ai/patina')} "
-             f"(1 call = 5 maps, ~${COST.get('patina_usd', 0.02):.2f}/skin) · emissive + relight: local $0")
+             f"(1 call = 5 maps, ~${COST.get('patina_usd', 0.02):.2f}/skin) · {relight_note}")
 
 HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -73,7 +84,7 @@ HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <header>
   <h1>__SID__ — __TITLE__ · ✨ dynamic lighting (PBR)</h1>
   <div class="anno">__COST__ · <a href="player.html">← plain player</a>
-  · beat clock <b id="bpmLab"></b> bpm (?bpm=) · pulse: <b>__PULSE__</b> — “__HINT__”</div>
+  · beat clock <b id="bpmLab"></b> bpm (?bpm=)__EMISSIVE_HDR__</div>
 </header>
 <div class="wrap">
   <div class="stage"><canvas id="gl" class="gl"></canvas>
@@ -83,12 +94,10 @@ HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
       <button id="btnAnim" class="on">Pulse ▶</button></div>
     <label>albedo <select id="selAlb"><option value="paint">original paint</option>
       <option value="patina">patina basecolor (delit)</option></select></label>
-    <label><span>emissive intensity</span><span id="vEm"></span></label>
-    <input type="range" id="em" min="0" max="3" step="0.05">
+    __EMISSIVE_UI_EM__
     <label><span>viz / dynamic-source spill</span><span id="vVz"></span></label>
     <input type="range" id="vz" min="0" max="4" step="0.05">
-    <label><span>beat coupling</span><span id="vBc"></span></label>
-    <input type="range" id="bc" min="0" max="0.3" step="0.01">
+    __EMISSIVE_UI_BC__
     <label><span>ambient</span><span id="vA"></span></label>
     <input type="range" id="a" min="0" max="1" step="0.01">
     <label><span>light intensity</span><span id="vI"></span></label>
@@ -107,6 +116,10 @@ HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 </div>
 <script>
 const Q = new URLSearchParams(location.search);
+// EMISSIVE_ENABLED — baked-glyph emissive glow disabled per user verdict (2026-07-10):
+// randomly glowed nonsensical areas even after the relative-gate fix. Relight (pointer
+// light, patina maps, specular, glass, viz-as-dynamic-source) is unaffected.
+const EMISSIVE_ENABLED = __EMISSIVE_ENABLED_JS__;
 const V = '__V__';
 const PBRD = '../assets-__SID___pbr/', BREF = '../assets-__SID___biref/';
 const META = __META__;
@@ -129,7 +142,7 @@ varying vec2 vUV;
 uniform sampler2D uAlb, uNrm, uEmis, uGlass, uRough, uMetal, uEm1, uEm2, uBtnIds, uThumb, uTog, uKnob, uViz, uDyn1, uDyn2;
 uniform vec3 uLight;
 uniform float uIntensity, uSpec, uAmbient, uBump, uLitMix, uAspect;
-uniform float uEmI, uEmPulse, uEmSuppress, uHalo;
+uniform float uEmI, uEmPulse, uEmSuppress, uHalo, uEmisEnabled;
 uniform vec3 uPLpos[6]; uniform vec3 uPLcol[6]; uniform float uPLpulse[6]; uniform float uPLn;
 uniform float uGlassAmt, uGlassClean; uniform vec3 uGlassFill;
 uniform vec2 uKnobC; uniform float uKnobR, uKnobAngle;
@@ -158,7 +171,7 @@ void main(){
   vec3 n = texture2D(uNrm, uvS).rgb * 2.0 - 1.0;
   n.xy *= uBump * (1.0 - g * 0.65);
   n = normalize(n); n.y = -n.y;
-  vec3 alb = mix(albRaw, albRaw * 0.30, em4.a * uEmSuppress);
+  vec3 alb = mix(albRaw, albRaw * 0.30, em4.a * uEmSuppress * uEmisEnabled);
   alb *= (1.0 - 0.22 * prs);
   float specMul = (1.0 - 0.45 * prs) * mix(1.0, 2.3, metal);
   // sprite parts composited in-shader so they receive ALL lighting
@@ -222,7 +235,7 @@ void main(){
   float eyU = dot(texture2D(uEm1, uv - vec2(0., e)).rgb, LUMA);
   vec3 eDir = normalize(vec3(exR - exL, eyD - eyU, 0.0) * 14.0 + vec3(0., 0., 0.30));
   float ewrap = max(dot(n, eDir), 0.0) * 0.65 + 0.35;
-  col += alb * eg * ewrap * uEmI * uEmPulse * (1.0 - em4.a * 0.5) * 1.5;
+  col += alb * eg * ewrap * uEmI * uEmPulse * (1.0 - em4.a * 0.5) * 1.5 * uEmisEnabled;
   // DYNAMIC emissive sources (registry): two-level gather — tight + wide spill
   vec3 dg = texture2D(uDyn1, uv).rgb + texture2D(uDyn2, uv).rgb * 0.9;
   col += alb * dg * (max(dot(n, vec3(0., 0., 1.)), 0.0) * 0.5 + 0.5) * uVizSpill;
@@ -239,7 +252,7 @@ void main(){
     col += (alb * dfi + spi * 0.6) * uPLcol[i] * ai * uEmI * uPLpulse[i];
   }
   // self glow
-  col += em4.rgb * pow(em4.a, 0.75) * uEmI * uEmPulse * 2.3;
+  col += em4.rgb * pow(em4.a, 0.75) * uEmI * uEmPulse * 2.3 * uEmisEnabled;
   // glass: fresnel + procedural env + emissive/dyn reflection
   if (g > 0.004){
     vec3 albG = mix(alb, uGlassFill, g * uGlassClean);
@@ -251,7 +264,7 @@ void main(){
     vec3 env = mix(vec3(0.06, 0.07, 0.09), vec3(0.38, 0.42, 0.50), smoothstep(-0.6, 0.9, R.y))
              + vec3(0.9, 0.95, 1.0) * diag * 0.5;
     float specG = pow(max(dot(ng, H), 0.0), 46.0) * 1.8 * att * uIntensity;
-    vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse
+    vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse * uEmisEnabled
                + texture2D(uDyn1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.8;
     vec3 glass = albG * (uAmbient * 0.85 + 0.3 * diff * att * uIntensity)
                + (F * 0.75 + 0.10) * env * uGlassAmt
@@ -461,9 +474,11 @@ async function boot(){
     paint: loadImg('paint.png?v=' + V),
     base: loadImg(PBRD + 'basecolor.png'), nrm: loadImg(PBRD + 'normal.png'),
     rough: loadImg(PBRD + 'roughness.png'), metal: loadImg(PBRD + 'metalness.png'),
-    emis: loadImg(PBRD + 'emissive.png'), glass: loadImg(PBRD + 'glass.png'),
+    glass: loadImg(PBRD + 'glass.png'),
     ids: loadImg(PBRD + 'btn-ids.png'),
   };
+  // EMISSIVE_ENABLED=false: don't even fetch the baked emissive.png — no light-gather cost.
+  if (EMISSIVE_ENABLED) loads.emis = loadImg(PBRD + 'emissive.png');
   for (const [rn, r] of Object.entries(META.regions || {}))
     if (r.mask) loads['rmask_' + rn] = loadImg(PBRD + r.mask);
   for (const p of ['vol', 'seek', 'shuffle_off', 'shuffle_on'])
@@ -479,10 +494,18 @@ async function boot(){
   upload('uNrm', IM.nrm, gl.RGB);
   upload('uRough', IM.rough, gl.LUMINANCE);
   upload('uMetal', IM.metal, gl.LUMINANCE);
-  upload('uEmis', IM.emis, gl.RGBA);
   upload('uGlass', IM.glass, gl.LUMINANCE);
-  upload('uEm1', blurLevel(IM.emis, 2.0, 3), gl.RGB);
-  upload('uEm2', blurLevel(IM.emis, 0.5, 8), gl.RGB);
+  if (EMISSIVE_ENABLED){
+    upload('uEmis', IM.emis, gl.RGBA);
+    upload('uEm1', blurLevel(IM.emis, 2.0, 3), gl.RGB);
+    upload('uEm2', blurLevel(IM.emis, 0.5, 8), gl.RGB);
+  } else {
+    // no baked emissive: bind a 1x1 black stand-in so uEmis/uEm1/uEm2 samples are well-defined.
+    // Every consuming shader term is ALSO hard-gated by uEmisEnabled=0.0 below, so this is
+    // redundant insurance against WebGL's texture-incomplete edge case, not load-bearing.
+    const blank = document.createElement('canvas'); blank.width = blank.height = 1;
+    upload('uEmis', blank, gl.RGBA); upload('uEm1', blank, gl.RGB); upload('uEm2', blank, gl.RGB);
+  }
   upload('uBtnIds', IM.ids, gl.LUMINANCE);
 
   // moving parts (tight-cropped at runtime from the biref cuts)
@@ -580,6 +603,7 @@ async function boot(){
 
   // static uniforms
   gl.uniform1f(U('uAspect'), CFG.h / CFG.w);
+  gl.uniform1f(U('uEmisEnabled'), EMISSIVE_ENABLED ? 1.0 : 0.0);
   gl.uniform3f(U('uGlassFill'), ...META.glassFill);
   if (META.knob){ gl.uniform2f(U('uKnobC'), ...META.knob.c); gl.uniform1f(U('uKnobR'), META.knob.r); }
   else gl.uniform1f(U('uKnobR'), 0);
@@ -597,7 +621,8 @@ async function boot(){
              offS: s2, sa: META.shuffle.stateAlign || {dx:0, dy:0} };
     setTog();
   }
-  const L = META.lights || [];
+  // extracted glyph point-lights are baked-emissive derived — off with EMISSIVE_ENABLED.
+  const L = EMISSIVE_ENABLED ? (META.lights || []) : [];
   const maxE = Math.max(...L.map(l => l.energy), 1e-6);
   gl.uniform1f(U('uPLn'), Math.min(L.length, 6));
   for (let i = 0; i < 6; i++){
@@ -801,6 +826,7 @@ for (const [id, key, fmt] of [['em','em',v=>v.toFixed(2)], ['vz','vz',v=>v.toFix
     ['bc','bc',v=>v.toFixed(2)], ['a','a',v=>v.toFixed(2)], ['i','i',v=>v.toFixed(2)],
     ['h','h',v=>v.toFixed(2)], ['b','b',v=>v.toFixed(2)], ['g','g',v=>v.toFixed(2)]]){
   const el = $(id), lab = $('v' + id.charAt(0).toUpperCase() + id.slice(1));
+  if (!el || !lab) continue;   // em/bc rows are omitted from the DOM when EMISSIVE_ENABLED=false
   el.value = state[key]; lab.textContent = fmt(state[key]);
   el.oninput = () => { state[key] = parseFloat(el.value); lab.textContent = fmt(state[key]); if (!state.anim) draw(lastT); };
 }
@@ -822,9 +848,24 @@ window.__state = state; window.__press = PRESS; window.__emsrc = EMSRC;  // test
 boot();
 </script></body></html>"""
 
+if EMISSIVE_ENABLED:
+    emissive_hdr = (f' · pulse: <b>{META["lighting"].get("pulse", "?")}</b> — '
+                    f'“{META["lighting"].get("emissive_hint", "")}”')
+    emissive_ui_em = ('<label><span>emissive intensity</span><span id="vEm"></span></label>\n'
+                       '    <input type="range" id="em" min="0" max="3" step="0.05">')
+    emissive_ui_bc = ('<label><span>beat coupling</span><span id="vBc"></span></label>\n'
+                       '    <input type="range" id="bc" min="0" max="0.3" step="0.01">')
+else:
+    emissive_hdr = " · emissive disabled (needs a better model — see TODO in this file)"
+    emissive_ui_em = ""
+    emissive_ui_bc = ""
+
 HTML = (HTML.replace("__SID__", SID).replace("__TITLE__", TITLE).replace("__V__", V)
-        .replace("__COST__", cost_line).replace("__PULSE__", META["lighting"].get("pulse", "?"))
-        .replace("__HINT__", META["lighting"].get("emissive_hint", ""))
+        .replace("__COST__", cost_line)
+        .replace("__EMISSIVE_HDR__", emissive_hdr)
+        .replace("__EMISSIVE_UI_EM__", emissive_ui_em)
+        .replace("__EMISSIVE_UI_BC__", emissive_ui_bc)
+        .replace("__EMISSIVE_ENABLED_JS__", "true" if EMISSIVE_ENABLED else "false")
         .replace("__META__", json.dumps(META)))
 out_path = os.path.join(OUT, "player-pbr.html")
 open(out_path, "w").write(HTML)

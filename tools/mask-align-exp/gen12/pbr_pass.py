@@ -162,6 +162,12 @@ else:
     print(f"[pbr:{SID}] patina maps saved ({time.time()-t0:.0f}s)")
 
 # ---------------------------------------------------------------- 2. glyph emissive (local, $0)
+# Confirmed 2026-07-10: every operation below (top-hat gating, hue window, component-area cap,
+# point-light centroids) is numpy/scipy/PIL — zero hosted calls, so there is no hosted spend to
+# gate off. The PLAYER no longer consumes this output by default (build_player_pbr.py's
+# EMISSIVE_ENABLED=False — user verdict: baked emissive glowed nonsensically); this extraction
+# stays wired so emissive.png/meta.json lights remain available for a future re-enable once
+# there's a better emissive model/approach (TODO, tracked in build_player_pbr.py).
 mx = src.max(axis=-1)
 mn = src.min(axis=-1)
 val = mx

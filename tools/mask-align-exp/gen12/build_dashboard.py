@@ -31,20 +31,16 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
             else: reg = v
         except Exception: pass
     gate = reg.get("gate", {})
-    # PBR card link requires BOTH the player AND a non-empty emissive extraction (meta.json
-    # emissiveCoverage > 0 / lights present) — a built player-pbr.html whose glyph-emissive
-    # pass found zero glow pixels (paint had no bright content matching the spec's hue window)
-    # would advertise "dynamic lighting" on a render with no lighting effect. Computed per
-    # skin from its own _pbr/meta.json, not a hand-picked exclusion (verify-outputs-rule /
-    # placement-invariants-rule: compute, don't hand-author).
-    pbr = False
-    if os.path.exists(os.path.join(d, "player-pbr.html")):
-        pbr_meta_path = os.path.join(HERE, f"assets-{sid}_pbr", "meta.json")
-        try:
-            pbr_meta = json.load(open(pbr_meta_path))
-            pbr = pbr_meta.get("emissiveCoverage", 0) > 0 or bool(pbr_meta.get("lights"))
-        except Exception:
-            pbr = False
+    # PBR card link gate: player-pbr.html + its _pbr/meta.json exist. Previously required a
+    # non-empty emissive extraction (meta.json emissiveCoverage>0 / lights present), because a
+    # zero-glow build would advertise "dynamic lighting" with no lighting effect. That's now
+    # moot — build_player_pbr.py's EMISSIVE_ENABLED=False (user verdict 2026-07-10: baked
+    # emissive glowed nonsensically) means the shipped PBR player is relight-only (pointer
+    # light + patina normal/roughness/metalness + specular + glass), which doesn't depend on
+    # the emissive extraction succeeding at all — gating the link on it was checking the wrong
+    # thing. The existence of the built player + its meta.json is the real precondition.
+    pbr = (os.path.exists(os.path.join(d, "player-pbr.html"))
+           and os.path.exists(os.path.join(HERE, f"assets-{sid}_pbr", "meta.json")))
     # run-id annotation: which generation is this card CURRENTLY showing? seed+roll come from
     # orch.json; "painted" is paint.png's own mtime (not orch.json's) so a manual re-roll or an
     # agent mid-regen that overwrote paint.png but hasn't re-run the orchestrator yet is visible

@@ -25,8 +25,8 @@
 </style></head><body>
 <header>
   <h1>steam-porthole — steam-porthole · ✨ dynamic lighting (PBR)</h1>
-  <div class="anno">paint: fal-ai/gemini-3-pro-image-preview/edit · PBR maps: fal-ai/patina (1 call = 5 maps, ~$0.00/skin) · emissive + relight: local $0 · <a href="player.html">← plain player</a>
-  · beat clock <b id="bpmLab"></b> bpm (?bpm=) · pulse: <b>ember</b> — “warm furnace glow behind the porthole glass and gauge lamps”</div>
+  <div class="anno">paint: fal-ai/gemini-3-pro-image-preview/edit · PBR maps: fal-ai/patina (1 call = 5 maps, ~$0.00/skin) · relight: local $0 (baked emissive disabled — TODO better model) · <a href="player.html">← plain player</a>
+  · beat clock <b id="bpmLab"></b> bpm (?bpm=) · emissive disabled (needs a better model — see TODO in this file)</div>
 </header>
 <div class="wrap">
   <div class="stage"><canvas id="gl" class="gl"></canvas>
@@ -36,12 +36,10 @@
       <button id="btnAnim" class="on">Pulse ▶</button></div>
     <label>albedo <select id="selAlb"><option value="paint">original paint</option>
       <option value="patina">patina basecolor (delit)</option></select></label>
-    <label><span>emissive intensity</span><span id="vEm"></span></label>
-    <input type="range" id="em" min="0" max="3" step="0.05">
+    
     <label><span>viz / dynamic-source spill</span><span id="vVz"></span></label>
     <input type="range" id="vz" min="0" max="4" step="0.05">
-    <label><span>beat coupling</span><span id="vBc"></span></label>
-    <input type="range" id="bc" min="0" max="0.3" step="0.01">
+    
     <label><span>ambient</span><span id="vA"></span></label>
     <input type="range" id="a" min="0" max="1" step="0.01">
     <label><span>light intensity</span><span id="vI"></span></label>
@@ -60,6 +58,10 @@
 </div>
 <script>
 const Q = new URLSearchParams(location.search);
+// EMISSIVE_ENABLED — baked-glyph emissive glow disabled per user verdict (2026-07-10):
+// randomly glowed nonsensical areas even after the relative-gate fix. Relight (pointer
+// light, patina maps, specular, glass, viz-as-dynamic-source) is unaffected.
+const EMISSIVE_ENABLED = false;
 const V = '1783629661';
 const PBRD = '../assets-steam-porthole_pbr/', BREF = '../assets-steam-porthole_biref/';
 const META = {"id": "steam-porthole", "size": [2304, 2784], "paintSize": [2304, 3712], "devFrac": 0.75, "lighting": {"emissive_hint": "warm furnace glow behind the porthole glass and gauge lamps", "emissive_color": [255, 150, 60], "pulse": "ember", "intensity": 0.8, "viz_emissive": true, "beat_couple": 0.06, "enabled": true}, "glassFill": [0.0016, 0.0017, 0.0014], "regions": {"visualizer": {"rect": [0.2513, 0.7554, 0.2834, 0.2073], "mask": "viz-mask.png", "maskRect": [0.217, 0.7302, 0.3516, 0.2572]}, "album_art": {"rect": [0.6033, 0.7554, 0.25, 0.2076], "mask": "art-mask.png", "maskRect": [0.5729, 0.7302, 0.3103, 0.2575]}}, "knob": {"c": [0.3066, 0.6277], "r": 0.0832}, "seek": {"track": [0.4032, 0.5388, 0.4727, 0.0873], "vertical": false, "travel": [0.3941, 0.885]}, "shuffle": {"rect": [0.6718, 0.6509, 0.1828, 0.0653], "angle": 0, "stateAlign": {"dx": 0, "dy": 0}}, "buttons": [{"name": "playpause", "id": 36, "rect": [0.2026, 0.421, 0.1221, 0.1017]}, {"name": "prev", "id": 72, "rect": [0.3572, 0.4271, 0.1068, 0.0884]}, {"name": "next", "id": 108, "rect": [0.4974, 0.4271, 0.1063, 0.0887]}, {"name": "repeat", "id": 144, "rect": [0.6367, 0.4271, 0.1063, 0.0884]}, {"name": "queue", "id": 180, "rect": [0.7765, 0.4282, 0.1037, 0.0858]}], "lights": [{"uv": [0.5384, 0.1556], "color": [1.0, 0.529, 0.489], "energy": 0.757}, {"uv": [0.9435, 0.7326], "color": [1.0, 0.783, 0.489], "energy": 0.234}, {"uv": [0.8626, 0.3414], "color": [1.0, 0.822, 0.579], "energy": 0.008}, {"uv": [0.1573, 0.7335], "color": [1.0, 0.671, 0.493], "energy": 0.002}], "emissiveCoverage": 0.00029, "emissiveHue": {"mode": "director", "center": 27.7, "half_width": 45}, "cost": {"patina_model": "fal-ai/patina", "patina_usd": 0.0, "paint_model": "fal-ai/gemini-3-pro-image-preview/edit", "emissive": "classical local $0"}, "src": {"sha1": "286a750ae54c", "paint_mtime": 1783629661}};
@@ -82,7 +84,7 @@ varying vec2 vUV;
 uniform sampler2D uAlb, uNrm, uEmis, uGlass, uRough, uMetal, uEm1, uEm2, uBtnIds, uThumb, uTog, uKnob, uViz, uDyn1, uDyn2;
 uniform vec3 uLight;
 uniform float uIntensity, uSpec, uAmbient, uBump, uLitMix, uAspect;
-uniform float uEmI, uEmPulse, uEmSuppress, uHalo;
+uniform float uEmI, uEmPulse, uEmSuppress, uHalo, uEmisEnabled;
 uniform vec3 uPLpos[6]; uniform vec3 uPLcol[6]; uniform float uPLpulse[6]; uniform float uPLn;
 uniform float uGlassAmt, uGlassClean; uniform vec3 uGlassFill;
 uniform vec2 uKnobC; uniform float uKnobR, uKnobAngle;
@@ -111,7 +113,7 @@ void main(){
   vec3 n = texture2D(uNrm, uvS).rgb * 2.0 - 1.0;
   n.xy *= uBump * (1.0 - g * 0.65);
   n = normalize(n); n.y = -n.y;
-  vec3 alb = mix(albRaw, albRaw * 0.30, em4.a * uEmSuppress);
+  vec3 alb = mix(albRaw, albRaw * 0.30, em4.a * uEmSuppress * uEmisEnabled);
   alb *= (1.0 - 0.22 * prs);
   float specMul = (1.0 - 0.45 * prs) * mix(1.0, 2.3, metal);
   // sprite parts composited in-shader so they receive ALL lighting
@@ -175,7 +177,7 @@ void main(){
   float eyU = dot(texture2D(uEm1, uv - vec2(0., e)).rgb, LUMA);
   vec3 eDir = normalize(vec3(exR - exL, eyD - eyU, 0.0) * 14.0 + vec3(0., 0., 0.30));
   float ewrap = max(dot(n, eDir), 0.0) * 0.65 + 0.35;
-  col += alb * eg * ewrap * uEmI * uEmPulse * (1.0 - em4.a * 0.5) * 1.5;
+  col += alb * eg * ewrap * uEmI * uEmPulse * (1.0 - em4.a * 0.5) * 1.5 * uEmisEnabled;
   // DYNAMIC emissive sources (registry): two-level gather — tight + wide spill
   vec3 dg = texture2D(uDyn1, uv).rgb + texture2D(uDyn2, uv).rgb * 0.9;
   col += alb * dg * (max(dot(n, vec3(0., 0., 1.)), 0.0) * 0.5 + 0.5) * uVizSpill;
@@ -192,7 +194,7 @@ void main(){
     col += (alb * dfi + spi * 0.6) * uPLcol[i] * ai * uEmI * uPLpulse[i];
   }
   // self glow
-  col += em4.rgb * pow(em4.a, 0.75) * uEmI * uEmPulse * 2.3;
+  col += em4.rgb * pow(em4.a, 0.75) * uEmI * uEmPulse * 2.3 * uEmisEnabled;
   // glass: fresnel + procedural env + emissive/dyn reflection
   if (g > 0.004){
     vec3 albG = mix(alb, uGlassFill, g * uGlassClean);
@@ -204,7 +206,7 @@ void main(){
     vec3 env = mix(vec3(0.06, 0.07, 0.09), vec3(0.38, 0.42, 0.50), smoothstep(-0.6, 0.9, R.y))
              + vec3(0.9, 0.95, 1.0) * diag * 0.5;
     float specG = pow(max(dot(ng, H), 0.0), 46.0) * 1.8 * att * uIntensity;
-    vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse
+    vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse * uEmisEnabled
                + texture2D(uDyn1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.8;
     vec3 glass = albG * (uAmbient * 0.85 + 0.3 * diff * att * uIntensity)
                + (F * 0.75 + 0.10) * env * uGlassAmt
@@ -414,9 +416,11 @@ async function boot(){
     paint: loadImg('paint.png?v=' + V),
     base: loadImg(PBRD + 'basecolor.png'), nrm: loadImg(PBRD + 'normal.png'),
     rough: loadImg(PBRD + 'roughness.png'), metal: loadImg(PBRD + 'metalness.png'),
-    emis: loadImg(PBRD + 'emissive.png'), glass: loadImg(PBRD + 'glass.png'),
+    glass: loadImg(PBRD + 'glass.png'),
     ids: loadImg(PBRD + 'btn-ids.png'),
   };
+  // EMISSIVE_ENABLED=false: don't even fetch the baked emissive.png — no light-gather cost.
+  if (EMISSIVE_ENABLED) loads.emis = loadImg(PBRD + 'emissive.png');
   for (const [rn, r] of Object.entries(META.regions || {}))
     if (r.mask) loads['rmask_' + rn] = loadImg(PBRD + r.mask);
   for (const p of ['vol', 'seek', 'shuffle_off', 'shuffle_on'])
@@ -432,10 +436,18 @@ async function boot(){
   upload('uNrm', IM.nrm, gl.RGB);
   upload('uRough', IM.rough, gl.LUMINANCE);
   upload('uMetal', IM.metal, gl.LUMINANCE);
-  upload('uEmis', IM.emis, gl.RGBA);
   upload('uGlass', IM.glass, gl.LUMINANCE);
-  upload('uEm1', blurLevel(IM.emis, 2.0, 3), gl.RGB);
-  upload('uEm2', blurLevel(IM.emis, 0.5, 8), gl.RGB);
+  if (EMISSIVE_ENABLED){
+    upload('uEmis', IM.emis, gl.RGBA);
+    upload('uEm1', blurLevel(IM.emis, 2.0, 3), gl.RGB);
+    upload('uEm2', blurLevel(IM.emis, 0.5, 8), gl.RGB);
+  } else {
+    // no baked emissive: bind a 1x1 black stand-in so uEmis/uEm1/uEm2 samples are well-defined.
+    // Every consuming shader term is ALSO hard-gated by uEmisEnabled=0.0 below, so this is
+    // redundant insurance against WebGL's texture-incomplete edge case, not load-bearing.
+    const blank = document.createElement('canvas'); blank.width = blank.height = 1;
+    upload('uEmis', blank, gl.RGBA); upload('uEm1', blank, gl.RGB); upload('uEm2', blank, gl.RGB);
+  }
   upload('uBtnIds', IM.ids, gl.LUMINANCE);
 
   // moving parts (tight-cropped at runtime from the biref cuts)
@@ -533,6 +545,7 @@ async function boot(){
 
   // static uniforms
   gl.uniform1f(U('uAspect'), CFG.h / CFG.w);
+  gl.uniform1f(U('uEmisEnabled'), EMISSIVE_ENABLED ? 1.0 : 0.0);
   gl.uniform3f(U('uGlassFill'), ...META.glassFill);
   if (META.knob){ gl.uniform2f(U('uKnobC'), ...META.knob.c); gl.uniform1f(U('uKnobR'), META.knob.r); }
   else gl.uniform1f(U('uKnobR'), 0);
@@ -550,7 +563,8 @@ async function boot(){
              offS: s2, sa: META.shuffle.stateAlign || {dx:0, dy:0} };
     setTog();
   }
-  const L = META.lights || [];
+  // extracted glyph point-lights are baked-emissive derived — off with EMISSIVE_ENABLED.
+  const L = EMISSIVE_ENABLED ? (META.lights || []) : [];
   const maxE = Math.max(...L.map(l => l.energy), 1e-6);
   gl.uniform1f(U('uPLn'), Math.min(L.length, 6));
   for (let i = 0; i < 6; i++){
@@ -754,6 +768,7 @@ for (const [id, key, fmt] of [['em','em',v=>v.toFixed(2)], ['vz','vz',v=>v.toFix
     ['bc','bc',v=>v.toFixed(2)], ['a','a',v=>v.toFixed(2)], ['i','i',v=>v.toFixed(2)],
     ['h','h',v=>v.toFixed(2)], ['b','b',v=>v.toFixed(2)], ['g','g',v=>v.toFixed(2)]]){
   const el = $(id), lab = $('v' + id.charAt(0).toUpperCase() + id.slice(1));
+  if (!el || !lab) continue;   // em/bc rows are omitted from the DOM when EMISSIVE_ENABLED=false
   el.value = state[key]; lab.textContent = fmt(state[key]);
   el.oninput = () => { state[key] = parseFloat(el.value); lab.textContent = fmt(state[key]); if (!state.anim) draw(lastT); };
 }
