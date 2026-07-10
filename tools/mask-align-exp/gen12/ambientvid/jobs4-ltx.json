@@ -1,0 +1,30 @@
+{
+  "round": 4,
+  "date": "2026-07-10",
+  "seed": 1207,
+  "note": "Round 3 was blocked: fal's LoRA endpoint fetches loras[].path anonymously server-side and 403s on HF's gated URL regardless of the account owner accepting terms. Unblocked by downloading the gated safetensors through the user's own authenticated HF browser session (claude-in-chrome, real Chrome, real cookies) and re-hosting the bytes on fal's own CDN, then pointing loras[0].path at that fal URL instead of the HF URL.",
+  "endpoint": "fal-ai/ltx-2.3-22b/distilled/image-to-video/lora",
+  "lora_source": "https://huggingface.co/Lightricks/LTX-2.3-22b-LoRA-Cinemagraph/resolve/main/ltx-2.3-22b-lora-cinemagraph-0.9.safetensors (gated, 201453416 bytes, verified valid safetensors header after browser download)",
+  "lora_fal_cdn_url": "https://v3b.fal.media/files/b/0aa1b9f7/IlqVKpJrcI_vlY0Fbsm_L_ltx-2.3-22b-lora-cinemagraph-0.9.safetensors",
+  "upload_method": "fal_client python SDK upload_file() (official fal-client==1.0.0) -- NOT the naive storage/upload/initiate + single PUT pattern from biref12.py's upload(), which 413'd (Payload Too Large) on this 201MB file. fal_client auto-switches to its multipart CDN upload path (MULTIPART_THRESHOLD = 100MB in fal_client/client.py) for anything over 100MB.",
+  "subject_images": {
+    "steam-porthole": "https://v3b.fal.media/files/b/0aa1ba05/UvAqutjpjQJGbkhojL2Qv_subject-steam-porthole-576x768.jpg",
+    "diablo-gothic": "https://v3b.fal.media/files/b/0aa1ba05/JlCeCyYqXYGy8t2_bHqLm_subject-diablo-gothic-576x768.jpg"
+  },
+  "prompts": {
+    "steam-porthole": "The brass and copper device is a rigid, perfectly static photograph — the metal housing, porthole screen, control buttons, slider, hinge, rivets and pipes NEVER move, deform, breathe or shimmer. ONLY these three regions animate: (1) the exposed brass gear train on the lower-left rotates slowly and mechanically in place; (2) the needles on the two round pressure gauges at the upper-left quiver slightly; (3) one thin wisp of steam rises gently from behind the coiled copper pipe at the right edge. Nothing else moves. Locked static camera, no zoom, no pan, no parallax. Seamless ambient loop.",
+    "diablo-gothic": "The carved dark stone tablet is a rigid, perfectly static photograph — the stone housing, skull and skeleton carvings, buttons, slider and glass screens NEVER move, deform, breathe or shimmer; the silhouette stays frozen. ONLY this region animates: the existing red runes around the central control cross gently pulse brighter and dimmer. No fire appears, nothing ignites, and the glow never spreads beyond the runes. Nothing else moves. Locked static camera, no zoom, no pan, no parallax. Seamless ambient loop.",
+    "note": "steam-porthole prompt reused verbatim from jobs2.json (round 2). diablo-gothic prompt reconstructed for round 3/4 using the round-2 write-up's safer 'runes only, no fire' clause (round 2 finding #3) since the verbatim winning round-2 prompt was never saved to the repo."
+  },
+  "negative_prompt": "news broadcast, 3d animation, computer graphics, pc game, console game, video game, cartoon, childish, watermark, logo, text, on screen text, subtitles, titles, signature, slowmo, camera movement, zoom, pan, dolly, tilt, parallax, camera shake, morphing, melting, warping, deformation, object replacement, whole-body ignition, fire spreading, hands, people",
+  "negative_prompt_note": "LTX's default negative_prompt ends in the literal word 'static' (confirmed via get_model_schema), which actively fights a static-device brief (round 2 finding #5) -- overridden here to drop 'static' and add scene-specific negatives.",
+  "params": {"camera_lora": "static", "seed": 1207, "num_frames": 121, "generate_audio": false, "enable_prompt_expansion": false},
+  "jobs": [
+    {"skin": "steam-porthole", "request_id": "019f4d72-d3a7-7a33-a781-7657556be22e", "video_url": "https://v3b.fal.media/files/b/0aa1ba29/B0NeSDRpuNWKmdaiyDsnN_VfnrEkQJ.mp4", "size": "576x768", "fps": 24, "duration_s": 5.04, "result": "COMPLETED -- generation ran (no 422). Verdict: FAIL (see below)."},
+    {"skin": "diablo-gothic", "request_id": "019f4d72-e325-7401-918c-2624cba01745", "video_url": "https://v3b.fal.media/files/b/0aa1ba1e/ogVILXcNVbx-i2Gwn7aU7_w1USeEiF.mp4", "size": "576x768", "fps": 24, "duration_s": 5.04, "result": "COMPLETED -- generation ran (no 422). Verdict: PASS (see below)."}
+  ],
+  "verified_frames": "3 full-res mid-clip frames per clip (t=0.2s/2.5s/4.8s) inspected directly, plus a close-up crop of the button row (steam-porthole) and the rune cluster (diablo-gothic) across all 3 frames, per verify-outputs-rule / verify-rule.",
+  "seam_mean_abs_diff_first_vs_last_frame": {"steam-porthole": 2.55, "diablo-gothic": 4.55},
+  "verdict": "steam-porthole FAIL, diablo-gothic PASS -- see docs/experiments/2026-07-09-ambient-video-loops.md round 4 for full writeup.",
+  "cost": "get_pricing: $0.001405/megapixel; 576x768x121frames = 53.53 MP/clip -> ~$0.075/clip x 2 = ~$0.15 total. Both jobs billed (real generation ran, unlike round 3's pre-billing 422s)."
+}

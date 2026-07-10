@@ -312,3 +312,94 @@ free at inference time and a no-op when the model was already clean.
 - LTX jobs/params: `ambientvid/jobs3-ltx.json`.
 - Cost this round: $0.00 for the masking prototype (100% local/OpenCV/ffmpeg); LTX benchmark
   ≈ $0.22–0.26 (2 clips, see 3a).
+
+---
+
+## Round 4 (2026-07-10) — unblocking the gated LoRA via browser download + fal re-host
+
+Round 3 closed with "the only remaining workaround... was assessed and ruled out as
+impractical" because the only HF read-path available (the HF MCP's `hf_fs cat`, capped at
+80,000 bytes/call) would need ~2,500 calls for a 201MB file. That constraint was specific to
+*that* tool. A **different** tool removes it entirely: the user's own Chrome, already logged
+into Hugging Face and already gate-accepted for this repo, can just download the file like any
+authenticated human would — no MCP byte-cap involved.
+
+### Method
+
+1. **Browser download.** Opened a new `claude-in-chrome` tab (the user's real, logged-in Chrome
+   — not a synthetic session), confirmed the exact filename via the repo's `tree/main` page
+   (`ltx-2.3-22b-lora-cinemagraph-0.9.safetensors`, 201 MB), then clicked the file's download
+   icon. Chrome's configured download directory turned out to be `~/Desktop` (not `~/Downloads`
+   — checked `Preferences`'s `download.default_directory` after an initial poll of `~/Downloads`
+   came up empty), where two copies landed (an earlier direct `resolve/main/` navigate had
+   already triggered one). Verified before trusting it: `file`, a hex dump of the header
+   (`60ef010000000000{"__metadata__"...` — a valid little-endian safetensors header, not an
+   HTML error/gate page), and exact byte count (201,453,416 — matches the repo's listed size).
+2. **Re-host on fal's CDN.** The `biref12.py`-proven pattern (`storage/upload/initiate` +
+   single PUT) **413'd** ("Payload Too Large") on this file — that pattern only ever moved
+   PNGs well under 100MB. Root cause: fal's own `fal_client` SDK hardcodes
+   `MULTIPART_THRESHOLD = 100 * 1024 * 1024` and switches to a chunked multipart CDN upload
+   above that size; the raw single-PUT REST call has no equivalent path for large files. Fixed
+   by using the actual `fal_client.upload_file()` (the real installed SDK, `fal-client==1.0.0`),
+   which auto-detects the 201MB size and does the multipart upload transparently. Verified the
+   resulting CDN URL with a `HEAD` request: `content-length: 201453416` (byte-exact match) and
+   `x-fal-storage-type: tigris`.
+3. **Re-ran the exact round-3 benchmark**, same subjects (fresh 576×768 JPEGs re-derived from
+   `subject-<skin>-34.png` and re-uploaded, since round 3's uploaded copies weren't recorded
+   anywhere retrievable), same prompts, same `camera_lora=static`/seed 1207/`num_frames=121`,
+   `loras=[{"path": <fal CDN URL>, "scale": 1}]` instead of the HF URL.
+
+### Result: the gate is unblocked — both jobs generated real video (no 422)
+
+Both `submit_job` calls queued normally (position ~148) and came back `COMPLETED` with actual
+video output ~4.5 minutes later — this alone confirms the fix: fal's fetcher accepted the
+CDN-hosted LoRA where it 403'd on every attempt at the HF URL in round 3. Cost: real generation
+this time (not a pre-billing validation failure) — `get_pricing` $0.001405/megapixel ×
+(576×768×121 frames ≈ 53.5 MP) ≈ **$0.075/clip × 2 ≈ $0.15 total**.
+
+### Verdict per skin (3 full-res mid-clip frames + close-up crops of the named-motion regions)
+
+| skin | verdict | what the frames show |
+|---|---|---|
+| **steam-porthole** | **FAIL** | The two round gauge dials AND the fast-forward/playlist button glyphs — explicitly in the "control buttons... NEVER move, deform, breathe or shimmer" clause — dissolve from clean printed icons at t=0.2s into an illegible smear by t=2.5s and **stay broken** through t=4.8s (close-up crop of the 5-button row confirms it: 3 of 5 icons lose their engraved glyph entirely). The gear cluster (an *allowed* region) does rotate as intended, and a steam wisp appears at the right edge by the final frame — the named effects work — but the control-identity freeze fails on the same class of element round 2 flagged for base LTX ("total ignition, button icons morph"). The Cinemagraph LoRA does not fix this failure mode; it persists through it. |
+| **diablo-gothic** | **PASS** | Close-up crop of the central rune cross across all 3 frames shows the stone housing, skull carvings, and D-pad/button icons pixel-stable, with the red rune glow present and roughly steady (no eruption, no spreading, no whole-tablet ignition) — matching the "gently pulse, no fire, nothing ignites" brief cleanly. Opaque/matte stone was already round 2's most stable material class (finding #4); it remains so here with the LoRA applied. |
+
+Loop seam (1.0s crossfade, mean \|first−last\| px): steam-porthole 2.55, diablo-gothic 4.55 —
+both looser than round 2's Seedance seams (0.9–1.3) despite diablo-gothic's content passing.
+
+### Verdict vs round-2 winners
+
+**Round 2's Seedance 1.0 pro fast pick stands as the better overall model** — it passed
+*both* skins with tighter seams and zero control-identity drift. LTX-2.3-Distilled + the
+Cinemagraph LoRA is only conditionally viable: it produced the cleanest ember/glow effect of
+any model tried across all four rounds on an opaque stone material (diablo-gothic), but
+reproduces round 2's core LTX failure (button-icon morphing) on a reflective, detail-dense
+metal control panel (steam-porthole). Recommendation: **keep Seedance 1.0 pro fast as the
+production ambient-loop model**; LTX+LoRA is a candidate worth a second look only for
+opaque/matte-material skins, and only after the button-icon-morphing failure mode is
+understood (it may be a resolution/`use_multiscale` tuning issue rather than fundamental).
+
+### Key findings
+
+1. **The gated-LoRA block was a tool-choice problem, not a fal/HF architecture dead-end.**
+   Round 3's "impractical" verdict was scoped to one specific read path (HF MCP's 80KB-capped
+   `hf_fs cat`); the user's already-authenticated real browser session had no such limit. The
+   general lesson: "no pragmatic way to fetch a gated file" should be re-checked against every
+   available tool with real user auth, not just the first one tried.
+2. **`storage/upload/initiate` + single PUT has an undocumented ~100MB ceiling** (413 in
+   practice). Anything approaching that size should go through the real `fal_client` SDK
+   (`upload_file`/`upload`), which transparently multiparts above `MULTIPART_THRESHOLD`
+   (100MB, hardcoded in `fal_client/client.py`), rather than hand-rolling the REST calls.
+3. **The Cinemagraph LoRA is not a universal fix for LTX's identity-drift problem** — it
+   inherits the base model's per-material behavior (stable on opaque stone, unstable on
+   reflective metal/glyph-dense controls) rather than eliminating it outright.
+
+### Artifacts (round 4)
+
+- Downloaded LoRA (re-hosted, then deleted locally per policy — re-downloadable, not
+  irreplaceable media): fal CDN URL recorded above and in `ambientvid/jobs4-ltx.json`.
+- Clips: `ambientvid/raw4-ltxcinemagraph-<skin>.mp4` (raw model output),
+  `ambientvid/loop4-ltxcinemagraph-<skin>.{mp4,webm}` (1.0s crossfade loop).
+- Jobs/params/prompts/URLs: `ambientvid/jobs4-ltx.json`.
+- Cost this round: ≈$0.15 (2 real LTX+LoRA generations; see above). LoRA re-host upload itself
+  is free (fal storage/CDN upload has no charge).

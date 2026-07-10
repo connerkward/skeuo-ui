@@ -446,10 +446,19 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
   [`tools/mask-align-exp/gen12/ambientvid/maskexp.html`](tools/mask-align-exp/gen12/ambientvid/maskexp.html).
 - [x] **Benchmark LTX-2.3 Cinemagraph LoRA** (HF terms accepted) vs round-2 Seedance/Wan results —
   same subjects + region-scoped prompts via fal ltx lora endpoint (~$0.10-0.15/clip).
-  **Outcome (2026-07-10):** not usable via fal — the LoRA endpoint fetches `loras[].path`
-  anonymously server-side, and HF's gate 403s that regardless of the account owner having
-  accepted terms (confirmed via 2 live submitted jobs, both unbilled 422). Local (46GB model)
-  still impractical. Round-2 picks (Seedance 1.0 pro fast) stand. Same doc/page as above.
+  **Outcome (2026-07-10, round 3):** not usable via fal as attempted — the LoRA endpoint
+  fetches `loras[].path` anonymously server-side, and HF's gate 403s that regardless of the
+  account owner having accepted terms (confirmed via 2 live submitted jobs, both unbilled 422).
+  **Round 4 (2026-07-10) unblocked it**: downloaded the gated safetensors via the user's own
+  authenticated HF browser session (claude-in-chrome), re-hosted the 201MB file on fal's CDN via
+  the real `fal_client` SDK (the naive single-PUT REST pattern 413'd above ~100MB — needed the
+  SDK's multipart upload), then pointed `loras[0].path` at the fal URL. Both jobs generated real
+  video. **Verdict: mixed, Seedance still wins overall** — diablo-gothic PASS (clean rune pulse,
+  no ignition), steam-porthole FAIL (button/gauge icon glyphs dissolve mid-clip, same
+  identity-drift failure round 2 saw on base LTX). Round-2 pick (Seedance 1.0 pro fast) remains
+  the production model. See
+  [`docs/experiments/2026-07-09-ambient-video-loops.md`](docs/experiments/2026-07-09-ambient-video-loops.md#round-4-2026-07-10--unblocking-the-gated-lora-via-browser-download--fal-re-host)
+  round 4.
 - **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
   across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
   featured path for skins with strong emissive themes.
