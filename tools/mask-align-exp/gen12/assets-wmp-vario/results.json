@@ -150,5 +150,10 @@
   "viz_emissive": true,
   "beat_couple": 0.05
  },
- "template": {}
+ "template": {},
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 0.0
 }

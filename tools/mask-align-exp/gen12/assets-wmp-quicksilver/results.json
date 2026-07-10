@@ -1,7 +1,7 @@
 {
  "id": "wmp-quicksilver",
  "mode": "templated",
- "seed": 623,
+ "seed": 662,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -213,5 +213,5 @@
   4608,
   3712
  ],
- "leak": 0.0
+ "leak": 0.000445
 }

@@ -2,52 +2,18 @@
   "id": "wmp-quicksilver",
   "title": "Wmp Quicksilver",
   "mode": "templated",
-  "passed": false,
+  "passed": true,
   "rolls": 4,
-  "final_seed": 623,
+  "final_seed": 662,
   "gate": {
-    "seed": 623,
-    "PASS": false,
+    "seed": 662,
+    "PASS": true,
     "controls": 10,
-    "seek_cov": 1.037,
-    "reasons": [
-      "emptiness",
-      "state-align"
-    ],
-    "leak": 0.0
+    "seek_cov": 1.038,
+    "reasons": [],
+    "leak": 0.000445
   },
   "history": [
-    {
-      "seed": 584,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.0,
-      "reasons": [
-        "emptiness",
-        "state-align"
-      ],
-      "leak": 0.001134
-    },
-    {
-      "seed": 597,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [
-        "state-align"
-      ],
-      "leak": 7.9e-05
-    },
-    {
-      "seed": 610,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.038,
-      "reasons": [
-        "state-align"
-      ],
-      "leak": 0.0
-    },
     {
       "seed": 623,
       "PASS": false,
@@ -58,8 +24,37 @@
         "state-align"
       ],
       "leak": 0.0
+    },
+    {
+      "seed": 636,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness",
+        "state-align"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 649,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 662,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [],
+      "leak": 0.000445
     }
   ],
-  "elapsed_s": 646.7,
+  "elapsed_s": 1892.4,
   "player": "assets-wmp-quicksilver/player.html"
 }

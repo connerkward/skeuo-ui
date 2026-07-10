@@ -1,0 +1,11 @@
+{
+  "skin": "n64-prerender-character",
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause: SEATED-CORRECTLY\nprev: SEATED-CORRECTLY\nnext: SEATED-CORRECTLY\nrepeat: SEATED-CORRECTLY\nqueue: SEATED-CORRECTLY\nvol: SEATED-CORRECTLY\nseek: SEATED-CORRECTLY\nshuffle: BROKEN (baked text label)\nvisualizer: SEATED-CORRECTLY\nalbum_art: SEATED-CORRECTLY\nBAKED-IN TEXT: The word \"ON\" is visible on the shuffle toggle switch.\nVERDICT: FAIL",
+  "frames": [
+    "full.png",
+    "after.png"
+  ],
+  "ts": "2026-07-10T12:01:59"
+}

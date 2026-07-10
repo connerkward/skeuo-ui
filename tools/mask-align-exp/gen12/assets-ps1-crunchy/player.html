@@ -10,7 +10,7 @@
   .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v=1783578700') no-repeat;background-size:100% auto;border-radius:12px}
+    background:url('paint.png?v=1783706582') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
   .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}
@@ -20,6 +20,8 @@
   .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen}
   .pthumb{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
     background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}
+  .pseek-track{position:absolute;pointer-events:none;border-radius:999px}
+  .pseek-fill{position:absolute;pointer-events:none;border-radius:999px}
   .ptog{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;
     background-position:center;filter:drop-shadow(0 2px 4px #0008)}
   .viz{position:absolute;pointer-events:none}
@@ -47,7 +49,7 @@ fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementByI
 </div></div>
 <div class=hint id=hint>loading…</div>
 <script>
-const V='1783578700';
+const V='1783706582';
 (async function(){
   const R = await fetch('regions.json?v='+V).then(r=>r.json());
   const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
@@ -117,19 +119,70 @@ const V='1783578700';
     const s=vert?Math.min(1.5, track[2]*1.15/tw, track[2]*1.35/tw, span*0.45/th)
                 :Math.min(1.5, track[3]*1.15/th, track[3]*1.35/th, span*0.45/tw);
     tw*=s; th*=s;
+    
+      const _gs=document.createElement('canvas'); _gs.width=6; _gs.height=6;
+      _gs.getContext('2d').drawImage(paint, track[0]*PW, track[1]*PH, track[2]*PW, track[3]*PH, 0,0,6,6);
+      const _gd=_gs.getContext('2d').getImageData(0,0,6,6).data; let _gr=0,_gg=0,_gb=0,_gn=0;
+      for(let i=0;i<_gd.length;i+=4){ if(_gd[i+3]>40){_gr+=_gd[i];_gg+=_gd[i+1];_gb+=_gd[i+2];_gn++;} }
+      if(!_gn)_gn=1;
+      const _gAvg=[_gr/_gn,_gg/_gn,_gb/_gn];
+      const trackCol='rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)';
+      const fillCol='rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)';
+      // adaptive cross-axis band height: sample a luminance PROFILE across the groove's cross
+      // axis (in the middle half of the travel span, away from the thumb's home position at the
+      // travel start) and grow the darkest CONTIGUOUS run outward from the centre sample. A
+      // RELATIVE threshold (this groove's own min..max range), not an absolute luminance
+      // constant — a near-black recessed groove and a mid-tone one both resolve correctly.
+      // Guards against a degenerate (flat / noisy) profile with a safe fallback fraction.
+      const _N=40, _M=6, _t0=tv[0]+span*0.25, _t1=tv[0]+span*0.75;
+      const _pc=document.createElement('canvas'); let _prof=new Array(_N).fill(0);
+      if(vert){
+        _pc.width=_N; _pc.height=_M;
+        _pc.getContext('2d').drawImage(paint, track[0]*PW, _t0*PH, track[2]*PW, (_t1-_t0)*PH, 0,0,_N,_M);
+        const _pd=_pc.getContext('2d').getImageData(0,0,_N,_M).data;
+        for(let x=0;x<_N;x++){ let s=0; for(let y=0;y<_M;y++){ const i=(y*_N+x)*4; s+=0.299*_pd[i]+0.587*_pd[i+1]+0.114*_pd[i+2]; } _prof[x]=s/_M; }
+      }else{
+        _pc.width=_M; _pc.height=_N;
+        _pc.getContext('2d').drawImage(paint, _t0*PW, track[1]*PH, (_t1-_t0)*PW, track[3]*PH, 0,0,_M,_N);
+        const _pd=_pc.getContext('2d').getImageData(0,0,_M,_N).data;
+        for(let y=0;y<_N;y++){ let s=0; for(let x=0;x<_M;x++){ const i=(y*_M+x)*4; s+=0.299*_pd[i]+0.587*_pd[i+1]+0.114*_pd[i+2]; } _prof[y]=s/_M; }
+      }
+      const _plo=Math.min(..._prof), _phi=Math.max(..._prof), _pthr=_plo+(_phi-_plo)*0.4;
+      let _c0=Math.floor(_N/2), _c1=_c0;
+      while(_c0>0 && _prof[_c0-1]<=_pthr) _c0--;
+      while(_c1<_N-1 && _prof[_c1+1]<=_pthr) _c1++;
+      let bandFrac=(_c1-_c0+1)/_N;
+      if(!(bandFrac>0.12 && bandFrac<0.75)) bandFrac=0.34;
+      const trackEl=document.createElement('div'); trackEl.className='pseek-track'; trackEl.style.background=trackCol;
+      const fillEl=document.createElement('div'); fillEl.className='pseek-fill'; fillEl.style.background=fillCol;
+      if(vert){
+        const _bw=track[2]*bandFrac, _cx=track[0]+track[2]/2;
+        trackEl.style.left=(_cx-_bw/2)*100+'%'; trackEl.style.width=_bw*100+'%';
+        trackEl.style.top=(tv[0]/DF)*100+'%'; trackEl.style.height=((tv[1]-tv[0])/DF)*100+'%';
+        fillEl.style.left=trackEl.style.left; fillEl.style.width=trackEl.style.width;
+        fillEl.style.top=trackEl.style.top; fillEl.style.height='0%';
+      }else{
+        const _bh=track[3]*bandFrac, _cy=track[1]+track[3]/2;
+        trackEl.style.top=((_cy-_bh/2)/DF)*100+'%'; trackEl.style.height=(_bh/DF)*100+'%';
+        trackEl.style.left=tv[0]*100+'%'; trackEl.style.width=(tv[1]-tv[0])*100+'%';
+        fillEl.style.top=trackEl.style.top; fillEl.style.height=trackEl.style.height;
+        fillEl.style.left=trackEl.style.left; fillEl.style.width='0%';
+      }
+      phone.appendChild(trackEl); phone.appendChild(fillEl);
+
     el.style.width=tw*100+'%';el.style.height=(th/DF)*100+'%';
     let val=0,sp=0,sv=0,drag=false,rend;
     if(vert){
       el.style.cursor='ns-resize';
       const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%';
       const y0=tv[0],y1=tv[1]-th;
-      rend=()=>el.style.top=((y0+(y1-y0)*val)/DF)*100+'%';
+      rend=()=>{el.style.top=((y0+(y1-y0)*val)/DF)*100+'%';fillEl.style.height=Math.max(0,Math.min(span,(y0+(y1-y0)*val+th/2)-tv[0]))/DF*100+'%';};
       el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientY-sp)/(phone.clientHeight*((y1-y0)/DF))));rend();}});
       el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
     }else{
       const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
       const x0=tv[0],x1=tv[1]-tw;
-      rend=()=>el.style.left=(x0+(x1-x0)*val)*100+'%';
+      rend=()=>{el.style.left=(x0+(x1-x0)*val)*100+'%';fillEl.style.width=Math.max(0,Math.min(span,(x0+(x1-x0)*val+tw/2)-tv[0]))*100+'%';};
       el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientX-sp)/(phone.clientWidth*(x1-x0))));rend();}});
       el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
     }

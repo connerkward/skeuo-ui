@@ -4,50 +4,25 @@
   "mode": "templateless",
   "passed": false,
   "rolls": 4,
-  "final_seed": 749,
+  "final_seed": 788,
   "gate": {
-    "seed": 749,
+    "seed": 788,
     "PASS": false,
     "controls": 10,
-    "seek_cov": 1.04,
+    "seek_cov": 1.039,
     "reasons": [
-      "state-align"
+      "emptiness"
     ],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 710,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.04,
-      "reasons": [
-        "emptiness"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 723,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.04,
-      "reasons": [
-        "emptiness"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 736,
-      "PASS": false,
-      "controls": 8,
-      "seek_cov": 1.04,
-      "reasons": [
-        "missing:next,vol"
-      ],
-      "leak": 0.0
-    },
-    {
       "seed": 749,
+      "error": "genskin",
+      "log": "n main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 132, in edit\n    s = requests.get(job[\"status_url\"], headers={\"Authorization\": f\"Key {FAL}\"}).json().get(\"status\")\n                     ~~~^^^^^^^^^^^^^^\nKeyError: 'status_url'\n"
+    },
+    {
+      "seed": 762,
       "PASS": false,
       "controls": 10,
       "seek_cov": 1.04,
@@ -55,8 +30,29 @@
         "state-align"
       ],
       "leak": 0.0
+    },
+    {
+      "seed": 775,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "region-misplaced:album_art",
+        "emptiness"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 788,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 745.3,
+  "elapsed_s": 1047.1,
   "player": "assets-fa-sky/player.html"
 }

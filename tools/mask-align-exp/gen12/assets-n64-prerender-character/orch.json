@@ -1,0 +1,38 @@
+{
+  "id": "n64-prerender-character",
+  "title": "90s Pre-Rendered Character CG",
+  "mode": "templateless",
+  "passed": true,
+  "rolls": 2,
+  "final_seed": 823,
+  "gate": {
+    "seed": 823,
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.039,
+    "reasons": [],
+    "leak": 0.000284
+  },
+  "history": [
+    {
+      "seed": 810,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.001276
+    },
+    {
+      "seed": 823,
+      "PASS": true,
+      "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [],
+      "leak": 0.000284
+    }
+  ],
+  "elapsed_s": 633.8,
+  "player": "assets-n64-prerender-character/player.html"
+}

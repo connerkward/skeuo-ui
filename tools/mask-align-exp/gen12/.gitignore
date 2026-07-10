@@ -9,3 +9,4 @@ __pycache__/
 .venv-biref/
 review.json
 pbrtest/pydeps/
+assets-*/observe/*.png

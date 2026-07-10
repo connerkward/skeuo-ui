@@ -2,41 +2,27 @@
   "id": "wmp-vario",
   "title": "Wmp Vario",
   "mode": "templateless",
-  "passed": false,
-  "rolls": 4,
+  "passed": true,
+  "rolls": 1,
   "final_seed": 610,
   "gate": {
     "seed": 610,
-    "error": "genskin",
-    "log": "y\", line 328, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
+    "PASS": true,
+    "controls": 10,
+    "seek_cov": 1.039,
+    "reasons": [],
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 571,
-      "PASS": false,
+      "seed": 610,
+      "PASS": true,
       "controls": 10,
       "seek_cov": 1.039,
-      "reasons": [
-        "region-misplaced:album_art"
-      ],
+      "reasons": [],
       "leak": 0.0
-    },
-    {
-      "seed": 584,
-      "error": "genskin",
-      "log": "y\", line 328, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
-    },
-    {
-      "seed": 597,
-      "error": "genskin",
-      "log": "y\", line 328, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
-    },
-    {
-      "seed": 610,
-      "error": "genskin",
-      "log": "y\", line 328, in main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                                     ~~~~~~^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 121, in upload\n    requests.put(init[\"upload_url\"], headers={\"Content-Type\": \"image/png\"}, data=open(p, \"rb\").read())\n                 ~~~~^^^^^^^^^^^^^^\nKeyError: 'upload_url'\n"
     }
   ],
-  "elapsed_s": 136.8,
+  "elapsed_s": 280.7,
   "player": "assets-wmp-vario/player.html"
 }

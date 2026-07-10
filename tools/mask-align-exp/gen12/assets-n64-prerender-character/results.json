@@ -1,7 +1,7 @@
 {
- "id": "fa-sky",
+ "id": "n64-prerender-character",
  "mode": "templateless",
- "seed": 788,
+ "seed": 823,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -9,105 +9,95 @@
   24
  ],
  "palette": {
-  "aqua_blue": [
-   30,
-   120,
-   235
-  ],
-  "cyan_glass": [
-   70,
-   205,
-   230
-  ],
-  "grass_green": [
-   110,
-   200,
-   60
-  ],
-  "liquid_silver": [
+  "glossy_red": [
    175,
-   185,
-   200
+   70,
+   65
   ],
-  "gloss_white": [
-   240,
-   244,
-   250
+  "glossy_blue": [
+   70,
+   100,
+   150
   ],
-  "sky_teal": [
-   30,
+  "satin_grey": [
+   140,
+   142,
+   148
+  ],
+  "warm_highlight": [
+   200,
    150,
-   170
+   90
   ],
-  "ink_navy": [
-   20,
-   26,
-   48
+  "deep_shadow": [
+   40,
+   38,
+   46
   ]
  },
  "keys": {
   "playpause": [
-   255,
    0,
+   255,
    0
   ],
   "prev": [
    255,
    0,
-   128
+   255
   ],
   "next": [
-   255,
    0,
+   255,
    255
   ],
   "repeat": [
+   0,
    255,
-   128,
-   0
+   128
   ],
   "queue": [
-   255,
-   255,
-   0
+   0,
+   0,
+   255
   ],
   "vol": [
+   255,
    128,
-   0,
    255
   ],
   "seek": [
    128,
    0,
-   128
+   255
   ],
   "shuffle": [
-   0,
+   128,
    255,
-   0
+   255
   ],
   "visualizer": [
-   0,
-   0,
-   255
+   128,
+   255,
+   0
   ],
   "album_art": [
    255,
    255,
-   128
+   0
   ]
  },
  "keyNames": {
-  "playpause": "PURE RED",
-  "prev": "ROSE PINK",
-  "next": "MAGENTA",
-  "repeat": "ORANGE",
-  "queue": "YELLOW",
-  "vol": "VIOLET-PURPLE",
-  "seek": "DEEP PURPLE",
-  "shuffle": "PURE GREEN",
-  "visualizer": "PURE BLUE",
-  "album_art": "RGB(255, 255, 128)"
+  "playpause": "PURE GREEN",
+  "prev": "MAGENTA",
+  "next": "CYAN",
+  "repeat": "SPRING GREEN",
+  "queue": "PURE BLUE",
+  "vol": "ORCHID",
+  "seek": "VIOLET-PURPLE",
+  "shuffle": "PALE AQUA",
+  "visualizer": "CHARTREUSE",
+  "album_art": "YELLOW"
  },
  "buttons": [
   "playpause",
@@ -149,17 +139,21 @@
  },
  "devFrac": 0.75,
  "lighting": {
-  "emissive_hint": "soft aqua-sky glow of the translucent shell and glass glints",
-  "emissive_color": "auto",
+  "emissive_hint": "a small glossy gem-like eye or chest jewel on the character catching a warm point-light glint",
+  "emissive_color": [
+   255,
+   200,
+   90
+  ],
   "pulse": "breathe",
-  "intensity": 0.6,
+  "intensity": 0.5,
   "viz_emissive": true,
-  "beat_couple": 0.04
+  "beat_couple": 0.03
  },
  "template": {},
  "dims": [
   4608,
   3712
  ],
- "leak": 0.0
+ "leak": 0.000284
 }

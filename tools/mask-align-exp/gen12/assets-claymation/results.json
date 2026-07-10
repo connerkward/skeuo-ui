@@ -143,7 +143,14 @@
   "queue": 0.12333333333333334
  },
  "devFrac": 0.75,
- "lighting": {},
+ "lighting": {
+  "emissive_hint": "none \u2014 matte plasticine; only the visualizer screen emits, softly",
+  "emissive_color": "auto",
+  "pulse": "none",
+  "intensity": 0.25,
+  "viz_emissive": true,
+  "beat_couple": 0.02
+ },
  "template": {},
  "dims": [
   4608,

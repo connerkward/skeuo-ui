@@ -1,0 +1,11 @@
+{
+  "skin": "myst-arcanum",
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause: SEATED-CORRECTLY\nprev: BROKEN (missing sprite)\nnext: SEATED-CORRECTLY\nrepeat: SEATED-CORRECTLY\nqueue: SEATED-CORRECTLY\nvol: BROKEN (missing sprite)\nseek: BROKEN (missing sprite)\nshuffle: BROKEN (baked text label)\nvisualizer: SEATED-CORRECTLY\nalbum_art: SEATED-CORRECTLY\nVERDICT: FAIL",
+  "frames": [
+    "full.png",
+    "after.png"
+  ],
+  "ts": "2026-07-10T11:54:01"
+}

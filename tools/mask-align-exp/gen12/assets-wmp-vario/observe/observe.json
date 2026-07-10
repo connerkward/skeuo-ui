@@ -1,0 +1,11 @@
+{
+  "skin": "wmp-vario",
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause: SEATED-CORRECTLY\nprev: SEATED-CORRECTLY\nnext: SEATED-CORRECTLY\nrepeat: SEATED-CORRECTLY\nqueue: SEATED-CORRECTLY\nvol: SEATED-CORRECTLY\nseek: SEATED-CORRECTLY\nshuffle: BROKEN (baked text label)\nvisualizer: SEATED-CORRECTLY\nalbum_art: SEATED-CORRECTLY\nVERDICT: FAIL",
+  "frames": [
+    "full.png",
+    "after.png"
+  ],
+  "ts": "2026-07-10T11:57:45"
+}

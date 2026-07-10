@@ -668,28 +668,49 @@ entries already under "saved for later" above — those four stand as-is.
     chunky gouraud-faceted forms. Prompt never uses the literal token "N64". Palette validated
     via `genskin.py --blueprint-only` (had to retune the 5 guide-key majors once — the first
     draft's saturated red/blue/near-white trio only left 7/10 usable guide keys; muted them
-    to 14/10 survivors). Rolling through `orchestrate12.py` in batch 2 (item 11).
+    to 14/10 survivors). **Generated 2026-07-10: PASS on roll 2 (seed 823)** — a glossy
+    orange dinosaur-mascot bust fused with the player body, exactly the intended register;
+    all 10 controls seated (observed + VLM-checked); one defect: baked "ON" on the toggle
+    (see 11b).
 
-11. **Fal billing: was exhausted-balance-locked 2026-07-10 morning (confirmed via curl:
-    "User is locked. Reason: Exhausted balance", the cause of every `KeyError: 'upload_url'`
-    in `genskin.py:121` across the `46574f6c` orch histories); user topped up same day and
-    the unlock was re-verified by curl. Re-rolls now IN FLIGHT** (batch 1: claymation,
-    fa-sky, myst-arcanum, ps1-crunchy; batch 2 queued: ps1-wild, wmp-quicksilver, wmp-vario,
-    n64-prerender-character — ≤4 concurrent). Spend-classification per the new
-    [generation-spend rule](/.claude/rules/generation-spend-rule.md) (`7e1cba6c`): the
-    batch-2 four are genuinely model-side defects (leak residue / baked-part emptiness +
-    broken toggle render / misplaced album_art blob / never-rolled spec); claymation,
-    fa-sky, ps1-crunchy were extractor-side and already recover for $0 under the fixed gate
-    — their batch-1 rolls were launched minutes before the rule landed and were left to
-    finish (killing mid-roll would have corrupted the gitignored paint.png on disk for ~$0.45
-    saved). Results + dashboard rebuild + commit when both batches land.
+11. [x] **Re-roll batch DONE 2026-07-10** (fal was exhausted-balance-locked in the morning —
+    the cause of every `KeyError: 'upload_url'` in the `46574f6c` orch histories — user
+    topped up same day, unlock re-verified by curl). 8 skins rolled through the FIXED gate,
+    ≤4 concurrent, ~22 rolls total: **6 PASS** — claymation (r1), ps1-crunchy (r1),
+    wmp-vario (r1), myst-arcanum (r2), n64-prerender-character (r2), wmp-quicksilver (r4) —
+    **2 honest FAILs at 4 rolls** — fa-sky (emptiness), ps1-wild (region-misplaced:album_art
+    + emptiness + state-align; its ON cut is a different housing WITH a baked "ON" label —
+    the 1.4 scale bound caught a real break, not creative asymmetry). All FAIL reasons were
+    model-side per the [generation-spend rule](/.claude/rules/generation-spend-rule.md);
+    nothing was extractor-recoverable for $0. Dashboard rebuilt: **auto 13/15**.
 
-12. **Human review of the 7 fresh PASSes — not yet reviewed.** diablo-gothic, fa-pod,
-    fallout-pipboy, fallout-vault, n64-cutscene, steam-porthole, wc-goldshield (seed/rolls per
-    skin in `orch.json`). User's own note closing the session: "the skins are getting uglier
-    tho" — the stricter gate may be passing technically-correct but less visually striking
-    generations; worth checking whether it's now over-constraining aesthetics, not just
-    geometry. Re-serve `tools/mask-align-exp/gen12` and open
+11b. **Baked ON/OFF toggle text — the dominant remaining paint-defect class (4 of 7
+    observed skins: myst-arcanum, wmp-vario, wmp-quicksilver, n64-prerender-character).**
+    Found by the new observation pass ([observe12.py](tools/mask-align-exp/gen12/observe12.py)
+    + [observe_drive.mjs](tools/mask-align-exp/gen12/observe_drive.mjs), per the
+    skin-observation + sota-eye-review rules; per-skin verdicts committed in
+    `assets-*/observe/observe.json`, eye = `google/gemini-2.5-pro` via fal
+    `openrouter/router/vision` ~$0.02/skin; screenshot/crop PNGs regenerable, gitignored).
+    genskin.py's prompt already forbids ON/OFF text but the model keeps labelling the ON
+    state — the "OFF/ON state" wording itself is the likely semantic pull. Recommended
+    generalizable fixes (NOT applied — needs seed-validation spend): (a) reword the SHUFFLE
+    STATES clause to avoid the tokens ON/OFF ("state A / state B", "engaged / disengaged");
+    (b) wire `observe12.py --vlm` into `orchestrate12.py` as a flag-gated post-PASS text
+    gate so a labelled toggle re-rolls automatically. Also caught, gate-invisible:
+    myst-arcanum icon-region mismatch (a ▶|| icon sits in the `prev` region while the
+    `playpause` region is an iconless gear well — clicking the visible ▶|| fires prev) and
+    claymation's degenerate 24×31px album_art region (min-region-size gate candidate).
+    Adjudication note: the VLM also claimed myst's vol/seek sprites "missing" — overruled
+    by direct crops (both clearly seated); its baked-text calls were all confirmed by eye.
+
+12. **Human review of the 13 auto-PASSes — not yet reviewed.** The original 7 (diablo-gothic,
+    fa-pod, fallout-pipboy, fallout-vault, n64-cutscene, steam-porthole, wc-goldshield) plus
+    the 6 fresh 2026-07-10 re-rolls (claymation, myst-arcanum, ps1-crunchy, wmp-vario,
+    wmp-quicksilver, n64-prerender-character — VLM observation verdicts + notes in each
+    `assets-*/observe/observe.json`, 4 flagged for baked toggle text per 11b). User's note
+    closing the previous session: "the skins are getting uglier tho" — the stricter gate may
+    be passing technically-correct but less visually striking generations. Re-serve
+    `tools/mask-align-exp/gen12` and open
     [dashboard12.html](tools/mask-align-exp/gen12/dashboard12.html) for the pass/fail/notes gate.
 
 13. **Done — CSS seek progress track/fill, under the sprite thumb (`gen12/build_player.py`,

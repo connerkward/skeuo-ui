@@ -1,0 +1,11 @@
+{
+  "skin": "claymation",
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause (button): SEATED-CORRECTLY\nprev (button): SEATED-CORRECTLY\nnext (button): SEATED-CORRECTLY\nrepeat (button): SEATED-CORRECTLY\nqueue (button): SEATED-CORRECTLY\nvol (knob): SEATED-CORRECTLY\nseek (slider): SEATED-CORRECTLY\nshuffle (toggle): SEATED-CORRECTLY\nvisualizer (region): SEATED-CORRECTLY\nalbum_art (region): BROKEN (misplaced: a large slider control is placed directly over the region, obscuring its content)\nVERDICT: FAIL",
+  "frames": [
+    "full.png",
+    "after.png"
+  ],
+  "ts": "2026-07-10T11:52:54"
+}
