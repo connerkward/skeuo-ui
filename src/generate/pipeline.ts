@@ -221,13 +221,15 @@ const modelLabel = (id: ModelId): string => MODELS.find((m) => m.id === id)?.lab
 
 export interface RuntimeDeps {
   falKey: string;
-  // optional: Director keys (prompt → material/layout). Director text calls prefer
-  // Gemini 3.1 Pro (geminiKey) and fall back to OpenAI gpt-4o (openaiKey) when unset;
-  // extractSlots/extractMasks (vision, image_url) always use openaiKey — see director.ts.
-  // When BOTH are absent, the handler drives the paint material from the raw prompt
-  // text instead (deterministic heuristic — never throws).
-  geminiKey?: string;
-  openaiKey?: string;
+  // optional: Director auth (prompt/vision → material/layout/control-boxes), Vertex-only
+  // (see director.ts + vertexAuth.ts — Gemini 3.1 Pro, ZERO OpenAI anywhere). Prod (the
+  // Cloudflare Worker) supplies gcpServiceAccountKey (the GCP_SERVICE_ACCOUNT_KEY secret,
+  // JWT-bearer flow); dev (server/devApiPlugin.ts + server/gcloudAuth.ts) supplies
+  // vertexDevToken (a `gcloud auth print-access-token` bearer token, refreshed per
+  // request). When BOTH are absent, every Director call degrades to its deterministic
+  // fallback (heuristic material / null layout / empty boxes) — never throws.
+  gcpServiceAccountKey?: string;
+  vertexDevToken?: string;
   // SVG string → PNG bytes (resvg-wasm in CF, resvg-js in Node)
   rasterize: (svg: string) => Promise<Uint8Array>;
   // optional: persist one artifact for skin <id>, return its public URL. frame/paint

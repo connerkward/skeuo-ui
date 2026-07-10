@@ -6,13 +6,26 @@
 # FAL_KEY is a SECRET — set it in the Pages dashboard (Settings → Environment
 # variables, encrypted) or via:  npx wrangler pages secret put FAL_KEY
 #
-# GEMINI_API_KEY is an optional SECRET for the Director (prompt → material/layout,
-# src/generate/director.ts) — switched 2026-07 from OpenAI gpt-4o to Gemini 3.1 Pro,
-# text-only (image input is a separate future TODO; vision control-locator calls in
-# functions/api/extract.ts still use OPENAI_API_KEY / gpt-4o). Get a key at
-# https://aistudio.google.com/apikey, then:  npx wrangler pages secret put GEMINI_API_KEY
-# Until this secret is set, the Director transparently falls back to OPENAI_API_KEY,
-# then to a deterministic keyword heuristic — generation never breaks either way.
+# GCP_SERVICE_ACCOUNT_KEY is an optional SECRET for the Director (prompt/vision →
+# material/layout/control-boxes, src/generate/director.ts) — Gemini 3.1 Pro via
+# VERTEX AI ONLY (2026-07: the OpenAI gpt-4o Director + vision fallback was removed
+# entirely — ZERO gpt-4o, ZERO api.openai.com, ZERO OPENAI_API_KEY anywhere in this
+# pipeline). One model covers text (deriveMaterial/deriveLayout) AND vision
+# (extractSlots/extractMasks in functions/api/extract.ts) — it's natively multimodal.
+#
+# Deploy (one-time), project muser-2605300220:
+#   gcloud iam service-accounts create skeuo-vertex --project=muser-2605300220
+#   gcloud projects add-iam-policy-binding muser-2605300220 \
+#     --member="serviceAccount:skeuo-vertex@muser-2605300220.iam.gserviceaccount.com" \
+#     --role="roles/aiplatform.user"
+#   gcloud iam service-accounts keys create sa-key.json \
+#     --iam-account=skeuo-vertex@muser-2605300220.iam.gserviceaccount.com
+#   npx wrangler pages secret put GCP_SERVICE_ACCOUNT_KEY < sa-key.json
+#   rm sa-key.json   # never commit it — see .claude/rules/security-rule.md
+# Until this secret is set, the Director transparently falls back to a deterministic
+# keyword heuristic / null layout / empty control-boxes — generation never breaks.
+# Local dev needs NO secret at all: it authenticates via the developer's own
+# `gcloud auth print-access-token` session (server/gcloudAuth.ts).
 #
 # Never commit secrets. The functions/ dir is auto-discovered by Pages.
 name = "skeuo-ui"

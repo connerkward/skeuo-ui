@@ -41,15 +41,26 @@ import { reserve, refund, GEN_BUCKET } from "../../src/generate/meter";
 
 interface Env {
   FAL_KEY: string;
-  // Director keys (prompt → material/layout). NEVER sent to client. Gemini 3.1 Pro
-  // (text-only) is preferred when GEMINI_API_KEY is set; OPENAI_API_KEY is the
-  // fallback (also still required for the vision-based extractSlots/extractMasks
-  // control-locator calls in functions/api/extract.ts, unaffected by this switch).
-  // Set the Gemini secret with: npx wrangler pages secret put GEMINI_API_KEY
-  // (get a key at https://aistudio.google.com/apikey). Until set, generation
-  // transparently falls back to the existing OPENAI_API_KEY Director path.
-  GEMINI_API_KEY?: string;
-  OPENAI_API_KEY?: string;
+  // Director auth (prompt/vision → material/layout/control-boxes). NEVER sent to the
+  // client. Vertex-only (src/generate/director.ts + vertexAuth.ts) — ZERO OpenAI, ZERO
+  // gpt-4o. A service-account JSON key exchanged for a Vertex access token via the
+  // standard JWT-bearer flow (RS256, WebCrypto — no gcloud/child_process needed in the
+  // Worker). Also used by the vision-based extractSlots/extractMasks control-locator
+  // calls in functions/api/extract.ts (same Vertex Gemini model, same secret).
+  //
+  // DEPLOY STEP REQUIRED (one-time):
+  //   1. gcloud iam service-accounts create skeuo-vertex --project=muser-2605300220
+  //   2. gcloud projects add-iam-policy-binding muser-2605300220 \
+  //        --member="serviceAccount:skeuo-vertex@muser-2605300220.iam.gserviceaccount.com" \
+  //        --role="roles/aiplatform.user"
+  //   3. gcloud iam service-accounts keys create sa-key.json \
+  //        --iam-account=skeuo-vertex@muser-2605300220.iam.gserviceaccount.com
+  //   4. npx wrangler pages secret put GCP_SERVICE_ACCOUNT_KEY < sa-key.json
+  //   5. rm sa-key.json (never commit it — see security-rule)
+  // Until this secret is set, every Director call transparently falls back to the
+  // deterministic heuristic (heuristic() in director.ts) / null layout / empty boxes —
+  // generation never breaks, it just loses the LLM-derived material/layout/VLM-align.
+  GCP_SERVICE_ACCOUNT_KEY?: string;
   SKINS?: R2Bucket;          // optional R2 bucket binding
   ASSETS_BASE_URL?: string;  // public base for stored frames (e.g. https://cdn/skins)
   RATELIMIT?: KVNamespace;   // lifetime spend ledger (edge-shared) — see below
@@ -118,8 +129,7 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
   const assetBase = env.ASSETS_BASE_URL ?? "/api/asset";
   const deps: RuntimeDeps = {
     falKey: env.FAL_KEY,
-    geminiKey: env.GEMINI_API_KEY,
-    openaiKey: env.OPENAI_API_KEY,
+    gcpServiceAccountKey: env.GCP_SERVICE_ACCOUNT_KEY,
     rasterize,
     // NO `cutout`: deferred to the browser to stay under the Function CPU ceiling.
     store: env.SKINS

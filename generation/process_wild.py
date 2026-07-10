@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build a merged template for an existing wild frame WITHOUT regenerating it:
   - SCREENS via CV flatness detection (precise → live content)
-  - CONTROLS via gpt-4o extraction (approximate → invisible functional hit-areas)
+  - CONTROLS via Gemini/Vertex extraction (freeform.py extract(); approximate → invisible functional hit-areas)
 Controls get behaviour bindings so every control is clickable/draggable.
 
 Usage: python3 process_wild.py public/skins/<id> [public/skins/<id2> ...]

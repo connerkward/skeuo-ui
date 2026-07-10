@@ -2,92 +2,105 @@
 // asking them to pick. Given the silhouette idea, an LLM returns:
 //   - style:          closest-fitting donor of the 5 (sprite/palette donor)
 //   - materialPrompt: a rich custom material/finish description for the paint
-// On ANY failure (bad JSON, network, invalid style) it falls back to a
-// deterministic keyword heuristic — it never throws.
+// On ANY failure (bad JSON, network, invalid style, no auth) it falls back to a
+// deterministic keyword heuristic — it never throws, and never calls OpenAI.
 import { DONOR_STYLES, type DonorStyle } from "./pipeline";
 import type { Region, Kind } from "../template/schema";
+import { getVertexAccessToken, VERTEX_PROJECT, type VertexAuthOpts } from "./vertexAuth";
 
 // ---------------------------------------------------------------------------
-// Director LLM provider — TEXT-ONLY (deriveMaterial + deriveLayout below).
-// Switched from gpt-4o to Gemini 3.1 Pro (2026-07): Google's OpenAI-compatible
-// chat/completions endpoint (https://ai.google.dev/gemini-api/docs/openai,
-// verified live 2026-07-09) accepts the same request shape (messages,
-// response_format json_object), so this is a drop-in provider swap, not a
-// rewrite. Model id verified live against Google's docs: "gemini-3-pro-preview"
-// was retired (shut down 2026-03-09) and now aliases to "gemini-3.1-pro-preview"
-// — new code should use the explicit current id, which is what GEMINI_MODEL is
-// below. Google's own docs also warn Gemini 3.1 Pro should be run at its default
-// temperature (1.0) — "reducing it may lead to looping or degraded performance"
-// — so the Gemini branch below never forwards the gpt-4o-era 1.05 variety-temp.
+// Director LLM provider — Gemini 3.1 Pro via VERTEX AI, for BOTH the text-only
+// calls (deriveMaterial/deriveLayout) AND the vision calls (extractSlots/
+// extractMasks). ZERO gpt-4o, ZERO api.openai.com, ZERO OPENAI_API_KEY anywhere
+// in this file (2026-07 — the OpenAI Director/vision fallback that used to live
+// here has been removed entirely per user directive: "ZERO gpt-4o anywhere").
 //
-// IMAGE INPUT IS DELIBERATELY NOT PORTED — extractSlots/extractMasks below stay
-// on OpenAI's gpt-4o vision endpoint (they pass image_url); wiring Gemini's
-// vision input is an explicit future TODO, not part of this swap.
+// Auth is Vertex-only (see vertexAuth.ts): a GCP_SERVICE_ACCOUNT_KEY secret in
+// prod (Cloudflare Worker, JWT-bearer flow), or a gcloud user-auth access token
+// in dev (server/gcloudAuth.ts) — same project (muser-2605300220) + auth pattern
+// proven working by tools/mask-align-exp/gen12/genskin.py's edit_vertex(). When
+// neither is available, every function below degrades to its deterministic
+// fallback (heuristic() / null / []) — never throws.
 //
-// Deploy step required: `npx wrangler pages secret put GEMINI_API_KEY`
-// (get a key at https://aistudio.google.com/apikey). Until that secret is set,
-// deriveMaterial/deriveLayout transparently fall back to the existing OpenAI
-// path (OPENAI_API_KEY), then to the deterministic heuristic — never throws.
-export interface DirectorKeys { geminiKey?: string; openaiKey?: string }
+// Model id verified live against Google's docs (2026-07-09): "gemini-3-pro-preview"
+// was retired (shut down 2026-03-09) and now aliases to "gemini-3.1-pro-preview" —
+// the explicit current id, used below for both text and vision (it is natively
+// multimodal, so one model covers deriveMaterial/deriveLayout/extractSlots/
+// extractMasks). Google's docs also warn Gemini 3.1 Pro should be run at its
+// default temperature (1.0) — "reducing it may lead to looping or degraded
+// performance" — so no call below forwards a custom temperature.
+export interface DirectorKeys { gcpServiceAccountKey?: string; devToken?: string }
 
-const GEMINI_MODEL = "gemini-3.1-pro-preview";
-const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
-// vision-only calls (extractSlots/extractMasks, image_url payloads) stay on OpenAI.
-const OPENAI_VISION_MODEL = "gpt-4o";
-// text-only Director calls (deriveMaterial/deriveLayout) via OpenAI, USED ONLY as
-// the fallback when no GEMINI_API_KEY is configured.
-const OPENAI_TEXT_MODEL = "gpt-4o";
+const VERTEX_MODEL = "gemini-3.1-pro-preview";
+const VERTEX_LOCATION = "global";
+function vertexEndpoint(model: string): string {
+  return `https://aiplatform.googleapis.com/v1/projects/${VERTEX_PROJECT}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
+}
+function authOpts(keys: DirectorKeys): VertexAuthOpts {
+  return { serviceAccountKey: keys.gcpServiceAccountKey, devToken: keys.devToken };
+}
 
 interface ChatResult { content: string; finishReason?: string }
 
-// One JSON-mode chat call, routed to whichever Director provider is configured:
-// Gemini 3.1 Pro (preferred) → OpenAI gpt-4o (fallback) → throws (caller catches
-// and falls back further, to the deterministic heuristic / null layout).
+// chunked base64 (no call-stack limits on large images); atob/btoa exist in
+// browsers, Workers and modern Node — the only runtimes this file targets.
+function bytesToBase64(bytes: Uint8Array): string {
+  let bin = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  return btoa(bin);
+}
+
+// image (a data: URL or a public http(s) URL) → a Vertex generateContent inlineData
+// part. Vertex takes raw bytes, not a fetchable URL, so an http(s) image is fetched
+// and re-encoded server-side (this always runs server-side — Worker or Node dev).
+async function toImagePart(image: string): Promise<{ inline_data: { mime_type: string; data: string } }> {
+  const m = image.match(/^data:([^;]+);base64,([\s\S]+)$/);
+  if (m) return { inline_data: { mime_type: m[1], data: m[2] } };
+  const r = await fetch(image);
+  if (!r.ok) throw new Error(`fetch image ${image} → ${r.status}`);
+  const mime = r.headers.get("content-type") || "image/png";
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  return { inline_data: { mime_type: mime, data: bytesToBase64(bytes) } };
+}
+
+// One JSON-mode Vertex generateContent call. Returns null when no Vertex auth is
+// configured (dev: no gcloud session; prod: GCP_SERVICE_ACCOUNT_KEY secret unset) —
+// caller falls back to its deterministic default. Throws only on a genuine HTTP/parse
+// error once auth succeeded (caller catches that too).
 async function directorChat(
   keys: DirectorKeys,
-  opts: { system: string; user: string; temperature?: number; maxTokens?: number },
-): Promise<ChatResult> {
-  if (keys.geminiKey) {
-    const r = await fetch(GEMINI_ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${keys.geminiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: GEMINI_MODEL,
-        response_format: { type: "json_object" },
-        // NOTE: intentionally NOT forwarding opts.temperature here — Google's docs
-        // for gemini-3.1-pro-preview recommend staying at the default (1.0).
-        ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
-        messages: [
-          { role: "system", content: opts.system },
-          { role: "user", content: opts.user },
-        ],
-      }),
-    });
-    if (!r.ok) throw new Error(`gemini ${r.status} ${(await r.text()).slice(0, 200)}`);
-    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
-    return { content: data.choices?.[0]?.message?.content ?? "{}", finishReason: data.choices?.[0]?.finish_reason };
-  }
-  if (keys.openaiKey) {
-    const r = await fetch(OPENAI_ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${keys.openaiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: OPENAI_TEXT_MODEL,
-        response_format: { type: "json_object" },
-        ...(opts.temperature ? { temperature: opts.temperature } : {}),
-        ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
-        messages: [
-          { role: "system", content: opts.system },
-          { role: "user", content: opts.user },
-        ],
-      }),
-    });
-    if (!r.ok) throw new Error(`openai ${r.status} ${(await r.text()).slice(0, 200)}`);
-    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
-    return { content: data.choices?.[0]?.message?.content ?? "{}", finishReason: data.choices?.[0]?.finish_reason };
-  }
-  throw new Error("no director key (GEMINI_API_KEY / OPENAI_API_KEY)");
+  opts: { system: string; user: string; maxTokens?: number; imageParts?: Array<{ inline_data: { mime_type: string; data: string } }> },
+): Promise<ChatResult | null> {
+  const token = await getVertexAccessToken(authOpts(keys));
+  if (!token) return null;
+  const parts: unknown[] = [...(opts.imageParts ?? []), { text: opts.user }];
+  const body = {
+    contents: [{ role: "user", parts }],
+    systemInstruction: { role: "system", parts: [{ text: opts.system }] },
+    generationConfig: {
+      responseMimeType: "application/json",
+      // gemini-3.1-pro-preview defaults to thinkingLevel "high" — verified live
+      // (2026-07-10) that this burns the ENTIRE maxOutputTokens budget on internal
+      // thought tokens before emitting any JSON (finishReason MAX_TOKENS, zero
+      // content). These are short structured-extraction calls, not open reasoning —
+      // force "low" so the token budget goes to the actual JSON response.
+      thinkingConfig: { thinkingLevel: "low" },
+      ...(opts.maxTokens ? { maxOutputTokens: opts.maxTokens } : {}),
+    },
+  };
+  const r = await fetch(vertexEndpoint(VERTEX_MODEL), {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`vertex ${r.status} ${(await r.text()).slice(0, 200)}`);
+  const data = (await r.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
+  };
+  const cand = data.candidates?.[0];
+  const content = cand?.content?.parts?.map((p) => p.text ?? "").join("") || "{}";
+  return { content, finishReason: cand?.finishReason };
 }
 
 // Punchy, cinematic Google-Fonts families SUGGESTED to the Director — these are
@@ -189,7 +202,6 @@ function heuristic(prompt: string): Material {
 }
 
 export async function deriveMaterial(keys: DirectorKeys, prompt: string, avoidFonts: string[] = []): Promise<Material> {
-  if (!keys.geminiKey && !keys.openaiKey) return heuristic(prompt);
   // pick a random genre to favor this call + a rotated set of its exemplars, and a
   // de-duped recent-fonts avoid list — together these spread font choices across
   // generations instead of clustering on the same few popular faces.
@@ -213,8 +225,9 @@ export async function deriveMaterial(keys: DirectorKeys, prompt: string, avoidFo
       (avoid.length ? `Do NOT reuse any of these recently-used families: ${avoid.join(", ")}. ` : "") +
       "Avoid defaulting to the same handful of popular faces (Anton, Bebas Neue, Oswald) unless truly apt. " +
       "Return the exact family name as it appears on Google Fonts.";
-    const { content } = await directorChat(keys, { system, user: prompt });
-    const parsed = JSON.parse(content);
+    const res = await directorChat(keys, { system, user: prompt });
+    if (!res) return heuristic(prompt);
+    const parsed = JSON.parse(res.content);
     const style = parsed.style as DonorStyle;
     const materialPrompt = (parsed.materialPrompt ?? "").trim();
     if (!DONOR_STYLES.includes(style) || !materialPrompt) throw new Error("invalid director output");
@@ -330,14 +343,10 @@ function normRegion(r: Record<string, unknown>, i: number): Region | null {
 }
 
 export async function deriveLayout(keys: DirectorKeys, prompt: string): Promise<Region[] | null> {
-  if (!keys.geminiKey && !keys.openaiKey) return null;
   try {
-    // temperature 1.05 (high variety, wild/organic/non-uniform arrangements) only
-    // applies on the OpenAI fallback path — directorChat withholds it from Gemini
-    // per Google's default-temperature guidance for gemini-3.1-pro-preview.
-    const { content, finishReason } = await directorChat(keys, {
-      system: LAYOUT_SYS, user: `Theme: ${prompt}`, temperature: 1.05, maxTokens: 4000,
-    });
+    const res = await directorChat(keys, { system: LAYOUT_SYS, user: `Theme: ${prompt}`, maxTokens: 4000 });
+    if (!res) return null;
+    const { content, finishReason } = res;
     const parsed = JSON.parse(content) as { regions?: Record<string, unknown>[] };
     const raw = Array.isArray(parsed.regions) ? parsed.regions : [];
     const all = raw.map(normRegion).filter((x): x is Region => x !== null);
@@ -370,11 +379,13 @@ export async function deriveLayout(keys: DirectorKeys, prompt: string): Promise<
 
 // ---------------------------------------------------------------------------
 // extractSlots — the VLM ALIGN pass (the approach Conner landed on, see
-// generation/freeform.py). Give gpt-4o the painted device image + the template's
+// generation/freeform.py). Give the Director vision model (Gemini 3.1 Pro via
+// Vertex — see the module header) the painted device image + the template's
 // control checklist; it returns each control's ACTUAL bounding box in the image,
 // matched by bind/icon/shape (play=►, prev=◄◄, knob=round dial, seek=slider,
 // screen=large display). Identity is correct by construction (matched by bind),
-// so there is no nearest-neighbour mis-assignment. Returns [] on any failure.
+// so there is no nearest-neighbour mis-assignment. Returns [] on any failure
+// (including no Vertex auth configured).
 // ---------------------------------------------------------------------------
 export interface SlotControl { bind: string; kind: string; label?: string }
 export interface SlotBox { bind: string; x: number; y: number; w: number; h: number; conf?: number }
@@ -393,37 +404,24 @@ const EXTRACT_SYS =
   "you cannot find. Return ONLY the JSON object.";
 
 export async function extractSlots(
-  openaiKey: string,
+  keys: DirectorKeys,
   image: string,          // data: URL or public URL of the device image
   controls: SlotControl[],
 ): Promise<SlotBox[]> {
-  if (!openaiKey || !controls.length) return [];
+  if (!controls.length) return [];
   const list = controls
     .map((c) => `${c.bind} (${c.kind}${c.label ? `, labeled "${c.label}"` : ""})`)
     .join("; ");
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: OPENAI_VISION_MODEL,
-        response_format: { type: "json_object" },
-        max_tokens: 3000,
-        messages: [
-          { role: "system", content: EXTRACT_SYS },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: `Locate these expected controls in the image (normalized 0..1 boxes): ${list}` },
-              { type: "image_url", image_url: { url: image, detail: "high" } },
-            ],
-          },
-        ],
-      }),
+    const imagePart = await toImagePart(image);
+    const res = await directorChat(keys, {
+      system: EXTRACT_SYS,
+      user: `Locate these expected controls in the image (normalized 0..1 boxes): ${list}`,
+      imageParts: [imagePart],
+      maxTokens: 3000,
     });
-    if (!r.ok) throw new Error(`openai ${r.status}`);
-    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}") as { boxes?: Record<string, unknown>[] };
+    if (!res) return [];
+    const parsed = JSON.parse(res.content) as { boxes?: Record<string, unknown>[] };
     const raw = Array.isArray(parsed.boxes) ? parsed.boxes : [];
     const out: SlotBox[] = [];
     for (const b of raw) {
@@ -439,9 +437,10 @@ export async function extractSlots(
 }
 
 // ---- VLM MASKING arm (head-to-head vs SAM) -------------------------------------
-// Ask gpt-4o to return a TIGHT POLYGON outline per control (the "add masking to the
-// VLM/slot pass" approach). This is the literal VLM-does-the-masking contender; it
-// tests whether a VLM can produce a usable silhouette vs SAM's per-pixel mask.
+// Ask the Director vision model to return a TIGHT POLYGON outline per control (the
+// "add masking to the VLM/slot pass" approach). This is the literal VLM-does-the-
+// masking contender; it tests whether a VLM can produce a usable silhouette vs
+// SAM's per-pixel mask.
 export interface SlotPoly { bind: string; points: [number, number][] }
 const MASK_SYS =
   "You are a precise UI control SILHOUETTE tracer for skeuomorphic music-player images. Given the image " +
@@ -452,32 +451,22 @@ const MASK_SYS =
   "horizontal slider = its groove rectangle). Identify by icon: play ▶, prev ◀◀, next ▶▶, stop ■, knob = round " +
   "dial, slider-v = vertical fader, toggle = small switch. OMIT controls you cannot find. Return ONLY the JSON.";
 export async function extractMasks(
-  openaiKey: string,
+  keys: DirectorKeys,
   image: string,
   controls: SlotControl[],
 ): Promise<SlotPoly[]> {
-  if (!openaiKey || !controls.length) return [];
+  if (!controls.length) return [];
   const list = controls.map((c) => `${c.bind} (${c.kind}${c.label ? `, "${c.label}"` : ""})`).join("; ");
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: OPENAI_VISION_MODEL,
-        response_format: { type: "json_object" },
-        max_tokens: 4000,
-        messages: [
-          { role: "system", content: MASK_SYS },
-          { role: "user", content: [
-            { type: "text", text: `Trace tight silhouette polygons for these controls: ${list}` },
-            { type: "image_url", image_url: { url: image, detail: "high" } },
-          ] },
-        ],
-      }),
+    const imagePart = await toImagePart(image);
+    const res = await directorChat(keys, {
+      system: MASK_SYS,
+      user: `Trace tight silhouette polygons for these controls: ${list}`,
+      imageParts: [imagePart],
+      maxTokens: 4000,
     });
-    if (!r.ok) throw new Error(`openai ${r.status}`);
-    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}") as { polys?: Record<string, unknown>[] };
+    if (!res) return [];
+    const parsed = JSON.parse(res.content) as { polys?: Record<string, unknown>[] };
     const raw = Array.isArray(parsed.polys) ? parsed.polys : [];
     const out: SlotPoly[] = [];
     for (const p of raw) {

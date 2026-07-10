@@ -7,7 +7,7 @@ import type { RuntimeDeps } from "./pipeline";
 import { generateSkin, DONOR_STYLES, MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
 import { checkAndReserve, release } from "./ratelimit";
-import { deriveMaterial, deriveLayout, titleFromPrompt, blurbFromPrompt } from "./director";
+import { deriveMaterial, deriveLayout, titleFromPrompt, blurbFromPrompt, type DirectorKeys } from "./director";
 import type { Region } from "../template/schema";
 
 function slug(s: string): string {
@@ -37,29 +37,18 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   //   • style          → the runtime [data-skin] palette/sprite id (a separate CSS
   //     concern). A donor named in the request, or the Director's closest-fit, just
   //     picks the palette; it does NOT force the paint material.
-  // With a Director key (Gemini preferred, OpenAI fallback), the Director gives a
-  // rich material + a closest-fit palette. With NO key, the material is the raw
-  // prompt text itself (no hard-forced look), and the palette defaults to a donor
-  // (the heuristic, or the requested style).
-  let style: DonorStyle;
-  let materialPrompt: string;
-  let font = "Cinzel";                       // logomark title font (Director pick)
-  // concise title + description — default to a tidy prompt-derived fallback, then
-  // override with the Director's when the LLM runs (never the raw "prompt · model")
-  let name = titleFromPrompt(prompt);
-  let blurb = blurbFromPrompt(prompt);
-  const directorKeys = { geminiKey: deps.geminiKey, openaiKey: deps.openaiKey };
-  if (deps.geminiKey || deps.openaiKey) {
-    const derived = await deriveMaterial(directorKeys, prompt, body.avoidFonts);
-    materialPrompt = derived.materialPrompt;   // paint look — prompt-driven, never a canned donor
-    font = derived.font; name = derived.name; blurb = derived.blurb;
-    // an explicitly-requested donor still picks the PALETTE; else the Director's fit
-    style = reqStyle && DONOR_STYLES.includes(reqStyle) ? reqStyle : derived.style;
-  } else {
-    // no Director — drive the material straight from the user's sentence
-    materialPrompt = prompt;
-    style = reqStyle && DONOR_STYLES.includes(reqStyle) ? reqStyle : ("winamp" as DonorStyle);
-  }
+  // deriveMaterial is ALWAYS attempted (Vertex-only Director — see director.ts): with
+  // Vertex auth it returns a rich LLM-derived material + closest-fit palette; with NO
+  // auth (no GCP_SERVICE_ACCOUNT_KEY / gcloud session) it degrades internally to its
+  // OWN deterministic keyword heuristic — never throws, never calls OpenAI.
+  const directorKeys: DirectorKeys = { gcpServiceAccountKey: deps.gcpServiceAccountKey, devToken: deps.vertexDevToken };
+  const derived = await deriveMaterial(directorKeys, prompt, body.avoidFonts);
+  const materialPrompt = derived.materialPrompt;   // paint look — prompt-driven, never a canned donor
+  const font = derived.font;                       // logomark title font (Director pick)
+  const name = derived.name || titleFromPrompt(prompt);
+  const blurb = derived.blurb || blurbFromPrompt(prompt);
+  // an explicitly-requested donor still picks the PALETTE; else the Director's fit
+  const style: DonorStyle = reqStyle && DONOR_STYLES.includes(reqStyle) ? reqStyle : derived.style;
 
   const rl = checkAndReserve(ip);
   if (!rl.ok) return { status: "error", error: rl.reason ?? "rate limited" };
@@ -86,7 +75,9 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     // body.regions = HUMAN-authored (wizard drag / Template Studio) → pipeline uses them as-is;
     // Director-derived regions below are messy LLM output → pipeline repacks them.
     const authored = !!regions;
-    if (!regions && (deps.geminiKey || deps.openaiKey)) {
+    if (!regions) {
+      // deriveLayout is Vertex-only (director.ts) and degrades to null with no auth —
+      // caller falls back to the constant variant preset (regionsForVariant), below.
       regions = (await deriveLayout(directorKeys, prompt)) ?? undefined;
     }
     const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions, authored, seed: body.seed, maskPanel: body.maskPanel === true });

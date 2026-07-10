@@ -2,8 +2,8 @@
 """FREEFORM → TEMPLATE → RESKIN.
 
 1. Generate a media-player UI FREEFORM with gpt-image-2 (no blueprint).
-2. EXTRACT a template (region boxes + kinds) from that image with an OpenAI
-   vision model — the extracted layout becomes the new source of truth.
+2. EXTRACT a template (region boxes + kinds) from that image with Gemini 3.1 Pro
+   via Vertex AI — the extracted layout becomes the new source of truth.
 3. (reskin step lives in generate.py once template.json is swapped.)
 
 Outputs to generation/freeform/:
@@ -11,7 +11,7 @@ Outputs to generation/freeform/:
   template.json        extracted, schema-compatible template
   overlay.png          extracted boxes drawn over the donor (for verification)
 """
-import base64, json, os, time, urllib.request
+import base64, json, os, subprocess, time, urllib.request
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +20,16 @@ OUT = os.path.join(HERE, "freeform"); os.makedirs(OUT, exist_ok=True)
 def key(name):
     for l in open("/Users/conner/dev/central/.env"):
         if l.startswith(name + "="): return l.split("=", 1)[1].strip()
-FAL = key("FAL_KEY"); OPENAI = key("OPENAI_API_KEY")
+FAL = key("FAL_KEY")
+
+# extract() below is Gemini 3.1 Pro via VERTEX AI (gcloud user-auth access token) —
+# ZERO OpenAI/gpt-4o. Same project + auth pattern proven working by
+# tools/mask-align-exp/gen12/genskin.py's edit_vertex() (this machine is already
+# `gcloud auth login`-ed against muser-2605300220).
+VERTEX_PROJECT = os.environ.get("VERTEX_PROJECT", "muser-2605300220")
+VERTEX_MODEL = "gemini-3.1-pro-preview"
+VERTEX_URL = (f"https://aiplatform.googleapis.com/v1/projects/{VERTEX_PROJECT}/locations/global/"
+              f"publishers/google/models/{VERTEX_MODEL}:generateContent")
 
 def fpost(u, b):
     r = urllib.request.Request(u, data=json.dumps(b).encode(),
@@ -71,23 +80,29 @@ EXTRACT_SYS = (
 )
 
 def extract(donor_url):
+    """Vision-locate every region in the freeform donor image. Ported 2026-07 from
+    OpenAI gpt-4o (api.openai.com) to Gemini 3.1 Pro via Vertex AI — same gcloud
+    user-auth access-token pattern as genskin.py:edit_vertex(). No OpenAI key needed."""
+    tok = subprocess.check_output(["gcloud", "auth", "print-access-token"]).decode().strip()
+    img_bytes = urllib.request.urlopen(donor_url, timeout=60).read()
+    b64 = base64.b64encode(img_bytes).decode()
     body = {
-        "model": "gpt-4o",
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": EXTRACT_SYS},
-            {"role": "user", "content": [
-                {"type": "text", "text": "Parse this music-player UI into normalized region boxes."},
-                {"type": "image_url", "image_url": {"url": donor_url, "detail": "high"}},
-            ]},
-        ],
-        "max_tokens": 4000,
+        "contents": [{"role": "user", "parts": [
+            {"inline_data": {"mime_type": "image/png", "data": b64}},
+            {"text": "Parse this music-player UI into normalized region boxes."},
+        ]}],
+        "systemInstruction": {"role": "system", "parts": [{"text": EXTRACT_SYS}]},
+        # thinkingLevel "low": gemini-3.1-pro-preview defaults to "high" thinking, which
+        # (verified live 2026-07-10) burns the ENTIRE maxOutputTokens budget on internal
+        # thought tokens before emitting any JSON (finishReason MAX_TOKENS, zero content)
+        # for a short structured-extraction call like this one.
+        "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": 4000,
+                              "thinkingConfig": {"thinkingLevel": "low"}},
     }
-    r = urllib.request.Request("https://api.openai.com/v1/chat/completions",
-        data=json.dumps(body).encode(),
-        headers={"Authorization": f"Bearer {OPENAI}", "Content-Type": "application/json"}, method="POST")
+    r = urllib.request.Request(VERTEX_URL, data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"}, method="POST")
     resp = json.loads(urllib.request.urlopen(r, timeout=180).read())
-    content = resp["choices"][0]["message"]["content"]
+    content = "".join(p.get("text", "") for p in resp["candidates"][0]["content"]["parts"])
     data = json.loads(content)
     regs = data.get("regions", [])
     print(f"extracted {len(regs)} regions", flush=True)

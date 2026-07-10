@@ -15,12 +15,20 @@ slots → EQ bands, the long groove → seek, small rect wells → switches.
 Usage: python3 wild_y2k.py            # all variants
        python3 wild_y2k.py pod        # one
 """
-import json, os, sys, time, urllib.request, concurrent.futures
+import base64, json, os, subprocess, sys, time, urllib.request, concurrent.futures
 import generate as G
 import detect_screens as DS
 
 ROOT = os.path.dirname(G.HERE)
 W, H = 1024, 1536
+
+# extract_wells() below is Gemini 3.1 Pro via VERTEX AI (gcloud user-auth access
+# token) — ZERO OpenAI/gpt-4o. Same project + auth pattern proven working by
+# tools/mask-align-exp/gen12/genskin.py's edit_vertex().
+VERTEX_PROJECT = os.environ.get("VERTEX_PROJECT", "muser-2605300220")
+VERTEX_MODEL = "gemini-3.1-pro-preview"
+VERTEX_URL = (f"https://aiplatform.googleapis.com/v1/projects/{VERTEX_PROJECT}/locations/global/"
+              f"publishers/google/models/{VERTEX_MODEL}:generateContent")
 
 BODY = (
     "Design a WILDLY NON-RECTANGULAR skeuomorphic MP3-player device in late-90s Winamp-skin / Y2K style: "
@@ -85,21 +93,30 @@ def cutout(url):
     return G.get(job["response_url"])["image"]["url"]
 
 def extract_wells(image_url):
-    key_openai = None
-    for l in open("/Users/conner/dev/central/.env"):
-        if l.startswith("OPENAI_API_KEY="): key_openai = l.split("=", 1)[1].strip()
-    body = {"model": "gpt-4o", "response_format": {"type": "json_object"},
-            "messages": [
-                {"role": "system", "content": EXTRACT_WELLS},
-                {"role": "user", "content": [
-                    {"type": "text", "text": "Find every empty mounting well."},
-                    {"type": "image_url", "image_url": {"url": image_url, "detail": "high"}}]}],
-            "max_tokens": 4000}
-    req = urllib.request.Request("https://api.openai.com/v1/chat/completions",
-        data=json.dumps(body).encode(),
-        headers={"Authorization": f"Bearer {key_openai}", "Content-Type": "application/json"}, method="POST")
+    """Vision-locate empty mounting wells. Ported 2026-07 from OpenAI gpt-4o
+    (api.openai.com) to Gemini 3.1 Pro via Vertex AI — same gcloud user-auth
+    access-token pattern as genskin.py:edit_vertex(). No OpenAI key needed."""
+    tok = subprocess.check_output(["gcloud", "auth", "print-access-token"]).decode().strip()
+    img_bytes = urllib.request.urlopen(image_url, timeout=60).read()
+    b64 = base64.b64encode(img_bytes).decode()
+    body = {
+        "contents": [{"role": "user", "parts": [
+            {"inline_data": {"mime_type": "image/png", "data": b64}},
+            {"text": "Find every empty mounting well."},
+        ]}],
+        "systemInstruction": {"role": "system", "parts": [{"text": EXTRACT_WELLS}]},
+        # thinkingLevel "low": gemini-3.1-pro-preview defaults to "high" thinking, which
+        # (verified live 2026-07-10) burns the ENTIRE maxOutputTokens budget on internal
+        # thought tokens before emitting any JSON (finishReason MAX_TOKENS, zero content)
+        # for a short structured-extraction call like this one.
+        "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": 4000,
+                              "thinkingConfig": {"thinkingLevel": "low"}},
+    }
+    req = urllib.request.Request(VERTEX_URL, data=json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"}, method="POST")
     resp = json.loads(urllib.request.urlopen(req, timeout=180).read())
-    return json.loads(resp["choices"][0]["message"]["content"]).get("regions", [])
+    content = "".join(p.get("text", "") for p in resp["candidates"][0]["content"]["parts"])
+    return json.loads(content).get("regions", [])
 
 TRANSPORT = ["prev", "play", "pause", "stop", "next", "eject"]
 def build_template(dirpath, wells):

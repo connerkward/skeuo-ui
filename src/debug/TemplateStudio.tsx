@@ -114,7 +114,7 @@ export default function TemplateStudio() {
       const r = await fetch("/api/derive", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
       const d = await r.json();
       if (d.regions?.length) { mutate(() => d.regions as SR[]); setSelIds([]); setAuthored(false); setLlmMsg(`LLM: ${d.regions.length} regions`); }
-      else setLlmMsg(d.hasKey ? "LLM returned no usable layout (fell back)" : "no OpenAI key on server");
+      else setLlmMsg(d.hasKey ? "LLM returned no usable layout (fell back)" : "no Vertex auth on server (gcloud login, or set GCP_SERVICE_ACCOUNT_KEY)");
     } catch (e) { setLlmMsg("error: " + (e instanceof Error ? e.message : String(e))); }
   };
 

@@ -12,10 +12,12 @@ import { resolve } from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import { handleGenerate } from "../src/generate/handler";
 import { removeBackground, segmentControls, type RuntimeDeps, type SamBoxPx } from "../src/generate/pipeline";
-import { extractSlots, extractMasks, deriveLayout, type SlotControl } from "../src/generate/director";
+import { extractSlots, extractMasks, deriveLayout, type SlotControl, type DirectorKeys } from "../src/generate/director";
+import { getVertexAccessToken } from "../src/generate/vertexAuth";
+import { getGcloudAccessToken } from "./gcloudAuth";
 
 // Read a key from .dev.vars → process.env → central/.env (dev convenience),
-// the same precedence used for both FAL_KEY and OPENAI_API_KEY.
+// the same precedence used for both FAL_KEY and GCP_SERVICE_ACCOUNT_KEY.
 function loadKey(root: string, name: string): string | undefined {
   const devVars = resolve(root, ".dev.vars");
   if (existsSync(devVars)) {
@@ -47,12 +49,19 @@ export function devApiPlugin(): Plugin {
     name: "skeuo-dev-api",
     configureServer(server: ViteDevServer) {
       const falKey = loadKey(server.config.root, "FAL_KEY");
-      const openaiKey = loadKey(server.config.root, "OPENAI_API_KEY");
-      // Director text calls (deriveMaterial/deriveLayout) prefer Gemini 3.1 Pro when
-      // this is set — same .dev.vars / central/.env precedence as the other keys.
-      // Get a key at https://aistudio.google.com/apikey and add GEMINI_API_KEY=... to
-      // .dev.vars (gitignored) to exercise the Gemini path locally.
-      const geminiKey = loadKey(server.config.root, "GEMINI_API_KEY");
+      // Director calls (deriveMaterial/deriveLayout/extractSlots/extractMasks) are
+      // Vertex-only (src/generate/director.ts) — ZERO OpenAI. In dev they authenticate
+      // via the developer's own `gcloud auth print-access-token` session (this machine
+      // is already `gcloud auth login`-ed against muser-2605300220 — proven working by
+      // tools/mask-align-exp/gen12/genskin.py), so NO key needs to be set here at all.
+      // GCP_SERVICE_ACCOUNT_KEY is optional: set it in .dev.vars only to exercise the
+      // PROD auth path (the service-account JWT flow) locally instead of gcloud.
+      const gcpServiceAccountKey = loadKey(server.config.root, "GCP_SERVICE_ACCOUNT_KEY");
+      // resolve a Vertex bearer token fresh per call (cheap — cached ~50min by
+      // getGcloudAccessToken / getVertexAccessToken); undefined when gcloud isn't
+      // installed/logged-in and no service-account key is set — callers degrade to
+      // their deterministic fallback, never throw.
+      const directorAuth = (): DirectorKeys => ({ gcpServiceAccountKey, devToken: getGcloudAccessToken() });
       // persist generated artifacts to public/generated/ so a page reload or dev-server
       // restart no longer wipes a just-created skin (the client stores only the URL).
       // Mirrors the prod R2 layout: frame.png + template.json + meta.json per skin, so
@@ -85,8 +94,9 @@ export function devApiPlugin(): Plugin {
           res.setHeader("Content-Type", "application/x-ndjson");
           const write = (obj: unknown) => res.write(JSON.stringify(obj) + "\n");
           // no `cutout`: deferred to the browser, mirroring the deployed Worker.
+          const auth = directorAuth();
           const deps: RuntimeDeps = {
-            falKey, geminiKey, openaiKey, rasterize, store,
+            falKey, gcpServiceAccountKey: auth.gcpServiceAccountKey, vertexDevToken: auth.devToken, rasterize, store,
             log: (m) => server.config.logger.info(m),
             onStage: (stage, url) => write({ stage, url }),
           };
@@ -102,9 +112,9 @@ export function devApiPlugin(): Plugin {
       });
 
       // POST /api/derive — the LLM data-template generator for the template studio.
-      // Calls the SAME deriveLayout (Gemini 3.1 Pro preferred, gpt-4o fallback,
-      // heuristic-guided LAYOUT_SYS) the pipeline uses, returns the raw Region[] so
-      // the studio can seed + pack it. { prompt } → { regions }.
+      // Calls the SAME deriveLayout (Gemini 3.1 Pro via Vertex, heuristic-guided
+      // LAYOUT_SYS) the pipeline uses, returns the raw Region[] so the studio can
+      // seed + pack it. { prompt } → { regions }.
       server.middlewares.use("/api/derive", (req, res) => {
         if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
         const chunks: Buffer[] = [];
@@ -113,9 +123,10 @@ export function devApiPlugin(): Plugin {
           res.setHeader("Content-Type", "application/json");
           try {
             const { prompt } = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
-            const hasKey = !!(geminiKey || openaiKey);
-            const regions = hasKey ? await deriveLayout({ geminiKey, openaiKey }, String(prompt || "")) : null;
-            res.end(JSON.stringify({ regions: regions ?? [], ok: !!regions, hasKey }));
+            const auth = directorAuth();
+            const token = await getVertexAccessToken({ serviceAccountKey: auth.gcpServiceAccountKey, devToken: auth.devToken });
+            const regions = token ? await deriveLayout(auth, String(prompt || "")) : null;
+            res.end(JSON.stringify({ regions: regions ?? [], ok: !!regions, hasKey: !!token }));
           } catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
         });
       });
@@ -189,11 +200,12 @@ export function devApiPlugin(): Plugin {
         });
       });
 
-      // POST /api/extract — local parity with functions/api/extract.ts. gpt-4o vision
-      // locates each expected control in the device image; OPENAI key server-side.
+      // POST /api/extract — local parity with functions/api/extract.ts. The Director
+      // vision model (Gemini 3.1 Pro via Vertex — see director.ts) locates each
+      // expected control in the device image. No key required in dev (gcloud auth);
+      // returns { boxes: [] } (never a 500) when no Vertex auth is available.
       server.middlewares.use("/api/extract", (req, res) => {
         if (req.method !== "POST") { res.statusCode = 405; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "POST only" })); return; }
-        if (!openaiKey) { res.statusCode = 500; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "server missing OPENAI_API_KEY (.dev.vars / central/.env)" })); return; }
         const chunks: Buffer[] = [];
         req.on("data", (c) => chunks.push(c as Buffer));
         req.on("end", async () => {
@@ -203,7 +215,7 @@ export function devApiPlugin(): Plugin {
             const image = body.imageDataUrl || body.imageUrl;
             if (!image) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "imageDataUrl required" })); return; }
             if (!Array.isArray(body.controls) || !body.controls.length) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "controls required" })); return; }
-            const boxes = await extractSlots(openaiKey, image, body.controls);
+            const boxes = await extractSlots(directorAuth(), image, body.controls);
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
             res.setHeader("Cache-Control", "no-store");
@@ -216,11 +228,10 @@ export function devApiPlugin(): Plugin {
         });
       });
 
-      // POST /api/maskvlm — VLM-masking arm (head-to-head vs SAM). gpt-4o returns a
-      // tight silhouette POLYGON per control. Body { imageDataUrl|imageUrl, controls }.
+      // POST /api/maskvlm — VLM-masking arm (head-to-head vs SAM). The Director vision
+      // model returns a tight silhouette POLYGON per control. Body { imageDataUrl|imageUrl, controls }.
       server.middlewares.use("/api/maskvlm", (req, res) => {
         if (req.method !== "POST") { res.statusCode = 405; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "POST only" })); return; }
-        if (!openaiKey) { res.statusCode = 500; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "server missing OPENAI_API_KEY" })); return; }
         const chunks: Buffer[] = [];
         req.on("data", (c) => chunks.push(c as Buffer));
         req.on("end", async () => {
@@ -230,7 +241,7 @@ export function devApiPlugin(): Plugin {
             const image = body.imageDataUrl || body.imageUrl;
             if (!image) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "imageDataUrl required" })); return; }
             if (!Array.isArray(body.controls) || !body.controls.length) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "controls required" })); return; }
-            const polys = await extractMasks(openaiKey, image, body.controls);
+            const polys = await extractMasks(directorAuth(), image, body.controls);
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
             res.setHeader("Cache-Control", "no-store");
