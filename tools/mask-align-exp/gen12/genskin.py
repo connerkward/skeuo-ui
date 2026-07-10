@@ -149,9 +149,10 @@ def edit(FAL, url, prompt, seed):
 
 
 def edit_vertex(bp_path, prompt, seed, aspect="5:4"):
-    """Same nano-banana-pro edit as edit(), direct via Vertex AI (no fal). Ported from the
-    proven bproof/run_bproof_vertex.py pattern (gcloud user-auth access token — no ADC file
-    needed on this machine). Returns raw output PNG bytes, same contract as edit()."""
+    """Same nano-banana-pro edit as edit(), direct via Vertex AI (no fal). Same proven pattern
+    as abshape/genskin_ab.py:edit_vertex() — that copy already ran 4 real generations today on
+    this project/auth; this is the mainline-genskin port of it (gcloud user-auth access token,
+    no ADC file needed). Returns raw output PNG bytes, same contract as edit()."""
     tok = subprocess.check_output(["gcloud", "auth", "print-access-token"]).decode().strip()
     b64 = base64.b64encode(open(bp_path, "rb").read()).decode()
     body = {
@@ -166,22 +167,16 @@ def edit_vertex(bp_path, prompt, seed, aspect="5:4"):
             "imageConfig": {"aspectRatio": aspect, "imageSize": "4K"},
         },
     }
-    t0 = time.time()
     r = requests.post(VERTEX_URL, headers={"Authorization": f"Bearer {tok}",
                                             "Content-Type": "application/json"},
                        json=body, timeout=420)
     if r.status_code != 200:
-        raise RuntimeError(f"vertex {r.status_code}: {r.text[:500]}")
-    resp = r.json()
-    img_b64 = None
-    for part in resp["candidates"][0]["content"]["parts"]:
+        raise RuntimeError(f"vertex HTTP {r.status_code}: {r.text[:500]}")
+    for part in r.json()["candidates"][0]["content"]["parts"]:
         d = part.get("inlineData") or part.get("inline_data") or {}
         if d.get("data"):
-            img_b64 = d["data"]; break
-    if not img_b64:
-        raise RuntimeError(f"vertex: no image part in response: {json.dumps(resp)[:500]}")
-    print(f"[vertex] {time.time() - t0:.0f}s", flush=True)
-    return base64.b64decode(img_b64)
+            return base64.b64decode(d["data"])
+    raise RuntimeError("vertex: no image part in response")
 
 
 def main():

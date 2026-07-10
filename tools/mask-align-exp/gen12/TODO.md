@@ -42,3 +42,7 @@ Flip only **between** batches, never while `orchestrate12.py` is mid-run.
   45s at 4608x3712 (aspect 1.241 vs requested 5:4=1.25). Full production-prompt
   parity not re-tested (contract — image in/out, aspect, seed — is what changed;
   prompt text is unchanged either way).
+- `genskin.py:edit_vertex()` matches (diffed line-for-line, only cosmetic naming
+  differs) `abshape/genskin_ab.py:edit_vertex()`, which already ran 4 real
+  generations today on this same project/auth — independent convergence on the
+  same proven call shape, not a fresh untested integration.
