@@ -20,12 +20,23 @@ Spec json fields: {id, title, mode: templated|templateless, layout: vpod|hcapsul
   palette:{name:[r,g,b],...}, material_is_dark: bool, theme_prompt: "...", seed}.
 Usage: python3 genskin.py <spec.json> [--blueprint-only]   → writes gen12/assets-<id>/
 """
-import os, re, io, sys, json, time, math
+import os, re, io, sys, json, time, math, base64, subprocess
 import requests
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL = "fal-ai/gemini-3-pro-image-preview/edit"
+
+# PAINT_VERTEX: call the SAME Gemini image model direct via Vertex AI instead of fal's wrapper —
+# fal charges $0.30/img at 4K (verified live on fal.ai, 2x its $0.15 1K/2K rate) vs Vertex's
+# $0.24/img at 4K (2000 output tokens x $120/1M, verified on the Vertex AI pricing page) — Vertex
+# is ~20% cheaper AND removes the dependency on fal's billing state (see generation-spend-rule).
+# DEFAULT FALSE — preserves current fal-wrapped behaviour exactly. Flip only BETWEEN batches.
+PAINT_VERTEX = False
+VERTEX_PROJECT = os.environ.get("VERTEX_PROJECT", "muser-2605300220")  # same project proven working by bproof/run_bproof_vertex.py
+VERTEX_MODEL = "gemini-3-pro-image-preview"  # same underlying model fal proxies at MODEL above
+VERTEX_URL = (f"https://aiplatform.googleapis.com/v1/projects/{VERTEX_PROJECT}/locations/global/"
+              f"publishers/google/models/{VERTEX_MODEL}:generateContent")
 COL_W, H, DEV_H = 1200, 1920, 1440
 DEVF = DEV_H / H
 
@@ -135,6 +146,42 @@ def edit(FAL, url, prompt, seed):
         time.sleep(4)
     r = requests.get(job["response_url"], headers={"Authorization": f"Key {FAL}"}).json()
     return requests.get(r["images"][0]["url"]).content
+
+
+def edit_vertex(bp_path, prompt, seed, aspect="5:4"):
+    """Same nano-banana-pro edit as edit(), direct via Vertex AI (no fal). Ported from the
+    proven bproof/run_bproof_vertex.py pattern (gcloud user-auth access token — no ADC file
+    needed on this machine). Returns raw output PNG bytes, same contract as edit()."""
+    tok = subprocess.check_output(["gcloud", "auth", "print-access-token"]).decode().strip()
+    b64 = base64.b64encode(open(bp_path, "rb").read()).decode()
+    body = {
+        "contents": [{"role": "user", "parts": [
+            {"inline_data": {"mime_type": "image/png", "data": b64}},
+            {"text": prompt},
+        ]}],
+        "generationConfig": {
+            "responseModalities": ["IMAGE"],
+            "seed": seed,
+            "candidateCount": 1,
+            "imageConfig": {"aspectRatio": aspect, "imageSize": "4K"},
+        },
+    }
+    t0 = time.time()
+    r = requests.post(VERTEX_URL, headers={"Authorization": f"Bearer {tok}",
+                                            "Content-Type": "application/json"},
+                       json=body, timeout=420)
+    if r.status_code != 200:
+        raise RuntimeError(f"vertex {r.status_code}: {r.text[:500]}")
+    resp = r.json()
+    img_b64 = None
+    for part in resp["candidates"][0]["content"]["parts"]:
+        d = part.get("inlineData") or part.get("inline_data") or {}
+        if d.get("data"):
+            img_b64 = d["data"]; break
+    if not img_b64:
+        raise RuntimeError(f"vertex: no image part in response: {json.dumps(resp)[:500]}")
+    print(f"[vertex] {time.time() - t0:.0f}s", flush=True)
+    return base64.b64decode(img_b64)
 
 
 def main():
@@ -324,8 +371,11 @@ def main():
         print(f"[blueprint-only] {sid} mode={mode} keys ok, prompt {len(prompt)} chars → {bp}")
         return
 
-    FAL = load_fal()
-    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)
+    if PAINT_VERTEX:
+        t = time.time(); out = edit_vertex(bp, prompt, seed)
+    else:
+        FAL = load_fal()
+        t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)
     open(os.path.join(OUT, "joint-4k.png"), "wb").write(out)
     im = Image.open(io.BytesIO(out)).convert("RGB"); w, h = im.size; half = w // 2
     im.crop((0, 0, half, h)).save(os.path.join(OUT, "paint.png"))

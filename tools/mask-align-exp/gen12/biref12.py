@@ -9,6 +9,53 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
+# BIREF_LOCAL: run BiRefNet locally (torch/transformers, MPS) instead of the fal endpoint —
+# $0/matte, no rate limits, no billing-lock dependency (see .claude/rules/generation-spend-rule.md).
+# DEFAULT FALSE — preserves current fal-ai/birefnet/v2 behaviour exactly. Flip only BETWEEN
+# batches, never mid-batch (a concurrent agent may be running this file right now).
+BIREF_LOCAL = False
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+_VENV_PY = os.path.join(HERE, ".venv-biref", "bin", "python3")  # torch+transformers venv (not the global python3)
+if BIREF_LOCAL:
+    try:
+        import torch  # noqa: F401  (present only in .venv-biref)
+    except ImportError:
+        if os.path.exists(_VENV_PY) and os.environ.get("_BIREF_REEXEC") != "1":
+            os.environ["_BIREF_REEXEC"] = "1"
+            os.execv(_VENV_PY, [_VENV_PY] + sys.argv)  # re-exec under the venv that has torch
+        sys.exit("BIREF_LOCAL=True needs torch+transformers — run "
+                  "`python3.13 -m venv .venv-biref && .venv-biref/bin/pip install torch torchvision "
+                  "transformers huggingface-hub accelerate scipy pillow requests numpy` in gen12/, "
+                  "or install torch in the interpreter running this file.")
+
+_LOCAL_MODEL = None  # cached (model, device) — loaded once per invocation, reused across islands
+
+
+def _local_matte(png_bytes):
+    """BiRefNet ZhengPeng7/BiRefNet via transformers, on MPS when available. Same contract as the
+    fal path: PNG bytes in, RGBA PNG bytes out (mask resized back to the input's native size)."""
+    global _LOCAL_MODEL
+    import torch
+    from torchvision import transforms
+    from transformers import AutoModelForImageSegmentation
+    if _LOCAL_MODEL is None:
+        dev = "mps" if torch.backends.mps.is_available() else "cpu"
+        model = AutoModelForImageSegmentation.from_pretrained("ZhengPeng7/BiRefNet", trust_remote_code=True)
+        model.to(dev, dtype=torch.float32).eval()  # checkpoint loads as fp16 by default; fp32 avoids a dtype mismatch vs the fp32 input tensor
+        _LOCAL_MODEL = (model, dev)
+    model, dev = _LOCAL_MODEL
+    im = Image.open(io.BytesIO(png_bytes)).convert("RGB"); W0, H0 = im.size
+    tfm = transforms.Compose([transforms.Resize((1024, 1024)), transforms.ToTensor(),
+                               transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+    x = tfm(im).unsqueeze(0).to(dev)
+    with torch.no_grad():
+        pred = model(x)[-1].sigmoid().cpu().squeeze()
+    mask = transforms.ToPILImage()(pred).resize((W0, H0), Image.BICUBIC)
+    rgba = im.convert("RGBA"); rgba.putalpha(mask)
+    buf = io.BytesIO(); rgba.save(buf, "PNG")
+    return buf.getvalue()
+
 
 def fal_key():
     for line in open(os.path.expanduser("~/dev/central/.env")):
@@ -17,7 +64,7 @@ def fal_key():
     sys.exit("no FAL_KEY")
 
 
-FAL = fal_key()
+FAL = None if BIREF_LOCAL else fal_key()  # local path needs no fal credential at all
 SRC = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
 OUT = SRC + "_biref"; os.makedirs(OUT, exist_ok=True)
 
@@ -39,6 +86,12 @@ _fresh = os.path.exists(_mp) and os.path.getmtime(_mp) >= os.path.getmtime(_pain
 # matte at least as new as the paint.
 if _fresh and "--force" not in sys.argv:
     raw = open(_mp, "rb").read(); print("[global] reused existing matte", flush=True)   # re-cut for free
+elif BIREF_LOCAL:
+    buf = io.BytesIO(); paint.save(buf, "PNG")
+    t0 = time.time()
+    raw = _local_matte(buf.getvalue())
+    open(_mp, "wb").write(raw)
+    print(f"[global-local] {time.time() - t0:.1f}s (BiRefNet ZhengPeng7, {_LOCAL_MODEL[1]})", flush=True)
 else:
     buf = io.BytesIO(); paint.save(buf, "PNG")
     job = requests.post("https://queue.fal.run/fal-ai/birefnet/v2",

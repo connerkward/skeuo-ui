@@ -6,5 +6,6 @@ assets-*/overlay.png
 assets-*/blueprint.png
 assets-*_biref/
 __pycache__/
+.venv-biref/
 review.json
 pbrtest/pydeps/
