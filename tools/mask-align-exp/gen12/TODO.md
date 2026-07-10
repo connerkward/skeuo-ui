@@ -1,5 +1,27 @@
 # gen12 TODO
 
+## Ambient video loops — round 5: Cinemagraph LoRA used CORRECTLY + anti-glow brief — DONE 2026-07-10
+
+Round 4's diablo "PASS" was overruled by the user. Root cause: rounds 3–4 used the Lightricks
+Cinemagraph LoRA naively. Round 5 re-ran it per the HF model card (trigger word `CINEMAGRAPH_MOTION`,
+non-distilled endpoint `fal-ai/ltx-2.3-22b/image-to-video/lora`, training res 512×704, card sampling
+steps=30/cfg=4/stg=1) with a hard anti-glow constraint (motion = particles/smoke/dust only; glow/fire/
+emissive in the negative). 3 gens, ≈$0.174. See `docs/experiments/2026-07-09-ambient-video-loops.md`
+round 5 + `ambientvid/jobs5-ltx.json`.
+
+Findings: (1) The dominant lever is `num_frames` = **training length (25)**. 121-frame clips (rounds
+3–5) drift/hallucinate; the **25-frame steam clip is the best LTX result of all rounds** (button glyphs
+legible, gauge holds). (2) Correct usage **helped steam** (25f clean; 121f keeps legible buttons vs
+round-4's blank dials) but **worsened diablo** — non-distilled + high card-guidance + trigger word
+over-generates on dark/low-detail UI art and hallucinated a whole new **glowing** device (banned).
+(3) Seedance 1.0 pro fast (round 2) remains the identity-preservation champion, BUT its diablo win was
+rune-glow (now banned) — its no-glow/particles behavior is untested. (4) fal storage/CDN hosting is FREE.
+
+Open follow-ups (not done): **re-benchmark Seedance under the no-glow / particles-only brief** (its
+wins relied on glow); if LTX is kept, run it **only at ~25 frames** and only on detail-dense subjects,
+extending via ping-pong/crossfade — never 121 frames; wire the round-3b temporal-std **hard-composite
+mask** as the standing safety net regardless of model.
+
 ## Director-specified CSS chrome colors (`css` schema, sibling of `lighting`) — DONE 2026-07-10
 
 Added a `"css": {"track","fill","accent","glow"}` block to the theme-spec schema (documented

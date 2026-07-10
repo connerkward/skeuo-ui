@@ -403,3 +403,117 @@ understood (it may be a resolution/`use_multiscale` tuning issue rather than fun
 - Jobs/params/prompts/URLs: `ambientvid/jobs4-ltx.json`.
 - Cost this round: ≈$0.15 (2 real LTX+LoRA generations; see above). LoRA re-host upload itself
   is free (fal storage/CDN upload has no charge).
+
+---
+
+## Round 5 (2026-07-10) — the Cinemagraph LoRA used CORRECTLY (per the model card), anti-glow particle brief
+
+Round 4's diablo-gothic "PASS" was **overruled by the user** — it is NOT a pass. Suspected root
+cause: rounds 3–4 used the Lightricks Cinemagraph LoRA **naively**, without reading how Lightricks
+intends it to be used. Round 5 re-runs it per the HF model card, and adds a hard user constraint:
+**the video pass must avoid ALL lighting/glow/emissive motion** (emissivity is handled
+programmatically elsewhere) — motion must be **particles/smoke/dust/steam/floating debris only**.
+
+### What the model card actually says (research, `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph` README, read via HF MCP)
+
+Rounds 3–4 got **five** things wrong, all documented on the card:
+
+1. **Trigger word `CINEMAGRAPH_MOTION`** must lead the positive prompt. Rounds 3–4 omitted it entirely.
+2. **Base model is the full, non-distilled `Lightricks/LTX-2.3`** (`base_model_relation: adapter`).
+   Rounds 3–4 used fal's **`/distilled`** endpoint, whose forced distill-LoRA second pass fights the
+   cinemagraph LoRA and hides the card's CFG/STG/step knobs. Round 5 uses
+   **`fal-ai/ltx-2.3-22b/image-to-video/lora`** (non-distilled, $0.001805/MP vs distilled $0.001405/MP).
+3. **Training resolution is 512×704, 25 frames.** Rounds 3–4 ran 576×768 × **121 frames** — ~5× the
+   training clip length.
+4. **Card sampling** now settable on the non-distilled endpoint: `num_inference_steps=30`
+   ("from training validation"), `video_cfg_scale=4.0` (card guidance 4.0), `video_stg_scale=1.0`
+   (card STG `stg_v` scale 1.0, for "boundary preservation" — keeps frozen regions frozen; the
+   block-29 target is ComfyUI-only, not exposed on fal). **LoRA strength** range 0.7–3.0 (0.7–1.0 =
+   conservative motion); round 5 uses 1.0.
+5. **Prompt style:** explicit motion boundaries, "only [element] moves; everything else frozen",
+   emphasize "locked-off static camera" + "seamless natural loop", **omit camera-movement words**.
+
+Anti-glow constraint applied on top: motion = drifting dust/ash motes, thin smoke wisp, steam;
+device geometry explicitly static; **glow/light/fire/emissive/neon added to the negative prompt**.
+(Round 4's diablo prompt was literally "red runes pulse brighter and dimmer" — pure glow, now banned.)
+
+### Method
+
+Non-distilled endpoint, LoRA reused from round 4's fal CDN re-host (HEAD 200, byte-exact 201,453,416
+— **not** re-uploaded), subject JPEGs reused (HEAD 200). Seed 1207, `camera_lora=static`,
+`video_size=512×704`, `num_inference_steps=30`, `video_cfg_scale=4`, `video_stg_scale=1`,
+`generate_audio=false`, `enable_prompt_expansion=false`, `lora scale=1`. Three gens:
+- **A** diablo-gothic, 121 frames.
+- **B** steam-porthole, 121 frames.
+- **C** steam-porthole, **25 frames** (training-exact — probes whether matching the LoRA's clip length
+  fixes the round-4 drift on the hard reflective-metal subject).
+
+All ran on B200/H200 in seconds. Verified per verify-rule §1b: 5 frames/clip (start/25/50/75/end)
+extracted at native 512×704, control-cluster crops upscaled 3× and inspected, seams measured. Round-4
+(naive) and round-2 (Seedance) clips of the same subjects re-cropped at the same harshness for a fair
+comparison. Jobs/params/URLs/verdicts in `ambientvid/jobs5-ltx.json`.
+
+### Harsh verdicts (device identity is the bar; ANY geometry drift / glyph morph / glow = FAIL)
+
+| gen | verdict | what the full-res crops show |
+|---|---|---|
+| **A diablo 121f** | **HARD FAIL** | t=0 is the clean input; from t=25% the model **resynthesizes the device** — the two dark speaker wells become bright blue/yellow **glowing** gauges (banned emissive), an invented bottom icon strip (x2 / running-man / orange-bars) and a blue-bordered **skeleton screen** appear, then the blue gauges **melt** into black/yellow blobs by t=end. The requested dust/smoke ARE present and glow-free, but device identity is destroyed. **Worse than round-4 diablo**, which held the stone device stable. Seam 12.63. |
+| **B steam 121f** | **FAIL** | Requested white-steam wisp + dust motes present, glow-free, on-brief. But control drift over 5 s: a **second gauge appears** in the left cluster, gears rearrange, and the bottom **play/pause glyph morphs toward an X** by t=end. Better than round-4 steam (which destroyed every button into blank white dials) but still fails "printed icons NEVER deform." Seam 2.71. |
+| **C steam 25f** | **NEAR-PASS — best LTX result of all rounds** | At training length the button glyphs stay **legible** (play/pause, rewind, ff, screen, equalizer all intact), the gauge **holds**, only minor gear shimmer; steam + dust present, no glow. The one config where correct usage genuinely worked — **because `num_frames` matched the LoRA's 25-frame training length.** Caveat: 1.04 s raw (ping-pong-looped to 2.08 s), short for an ambient loop. Seam 1.54. |
+
+### Did correct usage improve over round 4's naive usage?
+
+**Mixed — and the split is the finding.**
+- **steam: YES.** 25f correct-usage steam is far cleaner than round-4 steam (which morphed every button
+  into blank dials). Even the 121f correct-usage steam keeps 5 legible buttons where round 4 had none.
+- **diablo: NO — it got dramatically WORSE.** Round 4 (distilled, no trigger, lower effective guidance)
+  held the stone device stable with only rune-glow motion; round 5 (non-distilled + card guidance +
+  trigger word) over-generated on the dark, low-detail subject and hallucinated an entire new glowing
+  device. The card's aggressive settings are tuned for photographic scenes (water/neon/reflections),
+  not dark low-contrast UI art.
+
+**The dominant lever is `num_frames` = training length (25).** The LoRA is trained on 25-frame clips;
+running 121 frames pushes far outside distribution and drift/hallucination accumulate over the clip.
+The trigger word + non-distilled endpoint improve *motion fidelity* but push *stronger generation*,
+which helps detail-dense subjects and hurts dark/ambiguous ones.
+
+### vs Round 2 Seedance (re-cropped at the same harshness)
+
+Seedance 1.0 pro fast preserves device identity **cleanly on both skins across all 5 frames** — no
+hallucination, no glyph morph, no melting — and remains the **identity-preservation champion**. But
+its motion under the *old* brief was glow-based (diablo = rune-glow, now banned) or gauge-needle-quiver
+(steam); its behavior under the **new particles-only / no-glow constraint is untested**. So Seedance is
+still the best *model* for keeping the device intact, but the new constraint (particles on dark
+subjects, zero glow) is genuinely harder and was not what Seedance won on.
+
+### Bottom line / recommendation
+
+- **LTX-2.3 Cinemagraph LoRA is only viable at/near its 25-frame training length, and only on
+  detail-dense, higher-contrast subjects.** Extend the short clip by ping-pong/crossfade rather than
+  by generating more frames. Do **not** run it at 121 frames — that is what broke rounds 3–5.
+- On dark/low-detail UI art (diablo), the non-distilled + high-guidance config hallucinates; if LTX is
+  used there at all, drop CFG/STG toward the conservative end and stay at 25 frames.
+- For robust cross-skin identity, **Seedance 1.0 pro fast (`camera_fixed`) is still the safer model**,
+  but re-benchmark it under the new **no-glow, particles-only** brief before adopting — its wins relied
+  on glow.
+- Regardless of model, the **round-3b temporal-std hard-composite mask** remains the needed safety net
+  (force control-box pixels back to the static source frame) — it would have caught every drift above.
+
+### Cost & fal storage pricing
+
+- Round 5 spend: 512×704 = 0.36 MP/frame × $0.001805/MP. A+B (121f) = 43.6 MP = **$0.0787 each**;
+  C (25f) = 9.0 MP = **$0.0163**. **Total ≈ $0.174** (budget was $1.5). All three billed (real gen ran).
+- **fal storage/CDN hosting is FREE.** fal's live pricing page
+  ([fal.ai/docs/documentation/model-apis/pricing](https://fal.ai/docs/documentation/model-apis/pricing))
+  bills **only on generated model output** ("billed based on the output you generate") and lists **no
+  charge** for file storage, uploads, CDN hosting, or egress/bandwidth. The 201 MB LoRA re-host and the
+  subject-image uploads cost **$0**; you are also not charged for server errors or queue wait time.
+
+### Artifacts (round 5)
+
+- Raw clips: `ambientvid/raw5-ltxcinemagraph2-{diablo-gothic,steam-porthole,steam-porthole-25f}.mp4`.
+- Loops: `ambientvid/loop5-ltxcinemagraph2-{diablo-gothic,steam-porthole}.{mp4,webm}` (1.0 s xfade),
+  `loop5-ltxcinemagraph2-steam-porthole-25f.{mp4,webm}` (ping-pong, 2.08 s).
+- Jobs/params/prompts/URLs/verdicts: `ambientvid/jobs5-ltx.json`.
+- Correct-usage reference (trigger word, scale, res, steps, CFG/STG) captured in `jobs5-ltx.json`
+  `card_recommended_usage`.

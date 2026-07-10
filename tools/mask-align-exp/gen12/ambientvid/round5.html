@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambient loops — round 5 (Cinemagraph LoRA used correctly)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#111317; color:#e7e9ee; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  header { padding:22px clamp(14px,4vw,40px); border-bottom:1px solid #262a33; }
+  h1 { margin:0 0 6px; font-size:clamp(18px,3.4vw,26px); }
+  .meta { color:#9aa2b1; font-size:13px; max-width:80ch; }
+  .meta code { background:#1c2029; padding:1px 5px; border-radius:4px; color:#c8d0df; }
+  main { padding:clamp(14px,3vw,32px); display:flex; flex-direction:column; gap:34px; }
+  section > h2 { font-size:16px; margin:0 0 4px; color:#cfd6e4; }
+  section > .sub { color:#8b93a3; font-size:13px; margin:0 0 14px; }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+  figure { margin:0; background:#171a21; border:1px solid #262a33; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  figure.fail { border-color:#5a2731; }
+  figure.near { border-color:#4d5a2a; }
+  figure.champ { border-color:#2a4d55; }
+  video, img.stat { width:100%; height:auto; display:block; background:#0b0d11; aspect-ratio:512/704; object-fit:contain; }
+  figcaption { padding:9px 11px 12px; font-size:12.5px; }
+  .tag { display:inline-block; font-weight:700; font-size:11px; letter-spacing:.03em; padding:2px 7px; border-radius:5px; margin-bottom:5px; }
+  .t-fail { background:#3a1620; color:#ff9db0; }
+  .t-near { background:#2c3312; color:#d7e78a; }
+  .t-champ { background:#123037; color:#8fe6f2; }
+  .t-input { background:#22262f; color:#aeb6c6; }
+  .note { color:#9aa2b1; }
+  .cost { background:#1c2029; border:1px solid #2b303b; border-radius:8px; padding:11px 14px; font-size:13px; color:#c2cad8; max-width:90ch; }
+  b.hl { color:#ffd479; }
+  b.bad { color:#ff9db0; }
+  b.good { color:#8fe6f2; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ambient video loops — Round 5: LTX-2.3 Cinemagraph LoRA used <em>correctly</em>, anti-glow particle brief</h1>
+  <p class="meta">
+    Round 4's diablo "PASS" was overruled. Rounds 3–4 used the LoRA <b>naively</b>. Round 5 follows the
+    Lightricks model card: trigger word <code>CINEMAGRAPH_MOTION</code>, <b>non-distilled</b> endpoint
+    <code>fal-ai/ltx-2.3-22b/image-to-video/lora</code>, training res <code>512×704</code>, card sampling
+    <code>steps=30 · cfg=4 · stg=1</code>, seed 1207. User constraint: motion = <b>particles/smoke/dust only</b>,
+    <b>zero glow/emissive</b> (glow/fire/neon in the negative prompt).
+  </p>
+  <p class="cost">
+    Models: <code>fal-ai/ltx-2.3-22b/image-to-video/lora</code> + <code>Lightricks/LTX-2.3-22b-LoRA-Cinemagraph</code> ·
+    <b class="hl">Round-5 spend ≈ $0.174</b> (512×704 @ $0.001805/MP: 2×121f = $0.079 ea + 1×25f = $0.016) ·
+    comparison clips: round 4 <code>ltx/distilled+lora</code> (~$0.15), round 2 <code>bytedance/seedance/v1/pro/fast</code> (~$0.108/clip).
+    fal storage/CDN hosting = <b class="good">FREE</b>.
+  </p>
+</header>
+<main>
+
+  <section>
+    <h2>Inputs (static source frames)</h2>
+    <div class="grid">
+      <figure><img class="stat" src="subject-diablo-gothic-34.png" alt="diablo input"><figcaption><span class="tag t-input">INPUT</span><br>diablo-gothic — dark carved stone tablet</figcaption></figure>
+      <figure><img class="stat" src="subject-steam-porthole-34.png" alt="steam input"><figcaption><span class="tag t-input">INPUT</span><br>steam-porthole — brass/copper porthole device</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Round 5 — correct usage (loops)</h2>
+    <p class="sub">Motion is particle/smoke/dust only, glow-free — but device identity is the bar.</p>
+    <div class="grid">
+      <figure class="fail">
+        <video src="loop5-ltxcinemagraph2-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+        <figcaption><span class="tag t-fail">HARD FAIL</span><br>
+          <b>diablo 121f.</b> From t≈25% the model <b class="bad">resynthesizes the device</b>: dark wells → bright blue/yellow <b class="bad">glowing</b> gauges (banned), invented icon strip + skeleton screen, then melts. Dust/smoke present but device destroyed. <b class="bad">Worse than round 4.</b> Seam 12.63.</figcaption>
+      </figure>
+      <figure class="fail">
+        <video src="loop5-ltxcinemagraph2-steam-porthole.mp4" autoplay muted loop playsinline></video>
+        <figcaption><span class="tag t-fail">FAIL</span><br>
+          <b>steam 121f.</b> Steam wisp + dust motes on-brief, glow-free. But a <b class="bad">second gauge appears</b>, gears rearrange, play/pause glyph <b class="bad">morphs to an X</b> by end. Better than round-4 steam but still fails "icons never deform." Seam 2.71.</figcaption>
+      </figure>
+      <figure class="near">
+        <video src="loop5-ltxcinemagraph2-steam-porthole-25f.mp4" autoplay muted loop playsinline></video>
+        <figcaption><span class="tag t-near">NEAR-PASS · best LTX</span><br>
+          <b>steam 25f (training length, ping-pong loop).</b> Button glyphs <b class="good">legible</b>, gauge <b class="good">holds</b>, only gear shimmer; steam+dust, no glow. Worked <b class="hl">because num_frames matched the 25-frame training length.</b> Only 1.04s raw. Seam 1.54.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Round 4 — naive usage (distilled endpoint, no trigger word, 121f)</h2>
+    <p class="sub">The overruled round. Diablo held geometry but relied on rune-glow; steam destroyed its buttons.</p>
+    <div class="grid">
+      <figure class="fail">
+        <video src="loop4-ltxcinemagraph-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+        <figcaption><span class="tag t-fail">OVERRULED</span><br><b>diablo (round 4).</b> Device stable, but motion = <b class="bad">red rune glow</b> (now banned). Geometrically more stable than round-5 diablo.</figcaption>
+      </figure>
+      <figure class="fail">
+        <video src="loop4-ltxcinemagraph-steam-porthole.mp4" autoplay muted loop playsinline></video>
+        <figcaption><span class="tag t-fail">FAIL (round 4)</span><br><b>steam (round 4).</b> Buttons dissolve into <b class="bad">blank white dials</b>, glyphs destroyed. Round-5 correct usage clearly beats this.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Round 2 — Seedance 1.0 pro fast (identity champion, re-checked at same harshness)</h2>
+    <p class="sub">Preserves device identity cleanly on both skins — but its motion was glow (diablo) / gauge-quiver (steam); no-glow particle behavior untested.</p>
+    <div class="grid">
+      <figure class="champ">
+        <video src="loop2-seedancefast-diablo-gothic-v2.mp4" autoplay muted loop playsinline></video>
+        <figcaption><span class="tag t-champ">IDENTITY OK</span><br><b>diablo (Seedance).</b> Device pixel-stable across all frames — but motion = <b class="bad">rune glow</b> (now banned).</figcaption>
+      </figure>
+      <figure class="champ">
+        <video src="loop2-seedancefast-steam-porthole.mp4" autoplay muted loop playsinline></video>
+        <figcaption><span class="tag t-champ">IDENTITY OK</span><br><b>steam (Seedance).</b> Buttons/gauges intact across all frames; gauge-needle quiver + subtle steam. Best identity preservation of any model.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="cost">
+      <b class="hl">Bottom line.</b> The dominant correct-usage lever is <b>num_frames = training length (25)</b> — 121-frame clips drift/hallucinate.
+      Correct usage <b class="good">helped steam</b> but <b class="bad">worsened diablo</b> (non-distilled + high card guidance over-generates on dark UI art, hallucinating a glowing device).
+      LTX-Cinemagraph is viable only at ~25 frames on detail-dense subjects (extend via ping-pong/crossfade, never more frames).
+      Seedance stays the safer identity model but must be re-benchmarked under the no-glow/particles brief. The round-3b temporal-std hard-composite mask remains the needed safety net regardless.
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
