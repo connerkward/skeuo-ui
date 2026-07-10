@@ -4,9 +4,17 @@ player hoisted to the top, a human PASS/FAIL gate toggle, and a "what's wrong" n
 persisted in localStorage with an export so verdicts can be read back. Below that: the auto-gate
 verdict, the process strip (blueprint→paint→mask→overlay), and explainer diagrams.
 Usage: python3 build_dashboard.py"""
-import os, json, glob
+import os, json, glob, re, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# run-id annotation (max rolls): read the real default out of orchestrate12.py rather than
+# duplicating the number here, so if that default ever changes this label doesn't silently drift.
+try:
+    _orch_src = open(os.path.join(HERE, "orchestrate12.py")).read()
+    _m = re.search(r"len\(sys\.argv\)\s*>\s*2\s*else\s*(\d+)", _orch_src)
+    ROLLS_MAX = int(_m.group(1)) if _m else 4
+except Exception:
+    ROLLS_MAX = 4
 skins = []
 for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
     # only the real theme roster directly under gen12/ — exclude sidecar dirs
@@ -37,10 +45,23 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
             pbr = pbr_meta.get("emissiveCoverage", 0) > 0 or bool(pbr_meta.get("lights"))
         except Exception:
             pbr = False
+    # run-id annotation: which generation is this card CURRENTLY showing? seed+roll come from
+    # orch.json; "painted" is paint.png's own mtime (not orch.json's) so a manual re-roll or an
+    # agent mid-regen that overwrote paint.png but hasn't re-run the orchestrator yet is visible
+    # as a mismatch, not silently absorbed into the last-known-good orch.json numbers.
+    paint_path = os.path.join(d, "paint.png")
+    orch_path = os.path.join(d, "orch.json")
+    paint_mtime = os.path.getmtime(paint_path) if os.path.exists(paint_path) else None
+    orch_mtime = os.path.getmtime(orch_path) if os.path.exists(orch_path) else None
+    painted_str = (datetime.datetime.fromtimestamp(paint_mtime).strftime("%Y-%m-%d %H:%M")
+                   if paint_mtime else "?")
+    # >2s margin so ordinary same-second write ordering from the pipeline itself doesn't false-flag
+    mid_regen = paint_mtime is not None and orch_mtime is not None and paint_mtime > orch_mtime + 2
     skins.append({"id": sid, "title": res.get("title", orch.get("title", sid)),
                   "mode": res.get("mode", "?"), "passed": orch.get("passed", gate.get("PASS")),
                   "rolls": orch.get("rolls", "?"), "seed": orch.get("final_seed", res.get("seed", "?")),
                   "gate": gate, "leak": res.get("leak"), "pbr": pbr,
+                  "painted": painted_str, "mid_regen": mid_regen,
                   "reasons": (orch.get("gate") or {}).get("reasons") or gate.get("reasons") or []})
 npass = sum(1 for s in skins if s["passed"]); n = len(skins)
 # cost annotation (dev-facing-model-cost-annotation-rule): sum rolls × per-roll model spend
@@ -66,10 +87,18 @@ def card(s):
            f'leak {s["leak"]} · {s["rolls"]} roll(s) · seed {s["seed"]}')
     pbr_link = (f' · <a class=pbrlink href="assets-{sid}/player-pbr.html" target=_blank>'
                 f'&#10024; dynamic lighting</a>') if s.get("pbr") else ''
+    # run-id line: fixed spot so two dashboard visits (before/after another agent regenerates
+    # this skin) are comparable at a glance — same identity fields, same position, every card.
+    midflag = (' <span class=midregen title="paint.png mtime is newer than orch.json — this card '
+               'may be showing a mid-regeneration or a manual roll not yet aggregated into orch.json">'
+               '&#9888; paint newer than orch — mid-regen/unaggregated</span>') if s.get("mid_regen") else ''
+    runid = (f'<div class=runid>gen12 · seed {s["seed"]} · roll {s["rolls"]}/{ROLLS_MAX} · '
+             f'painted {s["painted"]}{midflag}</div>')
     return f'''<section class=card id="c-{sid}" data-id="{sid}">
   <div class=chead><h3>{s["title"]} <span class=mode>{s["mode"]}</span>{pbr_link}</h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="{sid}">— unset —</button></div></div>
+  {runid}
   <div class=live><iframe src="assets-{sid}/player.html" loading=lazy title="{sid} player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="{sid}" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -246,6 +275,8 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .chead{{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}}
 .chead h3{{margin:0;font-size:17px}}.mode{{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px}}
 .pbrlink{{font:11px ui-monospace,monospace;color:#ffcf7a;text-decoration:none;border:1px solid #ffcf7a44;border-radius:5px;padding:1px 7px}}.pbrlink:hover{{border-color:#ffcf7a;background:#ffcf7a1a}}
+.runid{{font:11px ui-monospace,monospace;color:#7a8090;margin:-4px 0 12px}}
+.midregen{{color:#0a0604;background:#ffb454;border-radius:4px;padding:1px 6px;font-weight:700;margin-left:6px}}
 .hverdict{{display:flex;align-items:center;gap:8px}}.hlabel{{font:11px ui-monospace,monospace;color:#8a90a0}}
 .htoggle{{border:1px solid #ffffff26;background:#161a22;color:#9aa;border-radius:8px;padding:7px 16px;font:700 12px ui-monospace,monospace;cursor:pointer;min-width:120px}}
 .htoggle.hp{{background:#153;border-color:#3a7;color:#7fe}}.htoggle.hf{{background:#511;border-color:#a44;color:#f99}}
