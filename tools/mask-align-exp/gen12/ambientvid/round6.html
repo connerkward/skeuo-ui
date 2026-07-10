@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambient loops — round 6 (LTX cinemagraph: research their recipe, find the gap)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#111317; color:#e7e9ee; font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  header { padding:22px clamp(14px,4vw,40px); border-bottom:1px solid #262a33; }
+  h1 { margin:0 0 6px; font-size:clamp(18px,3.4vw,26px); }
+  .meta { color:#9aa2b1; font-size:13px; max-width:90ch; }
+  .meta code { background:#1c2029; padding:1px 5px; border-radius:4px; color:#c8d0df; }
+  .cost { margin-top:8px; font-size:12.5px; color:#8fe6f2; }
+  main { padding:clamp(14px,3vw,32px); display:flex; flex-direction:column; gap:34px; max-width:1400px; }
+  section > h2 { font-size:16px; margin:0 0 4px; color:#cfd6e4; }
+  section > .sub { color:#8b93a3; font-size:13px; margin:0 0 14px; max-width:90ch; }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+  figure { margin:0; background:#171a21; border:1px solid #262a33; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  figure.fail { border-color:#5a2731; }
+  figure.near { border-color:#4d5a2a; }
+  video, img { width:100%; height:auto; display:block; background:#0b0d11; object-fit:contain; }
+  figcaption { padding:9px 11px 12px; font-size:12.5px; }
+  .tag { display:inline-block; font-weight:700; font-size:11px; letter-spacing:.03em; padding:2px 7px; border-radius:5px; margin-bottom:5px; }
+  .t-fail { background:#3a1620; color:#ff9db0; }
+  .t-near { background:#2c3312; color:#d7e78a; }
+  .t-input { background:#22262f; color:#aeb6c6; }
+  .note { color:#9aa2b1; }
+  table { border-collapse:collapse; width:100%; font-size:12.5px; overflow-x:auto; display:block; }
+  th,td { border:1px solid #262a33; padding:6px 9px; text-align:left; vertical-align:top; }
+  th { background:#1a1e26; color:#cfd6e4; }
+  td code { background:#1c2029; padding:1px 4px; border-radius:3px; }
+  .bad { color:#ff9db0; } .good { color:#8fe6f2; } .warn { color:#d7e78a; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Round 6 — "their examples are so much better": research the exact recipe, diff it, find the real gap</h1>
+  <div class="meta">
+    Models: <code>fal-ai/ltx-2.3-22b/image-to-video/lora</code> + <code>Lightricks/LTX-2.3-22b-LoRA-Cinemagraph</code>.
+    Read the HF model card + the ComfyUI workflow the card links, diffed vs round 5, ran 2 corrected probes
+    (<code>video_stg_scale=0</code>, <code>use_multiscale=false</code>, 25 frames). Verdict bar = device identity:
+    ANY glyph morph / geometry drift / glow = FAIL.
+    <div class="cost">Round-6 spend ≈ <b>$0.052</b> (28.66 MP × $0.001805/MP, 2 probes @ 25f). All prior rounds ≈ $0.5 total.</div>
+  </div>
+</header>
+<main>
+
+  <section>
+    <h2>The two corrected probes (ping-pong loops)</h2>
+    <p class="sub">Both 25f (LoRA training length), STG global knob off, multiscale off. P1 also bumps output res to 768×1024 to test the "did low res cause the glyph smear" question.</p>
+    <div class="grid">
+      <figure class="near">
+        <video src="loop6-ltxP1-steam-768-25f.mp4" autoplay loop muted playsinline></video>
+        <figcaption><span class="tag t-near">P1 · NEAR-PASS · best LTX steam yet</span>
+          steam-porthole · <b>768×1024</b> · 25f. Device identity holds — all 5 button glyphs legible, gauges + gears + slider present, steam wisp top-right, no glow. Higher res preserved glyphs far better than the 512 runs. Caveat: global tonal drift + minor gear shimmer (device-region seam 9.74) → ping-pong masks the seam.</figcaption>
+      </figure>
+      <figure class="fail">
+        <video src="loop6-ltxP2-diablo-512-25f.mp4" autoplay loop muted playsinline></video>
+        <figcaption><span class="tag t-fail">P2 · HARD FAIL · unchanged</span>
+          diablo-gothic · 512×704 · 25f. By end the device is fully resynthesized — green/red <b>glowing</b> buttons, invented app-icon strip, a <b>cartoon creature</b> in the right screen. Killing STG + multiscale at training length did NOT rescue it. Confirms OOD, not a setting.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>P1 steam — input vs start vs end (the res test)</h2>
+    <p class="sub">f0 is faithful to the input (no frame-0 reinvention); f24 holds identity. This is what "correct usage + higher res on a detail-dense subject" looks like.</p>
+    <div class="grid">
+      <figure><img src="subject-steam-porthole-34.png" alt="input"><figcaption><span class="tag t-input">INPUT</span> gen12 paint (1152×1536, stylized — OOD for a photographic-scene LoRA)</figcaption></figure>
+      <figure><img src="frame6-P1-steam-start.png" alt="P1 start"><figcaption><span class="tag t-near">P1 f0</span> faithful to input</figcaption></figure>
+      <figure><img src="frame6-P1-steam-end.png" alt="P1 end"><figcaption><span class="tag t-near">P1 f24</span> glyphs legible, steam emerged, no glow</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>P2 diablo — start vs end (the OOD failure)</h2>
+    <p class="sub">The dark, low-contrast, stylized subject the base model has no prior to hold frozen. Corrected knobs did not stop the resynthesis.</p>
+    <div class="grid">
+      <figure><img src="subject-diablo-gothic-34.png" alt="input"><figcaption><span class="tag t-input">INPUT</span> gen12 paint (stylized dark UI — OOD)</figcaption></figure>
+      <figure><img src="frame6-P2-diablo-start.png" alt="P2 start"><figcaption><span class="tag t-fail">P2 f0</span> mostly intact, over-large plume</figcaption></figure>
+      <figure><img src="frame6-P2-diablo-end.png" alt="P2 end"><figcaption><span class="tag t-fail">P2 f24</span> glowing buttons + app-icon strip + cartoon in screen</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Settings diff — Lightricks (card / linked workflow) vs our round 5 vs round-6 fix</h2>
+    <p class="sub">Their 4 published examples are all <b>photographs</b> (beach+sunglasses, man+cow+clouds, woman+tears, motel neon). Ours are stylized dark single-object UI paintings — the dominant gap is input distribution, not a slider.</p>
+    <table>
+      <tr><th>setting</th><th>Lightricks</th><th>round 5 (ours)</th><th>on fal?</th><th>round-6</th></tr>
+      <tr><td>frames</td><td>25 (text)</td><td class="warn">A/B 121, C 25</td><td class="good">yes</td><td>25 both</td></tr>
+      <tr><td>resolution</td><td>512×704</td><td>512×704</td><td class="good">yes</td><td>P1 → 768×1024</td></tr>
+      <tr><td><b>STG</b></td><td>stg_v 1.0 <b>block 29</b></td><td class="bad">global 1.0 (≠ block-29)</td><td class="bad">NO — block target ComfyUI-only</td><td>→ <b>0</b></td></tr>
+      <tr><td><b>multiscale</b></td><td>none</td><td class="bad">true (fal default, unset)</td><td class="good">yes</td><td>→ <b>false</b></td></tr>
+      <tr><td>steps / CFG</td><td>30 / 4.0 (text)</td><td>30 / 4.0</td><td class="good">yes</td><td>keep</td></tr>
+      <tr><td>distill LoRA</td><td>0.2 / 0.5 (workflow)</td><td>0.2 / 0.5 (default)</td><td class="good">yes</td><td>keep (r5 caveat was wrong)</td></tr>
+      <tr><td>trigger / LoRA str</td><td>CINEMAGRAPH_MOTION / 0.7–3.0</td><td>present / 1.0</td><td class="good">yes</td><td>keep</td></tr>
+      <tr><td>sampler</td><td>RES4LYF ClownSampler + ManualSigmas 8-step</td><td>fal black box</td><td class="bad">NO — ComfyUI-only</td><td>n/a</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Bottom line</h2>
+    <p class="sub">
+      1. <b>Input distribution</b> is the real gap — their inputs are photographs, ours are stylized dark UI art (OOD).
+      2. <b>fal cannot express the full recipe</b> — STG block-29 targeting + the RES4LYF distilled sampler are ComfyUI-only; only a global STG knob + black-box sampler are exposed.
+      3. Corrected knobs (STG=0, multiscale=false) + higher res gave the <b>best steam of all rounds</b> but did nothing for the OOD diablo.
+      LTX+Cinemagraph LoRA is viable only on detail-dense subjects at ~25f/768×1024/STG=0/multiscale=false; use Seedance for dark stylized skins and keep the temporal-std hard-composite mask safety net regardless.
+    </p>
+  </section>
+
+</main>
+</body>
+</html>

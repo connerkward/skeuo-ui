@@ -68,6 +68,29 @@ wins relied on glow); if LTX is kept, run it **only at ~25 frames** and only on 
 extending via ping-pong/crossfade — never 121 frames; wire the round-3b temporal-std **hard-composite
 mask** as the standing safety net regardless of model.
 
+## Ambient video loops — round 6: research Lightricks' EXACT recipe, diff it, find the gap — DONE 2026-07-10
+
+User: *"their LTX cinemagraph examples are so much better — verify you're using it correctly or find bugs."*
+Read the HF model card + the ComfyUI workflow it links, diffed vs round 5, ran 2 corrected probes (≈$0.052).
+See `docs/experiments/2026-07-09-ambient-video-loops.md` round 6, `ambientvid/jobs6-ltx.json`, `ambientvid/round6.html`.
+
+Findings: (1) **The real gap is INPUT DISTRIBUTION** — the LoRA's 4 published examples are all *photographs*
+(beach+sunglasses, man+cow+clouds, woman+tears, motel neon); our subjects are stylized dark single-object
+UI paintings = out-of-distribution. That, not a slider, is why theirs look better. (2) **Two real round-5
+mis-settings, both fixed:** `video_stg_scale=1.0` was a *global* knob, NOT the card's block-29-targeted STG
+(which is ComfyUI-only) → set to **0**; and `use_multiscale` was left at fal-default **true** (low-res first
+pass drives glyph resynthesis) → set **false**. (3) **fal cannot express the full recipe** — STG block-29 +
+the card's RES4LYF distilled sampler graph are ComfyUI-only; only a global STG + black-box sampler are
+exposed. (4) Corrected probes: **P1 steam 768×1024/25f = best LTX steam of all rounds** (identity holds,
+glyphs legible), but **P2 diablo still HARD FAIL** (fully resynthesized — glowing buttons, app-icon strip,
+cartoon in screen), so the corrected knobs help detail-dense subjects and do nothing for OOD dark ones.
+(5) The card's linked workflow keeps the distill LoRA at 0.2/0.5 → round-5's "zero them" caveat was wrong.
+
+Recommendation unchanged: LTX+LoRA only on detail-dense subjects at ~25f/768×1024/STG=0/multiscale=false;
+Seedance for dark stylized skins (still needs the no-glow re-benchmark); temporal-std hard-composite mask
+as the standing safety net. To run the card's *exact* graph would need local ComfyUI-LTXVideo (22B dev ckpt
+≈46GB + distill LoRA + Gemma encoder) — a multi-GB stand-up, not started.
+
 ## Director-specified CSS chrome colors (`css` schema, sibling of `lighting`) — DONE 2026-07-10
 
 Added a `"css": {"track","fill","accent","glow"}` block to the theme-spec schema (documented

@@ -1,0 +1,74 @@
+{
+  "round": 6,
+  "date": "2026-07-10",
+  "seed": 1207,
+  "note": "Deep-dive on 'their LTX cinemagraph examples are so much better'. Researched Lightricks' actual published recipe (HF model card + the ComfyUI workflow the card links) and diffed it against round 5. Found the true gap is INPUT DISTRIBUTION (the LoRA's 4 published examples are all photographs; our inputs are stylized dark UI paintings = OOD) plus two fal-expressible mis-settings round 5 introduced. Ran 2 corrected probes.",
+  "research_sources": {
+    "model_card": "hf://Lightricks/LTX-2.3-22b-LoRA-Cinemagraph/README.md (read via HF MCP hf_fs cat, full 7175 bytes)",
+    "card_linked_comfyui_workflow": "https://github.com/Lightricks/ComfyUI-LTXVideo/blob/master/example_workflows/2.3/LTX-2.3_T2V_I2V_Single_Stage_Distilled_Full.json (downloaded + parsed, 44 nodes)",
+    "example_assets": "examples/{Glasses,Jump,Motel,Tears}.{jpeg,mp4} — 4 published i2v examples, all PHOTOGRAPHIC scenes",
+    "fal_schema": "get_model_schema fal-ai/ltx-2.3-22b/image-to-video/lora (full param list)"
+  },
+  "published_examples_are_photographic": {
+    "Glasses": "man on a beach; motion = ocean-wave reflection inside his sunglasses lenses",
+    "Jump": "man + cow in a field; motion = clouds drift in time-lapse across the sky",
+    "Tears": "woman in an airplane seat; motion = illustrated tear drops slide down her cheeks",
+    "Motel": "vintage MOTEL neon sign at night; motion = neon tubes flicker/pulse",
+    "assessment": "All 4 are real photographs of scenes the base model has a STRONG prior for (people, sky, beach, neon). The moving element is always a natural phenomenon cleanly separable from a photographic subject the model can hold frozen. NONE are stylized single-object UI art on a blank ground. Our gen12 subjects are exactly the opposite -> strongly out-of-distribution."
+  },
+  "card_workflow_key_facts": {
+    "base_checkpoint": "ltx-2.3-22b-dev.safetensors (the DISTILLED dev checkpoint), NOT the full non-distilled model",
+    "distill_lora": "ltx-2.3-22b-distilled-lora-384-1.1.safetensors applied by TWO LoraLoaderModelOnly nodes at scales 0.5 and 0.2 -- this is EXACTLY fal's distill_lora_second_pass_scale=0.5 / first_pass_scale=0.2 defaults",
+    "sampler": "RES4LYF ClownSampler_Beta + SamplerCustomAdvanced with a hand-authored ManualSigmas 9-value schedule (1.0,0.99375,0.9875,0.98125,0.975,0.909375,0.725,0.421875,0.0) = 8 denoise steps; LTXVScheduler 15 steps shift 2.05/0.95",
+    "guidance": "GuiderParameters VIDEO cfg=3 (card TEXT says 4.0; workflow uses 3), MultimodalGuider block '28'",
+    "image_conditioning_strength": "LTXVImgToVideoConditionOnly = 0.7 (not 1.0)",
+    "resolution_frames": "EmptyLTXVLatentVideo 960x544 x 121 frames @ 24fps (this saved state is the generic distilled AV example, T2V-bypassed with a tea-ceremony prompt -- NOT a curated cinemagraph preset)",
+    "conclusion": "The card's LINKED workflow is a distilled, RES4LYF-sampler, distill-LoRA-0.2/0.5 graph. fal's endpoint is a black box that does NOT replicate this sampler topology. So 'match their workflow exactly on fal' is impossible. The authoritative recipe is the card's TEXT 'Recommended Settings' block, which round 5 already mostly followed."
+  },
+  "round5_misconfigurations_found": [
+    {
+      "bug": "video_stg_scale = 1.0 GLOBAL is NOT the card's STG",
+      "detail": "Card: 'STG stg_v mode, scale 1.0, targeting block 29 for boundary preservation'. Block-29 targeting is a localized nudge available only via ComfyUI (STGGuiderAdvanced/RES4LYF). fal exposes only a GLOBAL video_stg_scale that perturbs ALL blocks. Setting it to 1.0 applies a blunt whole-network STG that pushes 'more focused/consistent video content' = stronger, more confident generation -> can INCREASE hallucination, the opposite of the card's boundary-preservation intent. Corrected: video_stg_scale=0.",
+      "impact": "medium",
+      "fal_can_express_card_recipe": false
+    },
+    {
+      "bug": "use_multiscale left at fal default true",
+      "detail": "Multiscale generates a small-scale video first, then uses it to guide the full-size generation. At 512x704 the low-res first pass destroys glyph/detail legibility, and the blurry guide encourages the model to INVENT plausible-but-wrong detail = the device-resynthesis failure. Corrected: use_multiscale=false.",
+      "impact": "medium (helps detail-dense subjects; does not save OOD subjects)",
+      "fal_can_express_card_recipe": "n/a (card workflow has no multiscale; fal default silently added it)"
+    },
+    {
+      "bug": "round 5 caveat 'should set distill_lora scales to 0 to match the card' was itself WRONG",
+      "detail": "The card's own linked workflow keeps the distill LoRA at 0.2/0.5 -- exactly fal's non-distilled-endpoint defaults. Leaving them at defaults was correct; zeroing them would have DIVERGED from Lightricks' path. Round 4's /distilled endpoint may have been closer to their real pipeline than round 5 assumed.",
+      "impact": "low (round 5 left them at defaults anyway)"
+    }
+  ],
+  "settings_diff_theirs_vs_ours": "See docs/experiments/2026-07-09-ambient-video-loops.md round 6 table.",
+  "endpoint": "fal-ai/ltx-2.3-22b/image-to-video/lora",
+  "lora_fal_cdn_url": "https://v3b.fal.media/files/b/0aa1b9f7/IlqVKpJrcI_vlY0Fbsm_L_ltx-2.3-22b-lora-cinemagraph-0.9.safetensors (reused round 4, HEAD 200, 201453416 bytes)",
+  "params_common_corrected": {"camera_lora": "static", "camera_lora_scale": 1, "num_frames": 25, "fps": 24, "num_inference_steps": 30, "video_cfg_scale": 4, "video_stg_scale": 0, "use_multiscale": false, "seed": 1207, "generate_audio": false, "enable_prompt_expansion": false, "lora_scale": 1},
+  "probes": [
+    {
+      "id": "P1", "skin": "steam-porthole", "hypothesis": "does higher output resolution (768x1024) + STG=0 + multiscale=false preserve the detail-dense metal device better than the 512 runs? (user asked whether low res caused the glyph smear)",
+      "request_id": "019f4da1-7d27-7331-91f5-0df9eb83f97c",
+      "video_url": "https://v3b.fal.media/files/b/0aa1bb39/4UwDxUGlm3E-bgy4njF6S_NmjnPlVS.mp4",
+      "video_size": "768x1024", "num_frames": 25, "duration_s": 1.04,
+      "verdict": "NEAR-PASS / BEST LTX STEAM OF ALL ROUNDS",
+      "what_frames_show": "f0 is faithful to the input (oval brass porthole, same gauges/gears/5-button row/slider/toggle -- model did NOT reinvent at frame 0). f24 holds device IDENTITY: all 5 button glyphs (play/pause, rewind, ff, repeat, list) legible, both pressure gauges present, gear cluster present, slider present; a white steam wisp emerges top-right as requested, no glow. Higher res clearly preserved glyphs better than the 512 runs. Caveat: global tonal drift + minor gear-cluster/emblem shimmer over 25 frames (device-region seam 9.74, plume masked), so it is not a CLEAN freeze -- ping-pong loop masks the seam.",
+      "seam_full": 10.42, "seam_device_region": 9.74
+    },
+    {
+      "id": "P2", "skin": "diablo-gothic", "hypothesis": "does killing global-STG + multiscale at training length (25f) stop the round-5 device resynthesis on the dark OOD subject?",
+      "request_id": "019f4da1-95bb-71c3-b8be-367540b2bb4a",
+      "video_url": "https://v3b.fal.media/files/b/0aa1bb45/YQLLRHiD8woa626-LK6zD_oLRxYUZS.mp4",
+      "video_size": "512x704", "num_frames": 25, "duration_s": 1.04,
+      "verdict": "HARD FAIL (unchanged)",
+      "what_frames_show": "f0 mostly intact (over-large smoke plume already). By f24 the device is fully RESYNTHESIZED: control buttons become bright green/yellow GLOWING icons (banned emissive), the two dark speaker wells become bright RED glowing buttons, an invented colorful app-icon strip appears along the mid-band, and a CARTOON CREATURE (green/red, Mario-ish) is painted into the right screen. Killing STG + multiscale + running at 25f did NOT rescue diablo. Confirms the failure is input-distribution (dark stylized UI art is OOD), not a fal setting.",
+      "seam_full": 21.82
+    }
+  ],
+  "central_finding": "Round 5 was using the LoRA ~correctly per the card's TEXT recipe, with two real fal-expressible mis-settings (global STG=1.0 that is NOT the card's block-29 STG; multiscale left on). Correcting them + bumping resolution produced the BEST steam result yet (P1) but did NOTHING for the OOD dark subject (P2 still fully resynthesized). The dominant gap is not a setting -- it is that our stylized dark single-object UI paintings are out-of-distribution for a LoRA whose 4 published examples are all photographs of real scenes. fal CANNOT express the card's full recipe (STG block-29 targeting + the RES4LYF distilled sampler graph are ComfyUI-only), but the missing pieces are boundary-preservation nudges, not the thing that would fix OOD resynthesis.",
+  "cost_estimate": "P1 768x1024=0.786MP/frame x25 = 19.66MP; P2 512x704=0.36MP/frame x25 = 9.0MP. Total 28.66MP x $0.001805/MP = $0.052. Under the $0.5 probe cap.",
+  "recommendation": "For robust cross-skin ambient loops, LTX+Cinemagraph LoRA is viable ONLY on detail-dense higher-contrast subjects, at ~25 frames, video_stg_scale=0, use_multiscale=false, and higher output res (768x1024). It is NOT usable on dark/low-detail stylized UI art (diablo class) via any fal-expressible setting -- use Seedance 1.0 pro fast there (re-benchmarked under the no-glow brief) and/or the temporal-std hard-composite mask safety net regardless of model."
+}

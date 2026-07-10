@@ -517,3 +517,83 @@ subjects, zero glow) is genuinely harder and was not what Seedance won on.
 - Jobs/params/prompts/URLs/verdicts: `ambientvid/jobs5-ltx.json`.
 - Correct-usage reference (trigger word, scale, res, steps, CFG/STG) captured in `jobs5-ltx.json`
   `card_recommended_usage`.
+
+---
+
+## Round 6 (2026-07-10) — deep-dive: "their examples are so much better" — research their exact recipe, diff it, find the real gap
+
+User: *"their LTX cinemagraph examples online are so much better — verify you are using it correctly or find bugs."* Round 6 reads Lightricks' **actual published recipe** (HF model card + the ComfyUI workflow the card links), diffs it against round 5, and runs 2 corrected probes. Model: `fal-ai/ltx-2.3-22b/image-to-video/lora` + `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph`; round-6 spend **≈ $0.052** (2 probes, 25f).
+
+### What Lightricks actually publishes (and what their examples ARE)
+
+The LoRA ships **4 example i2v clips**, and every one is a **photograph of a real scene**:
+
+| example | scene | the one moving element |
+|---|---|---|
+| Glasses | man on a beach | ocean-wave reflection inside his sunglasses lenses |
+| Jump | man + cow in a field | clouds drift in fast time-lapse across the sky |
+| Tears | woman in an airplane seat | illustrated tear drops slide down her cheeks |
+| Motel | vintage neon MOTEL sign at night | neon tubes flicker/pulse |
+
+All four are scenes the **base model has a strong prior for** (people, sky, beach, neon), with a **natural-phenomenon** motion element cleanly separable from a photographic subject the model can hold frozen. The card's Intended-Use is explicit: trained on **"no moving people," locked-off tripod photographic footage**; out-of-scope = "complex dynamic scenes, multiple moving subjects." **None** are stylized single-object UI art on a blank ground.
+
+### The card-linked ComfyUI workflow (parsed, 44 nodes) — and why fal can't reproduce it
+
+The card's Usage step 4 links `LTX-2.3_T2V_I2V_Single_Stage_Distilled_Full.json`. Parsing it:
+
+- **Base = the DISTILLED `ltx-2.3-22b-dev.safetensors`** checkpoint, **plus a distill LoRA** (`...distilled-lora-384-1.1`) applied by two nodes at **0.5 and 0.2** — i.e. *exactly* fal's `distill_lora_second_pass_scale=0.5` / `first_pass_scale=0.2` defaults. **So Lightricks' own recommended path IS distilled + distill-LoRA-0.2/0.5.** Round 5's caveat ("should zero the distill scales to match the card") was **backwards** — the card keeps them at 0.2/0.5; round 4's `/distilled` endpoint was arguably *closer* to their pipeline than round 5 assumed.
+- **Sampler = RES4LYF `ClownSampler_Beta` + a hand-authored `ManualSigmas` 8-step schedule** (`1.0, 0.99375, … 0.421875, 0.0`), `LTXVScheduler` 15-step shift 2.05/0.95. This is a specific sampler topology fal's endpoint does **not** expose.
+- **Image-conditioning strength = 0.7** (node `LTXVImgToVideoConditionOnly`), not 1.0.
+- Guider `cfg=3` for video (card *text* says 4.0), `MultimodalGuider` block "28". (The saved state is the generic T2V-bypassed tea-ceremony example, not a curated cinemagraph preset, so its 960×544/121f resolution is not the cinemagraph recommendation — the card *text* "512×704, 25 frames" is.)
+
+**Conclusion: "match their workflow exactly on fal" is impossible** — the RES4LYF sampler graph and the STG block-29 target are ComfyUI-only. The authoritative fal-reachable recipe is the card's **text** "Recommended Settings," which round 5 already mostly followed.
+
+### Settings diff — Lightricks (card text / linked workflow) vs our round 5 vs round-6 correction
+
+| setting | Lightricks (card / workflow) | round 5 (ours) | expressible on fal? | round-6 correction |
+|---|---|---|---|---|
+| trigger word | `CINEMAGRAPH_MOTION` lead | ✓ present | yes | ✓ keep |
+| LoRA strength | 0.7–3.0 (0.7–1.0 conservative) | 1.0 | yes | ✓ keep 1.0 |
+| resolution | 512×704 (text) | 512×704 | yes | **P1 → 768×1024** (test) |
+| frames | 25 (text) | **A/B 121**, C 25 | yes | **25 both probes** |
+| steps | 30 (text) / 8 (workflow sigmas) | 30 | yes (30) | ✓ keep 30 |
+| CFG | 4.0 (text) / 3 (workflow) | 4.0 | yes | ✓ keep 4.0 |
+| **STG** | **`stg_v` 1.0 targeting BLOCK 29** | `video_stg_scale=1.0` **GLOBAL** | **NO — block target is ComfyUI-only** | **→ 0** (global 1.0 ≠ their block-29 nudge) |
+| **multiscale** | none (not in workflow) | **true** (fal default, unset) | yes | **→ false** |
+| distill LoRA | 0.2 / 0.5 (workflow) | 0.2 / 0.5 (fal default) | yes | ✓ keep defaults (round-5 caveat was wrong) |
+| base model | distilled dev + distill-LoRA | non-distilled endpoint | partial | (endpoint choice ~moot; distill LoRA applied either way) |
+| image cond. strength | 0.7 (workflow) | 1.0 (default) | yes (`image_strength`) | left 1.0 (stronger anchor is desirable here) |
+| camera | static, no cam words | `camera_lora=static` | yes | ✓ keep |
+| negative | short, no "static" | expanded, "static" dropped | yes | ✓ keep |
+
+### Bugs / gaps found, ranked by likely impact
+
+1. **INPUT DISTRIBUTION (highest — and not a setting).** The LoRA's 4 examples are photographs of real scenes; our subjects are **stylized, dark, glyph-dense digital UI paintings of a single centered object on a blank ground, downscaled hard from 1152×1536**. The base model has no strong prior to "hold" our invented glyphs frozen, so any residual generation pressure reinvents them. This is the gap the user sensed ("theirs are so much better") — their inputs are *in*-distribution; ours are not.
+2. **`video_stg_scale=1.0` GLOBAL is NOT the card's STG (medium; fal cannot express the real thing).** The card's STG is a **block-29-targeted** boundary-preservation nudge (ComfyUI/RES4LYF only). fal exposes only a **global** `video_stg_scale` that perturbs the whole network toward "more focused/consistent content" = *stronger, more confident generation* — the opposite of boundary preservation. Round 5 set it to 1.0; corrected to **0**.
+3. **`use_multiscale=true` (medium).** fal default, left unset in round 5. The low-res first pass at 512×704 destroys glyph legibility, then "guides" the full-res pass into inventing plausible-but-wrong detail — a direct driver of the device-resynthesis. Corrected to **false**.
+4. **Round-5's own "zero the distill scales" caveat was wrong (low).** The card's workflow uses 0.2/0.5; leaving fal's defaults was correct.
+
+### Corrected probes (2, both 25f, `video_stg_scale=0`, `use_multiscale=false`; direct full-res frame inspection, start vs end)
+
+| probe | config | verdict | what the frames show |
+|---|---|---|---|
+| **P1 steam** | **768×1024**, 25f | **NEAR-PASS — best LTX steam of all rounds** | f0 faithful to input (same oval brass porthole, gauges, gears, 5-button row, slider — no frame-0 reinvention). f24 holds device **identity**: all 5 button glyphs (play/pause, rewind, ff, repeat, list) legible, both gauges + gear cluster + slider present; white steam wisp emerges top-right, **no glow**. Higher res clearly preserved glyphs better than the 512 runs. Caveat: global **tonal drift + minor gear/emblem shimmer** over 25 frames (device-region seam 9.74) → not a *clean* freeze; ping-pong loop masks it. |
+| **P2 diablo** | 512×704, 25f | **HARD FAIL (unchanged)** | f0 mostly intact (over-large plume). By f24 the device is **fully resynthesized**: buttons become bright green/yellow **glowing** icons, the two speaker wells become **red glowing** buttons, an invented colorful app-icon strip appears, and a **cartoon creature** is painted into the right screen. Killing STG + multiscale + 25f did **not** rescue diablo — confirms the failure is **OOD**, not a fal setting. |
+
+### Answers to the brief
+
+- **Are we using it correctly?** *Mostly yes* per the card's text recipe — with **two real fal mis-settings** now fixed (global STG=1.0 ≠ block-29 STG; multiscale on). Fixing them gave the best steam yet but changed nothing for diablo.
+- **Can fal express the correct recipe at all?** **No, not fully.** STG **block-29 targeting** and the **RES4LYF distilled sampler graph** are ComfyUI-only; fal offers a global STG knob and a black-box sampler. The missing pieces are boundary-preservation *nudges*, not the lever that would fix OOD resynthesis. No other host (Replicate/official API) was found exposing full ComfyUI-grade STG-block control for this LoRA; the only way to run the card's exact graph is **local ComfyUI-LTXVideo** (the 22B dev checkpoint ≈ 46 GB + distill LoRA + Gemma text encoder — a multi-GB stand-up, not started this round).
+- **Are our painted UIs OOD?** **Yes, materially.** Their 4 examples are photographs of real scenes; ours are stylized dark single-object UI art. That distribution gap — not a slider — is the dominant reason their outputs look better than ours.
+
+### Bottom line
+
+LTX + Cinemagraph LoRA is viable **only** on detail-dense, higher-contrast subjects, at **~25 frames, `video_stg_scale=0`, `use_multiscale=false`, higher output res (768×1024)** — that config produced the cleanest steam of all six rounds. It is **not** usable on dark/low-detail stylized UI art (diablo class) via any fal-expressible setting. Keep **Seedance 1.0 pro fast** for cross-skin identity (re-benchmark under the no-glow brief), and keep the **temporal-std hard-composite mask** safety net regardless of model.
+
+### Artifacts (round 6)
+
+- Raw: `ambientvid/raw6-ltxP1-steam-768-25f.mp4`, `ambientvid/raw6-ltxP2-diablo-512-25f.mp4`.
+- Ping-pong loops: `ambientvid/loop6-ltxP1-steam-768-25f.{mp4,webm}`, `ambientvid/loop6-ltxP2-diablo-512-25f.{mp4,webm}`.
+- Start/end stills: `ambientvid/frame6-{P1-steam,P2-diablo}-{start,end}.png`.
+- Research + params + verdicts: `ambientvid/jobs6-ltx.json`. Review page: `ambientvid/round6.html`.
+- Cost: **≈ $0.052** (28.66 MP × $0.001805/MP; models: `fal-ai/ltx-2.3-22b/image-to-video/lora` + `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph`).
