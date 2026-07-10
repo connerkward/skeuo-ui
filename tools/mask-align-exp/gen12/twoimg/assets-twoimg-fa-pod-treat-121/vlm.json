@@ -1,0 +1,18 @@
+{
+  "tag": "fa-pod-treat-121",
+  "theme": "fa-pod",
+  "arm": "treat",
+  "seed": 121,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause: NONE\nprev: N/A\nnext: N/A\nrepeat: N/A\nqueue: NONE\nvol: NONE\nseek: NONE\nshuffle: NONE\nvisualizer: NONE\nalbum_art: NONE\n\nvol (cavity): FILLED\nseek (cavity): FILLED\nshuffle (cavity): FILLED\n\nVERDICT: FAIL",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-playpause.png",
+    "crop-queue.png"
+  ],
+  "ts": "2026-07-10T12:20:00"
+}

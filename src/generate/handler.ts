@@ -37,9 +37,10 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   //   • style          → the runtime [data-skin] palette/sprite id (a separate CSS
   //     concern). A donor named in the request, or the Director's closest-fit, just
   //     picks the palette; it does NOT force the paint material.
-  // With an OpenAI key, the Director gives a rich material + a closest-fit palette.
-  // With NO key, the material is the raw prompt text itself (no hard-forced look),
-  // and the palette defaults to a donor (the heuristic, or the requested style).
+  // With a Director key (Gemini preferred, OpenAI fallback), the Director gives a
+  // rich material + a closest-fit palette. With NO key, the material is the raw
+  // prompt text itself (no hard-forced look), and the palette defaults to a donor
+  // (the heuristic, or the requested style).
   let style: DonorStyle;
   let materialPrompt: string;
   let font = "Cinzel";                       // logomark title font (Director pick)
@@ -47,8 +48,9 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   // override with the Director's when the LLM runs (never the raw "prompt · model")
   let name = titleFromPrompt(prompt);
   let blurb = blurbFromPrompt(prompt);
-  if (deps.openaiKey) {
-    const derived = await deriveMaterial(deps.openaiKey, prompt, body.avoidFonts);
+  const directorKeys = { geminiKey: deps.geminiKey, openaiKey: deps.openaiKey };
+  if (deps.geminiKey || deps.openaiKey) {
+    const derived = await deriveMaterial(directorKeys, prompt, body.avoidFonts);
     materialPrompt = derived.materialPrompt;   // paint look — prompt-driven, never a canned donor
     font = derived.font; name = derived.name; blurb = derived.blurb;
     // an explicitly-requested donor still picks the PALETTE; else the Director's fit
@@ -84,8 +86,8 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
     // body.regions = HUMAN-authored (wizard drag / Template Studio) → pipeline uses them as-is;
     // Director-derived regions below are messy LLM output → pipeline repacks them.
     const authored = !!regions;
-    if (!regions && deps.openaiKey) {
-      regions = (await deriveLayout(deps.openaiKey, prompt)) ?? undefined;
+    if (!regions && (deps.geminiKey || deps.openaiKey)) {
+      regions = (await deriveLayout(directorKeys, prompt)) ?? undefined;
     }
     const r = await generateSkin(deps, { id, variant, style, materialPrompt, brief: prompt, refImageUrls: refUrls, model, envelope, envelopeUrl, regions, authored, seed: body.seed, maskPanel: body.maskPanel === true });
     return {

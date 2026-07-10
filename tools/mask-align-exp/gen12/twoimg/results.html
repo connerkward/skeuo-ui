@@ -1,0 +1,350 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>twoimg — multi-image conditioning vs single-canvas guide bleed (gen12)</title>
+<style>
+  body { background:#101014; color:#ddd; font:14px/1.5 -apple-system, system-ui, sans-serif; margin:0; padding:16px clamp(8px,3vw,40px); }
+  h1 { font-size:clamp(18px,2.5vw,26px); margin:.2em 0; }
+  h2 { font-size:clamp(16px,2vw,20px); color:#8cf; margin:28px 0 4px; border-top:1px solid #2a2a30; padding-top:18px; }
+  .anno { color:#9a9; font-size:12px; border:1px solid #2a2a30; border-radius:8px; padding:8px 12px; background:#16161c; margin:10px 0 18px; max-width:100ch; }
+  .anno.small { padding:6px 10px; margin:4px 0 14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:18px; }
+  .cell { background:#16161c; border:1px solid #2a2a30; border-radius:10px; padding:12px; min-width:0; }
+  .cell h3 { margin:.1em 0 .5em; font-size:14px; color:#8cf; }
+  .cell h3 .tag { color:#667; font-size:11px; font-weight:normal; }
+  img.paint { width:100%; height:auto; border-radius:6px; display:block; max-width:100%; }
+  .crops { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .crops figure { flex:1 1 110px; margin:0; }
+  .crops img { width:100%; height:auto; border-radius:4px; display:block; border:1px solid #333; }
+  figcaption { font-size:11px; color:#889; }
+  .mini { font-size:11px; margin-top:6px; word-break:break-word; }
+  a { color:#7ab8ff; }
+  code { background:#20202a; padding:1px 5px; border-radius:4px; }
+  table { border-collapse:collapse; margin-top:8px; width:100%; }
+  td, th { border:1px solid #2a2a30; padding:3px 8px; font-size:12px; text-align:left; }
+  .ok { color:#7f7; } .bad { color:#f66; font-weight:bold; } .warn { color:#fc6; font-weight:bold; }
+  .verdict { background:#1a2016; border:1px solid #3a4a30; border-radius:10px; padding:14px 18px; margin:20px 0; max-width:100ch; }
+  .tblwrap { overflow-x:auto; }
+  .vlm { margin-top:8px; font-size:12px; border-top:1px dashed #333; padding-top:6px; }
+  .vlm pre { white-space:pre-wrap; font-size:11px; color:#aab; max-height:220px; overflow:auto; }
+  details.bleedtbl { margin-top:6px; font-size:11px; }
+</style></head><body>
+<h1>twoimg — separate the layout from the canvas (multi-image conditioning)</h1>
+<div class='anno'><b>Hypothesis:</b> guide-colour bleed happens because colour-coded guide shapes are
+physically painted INTO the edit-target canvas — sending the layout as a SECOND reference image
+with a guide-pixel-FREE clean target makes bleed impossible by construction (verified: the clean
+scaffold contains zero pixels within RGB-distance 60 of any guide key, checked programmatically
+before any generation ran).<br>
+<b>Arms</b> (both use SOLID FILLED guide shapes, the abshape-verdict 2026-07-09 winner):
+CONTROL = current single joint canvas (left=guided blueprint, right=black mask target), 1 input
+image. TREAT = image 1 (edit target) is a CLEAN scaffold with the SAME geometry and ZERO guide-
+coloured pixels; image 2 is the SAME guided blueprint as CONTROL, sent purely as a layout
+reference the prompt says is never painted.<br>
+<b>Model:</b> gemini-3-pro-image-preview via Vertex AI direct (project muser-2605300220, global),
+4K, 5:4 — same underlying model the fal path proxies, chosen because it's the already-proven
+~20%-cheaper path (gen12/TODO.md) and both fal's <code>image_urls: array&lt;string&gt;</code> schema
+AND Vertex's multi-<code>inline_data</code>-part <code>generateContent</code> shape confirmed
+multi-image support before this ran (see genskin_twoimg.py docstring).<br>
+<b>Scoring:</b> ../extract12.py pass 1 (no matte) for the shared gates (leak/emptiness/controls/
+region-placement) PLUS a bespoke <b>perimeter-band hue-distance bleed-ring metric</b> (this
+script's own — the shared leak gate under-counts thin rings/bezels per the abshape verdict, so
+this experiment measures its actual target defect directly).<br>
+<b>SOTA eye review</b> (this agent is Sonnet, sub-SOTA — per sota-eye-review-rule the final visual
+call is routed through a SOTA vision model): 8 calls to <code>google/gemini-2.5-pro</code>
+via fal <code>openrouter/router/vision</code>, one per generation, each sent the downscaled full
+paint + full-res vol/seek/shuffle/playpause/queue crops with guide-colour NAMES stated, asked for
+a per-control residue call (NONE/RING/FLOODED) + emptiness + one VERDICT line.<br>
+<b>Cost:</b> 8 gens × ~$0.24/4K image ≈ <b>$1.92</b> generation +
+8 VLM calls × ~$0.02 ≈ <b>$0.16</b> review ≈
+<b>$2.08 total</b> (extraction/scoring local, $0).</div>
+
+<div class='verdict'><b>Verdict:</b><br>HYPOTHESIS FALSIFIED — two-image conditioning does NOT eliminate guide-colour bleed, and it costs layout adherence.<br><br>Bleed axis (the thing the treatment was supposed to make impossible): guide-hue residue appears in BOTH arms at similar-or-worse rates in TREAT. Hand-verified at full res + SOTA-eye (gemini-2.5-pro) per-control calls: CONTROL shows guide-hue echo in 2/4 gens (fa-pod-134: button ICONS painted in their exact guide hues — red play, magenta next, orange repeat, yellow queue; wc-goldshield-134: prev/next/repeat/queue button gems FLOODED green/pink/green/red = their keys). TREAT shows residue in 3/4 gens (fa-pod-134: VIOLET-PURPLE ring around the vol socket + the seek groove FLOODED deep-purple — vol/seek&#x27;s exact guide keys, transferred from image 2 even though the edit canvas contained ZERO guide pixels (verified programmatically pre-run); wc-treat-121: shuffle RING). The bleed pathway is SEMANTIC — the model reads the reference image&#x27;s colours and paints them as design elements — not just pixel-tracing of the canvas, so removing guide pixels from the canvas does not remove the defect. <br><br>Layout-adherence cost (clear and consistent): CONTROL follows the locked template closely in 4/4 (rows/positions as authored). TREAT drifts in 4/4 — fa-pod-treat-121 collapses the 5-button row into a 2x2 cluster and moves the shuffle slot; wc-treat-121 and wc-treat-134 fully rearrange (screens moved to bottom / playpause pulled out of the row); fa-pod-treat-134 fails the region-misplaced gate (visualizer). TREAT also baked MORE parts into must-be-empty cavities (VLM cavity calls: FILLED on vol/seek/shuffle in all 4 treat gens vs 1/4 control — e.g. a thumb baked into fa-pod-treat-121&#x27;s seek groove; note the deterministic bright-interior gate passed these because mid-tone/dark fills sit under its &gt;150 brightness threshold, so the VLM caught a real gap in the automated gate) and introduced text labels (OFF/ON on fa-pod-treat-121&#x27;s strip switches) — both explicit prompt violations.<br><br>Metric caveat recorded for honesty: the bespoke perimeter-band hue metric false-positives on wc-goldshield&#x27;s queue in BOTH arms (8-39%) because the gold body hue (~42deg) sits inside the 16-step hue tolerance of the YELLOW guide key (~60deg) — those numbers measure the body material, not residue; same-theme cross-arm deltas are still usable, absolute values are not.<br><br>Recommendation: KEEP the single-canvas solid-guide blueprint (abshape verdict stands). Do not adopt multi-image conditioning for layout. If bleed reduction is pursued further, the lever is prompt/colour-selection (e.g. avoid keys hue-adjacent to the theme palette, strengthen the no-echo clause for ICONS specifically — icon fills were the most common echo site) rather than conditioning topology. n=4/arm: directional, not conclusive.</div>
+
+
+<h2>Theme — <code>fa-pod</code></h2>
+<div class='anno small'>bright translucent cyan “Frutiger Aero” water pod (material_is_dark=False).</div>
+<div class='tblwrap'><table>
+<tr><th>arm</th><th>seed</th><th>leak (genskin gate, worst)</th><th>bleed-ring (this exp's metric, worst)</th><th>emptiness</th><th>controls</th><th>seek cov</th></tr>
+<tr><td>control</td><td>121</td><td class='ok'>0.0000%</td><td class='ok'>visualizer 0.004%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.039</td></tr><tr><td>treat</td><td>121</td><td class='ok'>0.0000%</td><td class='ok'>visualizer 0.008%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.039</td></tr><tr><td>control</td><td>134</td><td class='ok'>0.0347%</td><td class='ok'>playpause 0.000%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.039</td></tr><tr><td>treat</td><td>134</td><td class='ok'>0.0002%</td><td class='ok'>shuffle 0.190%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.038</td></tr>
+</table></div>
+<div class='grid'>
+  <div class='cell'>
+    <h3>CONTROL — single canvas, guides baked in · seed 121 <span class='tag'>fa-pod-control-121</span></h3>
+    <a href='assets-twoimg-fa-pod-control-121/paint.png'><img class='paint' src='assets-twoimg-fa-pod-control-121/paint.png' alt='paint fa-pod-control-121'></a>
+    <div class='mini'><a href='assets-twoimg-fa-pod-control-121/blueprint-guided.png'>blueprint (guides baked in, sole image)</a> · <a href='assets-twoimg-fa-pod-control-121/mask.png'>mask</a>
+       · <a href='assets-twoimg-fa-pod-control-121/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-fa-pod-control-121/crop-playpause.png'><img src='assets-twoimg-fa-pod-control-121/crop-playpause.png' alt='playpause crop fa-pod-control-121'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-prev.png'><img src='assets-twoimg-fa-pod-control-121/crop-prev.png' alt='prev crop fa-pod-control-121'></a><figcaption>prev — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-next.png'><img src='assets-twoimg-fa-pod-control-121/crop-next.png' alt='next crop fa-pod-control-121'></a><figcaption>next — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-repeat.png'><img src='assets-twoimg-fa-pod-control-121/crop-repeat.png' alt='repeat crop fa-pod-control-121'></a><figcaption>repeat — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-queue.png'><img src='assets-twoimg-fa-pod-control-121/crop-queue.png' alt='queue crop fa-pod-control-121'></a><figcaption>queue — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-vol.png'><img src='assets-twoimg-fa-pod-control-121/crop-vol.png' alt='vol crop fa-pod-control-121'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-seek.png'><img src='assets-twoimg-fa-pod-control-121/crop-seek.png' alt='seek crop fa-pod-control-121'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-shuffle.png'><img src='assets-twoimg-fa-pod-control-121/crop-shuffle.png' alt='shuffle crop fa-pod-control-121'></a><figcaption>shuffle — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-visualizer.png'><img src='assets-twoimg-fa-pod-control-121/crop-visualizer.png' alt='visualizer crop fa-pod-control-121'></a><figcaption>visualizer — bleed-ring 0.0038%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-121/crop-album_art.png'><img src='assets-twoimg-fa-pod-control-121/crop-album_art.png' alt='album_art crop fa-pod-control-121'></a><figcaption>album_art — bleed-ring 0.0%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0000%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='ok'><b>visualizer 0.004%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='ok'>0.0%</td></tr><tr><td>next</td><td class='ok'>0.0%</td></tr><tr><td>repeat</td><td class='ok'>0.0%</td></tr><tr><td>queue</td><td class='ok'>0.0%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='ok'>0.0%</td></tr><tr><td>visualizer</td><td class='ok'>0.0038%</td></tr><tr><td>album_art</td><td class='ok'>0.0%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='ok'>PASS</span><details><summary>raw</summary><pre>playpause: NONE
+prev: NONE
+next: NONE
+repeat: NONE
+queue: NONE
+vol: NONE
+seek: NONE
+shuffle: NONE
+visualizer: NONE
+album_art: NONE
+vol cavity: EMPTY
+seek cavity: EMPTY
+shuffle cavity: EMPTY
+VERDICT: PASS</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREAT — clean canvas + 2nd reference image · seed 121 <span class='tag'>fa-pod-treat-121</span></h3>
+    <a href='assets-twoimg-fa-pod-treat-121/paint.png'><img class='paint' src='assets-twoimg-fa-pod-treat-121/paint.png' alt='paint fa-pod-treat-121'></a>
+    <div class='mini'><a href='assets-twoimg-fa-pod-treat-121/blueprint-clean.png'>clean scaffold (edit target)</a> · <a href='assets-twoimg-fa-pod-treat-121/blueprint-guided.png'>guided (reference image 2)</a> · <a href='assets-twoimg-fa-pod-treat-121/mask.png'>mask</a>
+       · <a href='assets-twoimg-fa-pod-treat-121/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-fa-pod-treat-121/crop-playpause.png'><img src='assets-twoimg-fa-pod-treat-121/crop-playpause.png' alt='playpause crop fa-pod-treat-121'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-prev.png'><img src='assets-twoimg-fa-pod-treat-121/crop-prev.png' alt='prev crop fa-pod-treat-121'></a><figcaption>prev — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-next.png'><img src='assets-twoimg-fa-pod-treat-121/crop-next.png' alt='next crop fa-pod-treat-121'></a><figcaption>next — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-repeat.png'><img src='assets-twoimg-fa-pod-treat-121/crop-repeat.png' alt='repeat crop fa-pod-treat-121'></a><figcaption>repeat — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-queue.png'><img src='assets-twoimg-fa-pod-treat-121/crop-queue.png' alt='queue crop fa-pod-treat-121'></a><figcaption>queue — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-vol.png'><img src='assets-twoimg-fa-pod-treat-121/crop-vol.png' alt='vol crop fa-pod-treat-121'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-seek.png'><img src='assets-twoimg-fa-pod-treat-121/crop-seek.png' alt='seek crop fa-pod-treat-121'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-shuffle.png'><img src='assets-twoimg-fa-pod-treat-121/crop-shuffle.png' alt='shuffle crop fa-pod-treat-121'></a><figcaption>shuffle — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-visualizer.png'><img src='assets-twoimg-fa-pod-treat-121/crop-visualizer.png' alt='visualizer crop fa-pod-treat-121'></a><figcaption>visualizer — bleed-ring 0.0077%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-121/crop-album_art.png'><img src='assets-twoimg-fa-pod-treat-121/crop-album_art.png' alt='album_art crop fa-pod-treat-121'></a><figcaption>album_art — bleed-ring 0.0%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0000%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='ok'><b>visualizer 0.008%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='ok'>0.0%</td></tr><tr><td>next</td><td class='ok'>0.0%</td></tr><tr><td>repeat</td><td class='ok'>0.0%</td></tr><tr><td>queue</td><td class='ok'>0.0%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='ok'>0.0%</td></tr><tr><td>visualizer</td><td class='ok'>0.0077%</td></tr><tr><td>album_art</td><td class='ok'>0.0%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>playpause: NONE
+prev: N/A
+next: N/A
+repeat: N/A
+queue: NONE
+vol: NONE
+seek: NONE
+shuffle: NONE
+visualizer: NONE
+album_art: NONE
+
+vol (cavity): FILLED
+seek (cavity): FILLED
+shuffle (cavity): FILLED
+
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>CONTROL — single canvas, guides baked in · seed 134 <span class='tag'>fa-pod-control-134</span></h3>
+    <a href='assets-twoimg-fa-pod-control-134/paint.png'><img class='paint' src='assets-twoimg-fa-pod-control-134/paint.png' alt='paint fa-pod-control-134'></a>
+    <div class='mini'><a href='assets-twoimg-fa-pod-control-134/blueprint-guided.png'>blueprint (guides baked in, sole image)</a> · <a href='assets-twoimg-fa-pod-control-134/mask.png'>mask</a>
+       · <a href='assets-twoimg-fa-pod-control-134/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-fa-pod-control-134/crop-playpause.png'><img src='assets-twoimg-fa-pod-control-134/crop-playpause.png' alt='playpause crop fa-pod-control-134'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-prev.png'><img src='assets-twoimg-fa-pod-control-134/crop-prev.png' alt='prev crop fa-pod-control-134'></a><figcaption>prev — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-next.png'><img src='assets-twoimg-fa-pod-control-134/crop-next.png' alt='next crop fa-pod-control-134'></a><figcaption>next — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-repeat.png'><img src='assets-twoimg-fa-pod-control-134/crop-repeat.png' alt='repeat crop fa-pod-control-134'></a><figcaption>repeat — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-queue.png'><img src='assets-twoimg-fa-pod-control-134/crop-queue.png' alt='queue crop fa-pod-control-134'></a><figcaption>queue — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-vol.png'><img src='assets-twoimg-fa-pod-control-134/crop-vol.png' alt='vol crop fa-pod-control-134'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-seek.png'><img src='assets-twoimg-fa-pod-control-134/crop-seek.png' alt='seek crop fa-pod-control-134'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-shuffle.png'><img src='assets-twoimg-fa-pod-control-134/crop-shuffle.png' alt='shuffle crop fa-pod-control-134'></a><figcaption>shuffle — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-visualizer.png'><img src='assets-twoimg-fa-pod-control-134/crop-visualizer.png' alt='visualizer crop fa-pod-control-134'></a><figcaption>visualizer — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-control-134/crop-album_art.png'><img src='assets-twoimg-fa-pod-control-134/crop-album_art.png' alt='album_art crop fa-pod-control-134'></a><figcaption>album_art — bleed-ring 0.0%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0347%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='ok'><b>playpause 0.000%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='ok'>0.0%</td></tr><tr><td>next</td><td class='ok'>0.0%</td></tr><tr><td>repeat</td><td class='ok'>0.0%</td></tr><tr><td>queue</td><td class='ok'>0.0%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='ok'>0.0%</td></tr><tr><td>visualizer</td><td class='ok'>0.0%</td></tr><tr><td>album_art</td><td class='ok'>0.0%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>playpause: NONE
+prev: NONE
+next: NONE
+repeat: NONE
+queue: NONE
+vol: NONE, FILLED
+seek: NONE, FILLED
+shuffle: NONE, FILLED
+visualizer: NONE
+album_art: NONE
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREAT — clean canvas + 2nd reference image · seed 134 <span class='tag'>fa-pod-treat-134</span></h3>
+    <a href='assets-twoimg-fa-pod-treat-134/paint.png'><img class='paint' src='assets-twoimg-fa-pod-treat-134/paint.png' alt='paint fa-pod-treat-134'></a>
+    <div class='mini'><a href='assets-twoimg-fa-pod-treat-134/blueprint-clean.png'>clean scaffold (edit target)</a> · <a href='assets-twoimg-fa-pod-treat-134/blueprint-guided.png'>guided (reference image 2)</a> · <a href='assets-twoimg-fa-pod-treat-134/mask.png'>mask</a>
+       · <a href='assets-twoimg-fa-pod-treat-134/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-fa-pod-treat-134/crop-playpause.png'><img src='assets-twoimg-fa-pod-treat-134/crop-playpause.png' alt='playpause crop fa-pod-treat-134'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-prev.png'><img src='assets-twoimg-fa-pod-treat-134/crop-prev.png' alt='prev crop fa-pod-treat-134'></a><figcaption>prev — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-next.png'><img src='assets-twoimg-fa-pod-treat-134/crop-next.png' alt='next crop fa-pod-treat-134'></a><figcaption>next — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-repeat.png'><img src='assets-twoimg-fa-pod-treat-134/crop-repeat.png' alt='repeat crop fa-pod-treat-134'></a><figcaption>repeat — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-queue.png'><img src='assets-twoimg-fa-pod-treat-134/crop-queue.png' alt='queue crop fa-pod-treat-134'></a><figcaption>queue — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-vol.png'><img src='assets-twoimg-fa-pod-treat-134/crop-vol.png' alt='vol crop fa-pod-treat-134'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-seek.png'><img src='assets-twoimg-fa-pod-treat-134/crop-seek.png' alt='seek crop fa-pod-treat-134'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-shuffle.png'><img src='assets-twoimg-fa-pod-treat-134/crop-shuffle.png' alt='shuffle crop fa-pod-treat-134'></a><figcaption>shuffle — bleed-ring 0.19%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-visualizer.png'><img src='assets-twoimg-fa-pod-treat-134/crop-visualizer.png' alt='visualizer crop fa-pod-treat-134'></a><figcaption>visualizer — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-fa-pod-treat-134/crop-album_art.png'><img src='assets-twoimg-fa-pod-treat-134/crop-album_art.png' alt='album_art crop fa-pod-treat-134'></a><figcaption>album_art — bleed-ring 0.0%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0002%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.038</td></tr>
+      <tr><td>gate reasons</td><td>region-misplaced:visualizer</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='ok'><b>shuffle 0.190%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='ok'>0.0%</td></tr><tr><td>next</td><td class='ok'>0.0%</td></tr><tr><td>repeat</td><td class='ok'>0.0%</td></tr><tr><td>queue</td><td class='ok'>0.0%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='ok'>0.19%</td></tr><tr><td>visualizer</td><td class='ok'>0.0%</td></tr><tr><td>album_art</td><td class='ok'>0.0%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>playpause: NONE
+prev: NONE
+next: NONE
+repeat: NONE
+queue: NONE
+vol: RING
+vol (cavity): FILLED
+seek: FLOODED
+seek (cavity): FILLED
+shuffle: FLOODED
+shuffle (cavity): FILLED
+visualizer: FLOODED
+album_art: NONE
+
+VERDICT: FAIL</pre></details></div>
+  </div></div>
+
+<h2>Theme — <code>wc-goldshield</code></h2>
+<div class='anno small'>dark gold / royal-blue heraldic shield (material_is_dark=True).</div>
+<div class='tblwrap'><table>
+<tr><th>arm</th><th>seed</th><th>leak (genskin gate, worst)</th><th>bleed-ring (this exp's metric, worst)</th><th>emptiness</th><th>controls</th><th>seek cov</th></tr>
+<tr><td>control</td><td>121</td><td class='ok'>0.0596%</td><td class='bad'>queue 36.042%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.04</td></tr><tr><td>treat</td><td>121</td><td class='ok'>0.0187%</td><td class='bad'>queue 7.834%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.039</td></tr><tr><td>control</td><td>134</td><td class='ok'>0.0013%</td><td class='bad'>queue 15.878%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.039</td></tr><tr><td>treat</td><td>134</td><td class='ok'>0.0673%</td><td class='bad'>queue 38.787%</td><td class='ok'>pass</td><td class='ok'>10/10</td><td>1.039</td></tr>
+</table></div>
+<div class='grid'>
+  <div class='cell'>
+    <h3>CONTROL — single canvas, guides baked in · seed 121 <span class='tag'>wc-goldshield-control-121</span></h3>
+    <a href='assets-twoimg-wc-goldshield-control-121/paint.png'><img class='paint' src='assets-twoimg-wc-goldshield-control-121/paint.png' alt='paint wc-goldshield-control-121'></a>
+    <div class='mini'><a href='assets-twoimg-wc-goldshield-control-121/blueprint-guided.png'>blueprint (guides baked in, sole image)</a> · <a href='assets-twoimg-wc-goldshield-control-121/mask.png'>mask</a>
+       · <a href='assets-twoimg-wc-goldshield-control-121/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-playpause.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-playpause.png' alt='playpause crop wc-goldshield-control-121'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-prev.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-prev.png' alt='prev crop wc-goldshield-control-121'></a><figcaption>prev — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-next.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-next.png' alt='next crop wc-goldshield-control-121'></a><figcaption>next — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-repeat.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-repeat.png' alt='repeat crop wc-goldshield-control-121'></a><figcaption>repeat — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-queue.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-queue.png' alt='queue crop wc-goldshield-control-121'></a><figcaption>queue — bleed-ring 36.0416%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-vol.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-vol.png' alt='vol crop wc-goldshield-control-121'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-seek.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-seek.png' alt='seek crop wc-goldshield-control-121'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-shuffle.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-shuffle.png' alt='shuffle crop wc-goldshield-control-121'></a><figcaption>shuffle — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-visualizer.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-visualizer.png' alt='visualizer crop wc-goldshield-control-121'></a><figcaption>visualizer — bleed-ring 1.5979%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-121/crop-album_art.png'><img src='assets-twoimg-wc-goldshield-control-121/crop-album_art.png' alt='album_art crop wc-goldshield-control-121'></a><figcaption>album_art — bleed-ring 0.0039%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0596%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.04</td></tr>
+      <tr><td>gate reasons</td><td>region-misplaced:visualizer, region-misplaced:album_art</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='bad'><b>queue 36.042%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='ok'>0.0%</td></tr><tr><td>next</td><td class='ok'>0.0%</td></tr><tr><td>repeat</td><td class='ok'>0.0%</td></tr><tr><td>queue</td><td class='bad'>36.0416%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='ok'>0.0%</td></tr><tr><td>visualizer</td><td class='warn'>1.5979%</td></tr><tr><td>album_art</td><td class='ok'>0.0039%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='ok'>PASS</span><details><summary>raw</summary><pre>playpause: NONE
+prev: NONE
+next: NONE
+repeat: NONE
+queue: NONE
+vol: NONE, Cavity: EMPTY
+seek: NONE, Cavity: EMPTY
+shuffle: NONE, Cavity: EMPTY
+visualizer: NONE
+album_art: NONE
+VERDICT: PASS</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREAT — clean canvas + 2nd reference image · seed 121 <span class='tag'>wc-goldshield-treat-121</span></h3>
+    <a href='assets-twoimg-wc-goldshield-treat-121/paint.png'><img class='paint' src='assets-twoimg-wc-goldshield-treat-121/paint.png' alt='paint wc-goldshield-treat-121'></a>
+    <div class='mini'><a href='assets-twoimg-wc-goldshield-treat-121/blueprint-clean.png'>clean scaffold (edit target)</a> · <a href='assets-twoimg-wc-goldshield-treat-121/blueprint-guided.png'>guided (reference image 2)</a> · <a href='assets-twoimg-wc-goldshield-treat-121/mask.png'>mask</a>
+       · <a href='assets-twoimg-wc-goldshield-treat-121/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-playpause.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-playpause.png' alt='playpause crop wc-goldshield-treat-121'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-prev.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-prev.png' alt='prev crop wc-goldshield-treat-121'></a><figcaption>prev — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-next.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-next.png' alt='next crop wc-goldshield-treat-121'></a><figcaption>next — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-repeat.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-repeat.png' alt='repeat crop wc-goldshield-treat-121'></a><figcaption>repeat — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-queue.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-queue.png' alt='queue crop wc-goldshield-treat-121'></a><figcaption>queue — bleed-ring 7.8339%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-vol.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-vol.png' alt='vol crop wc-goldshield-treat-121'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-seek.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-seek.png' alt='seek crop wc-goldshield-treat-121'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-shuffle.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-shuffle.png' alt='shuffle crop wc-goldshield-treat-121'></a><figcaption>shuffle — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-visualizer.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-visualizer.png' alt='visualizer crop wc-goldshield-treat-121'></a><figcaption>visualizer — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-121/crop-album_art.png'><img src='assets-twoimg-wc-goldshield-treat-121/crop-album_art.png' alt='album_art crop wc-goldshield-treat-121'></a><figcaption>album_art — bleed-ring 0.0%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0187%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='bad'><b>queue 7.834%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='ok'>0.0%</td></tr><tr><td>next</td><td class='ok'>0.0%</td></tr><tr><td>repeat</td><td class='ok'>0.0%</td></tr><tr><td>queue</td><td class='bad'>7.8339%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='ok'>0.0%</td></tr><tr><td>visualizer</td><td class='ok'>0.0%</td></tr><tr><td>album_art</td><td class='ok'>0.0%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>playpause: NONE
+prev: NONE
+next: NONE
+repeat: NONE
+queue: NONE
+vol: NONE
+seek: NONE
+shuffle: RING
+visualizer: NONE
+album_art: NONE
+vol cavity: FILLED
+seek cavity: FILLED
+shuffle cavity: FILLED
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>CONTROL — single canvas, guides baked in · seed 134 <span class='tag'>wc-goldshield-control-134</span></h3>
+    <a href='assets-twoimg-wc-goldshield-control-134/paint.png'><img class='paint' src='assets-twoimg-wc-goldshield-control-134/paint.png' alt='paint wc-goldshield-control-134'></a>
+    <div class='mini'><a href='assets-twoimg-wc-goldshield-control-134/blueprint-guided.png'>blueprint (guides baked in, sole image)</a> · <a href='assets-twoimg-wc-goldshield-control-134/mask.png'>mask</a>
+       · <a href='assets-twoimg-wc-goldshield-control-134/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-playpause.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-playpause.png' alt='playpause crop wc-goldshield-control-134'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-prev.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-prev.png' alt='prev crop wc-goldshield-control-134'></a><figcaption>prev — bleed-ring 7.0773%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-next.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-next.png' alt='next crop wc-goldshield-control-134'></a><figcaption>next — bleed-ring 13.0425%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-repeat.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-repeat.png' alt='repeat crop wc-goldshield-control-134'></a><figcaption>repeat — bleed-ring 13.4816%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-queue.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-queue.png' alt='queue crop wc-goldshield-control-134'></a><figcaption>queue — bleed-ring 15.8777%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-vol.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-vol.png' alt='vol crop wc-goldshield-control-134'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-seek.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-seek.png' alt='seek crop wc-goldshield-control-134'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-shuffle.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-shuffle.png' alt='shuffle crop wc-goldshield-control-134'></a><figcaption>shuffle — bleed-ring 0.3562%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-visualizer.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-visualizer.png' alt='visualizer crop wc-goldshield-control-134'></a><figcaption>visualizer — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-control-134/crop-album_art.png'><img src='assets-twoimg-wc-goldshield-control-134/crop-album_art.png' alt='album_art crop wc-goldshield-control-134'></a><figcaption>album_art — bleed-ring 0.0%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0013%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='bad'><b>queue 15.878%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='bad'>7.0773%</td></tr><tr><td>next</td><td class='bad'>13.0425%</td></tr><tr><td>repeat</td><td class='bad'>13.4816%</td></tr><tr><td>queue</td><td class='bad'>15.8777%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='warn'>0.3562%</td></tr><tr><td>visualizer</td><td class='ok'>0.0%</td></tr><tr><td>album_art</td><td class='ok'>0.0%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>playpause: NONE
+prev: FLOODED
+next: FLOODED
+repeat: FLOODED
+queue: FLOODED
+vol: NONE
+seek: NONE
+shuffle: NONE
+visualizer: NONE
+album_art: NONE
+
+vol cavity: EMPTY
+seek cavity: EMPTY
+shuffle cavity: EMPTY
+
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREAT — clean canvas + 2nd reference image · seed 134 <span class='tag'>wc-goldshield-treat-134</span></h3>
+    <a href='assets-twoimg-wc-goldshield-treat-134/paint.png'><img class='paint' src='assets-twoimg-wc-goldshield-treat-134/paint.png' alt='paint wc-goldshield-treat-134'></a>
+    <div class='mini'><a href='assets-twoimg-wc-goldshield-treat-134/blueprint-clean.png'>clean scaffold (edit target)</a> · <a href='assets-twoimg-wc-goldshield-treat-134/blueprint-guided.png'>guided (reference image 2)</a> · <a href='assets-twoimg-wc-goldshield-treat-134/mask.png'>mask</a>
+       · <a href='assets-twoimg-wc-goldshield-treat-134/overlay.png'>overlay</a>
+    </div>
+    <div class='crops'><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-playpause.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-playpause.png' alt='playpause crop wc-goldshield-treat-134'></a><figcaption>playpause — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-prev.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-prev.png' alt='prev crop wc-goldshield-treat-134'></a><figcaption>prev — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-next.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-next.png' alt='next crop wc-goldshield-treat-134'></a><figcaption>next — bleed-ring 0.0406%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-queue.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-queue.png' alt='queue crop wc-goldshield-treat-134'></a><figcaption>queue — bleed-ring 38.7866%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-vol.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-vol.png' alt='vol crop wc-goldshield-treat-134'></a><figcaption>vol — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-seek.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-seek.png' alt='seek crop wc-goldshield-treat-134'></a><figcaption>seek — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-shuffle.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-shuffle.png' alt='shuffle crop wc-goldshield-treat-134'></a><figcaption>shuffle — bleed-ring 0.0%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-visualizer.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-visualizer.png' alt='visualizer crop wc-goldshield-treat-134'></a><figcaption>visualizer — bleed-ring 0.2658%</figcaption></figure><figure><a href='assets-twoimg-wc-goldshield-treat-134/crop-album_art.png'><img src='assets-twoimg-wc-goldshield-treat-134/crop-album_art.png' alt='album_art crop wc-goldshield-treat-134'></a><figcaption>album_art — bleed-ring 0.0003%</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>leak (worst control, genskin gate)</td><td class='ok'>0.0673%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td>1.039</td></tr>
+      <tr><td>gate reasons</td><td>—</td></tr>
+      <tr><td><b>bleed-ring worst (this experiment's own metric)</b></td>
+          <td class='bad'><b>queue 38.787%</b></td></tr>
+    </table>
+    <details class='bleedtbl'><summary>per-control bleed-ring % (perimeter-band hue match to guide key)</summary>
+      <table><tr><td>playpause</td><td class='ok'>0.0%</td></tr><tr><td>prev</td><td class='ok'>0.0%</td></tr><tr><td>next</td><td class='ok'>0.0406%</td></tr><tr><td>repeat</td><td class='ok'>0.0%</td></tr><tr><td>queue</td><td class='bad'>38.7866%</td></tr><tr><td>vol</td><td class='ok'>0.0%</td></tr><tr><td>seek</td><td class='ok'>0.0%</td></tr><tr><td>shuffle</td><td class='ok'>0.0%</td></tr><tr><td>visualizer</td><td class='ok'>0.2658%</td></tr><tr><td>album_art</td><td class='ok'>0.0003%</td></tr></table>
+    </details>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>playpause: NONE
+prev: NONE
+next: NONE
+repeat: NONE
+queue: NONE
+vol: NONE
+seek: NONE
+shuffle: NONE
+visualizer: NONE
+album_art: NONE
+vol cavity: FILLED
+seek cavity: FILLED
+shuffle cavity: FILLED
+VERDICT: FAIL</pre></details></div>
+  </div></div>
+
+</body></html>

@@ -5,7 +5,16 @@
 #
 # FAL_KEY is a SECRET — set it in the Pages dashboard (Settings → Environment
 # variables, encrypted) or via:  npx wrangler pages secret put FAL_KEY
-# Never commit it. The functions/ dir is auto-discovered by Pages.
+#
+# GEMINI_API_KEY is an optional SECRET for the Director (prompt → material/layout,
+# src/generate/director.ts) — switched 2026-07 from OpenAI gpt-4o to Gemini 3.1 Pro,
+# text-only (image input is a separate future TODO; vision control-locator calls in
+# functions/api/extract.ts still use OPENAI_API_KEY / gpt-4o). Get a key at
+# https://aistudio.google.com/apikey, then:  npx wrangler pages secret put GEMINI_API_KEY
+# Until this secret is set, the Director transparently falls back to OPENAI_API_KEY,
+# then to a deterministic keyword heuristic — generation never breaks either way.
+#
+# Never commit secrets. The functions/ dir is auto-discovered by Pages.
 name = "skeuo-ui"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]

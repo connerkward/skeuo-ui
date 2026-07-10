@@ -221,8 +221,12 @@ const modelLabel = (id: ModelId): string => MODELS.find((m) => m.id === id)?.lab
 
 export interface RuntimeDeps {
   falKey: string;
-  // optional: OpenAI key for the Director (prompt → material). When absent, the
-  // handler drives the paint material from the raw prompt text instead.
+  // optional: Director keys (prompt → material/layout). Director text calls prefer
+  // Gemini 3.1 Pro (geminiKey) and fall back to OpenAI gpt-4o (openaiKey) when unset;
+  // extractSlots/extractMasks (vision, image_url) always use openaiKey — see director.ts.
+  // When BOTH are absent, the handler drives the paint material from the raw prompt
+  // text instead (deterministic heuristic — never throws).
+  geminiKey?: string;
   openaiKey?: string;
   // SVG string → PNG bytes (resvg-wasm in CF, resvg-js in Node)
   rasterize: (svg: string) => Promise<Uint8Array>;

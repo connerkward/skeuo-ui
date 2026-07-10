@@ -7,7 +7,88 @@
 import { DONOR_STYLES, type DonorStyle } from "./pipeline";
 import type { Region, Kind } from "../template/schema";
 
-const MODEL = "gpt-4o";
+// ---------------------------------------------------------------------------
+// Director LLM provider — TEXT-ONLY (deriveMaterial + deriveLayout below).
+// Switched from gpt-4o to Gemini 3.1 Pro (2026-07): Google's OpenAI-compatible
+// chat/completions endpoint (https://ai.google.dev/gemini-api/docs/openai,
+// verified live 2026-07-09) accepts the same request shape (messages,
+// response_format json_object), so this is a drop-in provider swap, not a
+// rewrite. Model id verified live against Google's docs: "gemini-3-pro-preview"
+// was retired (shut down 2026-03-09) and now aliases to "gemini-3.1-pro-preview"
+// — new code should use the explicit current id, which is what GEMINI_MODEL is
+// below. Google's own docs also warn Gemini 3.1 Pro should be run at its default
+// temperature (1.0) — "reducing it may lead to looping or degraded performance"
+// — so the Gemini branch below never forwards the gpt-4o-era 1.05 variety-temp.
+//
+// IMAGE INPUT IS DELIBERATELY NOT PORTED — extractSlots/extractMasks below stay
+// on OpenAI's gpt-4o vision endpoint (they pass image_url); wiring Gemini's
+// vision input is an explicit future TODO, not part of this swap.
+//
+// Deploy step required: `npx wrangler pages secret put GEMINI_API_KEY`
+// (get a key at https://aistudio.google.com/apikey). Until that secret is set,
+// deriveMaterial/deriveLayout transparently fall back to the existing OpenAI
+// path (OPENAI_API_KEY), then to the deterministic heuristic — never throws.
+export interface DirectorKeys { geminiKey?: string; openaiKey?: string }
+
+const GEMINI_MODEL = "gemini-3.1-pro-preview";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+// vision-only calls (extractSlots/extractMasks, image_url payloads) stay on OpenAI.
+const OPENAI_VISION_MODEL = "gpt-4o";
+// text-only Director calls (deriveMaterial/deriveLayout) via OpenAI, USED ONLY as
+// the fallback when no GEMINI_API_KEY is configured.
+const OPENAI_TEXT_MODEL = "gpt-4o";
+
+interface ChatResult { content: string; finishReason?: string }
+
+// One JSON-mode chat call, routed to whichever Director provider is configured:
+// Gemini 3.1 Pro (preferred) → OpenAI gpt-4o (fallback) → throws (caller catches
+// and falls back further, to the deterministic heuristic / null layout).
+async function directorChat(
+  keys: DirectorKeys,
+  opts: { system: string; user: string; temperature?: number; maxTokens?: number },
+): Promise<ChatResult> {
+  if (keys.geminiKey) {
+    const r = await fetch(GEMINI_ENDPOINT, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${keys.geminiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: GEMINI_MODEL,
+        response_format: { type: "json_object" },
+        // NOTE: intentionally NOT forwarding opts.temperature here — Google's docs
+        // for gemini-3.1-pro-preview recommend staying at the default (1.0).
+        ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
+        messages: [
+          { role: "system", content: opts.system },
+          { role: "user", content: opts.user },
+        ],
+      }),
+    });
+    if (!r.ok) throw new Error(`gemini ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
+    return { content: data.choices?.[0]?.message?.content ?? "{}", finishReason: data.choices?.[0]?.finish_reason };
+  }
+  if (keys.openaiKey) {
+    const r = await fetch(OPENAI_ENDPOINT, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${keys.openaiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: OPENAI_TEXT_MODEL,
+        response_format: { type: "json_object" },
+        ...(opts.temperature ? { temperature: opts.temperature } : {}),
+        ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
+        messages: [
+          { role: "system", content: opts.system },
+          { role: "user", content: opts.user },
+        ],
+      }),
+    });
+    if (!r.ok) throw new Error(`openai ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
+    return { content: data.choices?.[0]?.message?.content ?? "{}", finishReason: data.choices?.[0]?.finish_reason };
+  }
+  throw new Error("no director key (GEMINI_API_KEY / OPENAI_API_KEY)");
+}
 
 // Punchy, cinematic Google-Fonts families SUGGESTED to the Director — these are
 // examples, NOT a hard allow-list: the chosen font is loaded dynamically at render
@@ -107,8 +188,8 @@ function heuristic(prompt: string): Material {
   };
 }
 
-export async function deriveMaterial(openaiKey: string, prompt: string, avoidFonts: string[] = []): Promise<Material> {
-  if (!openaiKey) return heuristic(prompt);
+export async function deriveMaterial(keys: DirectorKeys, prompt: string, avoidFonts: string[] = []): Promise<Material> {
+  if (!keys.geminiKey && !keys.openaiKey) return heuristic(prompt);
   // pick a random genre to favor this call + a rotated set of its exemplars, and a
   // de-duped recent-fonts avoid list — together these spread font choices across
   // generations instead of clustering on the same few popular faces.
@@ -116,39 +197,24 @@ export async function deriveMaterial(openaiKey: string, prompt: string, avoidFon
   const exemplars = shuffled(FONT_GENRES[genre]).slice(0, 4).join(", ");
   const avoid = [...new Set(avoidFonts.map((f) => f.trim()).filter(Boolean))].slice(0, 10);
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content:
-              "You art-direct skeuomorphic MP3-player skins. Given a silhouette idea, reply with JSON " +
-              `{"name": <title>, "blurb": <description>, "style": <one of ${DONOR_STYLES.join("|")}>, ` +
-              `"materialPrompt": <1-2 sentence rich custom material/finish description derived from the idea: ` +
-              `surface, color, sheen, hardware accents>, "font": <a Google Fonts family name>}. ` +
-              "name is a CONCISE, punchy skin TITLE — 1 to 3 words, like a product or film name (e.g. 'Angler Maw', " +
-              "'Bondi G3', 'Spartan Ring'); NEVER echo the raw prompt or include a model name. " +
-              "blurb is ONE short descriptive line, at most ~8 words (e.g. 'Fanged jaw grown around the dial'). " +
-              "style is the closest-fitting donor for palette/sprite reuse and MUST be exactly one of the listed values. " +
-              "font is the display typeface for this skin's TITLE LOGOMARK (like a film's title card): a real, " +
-              "currently-available Google Fonts family — favour PUNCHY, bold, cinematic display faces. " +
-              `For VARIETY, lean toward a ${genre} face this time (e.g. ${exemplars}), UNLESS the skin's vibe ` +
-              "strongly calls for a different genre — then follow the vibe. " +
-              (avoid.length ? `Do NOT reuse any of these recently-used families: ${avoid.join(", ")}. ` : "") +
-              "Avoid defaulting to the same handful of popular faces (Anton, Bebas Neue, Oswald) unless truly apt. " +
-              "Return the exact family name as it appears on Google Fonts.",
-          },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
-    if (!r.ok) throw new Error(`openai ${r.status}`);
-    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}");
+    const system =
+      "You art-direct skeuomorphic MP3-player skins. Given a silhouette idea, reply with JSON " +
+      `{"name": <title>, "blurb": <description>, "style": <one of ${DONOR_STYLES.join("|")}>, ` +
+      `"materialPrompt": <1-2 sentence rich custom material/finish description derived from the idea: ` +
+      `surface, color, sheen, hardware accents>, "font": <a Google Fonts family name>}. ` +
+      "name is a CONCISE, punchy skin TITLE — 1 to 3 words, like a product or film name (e.g. 'Angler Maw', " +
+      "'Bondi G3', 'Spartan Ring'); NEVER echo the raw prompt or include a model name. " +
+      "blurb is ONE short descriptive line, at most ~8 words (e.g. 'Fanged jaw grown around the dial'). " +
+      "style is the closest-fitting donor for palette/sprite reuse and MUST be exactly one of the listed values. " +
+      "font is the display typeface for this skin's TITLE LOGOMARK (like a film's title card): a real, " +
+      "currently-available Google Fonts family — favour PUNCHY, bold, cinematic display faces. " +
+      `For VARIETY, lean toward a ${genre} face this time (e.g. ${exemplars}), UNLESS the skin's vibe ` +
+      "strongly calls for a different genre — then follow the vibe. " +
+      (avoid.length ? `Do NOT reuse any of these recently-used families: ${avoid.join(", ")}. ` : "") +
+      "Avoid defaulting to the same handful of popular faces (Anton, Bebas Neue, Oswald) unless truly apt. " +
+      "Return the exact family name as it appears on Google Fonts.";
+    const { content } = await directorChat(keys, { system, user: prompt });
+    const parsed = JSON.parse(content);
     const style = parsed.style as DonorStyle;
     const materialPrompt = (parsed.materialPrompt ?? "").trim();
     if (!DONOR_STYLES.includes(style) || !materialPrompt) throw new Error("invalid director output");
@@ -176,7 +242,6 @@ export async function deriveMaterial(openaiKey: string, prompt: string, avoidFon
 // instead of a fixed preset. Returns normalized schema Regions, or null on any
 // failure (caller falls back to the constant variant). Never throws.
 // ---------------------------------------------------------------------------
-const LAYOUT_MODEL = "gpt-4o";
 const VALID_KINDS = new Set<Kind>([
   "button", "toggle", "slider-h", "slider-v", "knob", "slider-arc", "segmented", "xy", "display",
 ]);
@@ -264,26 +329,15 @@ function normRegion(r: Record<string, unknown>, i: number): Region | null {
   return reg;
 }
 
-export async function deriveLayout(openaiKey: string, prompt: string): Promise<Region[] | null> {
-  if (!openaiKey) return null;
+export async function deriveLayout(keys: DirectorKeys, prompt: string): Promise<Region[] | null> {
+  if (!keys.geminiKey && !keys.openaiKey) return null;
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: LAYOUT_MODEL,
-        response_format: { type: "json_object" },
-        temperature: 1.05,   // high variety — push wild, organic, non-uniform arrangements
-        max_tokens: 4000,
-        messages: [
-          { role: "system", content: LAYOUT_SYS },
-          { role: "user", content: `Theme: ${prompt}` },
-        ],
-      }),
+    // temperature 1.05 (high variety, wild/organic/non-uniform arrangements) only
+    // applies on the OpenAI fallback path — directorChat withholds it from Gemini
+    // per Google's default-temperature guidance for gemini-3.1-pro-preview.
+    const { content, finishReason } = await directorChat(keys, {
+      system: LAYOUT_SYS, user: `Theme: ${prompt}`, temperature: 1.05, maxTokens: 4000,
     });
-    if (!r.ok) throw new Error(`openai ${r.status} ${(await r.text()).slice(0, 200)}`);
-    const data = (await r.json()) as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
-    const content = data.choices?.[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(content) as { regions?: Record<string, unknown>[] };
     const raw = Array.isArray(parsed.regions) ? parsed.regions : [];
     const all = raw.map(normRegion).filter((x): x is Region => x !== null);
@@ -304,7 +358,7 @@ export async function deriveLayout(openaiKey: string, prompt: string): Promise<R
     const hasViz = regions.some((g) => g.kind === "display");
     const hasPlay = regions.some((g) => g.kind === "button" && g.bind === "play");
     // eslint-disable-next-line no-console
-    console.warn(`[deriveLayout] finish=${data.choices?.[0]?.finish_reason} raw=${raw.length} kept=${regions.length} (cap ${MAX_INTERACT}) viz=${hasViz} play=${hasPlay}`);
+    console.warn(`[deriveLayout] finish=${finishReason} raw=${raw.length} kept=${regions.length} (cap ${MAX_INTERACT}) viz=${hasViz} play=${hasPlay}`);
     if (!hasViz || !hasPlay || regions.length < 4) throw new Error("layout missing required controls");
     return regions;
   } catch (e) {
@@ -352,7 +406,7 @@ export async function extractSlots(
       method: "POST",
       headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: MODEL,
+        model: OPENAI_VISION_MODEL,
         response_format: { type: "json_object" },
         max_tokens: 3000,
         messages: [
@@ -409,7 +463,7 @@ export async function extractMasks(
       method: "POST",
       headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: MODEL,
+        model: OPENAI_VISION_MODEL,
         response_format: { type: "json_object" },
         max_tokens: 4000,
         messages: [

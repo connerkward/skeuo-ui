@@ -1,5 +1,22 @@
 # gen12 TODO
 
+## observe12.py --vlm will break: fal vision endpoint now requires `reasoning: true`
+
+Verified live 2026-07-10 (twoimg experiment): every `openrouter/router/vision` call with
+`google/gemini-2.5-pro` and no `"reasoning": true` in the body now returns
+`{"detail": "Reasoning is mandatory for this endpoint and cannot be disabled."}` instead of a
+verdict. `observe12.py` doesn't set it (line ~80) — its next `--vlm` run will write UNPARSED
+verdicts. One-line fix when the current batch is done (not touched now — live re-roll running):
+add `"reasoning": True` to the body dict. `twoimg/sota_eye.py` has the fixed call shape.
+
+## twoimg experiment (2026-07-10): two-image conditioning FALSIFIED — keep single canvas
+
+`twoimg/` tested sending the guide layout as a 2nd reference image with a guide-pixel-free
+edit canvas. Result: bleed still happens (3/4 treat gens, incl. exact-key vol ring + purple
+seek flood transferred semantically from the reference), AND layout adherence collapses
+(4/4 treat gens drift from the locked template vs 0/4 control). Verdict + full record:
+`twoimg/results.html`, `docs/experiments/2026-07-10-twoimg-conditioning.md`. Do not adopt.
+
 ## BIREF_LOCAL / PAINT_VERTEX flags
 
 Both landed flag-gated OFF, then were flipped ON 2026-07-10 (user call, batch drained —

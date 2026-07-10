@@ -1,0 +1,18 @@
+{
+  "tag": "fa-pod-control-134",
+  "theme": "fa-pod",
+  "arm": "control",
+  "seed": 134,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE, FILLED\nseek: NONE, FILLED\nshuffle: NONE, FILLED\nvisualizer: NONE\nalbum_art: NONE\nVERDICT: FAIL",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-playpause.png",
+    "crop-queue.png"
+  ],
+  "ts": "2026-07-10T12:20:26"
+}

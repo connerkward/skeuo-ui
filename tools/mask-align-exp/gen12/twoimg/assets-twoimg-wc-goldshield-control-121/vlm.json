@@ -1,0 +1,18 @@
+{
+  "tag": "wc-goldshield-control-121",
+  "theme": "wc-goldshield",
+  "arm": "control",
+  "seed": 121,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "PASS",
+  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE, Cavity: EMPTY\nseek: NONE, Cavity: EMPTY\nshuffle: NONE, Cavity: EMPTY\nvisualizer: NONE\nalbum_art: NONE\nVERDICT: PASS",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-playpause.png",
+    "crop-queue.png"
+  ],
+  "ts": "2026-07-10T12:23:30"
+}

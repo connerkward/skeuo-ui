@@ -48,6 +48,11 @@ export function devApiPlugin(): Plugin {
     configureServer(server: ViteDevServer) {
       const falKey = loadKey(server.config.root, "FAL_KEY");
       const openaiKey = loadKey(server.config.root, "OPENAI_API_KEY");
+      // Director text calls (deriveMaterial/deriveLayout) prefer Gemini 3.1 Pro when
+      // this is set — same .dev.vars / central/.env precedence as the other keys.
+      // Get a key at https://aistudio.google.com/apikey and add GEMINI_API_KEY=... to
+      // .dev.vars (gitignored) to exercise the Gemini path locally.
+      const geminiKey = loadKey(server.config.root, "GEMINI_API_KEY");
       // persist generated artifacts to public/generated/ so a page reload or dev-server
       // restart no longer wipes a just-created skin (the client stores only the URL).
       // Mirrors the prod R2 layout: frame.png + template.json + meta.json per skin, so
@@ -81,7 +86,7 @@ export function devApiPlugin(): Plugin {
           const write = (obj: unknown) => res.write(JSON.stringify(obj) + "\n");
           // no `cutout`: deferred to the browser, mirroring the deployed Worker.
           const deps: RuntimeDeps = {
-            falKey, openaiKey, rasterize, store,
+            falKey, geminiKey, openaiKey, rasterize, store,
             log: (m) => server.config.logger.info(m),
             onStage: (stage, url) => write({ stage, url }),
           };
@@ -97,8 +102,9 @@ export function devApiPlugin(): Plugin {
       });
 
       // POST /api/derive — the LLM data-template generator for the template studio.
-      // Calls the SAME deriveLayout (gpt-4o, heuristic-guided LAYOUT_SYS) the pipeline uses,
-      // returns the raw Region[] so the studio can seed + pack it. { prompt } → { regions }.
+      // Calls the SAME deriveLayout (Gemini 3.1 Pro preferred, gpt-4o fallback,
+      // heuristic-guided LAYOUT_SYS) the pipeline uses, returns the raw Region[] so
+      // the studio can seed + pack it. { prompt } → { regions }.
       server.middlewares.use("/api/derive", (req, res) => {
         if (req.method !== "POST") { res.statusCode = 405; res.end("POST only"); return; }
         const chunks: Buffer[] = [];
@@ -107,8 +113,9 @@ export function devApiPlugin(): Plugin {
           res.setHeader("Content-Type", "application/json");
           try {
             const { prompt } = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
-            const regions = openaiKey ? await deriveLayout(openaiKey, String(prompt || "")) : null;
-            res.end(JSON.stringify({ regions: regions ?? [], ok: !!regions, hasKey: !!openaiKey }));
+            const hasKey = !!(geminiKey || openaiKey);
+            const regions = hasKey ? await deriveLayout({ geminiKey, openaiKey }, String(prompt || "")) : null;
+            res.end(JSON.stringify({ regions: regions ?? [], ok: !!regions, hasKey }));
           } catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) })); }
         });
       });
