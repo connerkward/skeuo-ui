@@ -9,7 +9,10 @@ import os, json, glob
 HERE = os.path.dirname(os.path.abspath(__file__))
 skins = []
 for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
-    if d.endswith("_biref"): continue
+    # only the real theme roster directly under gen12/ — exclude sidecar dirs
+    # (_biref/_pbr suffixed passes) and any experiment subtree (abshape/, bproof/)
+    if d.endswith("_biref") or d.endswith("_pbr"): continue
+    if "/abshape/" in d or "/bproof/" in d: continue
     sid = os.path.basename(d).replace("assets-", "")
     orch = res = reg = {}
     for fn, tgt in [("orch.json", "orch"), ("results.json", "res"), ("regions.json", "reg")]:
@@ -20,10 +23,24 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
             else: reg = v
         except Exception: pass
     gate = reg.get("gate", {})
+    # PBR card link requires BOTH the player AND a non-empty emissive extraction (meta.json
+    # emissiveCoverage > 0 / lights present) — a built player-pbr.html whose glyph-emissive
+    # pass found zero glow pixels (paint had no bright content matching the spec's hue window)
+    # would advertise "dynamic lighting" on a render with no lighting effect. Computed per
+    # skin from its own _pbr/meta.json, not a hand-picked exclusion (verify-outputs-rule /
+    # placement-invariants-rule: compute, don't hand-author).
+    pbr = False
+    if os.path.exists(os.path.join(d, "player-pbr.html")):
+        pbr_meta_path = os.path.join(HERE, f"assets-{sid}_pbr", "meta.json")
+        try:
+            pbr_meta = json.load(open(pbr_meta_path))
+            pbr = pbr_meta.get("emissiveCoverage", 0) > 0 or bool(pbr_meta.get("lights"))
+        except Exception:
+            pbr = False
     skins.append({"id": sid, "title": res.get("title", orch.get("title", sid)),
                   "mode": res.get("mode", "?"), "passed": orch.get("passed", gate.get("PASS")),
                   "rolls": orch.get("rolls", "?"), "seed": orch.get("final_seed", res.get("seed", "?")),
-                  "gate": gate, "leak": res.get("leak"),
+                  "gate": gate, "leak": res.get("leak"), "pbr": pbr,
                   "reasons": (orch.get("gate") or {}).get("reasons") or gate.get("reasons") or []})
 npass = sum(1 for s in skins if s["passed"]); n = len(skins)
 # cost annotation (dev-facing-model-cost-annotation-rule): sum rolls × per-roll model spend
@@ -47,8 +64,10 @@ def card(s):
     det = (f'controls {g.get("controls","?")}/{g.get("controls_total","?")} · seek-cov {g.get("seek_cov","?")} · '
            f'empty {"ok" if g.get("empty_ok") else "FAIL"} · align {"ok" if g.get("state_align_ok") else "x"} · '
            f'leak {s["leak"]} · {s["rolls"]} roll(s) · seed {s["seed"]}')
+    pbr_link = (f' · <a class=pbrlink href="assets-{sid}/player-pbr.html" target=_blank>'
+                f'&#10024; dynamic lighting</a>') if s.get("pbr") else ''
     return f'''<section class=card id="c-{sid}" data-id="{sid}">
-  <div class=chead><h3>{s["title"]} <span class=mode>{s["mode"]}</span></h3>
+  <div class=chead><h3>{s["title"]} <span class=mode>{s["mode"]}</span>{pbr_link}</h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="{sid}">— unset —</button></div></div>
   <div class=live><iframe src="assets-{sid}/player.html" loading=lazy title="{sid} player"></iframe>
@@ -226,6 +245,7 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .card.hp{{border-color:#2a6}}.card.hf{{border-color:#a33}}
 .chead{{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}}
 .chead h3{{margin:0;font-size:17px}}.mode{{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px}}
+.pbrlink{{font:11px ui-monospace,monospace;color:#ffcf7a;text-decoration:none;border:1px solid #ffcf7a44;border-radius:5px;padding:1px 7px}}.pbrlink:hover{{border-color:#ffcf7a;background:#ffcf7a1a}}
 .hverdict{{display:flex;align-items:center;gap:8px}}.hlabel{{font:11px ui-monospace,monospace;color:#8a90a0}}
 .htoggle{{border:1px solid #ffffff26;background:#161a22;color:#9aa;border-radius:8px;padding:7px 16px;font:700 12px ui-monospace,monospace;cursor:pointer;min-width:120px}}
 .htoggle.hp{{background:#153;border-color:#3a7;color:#7fe}}.htoggle.hf{{background:#511;border-color:#a44;color:#f99}}

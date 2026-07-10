@@ -442,6 +442,23 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
 - **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
   across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
   featured path for skins with strong emissive themes.
+  - **2026-07-10 status — dashboard hook wired (item 5 below, done); roster run BLOCKED mid-way
+    on fal.ai billing** (`403 User is locked. Reason: Exhausted balance` on `storage/upload/initiate`
+    — verified directly against the endpoint, not assumed). Of the 7 PASS skins: **diablo-gothic**
+    and **fallout-vault** already had fresh `_pbr/` sidecars (built pre-session) and are dashboard-
+    linked — verified live via Playwright, relit render not blank, emissive glows where the spec's
+    hint says (diablo: rune/ember cracks; fallout-vault: amber lamps, though the "phosphor terminal
+    glow" half of the hint has no coverage — paint's screens are flat/off, nothing bright to
+    extract). **steam-porthole** also had a fresh sidecar but its `emissiveCoverage` is **0.0** —
+    the paint has no baked bright content behind the portholes/tubes (checked the source paint
+    crop: tubes are painted clear/unlit, gauge is a plain dial) — so the pass's headline feature
+    is a no-op there; `build_dashboard.py` now gates the card link on `emissiveCoverage>0 or
+    lights` (computed per skin, not hand-picked) so its "dynamic lighting" link is withheld rather
+    than shown broken. **fa-pod, fallout-pipboy, n64-cutscene, wc-goldshield** never got a patina
+    call — blocked on billing, not attempted with a degraded fallback. Re-run once the fal
+    account is topped up: `python3 pbr_pass.py assets-<id> && python3 build_player_pbr.py
+    assets-<id>` for those 4, idempotent via paint sha. Still gated OFF (`PBR_PASS_ENABLED`
+    untouched) — flipping it on is the user's call after reviewing the linked players.
 
 ## 2026-07-09 — session close-out backlog
 
@@ -526,12 +543,14 @@ entries already under "saved for later" above — those four stand as-is.
      [[empirical-testing-rule]]: question, method (model/seed/char-counts), the crop comparisons
      as evidence, and the verdict once decided above.
 
-5. **Dashboard PBR-player link hook — 2-line wire-up, blocked on the regen commit landing.**
-   [tools/mask-align-exp/gen12/WIRE-pbr.md](tools/mask-align-exp/gen12/WIRE-pbr.md) documents the
-   exact hook (`PBR_PASS_ENABLED` in `pbr_pass.py`, gate in `genskin.py` per lines 26-37). Once
-   the in-flight 15-skin regen aggregate commit lands (see item 8), add the PBR-player card link
-   into [build_dashboard.py](tools/mask-align-exp/gen12/build_dashboard.py) (confirmed today: it
-   currently has ZERO `pbr`/`PBR` references — the hook is fully unwired).
+5. [x] **Dashboard PBR-player link hook — DONE 2026-07-10.**
+   [tools/mask-align-exp/gen12/WIRE-pbr.md](tools/mask-align-exp/gen12/WIRE-pbr.md)'s hook wired
+   into [build_dashboard.py](tools/mask-align-exp/gen12/build_dashboard.py): per-skin card links
+   `assets-<id>/player-pbr.html` when it exists AND its `_pbr/meta.json` shows real emissive
+   output (`emissiveCoverage>0 or lights`) — not just file-existence, so a built-but-glow-less
+   PBR player isn't advertised as "dynamic lighting". Also fixed the 18-vs-15 skin-count glob bug
+   (excludes `_biref`/`_pbr` sidecar dirs and any `abshape/`/`bproof/` subtree). Roster run status
+   (which skins actually got PBR'd): see the "Enable emissivity/PBR pass in mainline" entry above.
 
 6. **User reviews pending (nothing acted on yet):**
    - **Vizlab visualizer lookdev pick** —
