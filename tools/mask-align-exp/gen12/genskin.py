@@ -254,7 +254,7 @@ def main():
     if mode == "templated":
         left_layout = ("The LEFT column is a BLUEPRINT: a neutral grey placeholder body with COLOURED "
             "OUTLINE guides marking each control's EXACT position, size and shape, plus a bottom SPRITE-STRIP "
-            "band with 4 loose parts (volume knob cap, seek slider thumb, shuffle switch OFF, shuffle switch ON). "
+            "band with 4 loose parts (volume knob cap, seek slider thumb, shuffle switch first state, shuffle switch second state). "
             "Each guide's colour maps to a control: " + roster_desc + ". KEEP EVERY CONTROL AT THE EXACT POSITION, "
             "SIZE AND SHAPE OF ITS GUIDE — do NOT move, resize, swap, rearrange, add or drop any control (their "
             "layout is locked). BUT the grey body is ONLY a rough placeholder showing WHERE the controls sit — you "
@@ -273,7 +273,7 @@ def main():
             "wings, pods, fins, greebles, ornament) that suits the theme, NOT a plain pod, slab or rectangle. "
             "Arrange the controls in one attractive layout of your choosing. In the bottom strip band below the divider, paint "
             "EXACTLY FOUR loose parts in ONE row left-to-right: volume knob cap, seek slider thumb, shuffle switch "
-            "OFF, shuffle switch ON — and NOTHING else in the strip.")
+            "in its first state, shuffle switch in its second state — and NOTHING else in the strip.")
 
     prompt = (
         "Two side-by-side columns of identical size, output at 5:4. ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO "
@@ -317,10 +317,10 @@ def main():
         "strip. A seek slot with anything riding in it is WRONG.\n"
         "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS — flat "
         "unlit dark glass panels only, with NOTHING inside them: NO baked spectrum/equalizer bars, NO album cover "
-        "or artwork, NO waveform, NO icons, NO text, NO content whatsoever. They are OFF screens; the app draws "
+        "or artwork, NO waveform, NO icons, NO text, NO content whatsoever. They are powered-down screens; the app draws "
         "their live content later. If either window contains any baked graphics, it is WRONG.\n"
         "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, left→right: volume knob cap, seek "
-        "slider thumb, shuffle switch OFF, shuffle switch ON — in the device's own materials, outlines removed, on "
+        "slider thumb, shuffle switch in its first state, shuffle switch in its second state — in the device's own materials, outlines removed, on "
         f"the flat {'pale' if dark else 'charcoal'} backdrop.\n"
         "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a finger slides, shown "
         "by itself on the backdrop, like a spare part in a parts tray. It is ABSOLUTELY NOT a slot, groove, "
@@ -332,10 +332,10 @@ def main():
         "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT have to be a plain "
         "pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, gem that shifts, valve, eye that opens — "
         "any physical two-state mechanism, as long as BOTH states share the SAME OUTER HOUSING SILHOUETTE at the "
-        "same size and are CLEARLY MIRROR-OPPOSITE: the moving element sits at ONE end/side in OFF and at the "
-        "OPPOSITE end/side in ON (never the same position in both). Put ABSOLUTELY NO 'ON', 'OFF', 'I', 'O' or any "
-        "text/letters/words/labels on either switch part or on ANY strip part — the state reads from the mechanism's "
-        "position alone.\n"
+        "same size and are CLEARLY MIRROR-OPPOSITE: the moving element sits at ONE end/side in the first state and "
+        "at the OPPOSITE end/side in the second state (never the same position in both). Put ABSOLUTELY NO text, "
+        "letters, numerals, glyphs, words or labels of ANY kind on either switch part or on ANY strip part — the "
+        "state must read from the mechanism's position alone, with zero markings.\n"
         "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in a PERFECTLY FLAT, "
         "STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view — the camera is directly overhead at exactly 90°, the same view "
         "as the device. Each part is drawn as if lying FLAT on a table seen from straight above, with ZERO "

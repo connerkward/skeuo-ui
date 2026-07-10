@@ -731,3 +731,15 @@ entries already under "saved for later" above — those four stand as-is.
     fa-pod, steam-porthole (close-up crops at 3 drag positions each) + a synthetic vertical-seek
     rig (no passing skin has `vertical:true` yet, so the orientation branch was smoke-tested
     against a rotated copy of fa-pod's regions).
+
+## 2026-07-10 — later / think-about
+- **Emissivity needs a better model/approach** (user verdict 2026-07-10: current glyph/top-hat
+  extraction "randomly makes parts of the image glow in nonsensical ways", even after the
+  relative-gate fix in `29b961e9`). Emissive layer now disabled via `EMISSIVE_ENABLED=False` in
+  build_player_pbr.py; relight/normal/specular stay. Candidate directions: director-authored
+  emissive REGIONS (spec says what glows, extractor only shapes it), a real segmentation model
+  scoring "should this glow" per region, or painting a dedicated emissive pass. Revisit before
+  flipping PBR into mainline.
+- **Director sees the paint (vision step) — think about, don't implement yet.** Director is
+  moving to Gemini 3 Pro (text-only). Later: hand it the painted image so css colors / lighting
+  hints / emissive regions are chosen from actual pixels, not imagined from text.
