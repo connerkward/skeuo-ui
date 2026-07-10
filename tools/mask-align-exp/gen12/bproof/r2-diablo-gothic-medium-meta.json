@@ -1,0 +1,16 @@
+{
+ "id": "diablo-gothic",
+ "tier": "medium",
+ "model": "gemini-3-pro-image-preview (Vertex AI, global)",
+ "seed": 310,
+ "resolution": "4K",
+ "aspect_ratio": "4:5",
+ "dims": [
+  3712,
+  4608
+ ],
+ "prompt": "A skeuomorphic media-player device, top-down orthographic, centered on a flat uniform pale grey-white backdrop: DIABLO / BALDUR'S GATE dark GOTHIC media player: carved grimdark STONE and tarnished IRON, glowing BLOOD-RED runes and ember cracks, skulls and gothic ornament, bone inlays, torchlit shadow, oppressive medieval-hell atmosphere. Weathered stone, rusted metal, red arcane glow. It has physical controls: five icon buttons (play/pause, prev, next, repeat, queue), a round volume knob, a horizontal seek slot, a small toggle switch, an album-art window and a visualizer window. No text anywhere. THE SINGLE MOST IMPORTANT RULE \u2014 EVERY MOVING-PART CAVITY IS EMPTY. The volume knob socket is a bare round HOLE showing only its dark recessed floor (NO knob, NO cap, NO dome, NO dial, NO pointer \u2014 nothing installed). The seek slider groove is an EMPTY DARK RECESSED CHANNEL cut into the body (NO thumb, NO grip, NO handle, NO fill \u2014 it is NOT a coloured or filled bar, it is a hollow dark slot). The shuffle switch slot is an EMPTY DARK rounded well (NO switch, NO lever, NO toggle installed). The device is photographed BEFORE ASSEMBLY. Do NOT colour the empty wells \u2014 neutral DARK recesses only. If ANY of the three cavities (knob socket, seek slot, shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone. The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS \u2014 flat unlit dark glass panels only, with NOTHING inside them: NO baked spectrum/equalizer bars, NO album cover or artwork, NO waveform, NO icons, NO text, NO content whatsoever. They are OFF screens; the app draws their live content later. If either window contains any baked graphics, it is WRONG. SEEK IS JUST AN EMPTY SLOT \u2014 treat the seek as a plain EMPTY recessed horizontal SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, grip, knob, handle, bar, fill, track-fill or progress indicator into it \u2014 it is a bare dark empty channel. A seek slot with anything riding in it is WRONG.",
+ "prompt_chars": 2062,
+ "elapsed_s": 42.3,
+ "input": "flat 1200x1500 RGB(235,235,238) canvas"
+}

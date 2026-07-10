@@ -684,3 +684,13 @@ entries already under "saved for later" above — those four stand as-is.
     generations; worth checking whether it's now over-constraining aesthetics, not just
     geometry. Re-serve `tools/mask-align-exp/gen12` and open
     [dashboard12.html](tools/mask-align-exp/gen12/dashboard12.html) for the pass/fail/notes gate.
+
+13. **Done — CSS seek progress track/fill, under the sprite thumb (`gen12/build_player.py`,
+    `SEEK_TRACK_CSS_ENABLED` flag).** A subtle recessed track + brighter progress fill, colored
+    by sampling the groove's own paint pixels and sized by an adaptive luminance-profile scan of
+    the groove's cross-axis (not a hand-tuned constant — avoids bezel overflow across skins of
+    different groove-to-bezel ratios), spans the full `travel` extent, updates live on drag and
+    on arrow-key seek, handles horizontal + vertical orientation. Verified on diablo-gothic,
+    fa-pod, steam-porthole (close-up crops at 3 drag positions each) + a synthetic vertical-seek
+    rig (no passing skin has `vertical:true` yet, so the orientation branch was smoke-tested
+    against a rotated copy of fa-pod's regions).

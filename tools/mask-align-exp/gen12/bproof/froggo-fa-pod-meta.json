@@ -1,0 +1,16 @@
+{
+ "id": "fa-pod",
+ "model": "gemini-3-pro-image-preview (Vertex AI, global; same model fal proxies)",
+ "seed": 673,
+ "resolution": "4K",
+ "aspect_ratio": "4:5",
+ "dims": [
+  3712,
+  4608
+ ],
+ "prompt": "A skeuomorphic media-player device, top-down orthographic, centered on a flat uniform pale grey-white backdrop: Quintessential FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic): a translucent glossy media-player pod of clear aqua-blue and cyan GLASS with liquid highlights and water-droplet beads, brushed liquid-silver metal bezels, a lush grass-green glowing accent, crisp specular reflections and soft shadows, optimistic and clean. Think Windows-Vista-era glass, Apple-Aqua gel buttons, bubbles and water. Buttons are glossy gel jewels; the body is a smooth organic pebble. Vivid, saturated, dimensional \u2014 never flat, never grungy. It has physical controls: five icon buttons (play/pause, prev, next, repeat, queue), a round volume knob, a horizontal seek slot, a small toggle switch, an album-art window and a visualizer window. No text anywhere.",
+ "prompt_chars": 853,
+ "gen12_prompt_chars": 10898,
+ "elapsed_s": 44.8,
+ "input": "flat 1200x1500 RGB(235,235,238) canvas"
+}

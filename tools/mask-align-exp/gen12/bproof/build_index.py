@@ -1,0 +1,316 @@
+#!/usr/bin/env python3
+"""Generates index.html from the bproof data (round 1: 6-theme gen12-vs-froggo grid
+with matched crops; round 2: 3-theme x 3-tier prompt-load ramp). Keeps the page DRY —
+regenerate after adding a theme/tier instead of hand-editing 6+ repeated HTML blocks.
+"""
+import json, os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+GEN12 = os.path.dirname(HERE)
+
+ROUND1_THEMES = ["steam-porthole", "diablo-gothic", "fa-pod", "fallout-vault", "wc-goldshield", "claymation"]
+CROP_LABELS = {
+    "buttons": ("transport button cluster", "gen12", "froggo-style"),
+    "knob": ("volume knob area", "gen12 (socket kept empty by design)", "froggo-style (knob installed)"),
+    "slider": ("seek slider", "gen12 (empty channel by design)", "froggo-style (thumb installed)"),
+    "screen": ("display window(s)", "gen12 (blank screens by design)", "froggo-style (populated)"),
+}
+ROUND2_THEMES = ["steam-porthole", "diablo-gothic", "wmp-quicksilver"]
+TIERS = ["light", "medium", "heavy"]
+TIER_LABEL = {"light": "LIGHT", "medium": "MEDIUM", "heavy": "HEAVY"}
+TIER_DESC = {
+    "light": "roster stated once, zero pipeline constraints",
+    "medium": "+ empty-cavity rule + blank-screens rule + seek-is-a-slot-only rule",
+    "heavy": "+ embossed-button-relief rule (real per-icon roster) + full no-text rule + reinforcement paragraph",
+}
+
+# steam-porthole & diablo-gothic gen12 "heavy" crops are a FROZEN snapshot from when this
+# comparison was first made (2026-07-09 ~10:00) — the live assets-*/orch.json for both has
+# since been regenerated (different seed) by later, unrelated pipeline work the same day.
+# The number shown here is the seed that WAS the passing roll at snapshot time.
+FROZEN_SEED_NOTE = {
+    "steam-porthole": ("84", "the live assets-steam-porthole/ dir has since moved to seed 623 "
+                              "via later, unrelated pipeline hardening the same day — this is a frozen snapshot"),
+    "diablo-gothic": ("110", "the live assets-diablo-gothic/ dir has since moved to seed 710 "
+                             "via later, unrelated pipeline hardening the same day — this is a frozen snapshot"),
+}
+
+
+def load_theme(sid):
+    res = json.load(open(os.path.join(GEN12, f"assets-{sid}", "results.json")))
+    g12len = json.load(open(os.path.join(HERE, "gen12ref", f"assets-{sid}", "results.json")))["prompt_len"]
+    fmeta = json.load(open(os.path.join(HERE, f"froggo-{sid}-meta.json")))
+    mode = res["mode"]
+    if sid in FROZEN_SEED_NOTE:
+        seed_disp, seed_note = FROZEN_SEED_NOTE[sid]
+    else:
+        seed_disp, seed_note = str(fmeta["seed"]), None
+    input_desc = ("grey placeholder blueprint + colored guide outlines" if mode == "templated"
+                  else "scaffold canvas (flat backdrop + dividers, no control geometry)")
+    crops = [k for k in CROP_LABELS if os.path.exists(os.path.join(HERE, f"crop-{sid}-{k}-gen12.png"))]
+    return dict(sid=sid, mode=mode, seed_disp=seed_disp, seed_note=seed_note, g12len=g12len,
+                fmeta=fmeta, input_desc=input_desc, crops=crops)
+
+
+def theme_block(t):
+    seed_html = f"<b>{t['seed_disp']}</b>"
+    note_html = (f'<div class="cap" style="margin-top:6px;color:#e8c471">note: {t["seed_note"]}</div>'
+                 if t["seed_note"] else "")
+    crop_html = ""
+    for key in t["crops"]:
+        label, g_lbl, f_lbl = CROP_LABELS[key]
+        crop_html += f"""
+  <div class="croppair"><h4>{label}</h4><div class="duo">
+    <div><img src="crop-{t['sid']}-{key}-gen12.png" loading="lazy" alt="{t['sid']} {key} gen12"><div class="lbl">{g_lbl}</div></div>
+    <div><img src="crop-{t['sid']}-{key}-froggo.png" loading="lazy" alt="{t['sid']} {key} froggo"><div class="lbl">{f_lbl}</div></div>
+  </div></div>"""
+    return f"""
+<h2>{t['sid']} <span style="color:var(--dim);font-weight:400;font-size:13px">({t['mode']} mode · seed {seed_html})</span></h2>
+<div class="grid2">
+  <div class="cell">
+    <span class="tag g12">gen12 — heavy constraints</span>
+    <img src="gen12-{t['sid']}-device-disp.jpg" data-full="gen12-{t['sid']}-device.png" loading="lazy" alt="gen12 {t['sid']} paint (device area)">
+    <div class="cap"><b>gen12 pipeline paint</b> (device area of paint.png) · model <b>fal-ai/gemini-3-pro-image-preview/edit</b> ·
+    seed {seed_html} · res 4K 5:4 two-panel joint (device column ~2304x2784px) ·
+    prompt <b>{t['g12len']:,} chars</b> · input: {t['input_desc']}.</div>
+    {note_html}
+  </div>
+  <div class="cell">
+    <span class="tag frg">froggo-style — light prompt</span>
+    <img src="froggo-{t['sid']}-disp.jpg" data-full="froggo-{t['sid']}.png" loading="lazy" alt="froggo-style {t['sid']} render">
+    <div class="cap"><b>froggo-style render</b> · model <b>{t['fmeta']['model']}</b> ·
+    seed <b>{t['fmeta']['seed']}</b> · res 4K 4:5 single panel ({t['fmeta']['dims'][0]}x{t['fmeta']['dims'][1]}px) ·
+    prompt <b>{t['fmeta']['prompt_chars']:,} chars</b> · input: flat 1200x1500 RGB(235,235,238) canvas.</div>
+  </div>
+</div>
+<div class="crops">{crop_html}
+</div>"""
+
+
+def round2_theme_row(sid):
+    cells = ""
+    for tier in TIERS:
+        meta_path = os.path.join(HERE, f"r2-{sid}-{tier}-meta.json")
+        meta = json.load(open(meta_path)) if os.path.exists(meta_path) else None
+        img = f"r2-{sid}-{tier}-disp.jpg"
+        chars = meta["prompt_chars"] if meta else "?"
+        seed = meta["seed"] if meta else "?"
+        cells += f"""
+  <div class="cell r2cell">
+    <span class="tag tier-{tier}">{TIER_LABEL[tier]}</span>
+    <img src="{img}" data-full="r2-{sid}-{tier}.png" loading="lazy" alt="{sid} {tier} tier render">
+    <div class="cap"><b>{tier}</b> tier · <b>{chars:,}</b> chars · seed <b>{seed}</b> · {TIER_DESC[tier]}</div>
+  </div>"""
+    return f"""
+<h3 class="r2h3">{sid}</h3>
+<div class="grid3">{cells}
+</div>"""
+
+
+def main():
+    r1 = [load_theme(s) for s in ROUND1_THEMES]
+    round1_html = "\n".join(theme_block(t) for t in r1)
+    round2_html = "\n".join(round2_theme_row(s) for s in ROUND2_THEMES)
+
+    html = TEMPLATE.replace("__ROUND1__", round1_html).replace("__ROUND2__", round2_html)
+    open(os.path.join(HERE, "index.html"), "w").write(html)
+    print(f"wrote index.html ({len(html):,} bytes), {len(r1)} round-1 themes, {len(ROUND2_THEMES)} round-2 themes")
+
+
+TEMPLATE = r"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B-proof &mdash; gen12 constraint load vs froggo-style light prompt</title>
+<style>
+  :root { --bg:#101014; --panel:#1a1a20; --ink:#e8e8ee; --dim:#9a9aa6; --acc:#7fd8c8; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,'Helvetica Neue',sans-serif; padding:24px clamp(12px,3vw,40px) 80px; }
+  h1 { font-size:clamp(18px,2.6vw,26px); margin-bottom:6px; }
+  h2 { font-size:clamp(16px,2.2vw,21px); margin:38px 0 4px; color:var(--acc); }
+  h3.r2h3 { font-size:clamp(14px,1.9vw,17px); margin:26px 0 8px; color:#e8c471; }
+  .sub { color:var(--dim); font-size:13px; max-width:110ch; }
+  .costbar { background:var(--panel); border:1px solid #2c2c34; border-radius:10px; padding:10px 14px; margin:14px 0 4px; font-size:13px; color:var(--dim); }
+  .costbar b { color:var(--ink); }
+  .decision { background:linear-gradient(#171722,#14141b); border:1px solid #33333e; border-radius:12px; padding:18px 20px; margin:16px 0 8px; font-size:14px; max-width:130ch; }
+  .decision h2 { margin:0 0 10px; color:var(--ink); font-size:clamp(17px,2.4vw,22px); }
+  .decision .q { color:var(--acc); font-weight:600; margin-bottom:8px; }
+  .decision ul { margin:8px 0 0 20px; }
+  .decision li { margin:4px 0; color:#cfcfd8; }
+  .grid2 { display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; }
+  .grid3 { display:flex; flex-wrap:wrap; gap:14px; margin-top:8px; }
+  .cell { flex:1 1 380px; min-width:280px; background:var(--panel); border:1px solid #2c2c34; border-radius:12px; padding:12px; }
+  .r2cell { flex:1 1 300px; }
+  .cell img { width:100%; height:auto; border-radius:8px; display:block; cursor:zoom-in; }
+  .cap { font-size:12.5px; color:var(--dim); margin-top:8px; }
+  .cap b { color:var(--ink); }
+  .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:99px; margin-bottom:8px; letter-spacing:.4px; }
+  .tag.g12 { background:#3a2b4d; color:#cfaaff; }
+  .tag.frg { background:#173d33; color:#7fd8c8; }
+  .tag.tier-light { background:#173d33; color:#7fd8c8; }
+  .tag.tier-medium { background:#3d3313; color:#e8c471; }
+  .tag.tier-heavy { background:#3a2b4d; color:#cfaaff; }
+  .crops { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; }
+  .croppair { flex:1 1 300px; min-width:260px; background:var(--panel); border:1px solid #2c2c34; border-radius:12px; padding:10px; }
+  .croppair .duo { display:flex; gap:8px; }
+  .croppair .duo > div { flex:1 1 0; min-width:0; }
+  .croppair img { width:100%; height:auto; border-radius:6px; display:block; cursor:zoom-in; }
+  .croppair .lbl { font-size:11px; color:var(--dim); text-align:center; margin-top:4px; }
+  .croppair h4 { font-size:13px; margin-bottom:8px; font-weight:600; }
+  .confound { background:#241d12; border:1px solid #4d3d1f; border-radius:10px; padding:12px 16px; margin-top:30px; font-size:13.5px; max-width:120ch; }
+  .confound h3 { font-size:14px; color:#e8c471; margin-bottom:6px; }
+  .confound li { margin:4px 0 4px 18px; color:#cbb98e; }
+  .verdict { background:#12241d; border:1px solid #1f4d3a; border-radius:10px; padding:12px 16px; margin-top:16px; font-size:13.5px; max-width:120ch; }
+  .verdict h3 { font-size:14px; color:var(--acc); margin-bottom:6px; }
+  .verdict li { margin:4px 0 4px 18px; color:#a9d8c9; }
+  .pending { background:#2a1414; border:1px solid #5c2323; border-radius:10px; padding:12px 16px; margin-top:16px; font-size:13.5px; max-width:120ch; color:#f0b8b8; }
+  .navtabs { display:flex; gap:8px; margin:20px 0 6px; flex-wrap:wrap; }
+  .navtabs a { color:var(--dim); text-decoration:none; font-size:12.5px; padding:5px 12px; border:1px solid #2c2c34; border-radius:99px; }
+  .navtabs a:hover { color:var(--ink); border-color:#444; }
+  #lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:9; cursor:zoom-out; overflow:auto; }
+  #lightbox.on { display:block; }
+  #lightbox img { display:block; margin:0 auto; min-width:60%; max-width:none; width:max(100%, 1200px); height:auto; }
+  #lbhint { position:fixed; top:10px; right:16px; color:#fff8; font-size:12px; z-index:10; display:none; }
+  #lightbox.on + #lbhint { display:block; }
+</style>
+</head>
+<body>
+<h1>B-proof: does gen12's constraint load degrade paint quality?</h1>
+<p class="sub">One variable changed at a time: the prompt. Same base model, matched seeds, same theme_prompt
+text verbatim, flat pale backdrop. Round 1 (6 themes) is a binary light-vs-heavy comparison; round 2 (3 themes)
+adds a middle tier to test whether quality falls off gradually or at a threshold.</p>
+
+<div class="decision">
+  <h2>What you're deciding</h2>
+  <p class="q">Adopt the B-pivot &mdash; beautiful-render-first, detect-second &mdash; or keep the current
+  constrained, pipeline-first single-pass generation?</p>
+  <ul>
+    <li><b>Keep current (constrained single-pass):</b> gen12's ~9-11k-char prompt guarantees empty knob/seek/
+    toggle cavities, exact-fit sprite-strip parts, and a pixel-aligned region mask in ONE generation &mdash;
+    the runtime seats real controls with zero detection risk. Cost: visibly flatter, less "photographed"
+    paint quality (see below), even on regions the prompt doesn't constrain.</li>
+    <li><b>Adopt B-pivot:</b> paint with a short, unconstrained prompt (what "froggo-style" approximates here)
+    to get the richer look, then RECOVER control geometry from the finished art via VLM/SAM/detector. Cost:
+    gives up the guaranteed-empty-cavity / exact-fit correctness that a detector has to re-earn (and per
+    <code>ai-image-coords-rule</code> / <code>discover-before-building-rule</code>, detector-based placement
+    has burned real time before on this project).</li>
+  </ul>
+  <p style="margin-top:10px;color:var(--dim)">Evidence below: round 1 shows the quality gap holds across
+  6 visually diverse themes (not just the original 2). Round 2 shows WHERE the gap opens &mdash; gradually, or
+  in one jump.</p>
+</div>
+
+<div class="costbar">
+  models: <b>fal-ai/gemini-3-pro-image-preview/edit</b> (gen12 pipeline rolls, ~$0.15/roll via fal, pre-existing
+  &mdash; no re-spend) &middot; <b>gemini-3-pro-image-preview</b> via Vertex AI <code>global</code> endpoint (every
+  froggo-style + round-2 render on this page &mdash; same base model fal proxies; fal's account was locked
+  for most of this session, confirmed live with a probe call before switching, ~$0.24/4K image) &middot;
+  crops/pages/previews = local $0.<br>
+  <b>spend before this session:</b> 2 rolls x ~$0.24 &asymp; $0.48 (original steam-porthole + diablo-gothic pair).
+  <b>this session's new spend:</b> 4 rolls (theme scale-up: fa-pod, fallout-vault, wc-goldshield, claymation)
+  + 9 rolls (round-2 3-theme x 3-tier ramp) = 13 x ~$0.24 &asymp; <b>$3.12</b>.
+  <b>running total: ~$3.60.</b>
+</div>
+
+<div class="navtabs">
+  <a href="#round1">Round 1 &middot; 6 themes, light vs heavy</a>
+  <a href="#round2">Round 2 &middot; 3 themes x 3 prompt-load tiers</a>
+  <a href="#verdict">Assessor's read</a>
+</div>
+
+<h1 id="round1" style="margin-top:40px;font-size:clamp(17px,2.3vw,22px)">Round 1 &mdash; 6 themes, gen12 (heavy) vs froggo-style (light)</h1>
+<p class="sub">The froggo-style condition states the control roster once (~600-900 chars) with zero mask /
+sprite-strip / empty-socket / exact-fit / zero-residue / two-panel clauses; gen12's shipping prompt is
+~9,000-11,000 chars of hard constraints. Crop pairs (buttons / knob / slider / display) are cut generically
+from each theme's own <code>regions.json</code> control boxes &mdash; not hand-picked per theme.</p>
+__ROUND1__
+
+<h1 id="round2" style="margin-top:52px;font-size:clamp(17px,2.3vw,22px)">Round 2 &mdash; 3-tier prompt-load ramp (linear vs cliff)</h1>
+<p class="sub">Round 1 only has 2 points on the constraint-length curve (light, heavy) &mdash; that can't tell
+a smooth decline from a threshold effect. Round 2 adds a MEDIUM tier and holds the input/output FORMAT constant
+across all 3 tiers (unlike round 1's heavy condition, which was the real two-column pipeline artifact) so
+prompt length is the only variable. Themes: steam-porthole &amp; diablo-gothic at FRESH seeds (284, 310 &mdash;
+different from round 1's 84, 110) + wmp-quicksilver (not yet used elsewhere in this lookbook) at seed 405.
+Tiers are literal layered subsets of genskin.py's real clauses (not paraphrased) &mdash; light ~600-640 chars,
+medium ~2,060-2,100 chars (+ empty-cavity + blank-screens + seek-slot-only rules), heavy ~3,555-3,590 chars
+(+ embossed-button-relief with the real per-icon roster + full no-text rule + a closing reinforcement
+paragraph). All via Vertex AI, same serving path as round 1's froggo-style renders.</p>
+__ROUND2__
+
+<div class="confound">
+  <h3>Confounds we could NOT fully control (read before concluding)</h3>
+  <li><b>Serving path (round 1):</b> gen12 rolls went through fal's proxy of the model; froggo-style rolls went
+  through Vertex AI directly (fal's account was locked for most of this session). Same published base model
+  (gemini-3-pro-image-preview), same seed integer passed &mdash; but seed&rarr;RNG mapping across the two
+  serving stacks is not proven identical, so "same seed" is nominal, not bit-exact.</li>
+  <li><b>Canvas area per device (round 1):</b> gen12's device shares a 5:4 4K canvas with the mask panel and
+  sprite strip (device ~2304x2784px ~6.4MP); the froggo-style device gets the whole 4:5 4K canvas (~17MP, most
+  of which is the device). The light condition has roughly 2x the pixel budget on the device itself.</li>
+  <li><b>Input image differs by construction (round 1):</b> blueprint/scaffold vs flat canvas. Part of the
+  "constraint load" variable by design, but it means layout freedom differs too.</li>
+  <li><b>Frozen snapshot (round 1, steam-porthole &amp; diablo-gothic only):</b> the gen12 "heavy" images shown
+  were captured 2026-07-09 ~10:00 against the pipeline's THEN-passing seeds (84, 110). The live
+  <code>assets-*</code> dirs for both themes were regenerated later the same day by unrelated pipeline hardening
+  work (now at seeds 623, 710) &mdash; this page intentionally keeps the original frozen comparison rather than
+  re-cutting crops from a moving target.</li>
+  <li><b>Round 2's "heavy" tier is NOT the literal shipping prompt.</b> It's a same-format (single flat canvas)
+  superset of real clauses reaching ~3.6k chars &mdash; not the two-column blueprint+mask ~9-11k-char prompt,
+  because that prompt asks for a structurally different task (painting a second mask column), which would
+  reintroduce round 1's format confound instead of isolating prompt length.</li>
+  <li><b>The froggo / round-2 renders are NOT pipeline-usable</b> at the light tier: screens have baked content,
+  knob/thumb/toggle are installed, no mask panel, no sprite strip. Medium and heavy tiers DO ask for empty
+  cavities/blank screens (that's the point) but still produce no mask panel or sprite strip.</li>
+</div>
+
+<div class="verdict" id="verdict">
+  <h3>Assessor's read (visual, all renders inspected at full res)</h3>
+  <li><b>Round 1 generalizes past the original 2 themes.</b> The light-prompt render is visibly richer than
+  its matched gen12 render on every one of the 6 themes &mdash; real material variation (patina, wear, specular
+  breakup), more volumetric lighting, higher perceived production value, and the gap holds even on surfaces
+  both conditions render freely (button facets, body panels). gen12's paint reads flatter, more "clean
+  illustration"; the light-prompt paint reads as photographed.</li>
+  <li><b>Round 2's honest finding: the drop is NOT a smooth ramp, and it front-loads.</b> Across all 3
+  round-2 themes, the biggest visible quality loss happens between LIGHT and MEDIUM &mdash; the moment the
+  prompt requires hollow/empty sockets and blank screens instead of a fully "alive" device. MEDIUM&rarr;HEAVY
+  (adding button-relief prose, the full no-text rule, and a reinforcement paragraph) does NOT reliably cost
+  further quality: diablo-gothic keeps declining slightly, wmp-quicksilver is roughly flat, and steam-porthole's
+  heavy tier is arguably MORE ornate than its medium tier (glowing lenses/tubes, a fuller round housing).</li>
+  <li><b>Read with caution:</b> this is 3 themes x 1 seed each &mdash; not enough to rule out per-seed variance
+  driving the steam-porthole non-monotonicity. But the consistent pattern (light&rarr;medium is the big drop,
+  medium&rarr;heavy is small/flat/reversed) points at a specific candidate mechanism: it may be the EMPTY-
+  CAVITY / BLANK-SCREEN requirement specifically &mdash; not sheer prompt length &mdash; that costs quality,
+  since round 2's heavy tier adds length without adding new "make it look unfinished" constraints. If that
+  holds up, it reframes the B-pivot question: the real cost driver may not be constraint LOAD in general but
+  this ONE class of constraint (forcing a "before assembly" incomplete look), which a beautiful-render-first
+  approach would also have to solve some other way (e.g. composite the empty cavity onto a fully-painted
+  device rather than asking the model to paint it in from the start).</li>
+</div>
+
+<div class="pending">
+  <b>Human verdict: PENDING.</b> This lookbook is served for your evaluation &mdash; nothing has been decided.
+  Once you weigh in, the decision (adopt B-pivot / keep current / something narrower like "fix only the
+  empty-cavity ask") gets recorded in docs/DECISIONS.md, linking back to
+  docs/experiments/2026-07-10-bproof-constraint-load.md.
+</div>
+
+<div id="lightbox"><img id="lbimg" alt=""></div>
+<div id="lbhint">click or Esc to close &middot; full-res</div>
+
+<script>
+  const lb = document.getElementById('lightbox'), lbimg = document.getElementById('lbimg');
+  document.querySelectorAll('img[data-full], .croppair img').forEach(img => {
+    img.addEventListener('click', () => { lbimg.src = img.dataset.full || img.src; lb.classList.add('on'); });
+  });
+  lb.addEventListener('click', () => lb.classList.remove('on'));
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input,textarea,select') || e.target.isContentEditable) return;
+    if (e.key === 'Escape') lb.classList.remove('on');
+  });
+</script>
+</body>
+</html>
+"""
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,214 @@
+{
+ "id": "fa-pod",
+ "mode": "templated",
+ "seed": 673,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  18,
+  18,
+  24
+ ],
+ "palette": {
+  "aqua_blue": [
+   30,
+   120,
+   235
+  ],
+  "cyan_glass": [
+   70,
+   205,
+   230
+  ],
+  "grass_green": [
+   110,
+   200,
+   60
+  ],
+  "liquid_silver": [
+   175,
+   185,
+   200
+  ],
+  "gloss_white": [
+   240,
+   244,
+   250
+  ],
+  "sky_teal": [
+   30,
+   150,
+   170
+  ],
+  "ink_navy": [
+   20,
+   26,
+   48
+  ]
+ },
+ "keys": {
+  "playpause": [
+   255,
+   0,
+   0
+  ],
+  "prev": [
+   255,
+   0,
+   128
+  ],
+  "next": [
+   255,
+   0,
+   255
+  ],
+  "repeat": [
+   255,
+   128,
+   0
+  ],
+  "queue": [
+   255,
+   255,
+   0
+  ],
+  "vol": [
+   128,
+   0,
+   255
+  ],
+  "seek": [
+   128,
+   0,
+   128
+  ],
+  "shuffle": [
+   0,
+   255,
+   0
+  ],
+  "visualizer": [
+   0,
+   0,
+   255
+  ],
+  "album_art": [
+   255,
+   255,
+   128
+  ]
+ },
+ "keyNames": {
+  "playpause": "PURE RED",
+  "prev": "ROSE PINK",
+  "next": "MAGENTA",
+  "repeat": "ORANGE",
+  "queue": "YELLOW",
+  "vol": "VIOLET-PURPLE",
+  "seek": "DEEP PURPLE",
+  "shuffle": "PURE GREEN",
+  "visualizer": "PURE BLUE",
+  "album_art": "RGB(255, 255, 128)"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "soft aqua glow accents in the translucent shell",
+  "emissive_color": "auto",
+  "pulse": "breathe",
+  "intensity": 0.7,
+  "viz_emissive": true,
+  "beat_couple": 0.04
+ },
+ "template": {
+  "album_art": [
+   0.5,
+   0.11249999999999999
+  ],
+  "visualizer": [
+   0.5,
+   0.25125000000000003
+  ],
+  "seek": [
+   0.5,
+   0.3525
+  ],
+  "prev": [
+   0.28,
+   0.44999999999999996
+  ],
+  "playpause": [
+   0.5,
+   0.44999999999999996
+  ],
+  "next": [
+   0.72,
+   0.44999999999999996
+  ],
+  "repeat": [
+   0.24,
+   0.5625
+  ],
+  "vol": [
+   0.42,
+   0.5700000000000001
+  ],
+  "shuffle": [
+   0.6,
+   0.5700000000000001
+  ],
+  "queue": [
+   0.78,
+   0.5625
+  ]
+ },
+ "album_art_rect": [
+  0.26666666666666666,
+  0.03437499999999999,
+  0.4666666666666667,
+  0.15625
+ ],
+ "visualizer_rect": [
+  0.23333333333333334,
+  0.21062500000000003,
+  0.5333333333333333,
+  0.08125
+ ],
+ "prompt_len": 10898
+}

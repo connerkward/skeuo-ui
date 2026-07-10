@@ -1,0 +1,16 @@
+{
+ "id": "steam-porthole",
+ "tier": "light",
+ "model": "gemini-3-pro-image-preview (Vertex AI, global)",
+ "seed": 284,
+ "resolution": "4K",
+ "aspect_ratio": "4:5",
+ "dims": [
+  3712,
+  4608
+ ],
+ "prompt": "A skeuomorphic media-player device, top-down orthographic, centered on a flat uniform pale grey-white backdrop: STEAMPUNK BRASS nautilus / diving-bell media player: riveted polished BRASS and COPPER housing with a big round porthole, pressure-gauge dials, engraved filigree, patina, glass tubes and a teal-glass display. Victorian submarine machinery \u2014 ornate, mechanical, warm metal, rich reflections. It has physical controls: five icon buttons (play/pause, prev, next, repeat, queue), a round volume knob, a horizontal seek slot, a small toggle switch, an album-art window and a visualizer window. No text anywhere.",
+ "prompt_chars": 618,
+ "elapsed_s": 57.5,
+ "input": "flat 1200x1500 RGB(235,235,238) canvas"
+}
