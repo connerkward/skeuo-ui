@@ -48,6 +48,93 @@ def opening(img_l, k):
     return img_l.filter(ImageFilter.MinFilter(k)).filter(ImageFilter.MaxFilter(k))
 
 
+# ---------------- knob-socket detector (2026-07-10 fix) ----------------
+# WHY this exists instead of regions.json's vol.seat: assets-diablo-gothic/regions.json
+# has been REWRITTEN TWICE since diablo-src.png was captured for pbrtest2/pbrtest3 (a
+# 15-skin regen-all run produced an entirely different diablo-gothic paint layout — see
+# the WARNING above the button-id block). Re-deriving the knob seat from the CURRENT
+# regions.json would misplace it into the button cluster (verified: vol.seat converts to
+# ~(0.50, 0.53), which sits on the repeat/queue icons, not either round socket). Per
+# placement-invariants-rule ("compute from the paint, don't hand-nudge"), this detector
+# finds BOTH round recessed sockets directly in the ACTUAL rendered image (diablo-src.png)
+# by darkness + shape, independent of any regions.json — future paint regens can't
+# re-break it because it no longer depends on stale mainline metadata at all.
+def _radial_probe(lum_img, cx0, cy0, max_r, nang=32, jump=0.22):
+    Wp, Hp = lum_img.shape[1], lum_img.shape[0]
+    core = float(lum_img[int(round(cy0)), int(round(cx0))])
+    radii = []
+    for k in range(nang):
+        ang = 2 * np.pi * k / nang
+        dx, dy = np.cos(ang), np.sin(ang)
+        found = None
+        for r in range(5, max_r):
+            x = int(round(cx0 + dx * r)); y = int(round(cy0 + dy * r))
+            if not (0 <= x < Wp and 0 <= y < Hp):
+                break
+            if lum_img[y, x] > core + jump:
+                found = r
+                break
+        radii.append(found)
+    return radii
+
+
+def find_knob_sockets(src_rgb, n=2):
+    """Return up to `n` round, near-black recessed sockets in src_rgb (RGB, 0..1),
+    sorted left-to-right. Each: {c:[x/W, y/H], r: r/W}. Pure shape/darkness detection —
+    no coordinates from regions.json, no hand-typed pixel positions."""
+    from scipy import ndimage
+
+    Hp, Wp = src_rgb.shape[:2]
+    lum = src_rgb.mean(axis=-1)
+    lum_s = np.asarray(
+        Image.fromarray((lum * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(3)),
+        np.float32) / 255.0
+
+    dark = lum_s < 0.16   # sockets measure ~0.12-0.15; body/buttons/runes are brighter
+    lab, ncomp = ndimage.label(dark)
+    sizes = ndimage.sum(np.ones_like(lab), lab, range(1, ncomp + 1))
+    coms = ndimage.center_of_mass(dark, lab, range(1, ncomp + 1))
+
+    cands = []
+    for i in range(ncomp):
+        area = sizes[i]
+        if area < 8000:
+            continue
+        cy, cx = coms[i]
+        ys, xs = np.where(lab == i + 1)
+        bw, bh = xs.max() - xs.min(), ys.max() - ys.min()
+        if bw == 0 or bh == 0 or not (0.85 <= bw / bh <= 1.18):
+            continue          # knobs are round -> near-square bbox; screens/slots aren't
+        naive_r = (area / np.pi) ** 0.5
+        if not (0.035 * Wp <= naive_r <= 0.115 * Wp):
+            continue          # plausible knob-cap size band (fraction of image width)
+        max_r = int(naive_r * 2.2)
+        radii = _radial_probe(lum_s, cx, cy, max_r)
+        found = [r for r in radii if r is not None]
+        if len(found) / len(radii) < 0.8:
+            continue          # no consistent bright rim nearby -> not a round bezel (rejects screens)
+        rr = np.array(found)
+        cv = rr.std() / rr.mean()
+        if cv >= 0.35:
+            continue          # too irregular to be a true circular socket
+        pts = np.array([(cx + np.cos(2 * np.pi * k / len(radii)) * r,
+                          cy + np.sin(2 * np.pi * k / len(radii)) * r)
+                         for k, r in enumerate(radii) if r is not None])
+        cx_ref, cy_ref = float(pts[:, 0].mean()), float(pts[:, 1].mean())
+        # coverage-safe bias (placement-invariants-rule): the diamond-tab decoration
+        # pulls some rays' rim-crossing radius short of the true bezel edge, so the
+        # raw median slightly undershoots on the tab-recessed sides — bump 6% so the
+        # cap sprite fully covers the recess rather than exposing a socket crescent.
+        r_ref = float(np.median(rr)) * 1.06
+        cands.append((cv, cx_ref, cy_ref, r_ref))
+
+    cands.sort(key=lambda c: c[0])           # best circularity first
+    cands = cands[:n]
+    cands.sort(key=lambda c: c[1])           # then left-to-right for stable ordering
+    return [{"c": [round(cx_ref / Wp, 4), round(cy_ref / Hp, 4)], "r": round(r_ref / Wp, 4)}
+            for _, cx_ref, cy_ref, r_ref in cands]
+
+
 # ---------------- 1. glyph-shaped emissive ----------------
 mx = src.max(axis=-1)
 mn = src.min(axis=-1)
@@ -189,6 +276,11 @@ for i, bname in enumerate(R["buttons"]):
     btn_meta.append({"name": bname, "id": (i + 1) * 36,
                      "rect": [round(db[0], 4), round(db[1] * YS, 4),
                               round(db[2], 4), round(db[3] * YS, 4)]})
+# CAVEAT: this mask is cropped from the LIVE mainline regions.json/mask.png — the same
+# moving target the end-of-script drift guard protects the JSON fields from. If that
+# guard prints a "drifted" warning for 'buttons' on a future run, this PNG (and the
+# seek/shuffle sprites below) were ALSO just overwritten from the wrong snapshot even
+# though the JSON self-healed — `git checkout HEAD -- btn-ids.png sprite-*.png` to match.
 Image.fromarray(ids, "L").save(HERE / "btn-ids.png")
 
 # ---------------- 4. moving-part sprites (tight-crop) ----------------
@@ -237,9 +329,17 @@ def slot_walk(cx_px, cy_px, win=340):
 def ctr(bx):
     return [bx[0] + bx[2] / 2, bx[1] + bx[3] / 2]
 
-vol = regs["vol"]; seek = regs["seek"]; shuf = regs["shuffle"]
-seat = vol["seat"]                       # [cx fracW, cy fracPaintH, r fracW]
-knob = {"c": [round(seat[0], 4), round(seat[1] * YS, 4)], "r": round(seat[2], 4)}
+seek = regs["seek"]; shuf = regs["shuffle"]
+# knob seat(s): detected directly in diablo-src.png (see find_knob_sockets above) —
+# NOT from regions.json's vol.seat, which no longer matches this paint. Two round
+# sockets exist in the paint; the RIGHT one is the original interactive "knob", the
+# LEFT one was previously left empty (2026-07-10: filled with a second knob, same
+# detection + same cap sprite, reusing the circle-fit here rather than hand-placing it).
+sockets = find_knob_sockets(src, n=2)
+if len(sockets) < 2:
+    raise SystemExit(f"find_knob_sockets: expected 2 round sockets, found {len(sockets)} — "
+                      "check the darkness/shape thresholds against the current paint")
+knob2, knob = sockets                    # left-to-right: knob2 (left), knob (right, original)
 
 tk = seek["device"]; tv = seek.get("travel", [tk[0], tk[0] + tk[2]])
 thw = sk.width / W; thh = sk.height / PAINT_H            # sprite frac of paint
@@ -280,12 +380,36 @@ meta = {
     "viz": [round(viz[0], 4), round(viz[1] * YS, 4), round(viz[2], 4), round(viz[3] * YS, 4)],
     "art": [round(art[0], 4), round(art[1] * YS, 4), round(art[2], 4), round(art[3] * YS, 4)],
     "knob": knob,
+    "knob2": knob2,
     "seek": seek_m,
     "shuffle": shuf_m,
     "buttons": btn_meta,
     "lights": lights,
     "emissiveCoverage": round(float(mask.mean()), 5),
 }
+
+# ---- guard against mainline regions.json drift (2026-07-10 incident) ----------
+# assets-diablo-gothic/regions.json is a LIVE, concurrently-edited mainline file (other
+# gen12 sessions regen it independently of pbrtest3). Discovered while fixing the knob:
+# a plain re-run of this script silently shifted seek/shuffle/viz/art/buttons to a
+# DIFFERENT regions.json snapshot than the one that produced the last verified-good
+# diablo-meta3.json — same failure class as [[human-labeled-data-rule]] (silently
+# clobbering good data with a stale/moving external source). Only 'knob'/'knob2' are
+# immune (detected straight from the paint, no regions.json dependency). For every other
+# regions.json-derived field, keep the ON-DISK value unless FORCE_REGEN=1 is set —
+# re-deriving those fields for real needs a deliberate, verified re-cut, not an
+# incidental side effect of running this script for something else.
+import os
+PINNED_KEYS = ["viz", "art", "seek", "shuffle", "buttons", "glassFill", "glassRects"]
+old_path = HERE / "diablo-meta3.json"
+if old_path.exists() and not os.environ.get("FORCE_REGEN"):
+    old = json.load(open(old_path))
+    for k in PINNED_KEYS:
+        if k in old and meta.get(k) != old[k]:
+            print(f"guard: '{k}' drifted from the on-disk value (regions.json moved under us) "
+                  "— keeping the pinned on-disk value. Set FORCE_REGEN=1 to accept a real re-cut.")
+            meta[k] = old[k]
+
 json.dump(meta, open(HERE / "diablo-meta3.json", "w"), indent=1)
 print("lights:")
 for L in lights:

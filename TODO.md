@@ -477,32 +477,28 @@ Open/missed/unreviewed items from today's gen12 session (2026-07-09), each writt
 executed cold. Does not duplicate the moiré / ambient-masking / LTX-LoRA / emissivity-mainline
 entries already under "saved for later" above — those four stand as-is.
 
-1. **PBR social video re-record — spec locked, NOT executed (user deferred).**
-   Prior video (BPM-locked lighting, rotation knob broken) is at
-   [~/Desktop/cc-skeuo/2026-07-09-pbr-social-9x16.mp4](file:///Users/conner/Desktop/cc-skeuo/2026-07-09-pbr-social-9x16.mp4)
-   (commit `0a8d7512`). Verbatim re-record requirements, in order:
-   - **Lighting: non-BPM.** Replace the 128-BPM beat-locked pulse with organic FIRELIGHT —
-     1/f-style (pink-noise) flicker, not a metronome. Beat-clock code to remove/bypass lives in
-     [tools/mask-align-exp/gen12/pbrtest3/social.html](tools/mask-align-exp/gen12/pbrtest3/social.html)
-     (introduced in `0a8d7512`).
-   - **Fix the rotation knob FIRST** — it currently renders broken. Likely cause: a stale
-     seat/cut computed against an earlier diablo paint, while the diablo assets have since been
-     regenerated twice. Root-cause against the drift-correction warning in
-     [tools/mask-align-exp/gen12/pbrtest3/extract3.py](tools/mask-align-exp/gen12/pbrtest3/extract3.py)
-     (see the `drift-corrected` comments around line 13 / 153 / 177 — device-centre-vs-mask-centre
-     drift is computed there; confirm it's being applied against the CURRENT paint, not a cached one).
-   - **Add a second knob** — the paint (`diablo-emissive3.png`) has an empty second round socket
-     that the current build never fills. Detect + seat it the same way as the first knob (reuse
-     the circle-fit + matte-centroid snap already in `extract3.py`), don't hand-place it.
-   - **Choreography order**: (1) press play FIRST, (2) move the cursor light around, (3) rotate
-     the knob, (4) zoom into the TOP region — must show both the skeleton motif AND the central
-     play/pause emissive glow in frame.
-   - **Capture mechanism**: reuse
-     [tools/mask-align-exp/gen12/animexport/record_social.mjs](tools/mask-align-exp/gen12/animexport/record_social.mjs)
-     — stepped frame-by-frame capture per the shipped `animexport` harness (central
-     `video-convert`/capture discipline: deterministic per-frame render, not realtime screen-grab).
-   - Source assets: `tools/mask-align-exp/gen12/pbrtest3/diablo-emissive3.png`,
-     `diablo-meta3.json`, `btn-ids.png`.
+1. **PBR social video re-record — DONE (2026-07-10).** Delivered:
+   [2026-07-10-pbr-social-9x16.mp4](file:///Users/conner/Desktop/cc-skeuo/2026-07-10-pbr-social-9x16.mp4)
+   + [1x1 cut](file:///Users/conner/Desktop/cc-skeuo/2026-07-10-pbr-social-1x1.mp4) (+ posters,
+   provenance sidecar). All spec items executed:
+   - **Knob root cause found + fixed generically**: NOT the drift-correction — `diablo-meta3.json`'s
+     knob seat came from mainline `assets-diablo-gothic/regions.json` `vol.seat`, and that file has
+     been rewritten twice by regen runs since `diablo-src.png` was captured (and is a LIVE moving
+     target — another session rewrote it again mid-fix). `extract3.py` now finds the round recessed
+     sockets **directly in the rendered paint** (darkness → shape/aspect → radial rim-walk
+     circularity), zero regions.json dependency, plus a drift guard that pins all other
+     regions.json-derived meta3 fields unless `FORCE_REGEN=1` (a bare re-run had silently
+     corrupted seek/shuffle/viz/buttons — reverted from git, guard prevents recurrence).
+   - **Second knob added**: the detector finds BOTH sockets; left one now seats the same cap
+     sprite, independently draggable (`knob2` in meta3/index.html, `?knob2=` URL param).
+     Both knobs verified seated via real pointer-drag + close-up crops in the shipped page.
+   - **Non-BPM lighting**: recorder simply doesn't pass `?bpm=` — the page's organic multi-octave
+     flicker branch (already in `0a8d7512` as the non-BPM path) drives ember pulse + viz bars.
+   - **Choreography re-ordered per spec**: press play FIRST (0-3s) → light sweeps the skulls
+     (3-10s) → knob rotates −140°→140° (10-14s) → zoom into the TOP region, both skulls + central
+     play/pause glow in frame (14-20s). Probe-verified per-beat before the full render.
+   - Stepped frame-by-frame capture (record_social.mjs), 600 frames @30fps per cut, libx264
+     crf15; ffprobe + mid-clip frame inspection passed (1080x1920 / 1080x1080 native).
 
 2. **Outline-vs-solid template A/B — DONE, two rounds, verdict delivered.** (2026-07-10)
    Scored + built a served results page across TWO themes (round 2 added on top of the

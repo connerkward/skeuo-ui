@@ -47,7 +47,7 @@
 <div class="wrap">
   <div class="stage">
     <canvas id="gl" class="gl"></canvas>
-    <div class="badge" id="badge">studio overlay: drag knob/seek · click buttons/shuffle · empty space drags the light</div>
+    <div class="badge" id="badge">studio overlay: drag either knob/seek · click buttons/shuffle · empty space drags the light</div>
   </div>
   <div class="panel">
     <div class="row">
@@ -87,13 +87,13 @@
     <input type="range" id="g" min="0" max="2" step="0.05" value="0.9">
     <label><span>visualizer light spill</span><span id="vVz"></span></label>
     <input type="range" id="vz" min="0" max="3" step="0.05" value="1.2">
-    <div class="hint">Every moving part is relit live in the shader: the <b>knob</b> (drag ↕ to rotate — its
+    <div class="hint">Every moving part is relit live in the shader: either <b>knob</b> (drag ↕ to rotate — its
     bump normals rotate with it, so the highlight stays with the LIGHT, not the cap), the <b>seek thumb</b>
     (drag ↔), the <b>shuffle switch</b> (click), the <b>buttons</b> (press = content shifts down + darkens
     under the same lighting), and the <b>visualizer</b> is a real emissive source — its live bars are fed
     into the emissive gather every frame and cast light on the bezel. Space = play/pause (bars go live).
     Arrows nudge the light (Shift = coarse), P pauses the pulse.
-    URL: ?freeze=&amp;lx=&amp;ly=&amp;knob=&amp;seek=&amp;shuffle=&amp;press=&amp;viz=high|low&amp;zx=&amp;zy=&amp;zs=</div>
+    URL: ?freeze=&amp;lx=&amp;ly=&amp;knob=&amp;knob2=&amp;seek=&amp;shuffle=&amp;press=&amp;viz=high|low&amp;zx=&amp;zy=&amp;zs=</div>
   </div>
 </div>
 
@@ -135,6 +135,7 @@ uniform float uEmI, uEmPulse, uEmSuppress, uHalo;
 uniform vec3 uPLpos[6]; uniform vec3 uPLcol[6]; uniform float uPLpulse[6]; uniform float uPLn;
 uniform float uGlassAmt, uGlassClean; uniform vec3 uGlassFill;
 uniform vec2 uKnobC; uniform float uKnobR, uKnobAngle;
+uniform vec2 uKnobC2; uniform float uKnobR2, uKnobAngle2;   // second (left) socket, same cap sprite
 uniform vec4 uThumbRect, uHomeRect, uTogRect, uVizRect;
 uniform float uHomeDx, uPressId, uPressAmt, uVizSpill, uVizI;
 uniform vec3 uZoom;
@@ -195,6 +196,24 @@ void main(){
       alb = mix(alb, ks.rgb, a);
       n = normalize(mix(n, sn, a * 0.85));
       em4.a *= (1.0 - a); rough = mix(rough, 0.5, a * 0.5);
+    }
+  }
+  // second knob (left socket) — same cap sprite, independent seat + rotation
+  vec2 dd2 = uv - uKnobC2; dd2.y *= uAspect;
+  float kr2 = length(dd2);
+  if (kr2 < uKnobR2 * 1.02){
+    float c3 = cos(-uKnobAngle2), s3 = sin(-uKnobAngle2);
+    vec2 rd2 = vec2(c3*dd2.x - s3*dd2.y, s3*dd2.x + c3*dd2.y);
+    vec2 lo2 = rd2 / (uKnobR2 * 2.0) + 0.5;
+    vec4 ks2 = texture2D(uKnob, lo2);
+    float a2 = ks2.a * smoothstep(uKnobR2 * 1.02, uKnobR2 * 0.98, kr2);
+    if (a2 > 0.003){
+      vec3 sn2 = spriteN(uKnob, lo2, 5.0);
+      float c4 = cos(uKnobAngle2), s4 = sin(uKnobAngle2);
+      sn2.xy = vec2(c4*sn2.x - s4*sn2.y, s4*sn2.x + c4*sn2.y);
+      alb = mix(alb, ks2.rgb, a2);
+      n = normalize(mix(n, sn2, a2 * 0.85));
+      em4.a *= (1.0 - a2); rough = mix(rough, 0.5, a2 * 0.5);
     }
   }
   // seek thumb (translates)
@@ -339,6 +358,7 @@ const state = {
   em: parseFloat(Q.get('em') ?? 1.3), halo: parseFloat(Q.get('halo') ?? 1), ps: 1,
   g: parseFloat(Q.get('glass') ?? 0.9), gc: 0.65, vz: parseFloat(Q.get('spill') ?? 1.2),
   knob: parseFloat(Q.get('knob') ?? 0) * Math.PI / 180,
+  knob2: parseFloat(Q.get('knob2') ?? -20) * Math.PI / 180,
   seek: parseFloat(Q.get('seek') ?? 0),
   shuffle: Q.get('shuffle') === '1',
   playing: (Q.get('viz') || '') === 'high',
@@ -430,6 +450,8 @@ async function boot(){
   gl.uniform3f(U('uGlassFill'), ...META.glassFill);
   gl.uniform2f(U('uKnobC'), META.knob.c[0], META.knob.c[1]);
   gl.uniform1f(U('uKnobR'), META.knob.r);
+  gl.uniform2f(U('uKnobC2'), META.knob2.c[0], META.knob2.c[1]);
+  gl.uniform1f(U('uKnobR2'), META.knob2.r);
   const sm = META.seek;
   gl.uniform4f(U('uHomeRect'), sm.x0, sm.cy - sm.h/2, sm.w, sm.h);
   gl.uniform1f(U('uHomeDx'), sm.w * 1.15);
@@ -480,6 +502,8 @@ function hit(uv){
   const asp = CFG.h / CFG.w;
   const dx = uv[0] - META.knob.c[0], dy = (uv[1] - META.knob.c[1]) * asp;
   if (Math.hypot(dx, dy) < META.knob.r * 1.05) return { kind: 'knob' };
+  const dx2 = uv[0] - META.knob2.c[0], dy2 = (uv[1] - META.knob2.c[1]) * asp;
+  if (Math.hypot(dx2, dy2) < META.knob2.r * 1.05) return { kind: 'knob2' };
   const sm = META.seek, tx = sm.x0 + (sm.x1 - sm.x0) * state.seek;
   if (uv[0] > tx && uv[0] < tx + sm.w && Math.abs(uv[1] - sm.cy) < sm.h * 0.55) return { kind: 'seek' };
   const tr = META.shuffle.rect;
@@ -498,6 +522,7 @@ canvas.addEventListener('pointerdown', e => {
   const uv = uvOf(e); const h = hit(uv);
   canvas.setPointerCapture(e.pointerId);
   if (h.kind === 'knob') drag = { kind: 'knob', y0: e.clientY, v0: state.knob };
+  else if (h.kind === 'knob2') drag = { kind: 'knob2', y0: e.clientY, v0: state.knob2 };
   else if (h.kind === 'seek') drag = { kind: 'seek', x0: e.clientX, v0: state.seek };
   else if (h.kind === 'shuffle'){ state.shuffle = !state.shuffle; upload('uTog', state.shuffle ? togOn : togOff, gl.RGBA); drag = { kind: 'none' }; }
   else if (h.kind === 'button'){ PRESS.id = h.b.id; PRESS.name = h.b.name; PRESS.target = 1; drag = { kind: 'press' }; }
@@ -512,13 +537,15 @@ canvas.addEventListener('pointermove', e => {
     if (drag.kind === 'knob'){
       state.knob = Math.max(-2.36, Math.min(2.36, drag.v0 + (drag.y0 - e.clientY) / 160 * 2.36));
       syncSlider('k', state.knob * 180 / Math.PI);
+    } else if (drag.kind === 'knob2'){
+      state.knob2 = Math.max(-2.36, Math.min(2.36, drag.v0 + (drag.y0 - e.clientY) / 160 * 2.36));
     } else if (drag.kind === 'seek'){
       const sm = META.seek;
       state.seek = Math.max(0, Math.min(1, drag.v0 + (e.clientX - drag.x0) / (canvas.clientWidth * (sm.x1 - sm.x0))));
     } else if (drag.kind === 'light'){ state.lx = uv[0]; state.ly = uv[1]; }
   } else {
     const h = hit(uv);
-    canvas.style.cursor = h.kind === 'knob' ? 'ns-resize' : h.kind === 'seek' ? 'ew-resize'
+    canvas.style.cursor = (h.kind === 'knob' || h.kind === 'knob2') ? 'ns-resize' : h.kind === 'seek' ? 'ew-resize'
       : (h.kind === 'button' || h.kind === 'shuffle') ? 'pointer' : 'crosshair';
   }
   if (!state.anim && drag) draw(lastT);
@@ -533,7 +560,7 @@ window.addEventListener('pointerup', () => {
 function setBadge(){
   document.getElementById('badge').textContent =
     (state.playing ? '▶ playing — visualizer bars are casting light' :
-     'studio overlay: drag knob/seek · click buttons/shuffle · empty space drags the light');
+     'studio overlay: drag either knob/seek · click buttons/shuffle · empty space drags the light');
 }
 
 // ---------- pulse + viz ----------
@@ -624,6 +651,7 @@ function draw(t){
   gl.uniform1f(U('uVizSpill'), state.vz);
   gl.uniform1f(U('uVizI'), 1.0);
   gl.uniform1f(U('uKnobAngle'), state.knob);
+  gl.uniform1f(U('uKnobAngle2'), state.knob2);
   gl.uniform3f(U('uZoom'), ...state.zoom);   // in draw() so capture scripts can animate it
   const sm = META.seek, tx = sm.x0 + (sm.x1 - sm.x0) * state.seek;
   gl.uniform4f(U('uThumbRect'), tx, sm.cy - sm.h / 2, sm.w, sm.h);

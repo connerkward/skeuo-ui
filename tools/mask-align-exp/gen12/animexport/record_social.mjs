@@ -2,20 +2,32 @@
 // (1080x1920 9:16 social cut, 30 fps, ~20 s). Same discipline as record_pbr.mjs:
 // the recorder owns the clock (?freeze= kills the page rAF), sets the full
 // light/knob/press/zoom state per frame inside the REAL renderer iframe, calls
-// draw(t), screenshots. ?bpm=128 beat-locks the ember pulse + viz bars.
+// draw(t), screenshots.
 //
-// choreography (20 s @ 30 fps = 600 frames), all eased — catmull-rom spline
-// through waypoints for the light path (no linear moves, no teleports):
-//   A 0.0–8.0   scripted light path: sweeps in, RAKES ACROSS BOTH TOP SKULLS
-//               (low light height so the relief pops), arcs over the ember
-//               spikes and body, lands near the knob
-//   B 8.0–12.0  volume knob sweep −140°→140° (eased), light orbits the knob so
-//               the highlight travels on the brushed cap
-//   C 12.0–16.5 play press (button physically depresses) → visualizer bars leap
-//               on the 128-BPM grid, spilling light on the bezel; shuffle
-//               switch flicks ON at 15.4 (the fixed vertical lever)
-//   D 16.5–20.0 glass close-up: eased zoom into the twin glass panes, light
-//               ping-pongs so the reflection streak moves across the glass
+// 2026-07-10 re-record (TODO.md "session close-out backlog" item 1, spec locked):
+//   - lighting is ORGANIC firelight, not beat-locked. The 128-BPM clock from the
+//     prior cut (0a8d7512) is a feature-flagged path in pbrtest3/index.html's
+//     pulses()/drawViz() (?bpm=N) — we simply don't pass ?bpm= here, so the page's
+//     own non-BPM branch runs: a multi-octave decaying-amplitude sine sum, a cheap
+//     deterministic approximation of 1/f (pink-noise) ember flicker.
+//   - choreography order is LOCKED: (1) press play FIRST, (2) light sweeps across
+//     the skulls, (3) rotate the (right) knob, (4) zoom into the TOP region so the
+//     skull motif AND the central play/pause emissive glow are both in frame.
+//   - the second (left) knob added 2026-07-10 (pbrtest3/extract3.py) has no scripted
+//     motion here — it sits at its default static angle (index.html ?knob2=,
+//     default -20°) so both sockets simply read as filled/lived-in.
+//
+// choreography (20 s @ 30 fps = 600 frames), all eased — catmull-rom spline through
+// waypoints for the light path (no linear moves, no teleports):
+//   A 0.0–3.0   PRESS PLAY: light idles near the play/pause button, the button
+//               physically depresses, visualizer bars go live, light eases off
+//               toward the skull-sweep's entry point (no jump cut into B)
+//   B 3.0–10.0  scripted light path: sweeps in, RAKES ACROSS BOTH TOP SKULLS (low
+//               light height so the relief pops), arcs over the ember spikes/body
+//   C 10.0–14.0 volume knob sweep −140°→140° (eased), light orbits the knob so the
+//               highlight travels on the brushed cap; shuffle flicks ON at 13.4
+//   D 14.0–20.0 TOP-REGION close-up: eased zoom into the skulls + play/pause
+//               cluster, light lingers/drifts across it so the glow reads live
 //
 // usage: node record_social.mjs <serverURL> <framesRoot>
 import { chromium } from "playwright";
@@ -29,21 +41,24 @@ const dir = join(OUT, AR11 ? "frames-social-1x1" : "frames-social-9x16");
 mkdirSync(dir, { recursive: true });
 
 const FPS = 30, DUR = 20;
-const BPM = 128;
-const T0 = 2.8125;                       // 6 whole beats @128 -> frame 0 lands ON a beat (mid-glow)
+const T0 = 2.8125;                       // clock start offset (matches index.html's default freezeT band)
 const ease = (u) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, u)));
 
-// --- light path: catmull-rom through (time, lx, ly, h) waypoints -------------
+// --- computed from pbrtest3/diablo-meta3.json (2026-07-10 knob re-derivation) ------
+const PLAY = { x: 0.5044, y: 0.3186 };    // playpause button centre (meta3 buttons[].rect)
+const KNOB = { x: 0.6987, y: 0.4701 };    // right/original knob seat (re-derived from the paint)
+const TOP = { x: 0.50, y: 0.235 };        // zoom centre: both skulls (y~0.17) + playpause (y~0.32)
+
+// --- segment B light path: catmull-rom through (time, lx, ly, h) waypoints --------
 const WP = [
-  [-0.8, 0.62, 0.06, 0.40],   // lead-in (off-frame feel: high + right)
-  [ 0.0, 0.46, 0.12, 0.34],   // frame 0: already sweeping
-  [ 1.3, 0.24, 0.175, 0.15],  // SKULL top-left — raking
-  [ 2.4, 0.50, 0.13, 0.22],   // crest over the transport cluster
-  [ 3.5, 0.76, 0.175, 0.15],  // SKULL top-right — raking
-  [ 4.8, 0.86, 0.42, 0.20],   // right ember spikes
-  [ 6.0, 0.52, 0.56, 0.30],   // arc across the body
-  [ 7.0, 0.20, 0.42, 0.22],   // left ember ridge
-  [ 8.0, 0.58, 0.38, 0.26],   // hand-off toward the knob
+  [ 2.20, 0.62, 0.06, 0.40],  // lead-in, continuous from segment A's hand-off
+  [ 3.00, 0.46, 0.12, 0.34],  // frame start of B: already sweeping
+  [ 4.30, 0.24, 0.175, 0.15], // SKULL top-left — raking
+  [ 5.40, 0.50, 0.13, 0.22],  // crest over the transport cluster
+  [ 6.50, 0.76, 0.175, 0.15], // SKULL top-right — raking
+  [ 7.80, 0.86, 0.42, 0.20],  // right ember spikes
+  [ 9.00, 0.52, 0.56, 0.30],  // arc across the body
+  [10.00, 0.58, 0.38, 0.26],  // hand-off toward the knob
 ];
 function catmull(ts) {
   let i = 1;
@@ -61,39 +76,42 @@ function catmull(ts) {
   return out;   // [lx, ly, h]
 }
 
-const KNOB = { x: 0.7088, y: 0.4766 };
-const GLASS = { x: 0.54, y: 0.715 };
-
 function stateAt(sec) {
   const s = { k: 0, press: 0, playing: false, shuffle: false, zx: 0, zy: 0, zs: 0 };
-  if (sec < 8) {                    // A — spline light path over the skulls
+
+  if (sec < 3.0) {                              // A — press play first
+    s.playing = sec >= 0.55;
+    s.press = sec < 0.30 ? 0
+      : sec < 0.55 ? ease((sec - 0.30) / 0.25)
+      : Math.max(0, 1 - ease((sec - 0.55) / 0.30));
+    // ease the light off PLAY toward B's entry waypoint (2.2, 0.62, 0.06, 0.40) —
+    // no teleport at the A/B seam
+    const u = ease(Math.min(1, Math.max(0, (sec - 0.85) / (2.20 - 0.85))));
+    s.lx = PLAY.x + (0.62 - PLAY.x) * u;
+    s.ly = PLAY.y + (0.06 - PLAY.y) * u;
+    s.h = 0.24 + (0.40 - 0.24) * u;
+
+  } else if (sec < 10.0) {                      // B — spline light path over the skulls
+    s.playing = true;
     [s.lx, s.ly, s.h] = catmull(sec);
-  } else if (sec < 12) {            // B — knob sweep, light orbits the knob
-    const u = (sec - 8) / 4, th = Math.PI * (1.15 - 1.3 * ease(u));
+
+  } else if (sec < 14.0) {                      // C — knob sweep, light orbits the knob
+    s.playing = true;
+    const u = (sec - 10.0) / 4.0, th = Math.PI * (1.15 - 1.3 * ease(u));
     s.lx = KNOB.x + 0.16 * Math.cos(th); s.ly = KNOB.y - 0.13 * Math.sin(th); s.h = 0.20;
     s.k = -140 + 280 * ease(u);
-  } else {                          // C+D share knob end-state
-    s.k = 140;
-    if (sec < 16.5) {               // C — play press, beat bars, light drifts to viz
-      // park at (0.46, 0.56): above the glass panes — directly over them blows out white
-      const u = ease((sec - 12) / 4.5);
-      s.lx = KNOB.x + 0.16 * Math.cos(Math.PI * -0.15) - (KNOB.x + 0.16 * Math.cos(Math.PI * -0.15) - 0.46) * u;
-      s.ly = KNOB.y + 0.13 * Math.sin(Math.PI * 0.15) + (0.56 - KNOB.y - 0.13 * Math.sin(Math.PI * 0.15)) * u;
-      s.h = 0.20 + 0.08 * u;
-      s.press = sec < 12.2 ? 0 : sec < 12.45 ? ease((sec - 12.2) / 0.25) : Math.max(0, 1 - ease((sec - 12.45) / 0.3));
-      s.playing = sec >= 12.45;
-      s.shuffle = sec >= 15.4;
-    } else {                        // D — glass close-up, moving reflection
-      const u = (sec - 16.5) / 3.5;
-      s.playing = true; s.shuffle = true;
-      const zi = ease(Math.min(1, u * 2.2));           // zoom eases in over ~1.6 s
-      // zs=1 with zx,zy=0.5 is identity; ease centre + scale together (no jump)
-      s.zx = 0.5 + (GLASS.x - 0.5) * zi; s.zy = 0.5 + (GLASS.y - 0.5) * zi; s.zs = 1 + 1.35 * zi;
-      // light ping-pongs the empirically-good diagonal ABOVE the panes (record_pbr
-      // seg D: directly over glass = white blowout, this band = visible moving streak)
-      const pp = 0.5 - 0.5 * Math.cos(2 * Math.PI * 1.5 * u);   // smooth ping-pong
-      s.lx = 0.38 + 0.18 * pp; s.ly = 0.52 + 0.08 * pp; s.h = 0.25;
-    }
+    s.shuffle = sec >= 13.4;
+
+  } else {                                      // D — top-region close-up (skulls + play/pause)
+    s.playing = true; s.shuffle = true; s.k = 140;
+    const u = (sec - 14.0) / 6.0;
+    const zi = ease(Math.min(1, u * 2.0));               // zoom eases in over ~3 s, then holds
+    // kept moderate (not the glass-close-up's 2.35 max) — the top region spans both
+    // skulls (~0.10-0.90 wide); too tight crops the skull silhouettes out of frame
+    s.zx = 0.5 + (TOP.x - 0.5) * zi; s.zy = 0.5 + (TOP.y - 0.5) * zi; s.zs = 1 + 0.65 * zi;
+    // gentle ping-pong drift across the skull/play-pause band once zoomed in
+    const pp = 0.5 - 0.5 * Math.cos(2 * Math.PI * 1.1 * u);
+    s.lx = 0.30 + 0.40 * pp; s.ly = 0.16 + 0.12 * pp; s.h = 0.16;
   }
   return s;
 }
@@ -105,7 +123,8 @@ const errs = [];
 page.on("pageerror", (e) => errs.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errs.push(m.text()); });
 
-await page.goto(`${BASE}/pbrtest3/social.html?freeze=${T0}&bpm=${BPM}${AR11 ? "&ar=1x1" : ""}`);
+// no ?bpm= -> pbrtest3/index.html's organic (non-beat-locked) pulse/viz branch runs
+await page.goto(`${BASE}/pbrtest3/social.html?freeze=${T0}${AR11 ? "&ar=1x1" : ""}`);
 const frame = () => page.frames().find((f) => f.url().includes("pbrtest3/index.html"));
 await page.waitForFunction(() => {
   const f = document.getElementById("demo");
@@ -115,9 +134,9 @@ await frame().evaluate(() => { resize(); });   // after chrome-hiding CSS -> ful
 
 const t0 = Date.now();
 // PROBE=1 -> only a handful of representative frames (draw(t) is deterministic
-// per-frame under ?bpm, so skipping frames is safe for a layout check)
+// per-frame, so skipping frames is safe for a layout/choreography check)
 const FRAMES = process.env.PROBE
-  ? [0, 40, 105, 200, 290, 340, 372, 462, 530, 585]
+  ? [0, 10, 20, 40, 90, 150, 220, 310, 360, 420, 480, 540, 585]
   : Array.from({ length: DUR * FPS }, (_, i) => i);
 for (const n of FRAMES) {
   const sec = n / FPS;
