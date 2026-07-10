@@ -434,11 +434,22 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
   frequency). Terms: moiré pattern, lattice undersampling aliasing, ordered dithering. Replicable:
   sample every k-th pixel of a filled shape, draw at floor(x*s) with k*s non-integer. Consider as a
   deliberate visual style (viz mode / loading states / brand texture).
-- **Ambient-video masking problem**: find a reliable way to mask/limit modified areas in i2v
+- [x] **Ambient-video masking problem**: find a reliable way to mask/limit modified areas in i2v
   ambient loops — diff-detect changed pixels vs source frame + hard-composite video only inside
   allowed-motion masks (reuse PBR glass/region masks). Seedance 1.0 pro fast = current winner.
-- **Benchmark LTX-2.3 Cinemagraph LoRA** (HF terms accepted) vs round-2 Seedance/Wan results —
+  **Outcome (2026-07-10):** naive absdiff-vs-source doesn't work (11-22% false-touched from
+  compression/grain noise); per-pixel temporal std-dev across the clip does (0.5-5.9%, matches
+  human verdicts); hard-composite (force protected control boxes back to source, feathered)
+  verified to eliminate leak with a close-up crop check. See
+  [`docs/experiments/2026-07-09-ambient-video-loops.md`](docs/experiments/2026-07-09-ambient-video-loops.md#round-3-2026-07-10--ltx-23-cinemagraph-lora-benchmark--modified-area-masking-prototype)
+  round 3, and the live page
+  [`tools/mask-align-exp/gen12/ambientvid/maskexp.html`](tools/mask-align-exp/gen12/ambientvid/maskexp.html).
+- [x] **Benchmark LTX-2.3 Cinemagraph LoRA** (HF terms accepted) vs round-2 Seedance/Wan results —
   same subjects + region-scoped prompts via fal ltx lora endpoint (~$0.10-0.15/clip).
+  **Outcome (2026-07-10):** not usable via fal — the LoRA endpoint fetches `loras[].path`
+  anonymously server-side, and HF's gate 403s that regardless of the account owner having
+  accepted terms (confirmed via 2 live submitted jobs, both unbilled 422). Local (46GB model)
+  still impractical. Round-2 picks (Seedance 1.0 pro fast) stand. Same doc/page as above.
 - **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
   across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
   featured path for skins with strong emissive themes.

@@ -1,0 +1,14 @@
+{
+  "round": 3,
+  "date": "2026-07-10",
+  "seed": 1207,
+  "note": "LTX-2.3-22B-Distilled + Lightricks LoRA-Cinemagraph benchmark vs round-2 Seedance/Wan picks. Same subjects (downsized 576x768 JPEGs of subject-<skin>-34.png), same region-scoped-freeze prompt style as jobs2.json (diablo-gothic prompt reconstructed from the round-2 write-up's paraphrase of the winning 2nd/glow-only prompt -- the verbatim text was not saved anywhere in the repo).",
+  "endpoint": "fal-ai/ltx-2.3-22b/distilled/image-to-video/lora",
+  "lora": "https://huggingface.co/Lightricks/LTX-2.3-22b-LoRA-Cinemagraph/resolve/main/ltx-2.3-22b-lora-cinemagraph-0.9.safetensors",
+  "pricing": "$0.001405/megapixel (fal get_pricing, live)",
+  "jobs": [
+    {"skin": "steam-porthole", "request_id": "019f4d35-f988-7aa3-ab69-934939c829bc", "params": {"camera_lora": "static", "seed": 1207, "num_frames": 121, "generate_audio": false}, "result": "422 unbilled -- fal could not fetch the gated HF LoRA (403, anonymous fetch)"},
+    {"skin": "diablo-gothic", "request_id": "019f4d36-08e5-7560-9400-b045c56a284f", "params": {"camera_lora": "static", "seed": 1207, "num_frames": 121, "generate_audio": false}, "result": "422 unbilled -- same cause"}
+  ],
+  "verdict": "LTX-2.3-22B-Distilled-LoRA path is NOT usable via fal: the LoRA endpoint fetches loras[].path anonymously server-side, and HF's per-user gate blocks that regardless of the account owner having accepted terms. Cost: $0.00 (both requests failed pre-billing validation)."
+}

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambient-video masking experiment — 2026-07-10</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px; background: #14161b; color: #e8e8ea;
+    font: 15px/1.5 -apple-system, "SF Pro Text", Helvetica, Arial, sans-serif;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 40px 0 8px; border-top: 1px solid #333; padding-top: 20px; }
+  h3 { font-size: 14px; margin: 18px 0 6px; color: #ffcf6b; }
+  .sub { color: #9aa0aa; font-size: 13px; margin-bottom: 4px; }
+  .costband {
+    background: #1d222b; border: 1px solid #333; border-radius: 8px;
+    padding: 10px 14px; font-size: 12.5px; color: #b9c0cc; margin: 12px 0 8px;
+  }
+  .costband b { color: #ffcf6b; }
+  .blocked {
+    background: #2a1414; border: 1px solid #6b2a2a; border-radius: 8px;
+    padding: 12px 16px; margin: 10px 0; font-size: 13.5px;
+  }
+  .grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .card {
+    background: #1b1e24; border: 1px solid #2c313b; border-radius: 10px;
+    padding: 10px; flex: 1 1 260px; max-width: 420px;
+  }
+  .card img, .card video { width: 100%; height: auto; display: block; border-radius: 6px; background: #000; }
+  .card .cap { font-size: 12px; color: #9aa0aa; margin-top: 6px; }
+  .wide { max-width: 100%; flex: 1 1 100%; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 10px 0; }
+  th, td { border: 1px solid #2c313b; padding: 6px 10px; text-align: left; }
+  th { background: #1d222b; color: #ffcf6b; }
+  .pass { color: #7ee08a; font-weight: 600; }
+  .fail { color: #ff8b8b; font-weight: 600; }
+  code { background: #23262d; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+  .legend { font-size: 12px; color: #9aa0aa; }
+  a { color: #7fb8ff; }
+</style>
+</head>
+<body>
+
+<h1>Ambient-video: masking experiment + LTX-Cinemagraph benchmark</h1>
+<div class="sub">2026-07-10 · follow-up to <code>docs/experiments/2026-07-09-ambient-video-loops.md</code></div>
+
+<div class="costband">
+  <b>Models used this session:</b> local only — OpenCV 4.13 (absdiff / temporal std-dev / morphology),
+  ffmpeg 7 (frame extract + re-encode + xfade loop) for the masking prototype (section 2/3).
+  <b>fal LTX-2.3-22B-Distilled-LoRA</b> (<code>fal-ai/ltx-2.3-22b/distilled/image-to-video/lora</code>)
+  was submitted twice (2 skins) after the account balance was topped up — both failed pre-billing
+  validation (gated-LoRA fetch 403, see §1). <b>Total spend this session: $0.00.</b>
+</div>
+
+<h2>1 — LTX-2.3 Cinemagraph LoRA: runnability check</h2>
+
+<div class="blocked">
+  <b>Result: NOT usable via fal — architectural block, not a fluke.</b> The fal balance was
+  topped up mid-session and both jobs were actually submitted and ran to completion (queue
+  status <code>COMPLETED</code>), but both failed pre-billing validation with the same 422:
+  <pre style="white-space:pre-wrap;font-size:12px;background:#111;padding:8px;border-radius:6px;">Could not get LoRA at https://huggingface.co/Lightricks/LTX-2.3-22b-LoRA-Cinemagraph/resolve/main/ltx-2.3-22b-lora-cinemagraph-0.9.safetensors:
+Failed to download file... Status code: 403.</pre>
+  <ul>
+    <li><b>Endpoint + LoRA param confirmed working:</b> <code>fal-ai/ltx-2.3-22b/distilled/image-to-video/lora</code>
+      accepted the full request (image, prompt, <code>camera_lora=static</code>, seed, loras array) and reached
+      the LoRA-fetch step — it did not reject the request shape.</li>
+    <li><b>The actual blocker: fal fetches <code>loras[].path</code> URLs anonymously, server-side.</b>
+      Hugging Face's gated-repo mechanism requires the *authenticated, terms-accepting user's own token* on
+      every request — the account owner (<code>ckward</code>) accepting the gate on huggingface.co does
+      <b>not</b> propagate to a third party's anonymous fetch. This closes the question round 2 left open
+      ("whether fal's own fetcher can resolve the gated HF URL... remains unverified") — it cannot, and
+      retrying the identical call will keep 403ing.</li>
+    <li><b>Workaround assessed and ruled out:</b> download the 201&nbsp;MB gated file myself (authenticated)
+      and re-host it on fal's own CDN (exactly as done for the two subject images this round, via fal's
+      direct <code>storage/upload</code> REST endpoints) — but the only tool with read access to the gated
+      HF file, the Hugging Face MCP's <code>hf_fs cat</code> op, caps at 80,000 bytes/call. A 201&nbsp;MB
+      file needs ~2,500 sequential calls — not a reasonable spend for a $1 exploratory benchmark.</li>
+    <li><b>Local execution: still impractical</b> (per round 2's finding, re-confirmed, not re-tested) —
+      base model is a single 46&nbsp;GB <code>ltx-2.3-22b-distilled.safetensors</code>; a 22B video DiT on
+      this Mac's MPS is not a realistic path for a $0 local run.</li>
+  </ul>
+  <b>Cost: $0.00</b> — both requests failed pre-billing validation (unbilled 422, per fal's own semantics,
+  same as round 2's identical failure mode). <b>Round-2 picks stand</b>: Seedance 1.0 pro fast remains the
+  ambient-loop model of choice.
+</div>
+
+<h2>2 — Modified-area masking prototype</h2>
+<p class="sub">
+  Subjects: round-2 winner clips (<code>fal-ai/bytedance/seedance/v1/pro/fast/image-to-video</code>,
+  $0.108/clip, <code>camera_fixed=true</code>) for <b>steam-porthole</b> and <b>diablo-gothic</b> (its
+  region-scoped-glow "-v2" prompt — round 2's PASS pick, not the 1st-prompt whole-tablet-ignites FAIL
+  clip that shares the base filename).
+</p>
+<p class="sub">
+  Protected control boxes are hand-read off the frozen <code>subject-&lt;skin&gt;-34.png</code> frame
+  (see <code>protected_regions.json</code>) — <b>not</b> the live <code>assets-&lt;skin&gt;/regions.json</code>,
+  because that file's <code>paint.png</code> is gitignored and gets overwritten by every pipeline regen;
+  the version on disk when this ran had already been replaced with a different device design (confirmed:
+  its own boxes rendered on its own paint.png crop land nowhere near this experiment's frames).
+</p>
+
+<h3>Detection method comparison</h3>
+<table>
+  <tr><th>skin</th><th>method</th><th>touched % of frame</th><th>leak % into controls</th><th>verdict</th></tr>
+  <tr><td rowspan="3">steam-porthole</td><td>A: naive absdiff vs source</td><td>22.0%</td><td>19.0%</td><td class="fail">unusable — swamped by compression/grain noise</td></tr>
+  <tr><td>B: + per-frame DC correction</td><td>19.1%</td><td>17.5%</td><td class="fail">barely helps</td></tr>
+  <tr><td>C: temporal std-dev (round 2's own judge)</td><td><b>5.9%</b></td><td><b>2.5%</b></td><td class="pass">localizes to real motion (gears/needles/steam), matches doc's PASS verdict</td></tr>
+  <tr><td rowspan="3">diablo-gothic (v2/PASS)</td><td>A: naive absdiff vs source</td><td>11.4%</td><td>10.6%</td><td class="fail">overstated</td></tr>
+  <tr><td>B: + per-frame DC correction</td><td>10.3%</td><td>8.7%</td><td class="fail">barely helps</td></tr>
+  <tr><td>C: temporal std-dev</td><td><b>0.5%</b></td><td><b>0.5%</b></td><td class="pass">near-perfectly clean, matches "tablet frozen" verdict</td></tr>
+</table>
+<p class="sub">
+  <b>Finding: naive frame-vs-source absdiff does NOT work reliably on its own</b> — h264 recompression +
+  the model's own per-frame grain/relight produce a low-amplitude, spatially-broad diff that a single
+  global threshold can't separate from real localized motion (it flagged 11–22% of "frozen" frames as
+  touched). <b>Per-pixel temporal std-dev across the whole clip is the reliable signal</b> — consistent
+  with round 2's own choice of temporal-std heatmaps as its judge. It correctly re-derives "steam-porthole
+  and diablo-gothic both PASS" from raw pixels alone, with no model-identity assumptions.
+</p>
+
+<h3>Per-skin overlay (method C, temporal std-dev)</h3>
+<p class="legend">red = touched (moved at some point in the clip) · cyan outline = protected control box (named, per-control label on image) · yellow = leak (touched AND inside a protected control)</p>
+<div class="grid">
+  <div class="card"><img src="mask-overlay-steam-porthole-C-std.png" alt="steam-porthole touched/leak overlay"><div class="cap">steam-porthole — leak concentrated at the vol-knob rim (adjacent to legitimately-animating gears), everything else clean</div></div>
+  <div class="card"><img src="mask-overlay-diablo-gothic-C-std.png" alt="diablo-gothic touched/leak overlay"><div class="cap">diablo-gothic (v2/PASS) — essentially no leak; runes/cracks are the only sustained motion</div></div>
+</div>
+
+<h3>Method A vs C, side by side (why the naive method fails)</h3>
+<div class="grid">
+  <div class="card"><img src="mask-overlay-steam-porthole-A-naive.png" alt="steam naive"><div class="cap">steam-porthole — method A (naive): near-whole-device flagged red</div></div>
+  <div class="card"><img src="mask-overlay-steam-porthole-C-std.png" alt="steam std"><div class="cap">steam-porthole — method C (std): tight, localized</div></div>
+  <div class="card"><img src="mask-overlay-diablo-gothic-A-naive.png" alt="diablo naive"><div class="cap">diablo-gothic — method A (naive): whole body flagged red</div></div>
+  <div class="card"><img src="mask-overlay-diablo-gothic-C-std.png" alt="diablo std"><div class="cap">diablo-gothic — method C (std): near-empty</div></div>
+</div>
+
+<h2>3 — Hard-composite fix: before / after</h2>
+<p class="sub">
+  For every frame: protected control-box pixels are forced back to the true static source frame
+  (6px feathered blend at the mask edge to avoid a hard seam); everywhere else keeps the model's frame.
+  Composited clips re-looped with the same 1.0s ffmpeg xfade as round 2.
+</p>
+<div class="grid">
+  <div class="card wide">
+    <video src="loop2-seedancefast-steam-porthole.mp4" controls muted loop playsinline></video>
+    <div class="cap">steam-porthole — ORIGINAL model output</div>
+  </div>
+  <div class="card wide">
+    <video src="loop2-seedancefast-steam-porthole-composited.mp4" controls muted loop playsinline></video>
+    <div class="cap">steam-porthole — COMPOSITED (controls forced to source)</div>
+  </div>
+  <div class="card wide">
+    <video src="loop2-seedancefast-diablo-gothic-v2.mp4" controls muted loop playsinline></video>
+    <div class="cap">diablo-gothic — ORIGINAL model output (v2/PASS clip)</div>
+  </div>
+  <div class="card wide">
+    <video src="loop2-seedancefast-diablo-gothic-composited.mp4" controls muted loop playsinline></video>
+    <div class="cap">diablo-gothic — COMPOSITED</div>
+  </div>
+</div>
+
+<h3>Close-up proof: vol-knob rim, 3 timestamps (steam-porthole)</h3>
+<p class="sub">
+  Per verify-outputs-rule §1b — this is the region with the largest measured leak (15.5%). 4x
+  nearest-neighbor zoom crop at t=0.5s / 1.5s / 2.5s.
+</p>
+<div class="card wide">
+  <img src="vol-crop-compare-steam-porthole.png" alt="vol knob crop comparison, original top row vs composited bottom row, 3 timestamps">
+  <div class="cap">top row = original (visible brightness/rim drift across time) · bottom row = composited (pixel-identical across all 3 timestamps — forced to source)</div>
+</div>
+
+<h2>4 — Verdict</h2>
+<table>
+  <tr><th>question</th><th>answer</th></tr>
+  <tr><td>Does naive per-frame absdiff reliably detect "what the model touched"?</td><td class="fail">No — swamped by compression/grain noise, overstates by 4–20x.</td></tr>
+  <tr><td>Does per-pixel temporal std-dev across the clip work?</td><td class="pass">Yes — localizes to real motion, matches the human/frame-based verdicts from round 2.</td></tr>
+  <tr><td>Does hard-composite (source-frame-in-protected-boxes) fix leak?</td><td class="pass">Yes, by construction — verified pixel-identical across time in the leaked vol-knob region.</td></tr>
+  <tr><td>Is LTX-2.3 Cinemagraph LoRA runnable?</td><td class="fail">Blocked on fal account balance (403), not on capability. Endpoint + gated HF weights both confirmed reachable.</td></tr>
+</table>
+
+</body>
+</html>

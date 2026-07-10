@@ -1,0 +1,23 @@
+{
+  "_note": "Hand-annotated control boxes read off the ACTUAL subject-<skin>-34.png frame used to generate the round-2 ambient loops (gridded visual read, 0.05 precision). NOT sourced from assets-<skin>/regions.json: that file's paint.png is gitignored/regenerated on every pipeline run, and by the time this experiment ran (2026-07-10) the live assets-steam-porthole/paint.png had already been overwritten by a concurrent regen with a completely different device design (verified by rendering its regions.json boxes on its own paint.png crop -- see docs/experiments/2026-07-09-ambient-video-loops.md round-3 append). These coordinates are fractions of the subject-<skin>-34.png frame (1152x1536, the exact model input), which IS the stable, frozen ground truth for this experiment.",
+  "steam-porthole": {
+    "playpause": [0.275, 0.635, 0.375, 0.705],
+    "prev":      [0.375, 0.650, 0.465, 0.705],
+    "next":      [0.475, 0.650, 0.565, 0.705],
+    "repeat":    [0.565, 0.650, 0.655, 0.705],
+    "queue":     [0.720, 0.635, 0.810, 0.705],
+    "vol":       [0.235, 0.735, 0.375, 0.815],
+    "seek":      [0.400, 0.735, 0.790, 0.795],
+    "shuffle":   [0.450, 0.825, 0.680, 0.865]
+  },
+  "diablo-gothic": {
+    "playpause": [0.395, 0.335, 0.575, 0.490],
+    "prev":      [0.200, 0.360, 0.335, 0.475],
+    "next":      [0.635, 0.360, 0.775, 0.475],
+    "repeat":    [0.440, 0.200, 0.545, 0.265],
+    "queue":     [0.440, 0.535, 0.545, 0.620],
+    "vol":       [0.190, 0.525, 0.345, 0.645],
+    "shuffle":   [0.630, 0.525, 0.785, 0.645],
+    "seek":      [0.200, 0.600, 0.790, 0.640]
+  }
+}

@@ -172,3 +172,143 @@ Agent-judged from heatmaps + full-res frames + seam crops; user review via the s
   the PBR pass — natural fit). Unsolved; saved for later.
 - **TODO (terms now accepted on HF):** benchmark `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph`
   against the round-2 results (same subjects, same region-scoped prompts, fal LTX lora endpoint).
+
+---
+
+## Round 3 (2026-07-10) — LTX-2.3 Cinemagraph LoRA benchmark + modified-area masking prototype
+
+Both "saved for later" items from round 2 executed in one pass (`ambientvid/`, still
+scoped to that dir). Live comparison page:
+[`tools/mask-align-exp/gen12/ambientvid/maskexp.html`](../../tools/mask-align-exp/gen12/ambientvid/maskexp.html).
+
+### 3a — LTX-2.3-22B-Distilled + Lightricks LoRA-Cinemagraph vs round-2 winners
+
+**Method.** Endpoint `fal-ai/ltx-2.3-22b/distilled/image-to-video/lora` (confirmed live via
+`get_model_schema`: takes a required `loras: array<unknown>` in the standard fal shape
+`[{"path", "scale"}]`, plus `camera_lora` incl. `"static"`). LoRA weights:
+`Lightricks/LTX-2.3-22b-LoRA-Cinemagraph` (201 MB safetensors), gate accepted by the
+authenticated HF user (`ckward`). Same subjects as round 2 (`subject-<skin>-34.png`,
+downsized to 576×768 JPEG to fit the upload path), same region-scoped-freeze prompt style
+as `jobs2.json` (diablo-gothic's prompt reconstructed from round 2's paraphrase of the
+winning glow-only prompt — the verbatim text wasn't saved anywhere in the repo), seed 1207,
+`camera_lora=static`, `num_frames=121` (~5s @ 24fps), negative prompt overridden to drop
+LTX's default `"static"` term (round 2 finding #5) and add scene-specific negatives.
+Jobs recorded in `ambientvid/jobs3-ltx.json`.
+
+**fal account was locked mid-session** ("User is locked: Exhausted balance", verified via a
+live `submit_job` 403 before any billing occurred) — the user topped up and the jobs below
+ran after that. Pricing: `$0.001405/megapixel` (live `get_pricing`) ≈ **$0.11–0.13/clip**
+at this frame count/size; **2 clips ≈ $0.22–0.26**, under the $1 cap.
+
+**Result: definitively NOT usable via the fal hosted endpoint.** Both jobs completed (queue
+status `COMPLETED`) with a 422 before any generation ran:
+> `Could not get LoRA at https://huggingface.co/.../ltx-2.3-22b-lora-cinemagraph-0.9.safetensors:
+> Failed to download file... Status code: 403.`
+
+This closes the question round 2 left open ("whether fal's own fetcher can resolve the gated
+HF URL... remains unverified"). It cannot: **fal fetches LoRA URLs anonymously, server-side**,
+and Hugging Face's gate requires the *authenticated, terms-accepting user's own token* — gate
+acceptance by a human on huggingface.co does not propagate to a third party's anonymous fetch.
+This is an architectural mismatch between fal's LoRA-URL mechanism and HF's per-user gating,
+not a fluke — retrying the same call will keep 403ing.
+
+**The only remaining workaround** — download the 201 MB gated safetensors myself (with an
+authenticated HF session) and re-host it on fal's own CDN, then point `loras[0].path` at that
+CDN URL instead of the HF URL (exactly what was done for the two subject images this round,
+via fal's direct `storage/upload` REST endpoints) — was assessed and ruled out as impractical:
+the only tool with read access to the gated HF file is the Hugging Face MCP's `hf_fs cat` op,
+which caps at 80,000 bytes per call. A 201 MB file would need **~2,500 sequential calls**,
+which is not a reasonable spend of time or tool-call budget for a $1 exploratory benchmark
+(same "assess local, say so, stop" discipline this task was scoped under — this is the hosted
+equivalent of that call).
+
+**Verdict vs round-2 winners: N/A — no LTX-Cinemagraph footage was generated.** Round 2's
+picks stand: Seedance 1.0 pro fast ($0.108/clip, `camera_fixed=true`) remains the ambient-loop
+model of choice; Wan 2.2 turbo ($0.10/clip) remains the cheap-but-flawed runner-up. Total spend
+this round: **$0.00** — both submissions failed pre-billing validation.
+
+### 3b — Modified-area masking prototype ($0, local, existing round-2 videos)
+
+**Question.** Round 2 flagged: even a "PASS" clip changes pixels outside the intended
+regions subtly. Can we (a) detect what a clip actually changed vs its true source frame,
+and (b) hard-composite the source back in wherever it shouldn't have touched?
+
+**Method.** `ambientvid/mask_experiment.py`, on the round-2 winners (Seedance 1.0 pro fast,
+`camera_fixed=true`) for steam-porthole and diablo-gothic (its `-v2`/glow-only PASS clip —
+NOT the same-basename 1st-prompt FAIL clip, which the script initially picked by mistake
+before the file-selection was corrected and re-run).
+- **Protected control boxes**: hand-read off the frozen `subject-<skin>-34.png` frame itself
+  (`ambientvid/protected_regions.json`), NOT the live `assets-<skin>/regions.json` — that
+  file's `paint.png` is gitignored and had already been overwritten by a concurrent pipeline
+  regen with a different device design by the time this ran (confirmed empirically: its own
+  region boxes, rendered on its own current `paint.png` crop, don't correspond to anything in
+  this experiment's frames — a real gap: gen12's per-skin geometry has no stable historical
+  ground truth once `paint.png` gets regenerated).
+- **3 detection methods compared**, all measured against the true source frame:
+  - **A — naive per-frame absdiff vs source, unioned over time.**
+  - **B — A + per-frame global-mean (DC) correction** (strip a spatially-uniform
+    relight/grain pulse before thresholding).
+  - **C — per-pixel temporal std-dev across the whole clip** (round 2's own judge, here
+    applied per-pixel rather than as a downsampled heatmap).
+- **Hard composite**: every frame, protected-control pixels forced back to the true static
+  source frame (6px Gaussian-feathered blend at the mask edge), model frame kept everywhere
+  else; re-looped with the existing 1.0s ffmpeg xfade.
+
+**Results:**
+
+| skin | method | touched % of frame | leak % into controls |
+|---|---|---|---|
+| steam-porthole | A naive absdiff | 22.0% | 19.0% |
+| steam-porthole | B DC-corrected | 19.1% | 17.5% |
+| steam-porthole | **C temporal std** | **5.9%** | **2.5%** |
+| diablo-gothic (v2/PASS) | A naive absdiff | 11.4% | 10.6% |
+| diablo-gothic (v2/PASS) | B DC-corrected | 10.3% | 8.7% |
+| diablo-gothic (v2/PASS) | **C temporal std** | **0.5%** | **0.5%** |
+
+**Key findings:**
+1. **Naive frame-vs-source absdiff does not work as a modified-area detector on its own** —
+   it flagged 11–22% of two clips the docs already called "device frozen" / "PASS" as
+   touched. h264 recompression plus the model's own per-frame grain/relight produce a
+   low-amplitude, spatially-broad diff a single global threshold can't separate from real
+   localized motion. Per-frame DC (mean) correction barely helps (still 10–19%).
+2. **Per-pixel temporal std-dev across the whole clip is the reliable signal** —
+   0.5–5.9% touched, correctly re-deriving "both clips are well-behaved" straight from raw
+   pixels, with no model-identity assumptions and no reliance on the earlier
+   downsampled-heatmap version. This validates round 2's choice of temporal-std as its judge
+   and generalizes it into an actual per-pixel mask (not just a human-viewed heatmap).
+3. **Leak is real but small and localized** even on "PASS" clips — steam-porthole's leak
+   (2.5%, concentrated 15.5% inside the `vol` knob box) is explained by that knob sitting
+   directly against the legitimately-animating gear cluster; every other control box is
+   ≤0.5% leak on both skins.
+4. **Hard-composite eliminates the leak by construction, verified with a close-up crop**:
+   the steam-porthole vol-knob rim (its highest-leak control) shows visible brightness/rim
+   drift across 3 timestamps in the original, and is pixel-identical across all 3 timestamps
+   in the composited output (per verify-outputs-rule §1b close-up-crop check). Full-frame
+   before/after mid-clip comparisons otherwise look unchanged where leak was already near
+   zero — the fix is a no-op exactly where it should be.
+5. **A concrete pipeline gap surfaced along the way**: `assets-<skin>/paint.png` is
+   gitignored and gets overwritten by every regen, so there is no way to recover the
+   region map that was actually true when a specific rendered artifact (like a round-2 video)
+   was produced, once the pipeline has moved on. Anything meant to be re-verified later
+   against a frozen artifact needs its own frozen region snapshot saved alongside it —
+   this experiment's `protected_regions.json` had to be reconstructed by hand from the frame
+   itself for exactly this reason.
+
+**Verdict:** diff-detection + hard-composite **works**, but only with the temporal-std
+method — naive absdiff is not usable as shipped. Recommended production shape: compute a
+per-pixel temporal-std mask over the generated clip at generation time, force any pixel
+inside a known control's screen-space box back to the static source frame (feathered), and
+treat this as a blanket safety net regardless of how well the model already behaved — it's
+free at inference time and a no-op when the model was already clean.
+
+### Artifacts (round 3)
+
+- Live comparison page: `tools/mask-align-exp/gen12/ambientvid/maskexp.html`.
+- Masking prototype code: `ambientvid/mask_experiment.py`, `ambientvid/protected_regions.json`.
+- Overlays: `ambientvid/mask-overlay-<skin>-{A-naive,B-dc,C-std}.png`; raw numbers:
+  `ambientvid/mask_experiment_results.json`.
+- Composited loops: `ambientvid/loop2-seedancefast-<skin>-composited.{mp4,webm}`.
+- Close-up proof crop: `ambientvid/vol-crop-compare-steam-porthole.png`.
+- LTX jobs/params: `ambientvid/jobs3-ltx.json`.
+- Cost this round: $0.00 for the masking prototype (100% local/OpenCV/ffmpeg); LTX benchmark
+  ≈ $0.22–0.26 (2 clips, see 3a).

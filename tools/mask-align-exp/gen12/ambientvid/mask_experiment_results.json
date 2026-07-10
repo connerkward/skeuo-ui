@@ -1,0 +1,78 @@
+[
+  {
+    "skin": "steam-porthole",
+    "model": "seedancefast",
+    "video_dims": [
+      832,
+      1120
+    ],
+    "anisotropic_scale": [
+      0.7222,
+      0.7292
+    ],
+    "diff_thresh": 22,
+    "methods": {
+      "A_naive_absdiff": {
+        "touched_frac": 0.2196,
+        "leak_frac": 0.1903
+      },
+      "B_dc_corrected_absdiff": {
+        "touched_frac": 0.1911,
+        "leak_frac": 0.1745
+      },
+      "C_temporal_std": {
+        "touched_frac": 0.0586,
+        "leak_frac": 0.0252
+      }
+    },
+    "protected_px": 67220,
+    "per_control_leak_frac_stdmethod": {
+      "playpause": 0.0014,
+      "prev": 0.0,
+      "next": 0.0,
+      "repeat": 0.0017,
+      "queue": 0.0025,
+      "vol": 0.1546,
+      "seek": 0.0,
+      "shuffle": 0.0052
+    }
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "seedancefast",
+    "video_dims": [
+      832,
+      1120
+    ],
+    "anisotropic_scale": [
+      0.7222,
+      0.7292
+    ],
+    "diff_thresh": 22,
+    "methods": {
+      "A_naive_absdiff": {
+        "touched_frac": 0.1137,
+        "leak_frac": 0.1061
+      },
+      "B_dc_corrected_absdiff": {
+        "touched_frac": 0.1028,
+        "leak_frac": 0.0872
+      },
+      "C_temporal_std": {
+        "touched_frac": 0.0051,
+        "leak_frac": 0.0046
+      }
+    },
+    "protected_px": 113715,
+    "per_control_leak_frac_stdmethod": {
+      "playpause": 0.0,
+      "prev": 0.0006,
+      "next": 0.0,
+      "repeat": 0.0,
+      "queue": 0.0,
+      "vol": 0.0,
+      "seek": 0.0,
+      "shuffle": 0.03
+    }
+  }
+]
