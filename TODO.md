@@ -624,12 +624,12 @@ entries already under "saved for later" above — those four stand as-is.
    `/tmp`, cleaned up after) — the thumb rendered on the vertical groove and `window.__seek(d)`
    moved it along Y correctly, so the rendering/drag logic works; it's just never been triggered
    by a real paint. Getting a real vertical-seek exemplar needs a regen with a prompt nudge
-   toward a vertical layout (or luck) — blocked on fal billing like everything else below.
+   toward a vertical layout (or luck) on some future roll.
 
 8. **Fresh-regen landed — 7/15 PASS, committed `46574f6c`.** Per-skin history/reasons:
    `tools/mask-align-exp/gen12/assets-*/orch.json`. Follow-ups from closing this out below.
 
-9. [x] **Gate bug fixes (user-approved 2026-07-09) — DONE 2026-07-10, commit pending push.**
+9. [x] **Gate bug fixes (user-approved 2026-07-09) — DONE 2026-07-10.**
    Do NOT restore mirror-opposite state scoring, user likes the protruding/asymmetric switch look:
    - **Fixed.** `state-align` gate in [extract12.py](tools/mask-align-exp/gen12/extract12.py)
      scored raw silhouette IoU≥0.9 between OFF/ON toggle cuts, penalizing legitimately
@@ -645,8 +645,7 @@ entries already under "saved for later" above — those four stand as-is.
    - **Fixed.** The gross-leak check (`leak > 0.003`) could set `PASS=False` with no matching
      `reasons.append` — added `reasons.append(f"leak={leak_val}")`. Confirmed live: re-extracting
      `ps1-wild` now reports `reasons=['leak=0.00739']` instead of an empty list.
-   - `build_dashboard.py` 18-vs-15 glob fix is NOT mine (owned by another agent, out of scope
-     for this pass — noting it's still open).
+   - [x] `build_dashboard.py` 18-vs-15 glob fix — done by another agent in `bf3366ab`.
 
 10. [x] **N64 respec — DONE 2026-07-10.** User verdict: the old `n64-lowpoly` was "crap... i
     meant n64 cutscene render, not lowpoly n64 garbage... make it more a character stylized in
@@ -662,32 +661,21 @@ entries already under "saved for later" above — those four stand as-is.
     chunky gouraud-faceted forms. Prompt never uses the literal token "N64". Palette validated
     via `genskin.py --blueprint-only` (had to retune the 5 guide-key majors once — the first
     draft's saturated red/blue/near-white trio only left 7/10 usable guide keys; muted them
-    to 14/10 survivors). **Not yet generated** — blocked on fal billing (below), needs a real
-    roll through `orchestrate12.py theme_specs/n64-prerender-character.json 4`.
+    to 14/10 survivors). Rolling through `orchestrate12.py` in batch 2 (item 11).
 
-11. **BLOCKED ON BILLING — fal account balance exhausted, confirmed 2026-07-10.**
-    `POST https://rest.alpha.fal.ai/storage/upload/initiate` returns
-    `{"detail":"User is locked. Reason: Exhausted balance. Top up your balance at
-    fal.ai/dashboard/billing"}` for the project's `FAL_KEY` — reproduced both via direct curl
-    and via one real `orchestrate12.py` roll (immediate `KeyError: 'upload_url'` in
-    `genskin.py:121`, since the error response has no `upload_url` field). This blocks ALL new
-    generation project-wide, not just gen12. **Action needed: top up the fal.ai account balance**
-    (financial transaction — human-only, not agent-executable) at
-    [fal.ai/dashboard/billing](https://fal.ai/dashboard/billing).
-    **Resume command once topped up** — re-roll the 5 skins that still need a real regen
-    (gate-fix alone did NOT recover these; myst-arcanum is missing a control, ps1-wild leaks,
-    wmp-quicksilver has a genuinely broken toggle render + baked-in emptiness, wmp-vario has a
-    misplaced album_art region, plus the new n64 character spec has never been rolled):
-    ```bash
-    cd tools/mask-align-exp/gen12
-    for s in myst-arcanum ps1-wild wmp-quicksilver wmp-vario n64-prerender-character; do
-      python3 orchestrate12.py theme_specs/$s.json 4 &
-    done; wait
-    python3 build_dashboard.py
-    ```
-    Run in batches of ≤4 concurrent (as already sized above) to avoid hammering the API the
-    moment it's unlocked. claymation / fa-sky / ps1-crunchy do NOT need re-rolling — they now
-    gate-PASS on their existing paint per item 9 above.
+11. **Fal billing: was exhausted-balance-locked 2026-07-10 morning (confirmed via curl:
+    "User is locked. Reason: Exhausted balance", the cause of every `KeyError: 'upload_url'`
+    in `genskin.py:121` across the `46574f6c` orch histories); user topped up same day and
+    the unlock was re-verified by curl. Re-rolls now IN FLIGHT** (batch 1: claymation,
+    fa-sky, myst-arcanum, ps1-crunchy; batch 2 queued: ps1-wild, wmp-quicksilver, wmp-vario,
+    n64-prerender-character — ≤4 concurrent). Spend-classification per the new
+    [generation-spend rule](/.claude/rules/generation-spend-rule.md) (`7e1cba6c`): the
+    batch-2 four are genuinely model-side defects (leak residue / baked-part emptiness +
+    broken toggle render / misplaced album_art blob / never-rolled spec); claymation,
+    fa-sky, ps1-crunchy were extractor-side and already recover for $0 under the fixed gate
+    — their batch-1 rolls were launched minutes before the rule landed and were left to
+    finish (killing mid-roll would have corrupted the gitignored paint.png on disk for ~$0.45
+    saved). Results + dashboard rebuild + commit when both batches land.
 
 12. **Human review of the 7 fresh PASSes — not yet reviewed.** diablo-gothic, fa-pod,
     fallout-pipboy, fallout-vault, n64-cutscene, steam-porthole, wc-goldshield (seed/rolls per

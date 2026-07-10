@@ -645,9 +645,16 @@ if SLIDER and regs.get(SLIDER) and regs[SLIDER].get("travel") and regs[SLIDER].g
     tv = regs[SLIDER]["travel"]; gb = regs[SLIDER]["device"]
     gext = gb[3] if regs[SLIDER].get("vertical") else gb[2]   # groove extent along the travel axis
     seek_cov = round((tv[1] - tv[0]) / max(1e-6, gext), 3)    # travel span / groove extent (~1.0 good)
-# state-align sanity
+# state-align sanity — catch only GENUINELY BROKEN toggle states, not legitimate creative
+# asymmetry (lever protruding at opposite/different ends between OFF/ON is a valid design
+# choice, not a defect). The scale-ratio bounds catch a "wildly different scale" or a
+# collapsed/near-empty "speck" state (either drives scaleX/scaleY far from 1.0); the raw
+# silhouette IoU>=0.9 floor used to ALSO hard-fail any asymmetric-but-correct state (measured
+# 0.58-0.79 IoU on legitimate designs) — dropped to a low floor that only catches states with
+# near-zero overlap even at best alignment (effectively disjoint / broken), per user directive
+# 2026-07-09 (5 of 8 fresh-regen FAILs burned rolls on the old >=0.9 floor).
 sa = (regs.get(TOGGLE) or {}).get("stateAlign") if TOGGLE else None
-sa_ok = bool(sa and 0.7 <= sa.get("scaleX", 0) <= 1.4 and 0.7 <= sa.get("scaleY", 0) <= 1.4 and sa.get("iou", 0) >= 0.9)
+sa_ok = bool(sa and 0.7 <= sa.get("scaleX", 0) <= 1.4 and 0.7 <= sa.get("scaleY", 0) <= 1.4 and sa.get("iou", 0) >= 0.05)
 # biref parts present
 biref_parts = [p for p in ["vol", "seek", TOGGLE + "_off", TOGGLE + "_on"] if TOGGLE
                and os.path.exists(os.path.join(BIREF, p + ".png"))]
@@ -669,6 +676,8 @@ if missing: reasons.append("missing:" + ",".join(missing))
 if seek_cov is not None and seek_cov < 0.7: reasons.append(f"seek-cov={seek_cov}")
 if TOGGLE and not sa_ok and sa is not None: reasons.append("state-align")
 if biref_ok is False: reasons.append("biref-parts")
+leak_val = RES.get("leak")
+if leak_val is not None and leak_val > 0.003: reasons.append(f"leak={leak_val}")
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "reasons": reasons,
