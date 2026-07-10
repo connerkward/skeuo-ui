@@ -144,8 +144,57 @@
    ]
   }
  ],
- "lights": [],
- "emissiveCoverage": 0.0,
+ "lights": [
+  {
+   "uv": [
+    0.5384,
+    0.1556
+   ],
+   "color": [
+    1.0,
+    0.529,
+    0.489
+   ],
+   "energy": 0.757
+  },
+  {
+   "uv": [
+    0.9435,
+    0.7326
+   ],
+   "color": [
+    1.0,
+    0.783,
+    0.489
+   ],
+   "energy": 0.234
+  },
+  {
+   "uv": [
+    0.8626,
+    0.3414
+   ],
+   "color": [
+    1.0,
+    0.822,
+    0.579
+   ],
+   "energy": 0.008
+  },
+  {
+   "uv": [
+    0.1573,
+    0.7335
+   ],
+   "color": [
+    1.0,
+    0.671,
+    0.493
+   ],
+   "energy": 0.002
+  }
+ ],
+ "emissiveCoverage": 0.00029,
  "emissiveHue": {
   "mode": "director",
   "center": 27.7,
@@ -153,7 +202,7 @@
  },
  "cost": {
   "patina_model": "fal-ai/patina",
-  "patina_usd": 0.016,
+  "patina_usd": 0.0,
   "paint_model": "fal-ai/gemini-3-pro-image-preview/edit",
   "emissive": "classical local $0"
  },

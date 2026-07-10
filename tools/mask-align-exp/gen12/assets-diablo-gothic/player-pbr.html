@@ -25,7 +25,7 @@
 </style></head><body>
 <header>
   <h1>diablo-gothic — diablo-gothic · ✨ dynamic lighting (PBR)</h1>
-  <div class="anno">paint: fal-ai/gemini-3-pro-image-preview/edit · PBR maps: fal-ai/patina (1 call = 5 maps, ~$0.02/skin) · emissive + relight: local $0 · <a href="player.html">← plain player</a>
+  <div class="anno">paint: fal-ai/gemini-3-pro-image-preview/edit · PBR maps: fal-ai/patina (1 call = 5 maps, ~$0.00/skin) · emissive + relight: local $0 · <a href="player.html">← plain player</a>
   · beat clock <b id="bpmLab"></b> bpm (?bpm=) · pulse: <b>ember</b> — “the glowing blood-red runes and ember cracks in the stone”</div>
 </header>
 <div class="wrap">
@@ -62,7 +62,7 @@
 const Q = new URLSearchParams(location.search);
 const V = '1783629270';
 const PBRD = '../assets-diablo-gothic_pbr/', BREF = '../assets-diablo-gothic_biref/';
-const META = {"id": "diablo-gothic", "size": [2304, 2784], "paintSize": [2304, 3712], "devFrac": 0.75, "lighting": {"emissive_hint": "the glowing blood-red runes and ember cracks in the stone", "emissive_color": [255, 90, 40], "pulse": "ember", "intensity": 1.3, "viz_emissive": true, "beat_couple": 0.07, "enabled": true}, "glassFill": [0.1317, 0.1244, 0.1302], "regions": {"visualizer": {"rect": [0.6241, 0.4792, 0.2166, 0.1318], "mask": "viz-mask.png", "maskRect": [0.5981, 0.463, 0.2682, 0.1638]}, "album_art": {"rect": [0.1467, 0.3725, 0.23, 0.2536], "mask": "art-mask.png", "maskRect": [0.1189, 0.342, 0.2852, 0.3143]}}, "knob": {"c": [0.497, 0.5781], "r": 0.056}, "seek": {"track": [0.2682, 0.6883, 0.4848, 0.0598], "vertical": false, "travel": [0.2587, 0.7626]}, "shuffle": {"rect": [0.4158, 0.7949, 0.1562, 0.0758], "angle": 0, "stateAlign": {"dx": 0, "dy": 0}}, "buttons": [{"name": "playpause", "id": 36, "rect": [0.424, 0.2094, 0.1463, 0.121]}, {"name": "prev", "id": 72, "rect": [0.2617, 0.2313, 0.0955, 0.0801]}, {"name": "next", "id": 108, "rect": [0.6372, 0.2324, 0.0938, 0.0783]}, {"name": "repeat", "id": 144, "rect": [0.4742, 0.3847, 0.061, 0.0142]}, {"name": "queue", "id": 180, "rect": [0.6311, 0.2496, 0.0382, 0.0647]}], "lights": [{"uv": [0.766, 0.3475], "color": [1.0, 0.511, 0.247], "energy": 0.199}, {"uv": [0.7078, 0.8619], "color": [1.0, 0.49, 0.25], "energy": 0.093}, {"uv": [0.3996, 0.1933], "color": [1.0, 0.504, 0.263], "energy": 0.069}, {"uv": [0.5958, 0.195], "color": [1.0, 0.432, 0.225], "energy": 0.05}, {"uv": [0.8006, 0.6675], "color": [1.0, 0.417, 0.231], "energy": 0.05}, {"uv": [0.1939, 0.3122], "color": [1.0, 0.481, 0.234], "energy": 0.044}], "emissiveCoverage": 0.02268, "emissiveHue": {"mode": "director", "center": 14.0, "half_width": 45}, "cost": {"patina_model": "fal-ai/patina", "patina_usd": 0.016, "paint_model": "fal-ai/gemini-3-pro-image-preview/edit", "emissive": "classical local $0"}, "src": {"sha1": "fe3edd90a573", "paint_mtime": 1783629270}};
+const META = {"id": "diablo-gothic", "size": [2304, 2784], "paintSize": [2304, 3712], "devFrac": 0.75, "lighting": {"emissive_hint": "the glowing blood-red runes and ember cracks in the stone", "emissive_color": [255, 90, 40], "pulse": "ember", "intensity": 1.3, "viz_emissive": true, "beat_couple": 0.07, "enabled": true}, "glassFill": [0.1317, 0.1244, 0.1302], "regions": {"visualizer": {"rect": [0.6241, 0.4792, 0.2166, 0.1318], "mask": "viz-mask.png", "maskRect": [0.5981, 0.463, 0.2682, 0.1638]}, "album_art": {"rect": [0.1467, 0.3725, 0.23, 0.2536], "mask": "art-mask.png", "maskRect": [0.1189, 0.342, 0.2852, 0.3143]}}, "knob": {"c": [0.497, 0.5781], "r": 0.056}, "seek": {"track": [0.2682, 0.6883, 0.4848, 0.0598], "vertical": false, "travel": [0.2587, 0.7626]}, "shuffle": {"rect": [0.4158, 0.7949, 0.1562, 0.0758], "angle": 0, "stateAlign": {"dx": 0, "dy": 0}}, "buttons": [{"name": "playpause", "id": 36, "rect": [0.424, 0.2094, 0.1463, 0.121]}, {"name": "prev", "id": 72, "rect": [0.2617, 0.2313, 0.0955, 0.0801]}, {"name": "next", "id": 108, "rect": [0.6372, 0.2324, 0.0938, 0.0783]}, {"name": "repeat", "id": 144, "rect": [0.4742, 0.3847, 0.061, 0.0142]}, {"name": "queue", "id": 180, "rect": [0.6311, 0.2496, 0.0382, 0.0647]}], "lights": [{"uv": [0.3976, 0.1966], "color": [1.0, 0.64, 0.282], "energy": 0.08}, {"uv": [0.195, 0.3145], "color": [1.0, 0.618, 0.256], "energy": 0.061}, {"uv": [0.5953, 0.1971], "color": [1.0, 0.563, 0.231], "energy": 0.05}, {"uv": [0.8036, 0.3189], "color": [1.0, 0.364, 0.125], "energy": 0.039}, {"uv": [0.4207, 0.3631], "color": [1.0, 0.541, 0.256], "energy": 0.034}, {"uv": [0.3541, 0.8655], "color": [1.0, 0.635, 0.318], "energy": 0.032}], "emissiveCoverage": 0.01008, "emissiveHue": {"mode": "director", "center": 14.0, "half_width": 45}, "cost": {"patina_model": "fal-ai/patina", "patina_usd": 0.0, "paint_model": "fal-ai/gemini-3-pro-image-preview/edit", "emissive": "classical local $0"}, "src": {"sha1": "fe3edd90a573", "paint_mtime": 1783629270}};
 const LT = META.lighting || {};
 const PULSE = LT.pulse || 'breathe';
 const BPM = Math.max(30, Math.min(240, parseFloat(Q.get('bpm') ?? 118)));
@@ -203,7 +203,7 @@ void main(){
     float diag = pow(max(0.0, 1.0 - abs(dot(normalize(eq + vec2(0.001)), vec2(0.707, -0.707)))), 7.0);
     vec3 env = mix(vec3(0.06, 0.07, 0.09), vec3(0.38, 0.42, 0.50), smoothstep(-0.6, 0.9, R.y))
              + vec3(0.9, 0.95, 1.0) * diag * 0.5;
-    float specG = pow(max(dot(ng, H), 0.0), 46.0) * 2.6 * att * uIntensity;
+    float specG = pow(max(dot(ng, H), 0.0), 46.0) * 1.8 * att * uIntensity;
     vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse
                + texture2D(uDyn1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.8;
     vec3 glass = albG * (uAmbient * 0.85 + 0.3 * diff * att * uIntensity)
@@ -217,6 +217,14 @@ void main(){
   if (uVizRect.z > 0.0 && vzl.x > 0.0 && vzl.x < 1.0 && vzl.y > 0.0 && vzl.y < 1.0){
     col += texture2D(uViz, vzl).rgb * uVizI;
   }
+  // SANE EXPOSURE: soft-knee highlight roll-off, identity below 1.0 — a bright glass gather
+  // (fresnel + procedural env + specular + emissive reflection, all additive above) can sum
+  // past 1.0 per-channel; without this the hardware just hard-clips to flat white (measured
+  // 2026-07-10: wc-goldshield's album-art glass rendered as a solid white orb). Anything <=1.0
+  // is untouched (zero risk to already-correct exposure elsewhere); only the overshoot is
+  // compressed, so a blown highlight becomes a graduated falloff instead of a flat disc.
+  vec3 over = max(col - 1.0, 0.0);
+  col = col - over / (1.0 + over);
   gl_FragColor = vec4(mix(albRaw, col, uLitMix), 1.0);
 }`;
 
@@ -252,9 +260,32 @@ const aPos = gl.getAttribLocation(prog, 'aPos'), aUV = gl.getAttribLocation(prog
 gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
 gl.enableVertexAttribArray(aUV);  gl.vertexAttribPointer(aUV, 2, gl.FLOAT, false, 16, 8);
 
+// DEFAULT key-light target, COMPUTED from the control cluster's own geometry (knob/seek/
+// shuffle/buttons centroid) instead of a fixed (0.5, 0.30) constant. A fixed screen-oriented
+// default lights whichever skin happens to have its controls near the top-centre and leaves
+// every OTHER layout's control cluster in near-darkness at load (measured 2026-07-10: both
+// fa-pod's knob/seek/switch and wc-goldshield's knob rendered as unreadable dark shapes on
+// first load — not missing sprites, just far outside the default light's falloff). Computing
+// the target from the actual region metadata generalizes across every skin's layout.
+function defaultLightXY(){
+  const pts = [];
+  if (META.knob) pts.push([META.knob.c[0], META.knob.c[1], 1.4]);
+  if (META.seek){ const t = META.seek.track; pts.push([t[0]+t[2]/2, t[1]+t[3]/2, 1.0]); }
+  if (META.shuffle){ const r = META.shuffle.rect; pts.push([r[0]+r[2]/2, r[1]+r[3]/2, 0.8]); }
+  for (const b of META.buttons || []) pts.push([b.rect[0]+b.rect[2]/2, b.rect[1]+b.rect[3]/2, 0.6]);
+  if (!pts.length) return [0.5, 0.30];
+  let sx = 0, sy = 0, sw = 0;
+  for (const [x, y, w] of pts){ sx += x*w; sy += y*w; sw += w; }
+  // aim a bit ABOVE the cluster's own centroid so the light rakes down onto the controls
+  // rather than sitting directly over them (grazing light reads the bump/specular detail
+  // better than a light pointed straight down the surface normal).
+  return [sx / sw, Math.max(0.12, sy / sw - 0.16)];
+}
+const DEF_LXY = defaultLightXY();
+
 const state = {
   alb: Q.get('alb') || 'paint',
-  lx: parseFloat(Q.get('lx') ?? 0.5), ly: parseFloat(Q.get('ly') ?? 0.30),
+  lx: parseFloat(Q.get('lx') ?? DEF_LXY[0]), ly: parseFloat(Q.get('ly') ?? DEF_LXY[1]),
   h: parseFloat(Q.get('h') ?? 0.32), i: parseFloat(Q.get('i') ?? 1.3),
   s: 0.6, a: parseFloat(Q.get('amb') ?? 0.16), b: 1.1,
   em: parseFloat(Q.get('em') ?? (LT.intensity ?? 1.0)),

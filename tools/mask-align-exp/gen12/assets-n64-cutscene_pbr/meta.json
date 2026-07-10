@@ -140,16 +140,90 @@
    ]
   }
  ],
- "lights": [],
- "emissiveCoverage": 0.0,
+ "lights": [
+  {
+   "uv": [
+    0.9007,
+    0.1594
+   ],
+   "color": [
+    1.0,
+    0.705,
+    0.511
+   ],
+   "energy": 0.366
+  },
+  {
+   "uv": [
+    0.5323,
+    0.5196
+   ],
+   "color": [
+    1.0,
+    0.751,
+    0.567
+   ],
+   "energy": 0.143
+  },
+  {
+   "uv": [
+    0.9219,
+    0.6315
+   ],
+   "color": [
+    1.0,
+    0.719,
+    0.509
+   ],
+   "energy": 0.137
+  },
+  {
+   "uv": [
+    0.6806,
+    0.6305
+   ],
+   "color": [
+    1.0,
+    0.751,
+    0.545
+   ],
+   "energy": 0.12
+  },
+  {
+   "uv": [
+    0.6468,
+    0.4754
+   ],
+   "color": [
+    1.0,
+    0.752,
+    0.561
+   ],
+   "energy": 0.094
+  },
+  {
+   "uv": [
+    0.6636,
+    0.6615
+   ],
+   "color": [
+    1.0,
+    0.763,
+    0.565
+   ],
+   "energy": 0.031
+  }
+ ],
+ "emissiveCoverage": 0.00076,
  "emissiveHue": {
   "mode": "auto",
-  "center": null,
-  "px": 0
+  "center": 25.0,
+  "half_width": 40,
+  "px": 15252
  },
  "cost": {
   "patina_model": "fal-ai/patina",
-  "patina_usd": 0.016,
+  "patina_usd": 0.0,
   "paint_model": "fal-ai/gemini-3-pro-image-preview/edit",
   "emissive": "classical local $0"
  },

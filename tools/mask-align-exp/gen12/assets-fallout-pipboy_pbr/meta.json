@@ -153,7 +153,7 @@
  },
  "cost": {
   "patina_model": "fal-ai/patina",
-  "patina_usd": 0.016,
+  "patina_usd": 0.0,
   "paint_model": "fal-ai/gemini-3-pro-image-preview/edit",
   "emissive": "classical local $0"
  },

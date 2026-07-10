@@ -191,7 +191,22 @@ def hue_window(hc, half):
     return smoothstep(half, half * 0.55, dd)   # 1 inside, feathered edge
 
 
-score_nh = smoothstep(0.55, 0.78, sat) * smoothstep(0.30, 0.55, val)
+# RELATIVE/LOCAL gating, not an absolute sat/val threshold. An absolute threshold saturates on
+# any material whose OWN base colour is already bright+saturated (a translucent aqua/teal shell,
+# a vivid lacquer) — every micro-specular glint on that material passes the same gate a genuine
+# glyph would, producing scattered "splatter" across the whole body (measured 2026-07-10,
+# fa-pod: 502590 candidate px, coverage 0.036 vs diablo-gothic's 0.023 on a much duller body).
+# Fix: gate on how much a pixel EXCEEDS its own local neighbourhood's sat/val baseline (a
+# material-scale morphological opening, coarser than the stroke/crack top-hat below) — a
+# uniformly bright/saturated material has near-zero local excess everywhere (baseline == value),
+# while a genuine glyph/rune is measurably brighter+more-saturated than the duller material
+# immediately around it. Material-agnostic: no hue special-case, no absolute constant.
+K3 = max(41, int(101 * W / 2304) | 1)                    # material-scale kernel (> K2, the crack scale)
+sat_base = ndimage.grey_opening(sat, size=(K3, K3))
+val_base = ndimage.grey_opening(val, size=(K3, K3))
+sat_excess = np.clip(sat - sat_base, 0, 1)
+val_excess = np.clip(val - val_base, 0, 1)
+score_nh = smoothstep(0.30, 0.55, sat_excess) * smoothstep(0.22, 0.42, val_excess)
 emc = lighting["emissive_color"]
 if isinstance(emc, (list, tuple)):
     cr, cg, cb = [c / 255 for c in emc]

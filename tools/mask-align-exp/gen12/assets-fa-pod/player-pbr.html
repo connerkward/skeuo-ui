@@ -25,7 +25,7 @@
 </style></head><body>
 <header>
   <h1>fa-pod — fa-pod · ✨ dynamic lighting (PBR)</h1>
-  <div class="anno">paint: fal-ai/gemini-3-pro-image-preview/edit · PBR maps: fal-ai/patina (1 call = 5 maps, ~$0.02/skin) · emissive + relight: local $0 · <a href="player.html">← plain player</a>
+  <div class="anno">paint: fal-ai/gemini-3-pro-image-preview/edit · PBR maps: fal-ai/patina (1 call = 5 maps, ~$0.00/skin) · emissive + relight: local $0 · <a href="player.html">← plain player</a>
   · beat clock <b id="bpmLab"></b> bpm (?bpm=) · pulse: <b>breathe</b> — “soft aqua glow accents in the translucent shell”</div>
 </header>
 <div class="wrap">
@@ -62,7 +62,7 @@
 const Q = new URLSearchParams(location.search);
 const V = '1783629589';
 const PBRD = '../assets-fa-pod_pbr/', BREF = '../assets-fa-pod_biref/';
-const META = {"id": "fa-pod", "size": [2304, 2784], "paintSize": [2304, 3712], "devFrac": 0.75, "lighting": {"emissive_hint": "soft aqua glow accents in the translucent shell", "emissive_color": "auto", "pulse": "breathe", "intensity": 0.7, "viz_emissive": true, "beat_couple": 0.04, "enabled": true}, "glassFill": [0.191, 0.2786, 0.3296], "regions": {"visualizer": {"rect": [0.5308, 0.1404, 0.2595, 0.2324], "mask": "viz-mask.png", "maskRect": [0.4996, 0.1124, 0.3216, 0.2881]}, "album_art": {"rect": [0.1892, 0.1394, 0.2843, 0.2338], "mask": "art-mask.png", "maskRect": [0.1549, 0.111, 0.3524, 0.2902]}}, "knob": {"c": [0.2576, 0.72], "r": 0.0893}, "seek": {"track": [0.4297, 0.7089, 0.3576, 0.0473], "vertical": false, "travel": [0.4227, 0.7943]}, "shuffle": {"rect": [0.4442, 0.7818, 0.2157, 0.0879], "angle": -90.0, "stateAlign": {"dx": 0, "dy": -1}}, "buttons": [{"name": "playpause", "id": 36, "rect": [0.1866, 0.4188, 0.1445, 0.1203]}, {"name": "prev", "id": 72, "rect": [0.398, 0.4274, 0.1628, 0.1002]}, {"name": "next", "id": 108, "rect": [0.622, 0.4274, 0.1623, 0.1002]}, {"name": "repeat", "id": 144, "rect": [0.4792, 0.57, 0.1176, 0.0981]}, {"name": "queue", "id": 180, "rect": [0.6593, 0.57, 0.1172, 0.0977]}], "lights": [{"uv": [0.366, 0.8516], "color": [0.236, 0.673, 1.0], "energy": 0.12}, {"uv": [0.6686, 0.4043], "color": [0.366, 0.884, 1.0], "energy": 0.072}, {"uv": [0.5438, 0.7775], "color": [0.261, 0.85, 1.0], "energy": 0.069}, {"uv": [0.3717, 0.7074], "color": [0.246, 0.727, 1.0], "energy": 0.064}, {"uv": [0.7891, 0.6037], "color": [0.267, 0.747, 1.0], "energy": 0.055}, {"uv": [0.5154, 0.6185], "color": [0.297, 0.921, 0.997], "energy": 0.046}], "emissiveCoverage": 0.0364, "emissiveHue": {"mode": "auto", "center": 195.0, "half_width": 40, "px": 502590}, "cost": {"patina_model": "fal-ai/patina", "patina_usd": 0.016, "paint_model": "fal-ai/gemini-3-pro-image-preview/edit", "emissive": "classical local $0"}, "src": {"sha1": "cece3a9f3ae9", "paint_mtime": 1783629589}};
+const META = {"id": "fa-pod", "size": [2304, 2784], "paintSize": [2304, 3712], "devFrac": 0.75, "lighting": {"emissive_hint": "soft aqua glow accents in the translucent shell", "emissive_color": "auto", "pulse": "breathe", "intensity": 0.7, "viz_emissive": true, "beat_couple": 0.04, "enabled": true}, "glassFill": [0.191, 0.2786, 0.3296], "regions": {"visualizer": {"rect": [0.5308, 0.1404, 0.2595, 0.2324], "mask": "viz-mask.png", "maskRect": [0.4996, 0.1124, 0.3216, 0.2881]}, "album_art": {"rect": [0.1892, 0.1394, 0.2843, 0.2338], "mask": "art-mask.png", "maskRect": [0.1549, 0.111, 0.3524, 0.2902]}}, "knob": {"c": [0.2576, 0.72], "r": 0.0893}, "seek": {"track": [0.4297, 0.7089, 0.3576, 0.0473], "vertical": false, "travel": [0.4227, 0.7943]}, "shuffle": {"rect": [0.4442, 0.7818, 0.2157, 0.0879], "angle": -90.0, "stateAlign": {"dx": 0, "dy": -1}}, "buttons": [{"name": "playpause", "id": 36, "rect": [0.1866, 0.4188, 0.1445, 0.1203]}, {"name": "prev", "id": 72, "rect": [0.398, 0.4274, 0.1628, 0.1002]}, {"name": "next", "id": 108, "rect": [0.622, 0.4274, 0.1623, 0.1002]}, {"name": "repeat", "id": 144, "rect": [0.4792, 0.57, 0.1176, 0.0981]}, {"name": "queue", "id": 180, "rect": [0.6593, 0.57, 0.1172, 0.0977]}], "lights": [{"uv": [0.5388, 0.7801], "color": [0.285, 0.851, 1.0], "energy": 0.239}, {"uv": [0.5347, 0.6974], "color": [0.295, 0.83, 1.0], "energy": 0.122}, {"uv": [0.581, 0.4748], "color": [0.66, 0.967, 1.0], "energy": 0.112}, {"uv": [0.6146, 0.6144], "color": [0.41, 0.892, 1.0], "energy": 0.103}, {"uv": [0.5069, 0.5516], "color": [0.545, 0.949, 1.0], "energy": 0.102}, {"uv": [0.673, 0.6242], "color": [0.321, 0.962, 0.991], "energy": 0.047}], "emissiveCoverage": 0.00955, "emissiveHue": {"mode": "auto", "center": 195.0, "half_width": 40, "px": 91860}, "cost": {"patina_model": "fal-ai/patina", "patina_usd": 0.0, "paint_model": "fal-ai/gemini-3-pro-image-preview/edit", "emissive": "classical local $0"}, "src": {"sha1": "cece3a9f3ae9", "paint_mtime": 1783629589}};
 const LT = META.lighting || {};
 const PULSE = LT.pulse || 'breathe';
 const BPM = Math.max(30, Math.min(240, parseFloat(Q.get('bpm') ?? 118)));
@@ -203,7 +203,7 @@ void main(){
     float diag = pow(max(0.0, 1.0 - abs(dot(normalize(eq + vec2(0.001)), vec2(0.707, -0.707)))), 7.0);
     vec3 env = mix(vec3(0.06, 0.07, 0.09), vec3(0.38, 0.42, 0.50), smoothstep(-0.6, 0.9, R.y))
              + vec3(0.9, 0.95, 1.0) * diag * 0.5;
-    float specG = pow(max(dot(ng, H), 0.0), 46.0) * 2.6 * att * uIntensity;
+    float specG = pow(max(dot(ng, H), 0.0), 46.0) * 1.8 * att * uIntensity;
     vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse
                + texture2D(uDyn1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.8;
     vec3 glass = albG * (uAmbient * 0.85 + 0.3 * diff * att * uIntensity)
@@ -217,6 +217,14 @@ void main(){
   if (uVizRect.z > 0.0 && vzl.x > 0.0 && vzl.x < 1.0 && vzl.y > 0.0 && vzl.y < 1.0){
     col += texture2D(uViz, vzl).rgb * uVizI;
   }
+  // SANE EXPOSURE: soft-knee highlight roll-off, identity below 1.0 — a bright glass gather
+  // (fresnel + procedural env + specular + emissive reflection, all additive above) can sum
+  // past 1.0 per-channel; without this the hardware just hard-clips to flat white (measured
+  // 2026-07-10: wc-goldshield's album-art glass rendered as a solid white orb). Anything <=1.0
+  // is untouched (zero risk to already-correct exposure elsewhere); only the overshoot is
+  // compressed, so a blown highlight becomes a graduated falloff instead of a flat disc.
+  vec3 over = max(col - 1.0, 0.0);
+  col = col - over / (1.0 + over);
   gl_FragColor = vec4(mix(albRaw, col, uLitMix), 1.0);
 }`;
 
@@ -252,9 +260,32 @@ const aPos = gl.getAttribLocation(prog, 'aPos'), aUV = gl.getAttribLocation(prog
 gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
 gl.enableVertexAttribArray(aUV);  gl.vertexAttribPointer(aUV, 2, gl.FLOAT, false, 16, 8);
 
+// DEFAULT key-light target, COMPUTED from the control cluster's own geometry (knob/seek/
+// shuffle/buttons centroid) instead of a fixed (0.5, 0.30) constant. A fixed screen-oriented
+// default lights whichever skin happens to have its controls near the top-centre and leaves
+// every OTHER layout's control cluster in near-darkness at load (measured 2026-07-10: both
+// fa-pod's knob/seek/switch and wc-goldshield's knob rendered as unreadable dark shapes on
+// first load — not missing sprites, just far outside the default light's falloff). Computing
+// the target from the actual region metadata generalizes across every skin's layout.
+function defaultLightXY(){
+  const pts = [];
+  if (META.knob) pts.push([META.knob.c[0], META.knob.c[1], 1.4]);
+  if (META.seek){ const t = META.seek.track; pts.push([t[0]+t[2]/2, t[1]+t[3]/2, 1.0]); }
+  if (META.shuffle){ const r = META.shuffle.rect; pts.push([r[0]+r[2]/2, r[1]+r[3]/2, 0.8]); }
+  for (const b of META.buttons || []) pts.push([b.rect[0]+b.rect[2]/2, b.rect[1]+b.rect[3]/2, 0.6]);
+  if (!pts.length) return [0.5, 0.30];
+  let sx = 0, sy = 0, sw = 0;
+  for (const [x, y, w] of pts){ sx += x*w; sy += y*w; sw += w; }
+  // aim a bit ABOVE the cluster's own centroid so the light rakes down onto the controls
+  // rather than sitting directly over them (grazing light reads the bump/specular detail
+  // better than a light pointed straight down the surface normal).
+  return [sx / sw, Math.max(0.12, sy / sw - 0.16)];
+}
+const DEF_LXY = defaultLightXY();
+
 const state = {
   alb: Q.get('alb') || 'paint',
-  lx: parseFloat(Q.get('lx') ?? 0.5), ly: parseFloat(Q.get('ly') ?? 0.30),
+  lx: parseFloat(Q.get('lx') ?? DEF_LXY[0]), ly: parseFloat(Q.get('ly') ?? DEF_LXY[1]),
   h: parseFloat(Q.get('h') ?? 0.32), i: parseFloat(Q.get('i') ?? 1.3),
   s: 0.6, a: parseFloat(Q.get('amb') ?? 0.16), b: 1.1,
   em: parseFloat(Q.get('em') ?? (LT.intensity ?? 1.0)),

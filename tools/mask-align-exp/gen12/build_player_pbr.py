@@ -250,7 +250,7 @@ void main(){
     float diag = pow(max(0.0, 1.0 - abs(dot(normalize(eq + vec2(0.001)), vec2(0.707, -0.707)))), 7.0);
     vec3 env = mix(vec3(0.06, 0.07, 0.09), vec3(0.38, 0.42, 0.50), smoothstep(-0.6, 0.9, R.y))
              + vec3(0.9, 0.95, 1.0) * diag * 0.5;
-    float specG = pow(max(dot(ng, H), 0.0), 46.0) * 2.6 * att * uIntensity;
+    float specG = pow(max(dot(ng, H), 0.0), 46.0) * 1.8 * att * uIntensity;
     vec3 emRef = texture2D(uEm1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.9 * uEmI * uEmPulse
                + texture2D(uDyn1, uv + R.xy * vec2(0.10, -0.10)).rgb * 0.8;
     vec3 glass = albG * (uAmbient * 0.85 + 0.3 * diff * att * uIntensity)
@@ -264,6 +264,14 @@ void main(){
   if (uVizRect.z > 0.0 && vzl.x > 0.0 && vzl.x < 1.0 && vzl.y > 0.0 && vzl.y < 1.0){
     col += texture2D(uViz, vzl).rgb * uVizI;
   }
+  // SANE EXPOSURE: soft-knee highlight roll-off, identity below 1.0 — a bright glass gather
+  // (fresnel + procedural env + specular + emissive reflection, all additive above) can sum
+  // past 1.0 per-channel; without this the hardware just hard-clips to flat white (measured
+  // 2026-07-10: wc-goldshield's album-art glass rendered as a solid white orb). Anything <=1.0
+  // is untouched (zero risk to already-correct exposure elsewhere); only the overshoot is
+  // compressed, so a blown highlight becomes a graduated falloff instead of a flat disc.
+  vec3 over = max(col - 1.0, 0.0);
+  col = col - over / (1.0 + over);
   gl_FragColor = vec4(mix(albRaw, col, uLitMix), 1.0);
 }`;
 
@@ -299,9 +307,32 @@ const aPos = gl.getAttribLocation(prog, 'aPos'), aUV = gl.getAttribLocation(prog
 gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
 gl.enableVertexAttribArray(aUV);  gl.vertexAttribPointer(aUV, 2, gl.FLOAT, false, 16, 8);
 
+// DEFAULT key-light target, COMPUTED from the control cluster's own geometry (knob/seek/
+// shuffle/buttons centroid) instead of a fixed (0.5, 0.30) constant. A fixed screen-oriented
+// default lights whichever skin happens to have its controls near the top-centre and leaves
+// every OTHER layout's control cluster in near-darkness at load (measured 2026-07-10: both
+// fa-pod's knob/seek/switch and wc-goldshield's knob rendered as unreadable dark shapes on
+// first load — not missing sprites, just far outside the default light's falloff). Computing
+// the target from the actual region metadata generalizes across every skin's layout.
+function defaultLightXY(){
+  const pts = [];
+  if (META.knob) pts.push([META.knob.c[0], META.knob.c[1], 1.4]);
+  if (META.seek){ const t = META.seek.track; pts.push([t[0]+t[2]/2, t[1]+t[3]/2, 1.0]); }
+  if (META.shuffle){ const r = META.shuffle.rect; pts.push([r[0]+r[2]/2, r[1]+r[3]/2, 0.8]); }
+  for (const b of META.buttons || []) pts.push([b.rect[0]+b.rect[2]/2, b.rect[1]+b.rect[3]/2, 0.6]);
+  if (!pts.length) return [0.5, 0.30];
+  let sx = 0, sy = 0, sw = 0;
+  for (const [x, y, w] of pts){ sx += x*w; sy += y*w; sw += w; }
+  // aim a bit ABOVE the cluster's own centroid so the light rakes down onto the controls
+  // rather than sitting directly over them (grazing light reads the bump/specular detail
+  // better than a light pointed straight down the surface normal).
+  return [sx / sw, Math.max(0.12, sy / sw - 0.16)];
+}
+const DEF_LXY = defaultLightXY();
+
 const state = {
   alb: Q.get('alb') || 'paint',
-  lx: parseFloat(Q.get('lx') ?? 0.5), ly: parseFloat(Q.get('ly') ?? 0.30),
+  lx: parseFloat(Q.get('lx') ?? DEF_LXY[0]), ly: parseFloat(Q.get('ly') ?? DEF_LXY[1]),
   h: parseFloat(Q.get('h') ?? 0.32), i: parseFloat(Q.get('i') ?? 1.3),
   s: 0.6, a: parseFloat(Q.get('amb') ?? 0.16), b: 1.1,
   em: parseFloat(Q.get('em') ?? (LT.intensity ?? 1.0)),
