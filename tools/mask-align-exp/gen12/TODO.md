@@ -578,6 +578,28 @@ Flip only **between** batches, never while `orchestrate12.py` is mid-run.
   (the sweep tracks correctly from whichever mark was chosen) and gate-PASSes;
   flagging for human judgment call if the wedge reading looks wrong on review.
 
+- **USER OVERRULE + re-verification (2026-07-11, same day):** the VLM-witnessed PASS
+  above was overruled — *"did you even cross check with vlm? these lines are off.
+  near, but off and noticeably."* A VLM cannot judge single-digit angular error
+  (witness, not judge — `verify-rule` §1b), and the proof page's overlay arrows were
+  drawn by a script that **reimplemented** the detector's centroid/radius geometry
+  instead of reading its stored output (`verify-rule` §7 proxy trap). Replaced with a
+  deterministic, $0, VLM-free closed loop: render the real `player.html` in a
+  throwaway isolated Playwright, crop the real `.pknob .cap` DOM element, re-measure
+  with the SAME detector algorithm on the RENDERED pixels. Root cause found: the old
+  detector returned the winning angular bin's leading EDGE with zero sub-bin
+  refinement (every stored `knob_zero_deg` was an exact multiple of 2° — proof of the
+  bug), a real, generalizable +1.0–1.9°/skin bias, smaller than the "5–20°" hypothesis
+  but real. Fixed in a new shared module `knob_angle.py` (imported by both
+  `extract12.py` and the verifier — one implementation, not two). Rotation-center and
+  CSS transform-origin were investigated and ruled out (measured <0.3° contribution).
+  Post-fix render error, all 6 skins: 0.44°–2.32° (was 0.56°–3.72° pre-fix; only
+  n64-cutscene was over the 3° bar pre-fix, now under). Full writeup + numbers:
+  [`docs/experiments/2026-07-11-knob-zero-closed-loop.md`](../../../docs/experiments/2026-07-11-knob-zero-closed-loop.md),
+  results page `knobzero-proof.html` (regenerated, reads overlay geometry from stored
+  `regions[knob].knob_zero_geo`, never re-derives it). myst-arcanum's two-mark
+  ambiguity above is unchanged and still pending human call.
+
 ## Knob tick marks shipped as a CSS/SVG overlay, not baked into the paint (2026-07-11)
 
 `KNOB_TICKS_ENABLED = True` in `build_player.py`. Baked-tick provisioning was tried and

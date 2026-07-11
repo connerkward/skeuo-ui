@@ -23,6 +23,7 @@ import os, sys, json
 import numpy as np
 from PIL import Image
 from scipy import ndimage
+from knob_angle import detect_from_sprite
 
 OUT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
 BIREF = OUT + "_biref"
@@ -294,50 +295,15 @@ def rrect_fit(b):
 # CUT SPRITE's own axis-aligned frame (same frame build_player.py loads — a tight-crop does not
 # rotate, so this angle transfers directly). Returns None when no anomaly clears the bar —
 # never guess (placement-invariants-rule).
-def detect_knob_zero_deg(cap_path, nbins=180, r_lo=0.28, r_hi=0.94, z_thresh=5.0, prom=2.5, max_width_deg=40):
-    if not os.path.exists(cap_path): return None, "no-cap-file"
-    arr = np.asarray(Image.open(cap_path).convert("RGBA")).astype(float)
-    H, W = arr.shape[:2]
-    alpha = arr[:, :, 3] > 40
-    if alpha.sum() < 400: return None, "too-few-alpha-px"
-    ys, xs = np.where(alpha)
-    cy, cx = ys.mean(), xs.mean()
-    R = float(np.percentile(np.hypot(xs - cx, ys - cy), 97))
-    if R < 8: return None, "too-small"
-    gray = arr[:, :, :3].mean(2)
-    gyy, gxx = np.gradient(gray); gmag = np.hypot(gxx, gyy)
-    YY, XX = np.mgrid[0:H, 0:W]
-    dxp = XX - cx; dyp = YY - cy
-    rad = np.hypot(dxp, dyp)
-    theta = np.degrees(np.arctan2(dxp, -dyp)) % 360.0     # 0 = up, clockwise +ve (CSS rotate() sense)
-    ring = alpha & (rad > r_lo * R) & (rad < r_hi * R)
-    if ring.sum() < 300: return None, "ring-too-small"
-    bw = 360.0 / nbins
-    bin_idx = np.clip((theta[ring] / bw).astype(int), 0, nbins - 1)
-    prof = np.zeros(nbins); cnt = np.zeros(nbins)
-    np.add.at(prof, bin_idx, gmag[ring]); np.add.at(cnt, bin_idx, 1)
-    valid = cnt > 3
-    if valid.sum() < nbins * 0.5: return None, "insufficient-angular-coverage"
-    avgprof = np.full(nbins, np.nan); avgprof[valid] = prof[valid] / cnt[valid]
-    med = np.nanmedian(avgprof); mad = np.nanmedian(np.abs(avgprof - med)) + 1e-6
-    z = (avgprof - med) / mad; zz = np.nan_to_num(z, nan=-999)
-    peak = int(np.nanargmax(zz)); peak_z = float(z[peak])
-    others = np.delete(z, peak); others = others[np.isfinite(others)]
-    p90 = float(np.nanpercentile(others, 90)) if len(others) else 0.0
-    # reject WIDE humps (a directional specular streak along the bezel) — a real carved
-    # notch/pointer is angularly narrow. Width = contiguous arc around the peak above half its
-    # excess over baseline.
-    half = med + (avgprof[peak] - med) * 0.5
-    lo = peak
-    while zz[(lo - 1) % nbins] > -900 and avgprof[(lo - 1) % nbins] > half and (peak - lo) < nbins // 2: lo -= 1
-    hi = peak
-    while zz[(hi + 1) % nbins] > -900 and avgprof[(hi + 1) % nbins] > half and (hi - peak) < nbins // 2: hi += 1
-    width_deg = (hi - lo) * bw
-    if peak_z < z_thresh or (peak_z - p90) < prom:
-        return None, f"no-strong-anomaly (z={peak_z:.1f})"
-    if width_deg > max_width_deg:
-        return None, f"anomaly-too-wide (likely specular, width={width_deg:.0f}deg)"
-    return peak * bw, f"z={peak_z:.1f} width={width_deg:.0f}deg"
+#
+# The actual radial-anomaly math lives in knob_angle.py (shared with the knob-zero closed-loop
+# render verifier — one implementation, not a reimplementation per skin per call-site; see that
+# module's docstring for the 2026-07-11 root-cause writeup of the bin-edge/no-sub-bin bug this
+# replaced). This is a thin wrapper: alpha-bbox-center + parabolic sub-bin refinement, matching
+# EXACTLY the origin build_player.py's tight()+background-size:cover renders around.
+def detect_knob_zero_deg(cap_path):
+    angle, info, geo = detect_from_sprite(cap_path)
+    return angle, info, geo
 
 
 drift_samples = []
@@ -353,8 +319,12 @@ for k in KNOBS:
     r["device"] = [(fx - fr) / GW, (fy - fr) / GH, 2 * fr / GW, 2 * fr / GH]
     r["seat"] = [fx / GW, fy / GH, fr / GW]
     print(f"[circle-fit] {k}: ({fx:.0f},{fy:.0f}) r={fr:.0f}px (mask offset {fx - mcx:+.0f},{fy - mcy:+.0f}px)")
-    zdeg, zinfo = detect_knob_zero_deg(os.path.join(BIREF, f"{k}.png"))
+    zdeg, zinfo, zgeo = detect_knob_zero_deg(os.path.join(BIREF, f"{k}.png"))
     r["knob_zero_deg"] = zdeg
+    # store the detector's OWN measured (cx,cy,R) in the cut sprite's pixel frame — so any later
+    # proof/overlay page draws FROM this stored geometry instead of re-deriving it independently
+    # (the exact §7 proxy-trap the old knobzero-proof/annotate.py committed; verify-outputs-rule).
+    r["knob_zero_geo"] = None if zgeo is None else [round(zgeo[0], 2), round(zgeo[1], 2), round(zgeo[2], 2)]
     print(f"[knob-zero] {k}: {zdeg if zdeg is None else round(zdeg, 1)}  ({zinfo})")
 if drift_samples:
     gdx = float(np.median([d[0] for d in drift_samples])) / GW

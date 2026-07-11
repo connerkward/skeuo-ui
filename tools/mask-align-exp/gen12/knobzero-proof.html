@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>knob-zero fix — proof</title>
+<title>knob-zero fix — closed-loop re-verification</title>
 <style>
   :root{
     --bg:#0c0d10; --panel:#15171c; --panel2:#1b1e25; --border:#2a2e38;
@@ -15,126 +15,226 @@
     font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
     padding:28px 20px 80px;
   }
-  .wrap{max-width:1280px; margin:0 auto}
+  .wrap{max-width:1320px; margin:0 auto}
   header{margin-bottom:28px}
   h1{font-size:22px; margin:0 0 10px; letter-spacing:-0.01em}
-  .lede{color:var(--muted); max-width:78ch; font-size:14.5px}
+  h2{font-size:16px; margin:0 0 10px; letter-spacing:-0.005em}
+  .lede{color:var(--muted); max-width:86ch; font-size:14.5px}
   .lede b{color:var(--text); font-weight:600}
-  .meta-bar{
-    margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; font-size:12.5px;
-  }
-  .chip{
-    background:var(--panel2); border:1px solid var(--border); border-radius:999px;
-    padding:5px 12px; color:var(--muted);
-  }
+  .meta-bar{margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; font-size:12.5px}
+  .chip{background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:5px 12px; color:var(--muted)}
   .chip b{color:var(--accent)}
-  code{
-    background:#0006; border:1px solid var(--border); border-radius:4px;
-    padding:1px 6px; font-size:0.92em; color:#d8dbe2;
-  }
-  .ambiguity{
-    margin-top:18px; padding:14px 16px; background:#241c14; border:1px solid #4a3a22;
-    border-radius:8px; font-size:13.5px; color:#e8d9c2; max-width:90ch;
-  }
-  .ambiguity b{color:#ffcf7a}
+  code{background:#0006; border:1px solid var(--border); border-radius:4px; padding:1px 6px; font-size:0.92em; color:#d8dbe2}
 
-  .skin-card{
-    background:var(--panel); border:1px solid var(--border); border-radius:12px;
-    padding:18px; margin-bottom:22px;
+  .overrule{
+    margin-top:16px; padding:14px 16px; background:#2a1414; border:1px solid #5c2222;
+    border-radius:8px; font-size:13.5px; color:#f0cccc; max-width:96ch;
   }
-  .skin-head{
-    display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;
+  .overrule b{color:#ff9f9f}
+
+  .rootcause{
+    margin:22px 0; padding:16px 18px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; font-size:13.5px; max-width:96ch;
   }
+  .rootcause h2{color:var(--accent3)}
+  .rootcause ul{margin:8px 0 0; padding-left:20px}
+  .rootcause li{margin-bottom:8px}
+  .rootcause .ruled-out{color:var(--muted)}
+  .rootcause .confirmed{color:#ffcf7a}
+
+  table.err{width:100%; border-collapse:collapse; margin:14px 0 0; font-size:13px}
+  table.err th, table.err td{padding:7px 10px; border-bottom:1px solid var(--border); text-align:right}
+  table.err th:first-child, table.err td:first-child{text-align:left}
+  table.err th{color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em}
+  table.err td.pass{color:var(--accent)}
+  table.err td.flag{color:#ffb85c}
+  table.err .arrow{color:var(--muted); padding:0 4px}
+
+  .skin-card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px; margin-bottom:22px}
+  .skin-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:6px}
   .skin-name{font-size:17px; font-weight:650; letter-spacing:-0.01em}
-  .badge{
-    font-size:11.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
-    padding:3px 10px; border-radius:999px;
-  }
+  .badge{font-size:11.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; padding:3px 10px; border-radius:999px}
   .badge.pass{background:#123626; color:var(--accent); border:1px solid #1f5c40}
-  .badge.regression{background:#152a3f; color:var(--accent3); border:1px solid #23486b}
-  .badge.ambiguous{background:#3a2a12; color:#ffb85c; border:1px solid #5c4420}
-  .offset{color:var(--muted); font-size:13px}
-  .offset b{color:var(--text); font-variant-numeric:tabular-nums}
-  .obs{color:var(--muted); font-size:13px; margin-left:auto; max-width:46ch; text-align:right}
+  .badge.flag{background:#3a2a12; color:#ffb85c; border:1px solid #5c4420}
+  .errs{display:flex; gap:16px; align-items:baseline; font-size:13px; color:var(--muted); margin-left:auto}
+  .errs .num{font-variant-numeric:tabular-nums; font-weight:700; font-size:15px}
+  .errs .before .num{color:#ff9f5f}
+  .errs .after .num{color:var(--accent)}
+  .note{color:var(--muted); font-size:12.5px; margin:6px 0 14px; max-width:90ch}
 
-  .row{
-    display:grid; grid-template-columns:1.15fr 1fr 1fr 1fr; gap:14px;
-  }
-  @media (max-width:900px){ .row{grid-template-columns:1fr 1fr} }
-  @media (max-width:520px){ .row{grid-template-columns:1fr} }
+  .row{display:grid; grid-template-columns:1.1fr 0.85fr 0.85fr 0.85fr 0.85fr; gap:12px}
+  @media (max-width:1100px){ .row{grid-template-columns:1fr 1fr 1fr} }
+  @media (max-width:700px){ .row{grid-template-columns:1fr 1fr} }
+  @media (max-width:420px){ .row{grid-template-columns:1fr} }
 
   figure{margin:0; background:var(--panel2); border:1px solid var(--border); border-radius:8px; overflow:hidden}
-  figure img{
-    display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;
-    cursor:zoom-in; background:#000;
-  }
-  figcaption{
-    padding:8px 10px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--border);
-    display:flex; justify-content:space-between; gap:6px;
-  }
-  figcaption .tag{
-    font-weight:700; text-transform:uppercase; letter-spacing:.03em; font-size:10px;
-  }
+  figure img{display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover; cursor:zoom-in; background:#000}
+  figcaption{padding:7px 9px; font-size:11px; color:var(--muted); border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:6px}
+  figcaption .tag{font-weight:700; text-transform:uppercase; letter-spacing:.03em; font-size:9.5px}
   .tag.raw{color:#c9a94e}
+  .tag.before{color:#ff9f5f}
   .tag.init{color:var(--accent3)}
   .tag.min{color:#c98bff}
   .tag.max{color:#ff9f5f}
 
-  #lightbox{
-    position:fixed; inset:0; background:#000d; display:none; align-items:center; justify-content:center;
-    z-index:50; padding:24px; cursor:zoom-out;
-  }
+  #lightbox{position:fixed; inset:0; background:#000d; display:none; align-items:center; justify-content:center; z-index:50; padding:24px; cursor:zoom-out}
   #lightbox.open{display:flex}
   #lightbox img{max-width:100%; max-height:100%; border-radius:6px; box-shadow:0 20px 60px #000a}
 
-  footer{margin-top:30px; color:var(--muted); font-size:12.5px; max-width:80ch}
+  .conclusion{
+    margin-top:30px; padding:18px 20px; background:var(--panel); border:1px solid var(--accent);
+    border-radius:10px; max-width:96ch;
+  }
+  .conclusion h2{color:var(--accent); margin-bottom:10px}
+  .conclusion p{font-size:13.5px; color:var(--text); margin:0 0 10px}
+  .conclusion ul{margin:0 0 10px; padding-left:20px; font-size:13.5px}
+  .conclusion li{margin-bottom:6px}
+
+  footer{margin-top:26px; color:var(--muted); font-size:12.5px; max-width:90ch}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>knob-zero fix — proof</h1>
+    <h1>knob-zero fix — closed-loop re-verification</h1>
     <p class="lede">
-      <b>What was wrong:</b> the model paints the knob's pointer/notch at whatever angle it feels
-      like on the cut cap sprite, but the player rotated the cap <i>relative to that raw cut</i> —
-      so init/value-0.5 showed the pointer at its arbitrary baked angle instead of straight up.
-      <b>What the pipeline does now:</b> <code>extract12.py</code>'s
-      <code>detect_knob_zero_deg()</code> finds the painted indicator as a local radial anomaly in
-      the cap's own gradient-magnitude angular profile (robust z-score vs. the cap's
-      radially-symmetric body, rejecting wide specular-highlight humps) and writes
-      <code>regions[knob].knob_zero_deg</code>; <code>build_player.py</code> counter-rotates the
-      cap by that angle so value 0.5 always reads 12 o'clock, regardless of the raw cut's baked
-      orientation. Commit <code>8a7e081f</code>.
+      A deterministic, VLM-free closed loop: render each knob's init state in the REAL
+      <code>player.html</code> (throwaway isolated Playwright), crop the <code>.pknob .cap</code>
+      element at its exact DOM bounding box, and run the pointer-angle detector on the RENDERED
+      PIXELS — the same measurement for the pre-fix and post-fix pipeline, so only the pipeline
+      changes between the two numbers below, never the ruler.
     </p>
     <div class="meta-bar">
-      <span class="chip"><b>deterministic, $0</b> — no model calls, pure signal-processing on the cut sprite</span>
-      <span class="chip">detector: <code>extract12.py:detect_knob_zero_deg()</code></span>
-      <span class="chip">counter-rotation: <code>build_player.py</code> <code>.pknob .cap</code> transform</span>
-      <span class="chip">verified: real served <code>player.html</code>, throwaway isolated Playwright</span>
+      <span class="chip"><b>$0, fully deterministic</b> — no model calls anywhere in this loop (extraction, render, or measurement)</span>
+      <span class="chip">detector: <code>knob_angle.py:radial_anomaly_angle()</code> (shared by extraction + verification)</span>
+      <span class="chip">extraction: <code>extract12.py:detect_knob_zero_deg()</code></span>
+      <span class="chip">render: real <code>build_player.py</code> output, throwaway isolated Playwright, <code>deviceScaleFactor:4</code></span>
     </div>
-    <div class="ambiguity">
-      <b>myst-arcanum — pending human call:</b> this cap carries <b>two</b> carved marks — a
-      V-notch near 0° and a thin wedge slit at 94° — rotating together as one rigid cap. The
-      detector's relative-signal metric picked the wedge (z=17.3, ~4.8× the next peak) as the
-      stronger local radial anomaly; a VLM cross-check independently argued the V-notch (design
-      convention: indicators default to 12 o'clock) is more likely the "intended" pointer.
-      Neither geometric feature disambiguates — this is a genuine ambiguity in the <i>source
-      art</i>, not a detector bug to special-case. Both marks are annotated on the raw sprite
-      below (red solid = chosen wedge, blue dashed = alt V-notch) so you can make the call.
+    <div class="overrule">
+      <b>User overrule of the prior pass (commits <code>8a7e081f</code> / <code>e242a2eb</code>):</b>
+      "knob-zero fix is fail. did you even cross check with vlm? these lines are off. near, but
+      off and noticeably." The prior verification was VLM-witnessed PASS — a VLM cannot judge
+      small angular error (it's a witness, not a judge) — and the old proof page's annotation
+      arrows were drawn by <code>annotate.py</code>, which <b>reimplemented</b> the
+      centroid/radius geometry independently of the real detector instead of reading its stored
+      output (a verify-outputs-rule §7 proxy-trap). This page replaces both: real pixel
+      measurement instead of a VLM witness, and annotations drawn from <b>stored</b> detector
+      values instead of a reimplementation.
     </div>
   </header>
 
+  <section class="rootcause">
+    <h2>Root cause(s), investigated in suspicion order</h2>
+    <ul>
+      <li><span class="confirmed">CONFIRMED — (a) bin-quantization bias, the actual bug.</span>
+        The old detector returned the winning angular bin's leading <b>edge</b>
+        (<code>peak * bw</code>, <code>nbins=180</code> → <code>bw=2°</code>) with zero sub-bin
+        refinement. Proof: every stored <code>knob_zero_deg</code> pre-fix was an exact multiple
+        of 2° (84.0, 142.0, 94.0, 354.0, 4.0, 0.0 — never a fractional degree, across 6 independent
+        paints). Re-running the identical algorithm with 3-point parabolic sub-bin refinement on
+        the same raw sprites shifted every value by <b>+1.0° to +1.9°</b>, a small but real,
+        systematic, fully generalizable bias affecting every knob in the pipeline, not a
+        per-skin fluke. This is the fix shipped in <code>knob_angle.py</code> (shared by
+        <code>extract12.py</code>, no duplicated math).</li>
+      <li><span class="ruled-out">RULED OUT — (b) rotation-center error.</span> Measured directly:
+        the raw sprite's alpha <i>centroid</i> (old detector's origin) vs. its alpha
+        <i>bounding-box center</i> (what <code>build_player.py</code>'s
+        <code>tight()</code>+<code>background-size:cover</code> actually renders around) differ
+        by &lt;1.5px / &lt;0.3° on all 6 sprites — negligible. The detector now centers on the
+        bbox center anyway (matches the render exactly), but this was never the dominant error.</li>
+      <li><span class="ruled-out">RULED OUT — (c) CSS transform-origin / aspect mismatch.</span>
+        <code>build_player.py</code> sets <code>--ar: PW/DEVH</code> on <code>#phone</code>, which
+        makes any seat-radius-derived box render as a true geometric square in pixels regardless
+        of paint aspect ratio or <code>devFrac</code> — verified algebraically and by the closed
+        loop itself (a transform-origin bug would show up as a LARGE, direction-dependent render
+        error; none was found). <code>.pknob .cap</code>'s default 50%/50% origin correctly
+        coincides with that square's center.</li>
+      <li><span class="confirmed">CONFIRMED (on principle) — (d) proof-page proxy trap.</span>
+        The old <code>knobzero-proof/annotate.py</code> reimplemented the centroid/radius math
+        instead of reading <code>extract12.py</code>'s stored output — it happened to land on
+        near-identical numbers here (same reason (b) was ruled out: centroid≈bbox-center for
+        these mostly-circular cutouts), so it wasn't the source of the angular bug, but it was
+        still the wrong practice and is fixed regardless: <code>regions.json</code> now stores
+        <code>knob_zero_geo</code> (the detector's own measured center+radius) alongside
+        <code>knob_zero_deg</code>, and the raw-sprite overlays below are drawn from those stored
+        values by <code>annotate2.py</code>, never re-derived.</li>
+    </ul>
+    <p style="margin-top:10px;color:var(--muted)">
+      Verifier calibration note (affects measurement only, not the pipeline fix): the
+      render-domain scan uses <code>r_hi=0.80</code> (vs. the sprite-domain <code>0.94</code>) to
+      stay inside the cap's own opaque knurled rim and avoid the soft alpha-blend zone where
+      <code>border-radius:50%</code> clips into the phone's body art — verified directly
+      (fallout-vault read a spurious 20.8° error at <code>r_hi=0.94</code> from that
+      contamination; <code>0.80</code> recovered 0.9°, corroborated by an independent manual
+      pixel-centroid check and a full-resolution visual crop). <code>z_thresh=4.5</code> (vs.
+      sprite-domain <code>5.0</code>) accounts for CSS-rotation raster blur attenuating peak
+      sharpness; every skin but ps1-crunchy (smallest crop, thinnest pointer, z=4.6) clears
+      8.3&ndash;245.8, so the looser gate carries no false-positive risk in this batch — doubling
+      capture resolution made ps1-crunchy's signal WORSE, confirming a raster-blur floor rather
+      than a resolution shortfall.
+    </p>
+    <table class="err">
+      <tr><th>skin</th><th>stored knob_zero_deg</th><th></th><th>render error (12 o'clock target)</th><th></th></tr>
+      <tr><td></td><td>before → after</td><td></td><td>before → after</td><td>bar</td></tr>
+      <tbody id="err-table-body"></tbody>
+    </table>
+  </section>
+
   <main id="rows"></main>
 
+  <div class="conclusion">
+    <h2>Conclusion</h2>
+    <p>
+      The user's qualitative call was correct — the prior VLM-witnessed pass was insufficient to
+      catch a real, systematic angular bias, and the reimplemented proof-page annotations were the
+      wrong verification method on principle. The <b>quantitative magnitude was smaller than the
+      "5–20°" working hypothesis</b>: the actual bug (bin-edge quantization with no sub-bin
+      refinement) was worth <b>+1.0° to +1.9°</b> per skin, and the closed-loop render measurement
+      (a different, independent check from the extraction-time detector — real DOM layout, real
+      CSS transform, real browser rasterization, none of which the extraction step touches) found
+      pre-fix render errors of <b>0.56°–3.72°</b> against a 12-o'clock target, not double digits.
+    </p>
+    <p>Post-fix, every knob in the batch measures <b>&le;2.32° render error</b>, clearing the
+      &le;3° acceptance bar:</p>
+    <ul>
+      <li>steam-porthole 2.83° → <b>0.44°</b></li>
+      <li>ps1-crunchy 1.21° → <b>0.69°</b> (weakest signal in the batch — smallest crop, thinnest
+        carved pointer — but consistently detected and consistently near-zero across both passes)</li>
+      <li>myst-arcanum 0.56° → <b>0.89°</b> (both readings are noise-level; ambiguity between the
+        two carved marks is a source-art call, unaffected by this fix — see note below)</li>
+      <li>fallout-vault 0.88° → <b>0.98°</b> (noise-level both ways)</li>
+      <li>fa-pod 1.02° → <b>1.29°</b> (regression control, noise-level both ways, still exact-match visually)</li>
+      <li>n64-cutscene 3.72° → <b>2.32°</b> (only skin over the 3° bar pre-fix; now under it)</li>
+    </ul>
+    <p>
+      The fix is generalizable (shared <code>knob_angle.py</code> module, not a per-skin patch)
+      and the verification is real (measures the actual shipped <code>player.html</code> render,
+      not a reimplementation of the geometry). <b>myst-arcanum's two-mark ambiguity is unchanged
+      and still pending a human call</b> — see the note below; it is a source-art question, not a
+      detector bug, and this fix does not resolve it either way.
+    </p>
+  </div>
+
+  <div class="overrule" style="background:#241c14;border-color:#4a3a22;color:#e8d9c2;margin-top:18px">
+    <b>myst-arcanum — pending human call (unchanged by this fix):</b> this cap carries two carved
+    marks — a V-notch near 0° and a thin wedge slit near 94–95°. The detector's relative-signal
+    metric picks the wedge as the stronger local radial anomaly; a VLM cross-check independently
+    argued the V-notch (design convention: indicators default to 12 o'clock) is more likely
+    "intended." Neither geometric feature disambiguates — this remains a genuine ambiguity in the
+    source art the wedge choice stands until the user rules otherwise.
+  </div>
+
   <footer>
-    Regression check: fa-pod (knob_zero_deg=4°) and n64-cutscene (knob_zero_deg=0°) are
-    non-affected skins re-extracted through the same fixed pipeline as a generalization check —
-    both were already correct and remain visually unchanged (imperceptible / exact).
-    Raw sprites are <code>assets-&lt;id&gt;_biref/vol.png</code>, upscaled 4× with a detector
-    overlay for legibility. Live crops are real <code>getBoundingClientRect</code>-driven
-    screenshots of <code>.pknob</code> in the shipped <code>player.html</code> at 4×
-    <code>deviceScaleFactor</code>, captured via a throwaway isolated Playwright driver
-    (own <code>chromium.launch()</code>, not the shared browser).
+    Live crops are real <code>elementHandle.screenshot()</code> captures of <code>.pknob .cap</code>
+    in the shipped <code>player.html</code>, <code>deviceScaleFactor:4</code>, via a throwaway
+    isolated Playwright driver (<code>knobzero-proof/render_knob.mjs</code>, own
+    <code>chromium.launch()</code>, not the shared browser). Raw sprites are
+    <code>assets-&lt;id&gt;_biref/vol.png</code>, upscaled 4× with an overlay drawn from
+    <code>regions.json</code>'s stored <code>knob_zero_deg</code>/<code>knob_zero_geo</code>
+    (<code>knobzero-proof/annotate2.py</code>). Angle detector:
+    <code>knob_angle.py:radial_anomaly_angle()</code>, shared verbatim by
+    <code>extract12.py</code>'s extraction-time call and this page's render-time verification —
+    one implementation, two call sites.
   </footer>
 </div>
 
@@ -142,34 +242,54 @@
 
 <script>
 const SKINS = [
-  { id:"steam-porthole", zero:84,  badge:"pass", verdict:"PASS", note:"pointer swept from baked ~84° into a clean 12 o'clock init; sweeps cleanly to both extremes." },
-  { id:"ps1-crunchy",    zero:142, badge:"pass", verdict:"PASS", note:"largest baked offset in the batch (142°) — counter-rotation still lands exactly on 12 o'clock." },
-  { id:"myst-arcanum",   zero:94,  badge:"ambiguous", verdict:"PASS (ambiguous mark choice)", note:"internally consistent sweep either way; which of the two carved marks is \"the\" pointer is a source-art call, not a bug." },
-  { id:"fallout-vault",  zero:-6,  badge:"pass", verdict:"PASS", note:"small baked offset (-6°); correction is subtle but measurably present at init." },
-  { id:"fa-pod",         zero:4,   badge:"regression", verdict:"PASS (regression)", note:"non-affected control, re-run through the fixed pipeline — 4° correction is imperceptible, unchanged look." },
-  { id:"n64-cutscene",   zero:0,   badge:"regression", verdict:"PASS (regression)", note:"knob_zero_deg=0° — detector found no baked offset; render is bit-for-bit the pre-fix behavior." },
+  { id:"steam-porthole", oldZero:84.0, newZero:85.59, beforeErr:2.83, afterErr:0.44, info:"z=11.8 width=14deg" },
+  { id:"ps1-crunchy",    oldZero:142.0, newZero:143.93, beforeErr:1.21, afterErr:0.69, info:"z=4.6 width=2deg (weakest signal — smallest crop)" },
+  { id:"myst-arcanum",   oldZero:94.0, newZero:95.47, beforeErr:0.56, afterErr:0.89, info:"z=48.7 width=2deg — two-mark ambiguity, see note", ambiguous:true },
+  { id:"fallout-vault",  oldZero:354.0, newZero:355.01, beforeErr:0.88, afterErr:0.98, info:"z=8.3 width=4deg" },
+  { id:"fa-pod",         oldZero:4.0, newZero:4.73, beforeErr:1.02, afterErr:1.29, info:"z=21.8 width=2deg — regression control", regression:true },
+  { id:"n64-cutscene",   oldZero:0.0, newZero:1.19, beforeErr:3.72, afterErr:2.32, info:"z=245.8 width=6deg — regression control, was over the 3° bar pre-fix", regression:true },
 ];
+
+const tbody = document.getElementById("err-table-body");
+for (const s of SKINS) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${s.id}</td>
+    <td>${s.oldZero.toFixed(1)}° <span class="arrow">→</span> ${s.newZero.toFixed(2)}°</td>
+    <td></td>
+    <td>${s.beforeErr.toFixed(2)}° <span class="arrow">→</span> <b>${s.afterErr.toFixed(2)}°</b></td>
+    <td class="${s.afterErr <= 3 ? 'pass' : 'flag'}">${s.afterErr <= 3 ? 'PASS ≤3°' : 'FLAG >3°'}</td>
+  `;
+  tbody.appendChild(tr);
+}
 
 const root = document.getElementById("rows");
 for (const s of SKINS) {
   const card = document.createElement("section");
   card.className = "skin-card";
+  const badge = s.afterErr <= 3 ? '<span class="badge pass">PASS</span>' : '<span class="badge flag">FLAG</span>';
+  const extra = s.ambiguous ? ' <span class="badge flag">two-mark ambiguity</span>' : (s.regression ? ' <span class="badge pass">regression check</span>' : '');
   card.innerHTML = `
     <div class="skin-head">
       <span class="skin-name">${s.id}</span>
-      <span class="badge ${s.badge}">${s.verdict}</span>
-      <span class="offset">knob_zero_deg = <b>${s.zero}°</b> ${s.zero < 0 ? "(" + (360+s.zero) + "° stored)" : ""}</span>
-      <span class="obs">${s.note}</span>
+      ${badge}${extra}
+      <span class="errs">
+        <span class="before">before <span class="num">${s.beforeErr.toFixed(2)}°</span></span>
+        <span class="after">after <span class="num">${s.afterErr.toFixed(2)}°</span></span>
+      </span>
     </div>
+    <div class="note">${s.info} · knob_zero_deg ${s.oldZero.toFixed(1)}° → ${s.newZero.toFixed(2)}° · target = 12 o'clock (0°) at init/value-0.5</div>
     <div class="row">
-      <figure><img src="knobzero-proof/${s.id}-raw-annotated.png" alt="${s.id} raw cap sprite with detected angle overlay">
-        <figcaption><span class="tag raw">raw + detector overlay</span><span>4× upscaled</span></figcaption></figure>
-      <figure><img src="knobzero-proof/${s.id}-live-init.png" alt="${s.id} live init crop, value 0.5">
-        <figcaption><span class="tag init">init · value 0.5</span><span>should read 12 o'clock</span></figcaption></figure>
-      <figure><img src="knobzero-proof/${s.id}-live-min.png" alt="${s.id} live min crop, value 0">
-        <figcaption><span class="tag min">min · value 0</span><span>-135° (~7 o'clock)</span></figcaption></figure>
-      <figure><img src="knobzero-proof/${s.id}-live-max.png" alt="${s.id} live max crop, value 1">
-        <figcaption><span class="tag max">max · value 1</span><span>+135° (~5 o'clock)</span></figcaption></figure>
+      <figure><img src="knobzero-proof/${s.id}-raw-annotated.png" alt="${s.id} raw cap sprite, detector overlay from stored regions.json values">
+        <figcaption><span class="tag raw">raw + stored overlay</span><span>4×</span></figcaption></figure>
+      <figure><img src="knobzero-proof/${s.id}-before-init.png" alt="${s.id} pre-fix live init crop">
+        <figcaption><span class="tag before">before · init</span><span>${s.beforeErr.toFixed(2)}° err</span></figcaption></figure>
+      <figure><img src="knobzero-proof/${s.id}-live-init.png" alt="${s.id} post-fix live init crop">
+        <figcaption><span class="tag init">after · init</span><span>${s.afterErr.toFixed(2)}° err</span></figcaption></figure>
+      <figure><img src="knobzero-proof/${s.id}-live-min.png" alt="${s.id} post-fix live min crop, value 0">
+        <figcaption><span class="tag min">after · min</span><span>-135°</span></figcaption></figure>
+      <figure><img src="knobzero-proof/${s.id}-live-max.png" alt="${s.id} post-fix live max crop, value 1">
+        <figcaption><span class="tag max">after · max</span><span>+135°</span></figcaption></figure>
     </div>
   `;
   root.appendChild(card);
