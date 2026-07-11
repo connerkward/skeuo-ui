@@ -70,7 +70,21 @@ async function toImagePart(image: string): Promise<{ inline_data: { mime_type: s
 // error once auth succeeded (caller catches that too).
 async function directorChat(
   keys: DirectorKeys,
-  opts: { system: string; user: string; maxTokens?: number; imageParts?: Array<{ inline_data: { mime_type: string; data: string } }> },
+  opts: {
+    system: string;
+    user: string;
+    maxTokens?: number;
+    imageParts?: Array<{ inline_data: { mime_type: string; data: string } }>;
+    // Vertex generateContent structured output: OpenAPI-3.0 subset, UPPERCASE Type
+    // enum ("OBJECT"/"STRING"/"ARRAY"/"NUMBER"/...) — this is the Vertex-specific
+    // wire shape (distinct from the Gemini Developer API's lowercase JSON-Schema
+    // types), verified live against Vertex/Gemini docs 2026-07-11 and confirmed
+    // working end-to-end by tools/mask-align-exp/gen12/semissive/judge.py and
+    // director_review.py. When present, guarantees the response parses to this
+    // shape — see docs/experiments/2026-07-11-image-model-json-output.md
+    // ("Structured OUTPUT viable: director YES, extraction YES").
+    schema?: Record<string, unknown>;
+  },
 ): Promise<ChatResult | null> {
   const token = await getVertexAccessToken(authOpts(keys));
   if (!token) return null;
@@ -80,6 +94,7 @@ async function directorChat(
     systemInstruction: { role: "system", parts: [{ text: opts.system }] },
     generationConfig: {
       responseMimeType: "application/json",
+      ...(opts.schema ? { responseSchema: opts.schema } : {}),
       // gemini-3.1-pro-preview defaults to thinkingLevel "high" — verified live
       // (2026-07-10) that this burns the ENTIRE maxOutputTokens budget on internal
       // thought tokens before emitting any JSON (finishReason MAX_TOKENS, zero
@@ -201,6 +216,20 @@ function heuristic(prompt: string): Material {
   };
 }
 
+// wire schema for deriveMaterial's {name,blurb,style,materialPrompt,font} contract
+// (Material minus nothing — every Material field is required from the model).
+const MATERIAL_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    name: { type: "STRING", description: "concise 1-3 word skin title, never the raw prompt" },
+    blurb: { type: "STRING", description: "one short descriptive line, ~8 words" },
+    style: { type: "STRING", enum: [...DONOR_STYLES] },
+    materialPrompt: { type: "STRING", description: "1-2 sentence rich material/finish description" },
+    font: { type: "STRING", description: "a real Google Fonts family name" },
+  },
+  required: ["name", "blurb", "style", "materialPrompt", "font"],
+};
+
 export async function deriveMaterial(keys: DirectorKeys, prompt: string, avoidFonts: string[] = []): Promise<Material> {
   // pick a random genre to favor this call + a rotated set of its exemplars, and a
   // de-duped recent-fonts avoid list — together these spread font choices across
@@ -225,7 +254,7 @@ export async function deriveMaterial(keys: DirectorKeys, prompt: string, avoidFo
       (avoid.length ? `Do NOT reuse any of these recently-used families: ${avoid.join(", ")}. ` : "") +
       "Avoid defaulting to the same handful of popular faces (Anton, Bebas Neue, Oswald) unless truly apt. " +
       "Return the exact family name as it appears on Google Fonts.";
-    const res = await directorChat(keys, { system, user: prompt });
+    const res = await directorChat(keys, { system, user: prompt, schema: MATERIAL_SCHEMA });
     if (!res) return heuristic(prompt);
     const parsed = JSON.parse(res.content);
     const style = parsed.style as DonorStyle;
@@ -290,6 +319,46 @@ const LAYOUT_SYS =
   "suggestion the painter is free to reinterpret). " +
   "Return ONLY the JSON object.";
 
+// wire schema for deriveLayout's {"regions":[...]} contract. Only the fields
+// normRegion() actually reads on for a control to be usable are required
+// (id/kind/x/y/w/h); everything else stays optional so the model isn't forced to
+// pad every region with irrelevant fields (bind/label/shape/options/group/index/
+// shapeKind/diff/path all remain free-form per the prompt's per-kind guidance).
+// kind's enum is the exact VALID_KINDS set (display ROLES like "visualizer" are
+// no longer a valid `kind` value under the schema — the model conveys role via
+// `bind` instead, which normRegion() below already reads for that).
+const REGION_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING" },
+    kind: { type: "STRING", enum: [...VALID_KINDS] },
+    bind: { type: "STRING" },
+    label: { type: "STRING" },
+    x: { type: "NUMBER" }, y: { type: "NUMBER" }, w: { type: "NUMBER" }, h: { type: "NUMBER" },
+    shape: { type: "STRING", enum: ["ellipse"] },
+    options: { type: "ARRAY", items: { type: "STRING" } },
+    group: { type: "STRING" },
+    index: { type: "NUMBER" },
+    shapeKind: { type: "STRING", description: "circle|square|hexagon|wedge|kidney|lozenge|teardrop|blob|arc, or any invented silhouette name" },
+    diff: { type: "NUMBER", description: "0..1 guide diffuseness" },
+    path: {
+      type: "ARRAY",
+      description: "5-12 point closed polygon, normalized 0..1 INSIDE the control's rect",
+      items: {
+        type: "OBJECT",
+        properties: { x: { type: "NUMBER" }, y: { type: "NUMBER" } },
+        required: ["x", "y"],
+      },
+    },
+  },
+  required: ["id", "kind", "x", "y", "w", "h"],
+};
+const LAYOUT_SCHEMA = {
+  type: "OBJECT",
+  properties: { regions: { type: "ARRAY", items: REGION_SCHEMA } },
+  required: ["regions"],
+};
+
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 // display ROLES the model sometimes puts in `kind` (or `id`/`bind`) instead of "display".
@@ -344,7 +413,7 @@ function normRegion(r: Record<string, unknown>, i: number): Region | null {
 
 export async function deriveLayout(keys: DirectorKeys, prompt: string): Promise<Region[] | null> {
   try {
-    const res = await directorChat(keys, { system: LAYOUT_SYS, user: `Theme: ${prompt}`, maxTokens: 4000 });
+    const res = await directorChat(keys, { system: LAYOUT_SYS, user: `Theme: ${prompt}`, maxTokens: 4000, schema: LAYOUT_SCHEMA });
     if (!res) return null;
     const { content, finishReason } = res;
     const parsed = JSON.parse(content) as { regions?: Record<string, unknown>[] };
@@ -403,6 +472,26 @@ const EXTRACT_SYS =
   "groove for a slider; the glass for a screen). Only include a control if you can confidently locate it; OMIT any " +
   "you cannot find. Return ONLY the JSON object.";
 
+// wire schema for extractSlots' {"boxes":[{bind,x,y,w,h,conf?}]} contract
+const SLOTS_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    boxes: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          bind: { type: "STRING", description: "the expected bind name, echoed back" },
+          x: { type: "NUMBER" }, y: { type: "NUMBER" }, w: { type: "NUMBER" }, h: { type: "NUMBER" },
+          conf: { type: "NUMBER", description: "0..1 confidence" },
+        },
+        required: ["bind", "x", "y", "w", "h"],
+      },
+    },
+  },
+  required: ["boxes"],
+};
+
 export async function extractSlots(
   keys: DirectorKeys,
   image: string,          // data: URL or public URL of the device image
@@ -419,6 +508,7 @@ export async function extractSlots(
       user: `Locate these expected controls in the image (normalized 0..1 boxes): ${list}`,
       imageParts: [imagePart],
       maxTokens: 3000,
+      schema: SLOTS_SCHEMA,
     });
     if (!res) return [];
     const parsed = JSON.parse(res.content) as { boxes?: Record<string, unknown>[] };
@@ -444,12 +534,41 @@ export async function extractSlots(
 export interface SlotPoly { bind: string; points: [number, number][] }
 const MASK_SYS =
   "You are a precise UI control SILHOUETTE tracer for skeuomorphic music-player images. Given the image " +
-  "and a list of EXPECTED controls (bind + kind), return STRICT JSON " +
-  "{\"polys\":[{\"bind\":\"<bind>\",\"points\":[[x,y],...]}]}. Each polygon is the TIGHT outline of that " +
+  "and a list of EXPECTED controls (bind + kind), return each polygon as the TIGHT outline of that " +
   "control's visible silhouette, 8-20 points, NORMALIZED 0..1 of the WHOLE image, clockwise. Trace the actual " +
   "painted shape (a round knob/button = a circle of points; a vertical fader/toggle = its stick+cap outline; a " +
   "horizontal slider = its groove rectangle). Identify by icon: play ▶, prev ◀◀, next ▶▶, stop ■, knob = round " +
-  "dial, slider-v = vertical fader, toggle = small switch. OMIT controls you cannot find. Return ONLY the JSON.";
+  "dial, slider-v = vertical fader, toggle = small switch. OMIT controls you cannot find.";
+// wire schema for extractMasks' {"polys":[{bind,points}]} contract. `points` is an
+// array of {x,y} objects, NOT a [x,y] tuple/array-of-arrays — Vertex/Gemini's
+// responseSchema docs (fetched 2026-07-11) confirm nested objects but do not
+// document array-of-array support, so the tuple shape is avoided as an unverified
+// external claim (verify-external-claims-rule); SlotPoly's public [number,number][]
+// contract is unchanged, this schema only changes the WIRE shape folded into it.
+const MASKS_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    polys: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          bind: { type: "STRING" },
+          points: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: { x: { type: "NUMBER" }, y: { type: "NUMBER" } },
+              required: ["x", "y"],
+            },
+          },
+        },
+        required: ["bind", "points"],
+      },
+    },
+  },
+  required: ["polys"],
+};
 export async function extractMasks(
   keys: DirectorKeys,
   image: string,
@@ -464,6 +583,7 @@ export async function extractMasks(
       user: `Trace tight silhouette polygons for these controls: ${list}`,
       imageParts: [imagePart],
       maxTokens: 4000,
+      schema: MASKS_SCHEMA,
     });
     if (!res) return [];
     const parsed = JSON.parse(res.content) as { polys?: Record<string, unknown>[] };
@@ -474,8 +594,15 @@ export async function extractMasks(
       const pts = Array.isArray(p.points) ? p.points : [];
       const points: [number, number][] = [];
       for (const pt of pts) {
-        if (Array.isArray(pt) && pt.length >= 2 && Number.isFinite(Number(pt[0])) && Number.isFinite(Number(pt[1])))
+        if (pt && typeof pt === "object" && !Array.isArray(pt)) {
+          const { x, y } = pt as { x?: unknown; y?: unknown };
+          if (Number.isFinite(Number(x)) && Number.isFinite(Number(y)))
+            points.push([clamp01(Number(x)), clamp01(Number(y))]);
+        } else if (Array.isArray(pt) && pt.length >= 2 && Number.isFinite(Number(pt[0])) && Number.isFinite(Number(pt[1]))) {
+          // defensive: tolerate the old [x,y] tuple shape too, in case a model/​
+          // schema edge case still emits it
           points.push([clamp01(Number(pt[0])), clamp01(Number(pt[1]))]);
+        }
       }
       if (bind && points.length >= 3) out.push({ bind, points });
     }

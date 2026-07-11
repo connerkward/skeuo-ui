@@ -116,6 +116,35 @@ separately).
    fa-pod-ticks01-502's miss), or left off where baked ticks already render on a skin. Not
    implemented as a fallback-selection mechanism yet — currently a bare global flag.
 
+## Done (2026-07-11) — Structured output (responseSchema) on Vertex TEXT calls
+
+Adopted `generationConfig.responseSchema` + `responseMimeType: application/json` (OpenAPI-3.0
+subset, UPPERCASE Type enum) in place of rhetorical "STRICT JSON" prose prompting, per
+[`docs/experiments/2026-07-11-image-model-json-output.md`](docs/experiments/2026-07-11-image-model-json-output.md)'s
+verdict ("Structured OUTPUT viable: director YES, extraction YES") and the semissive
+prototype's `judge.py` (3/3 clean, the pattern this reuses).
+
+- `tools/mask-align-exp/gen12/director_review.py` — `RESPONSE_SCHEMA` matches the existing
+  `{verdict,score_0_10,per_control,notes,improve}` on-disk contract; `per_control` rides the
+  wire as an ARRAY of `{control,status,note}` (Gemini's schema subset has no free-keyed-object
+  support) and is folded back into the `{control_key:{...}}` dict shape on parse, so
+  `build_dashboard.py` (which only reads `verdict`/`score_0_10`/`notes`) sees no contract
+  change. Parse stays defensive (never crashes; logs raw text + `finish_reason` on mismatch).
+  Verified live on `assets-diablo-gothic` (real run, ~$0.03): valid JSON, `finish_reason: STOP`,
+  content coherent with the pre-change verdict.
+- `src/generate/director.ts` — `directorChat()` takes an optional `schema`; added
+  `MATERIAL_SCHEMA` (`deriveMaterial`), `LAYOUT_SCHEMA`/`REGION_SCHEMA` (`deriveLayout`),
+  `SLOTS_SCHEMA` (`extractSlots`), `MASKS_SCHEMA` (`extractMasks`, `points` as `{x,y}` objects
+  not `[x,y]` tuples — array-of-array isn't documented as supported in Vertex/Gemini's schema
+  subset, checked live 2026-07-11, so the tuple shape was avoided rather than assumed). Every
+  existing heuristic/null/`[]` fallback on failure is unchanged. `npx tsc -b` clean. Verified
+  live through the real dev paths: `POST /api/derive` (devApiPlugin, real endpoint) returned a
+  themed 10-region layout with only valid `kind`s and no fallback triggered; `deriveMaterial`
+  called directly with a real `gcloud auth print-access-token` dev token (same auth
+  `devApiPlugin.ts` uses — no isolated HTTP endpoint exists for material-only, `/api/generate`
+  needs a full paid FAL image gen to reach it) returned a non-heuristic, prompt-specific
+  Material.
+
 ## GENERATION SYSTEM — full revamp / nuke from the ground up (2026-06-27) — #1, BRAIN WORK
 
 User directive 2026-06-27: *"complete revamp / nuke of the entire generation system from the
