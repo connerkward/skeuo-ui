@@ -61,6 +61,24 @@ BLUEPRINT_ARM_WEIGHTS = [("solid", 0.75), ("outline", 0.25)]
 # reintroducing the construction code from scratch. Default OFF: falsified, not proven better.
 BLUEPRINT_TWOIMG = False
 
+# PROMPT_JSON_SPEC: encode the per-control specification (roster, guide-colour map,
+# positions/sizes as fractions, strip cell order, congruence rule) as ONE fenced ```json```
+# block instead of inline prose; the narrative clauses (theme, camera, no-text, empty-cavity,
+# zero-residue, exact-fit, shuffle-states, mask column) stay prose either way. The jsonspec/
+# experiment (2026-07-11, n=4 paired gens, ~$2.2 spend) found this NEUTRAL-TO-MILDLY-HELPFUL,
+# not a fix: guide-hue bleed lower in the treatment in 4/4 paired gens (mean 5.04% -> 1.56%),
+# extract12 gate PASS 3/4 treat vs 2/4 control (both control fails were emptiness) — but layout
+# drift was unaffected (690px control vs 641px treat on a ~2300px canvas, both arms treat the
+# locked template as a suggestion) and guide-hue button echo still occurred in one treatment gen.
+# See jsonspec/verdict.json, docs/experiments/2026-07-11-jsonspec-paint.md, commit 8abf3e8a.
+# Only swaps the ENCODING of the templated 'solid'-conditioning control spec (the only arm the
+# experiment actually tested — see the `conditioning == "solid"` guard below); the 'outline' and
+# 'twoimg' conditioning arms and templateless mode are untouched by this flag regardless of its
+# value, so BLUEPRINT_TRIAL_ENABLED's outline draws keep using the prose encoding either way.
+# Default OFF: byte-identical current prose prompt. Flip only BETWEEN batches, never mid-batch
+# (see generation-spend-rule) — a re-roll batch may be running against genskin.py right now.
+PROMPT_JSON_SPEC = False
+
 COL_W, H, DEV_H = 1200, 1920, 1440
 DEVF = DEV_H / H
 
@@ -324,6 +342,204 @@ def edit_vertex_multi(image_paths, prompt, seed, aspect="5:4"):
     raise RuntimeError("vertex: no image part in response")
 
 
+# ------------------------------------------------------------------------------------- PROMPT_JSON_SPEC
+# Ported (structure + wording) from jsonspec/genskin_jsonspec.py's build_spec_json() /
+# build_treatment_prompt() — the harness actually scored by the 2026-07-11 experiment (see the
+# flag's why-comment above). Only the module-level names differ (no `G.` prefix; we ARE genskin.py).
+# Tick bullets (tick_skin_bullet/tick_sprite_bullet — a feature that shipped before jsonspec/ ran
+# and that harness never referenced) are spliced in at the SAME textual position as the production
+# prose prompt below, so PROMPT_JSON_SPEC=True doesn't silently drop the tick-provisioning feature.
+def _json_spec_control_size_frac(kind, sz):
+    if kind in ("btn", "knob"):
+        r = sz[0] if kind == "btn" else KNOB_R
+        return {"shape": "circle", "radius_frac_of_col_w": round(r / COL_W, 4)}
+    if kind == "groove":
+        return {"shape": "rounded_rect", "w_frac_of_col_w": round(GROOVE_W / COL_W, 4),
+                 "h_frac_of_dev_h": round(GROOVE_H / DEV_H, 4)}
+    if kind == "tog":
+        return {"shape": "rounded_rect", "w_frac_of_col_w": round(TOG_W / COL_W, 4),
+                 "h_frac_of_dev_h": round(TOG_H / DEV_H, 4)}
+    if kind == "rect":
+        w, h = sz
+        return {"shape": "rounded_rect", "w_frac_of_col_w": round(w / COL_W, 4),
+                 "h_frac_of_dev_h": round(h / DEV_H, 4)}
+    return {}
+
+
+def _build_json_spec_obj(KEYS, layout):
+    controls = []
+    for name in CONTROLS:
+        fx, fy, kind, *sz = layout[name]
+        controls.append({
+            "id": name,
+            "role": ROLES[name],
+            "guide_color_name": cname(KEYS[name]),
+            "guide_color_rgb": list(KEYS[name]),
+            "final_icon_or_content": ICON[name],
+            "position_frac": {"fx": round(fx, 4), "fy_of_device_area": round(fy, 4)},
+            **_json_spec_control_size_frac(kind, sz),
+        })
+    strip_sizes = {
+        "vol_cap": {"shape": "circle", "radius_frac_of_col_w": round(KNOB_R / COL_W, 4)},
+        "seek_thumb": {"shape": "rounded_rect", "w_frac_of_col_w": round(THUMB_W / COL_W, 4),
+                       "h_frac_of_dev_h": round(THUMB_H / DEV_H, 4)},
+        "shuffle_state": {"shape": "rounded_rect", "w_frac_of_col_w": round(TOG_W / COL_W, 4),
+                           "h_frac_of_dev_h": round(TOG_H / DEV_H, 4)},
+    }
+    return {
+        "_note": ("machine-readable control spec. position_frac is a fraction of the device "
+                  "column's own width (fx) and the device area's own height (fy), guide_color_rgb "
+                  "marks this control's blueprint position ONLY and must never be painted into the "
+                  "finished device, sizes are congruence-locked between the device slot and its "
+                  "matching loose strip part."),
+        "controls": controls,
+        "strip_order_left_to_right": ["vol_cap", "seek_thumb", "shuffle_state_1", "shuffle_state_2"],
+        "strip_part_sizes": strip_sizes,
+        "congruence_rule": ("each strip part's size EXACTLY equals its matching device slot's size "
+                             "above (vol_cap radius == vol's radius_frac_of_col_w; seek_thumb fits "
+                             "the seek groove; each shuffle_state exactly fills the shuffle slot)"),
+    }
+
+
+def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, tick_sprite_bullet):
+    spec_obj = _build_json_spec_obj(KEYS, layout)
+    json_block = "```json\n" + json.dumps(spec_obj, indent=1) + "\n```"
+    NO_LIST = ", ".join(f"NO {cname(KEYS[c]).lower()}" for c in CONTROLS)
+
+    preamble = ("Two side-by-side columns of identical size, output at 5:4. Below is THE "
+                "MACHINE-READABLE SPEC for this generation — follow it exactly for every "
+                "control's identity, guide-colour, position and size:\n\n" + json_block + "\n")
+    left_layout = (
+        "The LEFT column is a BLUEPRINT: a neutral grey placeholder body with COLOURED SOLID "
+        "FILLED patches marking each control's exact position/size/shape PER THE SPEC ABOVE, "
+        "plus a bottom SPRITE-STRIP band with 4 loose parts in the order given by the spec's "
+        "strip_order_left_to_right. KEEP EVERY CONTROL AT THE EXACT POSITION, SIZE AND SHAPE "
+        "given by the spec — do NOT move, resize, swap, rearrange, add or drop any control "
+        "(their layout, as specified, is locked). BUT the grey body is ONLY a rough placeholder "
+        "showing WHERE the controls sit — you are FREE and STRONGLY ENCOURAGED to sculpt a BOLD, "
+        "DISTINCTIVE, ASYMMETRIC, theme-appropriate outer HOUSING around them: an ornate, "
+        "characterful, sculpted form with a memorable silhouette (organic curves, wings, pods, "
+        "fins, greebles, ornament, asymmetry) — NOT a plain rounded rectangle, NOT a generic "
+        "slab or pod. Reshape the outer silhouette DRAMATICALLY to suit the theme; ONLY the "
+        "control positions given by the spec stay fixed. The coloured filled patches described "
+        "in the spec are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed.")
+    residue_bullet = (
+        "  • ZERO RESIDUE (CRITICAL) — the coloured guide patch around EVERY control is a "
+        "temporary alignment marking, NOT part of the design. It must VANISH completely. Each "
+        "finished BUTTON is ONE solid piece of the device's own material with absolutely NO "
+        "coloured ring, rim, bezel, halo, outline or edge-tint around it — if a button has a "
+        "coloured ring, it is WRONG. Likewise the album-art and visualizer windows have NO "
+        "coloured frame (just a dark recessed glass panel flush in the body), and no "
+        "socket/groove/slot has any coloured rim. Paint the body/button material seamlessly "
+        "OVER where each guide patch was.\n")
+
+    prompt = (
+        preamble + " ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS and NO "
+        "LABELS anywhere in EITHER column — not under controls, not on the strip, not a title, "
+        "nothing; the device is wordless, identified by icons and shapes only. " + left_layout + "\n"
+        "THEME (design the finished device in THIS style — you own all materials, colours, "
+        "form, lighting): " + STRUCT + "\n"
+        "Fill BOTH columns keeping the device+strip layout IDENTICAL so they overlay "
+        "pixel-for-pixel.\n"
+        "LEFT column — the FINISHED, richly 3D, tactile, skeuomorphic media player and its "
+        "loose parts, in the theme above. CRITICAL for cutout: the BACKDROP around the device "
+        f"and BEHIND every strip part is a FLAT, PERFECTLY UNIFORM "
+        f"{'pale grey-white' if dark else 'near-black charcoal'} tone (RGB ~{BG[0]},{BG[1]},{BG[2]}) "
+        "— a separate keyed-out backdrop with NO gradient/texture/vignette that strongly "
+        "contrasts the body; the device must never approach the backdrop tone.\n"
+        "  • The finished device uses ONLY its own theme materials/colours — NONE of the guide "
+        f"colours from the spec. ABSOLUTELY {NO_LIST} anywhere in the LEFT column; the guide "
+        "colours from the spec exist ONLY in the RIGHT mask.\n"
+        + residue_bullet
+        + "  • The 5 transport/function BUTTONS (playpause, prev, next, repeat, queue) are "
+        "raised, glossy, tactile control facets set into the body, EACH clearly bearing its "
+        "icon EMBOSSED/engraved in relief per the spec's final_icon_or_content field for that "
+        "control. Shape + icon + relief only; no text labels; no coloured rim.\n"
+        "  • BUTTON COLOURS COME FROM THE THEME, NEVER FROM THE GUIDES: a button's guide_color "
+        "in the spec marks its POSITION ONLY — the finished button's material/fill must NOT "
+        "inherit, echo or be tinted toward its guide colour in ANY way (no red play because its "
+        "guide was red, no magenta next, etc). ALL five buttons are made of the device's OWN "
+        "theme materials/palette, coloured consistently with each other and the body. If any "
+        "button's colour visibly matches its spec guide_color, the output is WRONG.\n"
+        "  • THE SINGLE MOST IMPORTANT RULE — EVERY MOVING-PART CAVITY IS EMPTY. The volume "
+        "knob socket is a bare round HOLE showing only its dark recessed floor (NO knob, NO "
+        "cap, NO dome, NO dial, NO pointer — nothing installed). The seek slider groove is an "
+        "EMPTY DARK RECESSED CHANNEL cut into the body (NO thumb, NO grip, NO handle, NO fill "
+        "— it is NOT a coloured or filled bar, it is a hollow dark slot). The shuffle switch "
+        "slot is an EMPTY DARK rounded well (NO switch, NO lever, NO toggle installed). The "
+        "device is photographed BEFORE ASSEMBLY: those parts exist ONLY in the bottom sprite "
+        "strip and have NOT been installed yet. Do NOT colour the empty wells — neutral DARK "
+        "recesses only. If ANY of the three cavities (knob socket, seek slot, shuffle slot) "
+        "contains ANY part or any fill colour, the output is WRONG and must be redone.\n"
+        + tick_skin_bullet
+        + "  • SEEK IS JUST AN EMPTY SLOT — treat the seek as a plain EMPTY recessed horizontal "
+        "SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, "
+        "grip, knob, handle, bar, fill, track-fill or progress indicator into it — it is a bare "
+        "dark empty channel; the thumb is a SEPARATE loose part in the strip (see spec's "
+        "strip_order_left_to_right). A seek slot with anything riding in it is WRONG.\n"
+        "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed "
+        "glass SCREENS — flat unlit dark glass panels only, with NOTHING inside them: NO baked "
+        "spectrum/equalizer bars, NO album cover or artwork, NO waveform, NO icons, NO text, NO "
+        "content whatsoever. They are powered-down screens; the app draws their live content "
+        "later. If either window contains any baked graphics, it is WRONG.\n"
+        "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, in the order "
+        "given by the spec's strip_order_left_to_right (volume knob cap, seek slider thumb, "
+        "shuffle switch first state, shuffle switch second state) — in the device's own "
+        f"materials, patches removed, on the flat {'pale' if dark else 'charcoal'} backdrop.\n"
+        + tick_sprite_bullet
+        + "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a "
+        "finger slides, shown by itself on the backdrop, like a spare part in a parts tray. It "
+        "is ABSOLUTELY NOT a slot, groove, channel, track, rail or recess, and must NOT be "
+        "drawn sitting in/on any slot or dark channel — no groove under it, no track through "
+        "it, no recessed surround. If the strip's seek cell shows any slot/track instead of a "
+        "lone thumb piece, the output is WRONG.\n"
+        "  • EXACT FIT — per the spec's congruence_rule: each strip part is the EXACT size & "
+        "shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove; "
+        "each shuffle_state exactly fills the switch slot). Do NOT resize/re-proportion a part.\n"
+        "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT "
+        "have to be a plain pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, "
+        "gem that shifts, valve, eye that opens — any physical two-state mechanism, as long as "
+        "BOTH states share the SAME OUTER HOUSING SILHOUETTE at the same size (per the spec's "
+        "shuffle_state size) and are CLEARLY MIRROR-OPPOSITE: the moving element sits at ONE "
+        "end/side in the first state and at the OPPOSITE end/side in the second state (never "
+        "the same position in both). Put ABSOLUTELY NO text, letters, numerals, glyphs, words "
+        "or labels of ANY kind on either switch part or on ANY strip part — the state must read "
+        "from the mechanism's position alone, with zero markings.\n"
+        "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in "
+        "a PERFECTLY FLAT, STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view — the camera is directly "
+        "overhead at exactly 90°, the same view as the device. Each part is drawn as if lying "
+        "FLAT on a table seen from straight above, with ZERO thickness, height or depth "
+        "visible. The volume knob cap is a FLAT ROUND DISC / COIN — you see ONLY its circular "
+        "TOP FACE (a knurled outer rim and a small pointer notch); you must NOT see any "
+        "cylindrical SIDE WALL, edge, height or 3D body of the knob. The seek thumb and the "
+        "shuffle switch are likewise flat shapes seen from directly overhead. ABSOLUTELY NO "
+        "product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO perspective, NO visible "
+        "sides — a part showing its side wall or any thickness is WRONG. Each part must look "
+        "EXACTLY as it appears seated flat in its socket on the top-down device, so it drops "
+        "straight in.\n"
+        "RIGHT column — a precise REGION MASK on pure BLACK, pixel-aligned to the LEFT. For "
+        "EACH control paint ONE SOLID FILLED blob in its own guide_color_rgb (from the spec), "
+        "at the EXACT same position, size and silhouette as that control on the left (the "
+        "seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; "
+        "the shuffle blob is a tall portrait rounded-rectangle; each knob/button blob a solid "
+        "disc) — one blob per control id in the spec's controls array, coloured by that "
+        "control's guide_color_rgb. DISPLAY-WINDOW BLOBS — the visualizer and album_art blobs "
+        "must EXACTLY cover their painted window's GLASS area on the left: the SAME rectangle "
+        "at the SAME position with the SAME rounded corners, edge-to-edge with the glass — "
+        "never larger than the bezel opening, never smaller, never shifted or offset onto the "
+        "surrounding body. Trace each window's glass outline precisely; a display blob that "
+        "extends past its painted window, covers body/bezel around it, or sits off the window "
+        "is WRONG; and each STRIP PART as a solid COMPACT blob of its matching control's "
+        "guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour, BOTH "
+        "shuffle states use shuffle's colour) exactly matching its part's silhouette & position "
+        "in the strip, in the spec's strip_order_left_to_right. CRITICAL: each blob is TIGHT to "
+        "its shape — NEVER let a colour bleed or stretch across the strip band or flood a "
+        "rectangle; the 4 strip blobs are 4 separate compact shapes with black gaps between "
+        "them. Every blob is ONE solid filled silhouette, no outlines, no holes. Everything "
+        "else is pure black.")
+    return prompt
+
+
 def main():
     spec = json.load(open(sys.argv[1]))
     sid = spec["id"]; mode = spec["mode"]; seed = spec.get("seed", 71)
@@ -506,7 +722,15 @@ def main():
         "the cap's surface so its rotation reads at a glance.\n"
     ) if ticks_spec.get("sprite") == "baked" else ""
 
-    prompt = (
+    # PROMPT_JSON_SPEC only covers what jsonspec/ tested: templated mode, 'solid' conditioning
+    # (see the flag's why-comment at the top of the file). Every other path (outline/twoimg
+    # conditioning, templateless mode) keeps the prose prompt below byte-for-byte.
+    use_json_spec = PROMPT_JSON_SPEC and mode == "templated" and conditioning == "solid"
+    res["prompt_json_spec"] = use_json_spec
+    if use_json_spec:
+        prompt = _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, tick_sprite_bullet)
+    else:
+        prompt = (
         preamble + " ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO "
         "NUMBERS, NO CAPTIONS and NO LABELS anywhere in EITHER column — not under controls, not on the strip, not "
         "a title, nothing; the device is wordless, identified by icons and shapes only. " + left_layout + "\n"

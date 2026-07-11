@@ -704,3 +704,23 @@ once the in-flight re-rolls land:
   (`fa-sky`, `ps1-wild`) and prompt-clause fixes (checklist items 1-5) that should land BEFORE the
   user spends the review round on them — reviewing pre-fix skins wastes the round. This prep only
   makes the round itself frictionless once those land.
+
+## `PROMPT_JSON_SPEC` flag adopted into genskin.py, default OFF (2026-07-11)
+
+Ported the jsonspec/ experiment's fenced-JSON control-spec encoding into mainline `genskin.py`
+as `PROMPT_JSON_SPEC` (flag-gated, default `False`, byte-identical prose prompt when off —
+diff-verified against pre-edit `genskin.py` for 2 themes via `--blueprint-only`). When `True`,
+only the templated + `conditioning == "solid"` path (the only arm jsonspec/ actually tested)
+swaps the per-control roster/position/size/guide-colour/strip-order/congruence spec for one
+fenced ```json``` block with narrative clauses kept as prose; `outline`/`twoimg` conditioning
+and templateless mode are untouched regardless of the flag (dry-verified: forcing the `outline`
+arm with the flag `True` still produced the prose prompt, `prompt_json_spec: false` recorded).
+Tick-provisioning bullets (a feature that shipped before jsonspec/ ran and that harness never
+referenced) are spliced into the JSON-spec prompt at the same textual position as production, so
+`ticks: baked` skins don't silently lose that clause when the flag is on.
+
+**Flip `PROMPT_JSON_SPEC` after the current re-roll batch drains; expected effect: reduced
+guide-hue bleed, no drift change** (jsonspec/verdict.json: bleed 5.04%→1.56% mean, 4/4 paired
+gens lower, gate 3/4 vs 2/4; layout drift unaffected, ~690px both arms). Do not flip mid-batch
+(generation-spend-rule). See jsonspec/verdict.json, docs/experiments/2026-07-11-jsonspec-paint.md,
+commit 8abf3e8a for the underlying evidence.
