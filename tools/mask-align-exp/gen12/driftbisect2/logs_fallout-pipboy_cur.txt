@@ -1,0 +1,36 @@
+[hue-recover] vol: found desaturated blob (hue-dist search) at [0.257, 0.512, 0.109, 0.068]
+[circle-fit] vol: (712,2026) r=136px (mask offset -6,+0px)
+[knob-zero] vol: 352.0  (z=27.0 width=6deg run=8deg)
+[global drift] mask->paint = (-0.26%, +0.00%)
+[rrect-fit] shuffle: (708,2556) 401x175px (was 368x161)
+[rrect-fit] seek: (724,2312) 531x165px (was 526x151)
+[region-refit] visualizer: snapped to painted window px(1117,1491 645x435) IoU-vs-mask 0.875 (cc 219998px thr 51 loose 70 (body 92 floor 29))
+[region-refit] album_art: snapped to painted window px(1126,2147 626x628) IoU-vs-mask 0.888 (cc 322591px thr 49 loose 67 (body 87 floor 29))
+[travel] seek groove 422..996px (fit bbox 458..989, mask cell 456..982, body L102/R102 floor 72) -> travel [0.17839, 0.43707]
+[angle] shuffle: elongation too weak (slot 2.3, part 1.9) -> no rotation
+[state-align] shuffle ON->OFF scale=(1.004,1.002) d=(0,0) IoU=0.998
+guide-ring gate (perimeter-band guide-hue residue around each control):
+  playpause    ring=  0.00% coh=0.00  ok
+  prev         ring=  0.00% coh=0.00  ok
+  next         ring=  0.00% coh=0.00  ok
+  repeat       ring=  0.00% coh=0.00  ok
+  queue        ring=  0.00% coh=0.00  ok
+  vol          ring=  0.00% coh=0.00  ok
+  seek         ring=  0.30% coh=0.21  ok
+  shuffle      ring=  0.00% coh=0.00  ok
+  visualizer   ring=  0.00% coh=0.00  ok
+  album_art    ring=  0.00% coh=0.00  ok
+[guide-ring gate] ok
+sprite guide-hue contamination (biref-cut PART pixels vs their own guide key):
+  vol          own-key-match    0.0%  ok
+  seek         own-key-match    0.0%  ok
+  shuffle_off  own-key-match    0.0%  ok
+  shuffle_on   own-key-match    0.0%  ok
+emptiness gate (bright-part pixels inside must-be-empty sockets):
+  vol      bright-interior   0.7%  ok
+  seek     bright-interior   1.3%  ok
+  shuffle  bright-interior   0.0%  ok
+[emptiness gate] ok
+fit check (device slot vs strip part, w x h ratio):
+  shuffle  slot/part w=1.62 h=0.36 <- MISMATCH >15%
+[GATE] PASS controls=10/10 seek_cov=1.038 empty=ok align=ok reasons=none

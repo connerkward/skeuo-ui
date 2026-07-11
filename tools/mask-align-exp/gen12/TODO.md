@@ -36,7 +36,22 @@ Roster sweep with final gates (before re-rolls): 8/15 PASS; contaminated = diabl
 (6 ring controls), n64-prerender-character (4 rings + 4 key-echo sprites), wmp-quicksilver
 (seek rim), wmp-vario (seek thumb), claymation (degenerate album_art); honest fails fa-sky
 (emptiness), ps1-wild (emptiness+misplaced+state-align+2 rings). All 7 re-rolled via
-`orchestrate12.py <spec> 3` (see orch.json/history per skin for outcomes).
+`orchestrate12.py <spec> 3`.
+
+**Re-roll outcomes (15 real generations, ≈$3.9 incl. director reviews):** diablo-gothic
+PASS roll 1 (director 8.5/10, was FAIL 4/10 — tarnished-iron rims + ember icons, zero neon,
+crop-verified), wmp-quicksilver PASS roll 1 (8.5/10), claymation PASS roll 3 (9/10;
+album_art now 744x860px vs the old sliver — and the degenerate gate live-caught a
+degenerate visualizer on its roll 1, proving the gate in the loop), fa-sky PASS roll 3
+(9/10, its long-standing emptiness fail cleared), wmp-vario PASS (graphite+electric-blue
+thumb, crop-verified). **Still honest FAILs after 3 real rolls each:**
+n64-prerender-character (sprite:vol key-echo + misplaced visualizer + missing repeat) and
+ps1-wild (emptiness + misplaced/degenerate visualizer + rings) — both surfaced on the
+dashboard for human triage; these two themes look structurally hard for the current prompt.
+Roster now **13/15 auto-PASS under the hardened gates.** Side fix shipped:
+`genskin.py edit_vertex` gained the 429 retry `edit_vertex_multi` already had (a Vertex
+quota blip burned 12 orchestrator rolls with zero real generations before the fix;
+3-way-parallel orchestration exceeds the quota — run re-roll batches sequentially).
 
 ## Director-decided knob tick provisioning: css vs baked, per axis — DONE 2026-07-11
 

@@ -1,0 +1,13 @@
+[rrect-fit] shuffle: (709,2548) 401x188px (was 368x161)
+[rrect-fit] seek: (753,2324) 489x128px (was 526x151)
+[travel] seek groove 607..1137px (was bbox 508..998) -> travel [0.25911, 0.49783]
+[state-align] shuffle ON->OFF scale=(1.004,1.002) d=(0,0) IoU=0.998
+emptiness gate (bright-part pixels inside must-be-empty sockets):
+  vol      bright-interior   1.2%  ok
+  seek     bright-interior   2.0%  ok
+  shuffle  bright-interior   0.0%  ok
+[emptiness gate] ok
+fit check (device slot vs strip part, w x h ratio):
+  vol      slot/part w=0.16 h=0.61 <- MISMATCH >15%
+  shuffle  slot/part w=1.62 h=0.39 <- MISMATCH >15%
+[GATE] PASS controls=10/10 seek_cov=1.038 empty=ok align=ok reasons=none

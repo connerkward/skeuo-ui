@@ -1,0 +1,212 @@
+{
+ "id": "fallout-pipboy",
+ "mode": "templated",
+ "seed": 571,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "phosphor_green": [
+   90,
+   230,
+   120
+  ],
+  "olive_metal": [
+   86,
+   88,
+   60
+  ],
+  "dark_olive": [
+   44,
+   46,
+   32
+  ],
+  "amber": [
+   230,
+   170,
+   50
+  ],
+  "steel_grey": [
+   120,
+   124,
+   116
+  ]
+ },
+ "keys": {
+  "playpause": [
+   255,
+   0,
+   255
+  ],
+  "prev": [
+   0,
+   0,
+   255
+  ],
+  "next": [
+   255,
+   128,
+   255
+  ],
+  "repeat": [
+   128,
+   0,
+   255
+  ],
+  "queue": [
+   0,
+   128,
+   255
+  ],
+  "vol": [
+   255,
+   0,
+   128
+  ],
+  "seek": [
+   255,
+   0,
+   0
+  ],
+  "shuffle": [
+   0,
+   255,
+   255
+  ],
+  "visualizer": [
+   0,
+   255,
+   0
+  ],
+  "album_art": [
+   128,
+   255,
+   255
+  ]
+ },
+ "keyNames": {
+  "playpause": "MAGENTA",
+  "prev": "PURE BLUE",
+  "next": "ORCHID",
+  "repeat": "VIOLET-PURPLE",
+  "queue": "AZURE BLUE",
+  "vol": "ROSE PINK",
+  "seek": "PURE RED",
+  "shuffle": "CYAN",
+  "visualizer": "PURE GREEN",
+  "album_art": "PALE AQUA"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "the green phosphor CRT display glow and indicator lamps",
+  "emissive_color": [
+   110,
+   255,
+   140
+  ],
+  "pulse": "phosphor",
+  "intensity": 1.1,
+  "viz_emissive": true,
+  "beat_couple": 0.05
+ },
+ "template": {
+  "album_art": [
+   0.5,
+   0.11249999999999999
+  ],
+  "visualizer": [
+   0.5,
+   0.25125000000000003
+  ],
+  "seek": [
+   0.5,
+   0.3525
+  ],
+  "prev": [
+   0.28,
+   0.44999999999999996
+  ],
+  "playpause": [
+   0.5,
+   0.44999999999999996
+  ],
+  "next": [
+   0.72,
+   0.44999999999999996
+  ],
+  "repeat": [
+   0.24,
+   0.5625
+  ],
+  "vol": [
+   0.42,
+   0.5700000000000001
+  ],
+  "shuffle": [
+   0.6,
+   0.5700000000000001
+  ],
+  "queue": [
+   0.78,
+   0.5625
+  ]
+ },
+ "album_art_rect": [
+  0.26666666666666666,
+  0.03437499999999999,
+  0.4666666666666667,
+  0.15625
+ ],
+ "visualizer_rect": [
+  0.23333333333333334,
+  0.21062500000000003,
+  0.5333333333333333,
+  0.08125
+ ],
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 0.0
+}
