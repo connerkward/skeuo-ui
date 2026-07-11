@@ -1,5 +1,31 @@
 # gen12 TODO
 
+## Director final-review stage added (2026-07-11) — flag-gated OFF
+
+`director_review.py` <assets-dir> — renders the REAL served `player.html` via a throwaway,
+isolated Node/Playwright driver (its own `chromium.launch()`, never the shared
+claude-in-chrome browser), captures a full screenshot + the standard per-control crops
+(knob, seek-at-mid, switch, buttons, screens), and sends them to gemini-3.1-pro-preview via
+Vertex (gcloud-token auth, same pattern as `genskin.py`'s `edit_vertex()`) with a
+DIRECTOR-persona prompt judging the FINISHED render against its own `theme_specs/<id>.json`
+brief — cohesion, material fidelity, control legibility, seating, what to improve. Writes
+`<assets-dir>/director-review.json` (model id + cost estimate recorded in the output).
+~$0.02-0.05/skin, ~11s/call. Distinct from `observe12.py` (geometry/defect verification,
+not aesthetic judgment) — see both files' docstrings.
+
+Wired into `orchestrate12.py` behind `DIRECTOR_REVIEW_ENABLED = False` (after
+`build_player.py`, alongside the existing `PBR_PASS_ENABLED` flag) — **disabled by
+default**, not yet proven across the roster. Verified once live against
+`assets-diablo-gothic`: valid JSON landed, verdict FAIL / score 4, and the notes correctly
+called out the neon-colored per-control rings visible in the real render (independently
+confirmed by opening `assets-diablo-gothic/director/full.png` — the borders are genuinely
+in the shipped output, not a hallucination) — a real, actionable defect the geometry pass
+doesn't check for. Next step before flipping the flag on: decide whether those neon rings
+are a `build_player.py`/`extract12.py` regression (they look like the `regions.json` debug
+`keys` per-control colors leaking into the actual control render) — worth investigating
+before enabling this stage broadly, since it'll fail most/all skins on that same defect
+until fixed.
+
 ## Media policy (2026-07-11) — paid outputs now committed to git
 
 `joint-4k.png`/`paint.png`/`mask.png` (paid Vertex rolls) and `assets-*_biref/*.png`

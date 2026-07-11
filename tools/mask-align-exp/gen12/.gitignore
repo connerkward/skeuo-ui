@@ -12,3 +12,5 @@ __pycache__/
 review.json
 pbrtest/pydeps/
 assets-*/observe/*.png
+assets-*/director/*.png
+.director-drive-*.mjs
