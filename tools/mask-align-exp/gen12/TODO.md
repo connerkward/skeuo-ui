@@ -220,7 +220,24 @@ scoped only to `docs/experiments/assets/*.png|*.jpg` — recommend extending LFS
 `blueprint.png` ($0 deterministic) and `assets-*_biref/` as a bulk ignore pattern stay/stayed
 ignored — see `.gitignore` for the itemized policy comment.
 
-## Media policy revisit (2026-07-11, later) — non-vital bulk should move to Drive, offload BLOCKED
+## Media policy revisit (2026-07-11, later) — non-vital bulk moved to Drive — DONE
+
+**COMPLETED (2026-07-11, latest):** the blocker below was cleared (`gdrive:` remote
+re-authenticated interactively). All 36 offload files (358,544,116 bytes) uploaded to
+`gdrive:skeuo-ui/gen12-media/2026-07-11/<repo-relative-path>` via
+`rclone copy --files-from --checksum`; post-upload `rclone check` = 36 matching / 0
+differences (Drive md5 vs local). Per-file sha256 + bytes + Drive share links recorded in
+`MEDIA-MANIFEST.md` (human) / `media-manifest.json` (machine) — all 36 `rclone link` calls
+succeeded, no manual sharing needed. `.gitignore` rewritten (offload patterns + a
+`!assets-steam-porthole_biref/global-matte.png` negation keeping the dashboard explainer's
+one runtime matte tracked); the 36 files `git rm --cached`-ed (kept on disk, now
+untracked-ignored). Render verify: dashboard12.html's only offload-class request is
+steam-porthole's global-matte (200); steam-porthole player.html renders with zero console
+errors and zero requests to offloaded files; the two dashboard player-pbr.html 404s
+(claymation, fa-sky) are pre-existing — those files never existed on disk. History-reclaim
+(filter-repo) remains a flagged, NOT-done decision (see "History honesty" below).
+
+<details><summary>Original blocked-state record (kept for provenance)</summary>
 
 User correction of the commit above: don't commit large non-vital volume media, store in
 Drive and link in. Re-classified the ~786MB currently tracked under `assets-*` by hard
@@ -272,6 +289,8 @@ evidence (grep for actual runtime `img`/`url()`/`fetch` refs in the *committed* 
 - No files were `git rm --cached`, `.gitignore` was left as-is, and nothing was pushed for
   this reclassification — untracking now, with no working Drive mirror, would leave the
   manifest linking to nothing. Re-run once `rclone` is reconnected.
+
+</details>
 
 **History honesty (for whenever the offload+untrack does complete):** removing files from the
 tip does NOT shrink `origin`'s already-pushed pack — `39d76200`'s blobs stay in history until
@@ -653,3 +672,35 @@ BROKEN (baked text label)`) → overall `VERDICT: FAIL`, correctly.
 predate this rule and are NOT being retrofitted** — they're closed experiments, not the
 production path. The rule binds **future** experiment harnesses and the mainline pipeline
 (`observe12.py`) going forward.
+
+## Human review round PREPPED — one link, ready for re-rolls to land (2026-07-11)
+
+Milestone 1's gate (checklist item 6, `docs/SKEUO-V1.md`) needed a **current, non-stale** review
+round — the only `review.json` on disk was a 0/15 all-fail round from 2026-07-09 that predates
+knob-zero, tick provisioning, and the crop-discipline protocol. Prepped so the round is one click
+once the in-flight re-rolls land:
+
+- **`review_server.py` verified against the CURRENT `dashboard12.html`** end-to-end, real shipped
+  path (not a reimplementation): killed a 2-day-old orphaned instance on `:54731` (predated the
+  file's `ThreadingMixIn` fix), started fresh on `:61171`, drove the actual page via headless
+  Playwright — toggled `claymation` to PASS + typed a note, confirmed the debounced `POST /save`
+  landed in `review.json` on disk with the correct current 15-skin roster. `ThreadingMixIn` +
+  `daemon_threads=True` (the idle-Chrome-preconnect wedge fix) confirmed already in place, no
+  code change needed.
+- Confirmed the dashboard's persistence model: verdicts live in the browser's `localStorage`
+  (keyed by page origin) and mirror to `review.json` only on save — so a **new server port is
+  automatically a blank round** (new origin → empty `localStorage`); no code change needed to
+  "reset" the UI, only the on-disk file.
+- **Archived, never deleted** (human-labeled-data-rule): the pre-existing
+  `review-2026-07-09.json` (13:02 snapshot) was already a dated copy but a *later* stale state
+  existed too (`review.json` as of 14:15 — extra `_pbr`/`n64-lowpoly` stale keys, differing
+  `fallout-pipboy` verdict); that later state is now preserved as `review-2026-07-09-archived.json`.
+  `review.json` reset to `{}` for the new round.
+- **`REVIEW-ROUND.md`** written: the gate criteria (controls seated, no guide rings, no baked
+  text, two-state toggle, full slider throw, theme-correct ticks, true knob zero, overall
+  aesthetic), how verdicts persist, and the served URL. Server left running —
+  [`.review-url`](.review-url) → `http://localhost:61171/dashboard12.html`.
+- **Not done in this pass** (owned by other agents per this task's scope): the actual re-rolls
+  (`fa-sky`, `ps1-wild`) and prompt-clause fixes (checklist items 1-5) that should land BEFORE the
+  user spends the review round on them — reviewing pre-fix skins wastes the round. This prep only
+  makes the round itself frictionless once those land.

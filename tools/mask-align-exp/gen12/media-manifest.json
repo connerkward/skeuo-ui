@@ -1,0 +1,260 @@
+{
+  "generated": "2026-07-11T15:52:27",
+  "drive_remote": "gdrive:",
+  "drive_root": "skeuo-ui/gen12-media/2026-07-11",
+  "note": "Bulk non-runtime gen12 media offloaded from git to Google Drive. sha256 computed locally pre-upload; remote integrity verified via `rclone check --files-from ...` (Drive md5 comparison) + size match. Files remain on local disk, git-ignored. Restore: `rclone copy gdrive:skeuo-ui/gen12-media/2026-07-11/ . --files-from <paths>` from repo root.",
+  "files": [
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-claymation/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-claymation/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1dyYqxNVbDU0N0-1wmObZhg6YndfK0Lpj",
+      "sha256": "746a0761b26427baea4be2b60f7ffe04e8819af8533d83b0f91268cbf4e6617d",
+      "bytes": 14754000
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-diablo-gothic/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-diablo-gothic/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1XlR18lffDga8WGTg6Q_1GYnlE0aOORts",
+      "sha256": "24b0d6766814d80930d2b9fdbef10bc636ea5412c7d866fcc59c9e18ff53d95c",
+      "bytes": 16347597
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fa-pod/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fa-pod/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1HFxiMzrbvae6qOpkRs5N-D2vNg9eBx7F",
+      "sha256": "7e953a15222d51d60384a2af545a97d53dcc30e2611562177680c88d4c8b3ca0",
+      "bytes": 15788833
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fa-sky/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fa-sky/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1XrwIWlwCNiiyytBw49twN2Ti8isFxqHE",
+      "sha256": "091b53637ca50500f6e477f1393cb0366058cc47b088d82b512e985ac36be41e",
+      "bytes": 16491825
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fallout-pipboy/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fallout-pipboy/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1lLACgYokZNoFbok4jDciU5HAoL7VhPak",
+      "sha256": "20cb71b6e2c1f54e0dcdc292fd59e2872d65e6f97699a72c2641d7f718da8540",
+      "bytes": 15999836
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fallout-vault/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fallout-vault/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1z2_uYlWZzj5ix6zx-QKN2h69EPVYp1KR",
+      "sha256": "5673acc7dfda45b5af4b1cebdf1500fe2a075b36012e53d3827d30b725cab7de",
+      "bytes": 16403300
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-myst-arcanum/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-myst-arcanum/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1WwS4IsghC8CYxU0pBABpvg6ndQmOSLGg",
+      "sha256": "1c8c4f68b98a1b8a08252e93a1da9443f0ecc8cf0301bdd130ec3378d128c6c2",
+      "bytes": 18051851
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-n64-cutscene/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-n64-cutscene/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1HDyWsNAmgk87uvRJ_jan-gVzXcfiBX0k",
+      "sha256": "b0ee708bcab5adb26e22ab202e046c6a2a12700ed760ac7dacf9ea2e61831da3",
+      "bytes": 14921612
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-n64-prerender-character/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-n64-prerender-character/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=14v7eaJjDT9AHmVS2AEPQvlk-OwGZ4df_",
+      "sha256": "4a67584712788df6279cb185547ab4d3178eba8497c1e146b896555b75a5db5c",
+      "bytes": 14204977
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-ps1-crunchy/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-ps1-crunchy/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=14xWxMhcjLeYAZISqkr6NQUXhEtvNQKSt",
+      "sha256": "5af4c9e7ace668ba9bfb0e495d54538aada7cec1f5cb0d2fa1e6454fc3e05c94",
+      "bytes": 17484776
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-ps1-wild/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-ps1-wild/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1MkZ7pyWvSZGGERqhPjsrQtafnXeU_X7o",
+      "sha256": "1e2f8c47400a76e4be44ad3709cac44e119a784bf539258dceba4591c705a50b",
+      "bytes": 16663633
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-steam-porthole/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-steam-porthole/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1y5hg8RrvfDxRexJ6yoYu1dDxxlWb1iHq",
+      "sha256": "f393b618982227f6cd6ad02879274ec79b1cf0379477154792fffc415e0abd44",
+      "bytes": 16646435
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-wc-goldshield/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-wc-goldshield/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1LBEhzLtwUjRws21aMIaaDM4vK87BVw6l",
+      "sha256": "7956fa2f402a97a33ef85cc724eba9a159ecef75785af1d69bb539d4f52d62d5",
+      "bytes": 16793368
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-wmp-quicksilver/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-wmp-quicksilver/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1OKh5cEk9OGF3c01ywnL5uU0Yupu5jJPY",
+      "sha256": "1a896155d1c63c6b2b59c1521861f246bf9a1955be9c1c41fd7a0a9d2002985c",
+      "bytes": 16339872
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-wmp-vario/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-wmp-vario/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1jOLaxuHUQ-IYTaNVfFwAuZue1RSZfCTW",
+      "sha256": "82594a2e9e787336b4242fcc3116e3d10fff391f0b235d59321d1e10f0ce5840",
+      "bytes": 15085144
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-claymation_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-claymation_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1fvf2Y_vuOEqHG3Q-73QsAI2_-EnMAzc4",
+      "sha256": "7f04c6b0c746dba3cefa66c02f951b51d1b845e5df05a788f76f6b1ada8082fd",
+      "bytes": 5671864
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-diablo-gothic_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-diablo-gothic_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1-5fhi9nlrrO2pXOflpnTDKKx1yzdE_Eh",
+      "sha256": "aaed2db2fc54d35106dde622dd01c5ac6d82f0a6612037855b1258a90be39a41",
+      "bytes": 8091225
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fa-pod_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fa-pod_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1My9oiJiPhhMkEo1SjzFunGOBlOB_thp9",
+      "sha256": "0923ea900b917d5c5dec6d758c96a6111f334455802cc76613a9f2dea67a8adb",
+      "bytes": 7519383
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fa-sky_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fa-sky_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1cqDRc29dSdPQuiVq6P6w2v26HkZrRCWP",
+      "sha256": "32e73ffa10afab9d884e53a7a12a9116de7e3a36540ca61825622396b3c17d9b",
+      "bytes": 7575231
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fallout-pipboy_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fallout-pipboy_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1YTSSIPpkQilmwXYbDpFyVQvBXr-yb-a2",
+      "sha256": "48d8e2c9a6d069d8a2542ba9cd2384c8d446393ad89f6597965fdcd89463d105",
+      "bytes": 8779975
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fallout-vault_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fallout-vault_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1m5-xuwv1QyjcnatAHg8LPLyFJgV7u_D_",
+      "sha256": "3825ea8e2de86d3ab89884f1e5e63fccbffdb457d25b269ea5d5420994486010",
+      "bytes": 7609759
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-myst-arcanum_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-myst-arcanum_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1hoOWUcGn9lLijHwqq5sbuSXgQrkwbLbQ",
+      "sha256": "a9d1b03b828ffd8470176640b0e905ec37c01ce56480415483d88d49d23e47b4",
+      "bytes": 10095287
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-n64-cutscene_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-n64-cutscene_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1Auup2-ihU0J_awKf14f5GQcIVgNnFV2Q",
+      "sha256": "213776121ddca9cae01f0d0831b6d68b1e4802fd825e68d9d2f3ab9a6287161b",
+      "bytes": 7858713
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-n64-prerender-character_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-n64-prerender-character_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1Gt9v7-R7b5O4HA4INXCRrkhijzPocy20",
+      "sha256": "4434c92eef29a7e15a7f71a2b3f841646e7a3253902ed3c4ba965dbf675ab9ef",
+      "bytes": 7041696
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-ps1-crunchy_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-ps1-crunchy_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=19X5A1HGDbii930wjX1DgLqV1yl8lb9AU",
+      "sha256": "e3200df4967102a77f3c0a1af6d44e7d82776a4613d32ada7b98838d95d8fb6d",
+      "bytes": 10260327
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-ps1-wild_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-ps1-wild_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1_KVyYuL7KXduZL4UpFrfab6-pREFU8vg",
+      "sha256": "609012ceea8ab63b99d7359bf07143902f63ded79a1af51fe8326c7cc8a6e89d",
+      "bytes": 7889747
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-wc-goldshield_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-wc-goldshield_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1OdQNlq80N8_NTuF5y31I4Fk2kRZGyiY4",
+      "sha256": "7c76e9128d89ad64f23584cf07b1fd13cbe40b791ca68831812e2786fb846fae",
+      "bytes": 9246498
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-wmp-quicksilver_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-wmp-quicksilver_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1-zvjciocfhO0-qgoBcZr6SinBdTsvYGf",
+      "sha256": "aa2da792ef321eb448a7e030a3302729de8ed77db560f9e6db6c8c88c2105080",
+      "bytes": 8598162
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-wmp-vario_biref/global-matte.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-wmp-vario_biref/global-matte.png",
+      "gdrive_link": "https://drive.google.com/open?id=1yXhaFlDG0OAba1R5VftoqAa6rSoOlol2",
+      "sha256": "6aea5b59db39ea8fb158f81e8699f48abd32a27aa1a8c9b31b5f2562973b33c2",
+      "bytes": 7843782
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-diablo-gothic_pbr/height.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-diablo-gothic_pbr/height.png",
+      "gdrive_link": "https://drive.google.com/open?id=1eayBMk3hDvetAaOVLHIA_kt2ndojvjdL",
+      "sha256": "cd45d2704ba7666c0a2aea83cad1506ddbf4af538373dc3863252c6201708d39",
+      "bytes": 391774
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fa-pod_pbr/height.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fa-pod_pbr/height.png",
+      "gdrive_link": "https://drive.google.com/open?id=1ybnlJ0dy4W2oy36zPV5RSbGlPoVgqQ9b",
+      "sha256": "7f92f69f1b2b24794e9ffb11aeecc60471260165e7a1a2bb15206a77ad45c94b",
+      "bytes": 307339
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fallout-pipboy_pbr/height.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fallout-pipboy_pbr/height.png",
+      "gdrive_link": "https://drive.google.com/open?id=1uJM5cIaA7P-FolHe65nWagzybaqZXZxz",
+      "sha256": "87f5b6e09f66b30389057dabaecfd02ddb0e0f3b4d2bddf2c7ca5cb397c00e9c",
+      "bytes": 318091
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-fallout-vault_pbr/height.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-fallout-vault_pbr/height.png",
+      "gdrive_link": "https://drive.google.com/open?id=1nID1c7MzF_Nu_yFkQ0r_eDdJgdGIgvcq",
+      "sha256": "05a45a7aee68d4356aa24404d4620f52644743445e99c1d1b775a4e56ecab8e4",
+      "bytes": 277720
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-n64-cutscene_pbr/height.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-n64-cutscene_pbr/height.png",
+      "gdrive_link": "https://drive.google.com/open?id=1avYVyWofkMxBh40X1DMGYR-wesC6CJcB",
+      "sha256": "42b97b3585049743deb206780a62496ba6348d09e642f42eae8e532f12e2856b",
+      "bytes": 377919
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-steam-porthole_pbr/height.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-steam-porthole_pbr/height.png",
+      "gdrive_link": "https://drive.google.com/open?id=1if7x1PZts7WPLykm-nf7KK36NtZ2BI8f",
+      "sha256": "d74edc3994fab207a1996792419b7824c1f920ce2acbb68325070a31a00707e9",
+      "bytes": 363514
+    },
+    {
+      "repo_path": "tools/mask-align-exp/gen12/assets-wc-goldshield_pbr/height.png",
+      "gdrive_path": "skeuo-ui/gen12-media/2026-07-11/tools/mask-align-exp/gen12/assets-wc-goldshield_pbr/height.png",
+      "gdrive_link": "https://drive.google.com/open?id=1U2fJOpgVZPpNsunG0dGr1B1I2aEDB77z",
+      "sha256": "f37fa01dbc857cfa6f16695c94468dd413574e12c6b9b6c33b1ddf766535c1a1",
+      "bytes": 449051
+    }
+  ]
+}

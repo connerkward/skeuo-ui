@@ -1,10 +1,23 @@
-# Policy (2026-07-11): PAID / non-trivially-recomputable outputs are COMMITTED so a
-# working tree loss doesn't destroy $0.24+/roll Vertex spend (a paint.png was overwritten
-# with no frozen copy before this policy existed — see gen12/TODO.md). $0-deterministic
-# or freely-relocal artifacts stay ignored. Committed: assets-*/joint-4k.png (paid Vertex
-# roll), assets-*/paint.png (paid), assets-*/mask.png (paid alpha), assets-*_biref/*.png
-# (BiRefNet cut sprites — $0 to recompute now that BIREF_LOCAL=True, but player.html loads
-# them at runtime from ../assets-<theme>_biref/, so they're runtime-required, not scratch).
+# Media policy (revised 2026-07-11, per central media-volume-storage rule):
+# VITAL runtime media stays COMMITTED; BULK non-runtime media lives on Google Drive
+# (gdrive:skeuo-ui/gen12-media/2026-07-11/, sha256-verified mirror) and is IGNORED here —
+# see MEDIA-MANIFEST.md / media-manifest.json for repo-path <-> Drive-path <-> sha256.
+# Evidence basis (grep of the committed player.html / player-pbr.html / dashboard12.html
+# for actual runtime img/url()/fetch refs — TODO.md "Media policy revisit"):
+#   COMMITTED (runtime-required): assets-*/paint.png (player background), assets-*/mask.png
+#     (player compositing), assets-*_biref/ cut sprites (device/seek/vol/shuffle_*/extra-*),
+#     assets-*_pbr/ maps loaded by player-pbr.html (basecolor/normal/roughness/metalness/
+#     glass/btn-ids/emissive/art-mask/viz-mask/meta.json), and
+#     assets-steam-porthole_biref/global-matte.png ONLY (dashboard12.html's embedded
+#     explainer_anim.js hardcodes KNOB_SKIN="assets-steam-porthole" and loadImg's it).
+#   ON DRIVE + IGNORED (no runtime refs anywhere): assets-*/joint-4k.png (paid Vertex roll,
+#     also recoverable from git history commit 39d76200), assets-*_biref/global-matte.png
+#     except steam-porthole ($0-recomputable via local BiRefNet BIREF_LOCAL=True),
+#     assets-*_pbr/height.png.
+assets-*/joint-4k.png
+assets-*_biref/global-matte.png
+!assets-steam-porthole_biref/global-matte.png
+assets-*_pbr/height.png
 assets-*/overlay.png
 assets-*/blueprint.png
 __pycache__/
