@@ -1,0 +1,920 @@
+{
+ "color-11": {
+  "arm": "color",
+  "seed": 11,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.0,
+    "mirror_iou": 0.0544,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.0,
+    "mirror_iou": 0.083,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.0,
+    "mirror_iou": 0.093,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.0,
+    "mirror_iou": 0.1247,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.0,
+    "mirror_iou": 0.1418,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.0,
+    "mirror_iou": 0.0389,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.0,
+    "mirror_iou": 0.0629,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.0,
+    "mirror_iou": 0.1671,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.0,
+  "iou_pass_at_0.5": 0,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0957,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "mirror",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ },
+ "color-22": {
+  "arm": "color",
+  "seed": 22,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.9189,
+    "mirror_iou": 0.0013,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.9415,
+    "mirror_iou": 0.0024,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.9446,
+    "mirror_iou": 0.002,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.9612,
+    "mirror_iou": 0.0045,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.8914,
+    "mirror_iou": 0.0021,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.8822,
+    "mirror_iou": 0.0007,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.8179,
+    "mirror_iou": 0.001,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.8081,
+    "mirror_iou": 0.0025,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0084,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.8957,
+  "iou_pass_at_0.5": 8,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0021,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "stack",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.001,
+  "tag_leak_n": 0
+ },
+ "color-33": {
+  "arm": "color",
+  "seed": 33,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.0,
+    "mirror_iou": 0.0011,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.0,
+    "mirror_iou": 0.002,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.0,
+    "mirror_iou": 0.0017,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.0,
+    "mirror_iou": 0.0039,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.0,
+    "mirror_iou": 0.0112,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.0,
+    "mirror_iou": 0.002,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.0,
+    "mirror_iou": 0.0336,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.0,
+    "mirror_iou": 0.039,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.0,
+  "iou_pass_at_0.5": 0,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0118,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "mirror",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ },
+ "numbered-11": {
+  "arm": "numbered",
+  "seed": 11,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.6043,
+    "mirror_iou": 0.0021,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.2407,
+    "mirror_iou": 0.0043,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.4986,
+    "mirror_iou": 0.0197,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.1637,
+    "mirror_iou": 0.0085,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.5893,
+    "mirror_iou": 0.0041,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.2639,
+    "mirror_iou": 0.0012,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.5134,
+    "mirror_iou": 0.0016,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.5319,
+    "mirror_iou": 0.0045,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.4257,
+  "iou_pass_at_0.5": 4,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0058,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "stack",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ },
+ "numbered-22": {
+  "arm": "numbered",
+  "seed": 22,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.899,
+    "mirror_iou": 0.0012,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.9304,
+    "mirror_iou": 0.0022,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.9254,
+    "mirror_iou": 0.0018,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.9291,
+    "mirror_iou": 0.0042,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.935,
+    "mirror_iou": 0.002,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.8655,
+    "mirror_iou": 0.0006,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.8806,
+    "mirror_iou": 0.0009,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.9502,
+    "mirror_iou": 0.0024,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.9144,
+  "iou_pass_at_0.5": 8,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0019,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "stack",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ },
+ "numbered-33": {
+  "arm": "numbered",
+  "seed": 33,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.0262,
+    "mirror_iou": 0.0057,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.029,
+    "mirror_iou": 0.0013,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.1038,
+    "mirror_iou": 0.009,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.0696,
+    "mirror_iou": 0.0026,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.0248,
+    "mirror_iou": 0.0062,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.0,
+    "mirror_iou": 0.0083,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.0299,
+    "mirror_iou": 0.0141,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.0834,
+    "mirror_iou": 0.0288,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.0458,
+  "iou_pass_at_0.5": 0,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0095,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "stack",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ },
+ "position-11": {
+  "arm": "position",
+  "seed": 11,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.0,
+    "mirror_iou": 0.0568,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.0,
+    "mirror_iou": 0.0773,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.0,
+    "mirror_iou": 0.0951,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.0,
+    "mirror_iou": 0.121,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.0,
+    "mirror_iou": 0.1444,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.0,
+    "mirror_iou": 0.0287,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.0,
+    "mirror_iou": 0.0661,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.0,
+    "mirror_iou": 0.1531,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.0,
+  "iou_pass_at_0.5": 0,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0928,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "mirror",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ },
+ "position-22": {
+  "arm": "position",
+  "seed": 22,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.0,
+    "mirror_iou": 0.0564,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.0,
+    "mirror_iou": 0.0866,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.0,
+    "mirror_iou": 0.0948,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.0,
+    "mirror_iou": 0.1251,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.0,
+    "mirror_iou": 0.1423,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.0,
+    "mirror_iou": 0.042,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.0,
+    "mirror_iou": 0.0656,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.0,
+    "mirror_iou": 0.1688,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.0,
+  "iou_pass_at_0.5": 0,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0977,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "mirror",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ },
+ "position-33": {
+  "arm": "position",
+  "seed": 33,
+  "dims": [
+   4608,
+   3712
+  ],
+  "per_cell": {
+   "r1": {
+    "cell": 0,
+    "iou": 0.0,
+    "mirror_iou": 0.0012,
+    "filled": true
+   },
+   "r2": {
+    "cell": 1,
+    "iou": 0.0,
+    "mirror_iou": 0.0023,
+    "filled": true
+   },
+   "r3": {
+    "cell": 2,
+    "iou": 0.0,
+    "mirror_iou": 0.0019,
+    "filled": true
+   },
+   "r4": {
+    "cell": 3,
+    "iou": 0.0,
+    "mirror_iou": 0.0043,
+    "filled": true
+   },
+   "r5": {
+    "cell": 4,
+    "iou": 0.0,
+    "mirror_iou": 0.1574,
+    "filled": true
+   },
+   "r6": {
+    "cell": 5,
+    "iou": 0.0,
+    "mirror_iou": 0.0325,
+    "filled": true
+   },
+   "r7": {
+    "cell": 6,
+    "iou": 0.0,
+    "mirror_iou": 0.0823,
+    "filled": true
+   },
+   "r8": {
+    "cell": 7,
+    "iou": 0.0,
+    "mirror_iou": 0.1537,
+    "filled": true
+   }
+  },
+  "contamination": {
+   "r1": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r2": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r3": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r4": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r5": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r6": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r7": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   },
+   "r8": {
+    "colour_frac": 0.0,
+    "tag_leak": false
+   }
+  },
+  "mean_iou": 0.0,
+  "iou_pass_at_0.5": 0,
+  "iou_pass_total": 8,
+  "mean_mirror_iou": 0.0544,
+  "mirror_pass_at_0.5": 0,
+  "detected_topology": "mirror",
+  "cells_filled": 8,
+  "cells_total": 8,
+  "mean_colour_contam": 0.0,
+  "tag_leak_n": 0
+ }
+}

@@ -1,0 +1,178 @@
+{
+ "arm": "color",
+ "seed": 11,
+ "model": "gemini-3-pro-image-preview (Vertex AI, global)",
+ "N": 8,
+ "col_w": 1200,
+ "H": 1920,
+ "band_h": 240,
+ "prompt": "ONE image provided, two side-by-side columns of EQUAL size, output at 5:4, 2400x1920px geometry. LEFT column: a plain neutral grey PANEL on a light backdrop containing exactly 8 small abstract flat-colour REGIONS of different shapes and sizes (circles, an oval, rounded rectangles, a diamond) -- purely geometric shapes, not icons, not letters, not any recognizable object. RIGHT column: on a pure BLACK background, a vertical stack of exactly 8 EQUAL-HEIGHT horizontal CELLS separated by thin grey divider lines, numbered here only for your reference as cell 1 (topmost) through cell 8 (bottommost), reading top to bottom. All 8 cells are currently EMPTY (pure black).\nASSIGNMENT RULE -- COLOUR KEY: each region on the LEFT panel is filled a solid guide colour (AZURE BLUE; PURE RED; SPRING GREEN; GOLD YELLOW; VIOLET PURPLE; CYAN; ROSE PINK; UMBER BROWN, one per region, in reading order), and each cell in the RIGHT column carries a small colour SWATCH chip near its left edge. A region is ASSIGNED to the cell whose swatch matches the region's own fill colour (a PURE RED region -> the cell with the PURE RED swatch).\nYOUR TASK: for every cell, identify which region on the LEFT panel is ASSIGNED to it (rule below), then paint INSIDE that cell ONLY a single SOLID WHITE FILLED silhouette that matches that region's exact shape and size (same shape family, same proportions), centered in the cell, leaving generous black margin around it. Do this for all 8 cells -- one silhouette per cell, matching all 8 regions. Do not resize, rotate, or distort the shape; do not merge, skip, or duplicate any region. Every silhouette must be plain solid WHITE on black, regardless of the source region's own colour -- the mask column encodes SHAPE and CELL ASSIGNMENT only, never colour.\nDo not alter the LEFT panel's regions in any way (same shapes, same positions, same neutral fill). ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS anywhere in either column.\nThe colour swatch chips in the RIGHT column are drafting/reference marks ONLY -- used purely so you can match region to cell by colour -- and MUST NOT appear in your finished output: paint each mask cell's silhouette in plain SOLID WHITE (never in the region's or swatch's own colour) with NO swatch chip surviving in it. Do NOT change the LEFT panel regions' own guide colours (keep them as given).\n",
+ "prompt_len": 2347,
+ "ground_truth": {
+  "arm": "color",
+  "N": 8,
+  "col_w": 1200,
+  "H": 1920,
+  "band_h": 240,
+  "region_order": [
+   "r1",
+   "r2",
+   "r3",
+   "r4",
+   "r5",
+   "r6",
+   "r7",
+   "r8"
+  ],
+  "shapes": {
+   "r1": [
+    "circle",
+    110,
+    110,
+    null
+   ],
+   "r2": [
+    "oval",
+    180,
+    90,
+    null
+   ],
+   "r3": [
+    "rrect",
+    150,
+    100,
+    20
+   ],
+   "r4": [
+    "rrect",
+    340,
+    55,
+    27
+   ],
+   "r5": [
+    "circle",
+    170,
+    170,
+    null
+   ],
+   "r6": [
+    "diamond",
+    120,
+    120,
+    null
+   ],
+   "r7": [
+    "rrect",
+    70,
+    190,
+    35
+   ],
+   "r8": [
+    "rrect",
+    200,
+    130,
+    30
+   ]
+  },
+  "centers": {
+   "r1": [
+    318.00000000000006,
+    272
+   ],
+   "r2": [
+    886.0,
+    252
+   ],
+   "r3": [
+    326.00000000000006,
+    760
+   ],
+   "r4": [
+    879.0,
+    725
+   ],
+   "r5": [
+    311.00000000000006,
+    1225
+   ],
+   "r6": [
+    874.0,
+    1238
+   ],
+   "r7": [
+    328.00000000000006,
+    1678
+   ],
+   "r8": [
+    884.0,
+    1710
+   ]
+  },
+  "guide_colors": {
+   "r1": [
+    0,
+    90,
+    255
+   ],
+   "r2": [
+    255,
+    40,
+    0
+   ],
+   "r3": [
+    0,
+    200,
+    90
+   ],
+   "r4": [
+    255,
+    200,
+    0
+   ],
+   "r5": [
+    170,
+    0,
+    220
+   ],
+   "r6": [
+    0,
+    210,
+    210
+   ],
+   "r7": [
+    255,
+    110,
+    190
+   ],
+   "r8": [
+    140,
+    90,
+    40
+   ]
+  },
+  "guide_color_names": {
+   "r1": "AZURE BLUE",
+   "r2": "PURE RED",
+   "r3": "SPRING GREEN",
+   "r4": "GOLD YELLOW",
+   "r5": "VIOLET PURPLE",
+   "r6": "CYAN",
+   "r7": "ROSE PINK",
+   "r8": "UMBER BROWN"
+  },
+  "band_of": {
+   "r1": 0,
+   "r2": 1,
+   "r3": 2,
+   "r4": 3,
+   "r5": 4,
+   "r6": 5,
+   "r7": 6,
+   "r8": 7
+  }
+ },
+ "dims": [
+  4608,
+  3712
+ ]
+}
