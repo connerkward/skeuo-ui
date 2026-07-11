@@ -1,5 +1,16 @@
 # gen12 TODO
 
+## Media policy (2026-07-11) — paid outputs now committed to git
+
+`joint-4k.png`/`paint.png`/`mask.png` (paid Vertex rolls) and `assets-*_biref/*.png`
+(runtime-required cut sprites `player.html` loads from `../assets-<theme>_biref/`) are now
+committed for all 15 skins (~699MB, plain git objects — no LFS is set up for gen12, matching
+the existing plain-PNG convention in `twoimg/`/`bproof/`; repo LFS exists but is currently
+scoped only to `docs/experiments/assets/*.png|*.jpg` — recommend extending LFS to gen12's
+`assets-*` media in a follow-up rather than this being retrofitted unilaterally here).
+`blueprint.png` ($0 deterministic) and `assets-*_biref/` as a bulk ignore pattern stay/stayed
+ignored — see `.gitignore` for the itemized policy comment.
+
 ## Think-about notes (2026-07-11) — emissive, director-vision, drift-clause bisect
 
 Three open design questions written up as decision-ready options + recommendations, none

@@ -1,10 +1,12 @@
-# heavy regenerable media — rerun the pipeline (committed) to reproduce
-assets-*/joint-4k.png
-assets-*/paint.png
-assets-*/mask.png
+# Policy (2026-07-11): PAID / non-trivially-recomputable outputs are COMMITTED so a
+# working tree loss doesn't destroy $0.24+/roll Vertex spend (a paint.png was overwritten
+# with no frozen copy before this policy existed — see gen12/TODO.md). $0-deterministic
+# or freely-relocal artifacts stay ignored. Committed: assets-*/joint-4k.png (paid Vertex
+# roll), assets-*/paint.png (paid), assets-*/mask.png (paid alpha), assets-*_biref/*.png
+# (BiRefNet cut sprites — $0 to recompute now that BIREF_LOCAL=True, but player.html loads
+# them at runtime from ../assets-<theme>_biref/, so they're runtime-required, not scratch).
 assets-*/overlay.png
 assets-*/blueprint.png
-assets-*_biref/
 __pycache__/
 .venv-biref/
 review.json
