@@ -2,57 +2,47 @@
   "id": "fa-sky",
   "title": "Frutiger Aero Sky (templateless)",
   "mode": "templateless",
-  "passed": false,
-  "rolls": 4,
-  "final_seed": 788,
+  "passed": true,
+  "rolls": 3,
+  "final_seed": 840,
   "gate": {
-    "seed": 788,
-    "PASS": false,
+    "seed": 840,
+    "PASS": true,
     "controls": 10,
-    "seek_cov": 1.039,
-    "reasons": [
-      "emptiness"
-    ],
-    "leak": 0.0
+    "seek_cov": 1.04,
+    "reasons": [],
+    "leak": 2.2e-05
   },
   "history": [
     {
-      "seed": 749,
-      "error": "genskin",
-      "log": "n main\n    t = time.time(); out = edit(FAL, upload(FAL, bp), prompt, seed)\n                           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 132, in edit\n    s = requests.get(job[\"status_url\"], headers={\"Authorization\": f\"Key {FAL}\"}).json().get(\"status\")\n                     ~~~^^^^^^^^^^^^^^\nKeyError: 'status_url'\n"
-    },
-    {
-      "seed": 762,
+      "seed": 814,
       "PASS": false,
       "controls": 10,
+      "seek_cov": 1.039,
+      "reasons": [
+        "emptiness"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 827,
+      "PASS": false,
+      "controls": 9,
       "seek_cov": 1.04,
       "reasons": [
-        "state-align"
+        "missing:vol"
       ],
       "leak": 0.0
     },
     {
-      "seed": 775,
-      "PASS": false,
+      "seed": 840,
+      "PASS": true,
       "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [
-        "region-misplaced:album_art",
-        "emptiness"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 788,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [
-        "emptiness"
-      ],
-      "leak": 0.0
+      "seek_cov": 1.04,
+      "reasons": [],
+      "leak": 2.2e-05
     }
   ],
-  "elapsed_s": 1047.1,
+  "elapsed_s": 534.4,
   "player": "assets-fa-sky/player.html"
 }

@@ -1,7 +1,7 @@
 {
  "id": "wmp-vario",
  "mode": "templateless",
- "seed": 610,
+ "seed": 636,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -150,7 +150,17 @@
   "viz_emissive": true,
   "beat_couple": 0.05
  },
+ "ticks": {
+  "skin": "css",
+  "sprite": "css"
+ },
  "template": {},
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 636,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "prompt_json_spec": false,
  "dims": [
   4608,
   3712

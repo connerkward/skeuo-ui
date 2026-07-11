@@ -4,25 +4,25 @@
   "mode": "templateless",
   "passed": true,
   "rolls": 1,
-  "final_seed": 710,
+  "final_seed": 736,
   "gate": {
-    "seed": 710,
+    "seed": 736,
     "PASS": true,
     "controls": 10,
     "seek_cov": 1.039,
     "reasons": [],
-    "leak": 1e-06
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 710,
+      "seed": 736,
       "PASS": true,
       "controls": 10,
       "seek_cov": 1.039,
       "reasons": [],
-      "leak": 1e-06
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 317.8,
+  "elapsed_s": 223.4,
   "player": "assets-diablo-gothic/player.html"
 }

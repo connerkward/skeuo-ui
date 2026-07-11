@@ -1,7 +1,7 @@
 {
  "id": "wmp-quicksilver",
  "mode": "templated",
- "seed": 662,
+ "seed": 688,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -155,6 +155,10 @@
   "viz_emissive": true,
   "beat_couple": 0.04
  },
+ "ticks": {
+  "skin": "css",
+  "sprite": "baked"
+ },
  "template": {
   "album_art": [
    0.28,
@@ -197,6 +201,11 @@
    0.585
   ]
  },
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "outline",
+ "blueprint_arm_draw_seed": 688,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "outline",
  "album_art_rect": [
   0.04666666666666669,
   0.13515624999999998,
@@ -209,9 +218,10 @@
   0.5333333333333333,
   0.08125
  ],
+ "prompt_json_spec": false,
  "dims": [
   4608,
   3712
  ],
- "leak": 0.000445
+ "leak": 0.0
 }

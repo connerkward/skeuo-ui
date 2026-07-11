@@ -60,9 +60,10 @@ if PBR_PASS_ENABLED:
     run(["python3", "build_player_pbr.py", ASSETS])
 # DIRECTOR FINAL REVIEW — aesthetic/thematic judgment of the FINISHED render against its
 # own theme brief (director_review.py), distinct from observe12.py's geometry/defect pass.
-# User-requested stage; default OFF until proven across the roster (~$0.02-0.05/skin,
-# unverified at scale) — flip here to enable.
-DIRECTOR_REVIEW_ENABLED = False
+# Proven on diablo-gothic (2026-07-11): caught the guide-ring-residue defect (neon borders
+# around every control) that the geometry/emptiness gate missed entirely — a real, actionable
+# aesthetic defect no deterministic check covers. Enabled roster-wide.
+DIRECTOR_REVIEW_ENABLED = True
 if DIRECTOR_REVIEW_ENABLED:
     run(["python3", "director_review.py", ASSETS])
 final = history[-1] if history else {}

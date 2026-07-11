@@ -3,58 +3,26 @@
   "title": "Wmp Quicksilver",
   "mode": "templated",
   "passed": true,
-  "rolls": 4,
-  "final_seed": 662,
+  "rolls": 1,
+  "final_seed": 688,
   "gate": {
-    "seed": 662,
+    "seed": 688,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.038,
+    "seek_cov": 1.039,
     "reasons": [],
-    "leak": 0.000445
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 623,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.037,
-      "reasons": [
-        "emptiness",
-        "state-align"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 636,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [
-        "emptiness",
-        "state-align"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 649,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.038,
-      "reasons": [
-        "emptiness"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 662,
+      "seed": 688,
       "PASS": true,
       "controls": 10,
-      "seek_cov": 1.038,
+      "seek_cov": 1.039,
       "reasons": [],
-      "leak": 0.000445
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 1892.4,
+  "elapsed_s": 214.2,
   "player": "assets-wmp-quicksilver/player.html"
 }

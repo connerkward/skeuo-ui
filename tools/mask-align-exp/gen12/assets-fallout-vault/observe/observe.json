@@ -1,0 +1,28 @@
+{
+  "skin": "fallout-vault",
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause: SEATED-CORRECTLY\nprev: CROP-MISS\nnext: SEATED-CORRECTLY\nrepeat: CROP-MISS\nqueue: SEATED-CORRECTLY\nvol: SEATED-CORRECTLY\nseek: SEATED-CORRECTLY\nshuffle: BROKEN (baked text label)\nvisualizer: SEATED-CORRECTLY\nalbum_art: SEATED-CORRECTLY\nVERDICT: FAIL",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-vol-after.png",
+    "crop-seek.png",
+    "crop-seek-after.png",
+    "crop-shuffle.png",
+    "crop-shuffle-after.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "unmeasured_crop_miss": [
+    "prev",
+    "repeat"
+  ],
+  "ts": "2026-07-11T15:19:44"
+}

@@ -19,7 +19,7 @@ NEW in gen12:
 Usage:  python3 extract12.py <assets-dir>        e.g.  gen12/assets-fa-pod
 Run once before biref (no seats yet), then again after biref (picks up matte seats + stateAlign).
 """
-import os, sys, json
+import os, sys, json, colorsys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
@@ -640,6 +640,159 @@ mm = Image.open(os.path.join(OUT, "mask.png")).convert("RGB").resize(p.size)
 pa = np.asarray(p).astype(float); ma = np.asarray(mm).astype(float); nb = (ma.max(2) > 45)[..., None]
 Image.fromarray((pa * (1 - 0.5 * nb) + ma * (0.5 * nb)).astype("uint8")).save(os.path.join(OUT, "overlay.png"))
 
+# ---- GUIDE-RING GATE ----
+# Perimeter-band guide-hue residue scan (ported from twoimg/score_twoimg.py's bleed_ring_pct,
+# the experiment that found the leak gate under-counts residue -- it only samples a narrow
+# interior window and misses a thin coloured RING/bezel that's visible at full-res and is
+# exactly the "ZERO RESIDUE" defect the genskin prompt bans). Promoted to mainline gen12 after
+# director_review.py caught it as a real, actionable defect on diablo-gothic (every control
+# wearing a neon ring in its OWN guide-key hue -- see docs/experiments and TODO.md).
+#
+# False-positive guard (2026-07-11 calibration against the full roster): an earlier cut
+# compared the ring band's saturation to the control's own INTERIOR (e.g. a flat dark screen)
+# -- that's a useless baseline for anything whose interior is legitimately near-black/flat, and
+# it false-flagged steam-porthole's brass visualizer bezel + myst-arcanum's brass album_art
+# frame (both have a yellow guide key, and brass is hue-adjacent to yellow -- the exact
+# "gold body vs YELLOW key" trap this gate must not fall into). Fixed by comparing instead to
+# a CONTEXT ring further out (the surrounding chassis material, away from the control) --
+# genuine neon residue reads as a hue OUTLIER against its own neighbourhood; a body's own
+# material (brass bezel, gold frame) does not. Combined with an angular ARC-COHERENCE
+# requirement (hit pixels must wrap a real arc around the control, not cluster in one
+# reflection/highlight) to reject specular false positives. Validated: diablo-gothic flags
+# 8/10 controls (its two misses read as neighbour-key bleed, not own-key -- future work, not
+# blocking); 9 other roster skins incl. both the brass/yellow-key traps above PASS clean.
+# PALETTE GUARD (both this scan and the sprite scan below): a hit pixel whose hue sits within
+# tolerance of one of the THEME'S OWN declared palette colours (results.json "palette", the
+# director-authored material colours) is THEMATIC, not residue -- claymation's terracotta vol
+# knob (h16 = clay_orange h16) and teal repeat button (h122 = clay_teal h122) are the theme's
+# clay, and ps1-wild's magenta/toxic-green outlines ARE its declared palette; flagging those
+# burned re-rolls on correct art (2026-07-11 adjudication: crops + palette cross-check).
+# Only saturated palette entries participate (sat>=60): grey/silver palette hues are
+# meaningless as hue anchors. Known blind spot, accepted: genuine residue in a hue the palette
+# ALSO declares is masked -- tolerable because genskin's pickKeyColor already biases guide keys
+# AWAY from the palette, so key-echo residue rarely lands on a palette hue.
+PAL_TOL = 16
+_pal_hues = []
+for _pv in (RES.get("palette") or {}).values():
+    _ph, _ps, _ = colorsys.rgb_to_hsv(*[v / 255 for v in _pv])
+    if _ps * 255 >= 60: _pal_hues.append(int(_ph * 255))
+
+
+def palette_mask(hsv):
+    """Bool mask of pixels whose hue is within PAL_TOL of any saturated theme-palette colour."""
+    m2 = np.zeros(hsv.shape[:2], dtype=bool)
+    for _h in _pal_hues:
+        hd = np.minimum(np.abs(hsv[..., 0].astype(int) - _h), 255 - np.abs(hsv[..., 0].astype(int) - _h))
+        m2 |= hd < PAL_TOL
+    return m2
+
+
+RING_BAND_FRAC = 0.14      # inner band width (perimeter zone directly touching the control), frac of bbox size
+RING_CTX_FRAC = 0.40       # outer context zone (surrounding chassis material), frac of bbox size
+RING_HUE_TOL = 16          # degrees (0-255 space) hue tolerance vs the control's OWN guide key
+RING_SAT_FLOOR, RING_VAL_FLOOR = 60, 70
+RING_CTX_HUE_MARGIN = 20   # hit pixels must ALSO differ from the surrounding context hue by this much
+RING_ARC_BINS = 24
+RING_ARC_COHERENCE = 0.30  # fraction of angular bins around the control that must contain a hit
+RING_PCT_THRESH = 2.0      # band coverage % (of the guarded hit) to flag
+
+
+def guide_ring_scan(paint_rgb, bbox, key_rgb, W, H):
+    """Returns (pct, arc_coherence) of the perimeter band around bbox whose hue matches
+    key_rgb AND stands out from the surrounding context material (see guard note above).
+    bbox is fractional [x,y,w,h] of the full paint canvas (extract12's device convention)."""
+    x, y, w, h = bbox
+    mx1, my1 = w * RING_BAND_FRAC, h * RING_BAND_FRAC
+    mx2, my2 = w * RING_CTX_FRAC, h * RING_CTX_FRAC
+    ox0, oy0 = max(0.0, x - mx2), max(0.0, y - my2)
+    ox1, oy1 = min(1.0, x + w + mx2), min(1.0, y + h + my2)
+    X0, Y0, X1, Y1 = int(ox0 * W), int(oy0 * H), int(ox1 * W), int(oy1 * H)
+    if X1 <= X0 or Y1 <= Y0: return 0.0, 0.0
+    hsv = np.asarray(Image.fromarray(paint_rgb[Y0:Y1, X0:X1]).convert("HSV")).astype(int)
+
+    def rectmask(mxx, myy):
+        ix0 = int((x - mxx - ox0) * W); iy0 = int((y - myy - oy0) * H)
+        ix1 = int((x + w + mxx - ox0) * W); iy1 = int((y + h + myy - oy0) * H)
+        mm2 = np.zeros(hsv.shape[:2], dtype=bool)
+        mm2[max(0, iy0):max(0, iy1), max(0, ix0):max(0, ix1)] = True
+        return mm2
+    interior = rectmask(0, 0)
+    outer1 = rectmask(mx1, my1)
+    outer2 = rectmask(mx2, my2)
+    band = outer1 & ~interior          # candidate ring zone, hugging the control
+    ctx = outer2 & ~outer1             # surrounding-chassis reference zone, further out
+    if band.sum() < 40: return 0.0, 0.0
+    kh = int(colorsys.rgb_to_hsv(*[v / 255 for v in key_rgb])[0] * 255)
+    hd_key = np.minimum(np.abs(hsv[..., 0].astype(int) - kh), 255 - np.abs(hsv[..., 0].astype(int) - kh))
+    ctx_pool = ctx if ctx.sum() > 20 else interior
+    ctx_h = float(np.median(hsv[..., 0][ctx_pool])) if ctx_pool.sum() else float(kh)
+    hd_ctx = np.minimum(np.abs(hsv[..., 0].astype(int) - int(ctx_h)), 255 - np.abs(hsv[..., 0].astype(int) - int(ctx_h)))
+    hit = (band & (hd_key < RING_HUE_TOL) & (hsv[..., 1] > RING_SAT_FLOOR) & (hsv[..., 2] > RING_VAL_FLOOR)
+           & (hd_ctx > RING_CTX_HUE_MARGIN) & ~palette_mask(hsv))
+    n_band = int(band.sum())
+    pct = 100.0 * int(hit.sum()) / n_band if n_band else 0.0
+    coh = 0.0
+    if hit.sum() >= 8:
+        ix0 = int((x - ox0) * W); iy0 = int((y - oy0) * H)
+        ix1 = int((x + w - ox0) * W); iy1 = int((y + h - oy0) * H)
+        cy_l, cx_l = (iy0 + iy1) / 2.0, (ix0 + ix1) / 2.0
+        hy, hx = np.where(hit)
+        ang = (np.degrees(np.arctan2(hy - cy_l, hx - cx_l)) % 360.0)
+        bins = (ang / (360.0 / RING_ARC_BINS)).astype(int) % RING_ARC_BINS
+        coh = len(set(bins.tolist())) / RING_ARC_BINS
+    return pct, coh
+
+
+paint_rgb_full = np.asarray(p)
+PW3, PH3 = p.size
+print("guide-ring gate (perimeter-band guide-hue residue around each control):")
+ring_flagged = []
+for k in NAMES:
+    r = regs.get(k)
+    if not r or not r.get("device"): continue
+    rpct, rcoh = guide_ring_scan(paint_rgb_full, r["device"], KEYS[k], PW3, PH3)
+    r["guideRingPct"] = round(rpct, 3)
+    flag = rpct > RING_PCT_THRESH and rcoh >= RING_ARC_COHERENCE
+    if flag: ring_flagged.append(k)
+    print(f"  {k:12} ring={rpct:6.2f}% coh={rcoh:.2f}  {'FAIL - guide-ring residue' if flag else 'ok'}")
+print(f"[guide-ring gate] {'FAIL - regenerate: ' + ','.join(ring_flagged) if ring_flagged else 'ok'}")
+
+# ---- SPRITE GUIDE-HUE CONTAMINATION (same family as the device ring gate above, applied to
+# the biref-cut moving PARTS instead of the paint-canvas socket perimeter). Only meaningful on
+# pass 2, once BIREF has cut vol/seek/shuffle_off/shuffle_on -- guarded on BIREF existing. A
+# sprite whose OWN visible pixels are dominated by ITS OWN guide-key hue means the model's paint
+# for that PART echoed the internal guide colour (found empirically: wmp-vario's seek thumb
+# painted salmon-pink against guide key (255,0,128), confirmed genuine paint-side residue by
+# inspecting joint-4k.png's staged part swatch directly -- not a biref/cut artefact). Distinct
+# shape from the device ring (full-fill vs thin border) so it needs its OWN scan, not a bbox-band
+# reuse; folded into the SAME gate reason family ("guide-ring:<part>") since it's the same root
+# defect (guide-hue leaking into the render) and the fix is the same (re-roll).
+SPRITE_CONTAM_THRESH = 40.0  # % of a part's visible pixels matching its own key -- calibrated
+                              # against the roster: genuine leaks measured 59-100%, clean/
+                              # ambiguous parts measured 0-19% (2026-07-11 sweep)
+SPRITE_PARTS = {"vol": "vol", "seek": "seek"}
+if TOGGLE: SPRITE_PARTS[TOGGLE + "_off"] = TOGGLE; SPRITE_PARTS[TOGGLE + "_on"] = TOGGLE
+sprite_flagged = []
+if os.path.exists(BIREF):
+    print("sprite guide-hue contamination (biref-cut PART pixels vs their own guide key):")
+    for part_file, key_name in SPRITE_PARTS.items():
+        if not key_name or key_name not in KEYS: continue
+        pf = os.path.join(BIREF, part_file + ".png")
+        if not os.path.exists(pf): continue
+        sarr = np.asarray(Image.open(pf).convert("RGBA"))
+        salpha = sarr[:, :, 3] > 30
+        if salpha.sum() < 200: continue
+        shsv = np.asarray(Image.open(pf).convert("RGB").convert("HSV")).astype(int)
+        skh = int(colorsys.rgb_to_hsv(*[v / 255 for v in KEYS[key_name]])[0] * 255)
+        shd = np.minimum(np.abs(shsv[..., 0] - skh), 255 - np.abs(shsv[..., 0] - skh))
+        shit = salpha & (shd < 20) & (shsv[..., 1] > RING_SAT_FLOOR) & (shsv[..., 2] > RING_VAL_FLOOR) & ~palette_mask(shsv)
+        spct = 100.0 * float(shit.sum()) / float(salpha.sum())
+        sflag = spct > SPRITE_CONTAM_THRESH
+        label = "sprite:" + part_file
+        if sflag and label not in ring_flagged: ring_flagged.append(label); sprite_flagged.append(label)
+        print(f"  {part_file:12} own-key-match {spct:6.1f}%  {'FAIL - sprite contamination' if sflag else 'ok'}")
+    if sprite_flagged: print(f"[sprite-contam gate] FAIL - regenerate: {','.join(sprite_flagged)}")
+
 # ---- EMPTINESS GATE ----
 pr = np.asarray(p).astype(int); PH2, PW2 = pr.shape[:2]
 print("emptiness gate (bright-part pixels inside must-be-empty sockets):")
@@ -698,10 +851,33 @@ for k in SC:
     r = regs.get(k)
     if not (r and r.get("device") and r.get("maskDevice")): continue
     if _iou(r["device"], r["maskDevice"]) < 0.5: region_misplaced.append(k)
+# region degeneracy: a detected region whose AREA is implausibly small passed every other
+# numeric gate while being visually broken (the burn: claymation shipped a ~143x188px
+# album_art sliver, 0.42% of the device column area, that sailed through -- observation
+# table 92b95e17). Material-agnostic thresholds, no absolute pixel counts:
+#   * templated  -- the blueprint DECLARED this region's rect (results.json <k>_rect, the
+#     same fraction-of-canvas frame the template fallback at region assignment uses); flag
+#     when the detected area collapsed below 25% of the declared area (the model may
+#     legitimately restyle a window somewhat; a 4x area collapse is a defect).
+#   * templateless -- no declared size exists; flag when the region's area falls below 1.0%
+#     of the device column area (devFrac). Calibrated on the 15-skin roster 2026-07-11:
+#     healthy regions span 1.79%..13.86% of device area; the claymation burn measured
+#     0.42% -- the 1.0% floor sits >2x from both sides of that gap.
+region_degenerate = []
+for k in SC:
+    r = regs.get(k)
+    if not (r and r.get("device")): continue
+    area = r["device"][2] * r["device"][3]
+    trect = RES.get(k + "_rect")
+    if TEMPLATED and trect:
+        if area < 0.25 * (trect[2] * trect[3]): region_degenerate.append(k)
+    elif area / max(1e-6, DEVF) < 0.010:
+        region_degenerate.append(k)
 reasons = []
 knob_tmpl = [k for k in KNOBS if (regs.get(k) or {}).get("fromTemplate")]
 if knob_tmpl: reasons.append("knob-template-fallback:" + ",".join(knob_tmpl))
 for k in region_misplaced: reasons.append(f"region-misplaced:{k}")
+for k in region_degenerate: reasons.append(f"region-degenerate:{k}")
 if empty_fail: reasons.append("emptiness")
 if missing: reasons.append("missing:" + ",".join(missing))
 if seek_cov is not None and seek_cov < 0.7: reasons.append(f"seek-cov={seek_cov}")
@@ -709,13 +885,16 @@ if TOGGLE and not sa_ok and sa is not None: reasons.append("state-align")
 if biref_ok is False: reasons.append("biref-parts")
 leak_val = RES.get("leak")
 if leak_val is not None and leak_val > 0.003: reasons.append(f"leak={leak_val}")
+if ring_flagged: reasons.append("guide-ring:" + ",".join(ring_flagged))
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
-        "leak": RES.get("leak"), "reasons": reasons,
+        "leak": RES.get("leak"), "guide_ring": ring_flagged,
+        "region_degenerate": region_degenerate, "reasons": reasons,
         "PASS": (not empty_fail) and (not missing) and (not knob_tmpl) and (not region_misplaced)
+                and (not region_degenerate)
                 and (seek_cov is None or seek_cov >= 0.7)
                 and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
-                and (not TOGGLE or sa is None or sa_ok)}
+                and (not TOGGLE or sa is None or sa_ok) and (not ring_flagged)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate
 json.dump(R2, open(os.path.join(OUT, "regions.json"), "w"), indent=2)
 print(f"[GATE] {'PASS' if gate['PASS'] else 'FAIL'} "

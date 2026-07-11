@@ -22,13 +22,15 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
     if d.endswith("_biref") or d.endswith("_pbr"): continue
     if "/abshape/" in d or "/bproof/" in d: continue
     sid = os.path.basename(d).replace("assets-", "")
-    orch = res = reg = {}
-    for fn, tgt in [("orch.json", "orch"), ("results.json", "res"), ("regions.json", "reg")]:
+    orch = res = reg = dr = {}
+    for fn, tgt in [("orch.json", "orch"), ("results.json", "res"), ("regions.json", "reg"),
+                    ("director-review.json", "dr")]:
         try:
             v = json.load(open(os.path.join(d, fn)))
             if tgt == "orch": orch = v
             elif tgt == "res": res = v
-            else: reg = v
+            elif tgt == "reg": reg = v
+            else: dr = v
         except Exception: pass
     gate = reg.get("gate", {})
     # PBR card link gate: player-pbr.html + its _pbr/meta.json exist. Previously required a
@@ -57,16 +59,19 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
                   "mode": res.get("mode", "?"), "passed": orch.get("passed", gate.get("PASS")),
                   "rolls": orch.get("rolls", "?"), "seed": orch.get("final_seed", res.get("seed", "?")),
                   "gate": gate, "leak": res.get("leak"), "pbr": pbr,
-                  "painted": painted_str, "mid_regen": mid_regen,
+                  "painted": painted_str, "mid_regen": mid_regen, "dr": dr,
                   "reasons": (orch.get("gate") or {}).get("reasons") or gate.get("reasons") or []})
 npass = sum(1 for s in skins if s["passed"]); n = len(skins)
 # cost annotation (dev-facing-model-cost-annotation-rule): sum rolls × per-roll model spend
 total_rolls = sum(s["rolls"] for s in skins if isinstance(s["rolls"], int))
 GEN_MODEL = "fal-ai/gemini-3-pro-image-preview/edit"; MATTE_MODEL = "fal-ai/birefnet/v2"
-cost_lo = total_rolls * (0.15 + 0.005); cost_hi = cost_lo * 1.15
-cost_line = (f"models: <b>{GEN_MODEL}</b> (paint+mask, ~$0.15/roll) + <b>{MATTE_MODEL}</b> (~$0.005/roll) · "
-             f"extraction/player = local $0 · est. total ≈ <b>${cost_lo:.2f}</b> "
-             f"({total_rolls} rolls × ~$0.155)")
+n_dr = sum(1 for s in skins if s.get("dr"))
+DR_MODEL = "vertex:gemini-3.1-pro-preview"
+cost_lo = total_rolls * (0.15 + 0.005) + n_dr * 0.02; cost_hi = total_rolls * (0.15 + 0.005) * 1.15 + n_dr * 0.05
+cost_line = (f"models: <b>{GEN_MODEL}</b> (paint+mask, ~$0.15/roll) + <b>{MATTE_MODEL}</b> (~$0.005/roll) + "
+             f"<b>{DR_MODEL}</b> (director review, ~$0.02-0.05/skin) · "
+             f"extraction/player = local $0 · est. total ≈ <b>${cost_lo:.2f}-${cost_hi:.2f}</b> "
+             f"({total_rolls} rolls × ~$0.155 + {n_dr} director reviews)")
 
 
 def card(s):
@@ -83,6 +88,16 @@ def card(s):
            f'leak {s["leak"]} · {s["rolls"]} roll(s) · seed {s["seed"]}')
     pbr_link = (f' · <a class=pbrlink href="assets-{sid}/player-pbr.html" target=_blank>'
                 f'&#10024; dynamic lighting</a>') if s.get("pbr") else ''
+    dr = s.get("dr") or {}
+    dr_line = ''
+    if dr:
+        dv = dr.get("verdict", "?"); dscore = dr.get("score_0_10", "?")
+        drcls = "pass" if dv == "PASS" else "fail"
+        dr_notes = "; ".join(dr.get("notes") or [])[:220]
+        dr_line = (f'<br><span class=auto>director ({dr.get("model","?")}, '
+                    f'~${dr.get("cost_estimate_usd","?")}): '
+                    f'<span class="{drcls}">{dv} {dscore}/10</span> '
+                    f'<span class=rz>{dr_notes}</span></span>')
     # run-id line: fixed spot so two dashboard visits (before/after another agent regenerates
     # this skin) are comparable at a glance — same identity fields, same position, every card.
     midflag = (' <span class=midregen title="paint.png mtime is newer than orch.json — this card '
@@ -98,7 +113,7 @@ def card(s):
   <div class=live><iframe src="assets-{sid}/player.html" loading=lazy title="{sid} player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="{sid}" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto>{autob} · <span class=det>{det}</span><br><span class=rz>{reasons}</span></div>
+      <div class=auto>{autob} · <span class=det>{det}</span><br><span class=rz>{reasons}</span>{dr_line}</div>
       <details class=proc><summary>process images</summary><div class=strip>{imgs}</div></details>
     </div></div>
 </section>'''

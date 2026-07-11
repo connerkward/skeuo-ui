@@ -190,6 +190,12 @@
         0.3090277777777778,
         0.5459321120689655,
         0.05919053819444445
+      ],
+      "knob_zero_deg": 352.02904258439986,
+      "knob_zero_geo": [
+        167.0,
+        166.5,
+        163.91
       ]
     },
     "seek": {
@@ -343,6 +349,8 @@
     "state_align_ok": true,
     "biref_ok": true,
     "leak": 0.0,
+    "guide_ring": [],
+    "region_degenerate": [],
     "reasons": [],
     "PASS": true
   }

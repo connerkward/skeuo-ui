@@ -1,6 +1,43 @@
 # gen12 TODO
 
 ---
+## Guide-ring residue + sprite key-echo + degenerate-region GATES; director review mainlined — DONE 2026-07-11
+
+Followed the diablo-gothic director-review catch (neon guide-hue borders around every control
+that the geometry/emptiness gate missed entirely). Three new deterministic checks in
+`extract12.py`, all folded into `gate.reasons`/`gate.PASS` so `orchestrate12.py`'s roll loop
+re-rolls on them:
+
+1. **Guide-ring gate** (`guide-ring:<control>`): perimeter-band guide-hue scan around every
+   control's device bbox — ported from `twoimg/score_twoimg.py`'s `bleed_ring_pct` (the
+   experiment that established the shared leak gate under-counts thin ring residue). Two
+   false-positive guards, both roster-calibrated: (a) hue must ALSO be an outlier vs the
+   surrounding-chassis CONTEXT ring further out (kills the brass-bezel-vs-yellow-key trap:
+   steam-porthole visualizer, myst-arcanum album_art), plus an angular arc-coherence floor
+   (hits must wrap the control, not cluster in one specular); (b) **palette guard** — hits
+   within hue-tol of the theme's own saturated `results.json palette` colours are THEMATIC
+   (claymation's terracotta/teal clay, ps1-wild's magenta/toxic-green outlines), not residue.
+2. **Sprite key-echo scan** (`guide-ring:sprite:<part>`): same defect family on the biref-cut
+   moving parts — a part whose visible pixels are dominated by its OWN guide-key hue
+   (wmp-vario's salmon-pink seek thumb on an all-silver theme, 99.9% own-key match; verified
+   genuine against joint-4k.png's staged part swatch). Same palette guard. Threshold 40%
+   (genuine leaks measured 59-100%, clean parts 0-19%).
+3. **Degenerate-region gate** (`region-degenerate:<name>`): a detected region whose AREA
+   collapsed below plausibility — the burn: claymation shipped a ~143x188px album_art sliver
+   (0.42% of the device column) that passed every numeric gate. Templated: <25% of the
+   blueprint-declared `<k>_rect` area. Templateless: <1.0% of devFrac (roster-calibrated:
+   healthy regions 1.79-13.86%).
+
+`DIRECTOR_REVIEW_ENABLED=True` mainlined in `orchestrate12.py` (proven by the diablo catch);
+`build_dashboard.py` now surfaces each skin's `director-review.json` verdict/score/notes on
+its card and folds the ~$0.02-0.05/skin director cost into the cost line.
+
+Roster sweep with final gates (before re-rolls): 8/15 PASS; contaminated = diablo-gothic
+(6 ring controls), n64-prerender-character (4 rings + 4 key-echo sprites), wmp-quicksilver
+(seek rim), wmp-vario (seek thumb), claymation (degenerate album_art); honest fails fa-sky
+(emptiness), ps1-wild (emptiness+misplaced+state-align+2 rings). All 7 re-rolled via
+`orchestrate12.py <spec> 3` (see orch.json/history per skin for outcomes).
+
 ## Director-decided knob tick provisioning: css vs baked, per axis — DONE 2026-07-11
 
 User directive: *"allow director to decide css vs baked skin side knob ticks, same for

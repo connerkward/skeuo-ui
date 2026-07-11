@@ -291,9 +291,19 @@ def edit_vertex(bp_path, prompt, seed, aspect="5:4"):
             "imageConfig": {"aspectRatio": aspect, "imageSize": "4K"},
         },
     }
-    r = requests.post(VERTEX_URL, headers={"Authorization": f"Bearer {tok}",
-                                            "Content-Type": "application/json"},
-                       json=body, timeout=420)
+    # 429 retry — same backoff edit_vertex_multi() carries (proven there); without it a
+    # quota blip burns a whole orchestrate12 roll per 429 (4 skins x 3 rolls burned to
+    # RESOURCE_EXHAUSTED with zero real generations, 2026-07-11 re-roll batch).
+    for attempt in range(5):
+        r = requests.post(VERTEX_URL, headers={"Authorization": f"Bearer {tok}",
+                                                "Content-Type": "application/json"},
+                           json=body, timeout=420)
+        if r.status_code == 429 and attempt < 4:
+            wait = 15 * (attempt + 1)
+            print(f"[vertex] 429 rate-limited, retry {attempt+1}/5 in {wait}s", flush=True)
+            time.sleep(wait)
+            continue
+        break
     if r.status_code != 200:
         raise RuntimeError(f"vertex HTTP {r.status_code}: {r.text[:500]}")
     for part in r.json()["candidates"][0]["content"]["parts"]:

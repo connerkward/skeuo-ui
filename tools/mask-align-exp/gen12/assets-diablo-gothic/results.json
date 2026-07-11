@@ -1,7 +1,7 @@
 {
  "id": "diablo-gothic",
  "mode": "templateless",
- "seed": 710,
+ "seed": 736,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -150,10 +150,20 @@
   "viz_emissive": true,
   "beat_couple": 0.07
  },
+ "ticks": {
+  "skin": "baked",
+  "sprite": "baked"
+ },
  "template": {},
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 736,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "prompt_json_spec": false,
  "dims": [
   4608,
   3712
  ],
- "leak": 1e-06
+ "leak": 0.0
 }

@@ -1,7 +1,7 @@
 {
  "id": "ps1-wild",
  "mode": "templateless",
- "seed": 956,
+ "seed": 982,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -146,10 +146,20 @@
   "viz_emissive": true,
   "beat_couple": 0.05
  },
+ "ticks": {
+  "skin": "css",
+  "sprite": "css"
+ },
  "template": {},
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 982,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "prompt_json_spec": false,
  "dims": [
   4608,
   3712
  ],
- "leak": 0.001768
+ "leak": 0.012298
 }

@@ -1,7 +1,7 @@
 {
  "id": "n64-prerender-character",
  "mode": "templateless",
- "seed": 823,
+ "seed": 849,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -150,10 +150,20 @@
   "viz_emissive": true,
   "beat_couple": 0.03
  },
+ "ticks": {
+  "skin": "css",
+  "sprite": "css"
+ },
  "template": {},
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 849,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "prompt_json_spec": false,
  "dims": [
   4608,
   3712
  ],
- "leak": 0.000284
+ "leak": 1.8e-05
 }

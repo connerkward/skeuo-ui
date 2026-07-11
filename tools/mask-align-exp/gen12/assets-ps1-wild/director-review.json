@@ -1,0 +1,83 @@
+{
+  "skin": "ps1-wild",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 9.8,
+  "ts": "2026-07-11T16:13:18",
+  "verdict": "FAIL",
+  "score_0_10": 4,
+  "per_control": {
+    "playpause": {
+      "status": "needs_work",
+      "note": "Iconography is baked into the texture (looks like play/pause symbols) but it's not a distinctly modeled button, just a flat graphic."
+    },
+    "prev": {
+      "status": "needs_work",
+      "note": "No distinct control found here, just a structural fin with glowing lines."
+    },
+    "next": {
+      "status": "needs_work",
+      "note": "Just blank hull geometry, no control surface."
+    },
+    "repeat": {
+      "status": "needs_work",
+      "note": "Looks like an intake/thruster rather than a button."
+    },
+    "queue": {
+      "status": "needs_work",
+      "note": "Just hull detailing/recesses, not a distinct control."
+    },
+    "vol": {
+      "status": "needs_work",
+      "note": "Knob is present but its perspective is entirely broken compared to the underlying surface, floating above the gap."
+    },
+    "seek": {
+      "status": "needs_work",
+      "note": "Slider track is present, but the thumb is hovering loosely and doesn't sit in the slot properly."
+    },
+    "shuffle": {
+      "status": "needs_work",
+      "note": "Toggle switch appears to be a flat decal pasted onto the surface."
+    },
+    "visualizer": {
+      "status": "needs_work",
+      "note": "Blank/empty area, missing entirely."
+    },
+    "album_art": {
+      "status": "needs_work",
+      "note": "Blank/empty area, missing entirely."
+    }
+  },
+  "notes": [
+    "The aesthetic nails the vibrant 90s/PS1 racing game color palette and low-poly spaceship concept.",
+    "However, as an interface, it almost entirely fails. The controls are either missing, baked flat into the texture, or floating in incorrect perspective.",
+    "The central 'cockpit' area seems intended as a display but is not populated with the requested visualizer or album art regions.",
+    "The volume knob and seek slider are completely detached from the geometry of the spaceship wing they are supposed to be mounted on."
+  ],
+  "improve": [
+    "Ensure all controls are modeled as distinct, physical elements rather than just drawn onto the base texture.",
+    "Fix the perspective and seating of the volume knob and seek slider so they physically mount into the surface of the ship.",
+    "Populate the blank regions (visualizer, album art) in the designated display areas (presumably the cockpit window).",
+    "Replace the structural fins and thrusters with actual readable buttons for the playback controls, or clearly integrate buttons into them."
+  ]
+}

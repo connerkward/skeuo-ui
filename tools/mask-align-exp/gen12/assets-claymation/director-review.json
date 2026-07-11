@@ -1,0 +1,81 @@
+{
+  "skin": "claymation",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 9.6,
+  "ts": "2026-07-11T16:33:13",
+  "verdict": "PASS",
+  "score_0_10": 9.0,
+  "per_control": {
+    "playpause": {
+      "status": "good",
+      "note": "Reads as a clay pellet with pressed-in symbols; nicely irregular shape."
+    },
+    "prev": {
+      "status": "good",
+      "note": "Fits the material style, good debossed icon."
+    },
+    "next": {
+      "status": "good",
+      "note": "Good clay texture and color."
+    },
+    "repeat": {
+      "status": "good",
+      "note": "Debossed arrows look hand-pressed."
+    },
+    "queue": {
+      "status": "good",
+      "note": "Symbols are neatly pressed into the clay."
+    },
+    "vol": {
+      "status": "good",
+      "note": "Looks like a sculpted knob; turns well in the second frame."
+    },
+    "seek": {
+      "status": "good",
+      "note": "Slider reads as a clay track with a sculpted thumb piece; slides correctly."
+    },
+    "shuffle": {
+      "status": "good",
+      "note": "Switch is a chunky piece of clay; flips down convincingly."
+    },
+    "visualizer": {
+      "status": "good",
+      "note": "Screen is recessed neatly into the clay frame; dotted accent line looks painted or inlaid."
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Screen area looks like a smoothed slab set into the wobbly clay body."
+    }
+  },
+  "notes": [
+    "The overall texture and marbling effect on the body perfectly captures the claymation brief.",
+    "Buttons and knobs look hand-sculpted and tactile.",
+    "Icons are debossed cleanly as if stamped into the clay.",
+    "The interaction states (slider moved, switch flipped, knob turned) are well executed."
+  ],
+  "improve": [
+    "Adding more pronounced thumbprints or tool marks to the main body could enhance the stop-motion feel even further.",
+    "The screens are very flat and perfect; making them slightly wavy or uneven could fit the handmade theme better."
+  ]
+}
