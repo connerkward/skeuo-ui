@@ -1,0 +1,95 @@
+{
+  "round": 7,
+  "date": "2026-07-11",
+  "note": "FINAL model comparison: Seedance 1.0 Pro (no-glow/particles brief, full pro tier not fast) vs LTX-2.3 Cinemagraph LoRA (round-6 proven-best recipe). Same two subjects as rounds 2-6 (steam-porthole, diablo-gothic), same frozen fal-CDN input images. Delivery: every clip shipped both raw and ping-pong (forward+reverse concat); ping-pong is default playback per user preference.",
+  "seedance": {
+    "endpoint": "fal-ai/bytedance/seedance/v1/pro/image-to-video",
+    "endpoint_note": "Full quality Pro tier (NOT the /fast variant used in round 2). Checked fal catalog for a higher tier (seedance v1.5 pro, seedance 2.0) but task specified 'Seedance 1.0 pro' explicitly.",
+    "pricing": "$2.50/1M video tokens; tokens = (h*w*fps*duration)/1024. 1080p 5s ~= $0.74/clip per fal docs.",
+    "common_params": {"resolution": "1080p", "duration": "5", "aspect_ratio": "3:4", "camera_fixed": true, "enable_safety_checker": true},
+    "prompts_note": "NEW prompts written for this round per the no-lighting brief (round 2's Seedance prompts were glow-based and are superseded). No negative_prompt field on this endpoint; all negatives folded into the main prompt as explicit 'no X' clauses.",
+    "runs": [
+      {
+        "skin": "diablo-gothic",
+        "seed": 1207,
+        "request_id": "019f52bd-55cd-7763-a9d7-fcc0771e7f90",
+        "video_url": "https://v3b.fal.media/files/b/0aa1dcba/ruY3Aa0VKeTXywoizfq2c_video.mp4",
+        "output_size": "1248x1664",
+        "prompt": "Static tripod shot, the camera never moves. A carved dark stone tablet with skull and skeleton engravings sits centered against a plain background. The stone housing, carved icons, buttons, slider and glass screens stay completely rigid and frozen the entire time, they never move, deform, or change, and they never glow or light up. The only motion allowed: faint motes of cold grey dust and ash drift slowly upward and sideways through the air in front of the stone, and one thin wisp of pale smoke curls gently upward near the top edge. No glowing, no light pulsing, no flicker, no emissive light, no fire, no lava, no embers, no color change, no neon, no camera movement, no zoom, no pan, no parallax. Seamless slow ambient loop.",
+        "verdict": "PASS -- best diablo-gothic result of all 7 rounds. All 5 sampled frames (n=0,30,60,90,120) pixel-stable: skulls, runes, buttons, slider, both dark screens unchanged. Only motion = drifting grey dust/ash + one smoke wisp. No re-roll needed.",
+        "rerolled": false,
+        "cost_est": 0.74
+      },
+      {
+        "skin": "steam-porthole",
+        "seed": 1207,
+        "request_id": "019f52bd-4148-7db3-af8b-f01849219797",
+        "video_url": "https://v3b.fal.media/files/b/0aa1dcd2/_CDgdW31954WXMRDw86m9_video.mp4",
+        "output_size": "1248x1664",
+        "prompt": "Static tripod shot, the camera never moves. A brass and copper mechanical device sits centered against a plain background. The metal housing, porthole screen, control buttons, slider, round pressure gauges, gauge needles, hinge, rivets and pipes stay completely rigid and frozen the entire time, they never move, deform, or change. The only motion allowed: a thin wisp of pale white steam rises slowly and gently from behind the coiled copper pipe at the right edge, and a few faint dust motes drift slowly through the air in front of the device. No glowing, no light pulsing, no flicker, no emissive light, no fire, no color change, no lens flare, no neon, no camera movement, no zoom, no pan, no parallax. Seamless slow ambient loop.",
+        "verdict": "DEFECT -- DISCARDED. Buttons/gauges/gear cluster all static and legible, steam wisp on-brief and glow-free, BUT the slider thumb visibly slides left-to-right across the clip despite the explicit 'slider never moves' instruction -- Seedance's built-in media-player prior overrode the prompt. Confirmed via crop comparison at n=0/30/60/90/120 (frame7-seedance-steam-v1-crop-slider-*.png).",
+        "rerolled": true,
+        "cost_est": 0.74
+      },
+      {
+        "skin": "steam-porthole",
+        "seed": 4242,
+        "request_id": "019f52c2-fdfe-76f1-8563-e363c2f32531",
+        "video_url": "https://v3b.fal.media/files/b/0aa1dceb/xdwuS9IcFlTzfY9Nrv6k__video.mp4",
+        "output_size": "1248x1664",
+        "prompt": "Static tripod shot, the camera never moves. A brass and copper mechanical device sits centered against a plain background, like a framed photograph. This is NOT a media player interface and nothing is playing back - the slider thumb is glued in its exact starting position on the left end of the track and does not slide, drift, or travel along the track at any point, it is fixed like a rivet. The metal housing, porthole screen, control buttons, round pressure gauges, gauge needles, hinge, rivets, pipes and the slider stay completely rigid and frozen the entire time, they never move, deform, or change position. The only motion allowed anywhere in frame: a thin wisp of pale white steam rises slowly and gently from behind the coiled copper pipe at the right edge, and a few faint dust motes drift slowly through the air in front of the device. No glowing, no light pulsing, no flicker, no emissive light, no fire, no color change, no lens flare, no neon, no progress bar animation, no camera movement, no zoom, no pan, no parallax. Seamless slow ambient loop.",
+        "verdict": "NEAR-PASS -- delivered. Re-roll with strengthened anti-slider-motion clause + new seed fixed the slider drift (confirmed static via crop comparison, frame7-seedance-steam-v2-crop-slider-*.png). All buttons/gauges/gear cluster/slider static. Remaining minor defect: steam plume grows moderately large by mid/late clip and hazes the porthole glass -- softer than the LTX 960 occlusion (buttons stay fully visible throughout).",
+        "rerolled_from": "seed 1207 run above",
+        "cost_est": 0.74
+      }
+    ],
+    "subtotal_cost": 2.22
+  },
+  "ltx": {
+    "endpoint": "fal-ai/ltx-2.3-22b/image-to-video/lora",
+    "lora": "Lightricks/LTX-2.3-22b-LoRA-Cinemagraph, reused round-4 fal CDN re-host (HEAD 200 verified alive this round)",
+    "lora_fal_cdn_url": "https://v3b.fal.media/files/b/0aa1b9f7/IlqVKpJrcI_vlY0Fbsm_L_ltx-2.3-22b-lora-cinemagraph-0.9.safetensors",
+    "pricing": "$0.001805/megapixel (confirmed via get_pricing this round)",
+    "recipe_base": "round-6 proven-best (P1 steam, NEAR-PASS/best-of-all-rounds): 25 frames, video_stg_scale=0, use_multiscale=false, num_inference_steps=30, video_cfg_scale=4, distill_lora defaults (0.2/0.5), lora_scale=1, camera_lora=static, seed 1207",
+    "round7_additions": "video_quality=maximum (was 'high' default in round 6) and acceleration=none (was 'regular' default) -- bumped for 'highest quality' per this round's brief; not tested in round 6 so this is a deliberate deviation, noted for reproducibility.",
+    "prompts_note": "Reused verbatim from round 5/6 (CINEMAGRAPH_MOTION trigger, already the no-glow particles-only brief) -- task explicitly said 'same no-glow particle prompts' for LTX.",
+    "runs": [
+      {
+        "skin": "steam-porthole",
+        "request_id": "019f52bc-d029-7851-a070-867da5f90cf0",
+        "video_url": "https://v3b.fal.media/files/b/0aa1dcb1/WtItYfSPmVf52T0yRiCtH_PSP5BAgA.mp4",
+        "video_size": {"width": 768, "height": 1024},
+        "num_frames": 25,
+        "verdict": "NEAR-PASS -- best LTX steam of all 7 rounds, confirms round 6. All 5 button glyphs + both gauges + gear cluster + slider legible and correct by frame 24. Defect: frame 0 (n=0) decodes as a soft blurred mess (glyphs unlegible) -- single-frame VAE-decode artifact, fully resolved by frame 1 (checked explicitly). Trimmed from delivered ping-pong.",
+        "cost_mp": 19.6608,
+        "cost_usd": 0.0355
+      },
+      {
+        "skin": "diablo-gothic",
+        "request_id": "019f52bd-084e-7591-be5b-6e7395f75093",
+        "video_url": "https://v3b.fal.media/files/b/0aa1dcb2/Ee4C66tatg8VjqjTs9WwL_4JiY7R0P.mp4",
+        "video_size": {"width": 768, "height": 1024},
+        "num_frames": 25,
+        "verdict": "HARD FAIL -- unchanged from round 6 despite higher res (768x1024 vs round 6's 512x704) and video_quality=maximum. By end frame the device is fully resynthesized: loop button -> glowing gold circle, play/pause -> eyeball icon, rewind -> green ring, both dark screens -> invented 4-icon app grid with skull/monster glyphs. Glow present (amber circle + red rune bloom) despite negative_prompt banning it. Confirms round 6's OOD-input-distribution finding: no fal-expressible setting rescues this subject class.",
+        "cost_mp": 19.6608,
+        "cost_usd": 0.0355
+      },
+      {
+        "skin": "steam-porthole",
+        "note": "higher-res probe: does resolution above 768x1024 continue to help, per round-6's finding that 768x1024 beat 512x704?",
+        "request_id": "019f52bd-2992-7a21-98b1-806e567bc2a0",
+        "video_url": "https://v3b.fal.media/files/b/0aa1dcb3/wgwVRsNCzBxCL1Q0HYbni_7MDV5LNp.mp4",
+        "video_size": {"width": 960, "height": 1280},
+        "num_frames": 25,
+        "verdict": "REJECTED -- regression, not improvement. Steam plume over-grows into a large fog blob that occludes the right-side button row (repeat/list glyphs disappear) and bleeds into the porthole glass by mid-clip. 768x1024 remains the delivered LTX steam recipe; higher res was NOT better on this subject.",
+        "cost_mp": 30.72,
+        "cost_usd": 0.0554
+      }
+    ],
+    "subtotal_cost": 0.1264
+  },
+  "total_cost_usd_round7": 2.35,
+  "total_cost_usd_series_1_through_7": "~3.05 (rounds 1-6 combined ~0.7 per round-6 doc + this round's 2.35)",
+  "production_recommendation": "Ship Seedance 1.0 Pro (non-fast, 1080p, camera_fixed=true) as the production ambient-loop model for both subject classes -- only model across all 7 rounds holding device identity cleanly on the dark/OOD diablo-gothic class, and now also the cleanest steam-porthole result once the slider-drift defect was caught and fixed via re-roll. LTX+Cinemagraph LoRA stays a secondary/opportunistic option on detail-dense metallic subjects only (steam-class), never on dark stylized UI art. Keep the round-3b temporal-std hard-composite mask as a safety net regardless of model -- Seedance's one real defect this round (slider drift under its own media-player prior) shows even the winning model needs it.",
+  "verification_method": "Per verify-outputs-rule / verify-rule SS1b: 5 frames extracted per clip (start/25%/50%/75%/end for LTX 25f clips; n=0/30/60/90/120 for Seedance 121f clips), full-res crops of control clusters + glyphs inspected directly (not thumbnails), close-up slider-region crops built specifically to catch the drift defect, direct pixel comparison start-vs-end. ffprobe run on every delivered mp4 to confirm resolution/fps/duration/codec before shipping."
+}

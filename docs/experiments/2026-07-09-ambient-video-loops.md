@@ -597,3 +597,84 @@ LTX + Cinemagraph LoRA is viable **only** on detail-dense, higher-contrast subje
 - Start/end stills: `ambientvid/frame6-{P1-steam,P2-diablo}-{start,end}.png`.
 - Research + params + verdicts: `ambientvid/jobs6-ltx.json`. Review page: `ambientvid/round6.html`.
 - Cost: **≈ $0.052** (28.66 MP × $0.001805/MP; models: `fal-ai/ltx-2.3-22b/image-to-video/lora` + `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph`).
+
+---
+
+## Round 7 (2026-07-11) — FINAL: Seedance 1.0 Pro vs LTX Cinemagraph LoRA, no-glow brief, ping-pong delivery
+
+User authorized full spend ("spend whatever you need, highest quality for each") for a final head-to-head: **Seedance
+1.0 Pro** (full quality tier, not fast — re-benchmarked under the no-glow/particles brief per round 6's
+recommendation) vs **LTX-2.3 + Cinemagraph LoRA at its round-6 proven-best recipe**, on the same two subjects as every
+prior round (`steam-porthole`, `diablo-gothic`), same frozen fal-CDN input images (HEAD-200 verified byte-identical
+before reuse). Delivery requirement: every clip shipped **both raw and ping-pong** (forward+reverse concat), with
+ping-pong as the default player.
+
+### Method
+
+- **Seedance**: `fal-ai/bytedance/seedance/v1/pro/image-to-video` (checked the fal catalog for a higher tier —
+  `v1.5/pro` and `2.0` exist, but the brief named "Seedance 1.0 pro" explicitly, so that's what shipped).
+  `resolution=1080p`, `duration=5`, `aspect_ratio=3:4` (matches the 1152×1536 subject art), `camera_fixed=true`.
+  **New prompts** written for this round per the no-lighting brief (round 2's Seedance prompts were glow-based —
+  superseded). No `negative_prompt` field on this endpoint; all negatives folded into the prompt as explicit "no X"
+  clauses.
+- **LTX**: `fal-ai/ltx-2.3-22b/image-to-video/lora` + the Cinemagraph LoRA (round-4 fal CDN re-host, HEAD-200 verified
+  still alive). Round-6's proven-best recipe: 25 frames, `video_stg_scale=0`, `use_multiscale=false`,
+  `num_inference_steps=30`, `video_cfg_scale=4`, distill-LoRA defaults, `lora_scale=1`, `camera_lora=static`, seed
+  1207 — **plus** `video_quality=maximum` and `acceleration=none` (not tested in round 6; bumped this round for
+  "highest quality," noted as a deliberate deviation). **Same no-glow particle prompts as rounds 5/6** (verbatim,
+  `CINEMAGRAPH_MOTION` trigger). One higher-resolution probe (960×1280, above round 6's winning 768×1024) to test
+  whether resolution kept helping.
+
+Verified per `verify-outputs-rule` §1b: 5 frames/clip extracted (start/25%/50%/75%/end), full-res control-cluster and
+glyph crops inspected directly (not thumbnails), close-up slider-region crops built specifically after a defect was
+spotted, `ffprobe` run on every delivered file. Full params/prompts/request-ids/URLs/verdicts in
+`ambientvid/jobs7-final.json`. Live comparison page: `ambientvid/round7.html`.
+
+### Harsh verdicts
+
+| clip | verdict | what the frames show |
+|---|---|---|
+| **steam · LTX 768×1024** | **NEAR-PASS — best LTX steam of all 7 rounds** | All 5 button glyphs (play/pause, rewind, ff, repeat, list), both gauges, gear cluster and slider stay legible and correctly shaped end-to-end; steam wisp clean, no glow. **New defect found**: frame 0 (the very first output frame, 1/24s) decodes as a soft painterly blur with unlegible glyphs — a single-frame VAE-decode artifact that fully resolves by frame 1 and never recurs (checked explicitly). **Trimmed from the delivered ping-pong** (starts at frame 1). |
+| **steam · LTX 960×1280 probe** | **REJECTED — regression** | Higher resolution did NOT continue to help. The steam plume over-grows into a large fog blob that occludes the right-side button row (repeat/list glyphs disappear) and bleeds into the porthole glass by mid-clip. 768×1024 remains the delivered LTX steam recipe. |
+| **steam · Seedance 1.0 Pro, seed 1207 (roll 1)** | **DEFECT — discarded** | Buttons/gauges/gear cluster all static and legible, steam on-brief and glow-free, **but the slider thumb visibly slides left-to-right across the clip** despite the explicit "slider never moves" instruction — Seedance's own media-player prior overrode the prompt. Confirmed via crop comparison at n=0/30/60/90/120. |
+| **steam · Seedance 1.0 Pro, seed 4242 (roll 2, re-roll)** | **NEAR-PASS — delivered** | Re-roll with a strengthened anti-slider-motion clause ("NOT a media player interface... slider thumb is glued... does not slide") + new seed **fixed the drift** — slider confirmed static via crop comparison. Remaining minor defect: the steam plume grows moderately large by mid/late clip and its haze becomes visible through the porthole glass — softer than the LTX 960 occlusion (buttons stay fully visible throughout). |
+| **diablo · LTX 768×1024** | **HARD FAIL — unchanged from round 6** | Higher resolution (vs round 6's 512×704) and `video_quality=maximum` did **not** rescue this OOD subject. By mid-clip the device is fully resynthesized: the loop button becomes a glowing gold circle, play/pause becomes an eyeball icon, rewind becomes a green ring, and the two dark glass screens become an invented 4-icon app grid with skull/monster glyphs. Glow present (amber circle, red rune bloom) despite explicit no-glow negatives. |
+| **diablo · Seedance 1.0 Pro, seed 1207** | **PASS — best diablo-gothic result of all 7 rounds** | Every skull, rune glyph, button icon, screen edge and the slider position are pixel-stable across all 5 sampled frames — no drift, no morph, no invented content (confirmed at full-res close-up crop). Motion = grey ash/dust motes drifting in + a thin smoke wisp, matches the brief exactly. The baked-in red rune color is static source artwork, not animated pulsing (checked frame-to-frame — no brightness change). Clean on the first attempt, no re-roll needed. |
+
+### The Seedance slider-drift finding
+
+The one real defect in an otherwise-clean winning model: Seedance interpreted the steam-porthole subject's horizontal
+capsule-shaped slider as a **media-player progress bar** and animated it sliding left-to-right, even though the
+prompt explicitly said it never moves. This did **not** happen on diablo-gothic (whose slider sits in a much more
+rune/skull-dense, less "media player"-looking context) — the trigger appears to be how strongly the input art reads
+as literal playback UI. Fix: re-roll with an explicit anti-affordance clause ("this is NOT a media player interface
+and nothing is playing back... the slider thumb is glued in its exact starting position... it is fixed like a
+rivet") plus a new seed. This generalizes: **any UI-skin subject with a slider/progress-bar-shaped element is at risk
+of this specific hallucination on Seedance**, independent of the glow/no-glow brief — worth a standing prompt clause
+for the production pipeline, not just this experiment.
+
+### Production recommendation
+
+**Ship Seedance 1.0 Pro (non-fast, 1080p, `camera_fixed=true`) as the production ambient-loop model for BOTH subject
+classes.** It is the only model across all 7 rounds that holds device identity cleanly on the dark/OOD diablo-gothic
+class, and — once the slider-drift defect was caught and fixed via re-roll — also produced the cleanest steam-porthole
+result of the series. LTX+Cinemagraph LoRA remains viable **only** as a secondary/opportunistic option on
+detail-dense metallic subjects (steam-class), and should **never** be used on dark stylized UI art. Regardless of
+model, keep the round-3b temporal-std hard-composite mask as a safety net — Seedance's one defect this round (a
+slider that drifted under its own built-in prior, on the model that otherwise won) shows even the winning model
+benefits from a deterministic backstop on control geometry.
+
+### Cost
+
+- **Seedance**: 3 runs (diablo ×1, steam ×2 including the re-roll) × ~$0.74/1080p-5s-clip ≈ **$2.22**.
+- **LTX**: 3 runs (steam 768×1024, diablo 768×1024, steam 960×1280 probe) × 25f, $0.001805/MP ≈ **$0.126**.
+- **Round 7 total ≈ $2.35**. Series total (rounds 1–7) ≈ **$3.05**.
+
+### Artifacts (round 7)
+
+- Raw clips: `ambientvid/raw7-{ltx-steam-768-25f,ltx-diablo-768-25f,ltx-steam-960-25f,seedancepro-diablo-1080p,seedancepro-steam-1080p,seedancepro-steam-1080p-v2}.mp4`.
+- Delivered raw + ping-pong pairs: `ambientvid/loop7-{ltx-steam-768-25f,ltx-diablo-768-25f,ltx-steam-960-25f,seedancepro-diablo-1080p,seedancepro-steam-1080p}-{raw,pingpong}.{mp4,webm}`.
+- Full-res verification crops + start/end stills: `ambientvid/frame7-*.png` (17 files, incl. the slider-drift-before/after crop pair).
+- Params/prompts/request-ids/URLs/verdicts: `ambientvid/jobs7-final.json`. Live comparison page (ping-pong default, raw toggle): `ambientvid/round7.html`.
+- Desktop deliverables (winning ping-pong clips): `~/Desktop/cc-skeuo/2026-07-11-ambient-{steam-porthole-seedance1pro,diablo-gothic-seedance1pro,steam-porthole-ltxcinemagraph}.mp4`.
+- Cost: **≈ $2.35** this round (models: `fal-ai/bytedance/seedance/v1/pro/image-to-video`, `fal-ai/ltx-2.3-22b/image-to-video/lora` + `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph`).

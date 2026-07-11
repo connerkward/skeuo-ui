@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambient loops — round 7 (FINAL): Seedance 1.0 Pro vs LTX Cinemagraph, no-glow brief</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#111317; color:#e7e9ee; font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  header { padding:22px clamp(14px,4vw,40px); border-bottom:1px solid #262a33; position:sticky; top:0; background:#111317f2; backdrop-filter:blur(6px); z-index:10; }
+  h1 { margin:0 0 6px; font-size:clamp(18px,3.4vw,26px); }
+  .meta { color:#9aa2b1; font-size:13px; max-width:110ch; }
+  .meta code { background:#1c2029; padding:1px 5px; border-radius:4px; color:#c8d0df; }
+  .costband { margin-top:10px; padding:10px 14px; background:#151a12; border:1px solid #33421f; border-radius:8px; font-size:12.5px; color:#c8e0a0; max-width:110ch; }
+  .costband b { color:#e3f5bd; }
+  .rec { margin-top:10px; padding:12px 14px; background:#101a24; border:1px solid #1e4a63; border-radius:8px; font-size:13.5px; color:#bfe3f5; max-width:110ch; }
+  .rec b { color:#eaf7ff; }
+  main { padding:clamp(14px,3vw,32px); display:flex; flex-direction:column; gap:38px; max-width:1500px; margin:0 auto; }
+  section > h2 { font-size:17px; margin:0 0 4px; color:#cfd6e4; }
+  section > .sub { color:#8b93a3; font-size:13px; margin:0 0 14px; max-width:110ch; }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+  figure { margin:0; background:#171a21; border:1px solid #262a33; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  figure.fail { border-color:#5a2731; }
+  figure.near { border-color:#4d5a2a; }
+  figure.pass { border-color:#255a37; }
+  video, img { width:100%; height:auto; display:block; background:#0b0d11; object-fit:contain; }
+  .vidwrap { position:relative; }
+  .togglebar { display:flex; gap:6px; padding:6px 8px; background:#12151b; border-top:1px solid #232732; }
+  .togglebar button { flex:1; font-size:11px; padding:5px 6px; border-radius:5px; border:1px solid #2c313d; background:#1b1f28; color:#aeb6c6; cursor:pointer; }
+  .togglebar button.active { background:#2a3a22; border-color:#4d6a35; color:#d7e78a; }
+  figcaption { padding:10px 12px 13px; font-size:12.5px; }
+  .tag { display:inline-block; font-weight:700; font-size:11px; letter-spacing:.03em; padding:2px 7px; border-radius:5px; margin-bottom:6px; }
+  .t-fail { background:#3a1620; color:#ff9db0; }
+  .t-near { background:#2c3312; color:#d7e78a; }
+  .t-pass { background:#12321f; color:#7fe09a; }
+  .t-input { background:#22262f; color:#aeb6c6; }
+  .model-id { display:block; color:#8fe6f2; font-size:11.5px; margin:2px 0 6px; }
+  .note { color:#c3c9d6; margin-top:4px; }
+  .note b { color:#e7e9ee; }
+  .defect { color:#ffb199; }
+  table { border-collapse:collapse; width:100%; font-size:12.5px; overflow-x:auto; display:block; margin-top:6px; }
+  th,td { border:1px solid #262a33; padding:6px 9px; text-align:left; vertical-align:top; }
+  th { background:#1a1e26; color:#cfd6e4; }
+  td code { background:#1c2029; padding:1px 4px; border-radius:3px; }
+  .bad { color:#ff9db0; } .good { color:#8fe6f2; } .warn { color:#d7e78a; }
+  .cropgrid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+  .cropgrid figure { background:#14161b; }
+  .cropgrid figcaption { font-size:11.5px; color:#9aa2b1; }
+  footer { padding:16px clamp(14px,4vw,40px) 40px; color:#8b93a3; font-size:12.5px; max-width:120ch; }
+  a { color:#8fe6f2; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Round 7 (FINAL) — Seedance 1.0 Pro vs LTX-2.3 Cinemagraph LoRA, no-glow/particles brief</h1>
+  <div class="meta">
+    Same two subjects as rounds 2–6 (<code>steam-porthole</code>, <code>diablo-gothic</code>), frozen inputs reused
+    byte-identical from the fal CDN. Brief: motion ONLY as particles/smoke/dust/steam/drifting motes — NO glow, NO light
+    pulsing, NO emissive language. Verdict bar unchanged from rounds 5–6: ANY geometry drift / glyph smear / invented
+    elements / glow-style motion = FAIL. Delivery: every clip shipped BOTH raw and ping-pong (forward+reverse concat);
+    ping-pong is the default player below per the user's stated preference — use the toggle to see the raw pass.
+  </div>
+  <div class="costband">
+    <b>Models used:</b> <code>fal-ai/bytedance/seedance/v1/pro/image-to-video</code> (Seedance 1.0 Pro, 1080p, non-fast
+    tier) · <code>fal-ai/ltx-2.3-22b/image-to-video/lora</code> + <code>Lightricks/LTX-2.3-22b-LoRA-Cinemagraph</code>
+    (round-6 proven recipe: 25f, <code>video_stg_scale=0</code>, <code>use_multiscale=false</code>,
+    <code>video_quality=maximum</code>, <code>acceleration=none</code>).<br>
+    <b>Total round-7 spend ≈ $2.35</b> — Seedance: 3 runs (diablo ×1, steam ×2 incl. one re-roll to fix a slider-drift
+    defect) × ~$0.74/1080p-5s ≈ <b>$2.22</b>. LTX: 3 runs (steam 768×1024, diablo 768×1024, steam 960×1280 higher-res
+    probe) × 25f, $0.001805/MP ≈ <b>$0.126</b>. All prior rounds (1–6) combined ≈ $0.7. <b>Series total ≈ $3.05.</b>
+  </div>
+  <div class="rec">
+    <b>PRODUCTION RECOMMENDATION:</b> ship <b>Seedance 1.0 Pro</b> (non-fast, 1080p, <code>camera_fixed=true</code>) as
+    the production ambient-loop model for BOTH subject classes — it is the only model across all 7 rounds that holds
+    device identity cleanly on the dark/OOD diablo-gothic class. LTX+Cinemagraph LoRA remains viable only as a
+    secondary/opportunistic option on detail-dense metallic subjects (steam-class), never on dark stylized UI art. Keep
+    the round-3b temporal-std hard-composite mask as a safety net regardless of model — Seedance's one real defect this
+    round (a slider that drifted under the model's own "media player" prior) shows even the winning model needs it.
+  </div>
+</header>
+<main>
+
+  <section>
+    <h2>Steam-porthole</h2>
+    <div class="sub">Detail-dense reflective brass/copper device — the subject LTX has repeatedly done best on.</div>
+    <div class="grid">
+
+      <figure class="near">
+        <div class="vidwrap">
+          <video id="v-ltx-steam" autoplay muted loop playsinline src="loop7-ltx-steam-768-25f-pingpong.mp4"></video>
+        </div>
+        <div class="togglebar">
+          <button class="active" onclick="swap('v-ltx-steam','loop7-ltx-steam-768-25f-pingpong.mp4',this)">ping-pong</button>
+          <button onclick="swap('v-ltx-steam','loop7-ltx-steam-768-25f-raw.mp4',this)">raw</button>
+        </div>
+        <figcaption>
+          <span class="tag t-near">NEAR-PASS</span>
+          <span class="model-id"><code>fal-ai/ltx-2.3-22b/image-to-video/lora</code> + Cinemagraph LoRA (scale 1.0) ·
+          768×1024 · 25f · steps 30 · cfg 4.0 · stg 0 · multiscale off · quality=maximum · seed 1207 ·
+          ~$0.0355</span>
+          <div class="note"><b>Identity:</b> all 5 button glyphs (play/pause, rewind, ff, repeat, list), both gauges,
+          gear cluster and slider stay legible and correctly shaped end-to-end — the best LTX steam result of all 7
+          rounds, confirming round 6's finding.</div>
+          <div class="note defect"><b>Defect:</b> frame 0 (the very first output frame, 1/24s) decodes as a soft
+          painterly blur with unlegible glyphs — a single-frame VAE artifact that fully resolves by frame 1 and never
+          recurs. <b>Trimmed</b> from the delivered ping-pong (starts at frame 1); visible only in the raw toggle.</div>
+          <div class="note"><b>Seam / motion:</b> steam wisp emerges cleanly top-right, no glow; mild global tonal
+          drift + minor gear/emblem shimmer across the 25 frames masks acceptably under ping-pong.</div>
+        </figcaption>
+      </figure>
+
+      <figure class="near">
+        <div class="vidwrap">
+          <video id="v-ltx-steam960" autoplay muted loop playsinline src="loop7-ltx-steam-960-25f-pingpong.mp4"></video>
+        </div>
+        <div class="togglebar">
+          <button class="active" onclick="swap('v-ltx-steam960','loop7-ltx-steam-960-25f-pingpong.mp4',this)">ping-pong</button>
+          <button onclick="swap('v-ltx-steam960','loop7-ltx-steam-960-25f-raw.mp4',this)">raw</button>
+        </div>
+        <figcaption>
+          <span class="tag t-fail">HIGHER-RES PROBE — REJECTED</span>
+          <span class="model-id">Same recipe, <b>960×1280</b> (probe: does resolution above 768×1024 keep helping?) ·
+          25f · ~$0.0554</span>
+          <div class="note defect"><b>Regression, not an improvement:</b> the steam plume over-grows into a large
+          fog blob that occludes the right-side button row (repeat/list glyphs disappear behind it) and bleeds into
+          the porthole glass by mid-clip. Higher resolution did NOT continue to help past 768×1024 — kept only for the
+          record; <b>768×1024 is the delivered LTX steam recipe.</b></div>
+        </figcaption>
+      </figure>
+
+      <figure class="pass">
+        <div class="vidwrap">
+          <video id="v-sd-steam" autoplay muted loop playsinline src="loop7-seedancepro-steam-1080p-pingpong.mp4"></video>
+        </div>
+        <div class="togglebar">
+          <button class="active" onclick="swap('v-sd-steam','loop7-seedancepro-steam-1080p-pingpong.mp4',this)">ping-pong</button>
+          <button onclick="swap('v-sd-steam','loop7-seedancepro-steam-1080p-raw.mp4',this)">raw</button>
+        </div>
+        <figcaption>
+          <span class="tag t-near">NEAR-PASS (winner, after 1 re-roll)</span>
+          <span class="model-id"><code>fal-ai/bytedance/seedance/v1/pro/image-to-video</code> (Seedance 1.0 Pro) ·
+          1080p (1248×1664) · 5s/121f · aspect 3:4 · camera_fixed=true · seed 4242 (re-roll) · ~$0.74</span>
+          <div class="note"><b>Identity:</b> all 5 button glyphs, both gauges, gear cluster and slider position stay
+          pixel-stable across the full 5s clip — no morph, no invented parts.</div>
+          <div class="note defect"><b>Defect found on roll 1 (seed 1207, discarded):</b> the slider thumb visibly slid
+          left→right across the clip despite the prompt saying it never moves — Seedance's "media player" prior
+          overriding an explicit static-slider instruction. <b>Re-rolled</b> with seed 4242 and a strengthened prompt
+          ("NOT a media player interface... slider thumb is glued... does not slide") — fixed, confirmed static in the
+          delivered clip (crop evidence below).</div>
+          <div class="note defect"><b>Remaining minor defect:</b> the steam plume grows moderately large by mid/late
+          clip and its haze becomes visible through the porthole glass — softer than the LTX 960 occlusion (buttons
+          stay fully visible) but not a clean freeze.</div>
+        </figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Diablo-gothic</h2>
+    <div class="sub">Dark, low-contrast carved-stone device — out-of-distribution for the LTX Cinemagraph LoRA per
+    round 6; the harder test for both models.</div>
+    <div class="grid">
+
+      <figure class="fail">
+        <div class="vidwrap">
+          <video id="v-ltx-diablo" autoplay muted loop playsinline src="loop7-ltx-diablo-768-25f-pingpong.mp4"></video>
+        </div>
+        <div class="togglebar">
+          <button class="active" onclick="swap('v-ltx-diablo','loop7-ltx-diablo-768-25f-pingpong.mp4',this)">ping-pong</button>
+          <button onclick="swap('v-ltx-diablo','loop7-ltx-diablo-768-25f-raw.mp4',this)">raw</button>
+        </div>
+        <figcaption>
+          <span class="tag t-fail">HARD FAIL (unchanged from round 6)</span>
+          <span class="model-id"><code>fal-ai/ltx-2.3-22b/image-to-video/lora</code> + Cinemagraph LoRA · 768×1024
+          (bumped from round 6's 512×704) · 25f · same settings as steam · quality=maximum · seed 1207 · ~$0.0355</span>
+          <div class="note defect"><b>Device fully resynthesized</b> by mid-clip: the top loop button becomes a gold
+          glowing circle, the center play/pause becomes an eyeball icon, the left rewind becomes a green ring, and the
+          two dark glass screens become an invented 4-icon app grid with skull/monster glyphs. <b>Glow present</b>
+          (amber circle, red rune bloom) despite explicit no-glow negatives. Confirms round 6: higher resolution and
+          maximum quality do NOT rescue this OOD subject — LTX is not usable on dark stylized UI art at any tested
+          setting.</div>
+        </figcaption>
+      </figure>
+
+      <figure class="pass">
+        <div class="vidwrap">
+          <video id="v-sd-diablo" autoplay muted loop playsinline src="loop7-seedancepro-diablo-1080p-pingpong.mp4"></video>
+        </div>
+        <div class="togglebar">
+          <button class="active" onclick="swap('v-sd-diablo','loop7-seedancepro-diablo-1080p-pingpong.mp4',this)">ping-pong</button>
+          <button onclick="swap('v-sd-diablo','loop7-seedancepro-diablo-1080p-raw.mp4',this)">raw</button>
+        </div>
+        <figcaption>
+          <span class="tag t-pass">PASS — best diablo-gothic result of all 7 rounds</span>
+          <span class="model-id"><code>fal-ai/bytedance/seedance/v1/pro/image-to-video</code> (Seedance 1.0 Pro) ·
+          1080p (1248×1664) · 5s/121f · aspect 3:4 · camera_fixed=true · seed 1207 · ~$0.74</span>
+          <div class="note"><b>Identity:</b> every skull, rune glyph, button icon, screen edge and the slider position
+          are pixel-stable across all 5 sampled frames (start/25%/50%/75%/end) — no drift, no morph, no invented
+          content, confirmed at full-res close-up crop below.</div>
+          <div class="note"><b>Motion:</b> grey ash/dust motes drift in from the edges and a thin smoke wisp curls
+          upward near the top — matches the brief exactly. The baked-in red rune color is static artwork from the
+          source image, not animated pulsing (no brightness change frame-to-frame — checked directly).</div>
+          <div class="note"><b>No re-roll needed</b> — clean on the first attempt.</div>
+        </figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Verdict table</h2>
+    <table>
+      <tr><th>clip</th><th>model</th><th>res</th><th>identity</th><th>motion quality</th><th>ping-pong seam</th><th>verdict</th></tr>
+      <tr>
+        <td>steam · LTX 768×1024</td><td>LTX-2.3 + Cinemagraph LoRA</td><td>768×1024</td>
+        <td class="good">5/5 button glyphs legible, gauges/gear cluster intact</td>
+        <td class="good">clean steam wisp, no glow</td>
+        <td class="warn">frame-0 blur trimmed pre-ping-pong; otherwise clean</td>
+        <td class="warn">NEAR-PASS</td>
+      </tr>
+      <tr>
+        <td>steam · LTX 960×1280 probe</td><td>LTX-2.3 + Cinemagraph LoRA</td><td>960×1280</td>
+        <td class="bad">buttons occluded by over-grown plume</td>
+        <td class="bad">plume grows uncontrolled</td>
+        <td class="bad">occlusion persists both directions</td>
+        <td class="bad">REJECTED</td>
+      </tr>
+      <tr>
+        <td>steam · Seedance 1.0 Pro (seed 4242, re-roll)</td><td>Seedance 1.0 Pro</td><td>1080p</td>
+        <td class="good">buttons/gauges/gear/slider all static</td>
+        <td class="warn">steam plume moderately over-grown, hazes glass</td>
+        <td class="good">clean bounce, no pop</td>
+        <td class="warn">NEAR-PASS</td>
+      </tr>
+      <tr>
+        <td>diablo · LTX 768×1024</td><td>LTX-2.3 + Cinemagraph LoRA</td><td>768×1024</td>
+        <td class="bad">fully resynthesized by mid-clip, invented icon grid</td>
+        <td class="bad">glow present despite negatives</td>
+        <td class="bad">n/a — content wrong throughout</td>
+        <td class="bad">HARD FAIL</td>
+      </tr>
+      <tr>
+        <td>diablo · Seedance 1.0 Pro (seed 1207)</td><td>Seedance 1.0 Pro</td><td>1080p</td>
+        <td class="good">pixel-stable: skulls, runes, buttons, slider, screens</td>
+        <td class="good">grey dust/ash + thin smoke, on-brief, no glow</td>
+        <td class="good">clean bounce, no pop</td>
+        <td class="good">PASS</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Full-res verification crops</h2>
+    <div class="sub">Per <code>verify-outputs-rule</code> §1b: close-up crops of control clusters/glyphs, start vs
+    end frame, at native resolution (upscaled for viewing). These are the evidence behind the verdicts above.</div>
+    <div class="cropgrid">
+      <figure><img src="frame7-ltx-steam-crop-blurframe0.png"><figcaption>LTX steam — frame 0 (n=0): soft/blurred,
+      glyphs unlegible. Trimmed from delivered clip.</figcaption></figure>
+      <figure><img src="frame7-ltx-steam-crop-sharpend.png"><figcaption>LTX steam — frame 24 (end): all 5 button
+      glyphs sharp and legible.</figcaption></figure>
+      <figure><img src="frame7-ltx-diablo-crop-invented-icons.png"><figcaption>LTX diablo — end frame: the two dark
+      glass screens became an invented 4-icon app grid with hallucinated glyphs.</figcaption></figure>
+      <figure><img src="frame7-seedance-steam-v1-crop-slider-start.png"><figcaption>Seedance steam ROLL 1 (seed 1207,
+      discarded) — slider thumb at start position.</figcaption></figure>
+      <figure><img src="frame7-seedance-steam-v1-crop-slider-end.png"><figcaption>Seedance steam ROLL 1 — same slider,
+      end frame: thumb has slid to the right. Defect that triggered the re-roll.</figcaption></figure>
+      <figure><img src="frame7-seedance-steam-v2-crop-slider-start.png"><figcaption>Seedance steam ROLL 2 (seed 4242,
+      delivered) — slider start.</figcaption></figure>
+      <figure><img src="frame7-seedance-steam-v2-crop-slider-end.png"><figcaption>Seedance steam ROLL 2 — same slider,
+      end frame: thumb unchanged. Defect fixed.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Full-frame start/end stills</h2>
+    <div class="cropgrid">
+      <figure><img src="frame7-ltx-steam-start.png"><figcaption>LTX steam — start</figcaption></figure>
+      <figure><img src="frame7-ltx-steam-end.png"><figcaption>LTX steam — end</figcaption></figure>
+      <figure><img src="frame7-ltx-steam960-start.png"><figcaption>LTX steam 960×1280 probe — start</figcaption></figure>
+      <figure><img src="frame7-ltx-steam960-end.png"><figcaption>LTX steam 960×1280 probe — end (plume occlusion)</figcaption></figure>
+      <figure><img src="frame7-ltx-diablo-start.png"><figcaption>LTX diablo — start</figcaption></figure>
+      <figure><img src="frame7-ltx-diablo-end.png"><figcaption>LTX diablo — end (resynthesized)</figcaption></figure>
+      <figure><img src="frame7-seedance-steam-start.png"><figcaption>Seedance steam (winner) — start</figcaption></figure>
+      <figure><img src="frame7-seedance-steam-end.png"><figcaption>Seedance steam (winner) — end</figcaption></figure>
+      <figure><img src="frame7-seedance-diablo-start.png"><figcaption>Seedance diablo — start</figcaption></figure>
+      <figure><img src="frame7-seedance-diablo-end.png"><figcaption>Seedance diablo — end</figcaption></figure>
+    </div>
+  </section>
+
+</main>
+<footer>
+  Round 7 of the ambient-video-loops experiment. Full write-up:
+  <a href="../../../../docs/experiments/2026-07-09-ambient-video-loops.md">docs/experiments/2026-07-09-ambient-video-loops.md</a>
+  (round 7 section). Prior rounds: <a href="index.html">round 1</a>, <a href="round5.html">round 5</a>,
+  <a href="round6.html">round 6</a>. Raw job params/request-ids/URLs: <code>jobs7-final.json</code>.
+</footer>
+<script>
+function swap(id, src, btn){
+  const v = document.getElementById(id);
+  const t = v.currentTime; const wasPlaying = !v.paused;
+  v.pause();
+  v.src = src;
+  v.load();
+  v.addEventListener('loadeddata', function once(){
+    v.removeEventListener('loadeddata', once);
+    if (wasPlaying) v.play();
+  });
+  const bar = btn.parentElement;
+  [...bar.children].forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -459,6 +459,21 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
   the production model. See
   [`docs/experiments/2026-07-09-ambient-video-loops.md`](docs/experiments/2026-07-09-ambient-video-loops.md#round-4-2026-07-10--unblocking-the-gated-lora-via-browser-download--fal-re-host)
   round 4.
+  **FINAL (round 7, 2026-07-11):** ran the definitive head-to-head — Seedance 1.0 Pro (full quality
+  tier, not fast) vs LTX+Cinemagraph LoRA at its round-6 proven-best recipe, both under a strict
+  no-glow/particles-only brief, both delivered raw + ping-pong. **Production decision: ship
+  Seedance 1.0 Pro for both subject classes** — only model that holds device identity cleanly on
+  the dark/OOD diablo-gothic class (PASS, best of all 7 rounds), and after catching + fixing a
+  slider-drift defect via one re-roll (Seedance mistook a UI slider for a media-player progress
+  bar and animated it — needed an explicit anti-affordance prompt clause), also produced the
+  cleanest steam-porthole result of the series. LTX stays secondary/opportunistic on detail-dense
+  metallic subjects only, never on dark stylized UI art — diablo hard-failed again even at higher
+  res + max quality (device fully resynthesized, glow present despite negatives). Keep the
+  round-3b temporal-std hard-composite mask as a safety net regardless of model. Spend: round 7
+  ≈ $2.35, series total ≈ $3.05. See
+  [`docs/experiments/2026-07-09-ambient-video-loops.md`](docs/experiments/2026-07-09-ambient-video-loops.md#round-7-2026-07-11--final-seedance-10-pro-vs-ltx-cinemagraph-lora-no-glow-brief-ping-pong-delivery)
+  round 7, and the live comparison page
+  [`tools/mask-align-exp/gen12/ambientvid/round7.html`](tools/mask-align-exp/gen12/ambientvid/round7.html).
 - **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
   across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
   featured path for skins with strong emissive themes.
