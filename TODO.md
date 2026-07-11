@@ -807,6 +807,10 @@ entries already under "saved for later" above — those four stand as-is.
   **→ Analysis + options + recommendation:** [`docs/design/2026-07-11-think-about-notes.md`
   §1](docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink) (rec: (d) deterministic
   `css.glow` on known elements, near-zero-cost — most of it already ships).
+  **→ Semantic-ML landscape (2-stage VLM-judge + SAM-3-refiner architecture, prototype spec,
+  ~$0.075 to validate):** [`docs/design/2026-07-11-semantic-emissive-research.md`](docs/design/2026-07-11-semantic-emissive-research.md)
+  — `css.glow` still ships first (orthogonal); this targets freehand per-generation glow
+  (runes/cracks) a static region can't anchor to.
 - **Director sees the paint (vision step) — think about, don't implement yet.** Director is
   moving to Gemini 3 Pro (text-only). Later: hand it the painted image so css colors / lighting
   hints / emissive regions are chosen from actual pixels, not imagined from text.
