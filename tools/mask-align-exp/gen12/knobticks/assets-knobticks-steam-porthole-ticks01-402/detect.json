@@ -1,0 +1,80 @@
+{
+  "tag": "steam-porthole-ticks01-402",
+  "method": "mask_guide_color_nearest_classify_largest_component",
+  "template": {
+    "cx_frac": 0.42,
+    "cy_frac": 0.5700000000000001,
+    "r_frac": 0.07
+  },
+  "device_detection": {
+    "found": true,
+    "cx_frac": 0.5028458405891048,
+    "cy_frac": 0.7168339762345767,
+    "r_frac": 0.08070816601677872,
+    "area_px": 108630.0,
+    "bbox": [
+      926,
+      2501,
+      1391,
+      2783
+    ],
+    "n_components_in_band": 219
+  },
+  "strip_detection": {
+    "found": true,
+    "cx_frac": 0.15023333228113697,
+    "cy_frac": 0.9305145859707606,
+    "r_frac": 0.08985205775244812,
+    "area_px": 134639.0,
+    "bbox": [
+      123,
+      3271,
+      568,
+      3637
+    ],
+    "n_components_in_band": 2
+  },
+  "offset_vs_template": {
+    "dx_px": 190.9,
+    "dy_px": 545.0,
+    "dist_px": 577.5,
+    "dx_frac": 0.0828,
+    "dy_frac": 0.1468,
+    "dist_frac_of_width": 0.2507,
+    "dist_in_knob_radii": 3.58
+  },
+  "deterministic_ticks_recentered": {
+    "ring_radius_factor": 1.08,
+    "n_peaks": 11,
+    "peak_degs": [
+      -93.0,
+      -83.0,
+      -73.0,
+      -63.5,
+      -15.0,
+      20.0,
+      68.5,
+      78.0,
+      89.0,
+      90.5,
+      99.0
+    ],
+    "span_deg": [
+      -93.0,
+      99.0
+    ]
+  },
+  "crop_box_device": [
+    563,
+    2065,
+    1753,
+    3255
+  ],
+  "detection_failed": false,
+  "crop_box_strip": [
+    0,
+    2915,
+    884,
+    3712
+  ]
+}

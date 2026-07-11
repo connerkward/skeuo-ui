@@ -211,3 +211,44 @@ ticks — the failures cluster almost entirely in **collateral that has known, s
 
 Revised results page (per-gen axis-1-only badge + collateral breakdown, plus this section's
 banner): `tools/mask-align-exp/gen12/knobticks/index.html` (served).
+
+## Follow-up — crop-anchoring fix (2026-07-11, same day)
+
+User report on the revised page above: *"this page is super wrong with its crops and
+conclusions (even the knob crop is shit. more accurate, but off center)."*
+
+**Root cause:** `score_knobticks.py`'s `knob_crop_box()` cut every `crop-knob.png` at the
+**template's** expected `knob_center_frac` from `results.json`. The Results section above
+already documents layout drift on 6/7 gens — so a template-anchored crop framed the wrong area
+entirely on several gens (steam-porthole-ticks_ctr-401's old crop showed the rewind/play/repeat
+button row, not the knob) and clipped the knob off-center on the rest.
+
+**Fix — detect, don't assume:** [`redetect_knob.py`](../../tools/mask-align-exp/gen12/knobticks/redetect_knob.py)
+uses each gen's OWN `mask.png` region mask (pixel-aligned to `paint.png`) rather than the
+template. The knob's guide colour is painted as a solid blob both at the device socket and the
+loose cap in the strip band; classifying every mask pixel to its nearest of the gen's 10 known
+guide colours (handling per-gen colour drift/softening) and taking the largest connected
+component in the device region gives the knob's real position, independent of the template.
+Crops are re-centered on this detection, padded ≥2× the detected radius beyond the knob's edge
+— no new generations, no VLM calls, $0.
+
+**Quantified drift** (detected mask centroid vs template `knob_center_frac`, in knob-radii):
+fa-pod-ticks_ctr-501 4.41× · fa-pod-ticks_ctr-502 6.34× · fa-pod-ticks01-502 1.41× ·
+steam-ticks01-401 3.56× · steam-ticks01-402 3.58× · steam-ticks_ctr-401 2.68× ·
+steam-ticks_ctr-402 2.75×. Every gen was miscentered by ≥1.4 knob-radii, average ~3.2×.
+
+**What changed vs what held:** all 6 re-cut crops were visually re-confirmed one by one — every
+one now shows the knob centered and fully framed with its tick arc visible; none needed the
+detection-failed fallback. Every axis-1 tick-quality call and clock-position read in
+`axis-rescore.json` **held** on re-inspection with the properly-framed crop — no flips there.
+Two axis-3 layout-severity calls were **wrong and corrected**: `steam-porthole-ticks_ctr-401`
+and `steam-porthole-ticks_ctr-402` were labeled "minor" but measure 2.68×/2.75× knob-radius
+displacement — comparable to gens already labeled MAJOR — reclassified to **MAJOR**.
+`fa-pod-ticks01-502` was labeled "none" but measures 1.41× — reclassified to **minor**.
+
+**Effect on the product conclusion:** unchanged in direction, strengthened in one respect.
+Tick-drawing quality is still strong-to-excellent on 6/7 and the collateral axes are still the
+dominant failure mode. Layout drift (collateral B) is now measured as *worse and more
+consistent* than the original vaguer "some severity" framing (6/7 gens, ~3.2× average
+knob-radius displacement) — reinforcing rather than changing the recommendation above that
+layout displacement, not tick-drawing capability, is the actual blocker to ship-readiness.

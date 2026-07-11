@@ -1,0 +1,74 @@
+{
+  "tag": "fa-pod-ticks_ctr-501",
+  "method": "mask_guide_color_nearest_classify_largest_component",
+  "template": {
+    "cx_frac": 0.42,
+    "cy_frac": 0.5700000000000001,
+    "r_frac": 0.07
+  },
+  "device_detection": {
+    "found": true,
+    "cx_frac": 0.4978136065639443,
+    "cy_frac": 0.38452330377434196,
+    "r_frac": 0.09553254374030573,
+    "area_px": 152201.0,
+    "bbox": [
+      928,
+      1207,
+      1366,
+      1647
+    ],
+    "n_components_in_band": 35
+  },
+  "strip_detection": {
+    "found": true,
+    "cx_frac": 0.14316526725052622,
+    "cy_frac": 0.9300643270309789,
+    "r_frac": 0.09007135006286568,
+    "area_px": 135297.0,
+    "bbox": [
+      120,
+      3242,
+      540,
+      3661
+    ],
+    "n_components_in_band": 1
+  },
+  "offset_vs_template": {
+    "dx_px": 179.3,
+    "dy_px": -688.5,
+    "dist_px": 711.4,
+    "dx_frac": 0.0778,
+    "dy_frac": -0.1855,
+    "dist_frac_of_width": 0.3088,
+    "dist_in_knob_radii": 4.41
+  },
+  "deterministic_ticks_recentered": {
+    "ring_radius_factor": 1.0,
+    "n_peaks": 5,
+    "peak_degs": [
+      -178.5,
+      3.0,
+      89.0,
+      90.5,
+      174.5
+    ],
+    "span_deg": [
+      -178.5,
+      174.5
+    ]
+  },
+  "crop_box_device": [
+    442,
+    723,
+    1851,
+    2131
+  ],
+  "detection_failed": false,
+  "crop_box_strip": [
+    0,
+    2912,
+    869,
+    3712
+  ]
+}

@@ -8,26 +8,17 @@
     "verdict": "UNRELIABLE",
     "raw": "1. TICKS-PRESENT: no\n2. AT-SOCKET: yes\n3. LEGIBLE: no\n4. START-END-DISTINCT: no\n5. ANGLE-ESTIMATE: The start of the arc is at 8 o'clock, the end is at 4 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no\n8. DAMAGE-CHECK: Unrequested text (\"MIN\", \"MAX\") has been engraved on the housing at either end of the single indicator slot.\n\nVERDICT: UNRELIABLE",
     "deterministic": {
-      "ring_radius_factor": 1.3,
-      "n_peaks": 13,
+      "ring_radius_factor": 1.08,
+      "n_peaks": 4,
       "peak_degs": [
-        -176.0,
-        -169.5,
-        -162.0,
-        -151.0,
-        -123.5,
-        -32.5,
-        51.5,
-        67.0,
-        81.0,
-        91.5,
-        98.5,
-        106.0,
-        163.5
+        -138.0,
+        89.0,
+        90.5,
+        147.5
       ],
       "span_deg": [
-        -176.0,
-        163.5
+        -138.0,
+        147.5
       ]
     },
     "model_json_parsed": {
@@ -57,7 +48,59 @@
       "crop-knob.png",
       "crop-cap-strip.png"
     ],
-    "ts": "2026-07-11T14:17:34"
+    "ts": "2026-07-11T14:17:34",
+    "deterministic_template_anchored_OLD": {
+      "ring_radius_factor": 1.3,
+      "n_peaks": 13,
+      "peak_degs": [
+        -176.0,
+        -169.5,
+        -162.0,
+        -151.0,
+        -123.5,
+        -32.5,
+        51.5,
+        67.0,
+        81.0,
+        91.5,
+        98.5,
+        106.0,
+        163.5
+      ],
+      "span_deg": [
+        -176.0,
+        163.5
+      ]
+    },
+    "detected_knob": {
+      "device": {
+        "found": true,
+        "cx_frac": 0.3221118869721497,
+        "cy_frac": 0.5779884450160503,
+        "r_frac": 0.08990309594169209,
+        "area_px": 134792.0,
+        "bbox": [
+          536,
+          1938,
+          947,
+          2353
+        ],
+        "n_components_in_band": 9
+      },
+      "strip": {
+        "found": false
+      },
+      "offset_vs_template": {
+        "dx_px": -225.5,
+        "dy_px": 29.7,
+        "dist_px": 227.5,
+        "dx_frac": -0.0979,
+        "dy_frac": 0.008,
+        "dist_frac_of_width": 0.0987,
+        "dist_in_knob_radii": 1.41
+      },
+      "detection_failed": false
+    }
   },
   {
     "tag": "fa-pod-ticks_ctr-501",
@@ -68,22 +111,18 @@
     "verdict": "RELIABLE",
     "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: yes\n5. ANGLE-ESTIMATE: START looks like 7 o'clock, END looks like 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: yes\n8. DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
     "deterministic": {
-      "ring_radius_factor": 1.45,
-      "n_peaks": 9,
+      "ring_radius_factor": 1.0,
+      "n_peaks": 5,
       "peak_degs": [
-        -149.5,
-        -29.0,
-        -23.0,
-        23.5,
-        30.5,
-        47.5,
-        89.5,
-        94.5,
-        107.5
+        -178.5,
+        3.0,
+        89.0,
+        90.5,
+        174.5
       ],
       "span_deg": [
-        -149.5,
-        107.5
+        -178.5,
+        174.5
       ]
     },
     "model_json_parsed": {
@@ -113,7 +152,66 @@
       "crop-knob.png",
       "crop-cap-strip.png"
     ],
-    "ts": "2026-07-11T14:17:59"
+    "ts": "2026-07-11T14:17:59",
+    "deterministic_template_anchored_OLD": {
+      "ring_radius_factor": 1.45,
+      "n_peaks": 9,
+      "peak_degs": [
+        -149.5,
+        -29.0,
+        -23.0,
+        23.5,
+        30.5,
+        47.5,
+        89.5,
+        94.5,
+        107.5
+      ],
+      "span_deg": [
+        -149.5,
+        107.5
+      ]
+    },
+    "detected_knob": {
+      "device": {
+        "found": true,
+        "cx_frac": 0.4978136065639443,
+        "cy_frac": 0.38452330377434196,
+        "r_frac": 0.09553254374030573,
+        "area_px": 152201.0,
+        "bbox": [
+          928,
+          1207,
+          1366,
+          1647
+        ],
+        "n_components_in_band": 35
+      },
+      "strip": {
+        "found": true,
+        "cx_frac": 0.14316526725052622,
+        "cy_frac": 0.9300643270309789,
+        "r_frac": 0.09007135006286568,
+        "area_px": 135297.0,
+        "bbox": [
+          120,
+          3242,
+          540,
+          3661
+        ],
+        "n_components_in_band": 1
+      },
+      "offset_vs_template": {
+        "dx_px": 179.3,
+        "dy_px": -688.5,
+        "dist_px": 711.4,
+        "dx_frac": 0.0778,
+        "dy_frac": -0.1855,
+        "dist_frac_of_width": 0.3088,
+        "dist_in_knob_radii": 4.41
+      },
+      "detection_failed": false
+    }
   },
   {
     "tag": "fa-pod-ticks_ctr-502",
@@ -124,21 +222,19 @@
     "verdict": "UNRELIABLE",
     "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no \u2014 There is a distinct diamond-shaped center mark at 12 o'clock, but the start and end marks of the arc are just plain dots, visually identical to all the minor ticks. There are no distinct MIN and MAX marks.\n5. ANGLE-ESTIMATE: START looks like 8 o'clock, END looks like 4 o'clock.\n6. THEME-COHERENT: yes \u2014 The ticks appear as illuminated elements under the translucent housing, perfectly matching the device's overall aesthetic and lighting.\n7. POINTER-NOTCH-ALIGNED: yes \u2014 The loose knob cap's pointer notch is at the 12 o'clock position, matching the specified center/start direction.\n8. DAMAGE-CHECK: The text \"MIN\" and \"MAX\" is baked into the housing.\n\nVERDICT: UNRELIABLE",
     "deterministic": {
-      "ring_radius_factor": 1.38,
-      "n_peaks": 8,
+      "ring_radius_factor": 1.08,
+      "n_peaks": 6,
       "peak_degs": [
-        -159.0,
-        -135.5,
-        -38.5,
-        63.0,
+        -131.0,
+        -124.0,
+        -50.5,
+        -30.0,
         89.0,
-        90.5,
-        137.0,
-        159.5
+        90.5
       ],
       "span_deg": [
-        -159.0,
-        159.5
+        -131.0,
+        90.5
       ]
     },
     "model_json_parsed": null,
@@ -166,7 +262,65 @@
       "crop-knob.png",
       "crop-cap-strip.png"
     ],
-    "ts": "2026-07-11T14:18:33"
+    "ts": "2026-07-11T14:18:33",
+    "deterministic_template_anchored_OLD": {
+      "ring_radius_factor": 1.38,
+      "n_peaks": 8,
+      "peak_degs": [
+        -159.0,
+        -135.5,
+        -38.5,
+        63.0,
+        89.0,
+        90.5,
+        137.0,
+        159.5
+      ],
+      "span_deg": [
+        -159.0,
+        159.5
+      ]
+    },
+    "detected_knob": {
+      "device": {
+        "found": true,
+        "cx_frac": 0.6961325071619462,
+        "cy_frac": 0.3543724272664606,
+        "r_frac": 0.09325101004586324,
+        "area_px": 145018.0,
+        "bbox": [
+          1390,
+          1101,
+          1818,
+          1530
+        ],
+        "n_components_in_band": 1
+      },
+      "strip": {
+        "found": true,
+        "cx_frac": 0.1855179349917742,
+        "cy_frac": 0.8897159402430534,
+        "r_frac": 0.08587607623991468,
+        "area_px": 122987.0,
+        "bbox": [
+          229,
+          3104,
+          627,
+          3502
+        ],
+        "n_components_in_band": 103
+      },
+      "offset_vs_template": {
+        "dx_px": 636.2,
+        "dy_px": -800.4,
+        "dist_px": 1022.5,
+        "dx_frac": 0.2761,
+        "dy_frac": -0.2156,
+        "dist_frac_of_width": 0.4438,
+        "dist_in_knob_radii": 6.34
+      },
+      "detection_failed": false
+    }
   },
   {
     "tag": "steam-porthole-ticks01-401",
@@ -177,31 +331,25 @@
     "verdict": "UNRELIABLE",
     "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no. The marks are a uniform series of five identical, small, engraved lines. There are no visually distinct marks for START or END.\n5. ANGLE-ESTIMATE: The first mark of the arc is at approximately 7 o'clock, and the last mark is at approximately 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no. The pointer notch on the knob cap points directly down to 6 o'clock, not toward the 7 o'clock start position.\n8. DAMAGE-CHECK: The socket recess is not empty. It contains a dark central structure that appears to be the base of a knob that is already installed.\n\nVERDICT: UNRELIABLE",
     "deterministic": {
-      "ring_radius_factor": 1.0,
-      "n_peaks": 18,
+      "ring_radius_factor": 1.08,
+      "n_peaks": 12,
       "peak_degs": [
-        -161.5,
-        -147.5,
-        -112.5,
-        -96.5,
-        -89.5,
-        -69.0,
-        -60.5,
-        -45.5,
-        -29.5,
-        30.5,
-        46.0,
-        62.0,
-        70.0,
-        80.5,
-        88.0,
-        90.5,
-        119.0,
-        142.0
+        -159.5,
+        -133.0,
+        -41.0,
+        -11.0,
+        26.0,
+        56.0,
+        71.0,
+        86.5,
+        92.0,
+        108.0,
+        140.0,
+        152.0
       ],
       "span_deg": [
-        -161.5,
-        142.0
+        -159.5,
+        152.0
       ]
     },
     "model_json_parsed": {
@@ -235,7 +383,75 @@
       "crop-knob.png",
       "crop-cap-strip.png"
     ],
-    "ts": "2026-07-11T14:19:01"
+    "ts": "2026-07-11T14:19:01",
+    "deterministic_template_anchored_OLD": {
+      "ring_radius_factor": 1.0,
+      "n_peaks": 18,
+      "peak_degs": [
+        -161.5,
+        -147.5,
+        -112.5,
+        -96.5,
+        -89.5,
+        -69.0,
+        -60.5,
+        -45.5,
+        -29.5,
+        30.5,
+        46.0,
+        62.0,
+        70.0,
+        80.5,
+        88.0,
+        90.5,
+        119.0,
+        142.0
+      ],
+      "span_deg": [
+        -161.5,
+        142.0
+      ]
+    },
+    "detected_knob": {
+      "device": {
+        "found": true,
+        "cx_frac": 0.65078179535463,
+        "cy_frac": 0.6288810554939169,
+        "r_frac": 0.07092219277825557,
+        "area_px": 83884.0,
+        "bbox": [
+          1337,
+          2171,
+          1662,
+          2498
+        ],
+        "n_components_in_band": 75
+      },
+      "strip": {
+        "found": true,
+        "cx_frac": 0.16957769678806386,
+        "cy_frac": 0.9177292264239817,
+        "r_frac": 0.09235417092420643,
+        "area_px": 142242.0,
+        "bbox": [
+          178,
+          3192,
+          604,
+          3620
+        ],
+        "n_components_in_band": 1
+      },
+      "offset_vs_template": {
+        "dx_px": 531.7,
+        "dy_px": 218.6,
+        "dist_px": 574.9,
+        "dx_frac": 0.2308,
+        "dy_frac": 0.0589,
+        "dist_frac_of_width": 0.2495,
+        "dist_in_knob_radii": 3.56
+      },
+      "detection_failed": false
+    }
   },
   {
     "tag": "steam-porthole-ticks01-402",
@@ -246,6 +462,49 @@
     "verdict": "RELIABLE",
     "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: yes\n5. ANGLE-ESTIMATE: START looks like 7 o'clock, END looks like 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no\n8. DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
     "deterministic": {
+      "ring_radius_factor": 1.08,
+      "n_peaks": 11,
+      "peak_degs": [
+        -93.0,
+        -83.0,
+        -73.0,
+        -63.5,
+        -15.0,
+        20.0,
+        68.5,
+        78.0,
+        89.0,
+        90.5,
+        99.0
+      ],
+      "span_deg": [
+        -93.0,
+        99.0
+      ]
+    },
+    "model_json_parsed": null,
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "start"
+    },
+    "vlm_clock_mentions": [
+      7,
+      5
+    ],
+    "vlm_angle_guess_deg": [
+      -150,
+      150
+    ],
+    "agree_json_vs_deterministic_15deg": null,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:23:11",
+    "deterministic_template_anchored_OLD": {
       "ring_radius_factor": 1.38,
       "n_peaks": 24,
       "peak_degs": [
@@ -279,28 +538,46 @@
         170.0
       ]
     },
-    "model_json_parsed": null,
-    "expected_convention": {
-      "start_deg": -135,
-      "end_deg": 135,
-      "zero": "start"
-    },
-    "vlm_clock_mentions": [
-      7,
-      5
-    ],
-    "vlm_angle_guess_deg": [
-      -150,
-      150
-    ],
-    "agree_json_vs_deterministic_15deg": null,
-    "text_part_returned": true,
-    "images_sent": [
-      "paint.png(resized)",
-      "crop-knob.png",
-      "crop-cap-strip.png"
-    ],
-    "ts": "2026-07-11T14:23:11"
+    "detected_knob": {
+      "device": {
+        "found": true,
+        "cx_frac": 0.5028458405891048,
+        "cy_frac": 0.7168339762345767,
+        "r_frac": 0.08070816601677872,
+        "area_px": 108630.0,
+        "bbox": [
+          926,
+          2501,
+          1391,
+          2783
+        ],
+        "n_components_in_band": 219
+      },
+      "strip": {
+        "found": true,
+        "cx_frac": 0.15023333228113697,
+        "cy_frac": 0.9305145859707606,
+        "r_frac": 0.08985205775244812,
+        "area_px": 134639.0,
+        "bbox": [
+          123,
+          3271,
+          568,
+          3637
+        ],
+        "n_components_in_band": 2
+      },
+      "offset_vs_template": {
+        "dx_px": 190.9,
+        "dy_px": 545.0,
+        "dist_px": 577.5,
+        "dx_frac": 0.0828,
+        "dy_frac": 0.1468,
+        "dist_frac_of_width": 0.2507,
+        "dist_in_knob_radii": 3.58
+      },
+      "detection_failed": false
+    }
   },
   {
     "tag": "steam-porthole-ticks_ctr-401",
@@ -311,31 +588,23 @@
     "verdict": "UNRELIABLE",
     "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no \u2014 There is a longer tick at 12 o'clock, and what appear to be start/end marks that are also longer ticks, identical in design to the center mark. The start, end, and center marks are not visually distinct from each other, only from the minor ticks.\n5. ANGLE-ESTIMATE: START looks like 7:30 o'clock, END looks like 4:30 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: yes\n8. DAMAGE-CHECK: NONE\n\nVERDICT: UNRELIABLE",
     "deterministic": {
-      "ring_radius_factor": 1.08,
-      "n_peaks": 18,
+      "ring_radius_factor": 1.0,
+      "n_peaks": 10,
       "peak_degs": [
-        -178.5,
-        -173.0,
-        -81.5,
-        -70.0,
-        -46.0,
-        -34.0,
-        10.5,
-        15.5,
-        43.5,
-        76.5,
-        85.5,
+        -177.0,
+        -25.0,
+        -10.0,
+        3.0,
+        89.0,
         90.5,
-        105.0,
-        112.0,
-        122.5,
-        128.0,
-        145.0,
-        165.0
+        130.5,
+        135.0,
+        161.5,
+        174.0
       ],
       "span_deg": [
-        -178.5,
-        165.0
+        -177.0,
+        174.0
       ]
     },
     "model_json_parsed": {
@@ -365,7 +634,75 @@
       "crop-knob.png",
       "crop-cap-strip.png"
     ],
-    "ts": "2026-07-11T14:21:33"
+    "ts": "2026-07-11T14:21:33",
+    "deterministic_template_anchored_OLD": {
+      "ring_radius_factor": 1.08,
+      "n_peaks": 18,
+      "peak_degs": [
+        -178.5,
+        -173.0,
+        -81.5,
+        -70.0,
+        -46.0,
+        -34.0,
+        10.5,
+        15.5,
+        43.5,
+        76.5,
+        85.5,
+        90.5,
+        105.0,
+        112.0,
+        122.5,
+        128.0,
+        145.0,
+        165.0
+      ],
+      "span_deg": [
+        -178.5,
+        165.0
+      ]
+    },
+    "detected_knob": {
+      "device": {
+        "found": true,
+        "cx_frac": 0.5051944464676219,
+        "cy_frac": 0.673909529989351,
+        "r_frac": 0.09623888974681548,
+        "area_px": 154460.0,
+        "bbox": [
+          945,
+          2279,
+          1384,
+          2724
+        ],
+        "n_components_in_band": 112
+      },
+      "strip": {
+        "found": true,
+        "cx_frac": 0.10618964960956429,
+        "cy_frac": 0.9357726207552044,
+        "r_frac": 0.07322918560189313,
+        "area_px": 89430.0,
+        "bbox": [
+          76,
+          3304,
+          414,
+          3644
+        ],
+        "n_components_in_band": 10
+      },
+      "offset_vs_template": {
+        "dx_px": 196.3,
+        "dy_px": 385.7,
+        "dist_px": 432.8,
+        "dx_frac": 0.0852,
+        "dy_frac": 0.1039,
+        "dist_frac_of_width": 0.1878,
+        "dist_in_knob_radii": 2.68
+      },
+      "detection_failed": false
+    }
   },
   {
     "tag": "steam-porthole-ticks_ctr-402",
@@ -376,6 +713,45 @@
     "verdict": "RELIABLE",
     "raw": "1.  TICKS-PRESENT: yes\n2.  AT-SOCKET: yes\n3.  LEGIBLE: yes\n4.  START-END-DISTINCT: yes\n5.  ANGLE-ESTIMATE: START (\"MIN\" text) is at 8 o'clock, END (\"MAX\" text) is at 4 o'clock. The CENTER mark is at 12 o'clock.\n6.  THEME-COHERENT: yes\n7.  POINTER-NOTCH-ALIGNED: yes\n8.  DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
     "deterministic": {
+      "ring_radius_factor": 1.0,
+      "n_peaks": 5,
+      "peak_degs": [
+        -34.5,
+        89.0,
+        90.5,
+        115.0,
+        128.0
+      ],
+      "span_deg": [
+        -34.5,
+        128.0
+      ]
+    },
+    "model_json_parsed": null,
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "center"
+    },
+    "vlm_clock_mentions": [
+      8,
+      4,
+      12
+    ],
+    "vlm_angle_guess_deg": [
+      -120,
+      120,
+      0
+    ],
+    "agree_json_vs_deterministic_15deg": null,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:21:54",
+    "deterministic_template_anchored_OLD": {
       "ring_radius_factor": 1.3,
       "n_peaks": 18,
       "peak_degs": [
@@ -403,29 +779,45 @@
         169.0
       ]
     },
-    "model_json_parsed": null,
-    "expected_convention": {
-      "start_deg": -135,
-      "end_deg": 135,
-      "zero": "center"
-    },
-    "vlm_clock_mentions": [
-      8,
-      4,
-      12
-    ],
-    "vlm_angle_guess_deg": [
-      -120,
-      120,
-      0
-    ],
-    "agree_json_vs_deterministic_15deg": null,
-    "text_part_returned": true,
-    "images_sent": [
-      "paint.png(resized)",
-      "crop-knob.png",
-      "crop-cap-strip.png"
-    ],
-    "ts": "2026-07-11T14:21:54"
+    "detected_knob": {
+      "device": {
+        "found": true,
+        "cx_frac": 0.41608300501306594,
+        "cy_frac": 0.6896647034996618,
+        "r_frac": 0.10876649291803733,
+        "area_px": 197290.0,
+        "bbox": [
+          704,
+          2314,
+          1213,
+          2783
+        ],
+        "n_components_in_band": 74
+      },
+      "strip": {
+        "found": true,
+        "cx_frac": 0.16345006543133306,
+        "cy_frac": 0.921883107631705,
+        "r_frac": 0.10336059573630557,
+        "area_px": 178166.0,
+        "bbox": [
+          138,
+          3183,
+          616,
+          3662
+        ],
+        "n_components_in_band": 2
+      },
+      "offset_vs_template": {
+        "dx_px": -9.0,
+        "dy_px": 444.2,
+        "dist_px": 444.3,
+        "dx_frac": -0.0039,
+        "dy_frac": 0.1197,
+        "dist_frac_of_width": 0.1928,
+        "dist_in_knob_radii": 2.75
+      },
+      "detection_failed": false
+    }
   }
 ]
