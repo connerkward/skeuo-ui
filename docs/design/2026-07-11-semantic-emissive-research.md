@@ -1,17 +1,24 @@
 # Semantic emissive research — does an ML/VLM model belong in the "what glows" decision?
 
-> **STATUS (2026-07-11): prototype BUILT and RUN**, not just specced — see
-> [`docs/experiments/2026-07-11-semantic-emissive-prototype.md`](../experiments/2026-07-11-semantic-emissive-prototype.md)
-> and `tools/mask-align-exp/gen12/semissive/`. Verdict: the 2-stage architecture beat the
-> classical top-hat baseline on all 3 test skins on "semantic correctness of WHAT glows"
-> (diablo-gothic parity, fallout-pipboy found 3 lit elements classical found zero of, fa-pod
-> avoided classical's documented false-positive blotching). One real empirical addition to
-> the spec below: SAM-3's text-prompt mask is OBJECT/PART-level, not material-level, so a
-> Stage 2b local hue/brightness/saturation gate (scoped strictly inside the SAM mask) was
-> added to isolate the actually-lit sub-pixels. Not yet promoted to a mainline flag — 2 of 3
-> skins got a SOTA-eye cross-check FAIL, diagnosed as an upstream paint-generation gap
-> (unlit screens in that specific paint roll), not a defect in the judge or refiner. Read the
-> experiment record before extending this further.
+> **STATUS (2026-07-11): prototype validated directionally; parked for v2 with user's
+> per-tube quality bar recorded.** Prototype BUILT, RUN, and HUMAN-JUDGED — see
+> [`docs/experiments/2026-07-11-semantic-emissive-prototype.md`](../experiments/2026-07-11-semantic-emissive-prototype.md#human-verdict-2026-07-11)
+> and `tools/mask-align-exp/gen12/semissive/`. Automated verdict: the 2-stage architecture
+> beat the classical top-hat baseline on all 3 test skins on "semantic correctness of WHAT
+> glows" (diablo-gothic parity, fallout-pipboy found 3 lit elements classical found zero of,
+> fa-pod avoided classical's documented false-positive blotching). One real empirical
+> addition to the spec below: SAM-3's text-prompt mask is OBJECT/PART-level, not
+> material-level, so a Stage 2b local hue/brightness/saturation gate (scoped strictly inside
+> the SAM mask) was added to isolate the actually-lit sub-pixels.
+>
+> **Human verdict (2026-07-11, verbatim in the experiment doc):** direction called "very
+> interesting" and directionally validated, but with concrete defects — SAM-3 missed one of
+> fallout-pipboy's two vacuum tubes, and the left tube's glow covers the whole glass envelope
+> instead of the filament while the right tube's subtle filament-only glow is correctly
+> called out as **the quality bar** ("much better and more physically accurate"); fa-pod's
+> button-icon glow is "a bit questionable." **Disposition: PARKED for skeuo v2**, alongside
+> other PBR-related tasks — not promoted to a mainline flag, not abandoned. v1 finishes
+> first. Read the experiment record's Human verdict section before extending this further.
 
 Research task, not implementation. Triggered by the user's framing: *"i feel a semantic ml
 model / llm needs to do this, not an older heuristic approach."* Read first:

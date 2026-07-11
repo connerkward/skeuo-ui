@@ -1,5 +1,78 @@
 # skeuo-ui — TODO
 
+---
+## PARKED for skeuo v2 (2026-07-11) — emissive / PBR, NOT v1 work
+
+> **Everything in this section is explicitly parked, not active.** v1 finishing work
+> continues unblocked in every other section of this file; nothing below competes for
+> attention until v1 ships. Do not resume without re-reading the linked verdict first.
+
+**User verdict (2026-07-11, verbatim + distilled reading in
+[`docs/experiments/2026-07-11-semantic-emissive-prototype.md`](docs/experiments/2026-07-11-semantic-emissive-prototype.md#human-verdict-2026-07-11)):**
+the 2-stage semantic-judge + SAM-3-refiner direction is "very interesting" and validated
+directionally, but has concrete defects (SAM-3 missed one of fallout-pipboy's two vacuum
+tubes; the left tube's glow floods the whole glass envelope instead of the filament — the
+right tube's subtle filament glow is the quality bar) and fa-pod's button-icon glow is "a
+bit questionable." **Disposition: PARK for skeuo v2, alongside other PBR-related tasks.**
+Not abandoned — just not part of finishing v1.
+
+- **Enable emissivity/PBR pass in mainline** (moved from "2026-07-09 — saved for later"):
+  flip `PBR_PASS_ENABLED` on (`orchestrate12.py`) once proven across the roster; wire the
+  dashboard card link (`WIRE-pbr.md`, 2 lines); make the PBR player the featured path for
+  skins with strong emissive themes.
+  - **2026-07-10 status — dashboard hook wired (item 5, done); roster run BLOCKED mid-way
+    on fal.ai billing** (`403 User is locked. Reason: Exhausted balance` on
+    `storage/upload/initiate` — verified directly against the endpoint, not assumed). Of
+    the 7 PASS skins: **diablo-gothic** and **fallout-vault** already had fresh `_pbr/`
+    sidecars (built pre-session) and are dashboard-linked — verified live via Playwright,
+    relit render not blank, emissive glows where the spec's hint says (diablo: rune/ember
+    cracks; fallout-vault: amber lamps, though the "phosphor terminal glow" half of the
+    hint has no coverage — paint's screens are flat/off, nothing bright to extract).
+    **steam-porthole** also had a fresh sidecar but its `emissiveCoverage` is **0.0** — the
+    paint has no baked bright content behind the portholes/tubes (checked the source paint
+    crop: tubes are painted clear/unlit, gauge is a plain dial) — so the pass's headline
+    feature is a no-op there; `build_dashboard.py` now gates the card link on
+    `emissiveCoverage>0 or lights` (computed per skin, not hand-picked) so its "dynamic
+    lighting" link is withheld rather than shown broken. **fa-pod, fallout-pipboy,
+    n64-cutscene, wc-goldshield** never got a patina call — blocked on billing, not
+    attempted with a degraded fallback. Re-run once the fal account is topped up:
+    `python3 pbr_pass.py assets-<id> && python3 build_player_pbr.py assets-<id>` for those
+    4, idempotent via paint sha. Still gated OFF (`PBR_PASS_ENABLED` untouched).
+  - **Superseded by the 2026-07-11 verdict above** — do not flip until the
+    semantic-emissive rework below is revisited in v2.
+
+- **Emissivity needs a better model/approach** (moved from "2026-07-10 — later /
+  think-about"; user verdict 2026-07-10: current glyph/top-hat extraction "randomly makes
+  parts of the image glow in nonsensical ways", even after the relative-gate fix in
+  `29b961e9`). Emissive layer disabled via `EMISSIVE_ENABLED=False` in
+  `build_player_pbr.py`; relight/normal/specular stay. Candidate directions:
+  director-authored emissive REGIONS (spec says what glows, extractor only shapes it), a
+  real segmentation model scoring "should this glow" per region, or painting a dedicated
+  emissive pass.
+  **→ Analysis + options + recommendation:** [`docs/design/2026-07-11-think-about-notes.md`
+  §1](docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink) (rec: (d) deterministic
+  `css.glow` on known elements, near-zero-cost — most of it already ships. `css.glow` is
+  NOT parked — it's orthogonal, ships for known/fixed elements regardless of this).
+  **→ Semantic-ML landscape (2-stage VLM-judge + SAM-3-refiner architecture) — PROTOTYPE
+  BUILT, RUN, AND HUMAN-JUDGED (2026-07-11):**
+  [`docs/design/2026-07-11-semantic-emissive-research.md`](docs/design/2026-07-11-semantic-emissive-research.md) /
+  [`docs/experiments/2026-07-11-semantic-emissive-prototype.md`](docs/experiments/2026-07-11-semantic-emissive-prototype.md)
+  (code: `tools/mask-align-exp/gen12/semissive/`). Beat classical on semantic correctness on
+  all 3 test skins ($0.30 total spend); 2/3 SOTA-eye cross-checks FAILed but diagnosed as an
+  upstream paint-content gap (unlit screens), not a judge/refiner defect. Human verdict
+  (2026-07-11, see prototype doc): directionally validated, specific defects noted (SAM
+  missed a tube; left-tube glow too broad), **PARKED for v2**, not flipped into a mainline
+  flag.
+
+**Next resumption step (v2, not now):** re-read the prototype doc's verdict section, then
+either (a) re-run the judge/refiner on a paint roll where the screens ARE rendered lit, or
+(b) fix `genskin.py`'s screen-lighting prompt upstream first — and separately, tighten
+Stage 2b's local gate so the left-tube-class failure (glow floods the whole glass envelope)
+converges toward the right-tube's filament-only result, which the user named as the quality
+bar. Fold into skeuo v2's broader PBR/material work rather than resuming as a standalone
+emissive task.
+---
+
 ## GENERATION SYSTEM — full revamp / nuke from the ground up (2026-06-27) — #1, BRAIN WORK
 
 User directive 2026-06-27: *"complete revamp / nuke of the entire generation system from the
@@ -533,26 +606,10 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
   a true seamless loop (steam motion still visibly advances end vs start), and doesn't extend the
   25-frame length. Not swapped into the delivered asset this round; documented as a probed addendum
   (≈$0.071, 2 runs) for a future round. See the "Round 7 addendum" section of the same doc.
-- **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
-  across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
-  featured path for skins with strong emissive themes.
-  - **2026-07-10 status — dashboard hook wired (item 5 below, done); roster run BLOCKED mid-way
-    on fal.ai billing** (`403 User is locked. Reason: Exhausted balance` on `storage/upload/initiate`
-    — verified directly against the endpoint, not assumed). Of the 7 PASS skins: **diablo-gothic**
-    and **fallout-vault** already had fresh `_pbr/` sidecars (built pre-session) and are dashboard-
-    linked — verified live via Playwright, relit render not blank, emissive glows where the spec's
-    hint says (diablo: rune/ember cracks; fallout-vault: amber lamps, though the "phosphor terminal
-    glow" half of the hint has no coverage — paint's screens are flat/off, nothing bright to
-    extract). **steam-porthole** also had a fresh sidecar but its `emissiveCoverage` is **0.0** —
-    the paint has no baked bright content behind the portholes/tubes (checked the source paint
-    crop: tubes are painted clear/unlit, gauge is a plain dial) — so the pass's headline feature
-    is a no-op there; `build_dashboard.py` now gates the card link on `emissiveCoverage>0 or
-    lights` (computed per skin, not hand-picked) so its "dynamic lighting" link is withheld rather
-    than shown broken. **fa-pod, fallout-pipboy, n64-cutscene, wc-goldshield** never got a patina
-    call — blocked on billing, not attempted with a degraded fallback. Re-run once the fal
-    account is topped up: `python3 pbr_pass.py assets-<id> && python3 build_player_pbr.py
-    assets-<id>` for those 4, idempotent via paint sha. Still gated OFF (`PBR_PASS_ENABLED`
-    untouched) — flipping it on is the user's call after reviewing the linked players.
+- **PARKED for skeuo v2 (2026-07-11) — Enable emissivity/PBR pass in mainline.** Full
+  entry (status, blockers, resumption step) moved to the
+  [PARKED for skeuo v2](#parked-for-skeuo-v2-2026-07-11--emissive--pbr-not-v1-work)
+  section at the top of this file — see there, not here.
 
 ## 2026-07-09 — session close-out backlog
 
@@ -809,26 +866,12 @@ entries already under "saved for later" above — those four stand as-is.
     against a rotated copy of fa-pod's regions).
 
 ## 2026-07-10 — later / think-about
-- **Emissivity needs a better model/approach** (user verdict 2026-07-10: current glyph/top-hat
-  extraction "randomly makes parts of the image glow in nonsensical ways", even after the
-  relative-gate fix in `29b961e9`). Emissive layer now disabled via `EMISSIVE_ENABLED=False` in
-  build_player_pbr.py; relight/normal/specular stay. Candidate directions: director-authored
-  emissive REGIONS (spec says what glows, extractor only shapes it), a real segmentation model
-  scoring "should this glow" per region, or painting a dedicated emissive pass. Revisit before
-  flipping PBR into mainline.
-  **→ Analysis + options + recommendation:** [`docs/design/2026-07-11-think-about-notes.md`
-  §1](docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink) (rec: (d) deterministic
-  `css.glow` on known elements, near-zero-cost — most of it already ships).
-  **→ Semantic-ML landscape (2-stage VLM-judge + SAM-3-refiner architecture) — PROTOTYPE
-  BUILT AND RUN (2026-07-11):** [`docs/design/2026-07-11-semantic-emissive-research.md`](docs/design/2026-07-11-semantic-emissive-research.md) /
-  [`docs/experiments/2026-07-11-semantic-emissive-prototype.md`](docs/experiments/2026-07-11-semantic-emissive-prototype.md)
-  (code: `tools/mask-align-exp/gen12/semissive/`). Beat classical on semantic correctness on
-  all 3 test skins ($0.30 total spend); 2/3 SOTA-eye cross-checks FAILed but diagnosed as an
-  upstream paint-content gap (unlit screens), not a judge/refiner defect. NOT yet flipped into
-  a mainline flag — needs either a re-run on paint with actually-lit screens or a separate fix
-  to `genskin.py`'s screen-lighting prompt before promoting. `css.glow` still ships first
-  (orthogonal); this targets freehand per-generation glow (runes/cracks) a static region can't
-  anchor to.
+- **PARKED for skeuo v2 (2026-07-11) — Emissivity needs a better model/approach.** Full
+  entry (top-hat failure history, candidate directions, semantic-ML prototype result, human
+  verdict) moved to the
+  [PARKED for skeuo v2](#parked-for-skeuo-v2-2026-07-11--emissive--pbr-not-v1-work)
+  section at the top of this file. `css.glow` (think-about-notes.md §1(d)) is NOT parked —
+  it's orthogonal and still the near-term ship for known/fixed glow elements.
 - **Director sees the paint (vision step) — think about, don't implement yet.** Director is
   moving to Gemini 3 Pro (text-only). Later: hand it the painted image so css colors / lighting
   hints / emissive regions are chosen from actual pixels, not imagined from text.

@@ -1,5 +1,40 @@
 # gen12 TODO
 
+---
+## PARKED for skeuo v2 (2026-07-11) — emissive / PBR, NOT v1 work
+
+> **Everything in this section is explicitly parked, not active.** v1 finishing work in the
+> rest of this file is unaffected. Full user verdict + distilled reading:
+> [`docs/experiments/2026-07-11-semantic-emissive-prototype.md#human-verdict-2026-07-11`](../../../docs/experiments/2026-07-11-semantic-emissive-prototype.md#human-verdict-2026-07-11).
+> Short version: the 2-stage semantic-judge + SAM-3-refiner direction is "very interesting"
+> and directionally validated, but SAM-3 missed one of fallout-pipboy's two vacuum tubes,
+> the left tube's glow floods the whole glass envelope instead of the filament (the right
+> tube's subtle filament glow is the quality bar), and fa-pod's button glow is "a bit
+> questionable." Park for skeuo v2, alongside other PBR-related tasks.
+
+- **§1 Emissive rethink** (moved from "Think-about notes" below) — `pbr_pass.py`'s baked
+  glyph-emissive (top-hat extraction) is disabled (`EMISSIVE_ENABLED=False` in
+  `build_player_pbr.py`); options for what replaces it were written up in
+  [`docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink`](../../../docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink)
+  (rec'd (d): deterministic `css.glow` on known elements via the already-live
+  `registerEmissiveSource()` — **this part is NOT parked, it's orthogonal and near-zero new
+  code, ship it independent of the semantic direction below**).
+- **Semantic-emissive prototype** (2-stage VLM-judge + SAM-3-refiner,
+  `tools/mask-align-exp/gen12/semissive/`) — built, run, and human-judged 2026-07-11. Beat
+  the classical top-hat baseline on semantic correctness on all 3 test skins; human verdict
+  above is the disposition. Full record:
+  [`docs/experiments/2026-07-11-semantic-emissive-prototype.md`](../../../docs/experiments/2026-07-11-semantic-emissive-prototype.md).
+- **PBR mainline flip** (`PBR_PASS_ENABLED` in `orchestrate12.py`) — do not flip until the
+  semantic-emissive rework above is revisited in v2; see root `TODO.md`'s PARKED section for
+  the full roster-run status/blockers.
+
+**Next resumption step (v2, not now):** re-read the prototype doc's verdict, then either
+re-run judge/refine on a paint roll with genuinely-lit screens, or fix `genskin.py`'s
+screen-lighting prompt upstream first; tighten Stage 2b's local gate toward the
+right-tube-class result the user named as the quality bar. Fold into v2's broader PBR/
+material work, not a standalone resume.
+---
+
 ## Let the DIRECTOR decide whether optional pipeline stages are worth running per skin (2026-07-11, user directive)
 
 Not implemented. Currently every flag-gated optional stage (`PBR_PASS_ENABLED`,
@@ -47,6 +82,12 @@ not after.
 **Generalizes to:** any future flag-gated optional stage, not just emissive/PBR — the pattern
 (global flag = permission, director spec-read = per-skin verdict, verdict logged to `orch.json`)
 should be the default shape for the *next* optional stage added, not a one-off for emissive.
+
+**Note (2026-07-11): this stage-gating PATTERN stays open/general — it is v1-relevant for
+any future optional stage** (e.g. `DIRECTOR_REVIEW_ENABLED` below). Its *emissive/PBR example*
+specifically is now **PARKED for skeuo v2** (see the section at the top of this file) —
+don't implement the emissive gate as a first proof-of-concept; pick a still-active stage if/
+when this pattern gets built.
 
 **Cross-links:**
 - Emissive rethink (§1, this doc's neighbor "think-about notes") — the concrete first use case:
@@ -210,10 +251,10 @@ Structured (fenced-JSON) prompts: measured neutral on extraction; paint-side unt
 Three open design questions written up as decision-ready options + recommendations, none
 implemented: [`docs/design/2026-07-11-think-about-notes.md`](../../../docs/design/2026-07-11-think-about-notes.md).
 
-- **§1 Emissive rethink** — `pbr_pass.py`'s baked glyph-emissive (top-hat extraction) is
-  disabled (`EMISSIVE_ENABLED=False` in `build_player_pbr.py`); options for what replaces
-  it. Rec: (d) deterministic `css.glow` on known elements via the already-live
-  `registerEmissiveSource()` — near-zero new code.
+- **§1 Emissive rethink** — moved to the
+  [PARKED for skeuo v2](#parked-for-skeuo-v2-2026-07-11--emissive--pbr-not-v1-work)
+  section at the top of this file (`css.glow` (d) is the one part NOT parked — ships
+  independently).
 - **§2 Director-vision step** — should `src/generate/director.ts` see the painted image to
   pick `css`/`lighting` values instead of guessing pre-paint. Rec: scope to `css.*` only
   first (lower circularity risk than re-deriving director-authored `lighting`).

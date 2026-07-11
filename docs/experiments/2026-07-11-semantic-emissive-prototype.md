@@ -194,3 +194,65 @@ probe) — not part of the shipped pipeline's own spend, called out separately f
   sota-eval.json, src/overlay/preview/classical-preview.png, masks/, spend.jsonl)
 - Review page: `tools/mask-align-exp/gen12/semissive/results.html` (serve the `semissive/` dir
   directly so relative `out/<id>/*.png` paths resolve)
+
+## Q: why multiple SAM-3 passes rather than one? (user question, 2026-07-11)
+
+Checked live against the endpoint schema (`get_model_schema fal-ai/sam-3/image`), not
+assumed, per `verify-external-claims-rule`: `fal-ai/sam-3/image`'s text `prompt` field is a
+**single string** (type `"string"`, default `"wheel"`) — there is no array/list form and no
+per-box prompt-pairing field. `box_prompts` DOES accept multiple boxes in one call (with an
+optional `object_id` to group boxes belonging to the same object), but every box in that
+call shares the ONE `prompt` string — the endpoint has no mechanism to say "box A is the
+rune glyphs, box B is the ember cracks" in a single request. Since `judge.py` (Stage 1)
+emits N *distinct* named concepts, each needing its own label text AND its own
+color_hex/intensity/pulse carried through to the composite, one call per region is what the
+schema requires to keep the region↔label↔color/intensity assignment unambiguous — batching
+into one call would either lose the per-region label (if boxes are grouped under one
+`object_id`+`prompt`) or silently apply diablo-gothic's "rune glyphs" prompt to the ember
+cracks' box too. This is a real API constraint, not an unexamined design choice: multi-box
+batching exists in this schema, multi-*prompt* batching does not. At $0.005/call the N-call
+cost is $0.01–0.02/skin (2–4 regions) — the batching that IS available (multiple boxes/one
+prompt) wasn't usable here because the regions are semantically distinct, not repeats of the
+same object.
+
+## Human verdict (2026-07-11)
+
+Human-labeled gold, per `human-labeled-data-rule` — preserved verbatim, do not edit or
+summarize over this quote:
+
+> "semmissive results are interesting. why multipe sam3 passes rather than one? the only
+> issue with fallout-pipboy was that sam didnt capture both 2 vaccum tubes. also 'The
+> concept of glowing filaments is excellent for the theme. However, the execution on the
+> left tube is poor; the entire glass envelope glows a solid yellow, which is unrealistic.
+> The right tube's subtle filament glow is much better and more physically accurate.' is
+> true. lets park the emissive thing for later. i find this very interesting. fa-pod on the
+> buttons themselves is a bit quesitonable. save these results and my feedback. again well
+> come back to this later, perhaps with other pbr related tasks in a skeuo v2. for now lets
+> finish skeuo v1 solidly."
+
+**Distilled reading:**
+
+- **Direction validated & found interesting** — the 2-stage semantic-judge + SAM-3-refiner
+  architecture itself is endorsed, not rejected. "very interesting" is stated twice.
+- **Specific defect 1 — fallout-pipboy, SAM-3 coverage:** SAM-3 (Stage 2) only captured ONE
+  of the two vacuum tubes, not both. This is a Stage-2 (refiner) recall gap, not a Stage-1
+  (judge) naming problem — worth checking on re-run whether the judge named both tubes as
+  separate regions and SAM-3 dropped one on a low score, or whether the judge itself only
+  proposed one tube to begin with (the per-skin `judge.json`/`refine.json` for this run would
+  need re-inspection to tell which; not re-diagnosed here since the item is parked).
+- **Specific defect 2 — fallout-pipboy, left-tube glow quality (quoting the SOTA-eye
+  verdict, confirmed true by the user):** "the entire glass envelope glows a solid yellow,
+  which is unrealistic" on the left tube, vs. the right tube's "subtle filament glow" which
+  is "much better and more physically accurate." **This is the concrete quality bar for any
+  future iteration:** glow confined to the filament, not the whole envelope. Points at
+  Stage 2b's local hue/brightness/saturation gate keeping too much of the SAM ROI on the
+  left tube specifically — a per-region gate-tightness inconsistency worth investigating
+  before this is ever revisited, not a global failure of the gate approach (the right tube,
+  same mechanism, got it right).
+- **Specific defect 3 — fa-pod button-icon glow:** called "a bit questionable" — a milder,
+  non-blocking note, not a hard fail. Recorded for v2, not diagnosed further here.
+- **DISPOSITION: PARKED for skeuo v2**, explicitly grouped with "other pbr related tasks."
+  Not rejected, not promoted to a mainline flag — shelved. The instruction is explicit and
+  twofold: (1) stop working this now, (2) finish skeuo v1 solidly first. See the PARKED
+  sections of `TODO.md` and `tools/mask-align-exp/gen12/TODO.md` for where the open items
+  now live.
