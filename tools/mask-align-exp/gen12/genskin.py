@@ -329,6 +329,10 @@ def main():
     sid = spec["id"]; mode = spec["mode"]; seed = spec.get("seed", 71)
     palette = {k: tuple(v) for k, v in spec["palette"].items()}
     dark = spec.get("material_is_dark", False)
+    # director-decided knob tick-mark provisioning (WIRE-pbr.md "ticks" schema, sibling of
+    # css/lighting): {"skin":"baked"|"css"|"none","sprite":"baked"|"css"|"none"}. A spec
+    # without this block behaves as {"skin":"css","sprite":"css"} (build_player.py's default).
+    ticks_spec = spec.get("ticks", {})
     BG = (235, 235, 238) if dark else (18, 18, 24)
     OUT = os.path.join(HERE, f"assets-{sid}"); os.makedirs(OUT, exist_ok=True)
     keys = pick_keys(palette)
@@ -371,6 +375,7 @@ def main():
            "buttons": BUTTONS, "sprites": [KNOB, SLIDER, TOGGLE], "extras": REGIONS,
            "roles": ROLES, "defsz": defsz, "devFrac": DEVF,
            "lighting": spec.get("lighting", {}),  # director-authored emissive/lighting (pbr_pass)
+           "ticks": ticks_spec,  # director-authored knob tick provisioning (build_player.py)
            "template": template if mode == "templated" else {},
            # -------- blueprint-conditioning trial record (additive; see TODO.md) --------
            "blueprint_trial_enabled": BLUEPRINT_TRIAL_ENABLED,
@@ -483,6 +488,24 @@ def main():
             "EXACTLY FOUR loose parts in ONE row left-to-right: volume knob cap, seek slider thumb, shuffle switch "
             "in its first state, shuffle switch in its second state — and NOTHING else in the strip.")
 
+    # -------- knob tick-mark provisioning (director-decided, per-spec) --------
+    # docs/experiments/2026-07-11-knob-tick-provisioning.md found baked ticks UNRELIABLE
+    # (0/8 adjudicated PASS) specifically because the clause NAMED positions (MIN/MAX/CENTER) —
+    # that vocabulary baked in as literal engraved TEXT. These clauses stay deliberately LIGHT:
+    # describe the physical mark only, never a position-label word, never an angle number.
+    tick_skin_bullet = (
+        "  • The panel immediately surrounding the volume knob's socket carries a swept ring of "
+        "tick or index marks framing the opening, cut/engraved/cast into the device's own housing "
+        "material and finish — subtle, part of the panel, not a separate applied sticker. This is "
+        "on the surrounding panel only; the socket cavity itself stays the bare empty hole described "
+        "above.\n"
+    ) if ticks_spec.get("skin") == "baked" else ""
+    tick_sprite_bullet = (
+        "  • The volume knob cap (the loose strip part) carries one small pointer or index mark at "
+        "its rim, in the device's own material and finish, clearly distinguishable from the rest of "
+        "the cap's surface so its rotation reads at a glance.\n"
+    ) if ticks_spec.get("sprite") == "baked" else ""
+
     prompt = (
         preamble + " ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO "
         "NUMBERS, NO CAPTIONS and NO LABELS anywhere in EITHER column — not under controls, not on the strip, not "
@@ -513,7 +536,8 @@ def main():
         "ASSEMBLY: those parts exist ONLY in the bottom sprite strip and have NOT been installed yet. Do NOT colour "
         "the empty wells — neutral DARK recesses only. If ANY of the three cavities (knob socket, seek slot, "
         "shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone.\n"
-        "  • SEEK IS JUST AN EMPTY SLOT — treat the seek as a plain EMPTY recessed horizontal SLOT/CHANNEL only, "
+        + tick_skin_bullet
+        + "  • SEEK IS JUST AN EMPTY SLOT — treat the seek as a plain EMPTY recessed horizontal SLOT/CHANNEL only, "
         "NOT a functioning slider. Absolutely do NOT bake a slider thumb, grip, knob, handle, bar, fill, track-fill "
         "or progress indicator into it — it is a bare dark empty channel; the thumb is a SEPARATE loose part in the "
         "strip. A seek slot with anything riding in it is WRONG.\n"
@@ -524,7 +548,8 @@ def main():
         "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, left→right: volume knob cap, seek "
         "slider thumb, shuffle switch in its first state, shuffle switch in its second state — in the device's own materials, outlines removed, on "
         f"the flat {'pale' if dark else 'charcoal'} backdrop.\n"
-        "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a finger slides, shown "
+        + tick_sprite_bullet
+        + "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a finger slides, shown "
         "by itself on the backdrop, like a spare part in a parts tray. It is ABSOLUTELY NOT a slot, groove, "
         "channel, track, rail or recess, and must NOT be drawn sitting in/on any slot or dark channel — no groove "
         "under it, no track through it, no recessed surround. If the strip's seek cell shows any slot/track "

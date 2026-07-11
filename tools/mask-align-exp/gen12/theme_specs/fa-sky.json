@@ -55,5 +55,9 @@
     "fill": "#209eb2",
     "accent": "#6ec83c",
     "glow": "#228aff"
+  },
+  "ticks": {
+    "skin": "css",
+    "sprite": "css"
   }
 }

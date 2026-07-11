@@ -31,7 +31,7 @@
       46
     ]
   },
-  "theme_prompt": "Mid-90s PRE-RENDERED PROMOTIONAL CG character look, exactly like a Rare Ltd. Donkey Kong Country / Killer Instinct box-art render or a Silicon-Graphics-workstation cutscene bust — NOT a realtime game screenshot, a slow offline CG render. A single stylized CREATURE/ANIMAL-MASCOT BUST or friendly monster head-and-shoulders figure is SCULPTED INTO the top of the device housing as its dominant, character-forward feature — this is a character portrait fused with a media player, not a plain box. The bust reads as chunky, rounded, toylike geometry with smoothly gouraud-shaded facets (soft polygonal transitions, no crisp modern subdivision), glossy INJECTION-MOLDED-PLASTIC skin with tight specular hot-spots and long soft raytraced highlight streaks, faint environment-map sheen like an SGI render, and simple flat ambient-occlusion-style core shadows under brows/chin/jaw. Saturated primary-colour glossy plastics (reds, blues, warm ambers) against satin chrome trim. Rendered on a plain dark studio backdrop with a single soft key light, exactly like a mid-90s pack-in demo-disc character render — chunky, glossy, pre-rendered, warm, a little naive, unmistakably a CHARACTER, never abstract or geometric-only.",
+  "theme_prompt": "Mid-90s PRE-RENDERED PROMOTIONAL CG character look, exactly like a Rare Ltd. Donkey Kong Country / Killer Instinct box-art render or a Silicon-Graphics-workstation cutscene bust \u2014 NOT a realtime game screenshot, a slow offline CG render. A single stylized CREATURE/ANIMAL-MASCOT BUST or friendly monster head-and-shoulders figure is SCULPTED INTO the top of the device housing as its dominant, character-forward feature \u2014 this is a character portrait fused with a media player, not a plain box. The bust reads as chunky, rounded, toylike geometry with smoothly gouraud-shaded facets (soft polygonal transitions, no crisp modern subdivision), glossy INJECTION-MOLDED-PLASTIC skin with tight specular hot-spots and long soft raytraced highlight streaks, faint environment-map sheen like an SGI render, and simple flat ambient-occlusion-style core shadows under brows/chin/jaw. Saturated primary-colour glossy plastics (reds, blues, warm ambers) against satin chrome trim. Rendered on a plain dark studio backdrop with a single soft key light, exactly like a mid-90s pack-in demo-disc character render \u2014 chunky, glossy, pre-rendered, warm, a little naive, unmistakably a CHARACTER, never abstract or geometric-only.",
   "lighting": {
     "emissive_hint": "a small glossy gem-like eye or chest jewel on the character catching a warm point-light glint",
     "emissive_color": [
@@ -49,5 +49,9 @@
     "fill": "#c8965a",
     "accent": "#466496",
     "glow": "#ffc85a"
+  },
+  "ticks": {
+    "skin": "css",
+    "sprite": "css"
   }
 }

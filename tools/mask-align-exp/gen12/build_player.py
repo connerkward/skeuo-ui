@@ -26,6 +26,20 @@ if not CSS_SPEC and os.path.exists(SPEC_PATH):
     except Exception:
         CSS_SPEC = {}
 
+# Director-decided knob tick provisioning (WIRE-pbr.md "ticks" schema, sibling of css/lighting):
+# {"skin":"baked"|"css"|"none","sprite":"baked"|"css"|"none"}. "skin" = the tick-arc/index marks
+# on the socket bezel; "sprite" = the pointer/indicator treatment on the rotating cap itself. Same
+# results.json-then-spec-file fallback pattern as CSS_SPEC above. A spec lacking the block behaves
+# as {"skin":"css","sprite":"css"} — the prior, pre-director-schema shipped behavior.
+TICKS_SPEC = RES.get("ticks") or {}
+if not TICKS_SPEC and os.path.exists(SPEC_PATH):
+    try:
+        TICKS_SPEC = json.load(open(SPEC_PATH)).get("ticks", {}) or {}
+    except Exception:
+        TICKS_SPEC = {}
+TICKS_SKIN = TICKS_SPEC.get("skin", "css")
+TICKS_SPRITE = TICKS_SPEC.get("sprite", "css")
+
 
 def _hex_to_rgba(hexcolor, alpha):
     h = hexcolor.lstrip("#")
@@ -118,13 +132,19 @@ TRACK_FILL_HORIZ = (
     "fillEl.style.width=Math.max(0,Math.min(span,(x0+(x1-x0)*val+tw/2)-tv[0]))*100+'%';"
 ) if SEEK_TRACK_CSS_ENABLED else ""
 
-# feature flag: deterministic CSS/SVG knob tick marks, computed from regions.json's KNOWN
-# socket geometry (seat centroid/radius) instead of baked-into-the-paint ticks. Baked-tick
-# provisioning was tried and rejected — docs/experiments/2026-07-11-knob-tick-provisioning.md
-# found 0/8 adjudicated PASSES (text contamination "MIN/MAX/CENTER" baked as literal labels,
-# layout drift, no reliable start/end marks, and the model's in-call rotation self-report was a
-# verbatim prompt-echo, not a measurement) and recommended this CSS-overlay fallback instead.
+# master kill-switch: flip False to disable ALL CSS/SVG knob tick+needle overlays regardless of
+# the per-spec TICKS_SKIN/TICKS_SPRITE choice below. When True, the director's per-spec "ticks"
+# block (WIRE-pbr.md) decides PER AXIS whether that axis renders a deterministic CSS/SVG overlay
+# (computed from regions.json's KNOWN socket geometry — seat centroid/radius), a baked-into-the-
+# paint treatment (genskin.py's ticks_skin_bullet/ticks_sprite_bullet — no CSS overlay on that
+# axis here), or nothing. Baked-tick provisioning with a heavier clause was tried and rejected
+# first — docs/experiments/2026-07-11-knob-tick-provisioning.md found 0/8 adjudicated PASSES
+# (text contamination "MIN/MAX/CENTER" baked as literal labels, layout drift, no reliable
+# start/end marks) and recommended this CSS-overlay fallback; the director schema now lets each
+# skin pick a lighter baked retry per axis instead of a single global choice (see WIRE-pbr.md).
 KNOB_TICKS_ENABLED = True
+SKIN_TICKS_CSS = KNOB_TICKS_ENABLED and TICKS_SKIN == "css"      # static tick-arc ring on the bezel
+SPRITE_TICK_CSS = KNOB_TICKS_ENABLED and TICKS_SPRITE == "css"   # live needle on the cap
 
 HTML = f"""<!doctype html><html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
@@ -233,13 +253,14 @@ const V='{V}';
     // 0.5/init showed the indicator at its baked angle instead of straight up).
     const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
     const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
-    // ---- knob tick marks (KNOB_TICKS_ENABLED) — deterministic SVG overlay computed from the
+    // ---- knob tick overlay (director-decided PER AXIS, WIRE-pbr.md "ticks" schema) ----
     // SAME socket centre/radius (cx,cy,w) just derived above for the cap, sharing the SAME
     // -135..+135 sweep convention as the cap rotation (ZERO-DEG CONVENTION comment above).
-    // Baked-into-the-paint ticks were tried and rejected (0/8 adjudicated PASS — see the
-    // KNOB_TICKS_ENABLED comment in build_player.py); this overlay is exact and free.
+    // SKIN_TICKS_CSS = static tick-arc ring on the bezel; SPRITE_TICK_CSS = live needle on the
+    // cap. Either, both, or neither may be true per skin — "baked"/"none" render no CSS overlay
+    // on that axis (baked relies on genskin.py's ticks_skin_bullet/ticks_sprite_bullet instead).
     let tickRend=null;
-    if({str(KNOB_TICKS_ENABLED).lower()}){{
+    if({str(SKIN_TICKS_CSS).lower()} || {str(SPRITE_TICK_CSS).lower()}){{
       const zeroMode=r.zero||'start';           // 'start' (volume) now; 'center' (balance) is one param away
       const TICK_MULT=1.34, N_MINOR=8;           // box radius = cap radius * TICK_MULT
       const wB=w*TICK_MULT, hB=wB*PW/PH;
@@ -255,27 +276,31 @@ const V='{V}';
         ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
         ln.setAttribute('stroke',tickCol); ln.setAttribute('stroke-width',w); ln.setAttribute('stroke-linecap','round');
         return ln; }};
-      const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
-      const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
-      hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
-      const midIdx=Math.round((N_MINOR+2)/2);
-      for(let i=0;i<=N_MINOR+2;i++){{
-        const t=i/(N_MINOR+2);                       // 0..1 across the sweep
-        const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
-        const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
-        const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
-        const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
-        shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
-        hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+      if({str(SKIN_TICKS_CSS).lower()}){{
+        const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
+        const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
+        hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
+        const midIdx=Math.round((N_MINOR+2)/2);
+        for(let i=0;i<=N_MINOR+2;i++){{
+          const t=i/(N_MINOR+2);                       // 0..1 across the sweep
+          const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
+          const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
+          const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
+          const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
+          shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+          hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+        }}
+        svg.appendChild(shadow); svg.appendChild(hi);
       }}
-      svg.appendChild(shadow); svg.appendChild(hi);
-      // subtle current-position indicator — a short needle tracking `val`, independent of the
-      // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at all)
-      const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
-      tickRend=(v)=>{{ const deg=-135+v*270, rad=deg*Math.PI/180;
-        needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
-        needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); }};
-      tickRend(val);
+      if({str(SPRITE_TICK_CSS).lower()}){{
+        // subtle current-position indicator — a short needle tracking `val`, independent of the
+        // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at all)
+        const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
+        tickRend=(v)=>{{ const deg=-135+v*270, rad=deg*Math.PI/180;
+          needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
+          needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); }};
+        tickRend(val);
+      }}
       phone.appendChild(svg);
     }}
     const rend=()=>{{cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)'; if(tickRend)tickRend(val);}};rend();

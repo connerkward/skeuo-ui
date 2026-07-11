@@ -55,5 +55,9 @@
     "fill": "#b28a3a",
     "accent": "#a66130",
     "glow": "#ff963c"
+  },
+  "ticks": {
+    "skin": "baked",
+    "sprite": "baked"
   }
 }

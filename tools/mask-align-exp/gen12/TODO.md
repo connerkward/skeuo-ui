@@ -1,6 +1,68 @@
 # gen12 TODO
 
 ---
+## Director-decided knob tick provisioning: css vs baked, per axis — DONE 2026-07-11
+
+User directive: *"allow director to decide css vs baked skin side knob ticks, same for
+sprite-side knob ticks."* The prior `KNOB_TICKS_ENABLED` was a single global flag rendering
+the SAME deterministic CSS/SVG tick-arc-ring (skin axis) + live needle (sprite axis) for
+every skin regardless of theme. Added a `"ticks":{"skin","sprite"}` block to the theme-spec
+schema (documented next to `css`/`lighting` in `WIRE-pbr.md`), each axis independently one of
+`"baked"|"css"|"none"`. `genskin.py` now emits a LIGHT, per-user-directive-constrained prompt
+clause ("dont overconstrain tick marks style" — the failed 2026-07-11 knobticks experiment's
+MIN/MAX/CENTER vocabulary is exactly what leaked as literal baked text) when an axis is
+`"baked"`; `build_player.py` renders its existing CSS ring/needle ONLY when that axis is
+`"css"`, splitting what was one `if(KNOB_TICKS_ENABLED)` block into two independently-gated
+halves sharing the same SVG/geometry setup. `KNOB_TICKS_ENABLED` stays as a master
+kill-switch over both axes. Backward-compat: a spec without the block behaves as
+`{"skin":"css","sprite":"css"}` (the prior shipped behavior, unchanged for any future spec
+that omits it).
+
+**Per-theme director choices** (all 15 `theme_specs/*.json` populated):
+
+| theme | skin | sprite | rationale |
+|---|---|---|---|
+| claymation | none | none | handmade/imperfect clay theme explicitly rejects technical/digital-smooth markings |
+| diablo-gothic | baked | baked | carved-stone/runes theme fit; also targets the documented CSS-tick legibility clash with this skin's own busy gear-cog ring texture (see the CSS-tick-ship entry below) |
+| fa-pod | css | baked | glossy modern bezel suits a crisp CSS ring; a single pointer dot is a classic hi-fi knob detail |
+| fa-sky | css | css | templateless + already flagged auto-fail-prone (orch.json) — no added baked risk |
+| fallout-pipboy | baked | baked | theme prompt literally names "analog dials"; templated mode = lower layout-drift risk than templateless |
+| fallout-vault | baked | baked | Vault-Tec gauge/calibration-panel aesthetic |
+| myst-arcanum | baked | baked | "intricate clockwork ornament"; cap already organically bakes carved marks (see the knob-zero-fix entry's myst-arcanum note) |
+| n64-cutscene | css | css | flat-shaded low-poly visual language doesn't suit fine engraved detail |
+| n64-prerender-character | css | css | creature/mascot bust has no dial-panel semantics |
+| ps1-crunchy | css | css | warped/dithered "crunchy" texture risks illegible baked fine detail |
+| ps1-wild | css | css | already one of 2 roster skins auto-failing on unrelated defects (orch.json); no added risk |
+| steam-porthole | baked | baked | theme prompt literally names "pressure-gauge dials" + "engraved filigree"; existing baked cap pointer already lands cleanly on the CSS major tick (see the CSS-tick-ship entry) |
+| wc-goldshield | baked | baked | ornate baroque filigree/runed crest; same clean baked-pointer/major-tick alignment already verified |
+| wmp-quicksilver | css | baked | "understated" clean chrome favors the CSS ring; one pointer dot is a minimal, period-correct hi-fi detail |
+| wmp-vario | css | css | theme's "illuminated ELECTRIC-BLUE ringed control cluster" is better served by the CSS ring (themed via `css.accent`) than baked geometry |
+
+**CRITICAL caveat, stated honestly:** choosing `"baked"` does NOT retroactively add ticks to
+an EXISTING `paint.png` — all 15 skins' current paint predates this schema. So today, the
+6 `"baked"`-skin themes above (diablo-gothic, fallout-pipboy, fallout-vault, myst-arcanum,
+steam-porthole, wc-goldshield) show **no tick ring at all** until regenerated — choosing
+`"baked"` right now visibly REMOVES the CSS ring that was there before, in exchange for a
+not-yet-realized future bake. Full explanation in `WIRE-pbr.md`'s `ticks` schema section.
+
+**Open question (not resolved, no policy invented):** should `build_player.py` auto-fall-back
+an axis to `"css"` when a `"baked"` spec's paint is detected to actually lack the marks? No
+detector for "does this paint have a baked tick ring" exists (`knob_zero_deg` only detects the
+CAP's pointer notch, not a bezel ring) — building one, or deciding the fallback policy without
+one, is future work, not invented here.
+
+**Verified:** deterministic DOM check (real shipped `player.html` via Playwright, no proxy) —
+all 15 skins render EXACTLY the `<svg class=pknob-ticks>` line/group count their spec
+predicts (0 lines for baked/none axes, the 22-line 2-group ring for `skin=css`, +1 needle line
+for `sprite=css`), 15/15 PASS. SOTA-eye cross-check (`google/gemini-2.5-pro` via fal
+`openrouter/router/vision`, `reasoning:true`, ~$0.043 for 3 calls) on 3 skins spanning all
+three states (wmp-vario css/css, steam-porthole baked/baked, claymation none/none): 2/3
+agreed with the deterministic result; the wmp-vario call falsely reported no ring/needle on a
+138×138px raw crop — overruled per verify-rule (a 552×552 upscaled re-crop plus the
+deterministic DOM count both independently confirm the ring+needle ARE present and correctly
+rendered). Net: all 3 sampled skins' actual behavior is correct per spec once adjudicated.
+
+---
 ## PARKED for skeuo v2 (2026-07-11) — emissive / PBR, NOT v1 work
 
 > **Everything in this section is explicitly parked, not active.** v1 finishing work in the

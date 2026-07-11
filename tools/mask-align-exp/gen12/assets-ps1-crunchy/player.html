@@ -106,13 +106,14 @@ const V='1783706582';
     // 0.5/init showed the indicator at its baked angle instead of straight up).
     const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
     const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
-    // ---- knob tick marks (KNOB_TICKS_ENABLED) — deterministic SVG overlay computed from the
+    // ---- knob tick overlay (director-decided PER AXIS, WIRE-pbr.md "ticks" schema) ----
     // SAME socket centre/radius (cx,cy,w) just derived above for the cap, sharing the SAME
     // -135..+135 sweep convention as the cap rotation (ZERO-DEG CONVENTION comment above).
-    // Baked-into-the-paint ticks were tried and rejected (0/8 adjudicated PASS — see the
-    // KNOB_TICKS_ENABLED comment in build_player.py); this overlay is exact and free.
+    // SKIN_TICKS_CSS = static tick-arc ring on the bezel; SPRITE_TICK_CSS = live needle on the
+    // cap. Either, both, or neither may be true per skin — "baked"/"none" render no CSS overlay
+    // on that axis (baked relies on genskin.py's ticks_skin_bullet/ticks_sprite_bullet instead).
     let tickRend=null;
-    if(true){
+    if(true || true){
       const zeroMode=r.zero||'start';           // 'start' (volume) now; 'center' (balance) is one param away
       const TICK_MULT=1.34, N_MINOR=8;           // box radius = cap radius * TICK_MULT
       const wB=w*TICK_MULT, hB=wB*PW/PH;
@@ -128,27 +129,31 @@ const V='1783706582';
         ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
         ln.setAttribute('stroke',tickCol); ln.setAttribute('stroke-width',w); ln.setAttribute('stroke-linecap','round');
         return ln; };
-      const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
-      const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
-      hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
-      const midIdx=Math.round((N_MINOR+2)/2);
-      for(let i=0;i<=N_MINOR+2;i++){
-        const t=i/(N_MINOR+2);                       // 0..1 across the sweep
-        const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
-        const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
-        const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
-        const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
-        shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
-        hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+      if(true){
+        const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
+        const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
+        hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
+        const midIdx=Math.round((N_MINOR+2)/2);
+        for(let i=0;i<=N_MINOR+2;i++){
+          const t=i/(N_MINOR+2);                       // 0..1 across the sweep
+          const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
+          const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
+          const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
+          const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
+          shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+          hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+        }
+        svg.appendChild(shadow); svg.appendChild(hi);
       }
-      svg.appendChild(shadow); svg.appendChild(hi);
-      // subtle current-position indicator — a short needle tracking `val`, independent of the
-      // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at all)
-      const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
-      tickRend=(v)=>{ const deg=-135+v*270, rad=deg*Math.PI/180;
-        needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
-        needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); };
-      tickRend(val);
+      if(true){
+        // subtle current-position indicator — a short needle tracking `val`, independent of the
+        // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at all)
+        const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
+        tickRend=(v)=>{ const deg=-135+v*270, rad=deg*Math.PI/180;
+          needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
+          needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); };
+        tickRend(val);
+      }
       phone.appendChild(svg);
     }
     const rend=()=>{cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)'; if(tickRend)tickRend(val);};rend();

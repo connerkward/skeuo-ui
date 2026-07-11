@@ -98,6 +98,61 @@ missing), `build_player.py` samples the groove/visualizer-region paint pixels it
 prior behavior) — same avg-pixel-tint mechanism as the knob specular tint. Director colors
 are preferred; paint-sampling is the safety net, never a silent break.
 
+## Director-specified knob tick provisioning (`ticks` schema, sibling of `css`/`lighting`) — DONE 2026-07-11
+
+The volume knob has TWO independent visual axes for a tick/index-mark treatment, and the
+director decides EACH separately, per skin:
+
+```json
+"ticks": {
+  "skin":   "baked" | "css" | "none",   // the tick-arc / index marks framing the SOCKET BEZEL
+  "sprite": "baked" | "css" | "none"    // the pointer/indicator treatment on the rotating CAP
+}
+```
+
+- **`skin`** — the static ring of tick/index marks on the panel immediately surrounding the
+  knob socket. `"css"` renders `build_player.py`'s deterministic SVG tick-arc ring (11 ticks,
+  3 major/8 minor, `multiply`+`screen` engraved-look pass, computed from `regions.json`'s
+  KNOWN socket centre/radius — themed via `css.accent` when the spec supplies one). `"baked"`
+  asks `genskin.py`'s paint prompt to bake an equivalent mark system into the panel material
+  itself (light clause — see below) and suppresses the CSS ring so the two never double up.
+  `"none"` renders neither.
+- **`sprite`** — the moving indicator on the knob cap: a short needle tracking live `val`
+  (`"css"`, independent of any baked pointer — matters most when `knob_zero_deg` is `null`),
+  a prompt-requested painted pointer/notch on the cap itself (`"baked"` — the SAME kind of
+  mark `extract12.py`'s `detect_knob_zero_deg()` already looks for), or neither (`"none"`).
+- **Backward-compat default:** a spec without a `ticks` block behaves as
+  `{"skin":"css","sprite":"css"}` — the prior, pre-director-schema global `KNOB_TICKS_ENABLED`
+  behavior. `KNOB_TICKS_ENABLED` itself stays as a master kill-switch over BOTH axes.
+
+**Why per-axis, not one flag:** the baked-tick experiment
+([`docs/experiments/2026-07-11-knob-tick-provisioning.md`](../../../docs/experiments/2026-07-11-knob-tick-provisioning.md))
+found 0/8 adjudicated PASS for a heavier clause that named positions (`MIN`/`MAX`/`CENTER`
+baked in as literal engraved TEXT). The clauses now shipped in `genskin.py`
+(`ticks_skin_bullet`/`ticks_sprite_bullet`) are deliberately LIGHT — they describe the
+physical mark only ("a swept ring of tick or index marks", "one small pointer or index
+mark"), never a position-label word, never an angle number — an explicit user directive
+("dont overconstrain tick marks style") in response to that experiment's failure mode. This
+is a NEW, untested-at-scale clause, not a re-run of the failed one; treat "baked" specs as an
+open bet on the next regen, not a proven result.
+
+**CRITICAL caveat — "baked" only manifests on FUTURE regenerations.** Choosing `"baked"` for
+a skin does NOT retroactively add ticks to its EXISTING `paint.png` — that pixel data was
+generated before this schema existed and simply has no baked tick marks to show. So for the
+14/15 skins whose paint predates this change (see population table below), the *only*
+observable effect of choosing `"baked"` right now is that the CSS tick overlay on that axis
+**disappears** (a visible regression versus the prior all-CSS shipped behavior) until the
+skin is regenerated through `genskin.py` with the new clause live and the paint verified to
+actually carry the marks. This was verified directly: `assets-steam-porthole/player.html`
+(spec: baked/baked) shows a plain knob with no CSS ring and no baked ring either — the correct,
+if visually poorer, behavior for an as-yet-unregenerated "baked" choice.
+**Open question (not resolved here, tracked in TODO.md):** should `build_player.py`
+auto-fall-back to CSS when a "baked" spec's actual paint is detected to lack tick marks (no
+robust detector for that exists yet — this is not the same signal as `knob_zero_deg`, which
+only detects the CAP's pointer, not a bezel tick ring), or should "baked" always mean "no CSS
+overlay, whether or not the paint delivered"? Left as an explicit open question rather than an
+invented policy.
+
 ## Player-side dynamic-emissive-source registry (for future director-declared sources)
 
 ```js
