@@ -466,3 +466,37 @@ Flip only **between** batches, never while `orchestrate12.py` is mid-run.
   `fix-generalizable-rule`). The render is now internally consistent either way
   (the sweep tracks correctly from whichever mark was chosen) and gate-PASSes;
   flagging for human judgment call if the wedge reading looks wrong on review.
+
+## Knob tick marks shipped as a CSS/SVG overlay, not baked into the paint (2026-07-11)
+
+`KNOB_TICKS_ENABLED = True` in `build_player.py`. Baked-tick provisioning was tried and
+rejected first — see
+[`docs/experiments/2026-07-11-knob-tick-provisioning.md`](../../../docs/experiments/2026-07-11-knob-tick-provisioning.md)
+(0/8 adjudicated PASS: text contamination `MIN`/`MAX`/`CENTER` baked as literal labels,
+layout drift, no reliable start/end marks, and the in-call rotation self-report was a
+verbatim prompt-echo, not a measurement) — which recommended exactly this fallback.
+
+**Design:** an SVG ring drawn from the SAME socket centre/radius (`cx,cy,w`) already used
+for the cap, sharing the cap's `-135°..+135°` sweep convention. 11 ticks (3 major: start,
+12-o'clock centre, end; 8 minor between), a dark `multiply` pass + a 1-tick `screen`
+highlight pass so they read engraved rather than stickered, colored by the director's
+`css.accent` when the theme spec supplies one (else a neutral fallback). A subtle needle
+tracks live `val` independent of the cap's own baked pointer (useful when
+`knob_zero_deg` is `null` — no baked pointer at all). `r.zero||'start'` is read but only
+`'start'` is exercised today; `'center'` (a bigger detent mark at the middle major tick)
+is wired and is one skin-side field away, per the task's ask.
+
+**Verified:** rebuilt all 15 skins. Close-up crops (init + post-drag) on diablo-gothic,
+fa-pod, steam-porthole, wc-goldshield, driven via a real `pointerdown`/`pointermove` on
+the shipped `player.html` (Playwright), cross-checked by `google/gemini-2.5-pro` via fal
+`openrouter/router/vision` (`reasoning:true`, ~$0.034 total for 4 calls). 3/4 clean PASS
+(fa-pod, steam-porthole, wc-goldshield — wc-goldshield's drag crop shows the cap's baked
+pointer land exactly on the start major tick at val=0). diablo-gothic's VLM verdict was
+FAIL ("forms a full 360° circle, no major ticks") — **overruled**: the DOM has exactly 11
+`<line>`s whose angles are provably `-135..+135°` by construction (same unmodified
+function that rendered a correct, VLM-confirmed 270° gapped arc on the other 3 skins), and
+a wide crop shows the skin's OWN baked gear-cog ring already runs the full 360° with
+tooth-valley shadows that visually mimic a continuous tick ring — a legibility clash with
+that one skin's busy source art, not a code defect. No pipeline change from this — a
+single busy-texture skin isn't grounds for a generalizable color/contrast rule
+(`fix-generalizable-rule`); revisit only if this recurs across more of the roster.

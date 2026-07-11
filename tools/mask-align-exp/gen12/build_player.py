@@ -118,6 +118,14 @@ TRACK_FILL_HORIZ = (
     "fillEl.style.width=Math.max(0,Math.min(span,(x0+(x1-x0)*val+tw/2)-tv[0]))*100+'%';"
 ) if SEEK_TRACK_CSS_ENABLED else ""
 
+# feature flag: deterministic CSS/SVG knob tick marks, computed from regions.json's KNOWN
+# socket geometry (seat centroid/radius) instead of baked-into-the-paint ticks. Baked-tick
+# provisioning was tried and rejected — docs/experiments/2026-07-11-knob-tick-provisioning.md
+# found 0/8 adjudicated PASSES (text contamination "MIN/MAX/CENTER" baked as literal labels,
+# layout drift, no reliable start/end marks, and the model's in-call rotation self-report was a
+# verbatim prompt-echo, not a measurement) and recommended this CSS-overlay fallback instead.
+KNOB_TICKS_ENABLED = True
+
 HTML = f"""<!doctype html><html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>skeuo.fm — {SID}: {TITLE}</title>
@@ -138,6 +146,7 @@ HTML = f"""<!doctype html><html><head><meta charset=utf-8>
   .pknob{{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}}
   .pknob .cap{{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}}
   .pknob .spec{{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen}}
+  .pknob-ticks{{position:absolute;pointer-events:none;overflow:visible}}
   .pthumb{{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
     background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}}
   {SEEK_TRACK_CSS}
@@ -224,7 +233,52 @@ const V='{V}';
     // 0.5/init showed the indicator at its baked angle instead of straight up).
     const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
     const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
-    const rend=()=>cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)';rend();
+    // ---- knob tick marks (KNOB_TICKS_ENABLED) — deterministic SVG overlay computed from the
+    // SAME socket centre/radius (cx,cy,w) just derived above for the cap, sharing the SAME
+    // -135..+135 sweep convention as the cap rotation (ZERO-DEG CONVENTION comment above).
+    // Baked-into-the-paint ticks were tried and rejected (0/8 adjudicated PASS — see the
+    // KNOB_TICKS_ENABLED comment in build_player.py); this overlay is exact and free.
+    let tickRend=null;
+    if({str(KNOB_TICKS_ENABLED).lower()}){{
+      const zeroMode=r.zero||'start';           // 'start' (volume) now; 'center' (balance) is one param away
+      const TICK_MULT=1.34, N_MINOR=8;           // box radius = cap radius * TICK_MULT
+      const wB=w*TICK_MULT, hB=wB*PW/PH;
+      const svgNS='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('class','pknob-ticks');
+      svg.setAttribute('viewBox','-1 -1 2 2'); svg.setAttribute('preserveAspectRatio','none');
+      svg.style.left=(cx-wB/2)*100+'%'; svg.style.top=((cy-hB/2)/DF)*100+'%';
+      svg.style.width=wB*100+'%'; svg.style.height=(hB/DF)*100+'%';
+      const capLocal=1/TICK_MULT;                 // cap edge, in this SVG's own unit-circle radius
+      const rIn=capLocal*1.04, rOutMinor=0.90, rOutMajor=0.99;   // ticks start JUST OUTSIDE the cap
+      const tickCol=({SPEC_ACCENT_JS})||'#e8ecf5';   // director css.accent wins; else a neutral engraved tone
+      const mk=(x1,y1,x2,y2,w)=>{{ const ln=document.createElementNS(svgNS,'line');
+        ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+        ln.setAttribute('stroke',tickCol); ln.setAttribute('stroke-width',w); ln.setAttribute('stroke-linecap','round');
+        return ln; }};
+      const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
+      const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
+      hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
+      const midIdx=Math.round((N_MINOR+2)/2);
+      for(let i=0;i<=N_MINOR+2;i++){{
+        const t=i/(N_MINOR+2);                       // 0..1 across the sweep
+        const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
+        const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
+        const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
+        const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
+        shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+        hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+      }}
+      svg.appendChild(shadow); svg.appendChild(hi);
+      // subtle current-position indicator — a short needle tracking `val`, independent of the
+      // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at all)
+      const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
+      tickRend=(v)=>{{ const deg=-135+v*270, rad=deg*Math.PI/180;
+        needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
+        needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); }};
+      tickRend(val);
+      phone.appendChild(svg);
+    }}
+    const rend=()=>{{cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)'; if(tickRend)tickRend(val);}};rend();
     el.addEventListener('pointerdown',e=>{{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();}});
     el.addEventListener('pointermove',e=>{{if(drag){{val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));rend();}}}});
     addEventListener('pointerup',()=>drag=false);
