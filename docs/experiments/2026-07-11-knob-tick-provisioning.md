@@ -95,6 +95,10 @@ with image output) ≈ **$1.90**; 8 SOTA-eye calls ≈ **$0.16**. Total ≈ **$2
   `genskin.py`. Experiment code + record committed in this change (see commit for SHA).
 - `docs/design/2026-07-11-semantic-emissive-research.md` §4's "image-model self-report is
   circular" hypothesis is now empirically CONFIRMED (echo behavior observed live).
+- **Superseded same-day by the human-overrule axis-separated re-score** (see that section
+  below) — the 0/8 full-contract number stands as "not ship-ready as prompted," but tick
+  DRAWING quality itself is re-scored 6/7 present-and-coherent, 5/7 shape-distinct. Rehab is
+  now recommended (light clause, director-gated), not abandoned.
 
 ## Recommendation
 
@@ -107,3 +111,103 @@ knobs), themed via the director's existing `css` schema colours (`css.track`/`cs
 a `mix-blend-mode` (multiply/overlay) pass so ticks read as engraved rather than stickered.
 Rotation metadata then needs no model at all — it's authored, exact, and identical across
 every skin.
+
+**Shipped same-day as the fallback (commit `d2271894`): `KNOB_TICKS_ENABLED` CSS/SVG ticks in
+`build_player.py`.** See the human overrule below — this fallback's framing changes (director
+fallback, not the sole path) but the code itself was correct to ship as a working baseline.
+
+## Human overrule + axis-separated re-score (2026-07-11)
+
+Conner overruled the 0/8 verdict above (verbatim, recorded as human-labeled gold per
+[[human-labeled-data-rule]]):
+
+> "also the baked tik marks are all actually perfect, except maybe the baked text. other than
+> that the ticks look near perfect, unless i am missing something."
+
+He additionally directed (verbatim, folded in below): *"also adding ticks or not should be up
+to the director if it matches the theme. dont overconstrain tick marks style. they look great."*
+
+**Why the 0/8 number was misleading.** `adjudication.json`'s `adjudicated` field was a
+**full-contract AND-gate**: any single defect — text leakage, layout drift, icon-colour bleed,
+*or* weak tick distinctness — failed the whole gen. That's the right bar for "is this
+ship-ready as tested," but it silently buries the question this doc's title actually asks
+("can the model bake tick marks") under three largely unrelated failure modes. Re-scoring the
+same 7 painted gens (no new generations — direct full-res crop re-inspection of the existing
+`paint.png`s, this $0 pass) on **separated axes** — full working data in
+[`axis-rescore.json`](../../tools/mask-align-exp/gen12/knobticks/axis-rescore.json):
+
+| gen | Axis 1 — TICK QUALITY ONLY | Axis 2 — text | Axis 3 — layout | Axis 4 — icon bleed |
+|---|---|---|---|---|
+| fa-pod ticks_ctr s501 | **EXCELLENT** — diamond CENTER@12, tapered minors, distinct longer start/end bars ~8/4 o'clock, no text | none | MAJOR (knob at ~0.45,0.40 vs template 0.42,0.57 — template spot shows a toggle instead) | none |
+| fa-pod ticks_ctr s502 | **EXCELLENT** — diamond CENTER, tapered minors, glowing LED-style end markers (shape-distinct even without the words) | MIN/MAX baked | MAJOR (knob at ~0.64,0.34) | none |
+| fa-pod ticks01 s501 | N/A — no image, 3 attempts | — | — | — |
+| fa-pod ticks01 s502 | **ABSENT** — single diagonal slot, no radial system at all (the one genuine tick-drawing miss) | MAX baked | none (on-template) | none |
+| steam ticks01 s401 | **GOOD** — full ring + L-bracket end-stop at ~4-5 o'clock (confirmed via a wider crop this pass; the earlier "disputed" call came from a 1.9r crop that clipped the bracket) | none | MAJOR (knob at ~0.75,0.68) | none |
+| steam ticks01 s402 | **GOOD** — evenly-spaced ring + confirmed L-bracket end-stop, taller top-of-sweep tick | none | MAJOR (knob at ~0.42-0.55,0.72) | 5 icons tinted to guide keys |
+| steam ticks_ctr s401 | **GOOD, PARTIAL** — diamond CENTER distinct; minor ticks uniform, no shape-distinct start/end (the one real axis-1 shortfall) | none | minor (knob slightly low) | 5 icons tinted to guide keys |
+| steam ticks_ctr s402 | **GOOD, TEXT-DEPENDENT** — clean gear-ring + triangle CENTER pointer, but MIN/MAX/CENTER *words* are the primary differentiator, not shape alone | CENTER/MIN/MAX baked | minor | none |
+
+**Deterministic-detector caveat found this pass:** the harness's own pixel-angle detector
+(`score_knobticks.py::detect_ticks`) crops from the fixed template `knob_center_frac`
+(0.42, 0.57). On **4/7 gens** (fa-pod-ticks_ctr-501/502, steam-ticks01-401/402) that crop
+missed the real knob entirely (layout drift moved it) — those 4 `span_deg` values in
+`scores.json` measure unrelated content (toggles, buttons, screens), not the ticks. Flagged
+per-card in the rebuilt results page rather than silently trusted.
+
+**Ticks-only score: 6/7 painted gens render a coherent, theme-appropriate tick/mark system at
+the socket** (all except fa-pod-ticks01-502). **5/7 have start/end-or-center marks that are
+visually distinct BY SHAPE, independent of any text** (fa-pod-ticks_ctr-501/502,
+steam-ticks01-401/402, steam-ticks_ctr-402); only steam-ticks_ctr-401 has a truly uniform ring
+where shape distinctness fails, and fa-pod-ticks01-502 has no tick arc at all.
+
+**Angle spread (hand-verified clock-position reads from full-res crops this pass, NOT the
+compromised detector spans above):** every tick-bearing gen places its start mark at 7-8
+o'clock (≈ −120° to −150°) and its end mark at 4-5 o'clock (≈ +120° to +150°) against the
+shipped −135°/+135° convention — a spread of roughly **±25° around the target, consistent
+across both themes, both arms, and every seed that produced a tick arc.** The model is not
+guessing angles randomly; it's converging on the intended register.
+
+**Revised verdict:** the user's overrule holds. Tick-*drawing* quality is strong-to-excellent
+on 6/7 and shape-distinct on 5/7, independent of the collateral axes. The prior 0/8 correctly
+flags "not ship-ready as prompted" but was never evidence that the model can't paint good
+ticks — the failures cluster almost entirely in **collateral that has known, separate fixes**:
+
+- **Collateral A (baked text) — PROMPT-FIXABLE.** `tick_clause()` in `gen_knobticks.py`
+  repeats the literal words MIN/START, MAX/END, CENTER/DETENT throughout — the exact
+  negative-prompt backfire already diagnosed and fixed for ON/OFF/I/O tokens (commit
+  `3eeccc55`, "remove literal ON/OFF/I/O tokens from prompt (negative-prompt backfire baked
+  them as text)"). Per Conner's directive above, the rehab clause must be **light**: describe
+  that tick/indicator marks exist around the knob sweep, in the device's own material
+  language, and nothing more — no label vocabulary, no style prescription (style is
+  unconstrained; the 6/7 sample already spans diamonds, LEDs, L-brackets, gear-tooth rings,
+  and all read well).
+- **Collateral B (layout displacement) — a KNOWN, pre-existing baseline failure mode**
+  (blueprint-trial-arm / seed layout drift, tracked separately in this repo's generation-system
+  work), not something the tick clause introduced. 6/7 painted gens show it at some severity,
+  which is roughly in line with the wider gen12 batch's drift rate, not obviously hotter.
+- **Collateral C (guide-colour icon bleed)** — 2/7, same known systemic issue the leak-gate
+  work is already fixing; unrelated to ticks.
+
+**Product decision — baked vs CSS ticks (open, not implemented here):**
+- **Baked (paint-time)** — painterly integration (ticks sit IN the material — backlit,
+  engraved, gear-toothed — reading as part of the object, not an overlay), per-skin unique
+  style with zero extra authoring. Costs: paint-time risk (text/layout collateral above,
+  though independently fixable), no guaranteed presence (fa-pod-ticks01-502 skipped it
+  entirely), and no free machine-readable rotation metadata (the in-call JSON self-report is
+  a verbatim prompt-echo, confirmed unusable this experiment).
+- **CSS (`KNOB_TICKS_ENABLED`, commit `d2271894`)** — deterministic, free, geometrically exact
+  (computed from `regions.json`'s known socket centre/radius), uniform across every skin
+  regardless of paint-time luck. Costs: reads as an overlay rather than a baked material
+  feature; less per-skin visual variety unless themed hard via `css.accent`.
+- **Recommendation, reflecting the user's lean:** pursue **baked ticks, gated by the DIRECTOR
+  per theme** (does ticks fit THIS theme — cross-ref
+  [`gen12/TODO.md`](../../tools/mask-align-exp/gen12/TODO.md) "Let the DIRECTOR decide whether
+  optional pipeline stages are worth running per skin"), with the light rehab clause above,
+  **unconstrained style** (no shape/label prescription). CSS ticks become the *fallback* for
+  skins where the director says ticks-fit-the-theme but the paint roll didn't produce them
+  (mirroring fa-pod-ticks01-502's miss), or stay off entirely on skins whose baked ticks
+  already render. Rehab path: reword the clause, ~2-4 validation gens, ~$1 — well under the
+  original $3 budget.
+
+Revised results page (per-gen axis-1-only badge + collateral breakdown, plus this section's
+banner): `tools/mask-align-exp/gen12/knobticks/index.html` (served).

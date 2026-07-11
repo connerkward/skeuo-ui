@@ -1,0 +1,82 @@
+{
+  "_note": "Human-overrule axis-separated re-score (2026-07-11), per verify-outputs-rule: the original adjudication.json bundled tick-quality with collateral damage into one FAIL-if-any-defect verdict per gen. Conner overruled that bundling: 'the baked tik marks are all actually perfect, except maybe the baked text. other than that the ticks look near perfect, unless i am missing something.' This file separates the 4 axes from direct full-res crop re-inspection this pass (several deterministic knob-crop boxes in scores.json were confirmed OFF-TARGET on gens with layout drift, so their pixel spans measure noise, not the real ticks -- see 'det_crop_on_target' below). Angle readings here are hand-verified clock-position reads against full-res crops, not the noisy detector.",
+  "_axis_legend": {
+    "1_tick_quality": "marks present at socket, visually coherent/themed, start/end (or center) distinguishable BY SHAPE, angular consistency",
+    "2_collateral_text": "MIN/MAX/CENTER or any baked text/label leakage",
+    "3_collateral_layout": "knob/control rendered off its known template socket position",
+    "4_collateral_bleed": "guide-colour icon/button tinting (known baseline failure mode, unrelated to tick clause)"
+  },
+  "fa-pod-ticks_ctr-501": {
+    "det_crop_on_target": false,
+    "axis1_tick_quality": "EXCELLENT",
+    "axis1_notes": "Diamond CENTER mark at 12 o'clock; symmetric tapering minor ticks (dashes shrink toward center, like a real graduated scale); two visibly LONGER/THICKER bars at approx 8 and 4 o'clock reading as distinct START/END marks by shape alone. No text. Reads as engraved/backlit, theme-coherent (glowing teal jelly-pod).",
+    "start_clock": 8, "end_clock": 4, "start_deg_est": -120, "end_deg_est": 120,
+    "axis2_text": false, "axis2_notes": "none visible in any crop around this knob",
+    "axis3_layout": "MAJOR", "axis3_notes": "Real knob rendered near frac (0.45,0.40); the template socket coordinate (0.42,0.57) instead shows an unrelated toggle switch. Confirmed directly this pass (previously flagged 'catastrophic' in adjudication.json, corroborated).",
+    "axis4_bleed": false
+  },
+  "fa-pod-ticks_ctr-502": {
+    "det_crop_on_target": false,
+    "axis1_tick_quality": "EXCELLENT",
+    "axis1_notes": "Diamond CENTER at 12 o'clock (3D bevel); symmetric tapering minor ticks; distinct glowing blue LED-style bar markers at each end (8 and 4 o'clock) -- shape-distinct independent of the MIN/MAX words printed beside them. Strongest visual hierarchy of the 7.",
+    "start_clock": 8, "end_clock": 4, "start_deg_est": -120, "end_deg_est": 120,
+    "axis2_text": true, "axis2_notes": "'MIN' and 'MAX' baked directly under the end markers",
+    "axis3_layout": "MAJOR", "axis3_notes": "Real knob rendered near frac (0.64,0.34) vs template (0.42,0.57).",
+    "axis4_bleed": false
+  },
+  "fa-pod-ticks01-501": {
+    "axis1_tick_quality": "N/A", "axis1_notes": "No image returned on 3 consecutive attempts (seeds 501/1501/2501) -- a generation-reliability failure, not a tick-quality failure.",
+    "axis2_text": null, "axis3_layout": null, "axis4_bleed": null
+  },
+  "fa-pod-ticks01-502": {
+    "det_crop_on_target": true,
+    "axis1_tick_quality": "ABSENT",
+    "axis1_notes": "No radial tick system at all -- a single diagonal indicator slot/groove instead. The one genuine tick-drawing MISS in the sample (not a collateral issue).",
+    "start_clock": null, "end_clock": null,
+    "axis2_text": true, "axis2_notes": "'MAX' baked at the slot's end",
+    "axis3_layout": "none", "axis3_notes": "knob on-template",
+    "axis4_bleed": false
+  },
+  "steam-porthole-ticks01-401": {
+    "det_crop_on_target": false,
+    "axis1_tick_quality": "GOOD",
+    "axis1_notes": "Full engraved tick ring around the socket with a small right-angle (L-bracket-style) end-stop mark visible at roughly 4-5 o'clock, confirmed via a wider full-res crop this pass (the original VLM/adjudicated 'disputed' call was from a 1.9r crop that clipped the bracket). Socket floor is a domed dark/copper surface -- genuinely ambiguous whether it reads as 'empty' at a glance, a real caveat independent of the ticks.",
+    "start_clock": 7, "end_clock": 5, "start_deg_est": -150, "end_deg_est": 150,
+    "axis2_text": false,
+    "axis3_layout": "MAJOR", "axis3_notes": "Real knob/dial found near frac (0.75,0.68) vs template (0.42,0.57).",
+    "axis4_bleed": false
+  },
+  "steam-porthole-ticks01-402": {
+    "det_crop_on_target": false,
+    "axis1_tick_quality": "GOOD",
+    "axis1_notes": "Well-formed evenly-spaced tick ring with a clear L-bracket end-stop mark (confirmed this pass) and a taller top-of-sweep tick; engraved gold, theme-coherent, no text.",
+    "start_clock": 8, "end_clock": 5, "start_deg_est": -135, "end_deg_est": 150,
+    "axis2_text": false,
+    "axis3_layout": "MAJOR", "axis3_notes": "Real knob found near frac (0.42-0.55,0.72) vs template (0.42,0.57) -- vertical displacement.",
+    "axis4_bleed": true, "axis4_notes": "5 button icons tinted to their guide keys (known baseline failure mode)"
+  },
+  "steam-porthole-ticks_ctr-401": {
+    "det_crop_on_target": true,
+    "axis1_tick_quality": "GOOD, PARTIAL",
+    "axis1_notes": "Diamond CENTER mark at 12 o'clock is clearly distinct; but the ring's minor ticks are UNIFORM all the way around -- no shape-distinct START/END marks confirmed on direct re-inspection (matches original VLM+adjudication read). The one gen in the sample where axis-1 genuinely falls short of 'perfect,' independent of any collateral.",
+    "start_clock": 8, "end_clock": 4, "start_deg_est": null, "end_deg_est": null,
+    "axis2_text": false,
+    "axis3_layout": "minor", "axis3_notes": "knob slightly low vs template",
+    "axis4_bleed": true, "axis4_notes": "5 button icons tinted to their guide keys"
+  },
+  "steam-porthole-ticks_ctr-402": {
+    "det_crop_on_target": true,
+    "axis1_tick_quality": "GOOD, TEXT-DEPENDENT",
+    "axis1_notes": "Clean engraved gear-ring with a triangle CENTER pointer (shape-distinct) plus small dash minor ticks; but the primary START/END/CENTER differentiation signal is the printed WORDS ('MIN'/'MAX'/'CENTER'), not an independent shape -- strip the text and the marks alone are weaker than fa-pod-501/502's shape-only hierarchy.",
+    "start_clock": 8, "end_clock": 4, "start_deg_est": -120, "end_deg_est": 120,
+    "axis2_text": true, "axis2_notes": "'CENTER', 'MIN', 'MAX' all baked",
+    "axis3_layout": "minor",
+    "axis4_bleed": false
+  },
+  "_reconciliation": {
+    "ticks_present_and_coherent": "6/7 painted gens (all except fa-pod-ticks01-502)",
+    "ticks_shape_distinct_independent_of_text": "5/7 (fa-pod-ticks_ctr-501, fa-pod-ticks_ctr-502, steam-ticks01-401, steam-ticks01-402, steam-ticks_ctr-402) -- steam-ticks_ctr-401 is the one clean miss on distinctness, fa-pod-ticks01-502 has no ticks at all",
+    "angle_register_across_all_tick_bearing_gens": "start clocks read 7-8 o'clock (-120 to -150deg), end clocks read 4-5 o'clock (+120 to +150deg) against the -135/+135 shipped convention -- spread is roughly +-25deg around the target, consistent across both themes, both arms, and every seed that produced a tick arc",
+    "verdict": "User's overrule holds on direct re-inspection: tick DRAWING quality is strong-to-excellent on 6/7, and shape-distinct on 5/7, independent of the collateral axes. The prior 0/8 adjudicated-PASS number was a full-contract AND gate (any collateral defect = FAIL) that correctly flags the clause isn't SHIP-READY as tested, but it obscured that the failures are concentrated in COLLATERAL (baked text, layout drift, icon bleed) rather than in the tick-drawing capability itself."
+  }
+}

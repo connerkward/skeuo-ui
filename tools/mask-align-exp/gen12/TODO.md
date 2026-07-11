@@ -98,6 +98,14 @@ when this pattern gets built.
 - `DIRECTOR_REVIEW_ENABLED` in `orchestrate12.py` (~L65) — the existing flag this pattern
   generalizes; `director_review.py` — the existing director spec-read surface to reuse
   (`spec_path`/`css`/`lighting` extraction, ~L49-158).
+- **Knob tick-mark provisioning — a second concrete candidate stage (2026-07-11 human
+  overrule + axis-separated re-score):**
+  [`docs/experiments/2026-07-11-knob-tick-provisioning.md`](../../../docs/experiments/2026-07-11-knob-tick-provisioning.md#human-overrule--axis-separated-re-score-2026-07-11).
+  Whether a skin's paint prompt should ask for baked tick marks is exactly a per-theme
+  "does this stage fit this theme" call (matte-clay: maybe not; a gauge/dial-heavy theme:
+  yes) — the same shape as the emissive gate. Tick presence itself becomes the director
+  verdict; `KNOB_TICKS_ENABLED` (CSS/SVG overlay, commit `d2271894`) is the deterministic
+  fallback for a director-says-yes skin whose paint roll didn't produce ticks.
 
 ## Position-mask correlation experiment (2026-07-11) — poscorr/
 

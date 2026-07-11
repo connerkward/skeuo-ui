@@ -73,6 +73,44 @@ bar. Fold into skeuo v2's broader PBR/material work rather than resuming as a st
 emissive task.
 ---
 
+## Knob tick-mark provisioning — rehab, director-gated (2026-07-11, human overrule)
+
+Original experiment ([`docs/experiments/2026-07-11-knob-tick-provisioning.md`](docs/experiments/2026-07-11-knob-tick-provisioning.md))
+scored 0/8 adjudicated PASS on a full-contract AND-gate (any collateral defect = FAIL) and
+shipped `KNOB_TICKS_ENABLED` CSS/SVG ticks the same day as the accepted fallback (commit
+`d2271894`). **Conner overruled the 0/8 read** (verbatim): *"also the baked tik marks are all
+actually perfect, except maybe the baked text. other than that the ticks look near perfect,
+unless i am missing something."* Plus: *"also adding ticks or not should be up to the director
+if it matches the theme. dont overconstrain tick marks style. they look great."*
+
+**$0 axis-separated re-score** (same 7 painted gens, no new generations — direct full-res crop
+re-inspection) confirms the overrule: **6/7 render a coherent, theme-appropriate tick system;
+5/7 are shape-distinct independent of any text**, and the angle register is tight (±25° around
+the shipped −135°/+135° convention across every theme/arm/seed). The 0/8 number was real but
+measured the wrong thing when read as "can the model paint good ticks" — see
+[`docs/experiments/2026-07-11-knob-tick-provisioning.md#human-overrule--axis-separated-re-score-2026-07-11`](docs/experiments/2026-07-11-knob-tick-provisioning.md#human-overrule--axis-separated-re-score-2026-07-11)
+for the full per-gen axis table (tick quality / baked-text / layout-drift / icon-bleed, scored
+separately).
+
+**Next step (not yet implemented):**
+1. **Tick presence becomes a per-theme DIRECTOR decision**, not a global flag — the same shape
+   as [`tools/mask-align-exp/gen12/TODO.md`](tools/mask-align-exp/gen12/TODO.md)'s "Let the
+   DIRECTOR decide whether optional pipeline stages are worth running per skin." A gauge/dial
+   theme says yes; a theme with no natural tick-scale motif says no.
+2. **Reword `gen_knobticks.py`'s `tick_clause()` LIGHT** before it graduates to `genskin.py`:
+   describe that tick/indicator marks exist around the knob sweep, in the device's own
+   material language — nothing more. No MIN/START/MAX/END/CENTER/DETENT vocabulary (that's
+   what baked the words as literal text — the same negative-prompt backfire as the ON/OFF fix,
+   commit `3eeccc55`), no style prescription (unconstrained — the sample already spans
+   diamonds, LEDs, L-brackets, gear-teeth, and all read well).
+3. **Validate the reworded clause** — ~2-4 gens, ~$1, same scoring harness
+   (`tools/mask-align-exp/gen12/knobticks/score_knobticks.py`), checking specifically that text
+   contamination drops without regressing tick quality.
+4. **`KNOB_TICKS_ENABLED` (CSS/SVG, `build_player.py`) reframed as the fallback** — used when
+   the director says a theme wants ticks but the paint roll didn't produce them (mirrors
+   fa-pod-ticks01-502's miss), or left off where baked ticks already render on a skin. Not
+   implemented as a fallback-selection mechanism yet — currently a bare global flag.
+
 ## GENERATION SYSTEM — full revamp / nuke from the ground up (2026-06-27) — #1, BRAIN WORK
 
 User directive 2026-06-27: *"complete revamp / nuke of the entire generation system from the

@@ -10,6 +10,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 scores = json.load(open(os.path.join(HERE, "scores.json")))
 adj = {k: v for k, v in json.load(open(os.path.join(HERE, "adjudication.json"))).items()
        if not k.startswith("_")}
+axis_raw = json.load(open(os.path.join(HERE, "axis-rescore.json")))
+axis = {k: v for k, v in axis_raw.items() if not k.startswith("_")}
+recon = axis_raw["_reconciliation"]
 # fold in the no-image generation failure as a scored row (it consumed attempts and is a datapoint)
 if not any(s["tag"] == "fa-pod-ticks01-501" for s in scores):
     scores.append({"tag": "fa-pod-ticks01-501", "theme": "fa-pod", "arm": "ticks01", "seed": 501,
@@ -52,6 +55,14 @@ for arm, items in by_arm.items():
         mj = r.get("model_json_parsed")
         ec = r.get("expected_convention", {})
         a = adj.get(r["tag"], {})
+        ax = axis.get(r["tag"], {})
+        t1 = ax.get("axis1_tick_quality")
+        axis1_cls = "pass" if t1 in ("EXCELLENT", "GOOD") else ("unparsed" if t1 else ("fail" if t1 == "ABSENT" else "unparsed"))
+        axis_html = (
+            f'<div class="axisrow"><b>axis-1 TICKS ONLY</b>: <span class="verdict {axis1_cls}">{esc(t1 or "n/a")}</span> {esc(ax.get("axis1_notes",""))}</div>'
+            f'<div class="axisrow"><b>collateral</b>: '
+            f'text={esc(ax.get("axis2_text"))} &middot; layout={esc(ax.get("axis3_layout"))} &middot; icon-bleed={esc(ax.get("axis4_bleed"))}</div>'
+            if ax else '')
         adj_v = a.get("adjudicated", "?")
         adj_cls = "pass" if str(adj_v).startswith("PASS") else "fail"
         verdict_cls = "pass" if r["verdict"] == "RELIABLE" else ("fail" if r["verdict"] == "UNRELIABLE" else "unparsed")
@@ -73,8 +84,10 @@ for arm, items in by_arm.items():
           <div class="imgs">{imgs_html}
           </div>
           <div class="meta">
+            {axis_html}
             <div class="adjnote"><b>adjudication</b>: {esc(a.get("evidence", "n/a"))}</div>
-            <div><b>deterministic ring</b>: r-factor={esc(det.get("ring_radius_factor"))} peaks={esc(det.get("n_peaks"))} span={esc(det.get("span_deg"))}deg</div>
+            <div><b>deterministic ring</b>: r-factor={esc(det.get("ring_radius_factor"))} peaks={esc(det.get("n_peaks"))} span={esc(det.get("span_deg"))}deg
+              {' <b style="color:#f0c860">(crop OFF-TARGET -- span measures unrelated content, not the ticks)</b>' if ax.get("det_crop_on_target") is False else ''}</div>
             <div><b>expected</b>: start={esc(ec.get("start_deg"))} end={esc(ec.get("end_deg"))} zero={esc(ec.get("zero"))}</div>
             <div><b>text part returned</b>: {esc(r.get("text_part_returned"))} &nbsp; <b>JSON parsed</b>: {esc(bool(mj))}</div>
             <div><b>model self-report JSON</b>: <code>{esc(json.dumps(mj) if mj else "none")}</code></div>
@@ -85,7 +98,8 @@ for arm, items in by_arm.items():
         </div>''')
     cards.append('</div>')
 
-page = f'''<title>knobticks — baked tick-mark provisioning experiment</title>
+page = f'''<meta charset="utf-8">
+<title>knobticks — baked tick-mark provisioning experiment</title>
 <style>
 :root {{ color-scheme: light dark; }}
 * {{ box-sizing: border-box; }}
@@ -119,16 +133,38 @@ h2 {{ font-size: 1.1rem; margin: 2rem 0 .6rem; display: flex; gap: .6rem; align-
 .adjnote {{ background: rgba(255,170,60,.10); border-left: 3px solid #d99036; padding: .35rem .5rem;
             border-radius: 4px; }}
 .noimg {{ padding: 2rem 1rem; border: 1px dashed #666; border-radius: 8px; opacity: .8; font-size: .85rem; }}
+.axisrow {{ font-size: .78rem; }}
+.revised {{ background: rgba(90,180,120,.10); border-color: #3f7a54; margin-top: 1rem; }}
 </style>
 <h1>knobticks — can the paint model bake tick-mark provisioning + self-report metadata?</h1>
 <div class="banner">
   <div><b>generator</b>: <code>{esc(GEN_MODEL)}</code></div>
   <div><b>eye</b>: <code>{esc(EYE_MODEL)}</code></div>
   <div><b>cost</b>: {N} gens x ~${COST_PER_GEN:.2f} = ~${gen_cost:.2f} generation + {N} VLM calls x ~${VLM_COST_PER_CALL:.2f} = ~${vlm_cost:.2f} scoring &nbsp;=&nbsp; <b>~${total_cost:.2f} total</b></div>
-  <div><b>overall</b>: VLM witness {rel}/{N} RELIABLE &middot; <b>adjudicated {adj_rel}/{N} PASS</b> &middot;
+  <div><b>overall (full-contract, any collateral defect = FAIL)</b>: VLM witness {rel}/{N} RELIABLE &middot; <b>adjudicated {adj_rel}/{N} PASS</b> &middot;
        text part returned {json_returned}/{N} &middot; JSON parsed {json_parsed}/{N} &middot;
        JSON-vs-pixel agreement {json_agree}/{max(1,json_parsed)} &middot;
        all 4 parsed JSONs echo the prompt's example values (-135/+135) verbatim — no evidence of measurement</div>
+</div>
+<div class="banner revised">
+  <div><b>CONCLUSION — human overrule + axis-separated re-score (2026-07-11)</b></div>
+  <div style="margin-top:.4rem">Conner (verbatim): <i>"also the baked tik marks are all actually perfect, except maybe the baked text.
+  other than that the ticks look near perfect, unless i am missing something."</i> Direct full-res re-inspection of all 7 painted
+  gens (crop-by-crop, this pass) confirms the overrule: the original 0/8 was a full-contract AND-gate where ANY collateral
+  defect failed the gen, which buried tick-drawing quality under unrelated failure modes.</div>
+  <div style="margin-top:.4rem"><b>ticks present &amp; theme-coherent</b>: {esc(recon["ticks_present_and_coherent"])} &middot;
+  <b>shape-distinct start/end/center independent of text</b>: {esc(recon["ticks_shape_distinct_independent_of_text"])}</div>
+  <div style="margin-top:.4rem"><b>angle register</b>: {esc(recon["angle_register_across_all_tick_bearing_gens"])}</div>
+  <div style="margin-top:.4rem">{esc(recon["verdict"])}</div>
+  <div style="margin-top:.4rem"><b>revised recommendation</b>: baked ticks, gated by the <b>director</b> per theme (not a
+  global on/off — cross-ref <code>gen12/TODO.md</code> "Let the DIRECTOR decide whether optional pipeline stages are worth
+  running per skin"), with a <b>light</b> rehab clause ("tick/indicator marks exist around the knob sweep, in the device's
+  own material language" — no MIN/MAX/CENTER vocabulary, no style prescription, since naming those words is what baked them
+  as literal text — same negative-prompt backfire as the ON/OFF fix, commit 3eeccc55). Est. ~2-4 validation gens, ~$1.
+  CSS ticks (<code>KNOB_TICKS_ENABLED</code>, commit d2271894) become the fallback for director-says-ticks-but-paint-lacks-them,
+  or stay off where baked ticks already exist on a skin.</div>
+  <div style="margin-top:.4rem;opacity:.75">Full per-gen axis table: see <code>docs/experiments/2026-07-11-knob-tick-provisioning.md</code>
+  &amp; <code>axis-rescore.json</code>. Per-card axis-1-only badge and collateral breakdown below.</div>
 </div>
 {''.join(cards)}
 '''
