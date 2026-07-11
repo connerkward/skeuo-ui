@@ -1,0 +1,23 @@
+{
+  "tag": "wc-goldshield-control-121",
+  "theme": "wc-goldshield",
+  "arm": "control",
+  "seed": 121,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "(1) BAKED TEXT \u2014 There is no baked-in text in the sense of functional labels. The skin features decorative runic-style glyphs carved into the outer edges of the shield, but these are part of the theme and not readable labels like \"PLAY\" or \"VOLUME\".\n\n(2) LAYOUT ADHERENCE \u2014 The layout fails adherence because two controls are missing their interactive components. The positions for the volume knob and shuffle toggle are present as empty recesses (a circular hole and a vertical slot, respectively), but the knob and the switch that should be inside them were not generated. All other controls are present and arranged in a sensible, non-overlapping media player layout.\n\n(3) GUIDE-COLOUR RESIDUE \u2014 There is no guide-colour residue visible anywhere on the skin. All controls and regions are cleanly painted.\n\n(4) OVERALL QUALITY \u2014 EXCELLENT. The skin is a stunning realization of the \"goldshield\" theme. The textures of the brushed and polished gold, the detailed lion sculpt, the gem inlays, and the runic carvings are all executed to a very high standard. Despite the missing components, the object that was rendered is highly detailed, thematically consistent, and a convincing piece of skeuomorphic design.\n\nVERDICT: FAIL",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "ts": "2026-07-11T15:26:12"
+}

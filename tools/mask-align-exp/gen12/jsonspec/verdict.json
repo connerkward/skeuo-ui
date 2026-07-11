@@ -1,0 +1,116 @@
+{
+ "question": "does delivering the per-control blueprint spec as a fenced JSON block (vs the production prose prompt) change PAINT-generation quality/adherence? (structured-INPUT for generation; the imgjson experiment only tested it for extraction)",
+ "design": "2 themes x 2 seeds x 2 arms = 8 gens, SAME blueprint image both arms (byte-identical copy), prompt encoding is the only variable. CONTROL = verbatim production prompt captured by importing genskin.py's own builder; TREAT = same semantic content, per-control spec as fenced ```json``` with prose narrative clauses around it.",
+ "pairs": [
+  {
+   "theme": "wc-goldshield",
+   "seed": 121,
+   "gate": {
+    "control": false,
+    "treat": true,
+    "control_reasons": [
+     "emptiness"
+    ],
+    "treat_reasons": []
+   },
+   "mean_bleed_pct": {
+    "control": 1.4488,
+    "treat": 0.1294
+   },
+   "mean_drift_px": {
+    "control": 467.7,
+    "treat": 877.3
+   }
+  },
+  {
+   "theme": "wc-goldshield",
+   "seed": 134,
+   "gate": {
+    "control": false,
+    "treat": false,
+    "control_reasons": [
+     "emptiness"
+    ],
+    "treat_reasons": [
+     "region-misplaced:visualizer",
+     "emptiness"
+    ]
+   },
+   "mean_bleed_pct": {
+    "control": 7.5259,
+    "treat": 2.3984
+   },
+   "mean_drift_px": {
+    "control": 565.1,
+    "treat": 576.2
+   }
+  },
+  {
+   "theme": "fa-pod",
+   "seed": 121,
+   "gate": {
+    "control": true,
+    "treat": true,
+    "control_reasons": [],
+    "treat_reasons": []
+   },
+   "mean_bleed_pct": {
+    "control": 3.9323,
+    "treat": 0.0
+   },
+   "mean_drift_px": {
+    "control": 734.4,
+    "treat": 466.0
+   }
+  },
+  {
+   "theme": "fa-pod",
+   "seed": 134,
+   "gate": {
+    "control": true,
+    "treat": true,
+    "control_reasons": [],
+    "treat_reasons": []
+   },
+   "mean_bleed_pct": {
+    "control": 7.2374,
+    "treat": 3.7202
+   },
+   "mean_drift_px": {
+    "control": 992.8,
+    "treat": 645.5
+   }
+  }
+ ],
+ "aggregates": {
+  "gate_pass": {
+   "control": 2,
+   "treat": 3,
+   "of": 4
+  },
+  "bleed_lower_in_treat_pairs": 4,
+  "drift_lower_in_treat_pairs": 2,
+  "mean_bleed": {
+   "control": 5.036,
+   "treat": 1.562
+  },
+  "mean_drift": {
+   "control": 690.0,
+   "treat": 641.2
+  }
+ },
+ "adjudication_notes": [
+  "SOTA-eye returned FAIL on all 8, but its dominant FAIL reason ('vol/seek/shuffle parts missing from device, sitting on a strip below') is a FALSE FLAG on the before-assembly design (empty cavities + sprite strip ARE the spec); the eye prompt failed to state that. Only its residue/baked-text/rearrangement claims were adjudicated.",
+  "CONFIRMED by pixels+eye: wc-control-134 and fa-pod-control-134 painted ALL 5 buttons in their exact guide hues (+ wc's shuffle slot flooded VIOLET-PURPLE); fa-pod-control-121 flooded repeat(ORANGE)/queue(YELLOW) + a PURE GREEN stripe. fa-pod-treat-134's buttons also echo guide hues (red/pink/orange/yellow vs an aqua/silver palette) despite the VLM calling them 'intended design' \u2014 the 3.72% metric and the theme palette (no warm colours) overrule it.",
+  "OVERRULED: fa-pod-treat-134 'next button absent' \u2014 the painted next exists (top-right, ff icon); the empty-recess crop came from a MISPLACED mask blob (detection followed the mask; next drift 1221px). A mask-alignment defect, not a missing control.",
+  "OVERRULED: fa-pod-treat-121 'shuffle cutout missing' \u2014 the slot is present and correctly empty (crop verified).",
+  "Observed by eye, missed by both gate and VLM: wc-treat-121 has a thumb BAKED into the seek groove (empty-cavity violation; the emptiness gate's bright-threshold missed it) and rune-like glyphs on its strip shuffle states.",
+  "bleed_ring metric caveat (known from twoimg): wc 'queue' false-positives on the gold body hue vs its YELLOW guide key; same-theme cross-arm deltas are the usable signal."
+ ],
+ "conclusion": "NEUTRAL-TO-MILDLY-HELPFUL, not a fix. The fenced-JSON encoding did not hurt anything measured, and directionally improved the two residue axes: guide-hue bleed was lower in the treatment in 4/4 paired gens (mean 5.04% -> 1.56%; a 4/4 sign at n=4 is p=0.0625 one-sided \u2014 directional, not significant), and the extract12 gate passed 3/4 treat vs 2/4 control (both control FAILs were emptiness; one treat FAIL was region-misplaced+emptiness). It does NOT fix the two dominant paint defects: layout drift is equally bad in both arms (mean 690px control vs 641px treat on a ~2300px canvas \u2014 both treat the locked template as a suggestion), and guide-hue button echo still occurred in a treat gen (fa-pod-treat-134). Encoding the spec as JSON does not make the image model obey it; the JSON block mainly seems to reduce how often the guide COLOUR words get painted as pigment. Recommendation: do not adopt as a fix; if adopted at all, it is safe (no observed cost) \u2014 but the layout-adherence and colour-echo levers remain key selection, icon-no-echo clauses, and mask-column decoupling, not prompt encoding. n=4 pairs; single roll per cell.",
+ "spend": "8 paint gens x ~$0.24 (Vertex 4K) = $1.92 + bonus probe ~$0.05 (text-out only) + 11 VLM calls x ~$0.02 = ~$0.22; total ~= $2.2 (one 429'd gen retried, not billed)",
+ "models": {
+  "paint": "gemini-3-pro-image-preview (Vertex AI, global, 4K, 5:4, seeded)",
+  "sota_eye": "google/gemini-2.5-pro via fal openrouter/router/vision (reasoning:true)"
+ }
+}

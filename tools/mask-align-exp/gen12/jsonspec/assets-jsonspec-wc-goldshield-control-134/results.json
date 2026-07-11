@@ -1,0 +1,218 @@
+{
+ "id": "jsonspec-wc-goldshield-control-134",
+ "mode": "templated",
+ "seed": 134,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "gold": [
+   210,
+   168,
+   66
+  ],
+  "deep_gold": [
+   150,
+   112,
+   40
+  ],
+  "royal_blue": [
+   46,
+   86,
+   190
+  ],
+  "gem_blue": [
+   60,
+   140,
+   220
+  ],
+  "iron_dark": [
+   56,
+   52,
+   58
+  ],
+  "parchment": [
+   224,
+   208,
+   168
+  ]
+ },
+ "keys": {
+  "playpause": [
+   255,
+   0,
+   255
+  ],
+  "prev": [
+   0,
+   255,
+   0
+  ],
+  "next": [
+   255,
+   0,
+   128
+  ],
+  "repeat": [
+   0,
+   255,
+   128
+  ],
+  "queue": [
+   255,
+   0,
+   0
+  ],
+  "vol": [
+   128,
+   255,
+   255
+  ],
+  "seek": [
+   128,
+   255,
+   0
+  ],
+  "shuffle": [
+   128,
+   0,
+   255
+  ],
+  "visualizer": [
+   0,
+   255,
+   255
+  ],
+  "album_art": [
+   255,
+   128,
+   255
+  ]
+ },
+ "keyNames": {
+  "playpause": "MAGENTA",
+  "prev": "PURE GREEN",
+  "next": "ROSE PINK",
+  "repeat": "SPRING GREEN",
+  "queue": "PURE RED",
+  "vol": "PALE AQUA",
+  "seek": "CHARTREUSE",
+  "shuffle": "VIOLET-PURPLE",
+  "visualizer": "CYAN",
+  "album_art": "ORCHID"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "glowing gems and enchanted rune engravings in the gold",
+  "emissive_color": "auto",
+  "pulse": "ember",
+  "intensity": 0.9,
+  "viz_emissive": true,
+  "beat_couple": 0.06
+ },
+ "template": {
+  "album_art": [
+   0.5,
+   0.11249999999999999
+  ],
+  "visualizer": [
+   0.5,
+   0.25125000000000003
+  ],
+  "seek": [
+   0.5,
+   0.3525
+  ],
+  "prev": [
+   0.28,
+   0.44999999999999996
+  ],
+  "playpause": [
+   0.5,
+   0.44999999999999996
+  ],
+  "next": [
+   0.72,
+   0.44999999999999996
+  ],
+  "repeat": [
+   0.24,
+   0.5625
+  ],
+  "vol": [
+   0.42,
+   0.5700000000000001
+  ],
+  "shuffle": [
+   0.6,
+   0.5700000000000001
+  ],
+  "queue": [
+   0.78,
+   0.5625
+  ]
+ },
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 134,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "album_art_rect": [
+  0.26666666666666666,
+  0.03437499999999999,
+  0.4666666666666667,
+  0.15625
+ ],
+ "visualizer_rect": [
+  0.23333333333333334,
+  0.21062500000000003,
+  0.5333333333333333,
+  0.08125
+ ],
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 1.9e-05
+}

@@ -1,0 +1,22 @@
+{
+  "tag": "fa-pod-control-134",
+  "theme": "fa-pod",
+  "arm": "control",
+  "seed": 134,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "(1) BAKED TEXT \u2014 There is no baked text, numbers, or labels on the device.\n\n(2) LAYOUT ADHERENCE \u2014 The layout is coherent and functional. All specified controls are present: playpause, prev, next, repeat, and queue buttons are clustered together; a volume knob recess, seek slider track, and shuffle toggle track are logically placed; and display regions for a visualizer and album art are present. No controls are missing, duplicated, or overlapping.\n\n(3) GUIDE-COLOUR RESIDUE \u2014 There is significant guide-colour residue. The five main transport buttons have been rendered entirely in their respective guide colours, rather than the colours being removed. The `playpause` button is red (guide=PURE RED), the `prev` button is pink (guide=ROSE PINK), the `next` button is magenta (guide=MAGENTA), the `repeat` button is orange (guide=ORANGE), and the `queue` button is yellow (guide=YELLOW). This is a failure to remove the guide colours, which have instead been used as the primary material colour, effectively flooding the controls.\n\n(4) OVERALL QUALITY \u2014 EXCELLENT. Disregarding the guide-colour issue, the skin is exceptionally well-rendered. It features a highly detailed and cohesive aqua/gel skeuomorphic theme, with convincing textures (brushed metal, glossy plastic, water droplets) and realistic lighting and reflections.\n\nVERDICT: FAIL",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "ts": "2026-07-11T15:33:02"
+}

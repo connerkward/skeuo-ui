@@ -1,0 +1,403 @@
+{
+ "wc-goldshield-control-121": {
+  "theme": "wc-goldshield",
+  "arm": "control",
+  "seed": 121,
+  "leak_pct": 0.0262,
+  "empty_ok": false,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.038,
+  "region_misplaced": [],
+  "gate_pass": false,
+  "reasons": [
+   "emptiness"
+  ],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": null,
+  "bleed_ring_pct": {
+   "playpause": 0.0,
+   "prev": 0.0,
+   "next": 0.0,
+   "repeat": 0.0,
+   "queue": 14.4541,
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 0.0342,
+   "visualizer": 0.0,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "queue",
+   "pct": 14.4541
+  },
+  "mean_bleed_pct": 1.4488,
+  "drift_px": {
+   "album_art": 253.1,
+   "visualizer": 236.0,
+   "seek": 962.1,
+   "prev": 202.5,
+   "playpause": 761.0,
+   "next": 515.9,
+   "repeat": 519.6,
+   "vol": 413.2,
+   "shuffle": 370.4,
+   "queue": 443.5
+  },
+  "mean_drift_px": 467.7
+ },
+ "wc-goldshield-treat-121": {
+  "theme": "wc-goldshield",
+  "arm": "treat",
+  "seed": 121,
+  "leak_pct": 0.0595,
+  "empty_ok": true,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.04,
+  "region_misplaced": [],
+  "gate_pass": true,
+  "reasons": [],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": 14747,
+  "bleed_ring_pct": {
+   "playpause": 0.0,
+   "prev": 0.0,
+   "next": 0.0,
+   "repeat": 0.0,
+   "queue": 1.2938,
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 0.0,
+   "visualizer": 0.0,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "queue",
+   "pct": 1.2938
+  },
+  "mean_bleed_pct": 0.1294,
+  "drift_px": {
+   "album_art": 1705.5,
+   "visualizer": 684.5,
+   "seek": 217.4,
+   "prev": 873.5,
+   "playpause": 1017.3,
+   "next": 928.9,
+   "repeat": 466.5,
+   "vol": 960.9,
+   "shuffle": 607.6,
+   "queue": 1311.2
+  },
+  "mean_drift_px": 877.3
+ },
+ "wc-goldshield-control-134": {
+  "theme": "wc-goldshield",
+  "arm": "control",
+  "seed": 134,
+  "leak_pct": 0.0019,
+  "empty_ok": false,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.04,
+  "region_misplaced": [],
+  "gate_pass": false,
+  "reasons": [
+   "emptiness"
+  ],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": null,
+  "bleed_ring_pct": {
+   "playpause": 0.0,
+   "prev": 13.9027,
+   "next": 10.3152,
+   "repeat": 0.0,
+   "queue": 20.2771,
+   "vol": 12.9983,
+   "seek": 2.5432,
+   "shuffle": 12.7756,
+   "visualizer": 2.4468,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "queue",
+   "pct": 20.2771
+  },
+  "mean_bleed_pct": 7.5259,
+  "drift_px": {
+   "album_art": 532.5,
+   "visualizer": 707.0,
+   "seek": 645.5,
+   "prev": 577.5,
+   "playpause": 996.1,
+   "next": 1135.3,
+   "repeat": 0.0,
+   "vol": 418.2,
+   "shuffle": 435.7,
+   "queue": 202.8
+  },
+  "mean_drift_px": 565.1
+ },
+ "wc-goldshield-treat-134": {
+  "theme": "wc-goldshield",
+  "arm": "treat",
+  "seed": 134,
+  "leak_pct": 0.044,
+  "empty_ok": false,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.039,
+  "region_misplaced": [
+   "region-misplaced:visualizer"
+  ],
+  "gate_pass": false,
+  "reasons": [
+   "region-misplaced:visualizer",
+   "emptiness"
+  ],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": 14747,
+  "bleed_ring_pct": {
+   "playpause": 0.0,
+   "prev": 0.0,
+   "next": 0.0,
+   "repeat": 0.0,
+   "queue": 23.984,
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 0.0,
+   "visualizer": 0.0,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "queue",
+   "pct": 23.984
+  },
+  "mean_bleed_pct": 2.3984,
+  "drift_px": {
+   "album_art": 438.0,
+   "visualizer": 727.2,
+   "seek": 1215.5,
+   "prev": 790.2,
+   "playpause": 269.1,
+   "next": 527.8,
+   "repeat": 437.7,
+   "vol": 532.9,
+   "shuffle": 402.1,
+   "queue": 421.1
+  },
+  "mean_drift_px": 576.2
+ },
+ "fa-pod-control-121": {
+  "theme": "fa-pod",
+  "arm": "control",
+  "seed": 121,
+  "leak_pct": 0.1536,
+  "empty_ok": true,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.039,
+  "region_misplaced": [],
+  "gate_pass": true,
+  "reasons": [],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": null,
+  "bleed_ring_pct": {
+   "playpause": 0.0,
+   "prev": 0.0,
+   "next": 0.0,
+   "repeat": 20.3491,
+   "queue": 18.974,
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 0.0,
+   "visualizer": 0.0,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "repeat",
+   "pct": 20.3491
+  },
+  "mean_bleed_pct": 3.9323,
+  "drift_px": {
+   "album_art": 1960.8,
+   "visualizer": 408.1,
+   "seek": 69.6,
+   "prev": 224.6,
+   "playpause": 77.0,
+   "next": 934.6,
+   "repeat": 1043.9,
+   "vol": 1396.6,
+   "shuffle": 753.9,
+   "queue": 475.4
+  },
+  "mean_drift_px": 734.4
+ },
+ "fa-pod-treat-121": {
+  "theme": "fa-pod",
+  "arm": "treat",
+  "seed": 121,
+  "leak_pct": 0,
+  "empty_ok": true,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.037,
+  "region_misplaced": [],
+  "gate_pass": true,
+  "reasons": [],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": 15011,
+  "bleed_ring_pct": {
+   "playpause": 0.0,
+   "prev": 0.0,
+   "next": 0.0,
+   "repeat": 0.0,
+   "queue": 0.0,
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 0.0,
+   "visualizer": 0.0,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "playpause",
+   "pct": 0.0
+  },
+  "mean_bleed_pct": 0.0,
+  "drift_px": {
+   "album_art": 626.0,
+   "visualizer": 389.5,
+   "seek": 1135.5,
+   "prev": 903.8,
+   "playpause": 65.4,
+   "next": 128.9,
+   "repeat": 192.3,
+   "vol": 500.5,
+   "shuffle": 429.7,
+   "queue": 288.7
+  },
+  "mean_drift_px": 466.0
+ },
+ "fa-pod-control-134": {
+  "theme": "fa-pod",
+  "arm": "control",
+  "seed": 134,
+  "leak_pct": 0.1445,
+  "empty_ok": true,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.039,
+  "region_misplaced": [],
+  "gate_pass": true,
+  "reasons": [],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": null,
+  "bleed_ring_pct": {
+   "playpause": 17.1521,
+   "prev": 16.7333,
+   "next": 20.1688,
+   "repeat": 18.3196,
+   "queue": 0.0,
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 0.0,
+   "visualizer": 0.0005,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "next",
+   "pct": 20.1688
+  },
+  "mean_bleed_pct": 7.2374,
+  "drift_px": {
+   "album_art": 1989.8,
+   "visualizer": 1492.3,
+   "seek": 349.2,
+   "prev": 1154.8,
+   "playpause": 1267.7,
+   "next": 1142.8,
+   "repeat": 1100.7,
+   "vol": 687.7,
+   "shuffle": 519.4,
+   "queue": 223.1
+  },
+  "mean_drift_px": 992.8
+ },
+ "fa-pod-treat-134": {
+  "theme": "fa-pod",
+  "arm": "treat",
+  "seed": 134,
+  "leak_pct": 0.1526,
+  "empty_ok": true,
+  "controls": 10,
+  "controls_total": 10,
+  "missing": [],
+  "seek_cov": 1.038,
+  "region_misplaced": [],
+  "gate_pass": true,
+  "reasons": [],
+  "dims": [
+   4608,
+   3712
+  ],
+  "prompt_len": 15011,
+  "bleed_ring_pct": {
+   "playpause": 5.2053,
+   "prev": 14.7872,
+   "next": 0.0,
+   "repeat": 17.2098,
+   "queue": 0.0,
+   "vol": 0.0,
+   "seek": 0.0,
+   "shuffle": 0.0,
+   "visualizer": 0.0,
+   "album_art": 0.0
+  },
+  "bleed_ring_worst": {
+   "control": "repeat",
+   "pct": 17.2098
+  },
+  "mean_bleed_pct": 3.7202,
+  "drift_px": {
+   "album_art": 516.8,
+   "visualizer": 320.5,
+   "seek": 1127.5,
+   "prev": 318.5,
+   "playpause": 313.4,
+   "next": 1221.3,
+   "repeat": 378.6,
+   "vol": 281.1,
+   "shuffle": 347.2,
+   "queue": 1630.0
+  },
+  "mean_drift_px": 645.5
+ }
+}

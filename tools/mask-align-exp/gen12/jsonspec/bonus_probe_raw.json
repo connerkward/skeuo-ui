@@ -1,0 +1,77 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "**Locating Player Controls**\n\nI am currently focused on precisely identifying the bounding boxes for the 'playpause' and 'prev' controls on the media player interface, as these are central to the playback functionality.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Pinpointing Interface Elements**\n\nMy current focus is on meticulously defining the regions for the 'playpause', 'prev', and 'next' control buttons, which are essential for user interaction with the playback functions.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Defining Control Areas**\n\nMy current task involves precisely delineating the bounding boxes for all ten interactive elements and display regions of the media player interface, ensuring accurate placement for each functional component.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Identifying Control Locations**\n\nMy current focus is on precisely defining the bounding boxes for all ten interactive elements and display regions within the media player interface, ensuring accurate placement for each functional component.\n\n**Mapping Control Areas**\n\nI am now meticulously defining the bounding boxes for the 'album_art', 'visualizer', 'seek' slot, 'playpause', 'prev', 'next', and 'repeat' controls on the media player skin.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Refining Control Coordinates**\n\nI'm continuing to refine the bounding box coordinates for the ten identified media player controls, focusing on precise localization within the interface's main panel regions.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Refining Control Locations**\n\nI'm continuing to refine the bounding box coordinates for the ten identified media player controls, focusing on precise localization within the interface's main panel regions. The task now involves ensuring accuracy for all interactive elements.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Finalizing Control Locations**\n\nI have now precisely identified and normalized the bounding box coordinates for all ten media player controls, ensuring accurate placement within the interface's main panel regions.\n\n",
+            "thought": true
+          },
+          {
+            "text": "```json\n[\n  {\"box_",
+            "thoughtSignature": "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"
+          },
+          {
+            "text": "2d\": [93, 307, 669, 630], \"label\": \"album_art\"},\n  {\"box_2d\": [324, 232, 746, 415], \"label\": \"visualizer\"},\n  {\"box_2d\": [439, 232, 763, 483], \"label\": \"seek\"},\n  {\"box_2d\": [502, 291, 412, 574], \"label\": \"playpause\"},\n  {\"box_2d\": [575, 201, 296, 634], \"label\": \"prev\"},\n  {\"box_2d\": [575, 409, 502, 634], \"label\": \"next\"},\n  {\"box_2d\": [640, 318, 414, 700], \"label\": \"repeat\"},\n  {\"box_2d\": [590, 692, 78"
+          },
+          {
+            "text": "7, 649], \"label\": \"queue\"},\n  {\"box_2d\": [500, 571, 713, 585], \"label\": \"vol\"},\n  {\"box_2d\": [613, 574, 653, 700], \"label\": \"shuffle\"}\n]\n```"
+          }
+        ]
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": 3.5156695156695155
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 747,
+    "candidatesTokenCount": 351,
+    "totalTokenCount": 4054,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "IMAGE",
+        "tokenCount": 560
+      },
+      {
+        "modality": "TEXT",
+        "tokenCount": 187
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 351
+      }
+    ],
+    "thoughtsTokenCount": 2956
+  },
+  "modelVersion": "gemini-3-pro-image-preview",
+  "createTime": "2026-07-11T22:17:33.693560Z",
+  "responseId": "_cBSariqKqSo9LsP-8-M6A0"
+}

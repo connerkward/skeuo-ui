@@ -1,0 +1,287 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jsonspec — fenced-JSON blueprint spec vs prose prompt (paint generation)</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font: 14px/1.5 -apple-system, system-ui, sans-serif; background: #14151a; color: #e8e8ec; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 17px; border-bottom: 1px solid #333; padding-bottom: 6px; margin-top: 36px; }
+  h2 .desc { font-weight: 400; color: #9a9aa4; font-size: 13px; }
+  h4 { color: #9a9aa4; margin: 18px 0 8px; }
+  .cost { color: #9a9aa4; font-size: 12.5px; margin-bottom: 18px; }
+  .arms { display: flex; flex-wrap: wrap; gap: 16px; }
+  .cell { flex: 1 1 460px; min-width: 0; background: #1b1c22; border: 1px solid #2c2d34; border-radius: 10px; padding: 14px; }
+  .cell h3 { font-size: 13.5px; margin: 0 0 8px; }
+  .tag { color: #6a6a74; font-weight: 400; font-size: 11px; }
+  img.paint { width: 100%; max-width: 420px; height: auto; display: block; border-radius: 6px; margin-bottom: 8px; }
+  .mini { font-size: 11.5px; color: #9a9aa4; margin-bottom: 8px; }
+  .mini a { color: #7ab8ff; }
+  .crops { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .crops figure { margin: 0; width: 90px; }
+  .crops img { width: 100%; height: auto; border-radius: 4px; display: block; max-width: 100%; }
+  .crops figcaption { font-size: 9.5px; color: #8a8a94; word-break: break-word; }
+  table.mini-scores { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.mini-scores td { padding: 3px 4px; border-top: 1px solid #26272e; }
+  table.mini-scores td:first-child { color: #9a9aa4; }
+  .reasons { color: #8a8a94; font-size: 10.5px; }
+  .ok { color: #6fd88a; } .bad { color: #ff7a7a; } .warn { color: #ffcf6f; }
+  .vlm { margin-top: 10px; font-size: 12px; background: #14151a; padding: 8px; border-radius: 6px; }
+  .vlm pre { white-space: pre-wrap; font-size: 10.5px; color: #b5b5c0; max-height: 240px; overflow: auto; }
+  table.summary { border-collapse: collapse; width: 100%; max-width: 900px; font-size: 12.5px; margin: 10px 0 20px; }
+  table.summary th, table.summary td { border: 1px solid #2c2d34; padding: 6px 10px; text-align: left; }
+  table.summary th { background: #1b1c22; }
+  code { background: #1b1c22; padding: 1px 4px; border-radius: 3px; }
+  .conclusion { background: #1b1c22; border: 1px solid #2c2d34; border-radius: 10px; padding: 18px 20px; margin-top: 30px; }
+  @media (prefers-color-scheme: light) { :root { color-scheme: light; } }
+</style></head><body>
+<h1>jsonspec — does a fenced-JSON blueprint spec help IMAGE GENERATION itself?</h1>
+<p class="cost">Model: gemini-3-pro-image-preview (Vertex AI, global, 4K/5:4) · 8 gens ·
+~$0.24/gen ≈ $1.92 · SOTA eye: google/gemini-2.5-pro via fal openrouter/router/vision
+(reasoning:true) · bonus probe: 1 extra Vertex call ≈ $0.24 · total ≈ $2.2</p>
+
+<h2>Summary</h2>
+<table class='summary'><tr><th>theme</th><th>arm</th><th>gate PASS</th><th>mean bleed-ring</th><th>mean drift</th><th>SOTA-eye PASS</th></tr><tr><td>wc-goldshield</td><td>CONTROL — verbatim production prose prompt</td><td>0/2</td><td>4.4874%</td><td>516.4px</td><td>0/2</td></tr><tr><td>wc-goldshield</td><td>TREATMENT — fenced ```json``` machine-readable spec</td><td>1/2</td><td>1.2639%</td><td>726.8px</td><td>0/2</td></tr><tr><td>fa-pod</td><td>CONTROL — verbatim production prose prompt</td><td>2/2</td><td>5.5849%</td><td>863.6px</td><td>0/2</td></tr><tr><td>fa-pod</td><td>TREATMENT — fenced ```json``` machine-readable spec</td><td>2/2</td><td>1.8601%</td><td>555.8px</td><td>0/2</td></tr></table>
+
+<section><h2>wc-goldshield <span class='desc'>dark gold / royal-blue heraldic shield (material_is_dark=True)</span></h2><div class='seedrow'><h4>seed 121</h4><div class='arms'>
+  <div class='cell'>
+    <h3>CONTROL — verbatim production prose prompt · seed 121 <span class='tag'>wc-goldshield-control-121</span></h3>
+    <a href='assets-jsonspec-wc-goldshield-control-121/paint.png'><img class='paint' src='assets-jsonspec-wc-goldshield-control-121/paint.png' alt='paint wc-goldshield-control-121' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-wc-goldshield-control-121/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-wc-goldshield-control-121/mask.png'>mask</a>
+      · <a href='assets-jsonspec-wc-goldshield-control-121/results.json'>prompt (results.json)</a> · prompt None chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-playpause.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-playpause.png' alt='playpause crop wc-goldshield-control-121' loading='lazy'></a><figcaption>playpause — bleed 0.0% · drift 761.0px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-prev.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-prev.png' alt='prev crop wc-goldshield-control-121' loading='lazy'></a><figcaption>prev — bleed 0.0% · drift 202.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-next.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-next.png' alt='next crop wc-goldshield-control-121' loading='lazy'></a><figcaption>next — bleed 0.0% · drift 515.9px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-repeat.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-repeat.png' alt='repeat crop wc-goldshield-control-121' loading='lazy'></a><figcaption>repeat — bleed 0.0% · drift 519.6px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-queue.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-queue.png' alt='queue crop wc-goldshield-control-121' loading='lazy'></a><figcaption>queue — bleed 14.4541% · drift 443.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-vol.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-vol.png' alt='vol crop wc-goldshield-control-121' loading='lazy'></a><figcaption>vol — bleed 0.0% · drift 413.2px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-seek.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-seek.png' alt='seek crop wc-goldshield-control-121' loading='lazy'></a><figcaption>seek — bleed 0.0% · drift 962.1px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-shuffle.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-shuffle.png' alt='shuffle crop wc-goldshield-control-121' loading='lazy'></a><figcaption>shuffle — bleed 0.0342% · drift 370.4px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-visualizer.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-visualizer.png' alt='visualizer crop wc-goldshield-control-121' loading='lazy'></a><figcaption>visualizer — bleed 0.0% · drift 236.0px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-121/crop-album_art.png'><img src='assets-jsonspec-wc-goldshield-control-121/crop-album_art.png' alt='album_art crop wc-goldshield-control-121' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 253.1px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='bad'>FAIL <span class='reasons'>(emptiness)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.0262%</td></tr>
+      <tr><td>emptiness gate</td><td class='bad'>FAIL</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.038</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='warn'>1.4488%</td></tr>
+      <tr><td>worst-control bleed</td><td>queue = 14.4541%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>467.7px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>(1) BAKED TEXT — There is no baked-in text in the sense of functional labels. The skin features decorative runic-style glyphs carved into the outer edges of the shield, but these are part of the theme and not readable labels like &quot;PLAY&quot; or &quot;VOLUME&quot;.
+
+(2) LAYOUT ADHERENCE — The layout fails adherence because two controls are missing their interactive components. The positions for the volume knob and shuffle toggle are present as empty recesses (a circular hole and a vertical slot, respectively), but the knob and the switch that should be inside them were not generated. All other controls are present and arranged in a sensible, non-overlapping media player layout.
+
+(3) GUIDE-COLOUR RESIDUE — There is no guide-colour residue visible anywhere on the skin. All controls and regions are cleanly painted.
+
+(4) OVERALL QUALITY — EXCELLENT. The skin is a stunning realization of the &quot;goldshield&quot; theme. The textures of the brushed and polished gold, the detailed lion sculpt, the gem inlays, and the runic carvings are all executed to a very high standard. Despite the missing components, the object that was rendered is highly detailed, thematically consistent, and a convincing piece of skeuomorphic design.
+
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREATMENT — fenced ```json``` machine-readable spec · seed 121 <span class='tag'>wc-goldshield-treat-121</span></h3>
+    <a href='assets-jsonspec-wc-goldshield-treat-121/paint.png'><img class='paint' src='assets-jsonspec-wc-goldshield-treat-121/paint.png' alt='paint wc-goldshield-treat-121' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-wc-goldshield-treat-121/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-wc-goldshield-treat-121/mask.png'>mask</a>
+      · <a href='assets-jsonspec-wc-goldshield-treat-121/results.json'>prompt (results.json)</a> · prompt 14747 chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-playpause.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-playpause.png' alt='playpause crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>playpause — bleed 0.0% · drift 1017.3px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-prev.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-prev.png' alt='prev crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>prev — bleed 0.0% · drift 873.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-next.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-next.png' alt='next crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>next — bleed 0.0% · drift 928.9px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-repeat.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-repeat.png' alt='repeat crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>repeat — bleed 0.0% · drift 466.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-queue.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-queue.png' alt='queue crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>queue — bleed 1.2938% · drift 1311.2px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-vol.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-vol.png' alt='vol crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>vol — bleed 0.0% · drift 960.9px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-seek.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-seek.png' alt='seek crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>seek — bleed 0.0% · drift 217.4px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-shuffle.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-shuffle.png' alt='shuffle crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>shuffle — bleed 0.0% · drift 607.6px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-visualizer.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-visualizer.png' alt='visualizer crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>visualizer — bleed 0.0% · drift 684.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-121/crop-album_art.png'><img src='assets-jsonspec-wc-goldshield-treat-121/crop-album_art.png' alt='album_art crop wc-goldshield-treat-121' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 1705.5px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='ok'>PASS <span class='reasons'>(none)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.0595%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.04</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='ok'>0.1294%</td></tr>
+      <tr><td>worst-control bleed</td><td>queue = 1.2938%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>877.3px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>BAKED TEXT: ZERO. The runic inscriptions around the border are purely decorative elements consistent with the fantasy theme and do not function as control labels.
+
+LAYOUT ADHERENCE: All controls have a designated position in a sensible, non-overlapping layout. However, the physical volume knob and seek slider handle are missing from the main device paint, leaving only empty sockets for them. These components appear to have been rendered separately (visible at the bottom of the first image) but were not integrated into the final skin. This counts as missing key parts of the controls. Additionally, the icons for the &#x27;repeat&#x27; and &#x27;queue&#x27; buttons are swapped from their common functional meanings.
+
+GUIDE-COLOUR RESIDUE: ZERO. All guide colours have been completely and cleanly removed from all controls.
+
+OVERALL QUALITY: EXCELLENT. The skin is a masterpiece of skeuomorphic design, perfectly capturing the &quot;golden lion shield&quot; theme with rich textures, intricate details, and convincing lighting. The materials look like weathered gold, polished gems, and dark steel. It is immediately recognizable and highly desirable as a fantasy-themed piece. The failure to integrate the knob and slider handle is a significant assembly error, but the quality of the painting itself is outstanding.
+
+VERDICT: FAIL</pre></details></div>
+  </div></div></div><div class='seedrow'><h4>seed 134</h4><div class='arms'>
+  <div class='cell'>
+    <h3>CONTROL — verbatim production prose prompt · seed 134 <span class='tag'>wc-goldshield-control-134</span></h3>
+    <a href='assets-jsonspec-wc-goldshield-control-134/paint.png'><img class='paint' src='assets-jsonspec-wc-goldshield-control-134/paint.png' alt='paint wc-goldshield-control-134' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-wc-goldshield-control-134/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-wc-goldshield-control-134/mask.png'>mask</a>
+      · <a href='assets-jsonspec-wc-goldshield-control-134/results.json'>prompt (results.json)</a> · prompt None chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-playpause.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-playpause.png' alt='playpause crop wc-goldshield-control-134' loading='lazy'></a><figcaption>playpause — bleed 0.0% · drift 996.1px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-prev.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-prev.png' alt='prev crop wc-goldshield-control-134' loading='lazy'></a><figcaption>prev — bleed 13.9027% · drift 577.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-next.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-next.png' alt='next crop wc-goldshield-control-134' loading='lazy'></a><figcaption>next — bleed 10.3152% · drift 1135.3px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-repeat.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-repeat.png' alt='repeat crop wc-goldshield-control-134' loading='lazy'></a><figcaption>repeat — bleed 0.0% · drift 0.0px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-queue.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-queue.png' alt='queue crop wc-goldshield-control-134' loading='lazy'></a><figcaption>queue — bleed 20.2771% · drift 202.8px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-vol.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-vol.png' alt='vol crop wc-goldshield-control-134' loading='lazy'></a><figcaption>vol — bleed 12.9983% · drift 418.2px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-seek.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-seek.png' alt='seek crop wc-goldshield-control-134' loading='lazy'></a><figcaption>seek — bleed 2.5432% · drift 645.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-shuffle.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-shuffle.png' alt='shuffle crop wc-goldshield-control-134' loading='lazy'></a><figcaption>shuffle — bleed 12.7756% · drift 435.7px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-visualizer.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-visualizer.png' alt='visualizer crop wc-goldshield-control-134' loading='lazy'></a><figcaption>visualizer — bleed 2.4468% · drift 707.0px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-control-134/crop-album_art.png'><img src='assets-jsonspec-wc-goldshield-control-134/crop-album_art.png' alt='album_art crop wc-goldshield-control-134' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 532.5px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='bad'>FAIL <span class='reasons'>(emptiness)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.0019%</td></tr>
+      <tr><td>emptiness gate</td><td class='bad'>FAIL</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.04</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='bad'>7.5259%</td></tr>
+      <tr><td>worst-control bleed</td><td>queue = 20.2771%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>565.1px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>(1) BAKED TEXT — Yes, there are rune characters (e.g., ᚠᚾᛞᚠ) etched into the gold chassis on either side of the main screen area. These are letters/words, violating the &quot;ZERO baked text&quot; rule.
+
+(2) LAYOUT ADHERENCE — The layout is incorrect. A critical control, the `seek` slider (guide-colour=CHARTREUSE), is completely missing from the device. Additionally, the `vol` knob is not rendered, leaving only a large circular hole in its place. The remaining controls are in plausible positions.
+
+(3) GUIDE-COLOUR RESIDUE — There is catastrophic guide-colour flooding. The `playpause` (MAGENTA), `prev` (PURE GREEN), `next` (ROSE PINK), `repeat` (SPRING GREEN), and `queue` (PURE RED) buttons are all rendered as solid blocks of their respective guide colours, not as properly painted controls. The `shuffle` slot is also a solid block of VIOLET-PURPLE.
+
+(4) OVERALL QUALITY — POOR. While the metallic chassis of the shield is detailed and thematically strong, the skin is an absolute failure as a functional media player interface. The missing controls, placeholder hole for the knob, and the garish, unpainted, guide-coloured buttons completely undermine the quality and break the skeuomorphic illusion.
+
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREATMENT — fenced ```json``` machine-readable spec · seed 134 <span class='tag'>wc-goldshield-treat-134</span></h3>
+    <a href='assets-jsonspec-wc-goldshield-treat-134/paint.png'><img class='paint' src='assets-jsonspec-wc-goldshield-treat-134/paint.png' alt='paint wc-goldshield-treat-134' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-wc-goldshield-treat-134/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-wc-goldshield-treat-134/mask.png'>mask</a>
+      · <a href='assets-jsonspec-wc-goldshield-treat-134/results.json'>prompt (results.json)</a> · prompt 14747 chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-playpause.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-playpause.png' alt='playpause crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>playpause — bleed 0.0% · drift 269.1px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-prev.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-prev.png' alt='prev crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>prev — bleed 0.0% · drift 790.2px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-next.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-next.png' alt='next crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>next — bleed 0.0% · drift 527.8px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-repeat.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-repeat.png' alt='repeat crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>repeat — bleed 0.0% · drift 437.7px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-queue.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-queue.png' alt='queue crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>queue — bleed 23.984% · drift 421.1px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-vol.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-vol.png' alt='vol crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>vol — bleed 0.0% · drift 532.9px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-seek.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-seek.png' alt='seek crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>seek — bleed 0.0% · drift 1215.5px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-shuffle.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-shuffle.png' alt='shuffle crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>shuffle — bleed 0.0% · drift 402.1px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-visualizer.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-visualizer.png' alt='visualizer crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>visualizer — bleed 0.0% · drift 727.2px</figcaption></figure><figure><a href='assets-jsonspec-wc-goldshield-treat-134/crop-album_art.png'><img src='assets-jsonspec-wc-goldshield-treat-134/crop-album_art.png' alt='album_art crop wc-goldshield-treat-134' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 438.0px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='bad'>FAIL <span class='reasons'>(region-misplaced:visualizer, emptiness)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.0440%</td></tr>
+      <tr><td>emptiness gate</td><td class='bad'>FAIL</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.039</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='bad'>2.3984%</td></tr>
+      <tr><td>worst-control bleed</td><td>queue = 23.984%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>576.2px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>(1) BAKED TEXT — ZERO. The skin uses standard, universally recognized iconography for media controls (play/pause, next/prev, etc.) without any baked-in words, letters, or numbers.
+
+(2) LAYOUT ADHERENCE — Fail. While the main transport buttons and display screens are plausibly arranged on the shield body, key controls are missing from the main unit. The volume knob, seek slider, and shuffle toggle are not integrated into the device; instead, they are rendered separately as disconnected elements on a &quot;strip&quot; at the bottom of the image. This constitutes a gross misplacement, as the player body itself is incomplete and non-functional without them.
+
+(3) GUIDE-COLOUR RESIDUE — ZERO. All controls and regions are cleanly rendered with no trace of their corresponding guide colours.
+
+(4) OVERALL QUALITY — EXCELLENT. Despite the layout failure, the visual execution is superb. The &quot;gold shield&quot; theme is realized with intricate, high-quality detailing, convincing metallic textures, rich lighting, and ornate flourishes like the lion crest and gemstones. The aesthetic is cohesive and highly polished.
+
+VERDICT: FAIL</pre></details></div>
+  </div></div></div></section><section><h2>fa-pod <span class='desc'>bright translucent cyan “Frutiger Aero” water pod (material_is_dark=False)</span></h2><div class='seedrow'><h4>seed 121</h4><div class='arms'>
+  <div class='cell'>
+    <h3>CONTROL — verbatim production prose prompt · seed 121 <span class='tag'>fa-pod-control-121</span></h3>
+    <a href='assets-jsonspec-fa-pod-control-121/paint.png'><img class='paint' src='assets-jsonspec-fa-pod-control-121/paint.png' alt='paint fa-pod-control-121' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-fa-pod-control-121/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-fa-pod-control-121/mask.png'>mask</a>
+      · <a href='assets-jsonspec-fa-pod-control-121/results.json'>prompt (results.json)</a> · prompt None chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-fa-pod-control-121/crop-playpause.png'><img src='assets-jsonspec-fa-pod-control-121/crop-playpause.png' alt='playpause crop fa-pod-control-121' loading='lazy'></a><figcaption>playpause — bleed 0.0% · drift 77.0px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-prev.png'><img src='assets-jsonspec-fa-pod-control-121/crop-prev.png' alt='prev crop fa-pod-control-121' loading='lazy'></a><figcaption>prev — bleed 0.0% · drift 224.6px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-next.png'><img src='assets-jsonspec-fa-pod-control-121/crop-next.png' alt='next crop fa-pod-control-121' loading='lazy'></a><figcaption>next — bleed 0.0% · drift 934.6px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-repeat.png'><img src='assets-jsonspec-fa-pod-control-121/crop-repeat.png' alt='repeat crop fa-pod-control-121' loading='lazy'></a><figcaption>repeat — bleed 20.3491% · drift 1043.9px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-queue.png'><img src='assets-jsonspec-fa-pod-control-121/crop-queue.png' alt='queue crop fa-pod-control-121' loading='lazy'></a><figcaption>queue — bleed 18.974% · drift 475.4px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-vol.png'><img src='assets-jsonspec-fa-pod-control-121/crop-vol.png' alt='vol crop fa-pod-control-121' loading='lazy'></a><figcaption>vol — bleed 0.0% · drift 1396.6px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-seek.png'><img src='assets-jsonspec-fa-pod-control-121/crop-seek.png' alt='seek crop fa-pod-control-121' loading='lazy'></a><figcaption>seek — bleed 0.0% · drift 69.6px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-shuffle.png'><img src='assets-jsonspec-fa-pod-control-121/crop-shuffle.png' alt='shuffle crop fa-pod-control-121' loading='lazy'></a><figcaption>shuffle — bleed 0.0% · drift 753.9px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-visualizer.png'><img src='assets-jsonspec-fa-pod-control-121/crop-visualizer.png' alt='visualizer crop fa-pod-control-121' loading='lazy'></a><figcaption>visualizer — bleed 0.0% · drift 408.1px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-121/crop-album_art.png'><img src='assets-jsonspec-fa-pod-control-121/crop-album_art.png' alt='album_art crop fa-pod-control-121' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 1960.8px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='ok'>PASS <span class='reasons'>(none)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.1536%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.039</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='bad'>3.9323%</td></tr>
+      <tr><td>worst-control bleed</td><td>repeat = 20.3491%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>734.4px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>(1) BAKED TEXT — ZERO. There are no letters, numbers, or text labels baked into the skin.
+
+(2) LAYOUT ADHERENCE — The layout is substantially flawed. While most controls are in sensible relative positions on the main device body, several key interactive components are missing from the device and are instead presented on a separate &quot;strip&quot; below. Specifically, the volume knob, the seek slider&#x27;s thumb/handle, and the shuffle switch are all shown as separate parts, while their corresponding positions on the device body are rendered as empty sockets or tracks. This constitutes a failure to integrate the controls into the final layout, meaning controls are effectively missing from the device itself.
+
+(3) GUIDE-COLOUR RESIDUE — Severe guide-colour residue is present. The `repeat` button is rendered entirely in ORANGE, and the `queue` button is rendered entirely in YELLOW, matching their respective guide colours. This indicates the guide colours have flooded these controls instead of being painted over. Additionally, a prominent, stray PURE GREEN stripe runs down the left side of the device body, which was the guide colour for the `shuffle` toggle.
+
+(4) OVERALL QUALITY — OK. The rendering style itself is excellent, with rich detail, glossy textures, and convincing lighting that perfectly captures the &quot;aqua&quot; skeuomorphic theme. However, the major functional and visual flaws—disassembled controls and blatant guide-colour residue—prevent it from being a convincing or usable skin. The technical execution of the rendering is high, but the adherence to the instructions is very poor.
+
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREATMENT — fenced ```json``` machine-readable spec · seed 121 <span class='tag'>fa-pod-treat-121</span></h3>
+    <a href='assets-jsonspec-fa-pod-treat-121/paint.png'><img class='paint' src='assets-jsonspec-fa-pod-treat-121/paint.png' alt='paint fa-pod-treat-121' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-fa-pod-treat-121/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-fa-pod-treat-121/mask.png'>mask</a>
+      · <a href='assets-jsonspec-fa-pod-treat-121/results.json'>prompt (results.json)</a> · prompt 15011 chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-playpause.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-playpause.png' alt='playpause crop fa-pod-treat-121' loading='lazy'></a><figcaption>playpause — bleed 0.0% · drift 65.4px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-prev.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-prev.png' alt='prev crop fa-pod-treat-121' loading='lazy'></a><figcaption>prev — bleed 0.0% · drift 903.8px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-next.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-next.png' alt='next crop fa-pod-treat-121' loading='lazy'></a><figcaption>next — bleed 0.0% · drift 128.9px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-repeat.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-repeat.png' alt='repeat crop fa-pod-treat-121' loading='lazy'></a><figcaption>repeat — bleed 0.0% · drift 192.3px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-queue.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-queue.png' alt='queue crop fa-pod-treat-121' loading='lazy'></a><figcaption>queue — bleed 0.0% · drift 288.7px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-vol.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-vol.png' alt='vol crop fa-pod-treat-121' loading='lazy'></a><figcaption>vol — bleed 0.0% · drift 500.5px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-seek.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-seek.png' alt='seek crop fa-pod-treat-121' loading='lazy'></a><figcaption>seek — bleed 0.0% · drift 1135.5px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-shuffle.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-shuffle.png' alt='shuffle crop fa-pod-treat-121' loading='lazy'></a><figcaption>shuffle — bleed 0.0% · drift 429.7px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-visualizer.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-visualizer.png' alt='visualizer crop fa-pod-treat-121' loading='lazy'></a><figcaption>visualizer — bleed 0.0% · drift 389.5px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-121/crop-album_art.png'><img src='assets-jsonspec-fa-pod-treat-121/crop-album_art.png' alt='album_art crop fa-pod-treat-121' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 626.0px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='ok'>PASS <span class='reasons'>(none)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.0000%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.037</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='ok'>0.0%</td></tr>
+      <tr><td>worst-control bleed</td><td>playpause = 0.0%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>466.0px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>(1) BAKED TEXT — ZERO.
+(2) LAYOUT ADHERENCE — All controls are present and arranged in a sensible layout, with distinct regions for the screens, a primary transport cluster, and a secondary control row. However, examining the main player body, while there are cutouts for the volume knob and seek slider, the necessary cutout for the shuffle toggle is completely missing. A control is therefore unable to be placed on the device, which is a major layout failure.
+(3) GUIDE-COLOUR RESIDUE — ZERO. All guide colours have been completely removed from all controls and their surrounding areas.
+(4) OVERALL QUALITY — EXCELLENT. This is a beautifully rendered skin with a cohesive and highly detailed &quot;aqua&quot; or &quot;gel&quot; skeuomorphic theme. The lighting, gloss, reflections, and subtle details like water droplets create a very polished and convincing appearance.
+
+VERDICT: FAIL</pre></details></div>
+  </div></div></div><div class='seedrow'><h4>seed 134</h4><div class='arms'>
+  <div class='cell'>
+    <h3>CONTROL — verbatim production prose prompt · seed 134 <span class='tag'>fa-pod-control-134</span></h3>
+    <a href='assets-jsonspec-fa-pod-control-134/paint.png'><img class='paint' src='assets-jsonspec-fa-pod-control-134/paint.png' alt='paint fa-pod-control-134' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-fa-pod-control-134/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-fa-pod-control-134/mask.png'>mask</a>
+      · <a href='assets-jsonspec-fa-pod-control-134/results.json'>prompt (results.json)</a> · prompt None chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-fa-pod-control-134/crop-playpause.png'><img src='assets-jsonspec-fa-pod-control-134/crop-playpause.png' alt='playpause crop fa-pod-control-134' loading='lazy'></a><figcaption>playpause — bleed 17.1521% · drift 1267.7px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-prev.png'><img src='assets-jsonspec-fa-pod-control-134/crop-prev.png' alt='prev crop fa-pod-control-134' loading='lazy'></a><figcaption>prev — bleed 16.7333% · drift 1154.8px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-next.png'><img src='assets-jsonspec-fa-pod-control-134/crop-next.png' alt='next crop fa-pod-control-134' loading='lazy'></a><figcaption>next — bleed 20.1688% · drift 1142.8px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-repeat.png'><img src='assets-jsonspec-fa-pod-control-134/crop-repeat.png' alt='repeat crop fa-pod-control-134' loading='lazy'></a><figcaption>repeat — bleed 18.3196% · drift 1100.7px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-vol.png'><img src='assets-jsonspec-fa-pod-control-134/crop-vol.png' alt='vol crop fa-pod-control-134' loading='lazy'></a><figcaption>vol — bleed 0.0% · drift 687.7px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-seek.png'><img src='assets-jsonspec-fa-pod-control-134/crop-seek.png' alt='seek crop fa-pod-control-134' loading='lazy'></a><figcaption>seek — bleed 0.0% · drift 349.2px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-shuffle.png'><img src='assets-jsonspec-fa-pod-control-134/crop-shuffle.png' alt='shuffle crop fa-pod-control-134' loading='lazy'></a><figcaption>shuffle — bleed 0.0% · drift 519.4px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-visualizer.png'><img src='assets-jsonspec-fa-pod-control-134/crop-visualizer.png' alt='visualizer crop fa-pod-control-134' loading='lazy'></a><figcaption>visualizer — bleed 0.0005% · drift 1492.3px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-control-134/crop-album_art.png'><img src='assets-jsonspec-fa-pod-control-134/crop-album_art.png' alt='album_art crop fa-pod-control-134' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 1989.8px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='ok'>PASS <span class='reasons'>(none)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.1445%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.039</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='bad'>7.2374%</td></tr>
+      <tr><td>worst-control bleed</td><td>next = 20.1688%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>992.8px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>(1) BAKED TEXT — There is no baked text, numbers, or labels on the device.
+
+(2) LAYOUT ADHERENCE — The layout is coherent and functional. All specified controls are present: playpause, prev, next, repeat, and queue buttons are clustered together; a volume knob recess, seek slider track, and shuffle toggle track are logically placed; and display regions for a visualizer and album art are present. No controls are missing, duplicated, or overlapping.
+
+(3) GUIDE-COLOUR RESIDUE — There is significant guide-colour residue. The five main transport buttons have been rendered entirely in their respective guide colours, rather than the colours being removed. The `playpause` button is red (guide=PURE RED), the `prev` button is pink (guide=ROSE PINK), the `next` button is magenta (guide=MAGENTA), the `repeat` button is orange (guide=ORANGE), and the `queue` button is yellow (guide=YELLOW). This is a failure to remove the guide colours, which have instead been used as the primary material colour, effectively flooding the controls.
+
+(4) OVERALL QUALITY — EXCELLENT. Disregarding the guide-colour issue, the skin is exceptionally well-rendered. It features a highly detailed and cohesive aqua/gel skeuomorphic theme, with convincing textures (brushed metal, glossy plastic, water droplets) and realistic lighting and reflections.
+
+VERDICT: FAIL</pre></details></div>
+  </div>
+  <div class='cell'>
+    <h3>TREATMENT — fenced ```json``` machine-readable spec · seed 134 <span class='tag'>fa-pod-treat-134</span></h3>
+    <a href='assets-jsonspec-fa-pod-treat-134/paint.png'><img class='paint' src='assets-jsonspec-fa-pod-treat-134/paint.png' alt='paint fa-pod-treat-134' loading='lazy'></a>
+    <div class='mini'><a href='assets-jsonspec-fa-pod-treat-134/blueprint.png'>shared blueprint</a> · <a href='assets-jsonspec-fa-pod-treat-134/mask.png'>mask</a>
+      · <a href='assets-jsonspec-fa-pod-treat-134/results.json'>prompt (results.json)</a> · prompt 15011 chars
+    </div>
+    <div class='crops'><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-playpause.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-playpause.png' alt='playpause crop fa-pod-treat-134' loading='lazy'></a><figcaption>playpause — bleed 5.2053% · drift 313.4px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-prev.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-prev.png' alt='prev crop fa-pod-treat-134' loading='lazy'></a><figcaption>prev — bleed 14.7872% · drift 318.5px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-next.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-next.png' alt='next crop fa-pod-treat-134' loading='lazy'></a><figcaption>next — bleed 0.0% · drift 1221.3px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-repeat.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-repeat.png' alt='repeat crop fa-pod-treat-134' loading='lazy'></a><figcaption>repeat — bleed 17.2098% · drift 378.6px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-vol.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-vol.png' alt='vol crop fa-pod-treat-134' loading='lazy'></a><figcaption>vol — bleed 0.0% · drift 281.1px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-seek.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-seek.png' alt='seek crop fa-pod-treat-134' loading='lazy'></a><figcaption>seek — bleed 0.0% · drift 1127.5px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-shuffle.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-shuffle.png' alt='shuffle crop fa-pod-treat-134' loading='lazy'></a><figcaption>shuffle — bleed 0.0% · drift 347.2px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-visualizer.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-visualizer.png' alt='visualizer crop fa-pod-treat-134' loading='lazy'></a><figcaption>visualizer — bleed 0.0% · drift 320.5px</figcaption></figure><figure><a href='assets-jsonspec-fa-pod-treat-134/crop-album_art.png'><img src='assets-jsonspec-fa-pod-treat-134/crop-album_art.png' alt='album_art crop fa-pod-treat-134' loading='lazy'></a><figcaption>album_art — bleed 0.0% · drift 516.8px</figcaption></figure></div>
+    <table class='mini-scores'>
+      <tr><td>gate</td><td class='ok'>PASS <span class='reasons'>(none)</span></td></tr>
+      <tr><td>leak (genskin gate, worst control)</td><td class='ok'>0.1526%</td></tr>
+      <tr><td>emptiness gate</td><td class='ok'>pass</td></tr>
+      <tr><td>controls detected</td><td class='ok'>10/10</td></tr>
+      <tr><td>seek coverage</td><td class='ok'>1.038</td></tr>
+      <tr><td>mean guide-hue bleed-ring (perimeter)</td><td class='bad'>3.7202%</td></tr>
+      <tr><td>worst-control bleed</td><td>repeat = 17.2098%</td></tr>
+      <tr><td>mean template drift</td><td class='bad'>645.5px</td></tr>
+    </table>
+    <div class='vlm'><b>SOTA eye (fal openrouter/router/vision (google/gemini-2.5-pro)):</b> <span class='bad'>FAIL</span><details><summary>raw</summary><pre>(1) BAKED TEXT — ZERO. There are no letters, numbers, or words baked into the skin.
+
+(2) LAYOUT ADHERENCE — Fails. The layout is severely broken. Multiple controls are either missing or misplaced. The &#x27;next&#x27; button is completely absent, rendered only as an empty circular recess. Furthermore, the interactive hardware for three other controls—the volume knob, the seek slider handle, and the shuffle toggle switch—are not integrated into the main device body. Instead, they are painted separately on a miscellaneous &quot;strip&quot; below the player, while the main body only contains their empty slots. This is a gross misplacement and a failure to assemble the final design.
+
+(3) GUIDE-COLOUR RESIDUE — ZERO. All guide colours have been successfully removed, with no visible rings, rims, or floods of the specified colours around any of the controls. The colours of the buttons themselves are part of the intended skeuomorphic design.
+
+(4) OVERALL QUALITY — POOR. Although the artistic rendering of the individual components that are present (the casing, the water drop effects, the rendered buttons) is EXCELLENT, with deep, rich skeuomorphic detail, the skin as a whole is incomplete and non-functional. The missing &#x27;next&#x27; button and the disassembled state of the volume, seek, and shuffle controls make the final product fundamentally broken.
+
+VERDICT: FAIL</pre></details></div>
+  </div></div></div></section>
+
+<h2>Bonus — Google's documented box_2d convention, re-probed</h2>
+
+  <table class='summary'>
+    <tr><th>metric</th><th>value</th></tr>
+    <tr><td>convention tested</td><td>google-documented: box_2d=[ymin,xmin,ymax,xmax] normalized 0-1000</td></tr>
+    <tr><td>model</td><td>gemini-3-pro-image-preview</td></tr>
+    <tr><td>parse ok</td><td>True</td></tr>
+    <tr><td>n returned / matched</td><td>10 / 10</td></tr>
+    <tr><td><b>mean IoU (this probe)</b></td><td><b>0.0964</b></td></tr>
+    <tr><td>mean center error</td><td>472.9px</td></tr>
+    <tr><td>vs imgjson test A raw (ad-hoc x,y,w,h @0-1)</td><td>mean IoU 0.003, mean ctr err 507px</td></tr>
+    <tr><td>vs imgjson test A after affine frame-rescue (needs GT, diagnostic only)</td><td>mean IoU 0.53, mean ctr err 49px</td></tr>
+  </table>
+  <details><summary>per-control</summary><table class='summary'><tr><th>control</th><th>IoU</th><th>center err</th></tr><tr><td>album_art</td><td>0.3313</td><td>678.4px</td></tr><tr><td>visualizer</td><td>0.145</td><td>731.3px</td></tr><tr><td>seek</td><td>0.0825</td><td>635.1px</td></tr><tr><td>playpause</td><td>0.0</td><td>353.3px</td></tr><tr><td>prev</td><td>0.0</td><td>736.7px</td></tr><tr><td>next</td><td>0.0</td><td>289.2px</td></tr><tr><td>repeat</td><td>0.0</td><td>628.6px</td></tr><tr><td>queue</td><td>0.0</td><td>297.3px</td></tr><tr><td>vol</td><td>0.0814</td><td>280.3px</td></tr><tr><td>shuffle</td><td>0.3237</td><td>99.0px</td></tr></table></details>
+  <p class='mini'>raw response head: <code>**Locating Player Controls**
+
+I am currently focused on precisely identifying the bounding boxes for the &#x27;playpause&#x27; and &#x27;prev&#x27; controls on the media player interface, as these are central to the playback functionality.
+
+**Pinpointing Interface Elements**
+
+My current focus is on meticulously defining the regions for the &#x27;playpause&#x27;, &#x27;prev&#x27;, and &#x27;next&#x27; control buttons, which are essential for user …</code></p>
+
+
+<div class="conclusion">
+<h2 style="margin-top:0;border:none;">Conclusion</h2>
+<p><b>NEUTRAL-TO-MILDLY-HELPFUL, not a fix. The fenced-JSON encoding did not hurt anything measured, and directionally improved the two residue axes: guide-hue bleed was lower in the treatment in 4/4 paired gens (mean 5.04% -&gt; 1.56%; a 4/4 sign at n=4 is p=0.0625 one-sided — directional, not significant), and the extract12 gate passed 3/4 treat vs 2/4 control (both control FAILs were emptiness; one treat FAIL was region-misplaced+emptiness). It does NOT fix the two dominant paint defects: layout drift is equally bad in both arms (mean 690px control vs 641px treat on a ~2300px canvas — both treat the locked template as a suggestion), and guide-hue button echo still occurred in a treat gen (fa-pod-treat-134). Encoding the spec as JSON does not make the image model obey it; the JSON block mainly seems to reduce how often the guide COLOUR words get painted as pigment. Recommendation: do not adopt as a fix; if adopted at all, it is safe (no observed cost) — but the layout-adherence and colour-echo levers remain key selection, icon-no-echo clauses, and mask-column decoupling, not prompt encoding. n=4 pairs; single roll per cell.</b></p><p>Aggregates: gate PASS control 2/4 vs treat 3/4 · bleed lower in treat 4/4 pairs (mean 5.036% → 1.562%) · drift lower in treat 2/4 pairs (mean 690.0px → 641.2px)</p><details open><summary>Adjudication notes (VLM claims vs pixels)</summary><ul><li>SOTA-eye returned FAIL on all 8, but its dominant FAIL reason (&#x27;vol/seek/shuffle parts missing from device, sitting on a strip below&#x27;) is a FALSE FLAG on the before-assembly design (empty cavities + sprite strip ARE the spec); the eye prompt failed to state that. Only its residue/baked-text/rearrangement claims were adjudicated.</li><li>CONFIRMED by pixels+eye: wc-control-134 and fa-pod-control-134 painted ALL 5 buttons in their exact guide hues (+ wc&#x27;s shuffle slot flooded VIOLET-PURPLE); fa-pod-control-121 flooded repeat(ORANGE)/queue(YELLOW) + a PURE GREEN stripe. fa-pod-treat-134&#x27;s buttons also echo guide hues (red/pink/orange/yellow vs an aqua/silver palette) despite the VLM calling them &#x27;intended design&#x27; — the 3.72% metric and the theme palette (no warm colours) overrule it.</li><li>OVERRULED: fa-pod-treat-134 &#x27;next button absent&#x27; — the painted next exists (top-right, ff icon); the empty-recess crop came from a MISPLACED mask blob (detection followed the mask; next drift 1221px). A mask-alignment defect, not a missing control.</li><li>OVERRULED: fa-pod-treat-121 &#x27;shuffle cutout missing&#x27; — the slot is present and correctly empty (crop verified).</li><li>Observed by eye, missed by both gate and VLM: wc-treat-121 has a thumb BAKED into the seek groove (empty-cavity violation; the emptiness gate&#x27;s bright-threshold missed it) and rune-like glyphs on its strip shuffle states.</li><li>bleed_ring metric caveat (known from twoimg): wc &#x27;queue&#x27; false-positives on the gold body hue vs its YELLOW guide key; same-theme cross-arm deltas are the usable signal.</li></ul></details><p><b>Bonus (Google box-convention probe):</b> Google documents box_2d=[ymin,xmin,ymax,xmax] @ 0-1000 for its image-UNDERSTANDING models only — no doc claims bounding boxes for gemini-3-pro-image. Asked with that exact convention, the image model returned boxes whose last two elements were TRANSPOSED ([ymin,xmin,xmax,ymax]); read as documented they score IoU 0.096, but under the transposed reading they hit <b>mean IoU 0.79, 9/10 controls at 2-26px center error</b> — the 0-1000 scale fixes the broken y-frame that the ad-hoc 0-1 convention produced (imgjson test A: IoU 0.003, y-scale ~0.66). The model reasons in its trained 0-1000 box space; our 0-1 ask was the frame breaker. (n=1 call; element-order stability untested.)</p><p class='mini'>Spend: 8 paint gens x ~$0.24 (Vertex 4K) = $1.92 + bonus probe ~$0.05 (text-out only) + 11 VLM calls x ~$0.02 = ~$0.22; total ~= $2.2 (one 429&#x27;d gen retried, not billed)</p>
+</div>
+</body></html>

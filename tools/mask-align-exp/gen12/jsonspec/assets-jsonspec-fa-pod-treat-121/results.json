@@ -1,0 +1,167 @@
+{
+ "id": "jsonspec-fa-pod-treat-121",
+ "theme": "fa-pod",
+ "arm": "treat",
+ "seed": 121,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  18,
+  18,
+  24
+ ],
+ "keys": {
+  "playpause": [
+   255,
+   0,
+   0
+  ],
+  "prev": [
+   255,
+   0,
+   128
+  ],
+  "next": [
+   255,
+   0,
+   255
+  ],
+  "repeat": [
+   255,
+   128,
+   0
+  ],
+  "queue": [
+   255,
+   255,
+   0
+  ],
+  "vol": [
+   128,
+   0,
+   255
+  ],
+  "seek": [
+   128,
+   0,
+   128
+  ],
+  "shuffle": [
+   0,
+   255,
+   0
+  ],
+  "visualizer": [
+   0,
+   0,
+   255
+  ],
+  "album_art": [
+   255,
+   255,
+   128
+  ]
+ },
+ "keyNames": {
+  "playpause": "PURE RED",
+  "prev": "ROSE PINK",
+  "next": "MAGENTA",
+  "repeat": "ORANGE",
+  "queue": "YELLOW",
+  "vol": "VIOLET-PURPLE",
+  "seek": "DEEP PURPLE",
+  "shuffle": "PURE GREEN",
+  "visualizer": "PURE BLUE",
+  "album_art": "RGB(255, 255, 128)"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "devFrac": 0.75,
+ "template": {
+  "album_art": [
+   0.5,
+   0.11249999999999999
+  ],
+  "visualizer": [
+   0.5,
+   0.25125000000000003
+  ],
+  "seek": [
+   0.5,
+   0.3525
+  ],
+  "prev": [
+   0.28,
+   0.44999999999999996
+  ],
+  "playpause": [
+   0.5,
+   0.44999999999999996
+  ],
+  "next": [
+   0.72,
+   0.44999999999999996
+  ],
+  "repeat": [
+   0.24,
+   0.5625
+  ],
+  "vol": [
+   0.42,
+   0.5700000000000001
+  ],
+  "shuffle": [
+   0.6,
+   0.5700000000000001
+  ],
+  "queue": [
+   0.78,
+   0.5625
+  ]
+ },
+ "album_art_rect": [
+  0.26666666666666666,
+  0.03437499999999999,
+  0.4666666666666667,
+  0.15625
+ ],
+ "visualizer_rect": [
+  0.23333333333333334,
+  0.21062500000000003,
+  0.5333333333333333,
+  0.08125
+ ],
+ "blueprint": "blueprint.png (byte-identical copy of control arm's)",
+ "prompt": "Two side-by-side columns of identical size, output at 5:4. Below is THE MACHINE-READABLE SPEC for this generation \u2014 follow it exactly for every control's identity, guide-colour, position and size:\n\n```json\n{\n \"_note\": \"machine-readable control spec. position_frac is a fraction of the device column's own width (fx) and the device area's own height (fy), guide_color_rgb marks this control's blueprint position ONLY and must never be painted into the finished device, sizes are congruence-locked between the device slot and its matching loose strip part.\",\n \"controls\": [\n  {\n   \"id\": \"playpause\",\n   \"role\": \"button\",\n   \"guide_color_name\": \"PURE RED\",\n   \"guide_color_rgb\": [\n    255,\n    0,\n    0\n   ],\n   \"final_icon_or_content\": \"a PLAY triangle (right-pointing) merged with pause bars\",\n   \"position_frac\": {\n    \"fx\": 0.5,\n    \"fy_of_device_area\": 0.6\n   },\n   \"shape\": \"circle\",\n   \"radius_frac_of_col_w\": 0.0867\n  },\n  {\n   \"id\": \"prev\",\n   \"role\": \"button\",\n   \"guide_color_name\": \"ROSE PINK\",\n   \"guide_color_rgb\": [\n    255,\n    0,\n    128\n   ],\n   \"final_icon_or_content\": \"a SKIP-BACK double-triangle / rewind chevrons\",\n   \"position_frac\": {\n    \"fx\": 0.28,\n    \"fy_of_device_area\": 0.6\n   },\n   \"shape\": \"circle\",\n   \"radius_frac_of_col_w\": 0.0617\n  },\n  {\n   \"id\": \"next\",\n   \"role\": \"button\",\n   \"guide_color_name\": \"MAGENTA\",\n   \"guide_color_rgb\": [\n    255,\n    0,\n    255\n   ],\n   \"final_icon_or_content\": \"a SKIP-FORWARD double-triangle / fast-forward chevrons\",\n   \"position_frac\": {\n    \"fx\": 0.72,\n    \"fy_of_device_area\": 0.6\n   },\n   \"shape\": \"circle\",\n   \"radius_frac_of_col_w\": 0.0617\n  },\n  {\n   \"id\": \"repeat\",\n   \"role\": \"button\",\n   \"guide_color_name\": \"ORANGE\",\n   \"guide_color_rgb\": [\n    255,\n    128,\n    0\n   ],\n   \"final_icon_or_content\": \"a REPEAT loop (two arrows chasing in a circle)\",\n   \"position_frac\": {\n    \"fx\": 0.24,\n    \"fy_of_device_area\": 0.75\n   },\n   \"shape\": \"circle\",\n   \"radius_frac_of_col_w\": 0.0617\n  },\n  {\n   \"id\": \"queue\",\n   \"role\": \"button\",\n   \"guide_color_name\": \"YELLOW\",\n   \"guide_color_rgb\": [\n    255,\n    255,\n    0\n   ],\n   \"final_icon_or_content\": \"a QUEUE / playlist icon (stacked horizontal lines)\",\n   \"position_frac\": {\n    \"fx\": 0.78,\n    \"fy_of_device_area\": 0.75\n   },\n   \"shape\": \"circle\",\n   \"radius_frac_of_col_w\": 0.0617\n  },\n  {\n   \"id\": \"vol\",\n   \"role\": \"knob\",\n   \"guide_color_name\": \"VIOLET-PURPLE\",\n   \"guide_color_rgb\": [\n    128,\n    0,\n    255\n   ],\n   \"final_icon_or_content\": \"a VOLUME knob (top face, knurled rim, pointer notch)\",\n   \"position_frac\": {\n    \"fx\": 0.42,\n    \"fy_of_device_area\": 0.76\n   },\n   \"shape\": \"circle\",\n   \"radius_frac_of_col_w\": 0.07\n  },\n  {\n   \"id\": \"seek\",\n   \"role\": \"slider\",\n   \"guide_color_name\": \"DEEP PURPLE\",\n   \"guide_color_rgb\": [\n    128,\n    0,\n    128\n   ],\n   \"final_icon_or_content\": \"the SEEK progress slider thumb (wide low grip)\",\n   \"position_frac\": {\n    \"fx\": 0.5,\n    \"fy_of_device_area\": 0.47\n   },\n   \"shape\": \"rounded_rect\",\n   \"w_frac_of_col_w\": 0.5333,\n   \"h_frac_of_dev_h\": 0.0528\n  },\n  {\n   \"id\": \"shuffle\",\n   \"role\": \"toggle\",\n   \"guide_color_name\": \"PURE GREEN\",\n   \"guide_color_rgb\": [\n    0,\n    255,\n    0\n   ],\n   \"final_icon_or_content\": \"a SHUFFLE icon (two crossing arrows)\",\n   \"position_frac\": {\n    \"fx\": 0.6,\n    \"fy_of_device_area\": 0.76\n   },\n   \"shape\": \"rounded_rect\",\n   \"w_frac_of_col_w\": 0.1,\n   \"h_frac_of_dev_h\": 0.1236\n  },\n  {\n   \"id\": \"visualizer\",\n   \"role\": \"region\",\n   \"guide_color_name\": \"PURE BLUE\",\n   \"guide_color_rgb\": [\n    0,\n    0,\n    255\n   ],\n   \"final_icon_or_content\": \"a VISUALIZER / spectrum-analyzer display window\",\n   \"position_frac\": {\n    \"fx\": 0.5,\n    \"fy_of_device_area\": 0.335\n   },\n   \"shape\": \"rounded_rect\",\n   \"w_frac_of_col_w\": 0.5333,\n   \"h_frac_of_dev_h\": 0.1083\n  },\n  {\n   \"id\": \"album_art\",\n   \"role\": \"region\",\n   \"guide_color_name\": \"RGB(255, 255, 128)\",\n   \"guide_color_rgb\": [\n    255,\n    255,\n    128\n   ],\n   \"final_icon_or_content\": \"an ALBUM ART / cover display window\",\n   \"position_frac\": {\n    \"fx\": 0.5,\n    \"fy_of_device_area\": 0.15\n   },\n   \"shape\": \"rounded_rect\",\n   \"w_frac_of_col_w\": 0.4667,\n   \"h_frac_of_dev_h\": 0.2083\n  }\n ],\n \"strip_order_left_to_right\": [\n  \"vol_cap\",\n  \"seek_thumb\",\n  \"shuffle_state_1\",\n  \"shuffle_state_2\"\n ],\n \"strip_part_sizes\": {\n  \"vol_cap\": {\n   \"shape\": \"circle\",\n   \"radius_frac_of_col_w\": 0.07\n  },\n  \"seek_thumb\": {\n   \"shape\": \"rounded_rect\",\n   \"w_frac_of_col_w\": 0.125,\n   \"h_frac_of_dev_h\": 0.0667\n  },\n  \"shuffle_state\": {\n   \"shape\": \"rounded_rect\",\n   \"w_frac_of_col_w\": 0.1,\n   \"h_frac_of_dev_h\": 0.1236\n  }\n },\n \"congruence_rule\": \"each strip part's size EXACTLY equals its matching device slot's size above (vol_cap radius == vol's radius_frac_of_col_w; seek_thumb fits the seek groove; each shuffle_state exactly fills the shuffle slot)\"\n}\n```\n ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS and NO LABELS anywhere in EITHER column \u2014 not under controls, not on the strip, not a title, nothing; the device is wordless, identified by icons and shapes only. The LEFT column is a BLUEPRINT: a neutral grey placeholder body with COLOURED SOLID FILLED patches marking each control's exact position/size/shape PER THE SPEC ABOVE, plus a bottom SPRITE-STRIP band with 4 loose parts in the order given by the spec's strip_order_left_to_right. KEEP EVERY CONTROL AT THE EXACT POSITION, SIZE AND SHAPE given by the spec \u2014 do NOT move, resize, swap, rearrange, add or drop any control (their layout, as specified, is locked). BUT the grey body is ONLY a rough placeholder showing WHERE the controls sit \u2014 you are FREE and STRONGLY ENCOURAGED to sculpt a BOLD, DISTINCTIVE, ASYMMETRIC, theme-appropriate outer HOUSING around them: an ornate, characterful, sculpted form with a memorable silhouette (organic curves, wings, pods, fins, greebles, ornament, asymmetry) \u2014 NOT a plain rounded rectangle, NOT a generic slab or pod. Reshape the outer silhouette DRAMATICALLY to suit the theme; ONLY the control positions given by the spec stay fixed. The coloured filled patches described in the spec are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed.\nTHEME (design the finished device in THIS style \u2014 you own all materials, colours, form, lighting): Quintessential FRUTIGER AERO (early-2000s glossy 'aqua' aesthetic): a translucent glossy media-player pod of clear aqua-blue and cyan GLASS with liquid highlights and water-droplet beads, brushed liquid-silver metal bezels, a lush grass-green glowing accent, crisp specular reflections and soft shadows, optimistic and clean. Think Windows-Vista-era glass, Apple-Aqua gel buttons, bubbles and water. Buttons are glossy gel jewels; the body is a smooth organic pebble. Vivid, saturated, dimensional \u2014 never flat, never grungy.\nFill BOTH columns keeping the device+strip layout IDENTICAL so they overlay pixel-for-pixel.\nLEFT column \u2014 the FINISHED, richly 3D, tactile, skeuomorphic media player and its loose parts, in the theme above. CRITICAL for cutout: the BACKDROP around the device and BEHIND every strip part is a FLAT, PERFECTLY UNIFORM near-black charcoal tone (RGB ~18,18,24) \u2014 a separate keyed-out backdrop with NO gradient/texture/vignette that strongly contrasts the body; the device must never approach the backdrop tone.\n  \u2022 The finished device uses ONLY its own theme materials/colours \u2014 NONE of the guide colours from the spec. ABSOLUTELY NO pure red, NO rose pink, NO magenta, NO orange, NO yellow, NO violet-purple, NO deep purple, NO pure green, NO pure blue, NO rgb(255, 255, 128) anywhere in the LEFT column; the guide colours from the spec exist ONLY in the RIGHT mask.\n  \u2022 ZERO RESIDUE (CRITICAL) \u2014 the coloured guide patch around EVERY control is a temporary alignment marking, NOT part of the design. It must VANISH completely. Each finished BUTTON is ONE solid piece of the device's own material with absolutely NO coloured ring, rim, bezel, halo, outline or edge-tint around it \u2014 if a button has a coloured ring, it is WRONG. Likewise the album-art and visualizer windows have NO coloured frame (just a dark recessed glass panel flush in the body), and no socket/groove/slot has any coloured rim. Paint the body/button material seamlessly OVER where each guide patch was.\n  \u2022 The 5 transport/function BUTTONS (playpause, prev, next, repeat, queue) are raised, glossy, tactile control facets set into the body, EACH clearly bearing its icon EMBOSSED/engraved in relief per the spec's final_icon_or_content field for that control. Shape + icon + relief only; no text labels; no coloured rim.\n  \u2022 BUTTON COLOURS COME FROM THE THEME, NEVER FROM THE GUIDES: a button's guide_color in the spec marks its POSITION ONLY \u2014 the finished button's material/fill must NOT inherit, echo or be tinted toward its guide colour in ANY way (no red play because its guide was red, no magenta next, etc). ALL five buttons are made of the device's OWN theme materials/palette, coloured consistently with each other and the body. If any button's colour visibly matches its spec guide_color, the output is WRONG.\n  \u2022 THE SINGLE MOST IMPORTANT RULE \u2014 EVERY MOVING-PART CAVITY IS EMPTY. The volume knob socket is a bare round HOLE showing only its dark recessed floor (NO knob, NO cap, NO dome, NO dial, NO pointer \u2014 nothing installed). The seek slider groove is an EMPTY DARK RECESSED CHANNEL cut into the body (NO thumb, NO grip, NO handle, NO fill \u2014 it is NOT a coloured or filled bar, it is a hollow dark slot). The shuffle switch slot is an EMPTY DARK rounded well (NO switch, NO lever, NO toggle installed). The device is photographed BEFORE ASSEMBLY: those parts exist ONLY in the bottom sprite strip and have NOT been installed yet. Do NOT colour the empty wells \u2014 neutral DARK recesses only. If ANY of the three cavities (knob socket, seek slot, shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone.\n  \u2022 SEEK IS JUST AN EMPTY SLOT \u2014 treat the seek as a plain EMPTY recessed horizontal SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, grip, knob, handle, bar, fill, track-fill or progress indicator into it \u2014 it is a bare dark empty channel; the thumb is a SEPARATE loose part in the strip (see spec's strip_order_left_to_right). A seek slot with anything riding in it is WRONG.\n  \u2022 The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS \u2014 flat unlit dark glass panels only, with NOTHING inside them: NO baked spectrum/equalizer bars, NO album cover or artwork, NO waveform, NO icons, NO text, NO content whatsoever. They are powered-down screens; the app draws their live content later. If either window contains any baked graphics, it is WRONG.\n  \u2022 SPRITE STRIP \u2014 EXACTLY FOUR finished parts in ONE horizontal row, in the order given by the spec's strip_order_left_to_right (volume knob cap, seek slider thumb, shuffle switch first state, shuffle switch second state) \u2014 in the device's own materials, patches removed, on the flat charcoal backdrop.\n  \u2022 THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** \u2014 the small handle piece a finger slides, shown by itself on the backdrop, like a spare part in a parts tray. It is ABSOLUTELY NOT a slot, groove, channel, track, rail or recess, and must NOT be drawn sitting in/on any slot or dark channel \u2014 no groove under it, no track through it, no recessed surround. If the strip's seek cell shows any slot/track instead of a lone thumb piece, the output is WRONG.\n  \u2022 EXACT FIT \u2014 per the spec's congruence_rule: each strip part is the EXACT size & shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove; each shuffle_state exactly fills the switch slot). Do NOT resize/re-proportion a part.\n  \u2022 SHUFFLE STATES \u2014 design a CHARACTERFUL switch that fits the theme: it does NOT have to be a plain pill/rocker \u2014 a lever, flip-toggle, sliding bolt, rotating latch, gem that shifts, valve, eye that opens \u2014 any physical two-state mechanism, as long as BOTH states share the SAME OUTER HOUSING SILHOUETTE at the same size (per the spec's shuffle_state size) and are CLEARLY MIRROR-OPPOSITE: the moving element sits at ONE end/side in the first state and at the OPPOSITE end/side in the second state (never the same position in both). Put ABSOLUTELY NO text, letters, numerals, glyphs, words or labels of ANY kind on either switch part or on ANY strip part \u2014 the state must read from the mechanism's position alone, with zero markings.\n  \u2022 CAMERA \u2014 this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in a PERFECTLY FLAT, STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view \u2014 the camera is directly overhead at exactly 90\u00b0, the same view as the device. Each part is drawn as if lying FLAT on a table seen from straight above, with ZERO thickness, height or depth visible. The volume knob cap is a FLAT ROUND DISC / COIN \u2014 you see ONLY its circular TOP FACE (a knurled outer rim and a small pointer notch); you must NOT see any cylindrical SIDE WALL, edge, height or 3D body of the knob. The seek thumb and the shuffle switch are likewise flat shapes seen from directly overhead. ABSOLUTELY NO product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO perspective, NO visible sides \u2014 a part showing its side wall or any thickness is WRONG. Each part must look EXACTLY as it appears seated flat in its socket on the top-down device, so it drops straight in.\nRIGHT column \u2014 a precise REGION MASK on pure BLACK, pixel-aligned to the LEFT. For EACH control paint ONE SOLID FILLED blob in its own guide_color_rgb (from the spec), at the EXACT same position, size and silhouette as that control on the left (the seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; the shuffle blob is a tall portrait rounded-rectangle; each knob/button blob a solid disc) \u2014 one blob per control id in the spec's controls array, coloured by that control's guide_color_rgb. DISPLAY-WINDOW BLOBS \u2014 the visualizer and album_art blobs must EXACTLY cover their painted window's GLASS area on the left: the SAME rectangle at the SAME position with the SAME rounded corners, edge-to-edge with the glass \u2014 never larger than the bezel opening, never smaller, never shifted or offset onto the surrounding body. Trace each window's glass outline precisely; a display blob that extends past its painted window, covers body/bezel around it, or sits off the window is WRONG; and each STRIP PART as a solid COMPACT blob of its matching control's guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour, BOTH shuffle states use shuffle's colour) exactly matching its part's silhouette & position in the strip, in the spec's strip_order_left_to_right. CRITICAL: each blob is TIGHT to its shape \u2014 NEVER let a colour bleed or stretch across the strip band or flood a rectangle; the 4 strip blobs are 4 separate compact shapes with black gaps between them. Every blob is ONE solid filled silhouette, no outlines, no holes. Everything else is pure black.",
+ "prompt_len": 15011,
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 0.0
+}

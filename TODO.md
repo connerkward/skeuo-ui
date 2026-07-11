@@ -908,6 +908,24 @@ entries already under "saved for later" above — those four stand as-is.
     rig (no passing skin has `vertical:true` yet, so the orientation branch was smoke-tested
     against a rotated copy of fa-pod's regions).
 
+## 2026-07-11 — jsonspec experiment (fenced-JSON paint prompt) — done, human review pending
+
+- **Does a fenced-JSON blueprint spec help PAINT generation?** (the structured-I/O
+  experiment only covered extraction; paint-side was flagged untested). 2 themes x 2 seeds
+  x 2 arms = 8 gens, same blueprint image, prompt encoding the only variable. **Verdict:
+  neutral-to-mildly-helpful, NOT a fix** — bleed-ring lower in treat 4/4 pairs (5.04%→1.56%
+  mean), gate 3/4 vs 2/4, but layout drift equally bad in both arms and guide-hue button
+  echo still occurred in a treat gen. Full record:
+  [docs/experiments/2026-07-11-jsonspec-paint.md](docs/experiments/2026-07-11-jsonspec-paint.md);
+  artifacts + bottom conclusion: `tools/mask-align-exp/gen12/jsonspec/results.html`. Human
+  review of results.html PENDING.
+- **Bonus finding (bounding boxes):** Google documents box_2d=[ymin,xmin,ymax,xmax]@0-1000
+  for image-UNDERSTANDING models only — nothing for gemini-3-pro-image. But re-asked with
+  that exact convention, the image model's boxes hit **IoU 0.79 / 9 of 10 controls at
+  2-26px** once an element-order transposition ([ymin,xmin,XMAX,YMAX]) is corrected — the
+  imgjson "broken y-frame" was our ad-hoc 0-1 convention, not the model's spatial sense
+  (n=1, order-stability untested; `jsonspec/bonus_probe.json`).
+
 ## 2026-07-10 — later / think-about
 - **PARKED for skeuo v2 (2026-07-11) — Emissivity needs a better model/approach.** Full
   entry (top-hat failure history, candidate directions, semantic-ML prototype result, human

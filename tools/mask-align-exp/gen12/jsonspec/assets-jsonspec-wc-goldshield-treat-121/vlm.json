@@ -1,0 +1,23 @@
+{
+  "tag": "wc-goldshield-treat-121",
+  "theme": "wc-goldshield",
+  "arm": "treat",
+  "seed": 121,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "BAKED TEXT: ZERO. The runic inscriptions around the border are purely decorative elements consistent with the fantasy theme and do not function as control labels.\n\nLAYOUT ADHERENCE: All controls have a designated position in a sensible, non-overlapping layout. However, the physical volume knob and seek slider handle are missing from the main device paint, leaving only empty sockets for them. These components appear to have been rendered separately (visible at the bottom of the first image) but were not integrated into the final skin. This counts as missing key parts of the controls. Additionally, the icons for the 'repeat' and 'queue' buttons are swapped from their common functional meanings.\n\nGUIDE-COLOUR RESIDUE: ZERO. All guide colours have been completely and cleanly removed from all controls.\n\nOVERALL QUALITY: EXCELLENT. The skin is a masterpiece of skeuomorphic design, perfectly capturing the \"golden lion shield\" theme with rich textures, intricate details, and convincing lighting. The materials look like weathered gold, polished gems, and dark steel. It is immediately recognizable and highly desirable as a fantasy-themed piece. The failure to integrate the knob and slider handle is a significant assembly error, but the quality of the painting itself is outstanding.\n\nVERDICT: FAIL",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "ts": "2026-07-11T15:26:40"
+}

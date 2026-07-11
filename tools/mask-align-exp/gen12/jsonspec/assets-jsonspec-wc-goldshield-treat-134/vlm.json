@@ -1,0 +1,23 @@
+{
+  "tag": "wc-goldshield-treat-134",
+  "theme": "wc-goldshield",
+  "arm": "treat",
+  "seed": 134,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "(1) BAKED TEXT \u2014 ZERO. The skin uses standard, universally recognized iconography for media controls (play/pause, next/prev, etc.) without any baked-in words, letters, or numbers.\n\n(2) LAYOUT ADHERENCE \u2014 Fail. While the main transport buttons and display screens are plausibly arranged on the shield body, key controls are missing from the main unit. The volume knob, seek slider, and shuffle toggle are not integrated into the device; instead, they are rendered separately as disconnected elements on a \"strip\" at the bottom of the image. This constitutes a gross misplacement, as the player body itself is incomplete and non-functional without them.\n\n(3) GUIDE-COLOUR RESIDUE \u2014 ZERO. All controls and regions are cleanly rendered with no trace of their corresponding guide colours.\n\n(4) OVERALL QUALITY \u2014 EXCELLENT. Despite the layout failure, the visual execution is superb. The \"gold shield\" theme is realized with intricate, high-quality detailing, convincing metallic textures, rich lighting, and ornate flourishes like the lion crest and gemstones. The aesthetic is cohesive and highly polished.\n\nVERDICT: FAIL",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "ts": "2026-07-11T15:36:36"
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "wc-goldshield-control-134",
+  "theme": "wc-goldshield",
+  "arm": "control",
+  "seed": 134,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "(1) BAKED TEXT \u2014 Yes, there are rune characters (e.g., \u16a0\u16be\u16de\u16a0) etched into the gold chassis on either side of the main screen area. These are letters/words, violating the \"ZERO baked text\" rule.\n\n(2) LAYOUT ADHERENCE \u2014 The layout is incorrect. A critical control, the `seek` slider (guide-colour=CHARTREUSE), is completely missing from the device. Additionally, the `vol` knob is not rendered, leaving only a large circular hole in its place. The remaining controls are in plausible positions.\n\n(3) GUIDE-COLOUR RESIDUE \u2014 There is catastrophic guide-colour flooding. The `playpause` (MAGENTA), `prev` (PURE GREEN), `next` (ROSE PINK), `repeat` (SPRING GREEN), and `queue` (PURE RED) buttons are all rendered as solid blocks of their respective guide colours, not as properly painted controls. The `shuffle` slot is also a solid block of VIOLET-PURPLE.\n\n(4) OVERALL QUALITY \u2014 POOR. While the metallic chassis of the shield is detailed and thematically strong, the skin is an absolute failure as a functional media player interface. The missing controls, placeholder hole for the knob, and the garish, unpainted, guide-coloured buttons completely undermine the quality and break the skeuomorphic illusion.\n\nVERDICT: FAIL",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "ts": "2026-07-11T15:27:14"
+}
