@@ -1,0 +1,26 @@
+{
+  "steam-porthole": {
+    "kn": "vol",
+    "zero": 85.59208608163844
+  },
+  "ps1-crunchy": {
+    "kn": "vol",
+    "zero": 143.9326982984298
+  },
+  "myst-arcanum": {
+    "kn": "vol",
+    "zero": 95.46983241833458
+  },
+  "fallout-vault": {
+    "kn": "vol",
+    "zero": 355.0089895342177
+  },
+  "fa-pod": {
+    "kn": "vol",
+    "zero": 4.3553461775101825
+  },
+  "n64-cutscene": {
+    "kn": "vol",
+    "zero": 1.1861377092254612
+  }
+}

@@ -195,7 +195,7 @@
         0.40220905172413796,
         0.07505425347222222
       ],
-      "knob_zero_deg": 355.0089895342177,
+      "knob_zero_deg": 355.4138420819335,
       "knob_zero_geo": [
         196.0,
         196.0,
@@ -312,6 +312,8 @@
     "state_align_ok": true,
     "biref_ok": true,
     "leak": 0.0,
+    "guide_ring": [],
+    "region_degenerate": [],
     "reasons": [],
     "PASS": true
   }

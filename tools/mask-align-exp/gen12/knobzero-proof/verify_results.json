@@ -1,0 +1,78 @@
+{
+  "bar_deg": 3.0,
+  "signal": "independent = texture-disruption (local-std) run centroid (knob_angle.detect_texture_from_render_crop); gradient = primary pipeline signal, shown for comparison only, NOT the pass bar",
+  "results": [
+    {
+      "sid": "steam-porthole",
+      "gradient_deg": 0.67,
+      "gradient_err_deg": 0.67,
+      "gradient_info": "z=11.1 width=4deg run=14deg",
+      "gradient_run_straddles_0deg": true,
+      "independent_texture_disruption_deg": 359.91,
+      "independent_err_deg": 0.09,
+      "independent_info": "z=33.4 width=10deg run=14deg",
+      "signals_agree_deg": 0.77,
+      "verdict": "PASS"
+    },
+    {
+      "sid": "ps1-crunchy",
+      "gradient_deg": null,
+      "gradient_err_deg": null,
+      "gradient_info": "no-strong-anomaly (z=3.6)",
+      "gradient_run_straddles_0deg": null,
+      "independent_texture_disruption_deg": null,
+      "independent_err_deg": null,
+      "independent_info": "run-too-wide-after-centroid (z=6.1)",
+      "signals_agree_deg": null,
+      "verdict": "NO-SIGNAL"
+    },
+    {
+      "sid": "myst-arcanum",
+      "gradient_deg": 359.16,
+      "gradient_err_deg": 0.84,
+      "gradient_info": "z=48.3 width=2deg run=6deg",
+      "gradient_run_straddles_0deg": true,
+      "independent_texture_disruption_deg": 354.29,
+      "independent_err_deg": 5.71,
+      "independent_info": "z=36.1 width=12deg run=14deg",
+      "signals_agree_deg": 4.87,
+      "verdict": "FAIL"
+    },
+    {
+      "sid": "fallout-vault",
+      "gradient_deg": null,
+      "gradient_err_deg": null,
+      "gradient_info": "run-too-wide-after-centroid (z=6.5)",
+      "gradient_run_straddles_0deg": null,
+      "independent_texture_disruption_deg": 4.36,
+      "independent_err_deg": 4.36,
+      "independent_info": "z=7.9 width=14deg run=22deg",
+      "signals_agree_deg": null,
+      "verdict": "FAIL"
+    },
+    {
+      "sid": "fa-pod",
+      "gradient_deg": 358.47,
+      "gradient_err_deg": 1.53,
+      "gradient_info": "z=24.7 width=0deg run=4deg",
+      "gradient_run_straddles_0deg": true,
+      "independent_texture_disruption_deg": 354.78,
+      "independent_err_deg": 5.22,
+      "independent_info": "z=10.3 width=8deg run=10deg",
+      "signals_agree_deg": 3.69,
+      "verdict": "FAIL"
+    },
+    {
+      "sid": "n64-cutscene",
+      "gradient_deg": 359.43,
+      "gradient_err_deg": 0.57,
+      "gradient_info": "z=230.9 width=4deg run=22deg",
+      "gradient_run_straddles_0deg": true,
+      "independent_texture_disruption_deg": 359.52,
+      "independent_err_deg": 0.48,
+      "independent_info": "z=133.9 width=18deg run=22deg",
+      "signals_agree_deg": 0.09,
+      "verdict": "PASS"
+    }
+  ]
+}
