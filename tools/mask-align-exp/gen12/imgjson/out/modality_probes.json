@@ -1,0 +1,27 @@
+{
+  "text_only_modalities": {
+    "ok": false,
+    "error": "vertex(image) HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"The request is not supported by this model.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n"
+  },
+  "image_only_modalities_textprompt": {
+    "finishReason": "NO_IMAGE",
+    "n_text_parts": 0,
+    "n_image_parts": 0,
+    "usageMetadata": {
+      "promptTokenCount": 782,
+      "totalTokenCount": 3921,
+      "trafficType": "ON_DEMAND",
+      "promptTokensDetails": [
+        {
+          "modality": "IMAGE",
+          "tokenCount": 560
+        },
+        {
+          "modality": "TEXT",
+          "tokenCount": 222
+        }
+      ],
+      "thoughtsTokenCount": 3139
+    }
+  }
+}

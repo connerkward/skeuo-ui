@@ -1,0 +1,38 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\"name\":\"Abyssal Helm\",\"blurb\":\"Forgotten relic of the deep ocean.\",\"style\":\"biomech\",\"materialPrompt\":\"Heavily oxidized brass and rusted cast iron, pitted by saltwater corrosion. Matte, rough surfaces intermixed with glossy, calcified barnacles and verdigris-stained copper accents.\",\"font\":\"Pirata One\"}",
+            "thoughtSignature": "AY89a18E4WeRn+tiJi9M53hA7svZ2cHEh3WcvxssB7Hdu8dq7hPrKmzekZRu8UJaWvIOLx4ft/RZ4Qv4sub7CoifookTkn5xdfF3IAK+jXqf8s06Ec1FiFBPYjLvpFtH+JJOg1Kd465QlYD9EUf8no5SKz/r8EzCArUX8DV/LlM+Sv7knqnBhfXdWEDF3lSQybfqdEn1CY8DviX44GNmrkbp8PuTXwQetdGBhCmuS1H9iUkEWn5ktjse8TA779/O39VBqk1gchnRR6oZ8XuwktjN7Zne8t5WBAW+/JbomnQaPdlxYg8lWjI7AM7j1HLliP/81AMNzq0xjfZdX+yQGpZciGlcZSs7aZo2sTZL0qnWnu3cqSDmdhNP72aK2IsTNeE9RvyKDV/W67bRtobE9mLMgGe5bpPR9lPHg9YWeCB+by4C6oPz1aaouaNudFV6EM5LxVT/3i+lbX+J9zIGjP3NAEYiSI2F2hmOSpUOokcerj9ZuS+P2d/JJ3YhrJTHNOzOa320PzFDPfXcOAYi/SES4T06ZHjzZqVY84fApPW5MWBrIL6b/0ri3jJO26ofu4GThxRDOKe8+/S93mEUSejoRhdIC9hUynARA1Q7wWi9eC6FTzY29Fg4QgNpV5A4ReMJzjxb10xpyQ6ecIWRhANtCMm7AQjE71BMR3avku+0L8gp56668CFRFVt3l9XiQfrMtbFbLzarR094fPXBRGLg7jYO1MPTDfoTde2/zWcJSkq6YrEL5IYGRfo3MJlit9PDvuKZrDcrzbuEQI5SS2fmQCNQI1rGIo3I6h9ghUVU2tODNZCe5pZhCoJW5AQjyXdcbb+R628ycU3VOJoFkrDgQshfJiDSf7Y3xdnxQ2nytMB9tlJckcLb7AOunNZ/Tm1yz/yu+op/oZehRjuvS6TIUv4RWvzSWqQEk10PoylI3pveYPrBN033oCuBi09DE9kZVNeznfYO3ugig5u/PIXguEWbIyxz51aCoNRQ1WiB2zIOR03abnkKw4nE3wPpjWkxAmZy6tURl+si7/6hsHC7BpvsUYA/Kdu9UyuILVCo8IhunlUdbogk6hwB0VxkyoaP6BavXuSqL4j0kgrMFYZfvVKXEawJyxWx/i+TuoGwIcQS6fAwHT+eaZF0Zcm17FOHvBUtH+H41Gf3qE7oDeoD5qN453AblVolY8DUPRMKqGF+Zt6EwkqXaCtyExD9xHiWM3+kavkYEXGlunl7SAAozQ3Mweb7k2jpy2w8BOJ7PWq/HlBzM6cpz1bKAvuIO1BphlhhGBBLNI3CldRsl9kpPSZ8ajEXzgHAbtnsQnQ7PWsx5ciquzUdtgmVhqMR8KulAwW8DWqHjgJjRD/f5uPC49pAqGsngGVZjDbPLigAKmYikFbC4x9S+eBkzqXh/s/R4KWSVEJS8qG1VU/4mVje7hlKFr8tJiKTE3Sr/SYf+XlmiT59chiV7CFWOE+5lvpvY+ySjUGHv0J/fUBAxaHUCv5t9e/fq3iTapi8E4so+VjalkNECDUYDqx+Tt8l51zZJ4V5Ej3SAAwtwrUyISGyu4Bj0HP43WVu3NYgaeUYKId185ZIr/OeODJ8DaSgyEyTqqSWyH/dXVcqQ4suoOvW7TlsR+DBMGs="
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 391,
+    "candidatesTokenCount": 71,
+    "totalTokenCount": 796,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 391
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 71
+      }
+    ],
+    "thoughtsTokenCount": 334
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T21:02:41.227013Z",
+  "responseId": "ca9SasXtDYibpucP3saB0QI"
+}

@@ -1,0 +1,38 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\"name\": \"Obsidian Altar\", \"blurb\": \"Carved volcanic glass pulsing with liquid fire.\", \"style\": \"halo\", \"materialPrompt\": \"Polished, pitch-black obsidian with chipped matte edges and a high-gloss surface. Deep, glowing orange magma veins course through the stone, accented by scorched iron hardware.\", \"font\": \"Cinzel\"}",
+            "thoughtSignature": "<thoughtSignature stripped (2492 chars, opaque)>"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 387,
+    "candidatesTokenCount": 76,
+    "totalTokenCount": 978,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 387
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 76
+      }
+    ],
+    "thoughtsTokenCount": 515
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T21:03:01.588477Z",
+  "responseId": "ha9Sar31I-qApucPgqW8kQQ"
+}

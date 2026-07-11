@@ -1,0 +1,20 @@
+{
+  "c_prose": {
+    "n": 7,
+    "mean_iou": 0.642,
+    "mean_ctr_px": 13.2,
+    "max_ctr_px": 22.3
+  },
+  "s2_schema": {
+    "n": 8,
+    "mean_iou": 0.5527,
+    "mean_ctr_px": 12.6,
+    "max_ctr_px": 30.6
+  },
+  "s4_json_prompt": {
+    "n": 8,
+    "mean_iou": 0.5685,
+    "mean_ctr_px": 13.1,
+    "max_ctr_px": 20.3
+  }
+}

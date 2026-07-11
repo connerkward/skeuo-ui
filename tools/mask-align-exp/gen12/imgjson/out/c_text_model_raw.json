@@ -1,0 +1,41 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "[\n  {\"name\": \"playpause\", \"x\": 0.283, \"y\": 0.495, \"w\": 0.133, \"w\": 0.083},\n  {\"name\": \"prev\", \"x\": 0.186, \"y\": 0.569, \"w\": 0.117, \"h\": 0.076},\n  {\"name\": \"next\", \"x\": 0.392, \"y\": 0.569, \"w\": 0.117, \"h\": 0.076},\n  {\"name\": \"repeat\", \"x\": 0.306, \"y\": 0.638, \"w\": 0.117, \"h\": 0.074},\n  {\"name\": \"queue\", \"x\": 0.680, \"y\": 0.584, \"w\": 0.109, \"h\": 0.067},\n  {\"name\": \"vol\", \"x\": 0.016, \"y\": 0.852, \"w\": 0.207, \"h\": 0.131},\n  {\"name\": \"seek\", \"x\": 0.222, \"y\": 0.428, \"w\": 0.548, \"h\": 0.052},\n  {\"name\": \"shuffle\", \"x\": 0.264, \"y\": 0.862, \"w\": 0.213, \"h\": 0.112},\n  {\"name\": \"visualizer\", \"x\": 0.222, \"y\": 0.320, \"w\": 0.548, \"h\": 0.099},\n  {\"name\": \"album_art\", \"x\": 0.298, \"y\": 0.079, \"w\": 0.384, \"h\": 0.240}\n]",
+            "thoughtSignature": "AY89a18K6veszG6P2hkOe5U1cT12ihfLcRYnp9AwGjcdw06Co4ZP4OnzgQmGsR5bDH0="
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1314,
+    "candidatesTokenCount": 487,
+    "totalTokenCount": 1801,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1092
+      },
+      {
+        "modality": "TEXT",
+        "tokenCount": 222
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 487
+      }
+    ]
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T20:53:39.533637Z",
+  "responseId": "U61SaoXJIPWpq8YPqLnPsAc"
+}

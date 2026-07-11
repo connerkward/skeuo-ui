@@ -1,0 +1,136 @@
+{
+  "s1_director_prose": [
+    {
+      "prompt": "a rusted deep-sea diving helmet grown over with barnacles",
+      "finishReason": "STOP",
+      "parse_ok": true,
+      "parse_error": null,
+      "validation": {
+        "complete": true,
+        "missing": [],
+        "style_valid": true
+      },
+      "obj": {
+        "name": "Benthic Bell",
+        "blurb": "Forgotten sounds from the oceanic depths.",
+        "style": "biomech",
+        "materialPrompt": "Heavily oxidized, pitted brass with a matte verdigris finish, clustered with rough, calcified barnacle growths. The interface features thick, scratched glass porthole screens and heavy, water-corroded copper hardware accents.",
+        "font": "Kelly Slab"
+      }
+    },
+    {
+      "prompt": "a 1950s pastel diner jukebox with chrome fins",
+      "finishReason": "STOP",
+      "parse_ok": true,
+      "parse_error": null,
+      "validation": {
+        "complete": true,
+        "missing": [],
+        "style_valid": true
+      },
+      "obj": {
+        "name": "Chrome Fin",
+        "blurb": "Rock around the clock with classic style.",
+        "style": "winamp",
+        "materialPrompt": "Glossy pastel-turquoise enamel paired with highly polished, ribbed chrome fins and ruby-red glowing indicator lights. The surface features a thick, candy-coat lacquer finish with tactile brushed aluminum buttons.",
+        "font": "Righteous"
+      }
+    },
+    {
+      "prompt": "an obsidian volcanic altar with glowing magma veins",
+      "finishReason": "STOP",
+      "parse_ok": true,
+      "parse_error": null,
+      "validation": {
+        "complete": true,
+        "missing": [],
+        "style_valid": true
+      },
+      "obj": {
+        "name": "Magma Altar",
+        "blurb": "Obsidian interface with pulsing molten veins.",
+        "style": "halo",
+        "materialPrompt": "Deep, glossy black obsidian with fractured, jagged edges framing the screen. Bright, luminescent orange and red magma flows through recessed channels, accented by dark brushed-tungsten buttons.",
+        "font": "Cinzel"
+      }
+    }
+  ],
+  "s1_director_schema": [
+    {
+      "prompt": "a rusted deep-sea diving helmet grown over with barnacles",
+      "finishReason": "STOP",
+      "parse_ok": true,
+      "parse_error": null,
+      "validation": {
+        "complete": true,
+        "missing": [],
+        "style_valid": true
+      },
+      "obj": {
+        "name": "Abyssal Helm",
+        "blurb": "Forgotten relic of the deep ocean.",
+        "style": "biomech",
+        "materialPrompt": "Heavily oxidized brass and rusted cast iron, pitted by saltwater corrosion. Matte, rough surfaces intermixed with glossy, calcified barnacles and verdigris-stained copper accents.",
+        "font": "Pirata One"
+      }
+    },
+    {
+      "prompt": "a 1950s pastel diner jukebox with chrome fins",
+      "finishReason": "STOP",
+      "parse_ok": true,
+      "parse_error": null,
+      "validation": {
+        "complete": true,
+        "missing": [],
+        "style_valid": true
+      },
+      "obj": {
+        "name": "Pastel Jukebox",
+        "blurb": "A 1950s chrome and pastel diner classic.",
+        "style": "winamp",
+        "materialPrompt": "Glossy pastel mint green enamel paired with highly polished ribbed chrome fins. Accented with warm neon tube lighting and brushed aluminum buttons.",
+        "font": "Pacifico"
+      }
+    },
+    {
+      "prompt": "an obsidian volcanic altar with glowing magma veins",
+      "finishReason": "STOP",
+      "parse_ok": true,
+      "parse_error": null,
+      "validation": {
+        "complete": true,
+        "missing": [],
+        "style_valid": true
+      },
+      "obj": {
+        "name": "Obsidian Altar",
+        "blurb": "Carved volcanic glass pulsing with liquid fire.",
+        "style": "halo",
+        "materialPrompt": "Polished, pitch-black obsidian with chipped matte edges and a high-gloss surface. Deep, glowing orange magma veins course through the stone, accented by scorched iron hardware.",
+        "font": "Cinzel"
+      }
+    }
+  ],
+  "s2_bbox_schema": {
+    "finishReason": "STOP",
+    "parse_ok": true,
+    "parse_error": null,
+    "n_items": 10
+  },
+  "s3_image_schema": {
+    "mime_only": {
+      "accepted": false,
+      "error_verbatim": "vertex(s3_mime_only) HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Parameter response_mime_type is not supported for generating image response.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n"
+    },
+    "mime_plus_schema": {
+      "accepted": false,
+      "error_verbatim": "vertex(s3_mime_plus_schema) HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Parameter response_mime_type is not supported for generating image response.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n"
+    }
+  },
+  "s4_json_prompt": {
+    "finishReason": "STOP",
+    "parse_ok": true,
+    "parse_error": null,
+    "n_items": 10
+  }
+}

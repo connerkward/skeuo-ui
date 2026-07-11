@@ -1,0 +1,38 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n  \"name\": \"Magma Altar\",\n  \"blurb\": \"Obsidian interface with pulsing molten veins.\",\n  \"style\": \"halo\",\n  \"materialPrompt\": \"Deep, glossy black obsidian with fractured, jagged edges framing the screen. Bright, luminescent orange and red magma flows through recessed channels, accented by dark brushed-tungsten buttons.\",\n  \"font\": \"Cinzel\"\n}",
+            "thoughtSignature": "<thoughtSignature stripped (2876 chars, opaque)>"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 158,
+    "candidatesTokenCount": 89,
+    "totalTokenCount": 846,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 158
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 89
+      }
+    ],
+    "thoughtsTokenCount": 599
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T21:02:29.674446Z",
+  "responseId": "Za9Sao6VKa6EpucP9NXz8A4"
+}

@@ -1,0 +1,38 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n  \"name\": \"Benthic Bell\",\n  \"blurb\": \"Forgotten sounds from the oceanic depths.\",\n  \"style\": \"biomech\",\n  \"materialPrompt\": \"Heavily oxidized, pitted brass with a matte verdigris finish, clustered with rough, calcified barnacle growths. The interface features thick, scratched glass porthole screens and heavy, water-corroded copper hardware accents.\",\n  \"font\": \"Kelly Slab\"\n}",
+            "thoughtSignature": "<thoughtSignature stripped (3528 chars, opaque)>"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 162,
+    "candidatesTokenCount": 99,
+    "totalTokenCount": 1017,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 162
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 99
+      }
+    ],
+    "thoughtsTokenCount": 756
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T21:02:06.467070Z",
+  "responseId": "Tq9Sav7AHK6EpucP9NXz8A4"
+}

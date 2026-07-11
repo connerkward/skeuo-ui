@@ -1,0 +1,38 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n  \"name\": \"Pastel Jukebox\",\n  \"blurb\": \"A 1950s chrome and pastel diner classic.\",\n  \"style\": \"winamp\",\n  \"materialPrompt\": \"Glossy pastel mint green enamel paired with highly polished ribbed chrome fins. Accented with warm neon tube lighting and brushed aluminum buttons.\",\n  \"font\": \"Pacifico\"\n}",
+            "thoughtSignature": "<thoughtSignature stripped (2136 chars, opaque)>"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 392,
+    "candidatesTokenCount": 85,
+    "totalTokenCount": 937,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 392
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 85
+      }
+    ],
+    "thoughtsTokenCount": 460
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T21:02:50.965661Z",
+  "responseId": "eq9Sap34OrqEpucP-Zm88AE"
+}

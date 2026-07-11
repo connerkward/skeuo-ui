@@ -1,0 +1,38 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n  \"name\": \"Chrome Fin\",\n  \"blurb\": \"Rock around the clock with classic style.\",\n  \"style\": \"winamp\",\n  \"materialPrompt\": \"Glossy pastel-turquoise enamel paired with highly polished, ribbed chrome fins and ruby-red glowing indicator lights. The surface features a thick, candy-coat lacquer finish with tactile brushed aluminum buttons.\",\n  \"font\": \"Righteous\"\n}",
+            "thoughtSignature": "<thoughtSignature stripped (3020 chars, opaque)>"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 163,
+    "candidatesTokenCount": 91,
+    "totalTokenCount": 896,
+    "trafficType": "PROVISIONED_THROUGHPUT",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 163
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 91
+      }
+    ],
+    "thoughtsTokenCount": 642
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T21:02:18.415345Z",
+  "responseId": "Wq9SavGsGY-epucPxZmYmAY"
+}

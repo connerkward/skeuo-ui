@@ -37,6 +37,21 @@ scoped only to `docs/experiments/assets/*.png|*.jpg` — recommend extending LFS
 `blueprint.png` ($0 deterministic) and `assets-*_biref/` as a bulk ignore pattern stay/stayed
 ignored — see `.gitignore` for the itemized policy comment.
 
+## imgjson: image-model JSON output + structured-I/O sweep — DONE 2026-07-11
+
+Answered "can gemini-3-pro-image-preview emit usable JSON (bbox manifests) alongside its
+image output" + a structured-I/O viability sweep. Harness + results page: `imgjson/`
+(`run_tests.py`, `run_structured.py`, `score.py`, `diagnose.py`, `index.html`); full
+write-up: [`docs/experiments/2026-07-11-image-model-json-output.md`](../../../docs/experiments/2026-07-11-image-model-json-output.md).
+Headlines: image-model text output is real (TEXT must ride WITH IMAGE modality; TEXT-alone
+= 400) but its bbox y-coords come back in an internal frame → raw IoU 0.003, unusable for
+manifests or detection; `responseMimeType/responseSchema` on the image model = hard 400.
+Text model (`gemini-3.1-pro-preview`): ~13 px mean centers on unambiguous controls;
+`responseSchema` costs nothing and guarantees field/enum completeness → **worth adopting on
+the director's calls** (open follow-up: wire `responseSchema` into
+`src/generate/director.ts` `directorChat`, replacing the hand-rolled validation fallbacks).
+Structured (fenced-JSON) prompts: measured neutral on extraction; paint-side untested.
+
 ## Think-about notes (2026-07-11) — emissive, director-vision, drift-clause bisect
 
 Three open design questions written up as decision-ready options + recommendations, none

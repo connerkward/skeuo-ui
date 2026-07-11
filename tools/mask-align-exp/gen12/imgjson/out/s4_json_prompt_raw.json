@@ -1,0 +1,41 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "[\n  {\n    \"name\": \"playpause\",\n    \"x\": 0.281,\n    \"y\": 0.490,\n    \"w\": 0.134,\n    \"h\": 0.089\n  },\n  {\n    \"name\": \"prev\",\n    \"x\": 0.186,\n    \"y\": 0.569,\n    \"w\": 0.124,\n    \"h\": 0.081\n  },\n  {\n    \"name\": \"next\",\n    \"x\": 0.392,\n    \"y\": 0.567,\n    \"w\": 0.124,\n    \"h\": 0.080\n  },\n  {\n    \"name\": \"repeat\",\n    \"x\": 0.301,\n    \"y\": 0.633,\n    \"w\": 0.133,\n    \"h\": 0.083\n  },\n  {\n    \"name\": \"queue\",\n    \"x\": 0.678,\n    \"y\": 0.584,\n    \"w\": 0.119,\n    \"h\": 0.076\n  },\n  {\n    \"name\": \"vol\",\n    \"x\": 0.016,\n    \"y\": 0.849,\n    \"w\": 0.210,\n    \"h\": 0.137\n  },\n  {\n    \"name\": \"seek\",\n    \"x\": 0.223,\n    \"y\": 0.428,\n    \"w\": 0.548,\n    \"h\": 0.057\n  },\n  {\n    \"name\": \"shuffle\",\n    \"x\": 0.510,\n    \"y\": 0.849,\n    \"w\": 0.478,\n    \"h\": 0.133\n  },\n  {\n    \"name\": \"visualizer\",\n    \"x\": 0.224,\n    \"y\": 0.320,\n    \"w\": 0.550,\n    \"h\": 0.108\n  },\n  {\n    \"name\": \"album_art\",\n    \"x\": 0.307,\n    \"y\": 0.080,\n    \"w\": 0.380,\n    \"h\": 0.245\n  }\n]",
+            "thoughtSignature": "AY89a19+mesm0hV+v7gEH7lcJK8CR+Sb3NbpL105dxa+JagQRbrM4JW8q8GEjjKy9KM="
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1541,
+    "candidatesTokenCount": 617,
+    "totalTokenCount": 2158,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 449
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1092
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 617
+      }
+    ]
+  },
+  "modelVersion": "gemini-3.1-pro-preview",
+  "createTime": "2026-07-11T21:04:27.331581Z",
+  "responseId": "269Sar2eFNObpucPj5CHsAg"
+}
