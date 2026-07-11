@@ -5,14 +5,20 @@
   "seed": 121,
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "PASS",
-  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE\nseek: NONE\nshuffle: NONE\nvisualizer: NONE\nalbum_art: NONE\nvol cavity: EMPTY\nseek cavity: EMPTY\nshuffle cavity: EMPTY\nVERDICT: PASS",
+  "digit_verdict": "CLEAN",
+  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE, EMPTY\nseek: NONE, EMPTY\nshuffle: NONE, EMPTY\nvisualizer: NONE\nalbum_art: NONE\n\nplaypause: DIGITS-NONE\nprev: DIGITS-NONE\nnext: DIGITS-NONE\nrepeat: DIGITS-NONE\nqueue: DIGITS-NONE\nvol: DIGITS-NONE\nseek: DIGITS-NONE\nshuffle: DIGITS-NONE\nvisualizer: DIGITS-NONE\nalbum_art: DIGITS-NONE\n\nVERDICT: PASS\nDIGIT-VERDICT: CLEAN",
   "images_sent": [
     "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
     "crop-vol.png",
     "crop-seek.png",
     "crop-shuffle.png",
-    "crop-playpause.png",
-    "crop-queue.png"
+    "crop-visualizer.png",
+    "crop-album_art.png"
   ],
-  "ts": "2026-07-10T12:19:26"
+  "ts": "2026-07-10T13:18:10"
 }

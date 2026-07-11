@@ -1,0 +1,347 @@
+{
+ "gens": [
+  {
+   "tag": "fa-pod-control-121",
+   "theme": "fa-pod",
+   "arm": "control",
+   "seed": 121,
+   "gate_pass": true,
+   "gate_reasons": [],
+   "empty_ok": true,
+   "leak_pct": 0,
+   "bleed_ring_worst": {
+    "control": "visualizer",
+    "pct": 0.0038
+   },
+   "vlm_verdict": "PASS",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [],
+   "cavity_filled_controls": [],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": true
+  },
+  {
+   "tag": "fa-pod-control-134",
+   "theme": "fa-pod",
+   "arm": "control",
+   "seed": 134,
+   "gate_pass": true,
+   "gate_reasons": [],
+   "empty_ok": true,
+   "leak_pct": 0.0347,
+   "bleed_ring_worst": {
+    "control": "playpause",
+    "pct": 0.0
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [
+    "next",
+    "playpause",
+    "prev",
+    "queue",
+    "repeat"
+   ],
+   "cavity_filled_controls": [],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": true
+  },
+  {
+   "tag": "fa-pod-treat-121",
+   "theme": "fa-pod",
+   "arm": "treat",
+   "seed": 121,
+   "gate_pass": true,
+   "gate_reasons": [],
+   "empty_ok": true,
+   "leak_pct": 0,
+   "bleed_ring_worst": {
+    "control": "visualizer",
+    "pct": 0.0077
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CONTAMINATED",
+   "color_residue_controls": [],
+   "cavity_filled_controls": [],
+   "digit_found_controls": [
+    "vol"
+   ],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  },
+  {
+   "tag": "fa-pod-treat-134",
+   "theme": "fa-pod",
+   "arm": "treat",
+   "seed": 134,
+   "gate_pass": false,
+   "gate_reasons": [
+    "region-misplaced:visualizer"
+   ],
+   "empty_ok": true,
+   "leak_pct": 0.0002,
+   "bleed_ring_worst": {
+    "control": "shuffle",
+    "pct": 0.19
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [
+    "seek",
+    "shuffle",
+    "vol"
+   ],
+   "cavity_filled_controls": [
+    "seek",
+    "shuffle",
+    "vol"
+   ],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  },
+  {
+   "tag": "fa-pod-neutral-121",
+   "theme": "fa-pod",
+   "arm": "neutral",
+   "seed": 121,
+   "gate_pass": true,
+   "gate_reasons": [],
+   "empty_ok": true,
+   "leak_pct": 0,
+   "bleed_ring_worst": {
+    "control": "playpause",
+    "pct": 0.0
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [
+    "shuffle"
+   ],
+   "cavity_filled_controls": [
+    "seek",
+    "shuffle",
+    "vol"
+   ],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  },
+  {
+   "tag": "fa-pod-neutral-134",
+   "theme": "fa-pod",
+   "arm": "neutral",
+   "seed": 134,
+   "gate_pass": false,
+   "gate_reasons": [
+    "emptiness"
+   ],
+   "empty_ok": false,
+   "leak_pct": 0,
+   "bleed_ring_worst": {
+    "control": "shuffle",
+    "pct": 0.0056
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [
+    "shuffle"
+   ],
+   "cavity_filled_controls": [],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  },
+  {
+   "tag": "wc-goldshield-control-121",
+   "theme": "wc-goldshield",
+   "arm": "control",
+   "seed": 121,
+   "gate_pass": false,
+   "gate_reasons": [
+    "region-misplaced:visualizer",
+    "region-misplaced:album_art"
+   ],
+   "empty_ok": true,
+   "leak_pct": 0.0596,
+   "bleed_ring_worst": {
+    "control": "queue",
+    "pct": 36.0416
+   },
+   "vlm_verdict": "PASS",
+   "digit_verdict": "CONTAMINATED",
+   "color_residue_controls": [],
+   "cavity_filled_controls": [],
+   "digit_found_controls": [
+    "vol"
+   ],
+   "digit_numeral_controls": [],
+   "layout_adheres": true
+  },
+  {
+   "tag": "wc-goldshield-control-134",
+   "theme": "wc-goldshield",
+   "arm": "control",
+   "seed": 134,
+   "gate_pass": true,
+   "gate_reasons": [],
+   "empty_ok": true,
+   "leak_pct": 0.0013,
+   "bleed_ring_worst": {
+    "control": "queue",
+    "pct": 15.8777
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [
+    "next",
+    "prev",
+    "queue",
+    "repeat"
+   ],
+   "cavity_filled_controls": [],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": true
+  },
+  {
+   "tag": "wc-goldshield-treat-121",
+   "theme": "wc-goldshield",
+   "arm": "treat",
+   "seed": 121,
+   "gate_pass": true,
+   "gate_reasons": [],
+   "empty_ok": true,
+   "leak_pct": 0.0187,
+   "bleed_ring_worst": {
+    "control": "queue",
+    "pct": 7.8339
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CONTAMINATED",
+   "color_residue_controls": [],
+   "cavity_filled_controls": [
+    "seek",
+    "shuffle",
+    "vol"
+   ],
+   "digit_found_controls": [
+    "album_art",
+    "repeat",
+    "visualizer",
+    "vol"
+   ],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  },
+  {
+   "tag": "wc-goldshield-treat-134",
+   "theme": "wc-goldshield",
+   "arm": "treat",
+   "seed": 134,
+   "gate_pass": true,
+   "gate_reasons": [],
+   "empty_ok": true,
+   "leak_pct": 0.0673,
+   "bleed_ring_worst": {
+    "control": "queue",
+    "pct": 38.7866
+   },
+   "vlm_verdict": "PASS",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [],
+   "cavity_filled_controls": [],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  },
+  {
+   "tag": "wc-goldshield-neutral-121",
+   "theme": "wc-goldshield",
+   "arm": "neutral",
+   "seed": 121,
+   "gate_pass": false,
+   "gate_reasons": [
+    "emptiness"
+   ],
+   "empty_ok": false,
+   "leak_pct": 0.0024,
+   "bleed_ring_worst": {
+    "control": "queue",
+    "pct": 18.1892
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [],
+   "cavity_filled_controls": [
+    "shuffle"
+   ],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  },
+  {
+   "tag": "wc-goldshield-neutral-134",
+   "theme": "wc-goldshield",
+   "arm": "neutral",
+   "seed": 134,
+   "gate_pass": false,
+   "gate_reasons": [
+    "emptiness"
+   ],
+   "empty_ok": false,
+   "leak_pct": 0.0398,
+   "bleed_ring_worst": {
+    "control": "shuffle",
+    "pct": 12.3923
+   },
+   "vlm_verdict": "FAIL",
+   "digit_verdict": "CLEAN",
+   "color_residue_controls": [
+    "next",
+    "repeat",
+    "shuffle"
+   ],
+   "cavity_filled_controls": [
+    "shuffle"
+   ],
+   "digit_found_controls": [],
+   "digit_numeral_controls": [],
+   "layout_adheres": false
+  }
+ ],
+ "summary": {
+  "control": {
+   "n": 4,
+   "gate_pass": "3/4",
+   "vlm_pass": "2/4",
+   "color_bleed_gens": "2/4",
+   "digit_mark_gens": "1/4",
+   "digit_numeral_gens": "0/4",
+   "layout_adherence_gens": "4/4",
+   "cavity_empty_gens": "4/4"
+  },
+  "treat": {
+   "n": 4,
+   "gate_pass": "3/4",
+   "vlm_pass": "1/4",
+   "color_bleed_gens": "1/4",
+   "digit_mark_gens": "2/4",
+   "digit_numeral_gens": "0/4",
+   "layout_adherence_gens": "0/4",
+   "cavity_empty_gens": "2/4"
+  },
+  "neutral": {
+   "n": 4,
+   "gate_pass": "1/4",
+   "vlm_pass": "0/4",
+   "color_bleed_gens": "3/4",
+   "digit_mark_gens": "0/4",
+   "digit_numeral_gens": "0/4",
+   "layout_adherence_gens": "0/4",
+   "cavity_empty_gens": "0/4"
+  }
+ }
+}

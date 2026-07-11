@@ -5,14 +5,20 @@
   "seed": 121,
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "PASS",
-  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE, Cavity: EMPTY\nseek: NONE, Cavity: EMPTY\nshuffle: NONE, Cavity: EMPTY\nvisualizer: NONE\nalbum_art: NONE\nVERDICT: PASS",
+  "digit_verdict": "CONTAMINATED",
+  "raw": "playpause (button): NONE\nprev (button): NONE\nnext (button): NONE\nrepeat (button): NONE\nqueue (button): NONE\nvol (knob): NONE; cavity is EMPTY\nseek (slider): NONE; cavity is EMPTY\nshuffle (toggle): NONE; cavity is EMPTY\nvisualizer (region): NONE\nalbum_art (region): NONE\n\nplaypause (button): DIGITS-NONE\nprev (button): DIGITS-NONE\nnext (button): DIGITS-NONE\nrepeat (button): DIGITS-NONE\nqueue (button): DIGITS-NONE\nvol (knob): DIGITS-FOUND (A small, dark, V-shaped notch or tick-mark is engraved on the bottom-right inner rim of the circular socket.)\nseek (slider): DIGITS-NONE\nshuffle (toggle): DIGITS-NONE\nvisualizer (region): DIGITS-NONE\nalbum_art (region): DIGITS-NONE\n\nVERDICT: PASS\nDIGIT-VERDICT: CONTAMINATED",
   "images_sent": [
     "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
     "crop-vol.png",
     "crop-seek.png",
     "crop-shuffle.png",
-    "crop-playpause.png",
-    "crop-queue.png"
+    "crop-visualizer.png",
+    "crop-album_art.png"
   ],
-  "ts": "2026-07-10T12:23:30"
+  "ts": "2026-07-11T13:03:06"
 }

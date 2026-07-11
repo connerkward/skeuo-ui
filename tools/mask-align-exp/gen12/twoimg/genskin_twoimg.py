@@ -40,7 +40,7 @@ Usage:
 """
 import os, io, sys, json, time, math, base64, subprocess
 import requests
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 GEN12 = os.path.dirname(HERE)
@@ -74,6 +74,84 @@ BTN_R, PLAY_R, KNOB_R = 74, 104, 84
 GROOVE_W, GROOVE_H, THUMB_W, THUMB_H, THUMB_R = 640, 76, 150, 96, 44
 TOG_W, TOG_H, TOG_R = 120, 178, 40
 ART_W, ART_H, VIZ_W, VIZ_H = 560, 300, 640, 156
+
+# --- neutral-reference arm (2026-07-10 twoimg-neutral): colourless line-art + number tags,
+# testing the user's hypothesis that a numbered reference just swaps colour-contamination for
+# DIGIT-contamination instead of eliminating bleed. CONTROLS is exactly 10 items, so 1-10 covers
+# every control with no reuse (except the two shuffle STRIP states, which intentionally reuse
+# shuffle's single number — they are the same control, just its two loose parts).
+NUM = {c: i + 1 for i, c in enumerate(CONTROLS)}
+CONTROL_LABEL = {
+    "playpause": "play/pause button", "prev": "previous-track button", "next": "next-track button",
+    "repeat": "repeat button", "queue": "queue button", "vol": "volume knob", "seek": "seek slider",
+    "shuffle": "shuffle switch", "visualizer": "visualizer window", "album_art": "album-art window",
+}
+MIDGREY = (150, 150, 156)
+
+
+def draw_shape_outline(d, kind, sz, x, y, col, width=5):
+    if kind == "btn":
+        r = sz[0]; d.ellipse([x - r, y - r, x + r, y + r], outline=col, width=width)
+    elif kind == "knob":
+        d.ellipse([x - KNOB_R, y - KNOB_R, x + KNOB_R, y + KNOB_R], outline=col, width=width)
+    elif kind == "groove":
+        box = [x - GROOVE_W / 2, y - GROOVE_H / 2, x + GROOVE_W / 2, y + GROOVE_H / 2]
+        d.rounded_rectangle(box, radius=35, outline=col, width=width)
+    elif kind == "tog":
+        box = [x - TOG_W / 2, y - TOG_H / 2, x + TOG_W / 2, y + TOG_H / 2]
+        d.rounded_rectangle(box, radius=TOG_R, outline=col, width=width)
+    elif kind == "rect":
+        w, hh = sz; box = [x - w / 2, y - hh / 2, x + w / 2, y + hh / 2]
+        d.rounded_rectangle(box, radius=28, outline=col, width=width)
+
+
+def _num_font():
+    try:
+        return ImageFont.load_default(size=40)
+    except TypeError:
+        return ImageFont.load_default()
+
+
+def draw_num_tag(d, x, y, num, font):
+    """Small legible number tag CENTRED on the shape's own centre point (the outline is
+    unfilled, so a centred tag stays inside it without overlapping the stroke)."""
+    txt = str(num)
+    tw = d.textlength(txt, font=font) if hasattr(d, "textlength") else len(txt) * 22
+    pad = 8
+    d.rectangle([x - tw / 2 - pad, y - 20 - pad, x + tw / 2 + pad, y + 20 + pad], fill=(40, 40, 44))
+    d.text((x - tw / 2, y - 20), txt, fill=(235, 235, 235), font=font)
+
+
+def build_neutral_reference(BG, layout, dark):
+    """Single-column (COL_W x H) reference image: the SAME placeholder-body + strip-band
+    geometry as the clean scaffold, drawn as thin MID-GREY OUTLINE strokes (zero fill, zero
+    guide colour) with a small printed NUMBER (1-10) centred in each control's outline. This
+    is the ENTIRE layout signal sent to the model for the neutral arm — no colour anywhere in
+    either image it receives, so any colour bleed in the paint cannot originate from a
+    reference pixel; the hypothesis under test is whether it instead bakes in DIGITS."""
+    img = Image.new("RGB", (COL_W, H), BG)
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([70, 60, COL_W - 70, DEV_H - 40], radius=140, outline=MIDGREY, width=4)
+    font = _num_font()
+    for name, spec_l in layout.items():
+        fx, fy, kind, *sz = spec_l
+        x, y = COL_W * fx, DEV_H * fy
+        draw_shape_outline(d, kind, sz, x, y, MIDGREY, width=4)
+        draw_num_tag(d, x, y, NUM[name], font)
+    sy = DEV_H + (H - DEV_H) // 2
+    cells = [(KNOB, "circle"), (SLIDER, "thumb"), (TOGGLE, "tog"), (TOGGLE, "tog")]
+    for i, (k, shp) in enumerate(cells):
+        cx = COL_W * (0.13 + 0.20 * i)
+        if shp == "circle":
+            d.ellipse([cx - KNOB_R, sy - KNOB_R, cx + KNOB_R, sy + KNOB_R], outline=MIDGREY, width=4)
+        elif shp == "thumb":
+            d.rounded_rectangle([cx - THUMB_W / 2, sy - THUMB_H / 2, cx + THUMB_W / 2, sy + THUMB_H / 2],
+                                 radius=THUMB_R, outline=MIDGREY, width=4)
+        else:
+            d.rounded_rectangle([cx - TOG_W / 2, sy - TOG_H / 2, cx + TOG_W / 2, sy + TOG_H / 2],
+                                 radius=TOG_R, outline=MIDGREY, width=4)
+        draw_num_tag(d, cx, sy, NUM[k], font)
+    return img
 
 
 def _vpod():
@@ -239,7 +317,7 @@ def build_prompt(arm, sid, KEYS, BG, dark, STRUCT):
             "characterful, sculpted form with a memorable silhouette. Reshape the outer silhouette "
             "DRAMATICALLY to suit the theme; ONLY the control positions stay fixed. The coloured filled "
             "patches are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed.")
-    else:
+    elif arm == "treat":
         preamble = (
             "TWO images are provided. IMAGE 1 is the EDIT TARGET / CANVAS — two side-by-side columns of "
             "identical size, output at 5:4, matching IMAGE 1's layout exactly. IMAGE 2 is a LAYOUT "
@@ -259,6 +337,38 @@ def build_prompt(arm, sid, KEYS, BG, dark, STRUCT):
             "DISTINCTIVE, ASYMMETRIC, theme-appropriate outer HOUSING around them: an ornate, characterful, "
             "sculpted form with a memorable silhouette. Reshape the outer silhouette DRAMATICALLY to suit "
             "the theme; ONLY the control positions (as shown by IMAGE 2) stay fixed.")
+    else:  # neutral — colourless numbered line-art reference (tests digit-contamination, not colour)
+        mapping_text = "; ".join(f"outline {NUM[c]} marks the {CONTROL_LABEL[c]}'s exact position/size"
+                                  for c in CONTROLS)
+        preamble = (
+            "TWO images are provided. IMAGE 1 is the EDIT TARGET / CANVAS — two side-by-side columns of "
+            "identical size, output at 5:4, matching IMAGE 1's layout exactly. IMAGE 2 is a LAYOUT "
+            "REFERENCE ONLY — a COLOURLESS line-art floor-plan with a small printed NUMBER (1-10) beside "
+            "every control, shown purely to tell you WHERE each control goes. IMAGE 2 is NOT part of the "
+            "canvas you edit: none of its thin grey outline strokes and NONE of its printed numbers may "
+            "ever appear, in any form, anywhere in your output.")
+        left_layout = (
+            "IMAGE 1's LEFT column is a neutral grey placeholder body (a rough blob, no markings of any "
+            "kind) plus a bottom SPRITE-STRIP band that is currently EMPTY/blank. IMAGE 2 shows the SAME "
+            "placeholder body and the SAME strip band, but with THIN MID-GREY OUTLINE shapes marking each "
+            "control's EXACT position, size and shape, each labeled with a small printed NUMBER — READ "
+            "IMAGE 2 to know where each control belongs by matching its number: " + mapping_text + ". The "
+            "same number appears TWICE on the strip row, once for each of the shuffle switch's two states "
+            "(both are the same shuffle control). COPY THE POSITION, SIZE AND SHAPE of every numbered "
+            "outline from IMAGE 2 exactly (their layout is locked) — but IMAGE 2's OUTLINE STROKES AND ITS "
+            "PRINTED NUMBERS ARE NEVER PAINTED anywhere in your output; they exist ONLY in IMAGE 2, purely "
+            "as drafting/position markers for you to read, exactly like a blueprint's tape-and-marker-pen "
+            "annotations that get peeled off before the real object ships. CRITICAL — DO NOT PAINT ANY "
+            "DIGITS: your finished output must contain ZERO printed numbers, numerals, digits, tick-marks, "
+            "reference dots, callout labels, or line-art strokes of any kind, on the device OR the strip OR "
+            "anywhere else — not a faint '6' engraved near the volume knob, not a tiny dot beside a button, "
+            "nothing. If IMAGE 2's number tags or outline strokes appear anywhere, in any size, faintness, "
+            "or material (engraved, painted, embossed, or worked in as a design motif), the output is "
+            "WRONG. The grey body in IMAGE 1 is only a rough placeholder showing roughly where the controls "
+            "sit — you are FREE and STRONGLY ENCOURAGED to sculpt a BOLD, DISTINCTIVE, ASYMMETRIC, "
+            "theme-appropriate outer HOUSING around them: an ornate, characterful, sculpted form with a "
+            "memorable silhouette. Reshape the outer silhouette DRAMATICALLY to suit the theme; ONLY the "
+            "control positions (as shown by IMAGE 2's numbered outlines) stay fixed.")
 
     prompt = (
         preamble + " ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS and NO LABELS "
@@ -322,7 +432,7 @@ def build_prompt(arm, sid, KEYS, BG, dark, STRUCT):
         "NO tilt, NO isometric, NO perspective, NO visible sides.\n"
         "RIGHT column of your output — a precise REGION MASK on pure BLACK, pixel-aligned to your LEFT "
         "column. For EACH control paint ONE SOLID FILLED blob in ITS OWN guide colour (as shown in "
-        + ("IMAGE 2" if arm == "treat" else "the guide")
+        + ("IMAGE 2" if arm in ("treat", "neutral") else "the guide")
         + "), at the EXACT same position, size and silhouette as that control on your LEFT column (the "
         "seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; the shuffle "
         "blob is a tall portrait rounded-rectangle; each knob/button blob a solid disc): " + mask_lines
@@ -341,7 +451,7 @@ def build_prompt(arm, sid, KEYS, BG, dark, STRUCT):
 def main():
     spec = json.load(open(sys.argv[1]))
     arm = sys.argv[sys.argv.index("--arm") + 1]
-    assert arm in ("control", "treat")
+    assert arm in ("control", "treat", "neutral")
     seed = int(sys.argv[sys.argv.index("--seed") + 1])
     sid = spec["id"]; mode = spec["mode"]
     assert mode == "templated", "twoimg experiment only makes sense in templated mode"
@@ -361,6 +471,13 @@ def main():
         clean_path = os.path.join(OUT, "blueprint-clean.png"); clean_img.save(clean_path)
         image_paths = [clean_path, guided_path]
         bp_for_record = "blueprint-clean.png + blueprint-guided.png (reference)"
+    elif arm == "neutral":
+        clean_img, _ = build_canvas(BG, layout, KEYS, guided=False)
+        clean_path = os.path.join(OUT, "blueprint-clean.png"); clean_img.save(clean_path)
+        neutral_img = build_neutral_reference(BG, layout, dark)
+        neutral_path = os.path.join(OUT, "blueprint-neutral-ref.png"); neutral_img.save(neutral_path)
+        image_paths = [clean_path, neutral_path]
+        bp_for_record = "blueprint-clean.png + blueprint-neutral-ref.png (colourless numbered layout reference)"
     else:
         image_paths = [guided_path]
         bp_for_record = "blueprint-guided.png"

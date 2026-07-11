@@ -1,0 +1,24 @@
+{
+  "tag": "fa-pod-neutral-121",
+  "theme": "fa-pod",
+  "arm": "neutral",
+  "seed": 121,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "digit_verdict": "CLEAN",
+  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE, FILLED\nseek: NONE, FILLED\nshuffle: FLOODED, FILLED\nvisualizer: NONE\nalbum_art: NONE\n\nplaypause: DIGITS-NONE\nprev: DIGITS-NONE\nnext: DIGITS-NONE\nrepeat: DIGITS-NONE\nqueue: DIGITS-NONE\nvol: DIGITS-NONE\nseek: DIGITS-NONE\nshuffle: DIGITS-NONE\nvisualizer: DIGITS-NONE\nalbum_art: DIGITS-NONE\n\nVERDICT: FAIL\nDIGIT-VERDICT: CLEAN",
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "ts": "2026-07-10T13:19:44"
+}

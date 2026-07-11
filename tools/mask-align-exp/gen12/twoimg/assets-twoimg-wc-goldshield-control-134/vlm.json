@@ -5,14 +5,20 @@
   "seed": 134,
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: NONE\nprev: FLOODED\nnext: FLOODED\nrepeat: FLOODED\nqueue: FLOODED\nvol: NONE\nseek: NONE\nshuffle: NONE\nvisualizer: NONE\nalbum_art: NONE\n\nvol cavity: EMPTY\nseek cavity: EMPTY\nshuffle cavity: EMPTY\n\nVERDICT: FAIL",
+  "digit_verdict": "CLEAN",
+  "raw": "playpause (button): NONE\nplaypause (button): DIGITS-NONE\nprev (button): FLOODED\nprev (button): DIGITS-NONE\nnext (button): FLOODED\nnext (button): DIGITS-NONE\nrepeat (button): FLOODED\nrepeat (button): DIGITS-NONE\nqueue (button): FLOODED\nqueue (button): DIGITS-NONE\nvol (knob): NONE\nvol (knob) cavity: EMPTY\nvol (knob): DIGITS-NONE\nseek (slider): NONE\nseek (slider) cavity: EMPTY\nseek (slider): DIGITS-NONE\nshuffle (toggle): NONE\nshuffle (toggle) cavity: EMPTY\nshuffle (toggle): DIGITS-NONE\nvisualizer (region): NONE\nvisualizer (region): DIGITS-NONE\nalbum_art (region): NONE\nalbum_art (region): DIGITS-NONE\n\nVERDICT: FAIL\nDIGIT-VERDICT: CLEAN",
   "images_sent": [
     "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
     "crop-vol.png",
     "crop-seek.png",
     "crop-shuffle.png",
-    "crop-playpause.png",
-    "crop-queue.png"
+    "crop-visualizer.png",
+    "crop-album_art.png"
   ],
-  "ts": "2026-07-10T12:24:28"
+  "ts": "2026-07-11T12:58:39"
 }

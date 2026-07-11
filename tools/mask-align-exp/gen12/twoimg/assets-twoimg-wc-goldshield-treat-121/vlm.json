@@ -5,14 +5,20 @@
   "seed": 121,
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE\nseek: NONE\nshuffle: RING\nvisualizer: NONE\nalbum_art: NONE\nvol cavity: FILLED\nseek cavity: FILLED\nshuffle cavity: FILLED\nVERDICT: FAIL",
+  "digit_verdict": "CONTAMINATED",
+  "raw": "playpause: NONE\nprev: NONE\nnext: NONE\nrepeat: NONE\nqueue: NONE\nvol: NONE, FILLED\nseek: NONE, FILLED\nshuffle: NONE, FILLED\nvisualizer: NONE\nalbum_art: NONE\n\nplaypause: DIGITS-NONE\nprev: DIGITS-NONE\nnext: DIGITS-NONE\nrepeat: DIGITS-FOUND\nqueue: DIGITS-NONE\nvol: DIGITS-FOUND\nseek: DIGITS-NONE\nshuffle: DIGITS-NONE\nvisualizer: DIGITS-FOUND\nalbum_art: DIGITS-FOUND\n\nVERDICT: FAIL\nDIGIT-VERDICT: CONTAMINATED",
   "images_sent": [
     "paint.png(resized)",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
     "crop-vol.png",
     "crop-seek.png",
     "crop-shuffle.png",
-    "crop-playpause.png",
-    "crop-queue.png"
+    "crop-visualizer.png",
+    "crop-album_art.png"
   ],
-  "ts": "2026-07-10T12:24:02"
+  "ts": "2026-07-11T12:58:00"
 }

@@ -35,7 +35,11 @@ this trial arm draw** — scope changed mid-implementation: the twoimg construct
 edit-target canvas + a second solid-filled guide-layout reference image, via `edit_vertex_multi`)
 is ported into mainline `genskin.py` and ready to flip, but stays a separate opt-in flag
 (default `False`) since the `twoimg/` experiment already FALSIFIED it as a bleed fix (see below)
-and a further raw-vs-neutral-reference variant decision is still pending.
+and the neutral-reference variant is now also RESOLVED (2026-07-11): rejected — digit
+contamination did NOT happen (user's prediction refuted, 0/4 numerals) but neutral lost on
+every other axis (0/4 layout adherence, 0/4 clean emptiness, 3/4 guide-hue residue incl.
+exact-key gems sourced from the TEXT prompt's mask-column colour spec — a third bleed pathway
+no image topology removes). See the twoimg section below.
 
 Verified 2026-07-10 (dry run, zero spend — `--blueprint-only` against 3 seeded specs, then
 deleted the throwaway `assets-drytest-*/` dirs): `solid` arm blueprint has filled guide shapes
@@ -131,6 +135,17 @@ edit canvas. Result: bleed still happens (3/4 treat gens, incl. exact-key vol ri
 seek flood transferred semantically from the reference), AND layout adherence collapses
 (4/4 treat gens drift from the locked template vs 0/4 control). Verdict + full record:
 `twoimg/results.html`, `docs/experiments/2026-07-10-twoimg-conditioning.md`. Do not adopt.
+
+**Neutral arm (2026-07-11): colourless numbered line-art reference — also rejected.** The
+digit-contamination prediction was REFUTED (0/4 gens baked numerals; SOTA-eye digit hunt over
+all 40 crops, detector proven over-sensitive on control/treat tick-marks), but neutral lost
+everywhere else: 0/4 layout adherence, 0/4 clean cavity emptiness, 3/4 guide-hue residue —
+including wc-neutral-134's next/repeat/shuffle gems in their EXACT named keys with verifiably
+colourless input images. That isolates a THIRD bleed pathway: the TEXT prompt's mask-column
+spec (each control's colour name + RGB) semantically leaks into the paint. No conditioning
+topology removes it while the joint-canvas mask column exists. Also learned: fal
+`openrouter/router/vision` caps images at 30MB of ENCODED (base64) payload — `twoimg/sota_eye.py`
+auto-falls-back to full-res JPEG q90 crops past 24MB encoded.
 
 ## BIREF_LOCAL / PAINT_VERTEX flags
 

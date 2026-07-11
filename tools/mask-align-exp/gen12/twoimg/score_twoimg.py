@@ -27,7 +27,7 @@ GEN12 = os.path.dirname(HERE)
 
 THEMES = ["fa-pod", "wc-goldshield"]
 SEEDS = [121, 134]
-ARMS = ["control", "treat"]
+ARMS = ["control", "treat", "neutral"]
 
 BAND_FRAC = 0.14      # perimeter band width, as a fraction of the control's own bbox size
 HUE_TOL = 16           # degrees (0-255 space) hue tolerance vs the guide key

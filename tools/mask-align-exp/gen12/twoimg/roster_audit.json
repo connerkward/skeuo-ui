@@ -1,0 +1,501 @@
+{
+ "note": "$0 audit from EXISTING regions.json/results.json/paint.png + git history \u2014 no new generations. mean_drift_px is the mean distance (px, on the skin's own paint.png pixel grid) between each control's AUTHORED template centre and its DETECTED device centre; mean_contam_pct is the twoimg experiment's own perimeter-band hue-bleed metric (score_twoimg.bleed_ring_pct), reused verbatim, measuring guide-colour residue around each control's own bbox.",
+ "gate_sweep_15_skins": {
+  "claymation": {
+   "mode": "templateless",
+   "pass": true
+  },
+  "diablo-gothic": {
+   "mode": "templateless",
+   "pass": true
+  },
+  "fa-pod": {
+   "mode": "templated",
+   "pass": true
+  },
+  "fa-sky": {
+   "mode": "templateless",
+   "pass": false
+  },
+  "fallout-pipboy": {
+   "mode": "templated",
+   "pass": true
+  },
+  "fallout-vault": {
+   "mode": "templateless",
+   "pass": true
+  },
+  "myst-arcanum": {
+   "mode": "templateless",
+   "pass": true
+  },
+  "n64-cutscene": {
+   "mode": "templateless",
+   "pass": true
+  },
+  "n64-prerender-character": {
+   "mode": "templateless",
+   "pass": true
+  },
+  "ps1-crunchy": {
+   "mode": "templated",
+   "pass": true
+  },
+  "ps1-wild": {
+   "mode": "templateless",
+   "pass": false
+  },
+  "steam-porthole": {
+   "mode": "templated",
+   "pass": true
+  },
+  "wc-goldshield": {
+   "mode": "templated",
+   "pass": true
+  },
+  "wmp-quicksilver": {
+   "mode": "templated",
+   "pass": true
+  },
+  "wmp-vario": {
+   "mode": "templateless",
+   "pass": true
+  }
+ },
+ "n_pass": 13,
+ "n_templated_passing": 6,
+ "templated_passing_ids": [
+  "fa-pod",
+  "fallout-pipboy",
+  "ps1-crunchy",
+  "steam-porthole",
+  "wc-goldshield",
+  "wmp-quicksilver"
+ ],
+ "live": [
+  {
+   "id": "fa-pod",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 502.9,
+   "max_drift_control": "repeat",
+   "max_drift_px": 777.3,
+   "mean_contam_pct": 0.0,
+   "max_contam_control": "visualizer",
+   "max_contam_pct": 0.002,
+   "gate_pass": true,
+   "per_control_drift_px": {
+    "album_art": 488.4,
+    "visualizer": 429.5,
+    "seek": 772.6,
+    "prev": 572.1,
+    "playpause": 649.7,
+    "next": 343.1,
+    "repeat": 777.3,
+    "vol": 390.4,
+    "shuffle": 213.9,
+    "queue": 392.1
+   },
+   "per_control_contam_pct": {
+    "playpause": 0.0,
+    "prev": 0.0,
+    "next": 0.0,
+    "repeat": 0.0,
+    "queue": 0.0,
+    "vol": 0.0,
+    "seek": 0.0,
+    "shuffle": 0.0,
+    "visualizer": 0.0016,
+    "album_art": 0.0
+   }
+  },
+  {
+   "id": "fallout-pipboy",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 950.5,
+   "max_drift_control": "album_art",
+   "max_drift_px": 2063.5,
+   "mean_contam_pct": 0.077,
+   "max_contam_control": "seek",
+   "max_contam_pct": 0.767,
+   "gate_pass": true,
+   "per_control_drift_px": {
+    "album_art": 2063.5,
+    "visualizer": 827.4,
+    "seek": 1096.5,
+    "prev": 703.8,
+    "playpause": 995.0,
+    "next": 982.0,
+    "repeat": 675.1,
+    "vol": 270.8,
+    "shuffle": 805.6,
+    "queue": 1085.4
+   },
+   "per_control_contam_pct": {
+    "playpause": 0.0,
+    "prev": 0.0,
+    "next": 0.0,
+    "repeat": 0.0,
+    "queue": 0.0,
+    "vol": 0.0,
+    "seek": 0.7673,
+    "shuffle": 0.0,
+    "visualizer": 0.0,
+    "album_art": 0.0
+   }
+  },
+  {
+   "id": "ps1-crunchy",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 415.4,
+   "max_drift_control": "vol",
+   "max_drift_px": 1379.7,
+   "mean_contam_pct": 0.01,
+   "max_contam_control": "visualizer",
+   "max_contam_pct": 0.103,
+   "gate_pass": true,
+   "per_control_drift_px": {
+    "album_art": 133.3,
+    "visualizer": 215.3,
+    "seek": 81.8,
+    "prev": 441.4,
+    "playpause": 438.8,
+    "next": 12.0,
+    "repeat": 14.5,
+    "vol": 1379.7,
+    "shuffle": 602.5,
+    "queue": 834.8
+   },
+   "per_control_contam_pct": {
+    "playpause": 0.0,
+    "prev": 0.0,
+    "next": 0.0,
+    "repeat": 0.0,
+    "queue": 0.0,
+    "vol": 0.0,
+    "seek": 0.0,
+    "shuffle": 0.0,
+    "visualizer": 0.1028,
+    "album_art": 0.0
+   }
+  },
+  {
+   "id": "steam-porthole",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 858.3,
+   "max_drift_control": "album_art",
+   "max_drift_px": 2043.3,
+   "mean_contam_pct": 1.209,
+   "max_contam_control": "visualizer",
+   "max_contam_pct": 12.086,
+   "gate_pass": true,
+   "per_control_drift_px": {
+    "album_art": 2043.3,
+    "visualizer": 1479.5,
+    "seek": 448.7,
+    "prev": 468.0,
+    "playpause": 651.2,
+    "next": 529.6,
+    "repeat": 1294.8,
+    "vol": 451.5,
+    "shuffle": 432.1,
+    "queue": 784.4
+   },
+   "per_control_contam_pct": {
+    "playpause": 0.0,
+    "prev": 0.0,
+    "next": 0.0,
+    "repeat": 0.0,
+    "queue": 0.0,
+    "vol": 0.0,
+    "seek": 0.0,
+    "shuffle": 0.0,
+    "visualizer": 12.0864,
+    "album_art": 0.0
+   }
+  },
+  {
+   "id": "wc-goldshield",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 461.6,
+   "max_drift_control": "next",
+   "max_drift_px": 837.2,
+   "mean_contam_pct": 0.702,
+   "max_contam_control": "queue",
+   "max_contam_pct": 6.885,
+   "gate_pass": true,
+   "per_control_drift_px": {
+    "album_art": 321.5,
+    "visualizer": 439.9,
+    "seek": 377.0,
+    "prev": 579.8,
+    "playpause": 471.0,
+    "next": 837.2,
+    "repeat": 506.0,
+    "vol": 525.9,
+    "shuffle": 321.1,
+    "queue": 236.7
+   },
+   "per_control_contam_pct": {
+    "playpause": 0.0,
+    "prev": 0.0,
+    "next": 0.0,
+    "repeat": 0.0,
+    "queue": 6.8852,
+    "vol": 0.1365,
+    "seek": 0.0,
+    "shuffle": 0.0,
+    "visualizer": 0.0,
+    "album_art": 0.0005
+   }
+  },
+  {
+   "id": "wmp-quicksilver",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 542.2,
+   "max_drift_control": "vol",
+   "max_drift_px": 1549.9,
+   "mean_contam_pct": 0.977,
+   "max_contam_control": "seek",
+   "max_contam_pct": 8.79,
+   "gate_pass": true,
+   "per_control_drift_px": {
+    "album_art": 171.6,
+    "visualizer": 194.0,
+    "seek": 751.6,
+    "prev": 409.9,
+    "playpause": 435.0,
+    "next": 408.2,
+    "repeat": 54.5,
+    "vol": 1549.9,
+    "shuffle": 697.6,
+    "queue": 749.7
+   },
+   "per_control_contam_pct": {
+    "playpause": 0.0,
+    "prev": 0.0,
+    "next": 0.0,
+    "repeat": 0.0,
+    "queue": 0.0,
+    "vol": 0.0,
+    "seek": 8.7895,
+    "shuffle": 0.9785,
+    "visualizer": 0.0,
+    "album_art": 0.0
+   }
+  }
+ ],
+ "historical_oldest": [
+  {
+   "id": "fa-pod",
+   "commit": "794da20e",
+   "seed": 173,
+   "dims": [
+    2304,
+    3712
+   ],
+   "mean_drift_px": 602.0,
+   "max_drift_control": "vol",
+   "max_drift_px": 1013.7,
+   "per_control_drift_px": {
+    "album_art": 270.7,
+    "visualizer": 483.0,
+    "seek": 574.7,
+    "prev": 590.0,
+    "playpause": 607.2,
+    "next": 604.6,
+    "repeat": 584.5,
+    "vol": 1013.7,
+    "shuffle": 633.5,
+    "queue": 657.6
+   }
+  },
+  {
+   "id": "fallout-pipboy",
+   "commit": "794da20e",
+   "seed": 71,
+   "dims": [
+    2304,
+    3712
+   ],
+   "mean_drift_px": 142.7,
+   "max_drift_control": "playpause",
+   "max_drift_px": 506.0,
+   "per_control_drift_px": {
+    "album_art": 13.2,
+    "visualizer": 6.2,
+    "seek": 22.6,
+    "prev": 427.2,
+    "playpause": 506.0,
+    "next": 9.7,
+    "repeat": 418.9,
+    "vol": 0.0,
+    "shuffle": 14.5,
+    "queue": 8.9
+   }
+  },
+  {
+   "id": "ps1-crunchy",
+   "commit": "794da20e",
+   "seed": 84,
+   "dims": [
+    2304,
+    3712
+   ],
+   "mean_drift_px": 330.3,
+   "max_drift_control": "vol",
+   "max_drift_px": 1346.1,
+   "per_control_drift_px": {
+    "album_art": 78.4,
+    "visualizer": 114.4,
+    "seek": 164.8,
+    "prev": 380.8,
+    "playpause": 439.5,
+    "next": 440.9,
+    "repeat": 9.8,
+    "vol": 1346.1,
+    "shuffle": 12.9,
+    "queue": 314.9
+   }
+  },
+  {
+   "id": "steam-porthole",
+   "commit": "794da20e",
+   "seed": 84,
+   "dims": [
+    2304,
+    3712
+   ],
+   "mean_drift_px": 523.2,
+   "max_drift_control": "seek",
+   "max_drift_px": 1002.5,
+   "per_control_drift_px": {
+    "album_art": 513.2,
+    "visualizer": 436.0,
+    "seek": 1002.5,
+    "prev": 473.1,
+    "playpause": 497.5,
+    "next": 568.0,
+    "repeat": 911.1,
+    "vol": 256.0,
+    "shuffle": 421.4,
+    "queue": 153.2
+   }
+  },
+  {
+   "id": "wc-goldshield",
+   "commit": "794da20e",
+   "seed": 110,
+   "dims": [
+    2304,
+    3712
+   ],
+   "mean_drift_px": 543.3,
+   "max_drift_control": "next",
+   "max_drift_px": 996.3,
+   "per_control_drift_px": {
+    "album_art": 343.1,
+    "visualizer": 464.5,
+    "seek": 551.4,
+    "prev": 588.3,
+    "playpause": 796.1,
+    "next": 996.3,
+    "repeat": 952.6,
+    "vol": 340.5,
+    "shuffle": 215.7,
+    "queue": 184.5
+   }
+  },
+  {
+   "id": "wmp-quicksilver",
+   "commit": "794da20e",
+   "seed": 84,
+   "dims": [
+    2304,
+    3712
+   ],
+   "mean_drift_px": 291.8,
+   "max_drift_control": "vol",
+   "max_drift_px": 789.0,
+   "per_control_drift_px": {
+    "album_art": 5.9,
+    "visualizer": 66.0,
+    "seek": 144.7,
+    "prev": 5.5,
+    "playpause": 658.1,
+    "next": 434.4,
+    "repeat": 6.3,
+    "vol": 789.0,
+    "shuffle": 20.0,
+    "queue": 788.3
+   }
+  }
+ ],
+ "oldest_vs_current_delta": [
+  {
+   "id": "fa-pod",
+   "old_seed": 173,
+   "old_mean_drift_px": 602.0,
+   "new_mean_drift_px": 502.9,
+   "delta_px": -99.1
+  },
+  {
+   "id": "fallout-pipboy",
+   "old_seed": 71,
+   "old_mean_drift_px": 142.7,
+   "new_mean_drift_px": 950.5,
+   "delta_px": 807.8
+  },
+  {
+   "id": "ps1-crunchy",
+   "old_seed": 84,
+   "old_mean_drift_px": 330.3,
+   "new_mean_drift_px": 415.4,
+   "delta_px": 85.1
+  },
+  {
+   "id": "steam-porthole",
+   "old_seed": 84,
+   "old_mean_drift_px": 523.2,
+   "new_mean_drift_px": 858.3,
+   "delta_px": 335.1
+  },
+  {
+   "id": "wc-goldshield",
+   "old_seed": 110,
+   "old_mean_drift_px": 543.3,
+   "new_mean_drift_px": 461.6,
+   "delta_px": -81.7
+  },
+  {
+   "id": "wmp-quicksilver",
+   "old_seed": 84,
+   "old_mean_drift_px": 291.8,
+   "new_mean_drift_px": 542.2,
+   "delta_px": 250.4
+  }
+ ]
+}
