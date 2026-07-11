@@ -1,5 +1,25 @@
 # gen12 TODO
 
+## Think-about notes (2026-07-11) — emissive, director-vision, drift-clause bisect
+
+Three open design questions written up as decision-ready options + recommendations, none
+implemented: [`docs/design/2026-07-11-think-about-notes.md`](../../../docs/design/2026-07-11-think-about-notes.md).
+
+- **§1 Emissive rethink** — `pbr_pass.py`'s baked glyph-emissive (top-hat extraction) is
+  disabled (`EMISSIVE_ENABLED=False` in `build_player_pbr.py`); options for what replaces
+  it. Rec: (d) deterministic `css.glow` on known elements via the already-live
+  `registerEmissiveSource()` — near-zero new code.
+- **§2 Director-vision step** — should `src/generate/director.ts` see the painted image to
+  pick `css`/`lighting` values instead of guessing pre-paint. Rec: scope to `css.*` only
+  first (lower circularity risk than re-deriving director-authored `lighting`).
+- **§3 Drift-clause bisect** — the roster adherence audit (`twoimg/roster_audit.json`,
+  `twoimg/results.html` Task 2, commit `91c01139`) found 4/6 templated-passing skins
+  drifted MORE from their template than the original `794da20e` batch (pipboy
+  143px→950px). Cheapest decisive bisect design (2 themes × 2 seeds × 2 variants, ~$1.92,
+  NOT run) is in the doc, including a verify-rule flag: the suspected clause's wording is
+  actually unchanged since baseline, so the bisect must isolate it from other confounds
+  (conditioning-arm draw, extraction-algorithm changes) rather than assume it's guilty.
+
 ## Review the longitudinal blueprint-conditioning randomization study (once n accumulates)
 
 Wired 2026-07-10: mainline `genskin.py` now randomly draws a blueprint guide-STYLE arm on every

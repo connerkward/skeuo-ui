@@ -763,6 +763,12 @@ entries already under "saved for later" above — those four stand as-is.
   emissive REGIONS (spec says what glows, extractor only shapes it), a real segmentation model
   scoring "should this glow" per region, or painting a dedicated emissive pass. Revisit before
   flipping PBR into mainline.
+  **→ Analysis + options + recommendation:** [`docs/design/2026-07-11-think-about-notes.md`
+  §1](docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink) (rec: (d) deterministic
+  `css.glow` on known elements, near-zero-cost — most of it already ships).
 - **Director sees the paint (vision step) — think about, don't implement yet.** Director is
   moving to Gemini 3 Pro (text-only). Later: hand it the painted image so css colors / lighting
   hints / emissive regions are chosen from actual pixels, not imagined from text.
+  **→ Analysis + options + recommendation:** [`docs/design/2026-07-11-think-about-notes.md`
+  §2](docs/design/2026-07-11-think-about-notes.md#2-director-vision-step) (rec: scope to `css.*` only
+  first — lower circularity risk than re-deriving director-authored `lighting`).
