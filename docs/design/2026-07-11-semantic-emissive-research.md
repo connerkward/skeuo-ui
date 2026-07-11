@@ -1,5 +1,18 @@
 # Semantic emissive research — does an ML/VLM model belong in the "what glows" decision?
 
+> **STATUS (2026-07-11): prototype BUILT and RUN**, not just specced — see
+> [`docs/experiments/2026-07-11-semantic-emissive-prototype.md`](../experiments/2026-07-11-semantic-emissive-prototype.md)
+> and `tools/mask-align-exp/gen12/semissive/`. Verdict: the 2-stage architecture beat the
+> classical top-hat baseline on all 3 test skins on "semantic correctness of WHAT glows"
+> (diablo-gothic parity, fallout-pipboy found 3 lit elements classical found zero of, fa-pod
+> avoided classical's documented false-positive blotching). One real empirical addition to
+> the spec below: SAM-3's text-prompt mask is OBJECT/PART-level, not material-level, so a
+> Stage 2b local hue/brightness/saturation gate (scoped strictly inside the SAM mask) was
+> added to isolate the actually-lit sub-pixels. Not yet promoted to a mainline flag — 2 of 3
+> skins got a SOTA-eye cross-check FAIL, diagnosed as an upstream paint-generation gap
+> (unlit screens in that specific paint roll), not a defect in the judge or refiner. Read the
+> experiment record before extending this further.
+
 Research task, not implementation. Triggered by the user's framing: *"i feel a semantic ml
 model / llm needs to do this, not an older heuristic approach."* Read first:
 [`docs/experiments/2026-07-09-pbr-delight-emissive.md`](../experiments/2026-07-09-pbr-delight-emissive.md)

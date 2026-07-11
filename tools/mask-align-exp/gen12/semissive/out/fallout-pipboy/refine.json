@@ -1,0 +1,130 @@
+{
+  "skin": "fallout-pipboy",
+  "sam_model": "fal-ai/sam-3/image",
+  "sam_calls": 3,
+  "sam_cost_usd": 0.015,
+  "min_score": 0.5,
+  "pad_frac": 0.2,
+  "local_gate_min_frac": 0.05,
+  "regions": [
+    {
+      "label": "upper indicator lamp",
+      "why": "This is a glass-covered indicator bulb that is actively emitting a bright amber light.",
+      "color_hex": "#ff9900",
+      "intensity_0_1": 0.9,
+      "pulse": "none",
+      "judge_box": {
+        "x": 0.46,
+        "y": 0.21,
+        "w": 0.06,
+        "h": 0.08
+      },
+      "box_px_padded": [
+        1032,
+        540,
+        1226,
+        852
+      ],
+      "sam_score": 0.8997418284416199,
+      "kept": true,
+      "sam_coverage_frac": 0.00768,
+      "refined_coverage_frac": 0.00768,
+      "local_gate_fallback_to_raw_sam": true
+    },
+    {
+      "label": "side indicator lamp",
+      "why": "This is a glass-covered indicator bulb that is actively emitting a bright amber light.",
+      "color_hex": "#ff9900",
+      "intensity_0_1": 0.9,
+      "pulse": "none",
+      "judge_box": {
+        "x": 0.8,
+        "y": 0.36,
+        "w": 0.07,
+        "h": 0.09
+      },
+      "box_px_padded": [
+        1811,
+        952,
+        2037,
+        1303
+      ],
+      "sam_score": 0.9115872383117676,
+      "kept": true,
+      "sam_coverage_frac": 0.011,
+      "refined_coverage_frac": 0.00177,
+      "local_gate_fallback_to_raw_sam": false
+    },
+    {
+      "label": "vacuum tube filaments",
+      "why": "The filaments inside the vacuum tubes are glowing orange with heat/electricity.",
+      "color_hex": "#ff8800",
+      "intensity_0_1": 0.6,
+      "pulse": "ember",
+      "judge_box": {
+        "x": 0.31,
+        "y": 0.12,
+        "w": 0.14,
+        "h": 0.05
+      },
+      "box_px_padded": [
+        650,
+        306,
+        1101,
+        501
+      ],
+      "sam_score": 0.9487100839614868,
+      "kept": true,
+      "sam_coverage_frac": 0.00772,
+      "refined_coverage_frac": 0.00771,
+      "local_gate_fallback_to_raw_sam": true
+    }
+  ],
+  "lights": [
+    {
+      "uv": [
+        0.3403,
+        0.1231
+      ],
+      "color": [
+        1.0,
+        0.6,
+        0.0
+      ],
+      "label": "upper indicator lamp",
+      "energy": 0.395
+    },
+    {
+      "uv": [
+        0.839,
+        0.4052
+      ],
+      "color": [
+        1.0,
+        0.6,
+        0.0
+      ],
+      "label": "side indicator lamp",
+      "energy": 0.25
+    },
+    {
+      "uv": [
+        0.378,
+        0.1485
+      ],
+      "color": [
+        1.0,
+        0.533,
+        0.0
+      ],
+      "label": "vacuum tube filaments",
+      "energy": 0.355
+    }
+  ],
+  "emissiveCoverage": 0.00751,
+  "size": [
+    2304,
+    2784
+  ],
+  "ts": "2026-07-11T14:22:35"
+}

@@ -1,0 +1,72 @@
+{
+  "skin": "diablo-gothic",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP",
+    "parse_error": null
+  },
+  "cost_estimate_usd": 0.03,
+  "elapsed_s": 14.5,
+  "ts": "2026-07-11T14:17:06",
+  "src_size": [
+    2304,
+    2784
+  ],
+  "emissive_regions": [
+    {
+      "label": "top-left ember cracks and runes",
+      "why": "These red-orange cracks and carved symbols in the stone are emitting a fiery glow from within.",
+      "box": {
+        "x": 0.15,
+        "y": 0.13,
+        "w": 0.25,
+        "h": 0.24
+      },
+      "color_hex": "#ff4a00",
+      "intensity_0_1": 0.85,
+      "pulse": "ember"
+    },
+    {
+      "label": "top-right ember cracks and runes",
+      "why": "The carved runes and jagged cracks emit an internal, fiery self-illumination distinct from ambient light.",
+      "box": {
+        "x": 0.65,
+        "y": 0.13,
+        "w": 0.25,
+        "h": 0.35
+      },
+      "color_hex": "#ff4a00",
+      "intensity_0_1": 0.85,
+      "pulse": "ember"
+    },
+    {
+      "label": "bottom-left glowing runes and edge",
+      "why": "Scattered runes and the cracked edge of the stone device are glowing with a hot orange-red light.",
+      "box": {
+        "x": 0.1,
+        "y": 0.7,
+        "w": 0.3,
+        "h": 0.25
+      },
+      "color_hex": "#ff4a00",
+      "intensity_0_1": 0.85,
+      "pulse": "ember"
+    },
+    {
+      "label": "bottom-right glowing runes and edge",
+      "why": "These carved symbols and the lower right rim of the stone glow brightly with a fiery inner light.",
+      "box": {
+        "x": 0.6,
+        "y": 0.7,
+        "w": 0.3,
+        "h": 0.25
+      },
+      "color_hex": "#ff4a00",
+      "intensity_0_1": 0.85,
+      "pulse": "ember"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "skin": "fallout-pipboy",
+  "model": "fal:openrouter/router/vision:google/gemini-2.5-pro",
+  "reasoning": true,
+  "structured_io": {
+    "responseSchema_available": false,
+    "note": "openrouter/router/vision has no response-format param \u2014 JSON requested via prompt only, parsed leniently",
+    "parse_error": null
+  },
+  "cost_usd": 0.01986875,
+  "cost_is_estimate": false,
+  "elapsed_s": 22.5,
+  "ts": "2026-07-11T14:28:02",
+  "sensible": false,
+  "per_region": [
+    {
+      "label": "upper indicator lamp",
+      "verdict": "sensible",
+      "note": "The amber glow is perfectly appropriate for a retro-industrial indicator or warning lamp."
+    },
+    {
+      "label": "side indicator lamp",
+      "verdict": "sensible",
+      "note": "Same as the upper lamp, the amber glow fits the theme and function of an indicator light."
+    },
+    {
+      "label": "vacuum tube filaments",
+      "verdict": "questionable",
+      "note": "The concept of glowing filaments is excellent for the theme. However, the execution on the left tube is poor; the entire glass envelope glows a solid yellow, which is unrealistic. The right tube's subtle filament glow is much better and more physically accurate."
+    }
+  ],
+  "missing": [
+    "main screens",
+    "analog meter backlights"
+  ],
+  "overall_note": "The most significant issue is that the two main screens are not glowing. The theme explicitly calls for a 'glowing GREEN monochrome PHOSPHOR CRT display', and this core element is completely missing. Additionally, backlighting for the analog meters would be thematically appropriate but is also absent. The existing glows are mostly fine, though the left vacuum tube's glow is unrealistic.",
+  "verdict": "FAIL"
+}

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>semissive — 2-stage semantic emissive prototype</title>
+<style>
+:root { color-scheme: light dark; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 1400px;
+  margin: 0 auto; padding: 24px; line-height: 1.5; background: #0b0c10; color: #e8e8ea; }
+@media (prefers-color-scheme: light) { body { background: #f7f7f9; color: #16171a; } }
+h1 { font-size: 1.6rem; margin-bottom: 4px; }
+h2 { border-top: 2px solid #444; padding-top: 24px; margin-top: 40px; text-transform: capitalize; }
+h3 { font-size: 1rem; opacity: 0.85; }
+.dev-banner { background: #1c2333; border: 1px solid #3a4260; border-radius: 8px; padding: 12px 16px;
+  font-size: 0.85rem; margin-bottom: 20px; }
+@media (prefers-color-scheme: light) { .dev-banner { background: #eef1fb; border-color: #c7d0f0; } }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 16px 0; }
+figure { margin: 0; background: #16181d; border-radius: 8px; overflow: hidden; border: 1px solid #2a2d35; }
+@media (prefers-color-scheme: light) { figure { background: #fff; border-color: #ddd; } }
+figure img { width: 100%; height: auto; display: block; background: #000; }
+figcaption { font-size: 0.75rem; padding: 6px 8px; opacity: 0.75; }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin: 16px 0; }
+.region-card { display: flex; gap: 10px; padding: 8px; border-radius: 6px; background: #16181d; margin-bottom: 8px; align-items: flex-start; }
+@media (prefers-color-scheme: light) { .region-card { background: #fff; border: 1px solid #eee; } }
+.region-card.dropped { opacity: 0.55; }
+.swatch { width: 22px; height: 22px; border-radius: 5px; flex: none; border: 1px solid rgba(128,128,128,0.4); margin-top: 2px; }
+.rc-label { font-weight: 600; font-size: 0.9rem; }
+.rc-meta { font-size: 0.75rem; opacity: 0.65; margin: 2px 0; }
+.rc-why { font-size: 0.82rem; opacity: 0.85; }
+.badge { font-size: 0.65rem; padding: 1px 6px; border-radius: 10px; background: #2d6a4f; margin-left: 6px; }
+.dropped .badge { background: #7a2e2e; }
+.sota { border-radius: 8px; padding: 14px 16px; border: 1px solid #333; }
+.sota.pass { border-color: #2d6a4f; background: rgba(45,106,79,0.12); }
+.sota.fail { border-color: #7a4a2e; background: rgba(122,74,46,0.12); }
+.sota-verdict { font-weight: 700; margin-bottom: 6px; }
+.sota ul { margin: 6px 0; padding-left: 18px; font-size: 0.85rem; }
+.v-sensible { color: #4caf7d; }
+.v-questionable { color: #d9a441; }
+.v-nonsensical { color: #e05c5c; }
+.missing { margin-top: 8px; font-size: 0.85rem; }
+.cost-line { font-size: 0.78rem; opacity: 0.7; margin-bottom: 6px; }
+.muted { opacity: 0.55; font-size: 0.85rem; }
+a { color: inherit; }
+</style>
+</head>
+<body>
+<h1>semissive — 2-stage semantic emissive extraction (prototype)</h1>
+<p class="muted">docs/design/2026-07-11-semantic-emissive-research.md · 3 skins · structured JSON in/out throughout</p>
+<div class="dev-banner">
+  <b>Models:</b> Stage 1 judge = <code>vertex:gemini-3.1-pro-preview</code> (responseSchema+responseMimeType enforced JSON) ·
+  Stage 2 refiner = <code>fal-ai/sam-3/image</code> (native text-prompt segmentation, $0.005/call) ·
+  Stage 3 cross-check = <code>fal:openrouter/router/vision:google/gemini-2.5-pro</code> (reasoning=true, no schema enforcement on this endpoint) ·
+  <b>Total spend this prototype: $0.2705</b> (diablo-gothic $0.1484, fallout-pipboy $0.0649, fa-pod $0.0573) — well under the $1 budget.
+</div>
+
+  <section class="skin">
+    <h2>diablo-gothic</h2>
+    <div class="cost-line">spend this skin: $0.1484 (judge $0.0300, judge $0.0300, refine_sam $0.0200, refine_sam $0.0200, sota_eval $0.0300, sota_eval $0.0184)</div>
+
+    <div class="grid-4">
+      <figure><img src="out/diablo-gothic/src.png" loading="lazy"><figcaption>paint (device crop)</figcaption></figure>
+      <figure><img src="out/diablo-gothic/overlay.png" loading="lazy"><figcaption>SAM boxes — labeled, per label-overlays-rule</figcaption></figure>
+      <figure><img src="out/diablo-gothic/preview.png" loading="lazy"><figcaption>semantic-emissive preview</figcaption></figure>
+      <figure><img src="out/diablo-gothic/classical-preview.png" loading="lazy"><figcaption>OLD classical (top-hat) preview — rejected baseline</figcaption></figure>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h3>Stage 1 — judge output (vertex:gemini-3.1-pro-preview, 14.5s, finish=STOP)</h3>
+        <div class="region-card">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">top-left ember cracks and runes</div>
+        <div class="rc-meta">#ff4a00 · intensity 0.85 · pulse ember</div>
+        <div class="rc-why">These red-orange cracks and carved symbols in the stone are emitting a fiery glow from within.</div>
+      </div>
+    </div><div class="region-card">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">top-right ember cracks and runes</div>
+        <div class="rc-meta">#ff4a00 · intensity 0.85 · pulse ember</div>
+        <div class="rc-why">The carved runes and jagged cracks emit an internal, fiery self-illumination distinct from ambient light.</div>
+      </div>
+    </div><div class="region-card">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">bottom-left glowing runes and edge</div>
+        <div class="rc-meta">#ff4a00 · intensity 0.85 · pulse ember</div>
+        <div class="rc-why">Scattered runes and the cracked edge of the stone device are glowing with a hot orange-red light.</div>
+      </div>
+    </div><div class="region-card">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">bottom-right glowing runes and edge</div>
+        <div class="rc-meta">#ff4a00 · intensity 0.85 · pulse ember</div>
+        <div class="rc-why">These carved symbols and the lower right rim of the stone glow brightly with a fiery inner light.</div>
+      </div>
+    </div>
+      </div>
+      <div>
+        <h3>Stage 2 — refiner output (fal-ai/sam-3/image, 4 calls)</h3>
+        <div class="region-card kept">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">top-left ember cracks and runes <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.87 · SAM ROI 0.77% → refined 0.13% (local hue/val/sat gate discriminated within the ROI)</div>
+      </div>
+    </div><div class="region-card kept">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">top-right ember cracks and runes <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.91 · SAM ROI 5.11% → refined 0.78% (local hue/val/sat gate discriminated within the ROI)</div>
+      </div>
+    </div><div class="region-card kept">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">bottom-left glowing runes and edge <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.96 · SAM ROI 6.24% → refined 0.84% (local hue/val/sat gate discriminated within the ROI)</div>
+      </div>
+    </div><div class="region-card kept">
+      <div class="swatch" style="background:#ff4a00"></div>
+      <div>
+        <div class="rc-label">bottom-right glowing runes and edge <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.95 · SAM ROI 4.41% → refined 0.71% (local hue/val/sat gate discriminated within the ROI)</div>
+      </div>
+    </div>
+        <div class="rc-meta">final coverage 1.858% of frame · classical coverage (rejected baseline) — see per-skin note below</div>
+      </div>
+    </div>
+
+    <h3>Stage 3 — independent SOTA-eye cross-check</h3>
+    
+    <div class="sota pass">
+      <div class="sota-verdict">SOTA-eye verdict: <b>PASS</b> (sensible=True)</div>
+      <p class="rc-why">The emissive lighting is perfectly executed according to the theme. It correctly identifies the &#x27;glowing BLOOD-RED runes and ember cracks&#x27; and applies a suitable orange-red glow that looks natural for the material. There are no questionable glowing areas, and nothing that should glow appears to be missing.</p>
+      <ul><li><b>top-left ember cracks and runes</b> — <span class='v-sensible'>sensible</span>: The glow on the runes and cracks perfectly fits the &#x27;glowing runes&#x27; and &#x27;ember cracks&#x27; part of the theme.</li><li><b>top-right ember cracks and runes</b> — <span class='v-sensible'>sensible</span>: Consistent with the theme, making the stone look like it&#x27;s heated from within by magical energy.</li><li><b>bottom-left glowing runes and edge</b> — <span class='v-sensible'>sensible</span>: The glow correctly highlights the carved runes and the cracked edges of the stone frame.</li><li><b>bottom-right glowing runes and edge</b> — <span class='v-sensible'>sensible</span>: Maintains the thematic consistency of glowing runes and cracks across the entire device.</li></ul>
+      
+      <div class="rc-meta">fal:openrouter/router/vision:google/gemini-2.5-pro · $0.01839375 · 24.7s</div>
+    </div>
+  </section>
+  <section class="skin">
+    <h2>fallout-pipboy</h2>
+    <div class="cost-line">spend this skin: $0.0649 (judge $0.0300, refine_sam $0.0150, sota_eval $0.0199)</div>
+
+    <div class="grid-4">
+      <figure><img src="out/fallout-pipboy/src.png" loading="lazy"><figcaption>paint (device crop)</figcaption></figure>
+      <figure><img src="out/fallout-pipboy/overlay.png" loading="lazy"><figcaption>SAM boxes — labeled, per label-overlays-rule</figcaption></figure>
+      <figure><img src="out/fallout-pipboy/preview.png" loading="lazy"><figcaption>semantic-emissive preview</figcaption></figure>
+      <figure><img src="out/fallout-pipboy/classical-preview.png" loading="lazy"><figcaption>OLD classical (top-hat) preview — rejected baseline</figcaption></figure>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h3>Stage 1 — judge output (vertex:gemini-3.1-pro-preview, 13.8s, finish=STOP)</h3>
+        <div class="region-card">
+      <div class="swatch" style="background:#ff9900"></div>
+      <div>
+        <div class="rc-label">upper indicator lamp</div>
+        <div class="rc-meta">#ff9900 · intensity 0.9 · pulse none</div>
+        <div class="rc-why">This is a glass-covered indicator bulb that is actively emitting a bright amber light.</div>
+      </div>
+    </div><div class="region-card">
+      <div class="swatch" style="background:#ff9900"></div>
+      <div>
+        <div class="rc-label">side indicator lamp</div>
+        <div class="rc-meta">#ff9900 · intensity 0.9 · pulse none</div>
+        <div class="rc-why">This is a glass-covered indicator bulb that is actively emitting a bright amber light.</div>
+      </div>
+    </div><div class="region-card">
+      <div class="swatch" style="background:#ff8800"></div>
+      <div>
+        <div class="rc-label">vacuum tube filaments</div>
+        <div class="rc-meta">#ff8800 · intensity 0.6 · pulse ember</div>
+        <div class="rc-why">The filaments inside the vacuum tubes are glowing orange with heat/electricity.</div>
+      </div>
+    </div>
+      </div>
+      <div>
+        <h3>Stage 2 — refiner output (fal-ai/sam-3/image, 3 calls)</h3>
+        <div class="region-card kept">
+      <div class="swatch" style="background:#ff9900"></div>
+      <div>
+        <div class="rc-label">upper indicator lamp <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.90 · SAM ROI 0.77% → refined 0.77% (gate fell back to raw SAM ROI — uniform material)</div>
+      </div>
+    </div><div class="region-card kept">
+      <div class="swatch" style="background:#ff9900"></div>
+      <div>
+        <div class="rc-label">side indicator lamp <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.91 · SAM ROI 1.10% → refined 0.18% (local hue/val/sat gate discriminated within the ROI)</div>
+      </div>
+    </div><div class="region-card kept">
+      <div class="swatch" style="background:#ff8800"></div>
+      <div>
+        <div class="rc-label">vacuum tube filaments <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.95 · SAM ROI 0.77% → refined 0.77% (gate fell back to raw SAM ROI — uniform material)</div>
+      </div>
+    </div>
+        <div class="rc-meta">final coverage 0.751% of frame · classical coverage (rejected baseline) — see per-skin note below</div>
+      </div>
+    </div>
+
+    <h3>Stage 3 — independent SOTA-eye cross-check</h3>
+    
+    <div class="sota fail">
+      <div class="sota-verdict">SOTA-eye verdict: <b>FAIL</b> (sensible=False)</div>
+      <p class="rc-why">The most significant issue is that the two main screens are not glowing. The theme explicitly calls for a &#x27;glowing GREEN monochrome PHOSPHOR CRT display&#x27;, and this core element is completely missing. Additionally, backlighting for the analog meters would be thematically appropriate but is also absent. The existing glows are mostly fine, though the left vacuum tube&#x27;s glow is unrealistic.</p>
+      <ul><li><b>upper indicator lamp</b> — <span class='v-sensible'>sensible</span>: The amber glow is perfectly appropriate for a retro-industrial indicator or warning lamp.</li><li><b>side indicator lamp</b> — <span class='v-sensible'>sensible</span>: Same as the upper lamp, the amber glow fits the theme and function of an indicator light.</li><li><b>vacuum tube filaments</b> — <span class='v-questionable'>questionable</span>: The concept of glowing filaments is excellent for the theme. However, the execution on the left tube is poor; the entire glass envelope glows a solid yellow, which is unrealistic. The right tube&#x27;s subtle filament glow is much better and more physically accurate.</li></ul>
+      <div class="missing"><b>Flagged missing:</b><ul><li>main screens</li><li>analog meter backlights</li></ul></div>
+      <div class="rc-meta">fal:openrouter/router/vision:google/gemini-2.5-pro · $0.01986875 · 22.5s</div>
+    </div>
+  </section>
+  <section class="skin">
+    <h2>fa-pod</h2>
+    <div class="cost-line">spend this skin: $0.0573 (judge $0.0300, refine_sam $0.0100, sota_eval $0.0173)</div>
+
+    <div class="grid-4">
+      <figure><img src="out/fa-pod/src.png" loading="lazy"><figcaption>paint (device crop)</figcaption></figure>
+      <figure><img src="out/fa-pod/overlay.png" loading="lazy"><figcaption>SAM boxes — labeled, per label-overlays-rule</figcaption></figure>
+      <figure><img src="out/fa-pod/preview.png" loading="lazy"><figcaption>semantic-emissive preview</figcaption></figure>
+      <figure><img src="out/fa-pod/classical-preview.png" loading="lazy"><figcaption>OLD classical (top-hat) preview — rejected baseline</figcaption></figure>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h3>Stage 1 — judge output (vertex:gemini-3.1-pro-preview, 13.6s, finish=STOP)</h3>
+        <div class="region-card">
+      <div class="swatch" style="background:#66ff66"></div>
+      <div>
+        <div class="rc-label">top row glowing icons</div>
+        <div class="rc-meta">#66ff66 · intensity 0.8 · pulse breathe</div>
+        <div class="rc-why">The green symbols inside the top gel buttons have a bright inner aura that emits light rather than just reflecting it.</div>
+      </div>
+    </div><div class="region-card">
+      <div class="swatch" style="background:#66ff66"></div>
+      <div>
+        <div class="rc-label">bottom row glowing icons</div>
+        <div class="rc-meta">#66ff66 · intensity 0.8 · pulse breathe</div>
+        <div class="rc-why">The green icons in the lower gel buttons emit a distinct internal green glow.</div>
+      </div>
+    </div>
+      </div>
+      <div>
+        <h3>Stage 2 — refiner output (fal-ai/sam-3/image, 2 calls)</h3>
+        <div class="region-card kept">
+      <div class="swatch" style="background:#66ff66"></div>
+      <div>
+        <div class="rc-label">top row glowing icons <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.93 · SAM ROI 6.83% → refined 6.83% (gate fell back to raw SAM ROI — uniform material)</div>
+      </div>
+    </div><div class="region-card kept">
+      <div class="swatch" style="background:#66ff66"></div>
+      <div>
+        <div class="rc-label">bottom row glowing icons <span class="badge">kept</span></div>
+        <div class="rc-meta">SAM score 0.91 · SAM ROI 3.80% → refined 3.80% (gate fell back to raw SAM ROI — uniform material)</div>
+      </div>
+    </div>
+        <div class="rc-meta">final coverage 5.938% of frame · classical coverage (rejected baseline) — see per-skin note below</div>
+      </div>
+    </div>
+
+    <h3>Stage 3 — independent SOTA-eye cross-check</h3>
+    
+    <div class="sota fail">
+      <div class="sota-verdict">SOTA-eye verdict: <b>FAIL</b> (sensible=False)</div>
+      <p class="rc-why">The decision to illuminate the button icons is perfectly logical and fits the theme of an early-2000s electronic device. However, the complete absence of any light from the two main display screens is a major, nonsensical omission. A media player&#x27;s screen is its primary information output and would always be backlit when the device is on. This makes the device look non-functional or broken.</p>
+      <ul><li><b>top row glowing icons</b> — <span class='v-sensible'>sensible</span>: The primary transport controls (play/pause, rewind, forward) are classic candidates for backlighting on a physical media player. The glow makes perfect sense.</li><li><b>bottom row glowing icons</b> — <span class='v-sensible'>sensible</span>: Secondary function buttons like repeat and menu/list are also commonly backlit for usability. This is a sensible choice.</li></ul>
+      <div class="missing"><b>Flagged missing:</b><ul><li>The two main display screens are completely dark. On any real media player, these would be backlit and should be the most prominent glowing elements.</li></ul></div>
+      <div class="rc-meta">fal:openrouter/router/vision:google/gemini-2.5-pro · $0.01725625 · 20.2s</div>
+    </div>
+  </section>
+<footer style="margin-top:40px; opacity:0.6; font-size:0.8rem;">
+  Generated by build_page.py — read alongside docs/experiments/2026-07-11-semantic-emissive-prototype.md for the full verdict.
+</footer>
+</body>
+</html>

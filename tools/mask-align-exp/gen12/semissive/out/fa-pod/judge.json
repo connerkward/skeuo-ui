@@ -1,0 +1,46 @@
+{
+  "skin": "fa-pod",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP",
+    "parse_error": null
+  },
+  "cost_estimate_usd": 0.03,
+  "elapsed_s": 13.6,
+  "ts": "2026-07-11T14:21:41",
+  "src_size": [
+    2304,
+    2784
+  ],
+  "emissive_regions": [
+    {
+      "label": "top row glowing icons",
+      "why": "The green symbols inside the top gel buttons have a bright inner aura that emits light rather than just reflecting it.",
+      "box": {
+        "x": 0.18,
+        "y": 0.41,
+        "w": 0.61,
+        "h": 0.13
+      },
+      "color_hex": "#66ff66",
+      "intensity_0_1": 0.8,
+      "pulse": "breathe"
+    },
+    {
+      "label": "bottom row glowing icons",
+      "why": "The green icons in the lower gel buttons emit a distinct internal green glow.",
+      "box": {
+        "x": 0.47,
+        "y": 0.56,
+        "w": 0.31,
+        "h": 0.11
+      },
+      "color_hex": "#66ff66",
+      "intensity_0_1": 0.8,
+      "pulse": "breathe"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "skin": "fa-pod",
+  "sam_model": "fal-ai/sam-3/image",
+  "sam_calls": 2,
+  "sam_cost_usd": 0.01,
+  "min_score": 0.5,
+  "pad_frac": 0.2,
+  "local_gate_min_frac": 0.05,
+  "regions": [
+    {
+      "label": "top row glowing icons",
+      "why": "The green symbols inside the top gel buttons have a bright inner aura that emits light rather than just reflecting it.",
+      "color_hex": "#66ff66",
+      "intensity_0_1": 0.8,
+      "pulse": "breathe",
+      "judge_box": {
+        "x": 0.18,
+        "y": 0.41,
+        "w": 0.61,
+        "h": 0.13
+      },
+      "box_px_padded": [
+        134,
+        1069,
+        2101,
+        1576
+      ],
+      "sam_score": 0.9286690950393677,
+      "kept": true,
+      "sam_coverage_frac": 0.06833,
+      "refined_coverage_frac": 0.06831,
+      "local_gate_fallback_to_raw_sam": true
+    },
+    {
+      "label": "bottom row glowing icons",
+      "why": "The green icons in the lower gel buttons emit a distinct internal green glow.",
+      "color_hex": "#66ff66",
+      "intensity_0_1": 0.8,
+      "pulse": "breathe",
+      "judge_box": {
+        "x": 0.47,
+        "y": 0.56,
+        "w": 0.31,
+        "h": 0.11
+      },
+      "box_px_padded": [
+        940,
+        1498,
+        1940,
+        1927
+      ],
+      "sam_score": 0.9118599891662598,
+      "kept": true,
+      "sam_coverage_frac": 0.03801,
+      "refined_coverage_frac": 0.03799,
+      "local_gate_fallback_to_raw_sam": true
+    }
+  ],
+  "lights": [
+    {
+      "uv": [
+        0.471,
+        0.4762
+      ],
+      "color": [
+        0.4,
+        1.0,
+        0.4
+      ],
+      "label": "top row glowing icons",
+      "energy": 0.649
+    },
+    {
+      "uv": [
+        0.6195,
+        0.6142
+      ],
+      "color": [
+        0.4,
+        1.0,
+        0.4
+      ],
+      "label": "bottom row glowing icons",
+      "energy": 0.351
+    }
+  ],
+  "emissiveCoverage": 0.05938,
+  "size": [
+    2304,
+    2784
+  ],
+  "ts": "2026-07-11T14:22:47"
+}

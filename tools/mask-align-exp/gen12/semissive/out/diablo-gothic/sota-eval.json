@@ -1,0 +1,40 @@
+{
+  "skin": "diablo-gothic",
+  "model": "fal:openrouter/router/vision:google/gemini-2.5-pro",
+  "reasoning": true,
+  "structured_io": {
+    "responseSchema_available": false,
+    "note": "openrouter/router/vision has no response-format param \u2014 JSON requested via prompt only, parsed leniently",
+    "parse_error": null
+  },
+  "cost_usd": 0.01839375,
+  "cost_is_estimate": false,
+  "elapsed_s": 24.7,
+  "ts": "2026-07-11T14:27:34",
+  "sensible": true,
+  "per_region": [
+    {
+      "label": "top-left ember cracks and runes",
+      "verdict": "sensible",
+      "note": "The glow on the runes and cracks perfectly fits the 'glowing runes' and 'ember cracks' part of the theme."
+    },
+    {
+      "label": "top-right ember cracks and runes",
+      "verdict": "sensible",
+      "note": "Consistent with the theme, making the stone look like it's heated from within by magical energy."
+    },
+    {
+      "label": "bottom-left glowing runes and edge",
+      "verdict": "sensible",
+      "note": "The glow correctly highlights the carved runes and the cracked edges of the stone frame."
+    },
+    {
+      "label": "bottom-right glowing runes and edge",
+      "verdict": "sensible",
+      "note": "Maintains the thematic consistency of glowing runes and cracks across the entire device."
+    }
+  ],
+  "missing": [],
+  "overall_note": "The emissive lighting is perfectly executed according to the theme. It correctly identifies the 'glowing BLOOD-RED runes and ember cracks' and applies a suitable orange-red glow that looks natural for the material. There are no questionable glowing areas, and nothing that should glow appears to be missing.",
+  "verdict": "PASS"
+}

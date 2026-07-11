@@ -1,0 +1,59 @@
+{
+  "skin": "fallout-pipboy",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP",
+    "parse_error": null
+  },
+  "cost_estimate_usd": 0.03,
+  "elapsed_s": 13.8,
+  "ts": "2026-07-11T14:21:26",
+  "src_size": [
+    2304,
+    2784
+  ],
+  "emissive_regions": [
+    {
+      "label": "upper indicator lamp",
+      "why": "This is a glass-covered indicator bulb that is actively emitting a bright amber light.",
+      "box": {
+        "x": 0.46,
+        "y": 0.21,
+        "w": 0.06,
+        "h": 0.08
+      },
+      "color_hex": "#ff9900",
+      "intensity_0_1": 0.9,
+      "pulse": "none"
+    },
+    {
+      "label": "side indicator lamp",
+      "why": "This is a glass-covered indicator bulb that is actively emitting a bright amber light.",
+      "box": {
+        "x": 0.8,
+        "y": 0.36,
+        "w": 0.07,
+        "h": 0.09
+      },
+      "color_hex": "#ff9900",
+      "intensity_0_1": 0.9,
+      "pulse": "none"
+    },
+    {
+      "label": "vacuum tube filaments",
+      "why": "The filaments inside the vacuum tubes are glowing orange with heat/electricity.",
+      "box": {
+        "x": 0.31,
+        "y": 0.12,
+        "w": 0.14,
+        "h": 0.05
+      },
+      "color_hex": "#ff8800",
+      "intensity_0_1": 0.6,
+      "pulse": "ember"
+    }
+  ]
+}

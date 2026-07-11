@@ -1,0 +1,6 @@
+{"stage": "judge", "usd": 0.03, "note": "gemini-3.1-pro-preview 9.7s finish=STOP", "ts": "2026-07-11T14:16:20"}
+{"stage": "judge", "usd": 0.03, "note": "gemini-3.1-pro-preview 14.5s finish=STOP", "ts": "2026-07-11T14:17:06"}
+{"stage": "refine_sam", "usd": 0.02, "note": "4 SAM-3 calls", "ts": "2026-07-11T14:18:34"}
+{"stage": "refine_sam", "usd": 0.02, "note": "4 SAM-3 calls", "ts": "2026-07-11T14:20:27"}
+{"stage": "sota_eval", "usd": 0.03, "note": "google/gemini-3-pro-preview 0.7s", "ts": "2026-07-11T14:25:26"}
+{"stage": "sota_eval", "usd": 0.01839, "note": "google/gemini-2.5-pro 24.7s", "ts": "2026-07-11T14:27:34"}
