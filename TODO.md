@@ -1,5 +1,10 @@
 # skeuo-ui — TODO
 
+**V1 tracking: [`docs/SKEUO-V1.md`](docs/SKEUO-V1.md)** — two milestones: `skeuov1-pipeline`
+(gen12 robustness + human review gate, ACTIVE, blocks everything below) then `skeuov1` (the
+release: skin-registry manifest, generation-parity architecture decision, mobile/web/desktop
+parity). Read that doc before picking up any v1-scoped item below.
+
 ---
 ## PARKED for skeuo v2 (2026-07-11) — emissive / PBR, NOT v1 work
 
