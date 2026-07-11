@@ -611,3 +611,23 @@ tooth-valley shadows that visually mimic a continuous tick ring — a legibility
 that one skin's busy source art, not a code defect. No pipeline change from this — a
 single busy-texture skin isn't grounds for a generalizable color/contrast rule
 (`fix-generalizable-rule`); revisit only if this recurs across more of the roster.
+
+## Crop discipline rule added — mainline harness fixed, experiment scripts NOT retrofitted (2026-07-11)
+
+`.claude/rules/sota-eye-review-rule.md` gained a "Crop discipline" section (full frame always
+attached, crops anchored on detected `regions.json` positions not template-expected ones,
+≥2x padding, VLM prompt licenses CROP-MISS, a returned CROP-MISS is unmeasured not FAIL) —
+written from two confirmed burns: `knobticks/` skin `steam-porthole-ticks01-402` (VLM judged a
+template-anchored crop that actually framed the button row, not the drifted knob, and said
+RELIABLE) and the knob-angle detector measuring noise as the indicator on 4/7 gens from a
+template-sized window. `observe12.py` (the mainline observation harness) is fixed to comply —
+verified live: re-ran on `assets-fallout-vault` with `--vlm`, the model correctly returned
+`CROP-MISS` for 2 of 10 controls (`prev`, `repeat`) and those landed in `unmeasured_crop_miss`,
+not counted as broken, while the full-frame fallback still caught a real defect (`shuffle:
+BROKEN (baked text label)`) → overall `VERDICT: FAIL`, correctly.
+
+**`knobticks/`, `semissive/`, and any other one-off experiment harness's own eye/judge script
+(`gen_knobticks.py`, `score_knobticks.py`, `semissive/judge.py`, `semissive/sota_eval.py`, etc.)
+predate this rule and are NOT being retrofitted** — they're closed experiments, not the
+production path. The rule binds **future** experiment harnesses and the mainline pipeline
+(`observe12.py`) going forward.
