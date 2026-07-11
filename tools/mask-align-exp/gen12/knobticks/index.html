@@ -1,0 +1,298 @@
+<title>knobticks — baked tick-mark provisioning experiment</title>
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 1.5rem;
+        background: #0d0f12; color: #e8e8ec; line-height: 1.45; }
+@media (prefers-color-scheme: light) { body { background: #f4f4f6; color: #16181c; } }
+h1 { font-size: 1.4rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.1rem; margin: 2rem 0 .6rem; display: flex; gap: .6rem; align-items: baseline; flex-wrap: wrap; }
+.tally { font-size: .85rem; opacity: .75; font-weight: normal; }
+.banner { background: #1b1e24; border: 1px solid #333; border-radius: 10px; padding: .9rem 1.1rem;
+           font-size: .88rem; max-width: 900px; }
+@media (prefers-color-scheme: light) { .banner { background: #fff; border-color: #ddd; } }
+.banner code { background: rgba(127,127,127,.18); padding: .1rem .35rem; border-radius: 4px; }
+.grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+.card { background: #16181d; border: 1px solid #2a2d33; border-radius: 10px; padding: .8rem;
+         width: min(100%, 420px); flex: 1 1 380px; }
+@media (prefers-color-scheme: light) { .card { background: #fff; border-color: #ddd; } }
+.hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; font-size: .85rem; }
+.tag { font-weight: 600; }
+.verdict { padding: .15rem .5rem; border-radius: 6px; font-weight: 700; font-size: .75rem; letter-spacing: .02em; }
+.verdict.pass { background: #163d22; color: #6fe08a; }
+.verdict.fail { background: #4a1620; color: #ff8a8a; }
+.verdict.unparsed { background: #443b16; color: #f0c860; }
+.imgs { display: flex; gap: .5rem; margin-bottom: .6rem; flex-wrap: wrap; }
+.thumb { height: 180px; width: auto; border-radius: 6px; border: 1px solid #333; }
+.crop { height: 180px; width: auto; border-radius: 6px; border: 1px solid #333; }
+.crop.small { height: 120px; }
+.meta { font-size: .8rem; opacity: .92; display: flex; flex-direction: column; gap: .25rem; }
+.meta pre { white-space: pre-wrap; font-size: .72rem; max-height: 260px; overflow: auto;
+             background: rgba(127,127,127,.12); padding: .5rem; border-radius: 6px; }
+.adjnote { background: rgba(255,170,60,.10); border-left: 3px solid #d99036; padding: .35rem .5rem;
+            border-radius: 4px; }
+.noimg { padding: 2rem 1rem; border: 1px dashed #666; border-radius: 8px; opacity: .8; font-size: .85rem; }
+</style>
+<h1>knobticks — can the paint model bake tick-mark provisioning + self-report metadata?</h1>
+<div class="banner">
+  <div><b>generator</b>: <code>gemini-3-pro-image-preview (Vertex AI, responseModalities=[TEXT,IMAGE], 4K, 5:4)</code></div>
+  <div><b>eye</b>: <code>google/gemini-2.5-pro (fal openrouter/router/vision, reasoning=true)</code></div>
+  <div><b>cost</b>: 8 gens x ~$0.24 = ~$1.92 generation + 8 VLM calls x ~$0.02 = ~$0.16 scoring &nbsp;=&nbsp; <b>~$2.08 total</b></div>
+  <div><b>overall</b>: VLM witness 3/8 RELIABLE &middot; <b>adjudicated 0/8 PASS</b> &middot;
+       text part returned 7/8 &middot; JSON parsed 4/8 &middot;
+       JSON-vs-pixel agreement 0/4 &middot;
+       all 4 parsed JSONs echo the prompt's example values (-135/+135) verbatim — no evidence of measurement</div>
+</div>
+<h2>BAKED TICKS 0..1 (single sweep) <span class="tally">1/4 RELIABLE</span></h2><div class="grid">
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">fa-pod / seed 502</span>
+            <span>
+              <span class="verdict fail" title="raw VLM witness verdict">VLM: UNRELIABLE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL</span>
+            </span>
+          </div>
+          <div class="imgs">
+            <a href="assets-knobticks-fa-pod-ticks01-502/paint.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks01-502/paint.png" class="thumb" loading="lazy"></a>
+            <a href="assets-knobticks-fa-pod-ticks01-502/crop-knob-labeled.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks01-502/crop-knob-labeled.png" class="crop" loading="lazy"></a>
+            <a href="assets-knobticks-fa-pod-ticks01-502/crop-cap-strip.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks01-502/crop-cap-strip.png" class="crop small" loading="lazy"></a>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: No tick arc at all — a single indicator slot instead; AND the words &#x27;MIN&#x27;/&#x27;MAX&#x27; engraved at its ends (VLM, damage check). Text contamination without even the tick system it was meant to label.</div>
+            <div><b>deterministic ring</b>: r-factor=1.3 peaks=13 span=[-176.0, 163.5]deg</div>
+            <div><b>expected</b>: start=-135 end=135 zero=start</div>
+            <div><b>text part returned</b>: True &nbsp; <b>JSON parsed</b>: True</div>
+            <div><b>model self-report JSON</b>: <code>{&quot;vol&quot;: {&quot;start_deg&quot;: -135, &quot;end_deg&quot;: 135, &quot;zero&quot;: &quot;start&quot;}}</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: False</div>
+            <div><b>VLM clock mentions</b>: [8, 4] -> approx [-120, 120]deg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>1. TICKS-PRESENT: no
+2. AT-SOCKET: yes
+3. LEGIBLE: no
+4. START-END-DISTINCT: no
+5. ANGLE-ESTIMATE: The start of the arc is at 8 o&#x27;clock, the end is at 4 o&#x27;clock.
+6. THEME-COHERENT: yes
+7. POINTER-NOTCH-ALIGNED: no
+8. DAMAGE-CHECK: Unrequested text (&quot;MIN&quot;, &quot;MAX&quot;) has been engraved on the housing at either end of the single indicator slot.
+
+VERDICT: UNRELIABLE</pre></details>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">steam-porthole / seed 401</span>
+            <span>
+              <span class="verdict fail" title="raw VLM witness verdict">VLM: UNRELIABLE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL</span>
+            </span>
+          </div>
+          <div class="imgs">
+            <a href="assets-knobticks-steam-porthole-ticks01-401/paint.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks01-401/paint.png" class="thumb" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks01-401/crop-knob-labeled.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks01-401/crop-knob-labeled.png" class="crop" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks01-401/crop-cap-strip.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks01-401/crop-cap-strip.png" class="crop small" loading="lazy"></a>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: Tick ring engraved around socket with two mirrored L-bracket end-stops at ~7 and ~5 o&#x27;clock (visible in my 3x lower-half crop; the VLM&#x27;s 1.9r crop clipped them and it called the ring uniform). Cap pointer notch ~7-8 o&#x27;clock (VLM read 6). VLM flagged &#x27;socket not empty — dark dome reads as installed knob base&#x27;; the recess floor is a domed dark surface with a copper centre, genuinely ambiguous, would fail the emptiness gate on appearance alone.</div>
+            <div><b>deterministic ring</b>: r-factor=1.0 peaks=18 span=[-161.5, 142.0]deg</div>
+            <div><b>expected</b>: start=-135 end=135 zero=start</div>
+            <div><b>text part returned</b>: True &nbsp; <b>JSON parsed</b>: True</div>
+            <div><b>model self-report JSON</b>: <code>{&quot;vol&quot;: {&quot;start_deg&quot;: -135, &quot;end_deg&quot;: 135, &quot;zero&quot;: &quot;start&quot;}}</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: False</div>
+            <div><b>VLM clock mentions</b>: [7, 5, 6, 7] -> approx [-150, 150, 180, -150]deg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>1. TICKS-PRESENT: yes
+2. AT-SOCKET: yes
+3. LEGIBLE: yes
+4. START-END-DISTINCT: no. The marks are a uniform series of five identical, small, engraved lines. There are no visually distinct marks for START or END.
+5. ANGLE-ESTIMATE: The first mark of the arc is at approximately 7 o&#x27;clock, and the last mark is at approximately 5 o&#x27;clock.
+6. THEME-COHERENT: yes
+7. POINTER-NOTCH-ALIGNED: no. The pointer notch on the knob cap points directly down to 6 o&#x27;clock, not toward the 7 o&#x27;clock start position.
+8. DAMAGE-CHECK: The socket recess is not empty. It contains a dark central structure that appears to be the base of a knob that is already installed.
+
+VERDICT: UNRELIABLE</pre></details>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">steam-porthole / seed 402</span>
+            <span>
+              <span class="verdict pass" title="raw VLM witness verdict">VLM: RELIABLE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL (override)</span>
+            </span>
+          </div>
+          <div class="imgs">
+            <a href="assets-knobticks-steam-porthole-ticks01-402/paint.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks01-402/paint.png" class="thumb" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks01-402/crop-knob-labeled.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks01-402/crop-knob-labeled.png" class="crop" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks01-402/crop-cap-strip.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks01-402/crop-cap-strip.png" class="crop small" loading="lazy"></a>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: Well-formed tick arc, but the knob was DISPLACED from its template socket (template crop location contains buttons; knob moved to bottom-left) — the socket the app will seat a cap into won&#x27;t be where the arc is. Guide-colour icon bleed on all five buttons (cyan prev / magenta play / green repeat / purple next / blue queue exactly matching guide keys). VLM&#x27;s own #7 pointer-notch = no, yet it still said RELIABLE.</div>
+            <div><b>deterministic ring</b>: r-factor=1.38 peaks=24 span=[-163.5, 170.0]deg</div>
+            <div><b>expected</b>: start=-135 end=135 zero=start</div>
+            <div><b>text part returned</b>: True &nbsp; <b>JSON parsed</b>: False</div>
+            <div><b>model self-report JSON</b>: <code>none</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: None</div>
+            <div><b>VLM clock mentions</b>: [7, 5] -> approx [-150, 150]deg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>1. TICKS-PRESENT: yes
+2. AT-SOCKET: yes
+3. LEGIBLE: yes
+4. START-END-DISTINCT: yes
+5. ANGLE-ESTIMATE: START looks like 7 o&#x27;clock, END looks like 5 o&#x27;clock.
+6. THEME-COHERENT: yes
+7. POINTER-NOTCH-ALIGNED: no
+8. DAMAGE-CHECK: NONE
+
+VERDICT: RELIABLE</pre></details>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">fa-pod / seed 501</span>
+            <span>
+              <span class="verdict unparsed" title="raw VLM witness verdict">VLM: NO-IMAGE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL (no image)</span>
+            </span>
+          </div>
+          <div class="imgs"><div class="noimg">NO IMAGE — model returned thought-text only, 3 attempts</div>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: Generation returned thought-text-only responses with NO image part on 3 consecutive attempts (seed 501, 1501, 2501) under responseModalities=[TEXT,IMAGE]. The metadata ask can kill image output entirely.</div>
+            <div><b>deterministic ring</b>: r-factor=None peaks=None span=Nonedeg</div>
+            <div><b>expected</b>: start=None end=None zero=None</div>
+            <div><b>text part returned</b>: False &nbsp; <b>JSON parsed</b>: False</div>
+            <div><b>model self-report JSON</b>: <code>none</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: None</div>
+            <div><b>VLM clock mentions</b>: None -> approx Nonedeg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>generation returned thought-text-only responses with no image part, 3 attempts (seeds 501/1501/2501)</pre></details>
+          </div>
+        </div></div><h2>BAKED TICKS -1..0..+1 (center detent / balance) <span class="tally">2/4 RELIABLE</span></h2><div class="grid">
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">fa-pod / seed 501</span>
+            <span>
+              <span class="verdict pass" title="raw VLM witness verdict">VLM: RELIABLE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL (override)</span>
+            </span>
+          </div>
+          <div class="imgs">
+            <a href="assets-knobticks-fa-pod-ticks_ctr-501/paint.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks_ctr-501/paint.png" class="thumb" loading="lazy"></a>
+            <a href="assets-knobticks-fa-pod-ticks_ctr-501/crop-knob-labeled.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks_ctr-501/crop-knob-labeled.png" class="crop" loading="lazy"></a>
+            <a href="assets-knobticks-fa-pod-ticks_ctr-501/crop-cap-strip.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks_ctr-501/crop-cap-strip.png" class="crop small" loading="lazy"></a>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: The tick arc + diamond centre mark exist and look excellent — but the ENTIRE layout was rearranged (buttons to top, knob at ~0.35 height vs template 0.57, screens to bottom). The VLM&#x27;s crop (taken at template coords) contains NO knob, so its &#x27;at-socket yes, 7 o&#x27;clock start&#x27; answers were confabulated from the downscaled full frame. Layout adherence destroyed; cut/composite would fail.</div>
+            <div><b>deterministic ring</b>: r-factor=1.45 peaks=9 span=[-149.5, 107.5]deg</div>
+            <div><b>expected</b>: start=-135 end=135 zero=center</div>
+            <div><b>text part returned</b>: True &nbsp; <b>JSON parsed</b>: True</div>
+            <div><b>model self-report JSON</b>: <code>{&quot;vol&quot;: {&quot;start_deg&quot;: -135, &quot;end_deg&quot;: 135, &quot;zero&quot;: &quot;center&quot;}}</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: False</div>
+            <div><b>VLM clock mentions</b>: [7, 5] -> approx [-150, 150]deg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>1. TICKS-PRESENT: yes
+2. AT-SOCKET: yes
+3. LEGIBLE: yes
+4. START-END-DISTINCT: yes
+5. ANGLE-ESTIMATE: START looks like 7 o&#x27;clock, END looks like 5 o&#x27;clock.
+6. THEME-COHERENT: yes
+7. POINTER-NOTCH-ALIGNED: yes
+8. DAMAGE-CHECK: NONE
+
+VERDICT: RELIABLE</pre></details>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">fa-pod / seed 502</span>
+            <span>
+              <span class="verdict fail" title="raw VLM witness verdict">VLM: UNRELIABLE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL</span>
+            </span>
+          </div>
+          <div class="imgs">
+            <a href="assets-knobticks-fa-pod-ticks_ctr-502/paint.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks_ctr-502/paint.png" class="thumb" loading="lazy"></a>
+            <a href="assets-knobticks-fa-pod-ticks_ctr-502/crop-knob-labeled.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks_ctr-502/crop-knob-labeled.png" class="crop" loading="lazy"></a>
+            <a href="assets-knobticks-fa-pod-ticks_ctr-502/crop-cap-strip.png" target="_blank"><img src="assets-knobticks-fa-pod-ticks_ctr-502/crop-cap-strip.png" class="crop small" loading="lazy"></a>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: Distinct diamond centre at 12, but start/end marks are plain dots identical to minor ticks (VLM); &#x27;MIN&#x27; and &#x27;MAX&#x27; text baked into the housing (VLM damage check).</div>
+            <div><b>deterministic ring</b>: r-factor=1.38 peaks=8 span=[-159.0, 159.5]deg</div>
+            <div><b>expected</b>: start=-135 end=135 zero=center</div>
+            <div><b>text part returned</b>: True &nbsp; <b>JSON parsed</b>: False</div>
+            <div><b>model self-report JSON</b>: <code>none</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: None</div>
+            <div><b>VLM clock mentions</b>: [12, 8, 4, 12] -> approx [0, -120, 120, 0]deg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>1. TICKS-PRESENT: yes
+2. AT-SOCKET: yes
+3. LEGIBLE: yes
+4. START-END-DISTINCT: no — There is a distinct diamond-shaped center mark at 12 o&#x27;clock, but the start and end marks of the arc are just plain dots, visually identical to all the minor ticks. There are no distinct MIN and MAX marks.
+5. ANGLE-ESTIMATE: START looks like 8 o&#x27;clock, END looks like 4 o&#x27;clock.
+6. THEME-COHERENT: yes — The ticks appear as illuminated elements under the translucent housing, perfectly matching the device&#x27;s overall aesthetic and lighting.
+7. POINTER-NOTCH-ALIGNED: yes — The loose knob cap&#x27;s pointer notch is at the 12 o&#x27;clock position, matching the specified center/start direction.
+8. DAMAGE-CHECK: The text &quot;MIN&quot; and &quot;MAX&quot; is baked into the housing.
+
+VERDICT: UNRELIABLE</pre></details>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">steam-porthole / seed 401</span>
+            <span>
+              <span class="verdict fail" title="raw VLM witness verdict">VLM: UNRELIABLE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL</span>
+            </span>
+          </div>
+          <div class="imgs">
+            <a href="assets-knobticks-steam-porthole-ticks_ctr-401/paint.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks_ctr-401/paint.png" class="thumb" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks_ctr-401/crop-knob-labeled.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks_ctr-401/crop-knob-labeled.png" class="crop" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks_ctr-401/crop-cap-strip.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks_ctr-401/crop-cap-strip.png" class="crop small" loading="lazy"></a>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: Diamond centre mark at 12 o&#x27;clock rendered beautifully; but start/end/centre marks not visually distinct from EACH OTHER (VLM, confirmed). Guide-colour icon bleed on all five buttons (same pattern as ticks01-402).</div>
+            <div><b>deterministic ring</b>: r-factor=1.08 peaks=18 span=[-178.5, 165.0]deg</div>
+            <div><b>expected</b>: start=-135 end=135 zero=center</div>
+            <div><b>text part returned</b>: True &nbsp; <b>JSON parsed</b>: True</div>
+            <div><b>model self-report JSON</b>: <code>{&quot;vol&quot;: {&quot;start_deg&quot;: -135, &quot;end_deg&quot;: 135, &quot;zero&quot;: &quot;center&quot;}}</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: False</div>
+            <div><b>VLM clock mentions</b>: [12, 30, 30] -> approx [0]deg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>1. TICKS-PRESENT: yes
+2. AT-SOCKET: yes
+3. LEGIBLE: yes
+4. START-END-DISTINCT: no — There is a longer tick at 12 o&#x27;clock, and what appear to be start/end marks that are also longer ticks, identical in design to the center mark. The start, end, and center marks are not visually distinct from each other, only from the minor ticks.
+5. ANGLE-ESTIMATE: START looks like 7:30 o&#x27;clock, END looks like 4:30 o&#x27;clock.
+6. THEME-COHERENT: yes
+7. POINTER-NOTCH-ALIGNED: yes
+8. DAMAGE-CHECK: NONE
+
+VERDICT: UNRELIABLE</pre></details>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hdr">
+            <span class="tag">steam-porthole / seed 402</span>
+            <span>
+              <span class="verdict pass" title="raw VLM witness verdict">VLM: RELIABLE</span>
+              <span class="verdict fail" title="adjudicated (VLM cross-checked against direct crop inspection)">ADJ: FAIL (override)</span>
+            </span>
+          </div>
+          <div class="imgs">
+            <a href="assets-knobticks-steam-porthole-ticks_ctr-402/paint.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks_ctr-402/paint.png" class="thumb" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks_ctr-402/crop-knob-labeled.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks_ctr-402/crop-knob-labeled.png" class="crop" loading="lazy"></a>
+            <a href="assets-knobticks-steam-porthole-ticks_ctr-402/crop-cap-strip.png" target="_blank"><img src="assets-knobticks-steam-porthole-ticks_ctr-402/crop-cap-strip.png" class="crop small" loading="lazy"></a>
+          </div>
+          <div class="meta">
+            <div class="adjnote"><b>adjudication</b>: The words &#x27;CENTER&#x27;, &#x27;MIN&#x27;, &#x27;MAX&#x27; are BAKED into the housing around the socket (my crop, and the VLM itself read the MIN/MAX text in its answer #5 while reporting DAMAGE NONE — internally inconsistent, overruled). Violates the production ABSOLUTELY-NO-TEXT rule; the tick clause&#x27;s own vocabulary leaked as literal engraved labels.</div>
+            <div><b>deterministic ring</b>: r-factor=1.3 peaks=18 span=[-164.0, 169.0]deg</div>
+            <div><b>expected</b>: start=-135 end=135 zero=center</div>
+            <div><b>text part returned</b>: True &nbsp; <b>JSON parsed</b>: False</div>
+            <div><b>model self-report JSON</b>: <code>none</code></div>
+            <div><b>JSON vs deterministic (+-15deg)</b>: None</div>
+            <div><b>VLM clock mentions</b>: [8, 4, 12] -> approx [-120, 120, 0]deg</div>
+            <details><summary>full VLM raw reasoning + verdict</summary><pre>1.  TICKS-PRESENT: yes
+2.  AT-SOCKET: yes
+3.  LEGIBLE: yes
+4.  START-END-DISTINCT: yes
+5.  ANGLE-ESTIMATE: START (&quot;MIN&quot; text) is at 8 o&#x27;clock, END (&quot;MAX&quot; text) is at 4 o&#x27;clock. The CENTER mark is at 12 o&#x27;clock.
+6.  THEME-COHERENT: yes
+7.  POINTER-NOTCH-ALIGNED: yes
+8.  DAMAGE-CHECK: NONE
+
+VERDICT: RELIABLE</pre></details>
+          </div>
+        </div></div>

@@ -1,0 +1,69 @@
+{
+  "tag": "steam-porthole-ticks01-401",
+  "theme": "steam-porthole",
+  "arm": "ticks01",
+  "seed": 401,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+  "verdict": "UNRELIABLE",
+  "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no. The marks are a uniform series of five identical, small, engraved lines. There are no visually distinct marks for START or END.\n5. ANGLE-ESTIMATE: The first mark of the arc is at approximately 7 o'clock, and the last mark is at approximately 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no. The pointer notch on the knob cap points directly down to 6 o'clock, not toward the 7 o'clock start position.\n8. DAMAGE-CHECK: The socket recess is not empty. It contains a dark central structure that appears to be the base of a knob that is already installed.\n\nVERDICT: UNRELIABLE",
+  "deterministic": {
+    "ring_radius_factor": 1.0,
+    "n_peaks": 18,
+    "peak_degs": [
+      -161.5,
+      -147.5,
+      -112.5,
+      -96.5,
+      -89.5,
+      -69.0,
+      -60.5,
+      -45.5,
+      -29.5,
+      30.5,
+      46.0,
+      62.0,
+      70.0,
+      80.5,
+      88.0,
+      90.5,
+      119.0,
+      142.0
+    ],
+    "span_deg": [
+      -161.5,
+      142.0
+    ]
+  },
+  "model_json_parsed": {
+    "vol": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "start"
+    }
+  },
+  "expected_convention": {
+    "start_deg": -135,
+    "end_deg": 135,
+    "zero": "start"
+  },
+  "vlm_clock_mentions": [
+    7,
+    5,
+    6,
+    7
+  ],
+  "vlm_angle_guess_deg": [
+    -150,
+    150,
+    180,
+    -150
+  ],
+  "agree_json_vs_deterministic_15deg": false,
+  "text_part_returned": true,
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-knob.png",
+    "crop-cap-strip.png"
+  ],
+  "ts": "2026-07-11T14:19:01"
+}

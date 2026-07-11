@@ -1,0 +1,65 @@
+{
+  "tag": "steam-porthole-ticks01-402",
+  "theme": "steam-porthole",
+  "arm": "ticks01",
+  "seed": 402,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+  "verdict": "RELIABLE",
+  "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: yes\n5. ANGLE-ESTIMATE: START looks like 7 o'clock, END looks like 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no\n8. DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
+  "deterministic": {
+    "ring_radius_factor": 1.38,
+    "n_peaks": 24,
+    "peak_degs": [
+      -163.5,
+      -156.0,
+      -150.5,
+      -134.0,
+      -127.0,
+      -111.0,
+      -104.5,
+      -93.5,
+      -86.0,
+      -75.0,
+      -63.0,
+      -36.5,
+      -22.0,
+      -13.5,
+      0.5,
+      5.0,
+      35.0,
+      43.5,
+      86.5,
+      94.0,
+      106.5,
+      123.5,
+      152.0,
+      170.0
+    ],
+    "span_deg": [
+      -163.5,
+      170.0
+    ]
+  },
+  "model_json_parsed": null,
+  "expected_convention": {
+    "start_deg": -135,
+    "end_deg": 135,
+    "zero": "start"
+  },
+  "vlm_clock_mentions": [
+    7,
+    5
+  ],
+  "vlm_angle_guess_deg": [
+    -150,
+    150
+  ],
+  "agree_json_vs_deterministic_15deg": null,
+  "text_part_returned": true,
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-knob.png",
+    "crop-cap-strip.png"
+  ],
+  "ts": "2026-07-11T14:23:11"
+}

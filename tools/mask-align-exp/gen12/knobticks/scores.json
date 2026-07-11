@@ -1,0 +1,431 @@
+[
+  {
+    "tag": "fa-pod-ticks01-502",
+    "theme": "fa-pod",
+    "arm": "ticks01",
+    "seed": 502,
+    "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+    "verdict": "UNRELIABLE",
+    "raw": "1. TICKS-PRESENT: no\n2. AT-SOCKET: yes\n3. LEGIBLE: no\n4. START-END-DISTINCT: no\n5. ANGLE-ESTIMATE: The start of the arc is at 8 o'clock, the end is at 4 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no\n8. DAMAGE-CHECK: Unrequested text (\"MIN\", \"MAX\") has been engraved on the housing at either end of the single indicator slot.\n\nVERDICT: UNRELIABLE",
+    "deterministic": {
+      "ring_radius_factor": 1.3,
+      "n_peaks": 13,
+      "peak_degs": [
+        -176.0,
+        -169.5,
+        -162.0,
+        -151.0,
+        -123.5,
+        -32.5,
+        51.5,
+        67.0,
+        81.0,
+        91.5,
+        98.5,
+        106.0,
+        163.5
+      ],
+      "span_deg": [
+        -176.0,
+        163.5
+      ]
+    },
+    "model_json_parsed": {
+      "vol": {
+        "start_deg": -135,
+        "end_deg": 135,
+        "zero": "start"
+      }
+    },
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "start"
+    },
+    "vlm_clock_mentions": [
+      8,
+      4
+    ],
+    "vlm_angle_guess_deg": [
+      -120,
+      120
+    ],
+    "agree_json_vs_deterministic_15deg": false,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:17:34"
+  },
+  {
+    "tag": "fa-pod-ticks_ctr-501",
+    "theme": "fa-pod",
+    "arm": "ticks_ctr",
+    "seed": 501,
+    "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+    "verdict": "RELIABLE",
+    "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: yes\n5. ANGLE-ESTIMATE: START looks like 7 o'clock, END looks like 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: yes\n8. DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
+    "deterministic": {
+      "ring_radius_factor": 1.45,
+      "n_peaks": 9,
+      "peak_degs": [
+        -149.5,
+        -29.0,
+        -23.0,
+        23.5,
+        30.5,
+        47.5,
+        89.5,
+        94.5,
+        107.5
+      ],
+      "span_deg": [
+        -149.5,
+        107.5
+      ]
+    },
+    "model_json_parsed": {
+      "vol": {
+        "start_deg": -135,
+        "end_deg": 135,
+        "zero": "center"
+      }
+    },
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "center"
+    },
+    "vlm_clock_mentions": [
+      7,
+      5
+    ],
+    "vlm_angle_guess_deg": [
+      -150,
+      150
+    ],
+    "agree_json_vs_deterministic_15deg": false,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:17:59"
+  },
+  {
+    "tag": "fa-pod-ticks_ctr-502",
+    "theme": "fa-pod",
+    "arm": "ticks_ctr",
+    "seed": 502,
+    "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+    "verdict": "UNRELIABLE",
+    "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no \u2014 There is a distinct diamond-shaped center mark at 12 o'clock, but the start and end marks of the arc are just plain dots, visually identical to all the minor ticks. There are no distinct MIN and MAX marks.\n5. ANGLE-ESTIMATE: START looks like 8 o'clock, END looks like 4 o'clock.\n6. THEME-COHERENT: yes \u2014 The ticks appear as illuminated elements under the translucent housing, perfectly matching the device's overall aesthetic and lighting.\n7. POINTER-NOTCH-ALIGNED: yes \u2014 The loose knob cap's pointer notch is at the 12 o'clock position, matching the specified center/start direction.\n8. DAMAGE-CHECK: The text \"MIN\" and \"MAX\" is baked into the housing.\n\nVERDICT: UNRELIABLE",
+    "deterministic": {
+      "ring_radius_factor": 1.38,
+      "n_peaks": 8,
+      "peak_degs": [
+        -159.0,
+        -135.5,
+        -38.5,
+        63.0,
+        89.0,
+        90.5,
+        137.0,
+        159.5
+      ],
+      "span_deg": [
+        -159.0,
+        159.5
+      ]
+    },
+    "model_json_parsed": null,
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "center"
+    },
+    "vlm_clock_mentions": [
+      12,
+      8,
+      4,
+      12
+    ],
+    "vlm_angle_guess_deg": [
+      0,
+      -120,
+      120,
+      0
+    ],
+    "agree_json_vs_deterministic_15deg": null,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:18:33"
+  },
+  {
+    "tag": "steam-porthole-ticks01-401",
+    "theme": "steam-porthole",
+    "arm": "ticks01",
+    "seed": 401,
+    "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+    "verdict": "UNRELIABLE",
+    "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no. The marks are a uniform series of five identical, small, engraved lines. There are no visually distinct marks for START or END.\n5. ANGLE-ESTIMATE: The first mark of the arc is at approximately 7 o'clock, and the last mark is at approximately 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no. The pointer notch on the knob cap points directly down to 6 o'clock, not toward the 7 o'clock start position.\n8. DAMAGE-CHECK: The socket recess is not empty. It contains a dark central structure that appears to be the base of a knob that is already installed.\n\nVERDICT: UNRELIABLE",
+    "deterministic": {
+      "ring_radius_factor": 1.0,
+      "n_peaks": 18,
+      "peak_degs": [
+        -161.5,
+        -147.5,
+        -112.5,
+        -96.5,
+        -89.5,
+        -69.0,
+        -60.5,
+        -45.5,
+        -29.5,
+        30.5,
+        46.0,
+        62.0,
+        70.0,
+        80.5,
+        88.0,
+        90.5,
+        119.0,
+        142.0
+      ],
+      "span_deg": [
+        -161.5,
+        142.0
+      ]
+    },
+    "model_json_parsed": {
+      "vol": {
+        "start_deg": -135,
+        "end_deg": 135,
+        "zero": "start"
+      }
+    },
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "start"
+    },
+    "vlm_clock_mentions": [
+      7,
+      5,
+      6,
+      7
+    ],
+    "vlm_angle_guess_deg": [
+      -150,
+      150,
+      180,
+      -150
+    ],
+    "agree_json_vs_deterministic_15deg": false,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:19:01"
+  },
+  {
+    "tag": "steam-porthole-ticks01-402",
+    "theme": "steam-porthole",
+    "arm": "ticks01",
+    "seed": 402,
+    "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+    "verdict": "RELIABLE",
+    "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: yes\n5. ANGLE-ESTIMATE: START looks like 7 o'clock, END looks like 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no\n8. DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
+    "deterministic": {
+      "ring_radius_factor": 1.38,
+      "n_peaks": 24,
+      "peak_degs": [
+        -163.5,
+        -156.0,
+        -150.5,
+        -134.0,
+        -127.0,
+        -111.0,
+        -104.5,
+        -93.5,
+        -86.0,
+        -75.0,
+        -63.0,
+        -36.5,
+        -22.0,
+        -13.5,
+        0.5,
+        5.0,
+        35.0,
+        43.5,
+        86.5,
+        94.0,
+        106.5,
+        123.5,
+        152.0,
+        170.0
+      ],
+      "span_deg": [
+        -163.5,
+        170.0
+      ]
+    },
+    "model_json_parsed": null,
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "start"
+    },
+    "vlm_clock_mentions": [
+      7,
+      5
+    ],
+    "vlm_angle_guess_deg": [
+      -150,
+      150
+    ],
+    "agree_json_vs_deterministic_15deg": null,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:23:11"
+  },
+  {
+    "tag": "steam-porthole-ticks_ctr-401",
+    "theme": "steam-porthole",
+    "arm": "ticks_ctr",
+    "seed": 401,
+    "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+    "verdict": "UNRELIABLE",
+    "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no \u2014 There is a longer tick at 12 o'clock, and what appear to be start/end marks that are also longer ticks, identical in design to the center mark. The start, end, and center marks are not visually distinct from each other, only from the minor ticks.\n5. ANGLE-ESTIMATE: START looks like 7:30 o'clock, END looks like 4:30 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: yes\n8. DAMAGE-CHECK: NONE\n\nVERDICT: UNRELIABLE",
+    "deterministic": {
+      "ring_radius_factor": 1.08,
+      "n_peaks": 18,
+      "peak_degs": [
+        -178.5,
+        -173.0,
+        -81.5,
+        -70.0,
+        -46.0,
+        -34.0,
+        10.5,
+        15.5,
+        43.5,
+        76.5,
+        85.5,
+        90.5,
+        105.0,
+        112.0,
+        122.5,
+        128.0,
+        145.0,
+        165.0
+      ],
+      "span_deg": [
+        -178.5,
+        165.0
+      ]
+    },
+    "model_json_parsed": {
+      "vol": {
+        "start_deg": -135,
+        "end_deg": 135,
+        "zero": "center"
+      }
+    },
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "center"
+    },
+    "vlm_clock_mentions": [
+      12,
+      30,
+      30
+    ],
+    "vlm_angle_guess_deg": [
+      0
+    ],
+    "agree_json_vs_deterministic_15deg": false,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:21:33"
+  },
+  {
+    "tag": "steam-porthole-ticks_ctr-402",
+    "theme": "steam-porthole",
+    "arm": "ticks_ctr",
+    "seed": 402,
+    "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+    "verdict": "RELIABLE",
+    "raw": "1.  TICKS-PRESENT: yes\n2.  AT-SOCKET: yes\n3.  LEGIBLE: yes\n4.  START-END-DISTINCT: yes\n5.  ANGLE-ESTIMATE: START (\"MIN\" text) is at 8 o'clock, END (\"MAX\" text) is at 4 o'clock. The CENTER mark is at 12 o'clock.\n6.  THEME-COHERENT: yes\n7.  POINTER-NOTCH-ALIGNED: yes\n8.  DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
+    "deterministic": {
+      "ring_radius_factor": 1.3,
+      "n_peaks": 18,
+      "peak_degs": [
+        -164.0,
+        -154.5,
+        -148.0,
+        -138.5,
+        -125.5,
+        -115.5,
+        -101.0,
+        26.0,
+        47.5,
+        55.5,
+        79.0,
+        88.0,
+        90.5,
+        121.0,
+        134.0,
+        144.0,
+        154.5,
+        169.0
+      ],
+      "span_deg": [
+        -164.0,
+        169.0
+      ]
+    },
+    "model_json_parsed": null,
+    "expected_convention": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "center"
+    },
+    "vlm_clock_mentions": [
+      8,
+      4,
+      12
+    ],
+    "vlm_angle_guess_deg": [
+      -120,
+      120,
+      0
+    ],
+    "agree_json_vs_deterministic_15deg": null,
+    "text_part_returned": true,
+    "images_sent": [
+      "paint.png(resized)",
+      "crop-knob.png",
+      "crop-cap-strip.png"
+    ],
+    "ts": "2026-07-11T14:21:54"
+  }
+]

@@ -1,0 +1,50 @@
+{
+  "_note": "Human-agent adjudication of the VLM witness verdicts (verify-rule 1b: the VLM is a witness, not a judge). Each VLM claim was checked against direct full-res crop inspection of the real paint; overrides carry the observed evidence. 'reliable' below = the FULL provisioning contract (ticks present at socket, legible, distinct start/end marks at consistent angles, theme-coherent, zero collateral damage incl. the no-text rule and layout adherence).",
+  "steam-porthole-ticks01-401": {
+    "vlm": "UNRELIABLE", "adjudicated": "FAIL",
+    "ticks_present": true, "at_socket": true, "start_end_distinct": "disputed",
+    "evidence": "Tick ring engraved around socket with two mirrored L-bracket end-stops at ~7 and ~5 o'clock (visible in my 3x lower-half crop; the VLM's 1.9r crop clipped them and it called the ring uniform). Cap pointer notch ~7-8 o'clock (VLM read 6). VLM flagged 'socket not empty — dark dome reads as installed knob base'; the recess floor is a domed dark surface with a copper centre, genuinely ambiguous, would fail the emptiness gate on appearance alone.",
+    "text_contamination": false, "icon_colour_bleed": false, "layout_drift": "minor"
+  },
+  "steam-porthole-ticks01-402": {
+    "vlm": "RELIABLE", "adjudicated": "FAIL (override)",
+    "ticks_present": true, "at_socket": true, "start_end_distinct": true,
+    "evidence": "Well-formed tick arc, but the knob was DISPLACED from its template socket (template crop location contains buttons; knob moved to bottom-left) — the socket the app will seat a cap into won't be where the arc is. Guide-colour icon bleed on all five buttons (cyan prev / magenta play / green repeat / purple next / blue queue exactly matching guide keys). VLM's own #7 pointer-notch = no, yet it still said RELIABLE.",
+    "text_contamination": false, "icon_colour_bleed": true, "layout_drift": "major"
+  },
+  "steam-porthole-ticks_ctr-401": {
+    "vlm": "UNRELIABLE", "adjudicated": "FAIL",
+    "ticks_present": true, "at_socket": true, "start_end_distinct": false,
+    "evidence": "Diamond centre mark at 12 o'clock rendered beautifully; but start/end/centre marks not visually distinct from EACH OTHER (VLM, confirmed). Guide-colour icon bleed on all five buttons (same pattern as ticks01-402).",
+    "text_contamination": false, "icon_colour_bleed": true, "layout_drift": "minor (knob slightly low)"
+  },
+  "steam-porthole-ticks_ctr-402": {
+    "vlm": "RELIABLE", "adjudicated": "FAIL (override)",
+    "ticks_present": true, "at_socket": true, "start_end_distinct": true,
+    "evidence": "The words 'CENTER', 'MIN', 'MAX' are BAKED into the housing around the socket (my crop, and the VLM itself read the MIN/MAX text in its answer #5 while reporting DAMAGE NONE — internally inconsistent, overruled). Violates the production ABSOLUTELY-NO-TEXT rule; the tick clause's own vocabulary leaked as literal engraved labels.",
+    "text_contamination": true, "icon_colour_bleed": false, "layout_drift": "minor"
+  },
+  "fa-pod-ticks01-501": {
+    "vlm": null, "adjudicated": "FAIL (no image)",
+    "evidence": "Generation returned thought-text-only responses with NO image part on 3 consecutive attempts (seed 501, 1501, 2501) under responseModalities=[TEXT,IMAGE]. The metadata ask can kill image output entirely.",
+    "text_contamination": null, "icon_colour_bleed": null, "layout_drift": null
+  },
+  "fa-pod-ticks01-502": {
+    "vlm": "UNRELIABLE", "adjudicated": "FAIL",
+    "ticks_present": false,
+    "evidence": "No tick arc at all — a single indicator slot instead; AND the words 'MIN'/'MAX' engraved at its ends (VLM, damage check). Text contamination without even the tick system it was meant to label.",
+    "text_contamination": true, "icon_colour_bleed": false, "layout_drift": "unknown"
+  },
+  "fa-pod-ticks_ctr-501": {
+    "vlm": "RELIABLE", "adjudicated": "FAIL (override)",
+    "ticks_present": true, "at_socket": true,
+    "evidence": "The tick arc + diamond centre mark exist and look excellent — but the ENTIRE layout was rearranged (buttons to top, knob at ~0.35 height vs template 0.57, screens to bottom). The VLM's crop (taken at template coords) contains NO knob, so its 'at-socket yes, 7 o'clock start' answers were confabulated from the downscaled full frame. Layout adherence destroyed; cut/composite would fail.",
+    "text_contamination": false, "icon_colour_bleed": false, "layout_drift": "catastrophic (full rearrangement)"
+  },
+  "fa-pod-ticks_ctr-502": {
+    "vlm": "UNRELIABLE", "adjudicated": "FAIL",
+    "ticks_present": true, "at_socket": true, "start_end_distinct": false,
+    "evidence": "Distinct diamond centre at 12, but start/end marks are plain dots identical to minor ticks (VLM); 'MIN' and 'MAX' text baked into the housing (VLM damage check).",
+    "text_contamination": true, "icon_colour_bleed": false, "layout_drift": "unknown"
+  }
+}

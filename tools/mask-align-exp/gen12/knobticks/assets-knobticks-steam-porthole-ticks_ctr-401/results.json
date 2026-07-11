@@ -1,0 +1,215 @@
+{
+ "id": "steam-porthole",
+ "arm": "ticks_ctr",
+ "seed": 401,
+ "model": "gemini-3-pro-image-preview (Vertex AI, global, responseModalities=[TEXT,IMAGE])",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "brass": [
+   178,
+   138,
+   58
+  ],
+  "copper": [
+   158,
+   92,
+   46
+  ],
+  "bronze_dark": [
+   70,
+   52,
+   30
+  ],
+  "teal_glass": [
+   28,
+   104,
+   110
+  ],
+  "iron": [
+   58,
+   54,
+   50
+  ],
+  "cream": [
+   228,
+   214,
+   178
+  ]
+ },
+ "keys": {
+  "playpause": [
+   255,
+   0,
+   255
+  ],
+  "prev": [
+   0,
+   255,
+   255
+  ],
+  "next": [
+   128,
+   0,
+   255
+  ],
+  "repeat": [
+   0,
+   255,
+   0
+  ],
+  "queue": [
+   0,
+   0,
+   255
+  ],
+  "vol": [
+   255,
+   0,
+   128
+  ],
+  "seek": [
+   0,
+   255,
+   128
+  ],
+  "shuffle": [
+   128,
+   128,
+   255
+  ],
+  "visualizer": [
+   255,
+   255,
+   0
+  ],
+  "album_art": [
+   0,
+   128,
+   255
+  ]
+ },
+ "keyNames": {
+  "playpause": "MAGENTA",
+  "prev": "CYAN",
+  "next": "VIOLET-PURPLE",
+  "repeat": "PURE GREEN",
+  "queue": "PURE BLUE",
+  "vol": "ROSE PINK",
+  "seek": "SPRING GREEN",
+  "shuffle": "PERIWINKLE",
+  "visualizer": "YELLOW",
+  "album_art": "AZURE BLUE"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "devFrac": 0.75,
+ "template": {
+  "album_art": [
+   0.5,
+   0.11249999999999999
+  ],
+  "visualizer": [
+   0.5,
+   0.25125000000000003
+  ],
+  "seek": [
+   0.5,
+   0.3525
+  ],
+  "prev": [
+   0.28,
+   0.44999999999999996
+  ],
+  "playpause": [
+   0.5,
+   0.44999999999999996
+  ],
+  "next": [
+   0.72,
+   0.44999999999999996
+  ],
+  "repeat": [
+   0.24,
+   0.5625
+  ],
+  "vol": [
+   0.42,
+   0.5700000000000001
+  ],
+  "shuffle": [
+   0.6,
+   0.5700000000000001
+  ],
+  "queue": [
+   0.78,
+   0.5625
+  ]
+ },
+ "expected_convention": {
+  "start_deg": -135,
+  "end_deg": 135,
+  "zero": "center"
+ },
+ "album_art_rect": [
+  0.26666666666666666,
+  0.03437499999999999,
+  0.4666666666666667,
+  0.15625
+ ],
+ "visualizer_rect": [
+  0.23333333333333334,
+  0.21062500000000003,
+  0.5333333333333333,
+  0.08125
+ ],
+ "knob_center_frac": [
+  0.42,
+  0.5700000000000001
+ ],
+ "knob_r_frac": 0.07,
+ "prompt": "Two side-by-side columns of identical size, output at 5:4. ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS and NO LABELS anywhere in EITHER column \u2014 not under controls, not on the strip, not a title, nothing; the device is wordless, identified by icons, shapes and tick marks only. The LEFT column is a BLUEPRINT: a neutral grey placeholder body with COLOURED SOLID FILLED patches marking each control's EXACT position, size and shape, plus a bottom SPRITE-STRIP band with 4 loose parts (volume knob cap, seek slider thumb, shuffle switch first state, shuffle switch second state). Each guide's colour maps to a control: MAGENTA = a PLAY triangle (right-pointing) merged with pause bars; CYAN = a SKIP-BACK double-triangle / rewind chevrons; VIOLET-PURPLE = a SKIP-FORWARD double-triangle / fast-forward chevrons; PURE GREEN = a REPEAT loop (two arrows chasing in a circle); PURE BLUE = a QUEUE / playlist icon (stacked horizontal lines); ROSE PINK = a VOLUME knob (top face, knurled rim, pointer notch); SPRING GREEN = the SEEK progress slider thumb (wide low grip); PERIWINKLE = a SHUFFLE icon (two crossing arrows); YELLOW = a VISUALIZER / spectrum-analyzer display window; AZURE BLUE = an ALBUM ART / cover display window. KEEP EVERY CONTROL AT THE EXACT POSITION, SIZE AND SHAPE OF ITS GUIDE \u2014 do NOT move, resize, swap, rearrange, add or drop any control (their layout is locked). BUT the grey body is ONLY a rough placeholder showing WHERE the controls sit \u2014 you are FREE and STRONGLY ENCOURAGED to sculpt a BOLD, DISTINCTIVE, ASYMMETRIC, theme-appropriate outer HOUSING around them: an ornate, characterful, sculpted form with a memorable silhouette (organic curves, wings, pods, fins, greebles, ornament, asymmetry) \u2014 NOT a plain rounded rectangle, NOT a generic slab or pod. Reshape the outer silhouette DRAMATICALLY to suit the theme; ONLY the control positions stay fixed. The coloured filled patches are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed.\nTHEME (design the finished device in THIS style \u2014 you own all materials, colours, form, lighting): STEAMPUNK BRASS nautilus / diving-bell media player: riveted polished BRASS and COPPER housing with a big round porthole, pressure-gauge dials, engraved filigree, patina, glass tubes and a teal-glass display. Victorian submarine machinery \u2014 ornate, mechanical, warm metal, rich reflections.\nFill BOTH columns keeping the device+strip layout IDENTICAL so they overlay pixel-for-pixel.\nLEFT column \u2014 the FINISHED, richly 3D, tactile, skeuomorphic media player and its loose parts, in the theme above. CRITICAL for cutout: the BACKDROP around the device and BEHIND every strip part is a FLAT, PERFECTLY UNIFORM pale grey-white tone (RGB ~235,235,238) \u2014 a separate keyed-out backdrop with NO gradient/texture/vignette that strongly contrasts the body; the device must never approach the backdrop tone.\n  \u2022 The finished device uses ONLY its own theme materials/colours \u2014 NONE of the guide colours. ABSOLUTELY NO magenta, NO cyan, NO violet-purple, NO pure green, NO pure blue, NO rose pink, NO spring green, NO periwinkle, NO yellow, NO azure blue anywhere in the LEFT column; the guide colours exist ONLY in the RIGHT mask.\n  \u2022 ZERO RESIDUE (CRITICAL) \u2014 the coloured guide patch around EVERY control is a temporary alignment marking, NOT part of the design. It must VANISH completely. Each finished BUTTON is ONE solid piece of the device's own material with absolutely NO coloured ring, rim, bezel, halo, outline or edge-tint around it \u2014 if a button has a coloured ring, it is WRONG. Likewise the album-art and visualizer windows have NO coloured frame (just a dark recessed glass panel flush in the body), and no socket/groove/slot has any coloured rim. Paint the body/button material seamlessly OVER where each guide patch was.\n  \u2022 The 5 transport/function BUTTONS (play/pause, previous, next, repeat, queue) are raised, glossy, tactile control facets set into the body, EACH clearly bearing its icon EMBOSSED/engraved in relief: a PLAY triangle (right-pointing) merged with pause bars; a SKIP-BACK double-triangle / rewind chevrons; a SKIP-FORWARD double-triangle / fast-forward chevrons; a REPEAT loop (two arrows chasing in a circle); a QUEUE / playlist icon (stacked horizontal lines). Shape + icon + relief only; no text labels; no coloured rim.\n  \u2022 BUTTON COLOURS COME FROM THE THEME, NEVER FROM THE GUIDES: the guide colour of a button marks its POSITION ONLY \u2014 the finished button's material/fill must NOT inherit, echo or be tinted toward its guide colour in ANY way. ALL five buttons are made of the device's OWN theme materials/palette, coloured consistently with each other and the body. If any button's colour visibly matches its guide colour, the output is WRONG.\n  \u2022 THE SINGLE MOST IMPORTANT RULE \u2014 EVERY MOVING-PART CAVITY IS EMPTY. The volume knob socket is a bare round HOLE showing only its dark recessed floor PLUS the tick-arc described below engraved into the housing AROUND the hole (NO knob, NO cap, NO dome, NO dial, NO pointer installed IN the hole). The seek slider groove is an EMPTY DARK RECESSED CHANNEL cut into the body (NO thumb, NO grip, NO handle, NO fill). The shuffle switch slot is an EMPTY DARK rounded well (NO switch, NO lever, NO toggle installed). The device is photographed BEFORE ASSEMBLY: those parts exist ONLY in the bottom sprite strip and have NOT been installed yet. If ANY of the three cavities contains ANY part or any fill colour, the output is WRONG and must be redone.\n  \u2022 SEEK IS JUST AN EMPTY SLOT \u2014 a plain EMPTY recessed horizontal SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, grip, knob, handle, bar, fill, track-fill or progress indicator into it; the thumb is a SEPARATE loose part in the strip.\n  \u2022 The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS \u2014 flat unlit dark glass panels only, with NOTHING inside them: NO baked spectrum/equalizer bars, NO album cover or artwork, NO waveform, NO icons, NO text. They are powered-down screens.\n  \u2022 KNOB TICK-ARC PROVISIONING (CRITICAL, NEW) \u2014 around the volume knob's EMPTY socket (engraved/painted/riveted into the STATIC HOUSING immediately surrounding the empty hole \u2014 NEVER on the removable cap, NEVER inside the empty recess itself), add a themed rotational reference scale rendered in the device's OWN material language (engraved grooves, riveted studs, painted dashes, cast ridges, glowing dots \u2014 whichever suits the theme, consistent with the rest of the housing): a distinct MIN/START mark at the socket's lower-LEFT, roughly the 7-o'clock direction; a distinct MAX/END mark of the same style at the socket's lower-RIGHT, roughly the 5-o'clock direction; AND a distinct CENTER/DETENT mark \u2014 visually DIFFERENT from the min/max marks (e.g. a small raised diamond, a deeper notch, or a different colour of the same material) \u2014 at the socket's TOP, exactly 12-o'clock, marking the knob's resting BALANCE position. Add 1-2 small minor tick marks in each half-arc between the center mark and each end mark.  The arc must read as a small, legible, PHYSICALLY REAL part of the housing immediately surrounding the socket \u2014 not a printed sticker, not floating elsewhere on the body, not overlapping any other control, not obscuring the socket's empty recessed floor. Additionally, on the volume knob CAP in the sprite strip, its pointer notch must be drawn oriented toward the TOP / 12-o'clock CENTER direction (so the cap, dropped onto the socket, reads at its CENTERED/BALANCED default position).\n  \u2022 SPRITE STRIP \u2014 EXACTLY FOUR finished parts in ONE horizontal row, left\u2192right: volume knob cap, seek slider thumb, shuffle switch in its first state, shuffle switch in its second state \u2014 in the device's own materials, outlines removed, on the flat pale backdrop.\n  \u2022 THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP ONLY \u2014 the small handle piece a finger slides, shown by itself on the backdrop, like a spare part in a parts tray. It is NOT a slot, groove, channel, track, rail or recess.\n  \u2022 EXACT FIT \u2014 each strip part is the EXACT size & shape of its slot (knob cap = socket diameter; thumb fits the groove; each shuffle state exactly fills the switch slot).\n  \u2022 SHUFFLE STATES \u2014 a CHARACTERFUL two-state mechanism fitting the theme; BOTH states share the SAME OUTER HOUSING SILHOUETTE and are CLEARLY MIRROR-OPPOSITE. NO text, letters, numerals, glyphs or labels of ANY kind on either switch part.\n  \u2022 CAMERA \u2014 render EVERY strip part in a PERFECTLY FLAT, STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view, exactly as it appears seated flat in its socket on the top-down device. The volume knob cap is a FLAT ROUND DISC / COIN \u2014 ONLY its circular TOP FACE (knurled rim, pointer notch), NO cylindrical side wall or thickness visible. NO 3/4 view, NO tilt, NO isometric, NO perspective.\nRIGHT column \u2014 a precise REGION MASK on pure BLACK, pixel-aligned to the LEFT. For EACH control paint ONE SOLID FILLED blob in ITS OWN guide colour, at the EXACT same position, size and silhouette as that control on the left (the seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; the shuffle blob is a tall portrait rounded-rectangle; each knob/button blob a solid disc \u2014 the mask blob is JUST the control silhouette, it does NOT include the tick-arc engraving around the knob): MAGENTA region filled 255,0,255; CYAN region filled 0,255,255; VIOLET-PURPLE region filled 128,0,255; PURE GREEN region filled 0,255,0; PURE BLUE region filled 0,0,255; ROSE PINK region filled 255,0,128; SPRING GREEN region filled 0,255,128; PERIWINKLE region filled 128,128,255; YELLOW region filled 255,255,0; AZURE BLUE region filled 0,128,255. DISPLAY-WINDOW BLOBS \u2014 the visualizer and album-art blobs must EXACTLY cover their painted window's GLASS area on the left: the SAME rectangle at the SAME position with the SAME rounded corners, edge-to-edge with the glass.\n; and each STRIP PART as a solid COMPACT blob of its colour (volume cap=rose pink, seek thumb=spring green, BOTH shuffle states=periwinkle) exactly matching its part's silhouette & position in the left strip. Every blob is ONE solid filled silhouette, no outlines, no holes. Everything else is pure black.\nSEPARATE TEXT OUTPUT (in addition to the image): after producing the image, ALSO emit a separate TEXT response part containing ONLY a single JSON object \u2014 no markdown code fences, no prose commentary before or after it \u2014 with EXACTLY this shape describing the volume knob's rotational range as you rendered its tick-arc:\n{\"vol\": {\"start_deg\": <number>, \"end_deg\": <number>, \"zero\": \"start\"|\"center\"}}\nDegrees are measured clockwise from straight-up (12-o'clock = 0 degrees), NEGATIVE for counter-clockwise-of-12: your MIN/START mark at ~7-o'clock is close to -135, your MAX/END mark at ~5-o'clock is close to +135. \"zero\" is \"center\" for this design (the knob rests at its marked CENTER/DETENT). Report the ACTUAL degrees of the marks you painted, not necessarily exactly -135/+135.",
+ "dims": [
+  4608,
+  3712
+ ],
+ "text_part_returned": true,
+ "model_text_raw": "**Designing Steampunk Player**\n\nI'm currently focusing on the design of a Steampunk-themed media player. My aim is to create a detailed representation of a brass nautilus or diving-bell inspired device, ensuring intricate material textures are incorporated.\n\n**Refining Media Player Design**\n\nMy current focus is on the detailed Steampunk aesthetic for the media player. I'm working on the specific textures of polished brass, riveted copper, and aged patina, aiming for a rich, mechanical, and ornate feel reminiscent of Victorian submarine machinery. The housing will be asymmetric with organic curves and intricate greebles.\n\n**Generating Media Player Image**\n\nI'm currently focused on creating a detailed, two-column image. The left column will showcase a Steampunk media player, heavily inspired by brass nautilus designs with intricate mechanical elements. The right column will provide a precise segmentation mask for these elements. I will ensure all controls and decorative features are rendered with specific material textures and mechanical detailing.\n\n**Adding Controls to Player**\n\nI am now working on the specific control elements for the Steampunk media player. This includes detailing the raised, tactile buttons with embossed icons, and creating the recessed cavities for the volume knob and seek slider. I'm also engraving a distinct tick-arc around the volume control area. The album art and visualizer windows will be rendered as dark, blank glass screens.\n\n**Creating Sprite Strip**\n\nI am now generating the sprite strip at the bottom of the image. This will feature four distinct, top-down views of individual component parts: a knurled brass volume knob cap with a pointer, a wide brass seek slider thumb, and two unique, mirrored steampunk shuffle switch designs.\n\n**Completing Segmentation Mask**\n\nMy current focus is on generating a pixel-aligned segmentation mask. This mask will meticulously outline each control element and the sprite strip components with their assigned solid colors on a black background. I will also be outputting a JSON object detailing the volume knob's rotational range and zero position.\n\n**Evaluating Visual Components**\n\nI'm reviewing the visual output against the specified criteria. The left-hand column closely matches the request for a Steampunk media player, featuring the desired aesthetic, appropriate controls, and empty spaces. The volume knob's tick-arc is a notable detail.\n\n**Confirming Steampunk Accuracy**\n\nI'm confirming the Steampunk media player's accuracy. The left side accurately reflects the prompt, showcasing the requested aesthetic, functional controls, and empty areas. The volume knob's tick-arc is particularly well-executed, including the center detent and range. The bottom strip also correctly displays the four loose components. The right side effectively segments the controls and strip parts, aligning with guide colors and shapes.\n\n{\"vol\": {\"start_deg\": -135, \"end_deg\": 135, \"zero\": \"center\"}}",
+ "model_json_parsed": {
+  "vol": {
+   "start_deg": -135,
+   "end_deg": 135,
+   "zero": "center"
+  }
+ },
+ "leak": 0.000408
+}

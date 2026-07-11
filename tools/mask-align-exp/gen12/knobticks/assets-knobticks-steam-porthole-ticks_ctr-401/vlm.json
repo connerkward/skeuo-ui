@@ -1,0 +1,65 @@
+{
+  "tag": "steam-porthole-ticks_ctr-401",
+  "theme": "steam-porthole",
+  "arm": "ticks_ctr",
+  "seed": 401,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+  "verdict": "UNRELIABLE",
+  "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: no \u2014 There is a longer tick at 12 o'clock, and what appear to be start/end marks that are also longer ticks, identical in design to the center mark. The start, end, and center marks are not visually distinct from each other, only from the minor ticks.\n5. ANGLE-ESTIMATE: START looks like 7:30 o'clock, END looks like 4:30 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: yes\n8. DAMAGE-CHECK: NONE\n\nVERDICT: UNRELIABLE",
+  "deterministic": {
+    "ring_radius_factor": 1.08,
+    "n_peaks": 18,
+    "peak_degs": [
+      -178.5,
+      -173.0,
+      -81.5,
+      -70.0,
+      -46.0,
+      -34.0,
+      10.5,
+      15.5,
+      43.5,
+      76.5,
+      85.5,
+      90.5,
+      105.0,
+      112.0,
+      122.5,
+      128.0,
+      145.0,
+      165.0
+    ],
+    "span_deg": [
+      -178.5,
+      165.0
+    ]
+  },
+  "model_json_parsed": {
+    "vol": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "center"
+    }
+  },
+  "expected_convention": {
+    "start_deg": -135,
+    "end_deg": 135,
+    "zero": "center"
+  },
+  "vlm_clock_mentions": [
+    12,
+    30,
+    30
+  ],
+  "vlm_angle_guess_deg": [
+    0
+  ],
+  "agree_json_vs_deterministic_15deg": false,
+  "text_part_returned": true,
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-knob.png",
+    "crop-cap-strip.png"
+  ],
+  "ts": "2026-07-11T14:21:33"
+}

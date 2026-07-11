@@ -1,0 +1,60 @@
+{
+  "tag": "fa-pod-ticks01-502",
+  "theme": "fa-pod",
+  "arm": "ticks01",
+  "seed": 502,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+  "verdict": "UNRELIABLE",
+  "raw": "1. TICKS-PRESENT: no\n2. AT-SOCKET: yes\n3. LEGIBLE: no\n4. START-END-DISTINCT: no\n5. ANGLE-ESTIMATE: The start of the arc is at 8 o'clock, the end is at 4 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: no\n8. DAMAGE-CHECK: Unrequested text (\"MIN\", \"MAX\") has been engraved on the housing at either end of the single indicator slot.\n\nVERDICT: UNRELIABLE",
+  "deterministic": {
+    "ring_radius_factor": 1.3,
+    "n_peaks": 13,
+    "peak_degs": [
+      -176.0,
+      -169.5,
+      -162.0,
+      -151.0,
+      -123.5,
+      -32.5,
+      51.5,
+      67.0,
+      81.0,
+      91.5,
+      98.5,
+      106.0,
+      163.5
+    ],
+    "span_deg": [
+      -176.0,
+      163.5
+    ]
+  },
+  "model_json_parsed": {
+    "vol": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "start"
+    }
+  },
+  "expected_convention": {
+    "start_deg": -135,
+    "end_deg": 135,
+    "zero": "start"
+  },
+  "vlm_clock_mentions": [
+    8,
+    4
+  ],
+  "vlm_angle_guess_deg": [
+    -120,
+    120
+  ],
+  "agree_json_vs_deterministic_15deg": false,
+  "text_part_returned": true,
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-knob.png",
+    "crop-cap-strip.png"
+  ],
+  "ts": "2026-07-11T14:17:34"
+}

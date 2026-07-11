@@ -1,0 +1,56 @@
+{
+  "tag": "fa-pod-ticks_ctr-501",
+  "theme": "fa-pod",
+  "arm": "ticks_ctr",
+  "seed": 501,
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro, reasoning=true)",
+  "verdict": "RELIABLE",
+  "raw": "1. TICKS-PRESENT: yes\n2. AT-SOCKET: yes\n3. LEGIBLE: yes\n4. START-END-DISTINCT: yes\n5. ANGLE-ESTIMATE: START looks like 7 o'clock, END looks like 5 o'clock.\n6. THEME-COHERENT: yes\n7. POINTER-NOTCH-ALIGNED: yes\n8. DAMAGE-CHECK: NONE\n\nVERDICT: RELIABLE",
+  "deterministic": {
+    "ring_radius_factor": 1.45,
+    "n_peaks": 9,
+    "peak_degs": [
+      -149.5,
+      -29.0,
+      -23.0,
+      23.5,
+      30.5,
+      47.5,
+      89.5,
+      94.5,
+      107.5
+    ],
+    "span_deg": [
+      -149.5,
+      107.5
+    ]
+  },
+  "model_json_parsed": {
+    "vol": {
+      "start_deg": -135,
+      "end_deg": 135,
+      "zero": "center"
+    }
+  },
+  "expected_convention": {
+    "start_deg": -135,
+    "end_deg": 135,
+    "zero": "center"
+  },
+  "vlm_clock_mentions": [
+    7,
+    5
+  ],
+  "vlm_angle_guess_deg": [
+    -150,
+    150
+  ],
+  "agree_json_vs_deterministic_15deg": false,
+  "text_part_returned": true,
+  "images_sent": [
+    "paint.png(resized)",
+    "crop-knob.png",
+    "crop-cap-strip.png"
+  ],
+  "ts": "2026-07-11T14:17:59"
+}

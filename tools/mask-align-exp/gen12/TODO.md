@@ -169,6 +169,27 @@ a coordinated `git filter-repo`/BFG rewrite + force-push. Repo-wide (not gen12-s
 5.25 GiB in 18 packs — a tip-level `git rm --cached` changes none of this; only a history
 rewrite would, and that needs explicit user sign-off (shared `main`, force-push implications).
 
+## knobticks: baked knob tick-arcs + in-call rotation metadata — DONE 2026-07-11, UNRELIABLE
+
+Can the paint prompt provision a themed tick/start-end system around knob sockets AND
+self-report the sweep as JSON in the same TEXT+IMAGE Vertex call? Harness + adjudicated
+results page: `knobticks/` (`gen_knobticks.py`, `score_knobticks.py`, `adjudication.json`,
+`index.html`); write-up:
+[`docs/experiments/2026-07-11-knob-tick-provisioning.md`](../../../docs/experiments/2026-07-11-knob-tick-provisioning.md).
+Headlines: 2 themes × 2 arms (0..1 / −1..0..+1) × 2 seeds — tick-arc PRESENCE 6/7 painted
+gens, but the full contract passed **0/8** after adjudication (VLM witness said 3/7): the
+clause's own MIN/MAX/CENTER vocabulary baked in as literal engraved TEXT on 3/7, knob/layout
+drift broke socket adherence on 2/7, and 1/8 gens returned thought-text with NO image at all
+(3 retries). Metadata half: JSON parsed 4/7 and every parse is a **verbatim echo of the
+prompt's example (−135/+135)** — a parrot, not a measurement (confirms the
+semantic-emissive-research §4 circularity prediction; sibling finding to imgjson's broken
+bbox frame). Verdict: baked ticks UNRELIABLE, in-call metadata UNUSABLE. Recommendation:
+CSS/SVG tick overlay in `build_player.py` from `regions.json` socket centre/radius + the
+fixed −135..+135 runtime convention, themed via director `css` colours — no model needed.
+Media policy: paint.png + crops committed (page-referenced evidence); joint-4k/mask/blueprint
+gitignored per the media-policy revisit above (add knobticks to the Drive offload list when
+rclone reconnects).
+
 ## imgjson: image-model JSON output + structured-I/O sweep — DONE 2026-07-11
 
 Answered "can gemini-3-pro-image-preview emit usable JSON (bbox manifests) alongside its
