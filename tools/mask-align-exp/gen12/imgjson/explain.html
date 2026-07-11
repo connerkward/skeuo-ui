@@ -1,0 +1,398 @@
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>imgjson explained — can the paint model hand back its own coordinates?</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{font:15px/1.6 -apple-system,system-ui,sans-serif;margin:0;padding:0 0 4rem;background:#101014;color:#e4e4ea}
+.wrap{max-width:980px;margin:0 auto;padding:0 clamp(1rem,4vw,3rem)}
+a{color:#7ab7ff}
+.topnav{background:#0a0a0d;border-bottom:1px solid #26262e;padding:.7rem clamp(1rem,4vw,3rem);font-size:.8rem;color:#8a90a0}
+.topnav a{margin-right:1rem}
+h1{font-size:1.7rem;margin:1.6rem 0 .3rem;line-height:1.25}
+h2{font-size:1.05rem;text-transform:uppercase;letter-spacing:.04em;color:#8a90a0;margin:3rem 0 .2rem;display:flex;align-items:center;gap:.5rem}
+h2 .num{background:#1e293b;color:#7ab7ff;border-radius:50%;width:1.6em;height:1.6em;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700}
+h3{font-size:1rem;margin:0 0 .5rem}
+p{margin:.6rem 0}
+.lede{font-size:1.1rem;color:#cfd3dc;background:#151822;border:1px solid #263047;border-radius:10px;padding:1rem 1.2rem;margin-top:.6rem}
+.meta{background:#181820;border:1px solid #2a2a34;border-radius:8px;padding:.6rem 1rem;font-size:.82rem;color:#9a9aa4;margin:1rem 0 0}
+.meta b{color:#c8c8d4}
+.pill{display:inline-block;background:#1e293b;color:#7ab7ff;border-radius:5px;padding:.05rem .5rem;font:.75rem ui-monospace,monospace;margin-left:.3rem}
+code,pre{font:.78rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+pre{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:.8rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.card{background:#15161c;border:1px solid #2a2a34;border-radius:12px;padding:1.1rem 1.2rem;margin:1rem 0}
+.armgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:1rem}
+.arm{background:#15161c;border:1px solid #2a2a34;border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+.arm h3{display:flex;align-items:center;gap:.5rem}
+.armtag{background:#26262e;color:#e4e4ea;border-radius:5px;padding:.1rem .5rem;font:.72rem ui-monospace,monospace}
+.arm .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#7a7a86;margin:.3rem 0 -.1rem}
+.arm img{width:100%;height:auto;border-radius:6px;border:1px solid #2a2a34;display:block;background:#000}
+.figcap{font-size:.72rem;color:#8a90a0;margin-top:.25rem}
+.verdictline{font-size:.85rem;border-top:1px dashed #2a2a34;padding-top:.5rem;margin-top:.2rem}
+.good{color:#7ae08a}.bad{color:#ff8a8a}.warn{color:#ffc266}
+.ov-wrap{position:relative;width:100%;max-width:420px;margin:.3rem auto 0;border-radius:8px;overflow:hidden;border:1px solid #2a2a34;background:#000}
+.ov-wrap img{display:block;width:100%;height:auto}
+.ov-box{position:absolute;border:2px solid;box-sizing:border-box;pointer-events:none}
+.ov-box span{position:absolute;top:0;left:0;font-size:8px;line-height:1.4;padding:0 3px;border-radius:0 0 3px 0;white-space:nowrap;color:#08080a;font-weight:700}
+.ov-box.gt{border-color:#3ecf6e}.ov-box.gt span{background:#3ecf6e}
+.ov-box.pa{border-color:#ffaa33}.ov-box.pa span{top:auto;bottom:0;background:#ffaa33}
+.ov-box.pb{border-color:#4fc3f7}.ov-box.pb span{top:auto;bottom:0;background:#4fc3f7}
+.legend{display:flex;flex-wrap:wrap;gap:.9rem;font-size:.75rem;color:#9a9aa4;margin-top:.5rem;align-items:center}
+.sw{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.3rem;vertical-align:-1px}
+table{border-collapse:collapse;width:100%;font-size:.85rem;margin:.8rem 0;display:block;overflow-x:auto}
+th,td{border:1px solid #2a2a34;padding:.5rem .65rem;text-align:left;vertical-align:top}
+th{background:#1a1a22;color:#c8c8d4}
+tr:hover td{background:#191a20}
+.reading{color:#9a9aa4;font-size:.82rem}
+.roster{font-size:.8rem;color:#9a9aa4}
+figure{margin:0}
+figcaption{font-size:.75rem;color:#8a90a0;margin-top:.35rem}
+.diagram{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:1rem;margin:.8rem 0}
+svg text{fill:#9a9aa4;font-size:9px;font-family:ui-monospace,monospace}
+svg .pt{fill:#ff8a8a}
+svg .ptlabel{fill:#cfd3dc;font-size:8px}
+svg .fitline{stroke:#ffaa33;stroke-width:2}
+svg .idline{stroke:#4fc3f7;stroke-width:1.5;stroke-dasharray:5 4}
+svg .axis{stroke:#3a3a46;stroke-width:1}
+.callout{background:#241a14;border:1px solid #4a3420;border-radius:8px;padding:.8rem 1rem;font-size:.9rem;color:#e8c9a0;margin:.8rem 0}
+.verdict{background:#122015;border:1px solid #2c4a2c;border-radius:10px;padding:1.1rem 1.3rem;margin:1rem 0}
+.verdict b{color:#eaeaea}
+.costline{background:#1a1712;border:1px solid #3a3020;border-radius:8px;padding:.6rem 1rem;font-size:.8rem;color:#c9b98a;margin-top:.8rem}
+.imglink{display:block}
+</style></head><body>
+
+<div class=topnav><div class=wrap>
+<a href="index.html">&larr; back to imgjson data page</a>
+<a href="../dashboard12.html">gen12 dashboard</a>
+</div></div>
+
+<div class=wrap>
+
+<h1>Can the paint model hand back its own coordinates?</h1>
+<div class=meta><b>Dev-facing walkthrough of a completed eval</b> — this page narrates
+<a href="index.html">index.html</a>'s raw results for a reader who wasn't in the room. Every
+image, JSON snippet, and number below is pulled directly from this experiment's committed
+<code>out/</code> and <code>viz/</code> artifacts — nothing here is simulated.</div>
+<div class=meta><b>Models:</b> <code>gemini-3-pro-image-preview</code> (the paint model) +
+<code>gemini-3.1-pro-preview</code> (the pipeline's existing text/director model), both direct
+Vertex AI <code>generateContent</code> · <b>Total spend:</b> <b>≈$0.45</b> — see §6 for the
+breakdown.</div>
+
+<h2><span class=num>1</span>The question</h2>
+<p class=lede>When you hand <code>gemini-3-pro-image-preview</code> — the same model that
+paints gen12's skins — a picture and ask it to also report back <em>where things are</em> as
+JSON, does it give you usable coordinates? If so, the pipeline could get self-reported
+mask-cell manifests for free, or even skip the separate detection pass entirely. This page
+walks through what actually came back.</p>
+
+<h2><span class=num>2</span>The setup</h2>
+<p>One source image, read-only: <code>gen12/assets-wc-goldshield/paint.png</code>
+(2304&times;3712px) — a top-down, fantasy-shield-styled media player skin. It has exactly 10
+controls, always present exactly once: 5 buttons, 1 knob, 1 slider, 1 toggle, and 2 flat
+regions.</p>
+<p><b>Ground truth</b> is <code>assets-wc-goldshield/regions.json</code>'s <code>regions[*].device</code>
+boxes — the same boxes <code>extract12.py</code>'s pixel-space detector already produced for this
+skin, normalized <code>[x,y,w,h]</code> against the paint's own pixel frame. Every arm below gets
+graded against these exact 10 boxes.</p>
+<div class="ov-wrap"><a class=imglink href="../assets-wc-goldshield/paint.png" target=_blank>
+<img src="viz/paint-thumb.jpg" alt="wc-goldshield paint, ground truth boxes overlaid" loading=lazy>
+<div class="ov-box gt" style="left:30.25%;top:50.67%;width:10.24%;height:6.38%"><span>playpause · button</span></div>
+<div class="ov-box gt" style="left:20.75%;top:57.76%;width:8.85%;height:5.52%"><span>prev · button</span></div>
+<div class="ov-box gt" style="left:41.19%;top:57.73%;width:8.81%;height:5.52%"><span>next · button</span></div>
+<div class="ov-box gt" style="left:32.55%;top:64.49%;width:8.81%;height:5.52%"><span>repeat · button</span></div>
+<div class="ov-box gt" style="left:69.84%;top:59.46%;width:8.64%;height:5.41%"><span>queue · button</span></div>
+<div class="ov-box gt" style="left:57.12%;top:49.79%;width:14.57%;height:9.05%"><span>vol · knob</span></div>
+<div class="ov-box gt" style="left:24.31%;top:43.81%;width:51.13%;height:3.19%"><span>seek · slider</span></div>
+<div class="ov-box gt" style="left:57.89%;top:61.69%;width:7.26%;height:7.81%"><span>shuffle · toggle</span></div>
+<div class="ov-box gt" style="left:23.70%;top:32.62%;width:51.87%;height:8.70%"><span>visualizer · region</span></div>
+<div class="ov-box gt" style="left:32.34%;top:9.40%;width:34.68%;height:21.01%"><span>album_art · region</span></div>
+</a></div>
+<div class=legend><span><span class=sw style="background:#3ecf6e"></span>ground truth (regions.json)</span>
+<span style="color:#6a6a76">click image for the full-res 2304&times;3712 source</span></div>
+
+<h2><span class=num>3</span>The arms</h2>
+<p>Same paint, same 10-control roster, five different asks. Each card shows the (condensed)
+prompt sent, a REAL verbatim snippet of what came back, and the scored overlay.</p>
+
+<div class=armgrid>
+
+<div class=arm>
+<h3>A <span class=armtag>image model · JSON-only</span></h3>
+<div class=lbl>sent</div>
+<pre>"This image is a top-down skeuomorphic media-player skin. It
+contains exactly these 10 controls, each present exactly once:
+playpause (button), prev (button), ... album_art (region).
+
+Return STRICT JSON ONLY — no markdown fence, no prose before or
+after — an array of {name,x,y,w,h}, x,y = TOP-LEFT, all normalized
+0..1 against this image's own width/height."
+generationConfig.responseModalities = ["TEXT","IMAGE"]  (seed 71)</pre>
+<div class=lbl>came back (verbatim, out/a_text_only_raw.json)</div>
+<pre>// part 1 of 9 — a "thought" part, despite "STRICT JSON ONLY, no prose":
+"**Locating Playback Controls**
+
+I'm currently focused on pinpointing the precise locations for the
+primary playback buttons. My efforts are concentrated on identifying
+the bounding boxes for the play/pause and previous track controls..."
+// ...7 more thinking-narration parts, ~2.5k chars total, omitted...
+// THEN the real JSON — split across 2 text parts, mid-number:
+part9: '[\n  {"name": "visualizer", ...},\n  {"name": "album_art", "x": 0.2051, "y": 0.'
+part10:                                                        '3597, "w": 0.5898, ...'
+// joined with "" (never "\n") → "0.3597" reassembles correctly</pre>
+<div class="ov-wrap"><a class=imglink href="viz/overlay-a_text_only.png" target=_blank>
+<img src="viz/overlay-a_text_only.png" alt="test A overlay: ground truth vs returned boxes vs affine-rescued boxes" loading=lazy></a></div>
+<div class=legend><span><span class=sw style="background:#20c552"></span>GT</span>
+<span><span class=sw style="background:#ff3c3c"></span>as returned</span>
+<span><span class=sw style="background:#ffaa00"></span>after affine rescue (§4)</span></div>
+<div class=verdictline class=bad>mean IoU <b>0.003</b> · mean center err <b>507px</b> — raw
+boxes miss almost everything. See §4: this is a frame problem, not noise.</div>
+</div>
+
+<div class=arm>
+<h3>B <span class=armtag>image model · interleaved</span></h3>
+<div class=lbl>sent</div>
+<pre>Same ask as A, PLUS:
+"Separately, also lightly re-render this exact image (same layout,
+same controls, same camera) with a subtle warmer color-grade pass.
+Return the JSON array as a TEXT part and the re-rendered image as
+an IMAGE part in the same response."</pre>
+<div class=lbl>came back (verbatim, out/b_interleaved_raw.json)</div>
+<pre>// 6 thinking parts, THEN the re-rendered 814x1312 image part, THEN
+// the JSON split across 8 more text parts — mid-number split example:
+part7: '{"name": "album_art", "x": 0.22'
+part8: '3, "y": 0.200, "w": 0.555, "h": 0.059},'
+// -> "0.223" only reassembles if you join with "" not "\n"</pre>
+<div class="ov-wrap"><a class=imglink href="viz/overlay-b_interleaved.png" target=_blank>
+<img src="viz/overlay-b_interleaved.png" alt="test B overlay: boxes unrescuable even after affine" loading=lazy></a></div>
+<div class=legend><span><span class=sw style="background:#20c552"></span>GT</span>
+<span><span class=sw style="background:#ff3c3c"></span>as returned</span>
+<span><span class=sw style="background:#ffaa00"></span>after affine (still broken)</span></div>
+<div class=verdictline class=bad>mean IoU <b>0.024</b>, and unlike A it <b>stays broken after
+affine rescue</b> (0.045) — asking for a re-rendered image in the same call visibly degrades box
+quality, not just adds cost.</div>
+<figcaption style="margin-top:.4rem"><a href="out/b_interleaved_img0.png" target=_blank>the
+returned re-render (814&times;1312)</a> — the IMAGE half works great; it's the JSON riding
+alongside it that suffers.</figcaption>
+</div>
+
+<div class=arm>
+<h3>C <span class=armtag>text model · prose (current pattern)</span></h3>
+<div class=lbl>sent</div>
+<pre>Identical prompt to A, but to gemini-3.1-pro-preview (the director
+model) with generationConfig.responseMimeType = "application/json"
+(no schema) + thinkingConfig.thinkingLevel = "low".</pre>
+<div class=lbl>came back (verbatim, out/c_text_model_raw.json — ONE clean part, no narration)</div>
+<pre>[
+  {"name": "playpause", "x": 0.283, "y": 0.495, "w": 0.133, "w": 0.083},
+  {"name": "prev", "x": 0.186, "y": 0.569, "w": 0.117, "h": 0.076},
+  ... 8 more, all well-formed ...
+]</pre>
+<div class=callout><b>Look at the playpause row.</b> <code>"w"</code> appears TWICE and
+<code>"h"</code> never does — valid JSON (a repeated key just overwrites), but
+<code>score_pred()</code> does <code>float(item["h"])</code>, gets a <code>KeyError</code>, and
+silently drops the row. That's why C is 9/10 matched, not 10/10, with zero prompt
+ambiguity involved — a pure field-completeness miss.</div>
+<div class="ov-wrap"><a class=imglink href="viz/overlay-c_text_model.png" target=_blank>
+<img src="viz/overlay-c_text_model.png" alt="test C overlay: tight on 7 controls, vol and shuffle boxed the wrong sprite" loading=lazy></a></div>
+<div class=legend><span><span class=sw style="background:#20c552"></span>GT</span>
+<span><span class=sw style="background:#ff3c3c"></span>predicted</span></div>
+<div class=verdictline class=good>mean IoU <b>0.499</b>, mean center err <b>340px</b> (dragged up
+by vol's 1842px miss) — on the 7 unambiguous controls, IoU 0.55&ndash;0.83, centers 1&ndash;22px.
+Frame-correct from the start; no rescue needed.</div>
+</div>
+
+<div class=arm>
+<h3>s2 <span class=armtag>text model · + responseSchema</span></h3>
+<div class=lbl>sent</div>
+<pre>Same image + task as C, PLUS generationConfig.responseSchema:
+{ type: "ARRAY", items: { type: "OBJECT", properties: {
+    name: {type:"STRING", enum: [...10 names]},
+    x:{type:"NUMBER"}, y:{type:"NUMBER"}, w:{type:"NUMBER"}, h:{type:"NUMBER"} },
+  required: ["name","x","y","w","h"] } }</pre>
+<div class=lbl>came back (verbatim, out/s2_bbox_schema_raw.json)</div>
+<pre>[
+  { "name": "playpause", "x": 0.278, "y": 0.490, "w": 0.143, "h": 0.093 },
+  { "name": "prev", "x": 0.188, "y": 0.569, "w": 0.126, "h": 0.081 },
+  ... 8 more — all 10 rows have all 5 keys, every "name" schema-valid ...
+]</pre>
+<div class="ov-wrap"><a class=imglink href="viz/paint-thumb.jpg" target=_blank>
+<img src="viz/paint-thumb.jpg" alt="s2 overlay: ground truth vs schema-constrained prediction" loading=lazy>
+<div class="ov-box gt" style="left:30.25%;top:50.67%;width:10.24%;height:6.38%"><span>GT</span></div>
+<div class="ov-box pa" style="left:27.8%;top:49.0%;width:14.3%;height:9.3%"><span>pred playpause</span></div>
+<div class="ov-box gt" style="left:20.75%;top:57.76%;width:8.85%;height:5.52%"><span>GT</span></div>
+<div class="ov-box pa" style="left:18.8%;top:56.9%;width:12.6%;height:8.1%"><span>pred prev</span></div>
+<div class="ov-box gt" style="left:41.19%;top:57.73%;width:8.81%;height:5.52%"><span>GT</span></div>
+<div class="ov-box pa" style="left:38.8%;top:56.6%;width:13.4%;height:8.1%"><span>pred next</span></div>
+<div class="ov-box gt" style="left:32.55%;top:64.49%;width:8.81%;height:5.52%"><span>GT</span></div>
+<div class="ov-box pa" style="left:29.8%;top:63.8%;width:13.6%;height:8.5%"><span>pred repeat</span></div>
+<div class="ov-box gt" style="left:69.84%;top:59.46%;width:8.64%;height:5.41%"><span>GT</span></div>
+<div class="ov-box pa" style="left:67.8%;top:57.5%;width:13.3%;height:8.8%"><span>pred queue</span></div>
+<div class="ov-box gt" style="left:57.12%;top:49.79%;width:14.57%;height:9.05%"><span>GT vol</span></div>
+<div class="ov-box pa" style="left:1.2%;top:84.1%;width:21.9%;height:14.1%"><span>pred vol (strip!)</span></div>
+<div class="ov-box gt" style="left:24.31%;top:43.81%;width:51.13%;height:3.19%"><span>GT</span></div>
+<div class="ov-box pa" style="left:22.2%;top:42.8%;width:55.1%;height:5.3%"><span>pred seek</span></div>
+<div class="ov-box gt" style="left:57.89%;top:61.69%;width:7.26%;height:7.81%"><span>GT shuffle</span></div>
+<div class="ov-box pa" style="left:76.4%;top:85.4%;width:20.8%;height:13.3%"><span>pred shuffle (strip!)</span></div>
+<div class="ov-box gt" style="left:23.70%;top:32.62%;width:51.87%;height:8.70%"><span>GT</span></div>
+<div class="ov-box pa" style="left:22.4%;top:32.3%;width:54.8%;height:10.1%"><span>pred visualizer</span></div>
+<div class="ov-box gt" style="left:32.34%;top:9.40%;width:34.68%;height:21.01%"><span>GT</span></div>
+<div class="ov-box pa" style="left:30.1%;top:8.3%;width:38.7%;height:23.3%"><span>pred album_art</span></div>
+</a></div>
+<div class=legend><span><span class=sw style="background:#3ecf6e"></span>GT</span>
+<span><span class=sw style="background:#ffaa33"></span>predicted (schema)</span></div>
+<div class=verdictline class=good>mean IoU <b>0.442</b>, mean center err <b>306px</b> — vol and
+shuffle box the bottom sprite-strip copies again (a prompt defect shared by every arm, see §5); on
+the other 8, tight and <b>10/10 field-complete</b> (schema's real win — see §6).</div>
+</div>
+
+<div class=arm>
+<h3>s4 <span class=armtag>text model · fenced-JSON input</span></h3>
+<div class=lbl>sent</div>
+<pre>Same task as C, no responseSchema, but the SPEC itself is a fenced
+JSON block instead of prose:
+```json
+{ "task": "locate_controls",
+  "controls": [{"name":"playpause","role":"button"}, ...],
+  "each_present_exactly_once": true,
+  "output": { "format": "STRICT JSON array only — no fence, no prose",
+    "item_shape": {"name":"<control name>","x":"<float>", ...},
+    "coords": "x,y = TOP-LEFT ... normalized 0..1 ...",
+    "include_only_listed_controls": true, "omit_none": true } }
+```</pre>
+<div class=lbl>came back (verbatim, out/s4_json_prompt_raw.json)</div>
+<pre>[
+  { "name": "playpause", "x": 0.281, "y": 0.490, "w": 0.134, "h": 0.089 },
+  { "name": "prev", "x": 0.186, "y": 0.569, "w": 0.124, "h": 0.081 },
+  ... 8 more — same shape discipline as s2, no schema needed to get it ...
+]</pre>
+<div class="ov-wrap"><a class=imglink href="viz/paint-thumb.jpg" target=_blank>
+<img src="viz/paint-thumb.jpg" alt="s4 overlay: ground truth vs fenced-JSON-prompt prediction" loading=lazy>
+<div class="ov-box gt" style="left:30.25%;top:50.67%;width:10.24%;height:6.38%"><span>GT</span></div>
+<div class="ov-box pb" style="left:28.1%;top:49.0%;width:13.4%;height:8.9%"><span>pred playpause</span></div>
+<div class="ov-box gt" style="left:20.75%;top:57.76%;width:8.85%;height:5.52%"><span>GT</span></div>
+<div class="ov-box pb" style="left:18.6%;top:56.9%;width:12.4%;height:8.1%"><span>pred prev</span></div>
+<div class="ov-box gt" style="left:41.19%;top:57.73%;width:8.81%;height:5.52%"><span>GT</span></div>
+<div class="ov-box pb" style="left:39.2%;top:56.7%;width:12.4%;height:8.0%"><span>pred next</span></div>
+<div class="ov-box gt" style="left:32.55%;top:64.49%;width:8.81%;height:5.52%"><span>GT</span></div>
+<div class="ov-box pb" style="left:30.1%;top:63.3%;width:13.3%;height:8.3%"><span>pred repeat</span></div>
+<div class="ov-box gt" style="left:69.84%;top:59.46%;width:8.64%;height:5.41%"><span>GT</span></div>
+<div class="ov-box pb" style="left:67.8%;top:58.4%;width:11.9%;height:7.6%"><span>pred queue</span></div>
+<div class="ov-box gt" style="left:57.12%;top:49.79%;width:14.57%;height:9.05%"><span>GT vol</span></div>
+<div class="ov-box pb" style="left:1.6%;top:84.9%;width:21.0%;height:13.7%"><span>pred vol (strip!)</span></div>
+<div class="ov-box gt" style="left:24.31%;top:43.81%;width:51.13%;height:3.19%"><span>GT</span></div>
+<div class="ov-box pb" style="left:22.3%;top:42.8%;width:54.8%;height:5.7%"><span>pred seek</span></div>
+<div class="ov-box gt" style="left:57.89%;top:61.69%;width:7.26%;height:7.81%"><span>GT shuffle</span></div>
+<div class="ov-box pb" style="left:51.0%;top:84.9%;width:47.8%;height:13.3%"><span>pred shuffle (strip!)</span></div>
+<div class="ov-box gt" style="left:23.70%;top:32.62%;width:51.87%;height:8.70%"><span>GT</span></div>
+<div class="ov-box pb" style="left:22.4%;top:32.0%;width:55.0%;height:10.8%"><span>pred visualizer</span></div>
+<div class="ov-box gt" style="left:32.34%;top:9.40%;width:34.68%;height:21.01%"><span>GT</span></div>
+<div class="ov-box pb" style="left:30.7%;top:8.0%;width:38.0%;height:24.5%"><span>pred album_art</span></div>
+</a></div>
+<div class=legend><span><span class=sw style="background:#3ecf6e"></span>GT</span>
+<span><span class=sw style="background:#4fc3f7"></span>predicted (fenced-JSON prompt)</span></div>
+<div class=verdictline class=good>mean IoU <b>0.455</b>, mean center err <b>296px</b> — same
+vol/shuffle miss, same tightness on the other 8. Structuring the INPUT prompt changed nothing
+measurable vs C's prose ask.</div>
+</div>
+
+</div><!-- /armgrid -->
+
+<h2><span class=num>4</span>The broken-frame finding</h2>
+<p>Arm A's raw score (mean IoU 0.003) looks like noise — as if the model just guessed. It
+isn't. Look at the <b>x</b> coordinates alone: they land almost exactly on target (scale 0.999
+against ground truth). It's specifically <b>y</b> that's off, and not randomly — every y comes
+back <em>compressed</em> toward the top by a consistent factor.</p>
+<div class=diagram>
+<svg viewBox="0 0 320 300" width="100%" style="max-width:480px;display:block;margin:0 auto">
+  <line class=axis x1=44 y1=270 x2=304 y2=270></line>
+  <line class=axis x1=44 y1=270 x2=44 y2=10></line>
+  <text x=44 y=283 text-anchor=middle>0</text>
+  <text x=169 y=283 text-anchor=middle>.5</text>
+  <text x=294 y=283 text-anchor=middle>1.0</text>
+  <text x=36 y=273 text-anchor=end>0</text>
+  <text x=36 y=148 text-anchor=end>.5</text>
+  <text x=36 y=23 text-anchor=end>1.0</text>
+  <text x=174 y=296 text-anchor=middle>model's reported y (fraction of image height)</text>
+  <text x=14 y=140 text-anchor=middle transform="rotate(-90 14 140)">actual y in the image</text>
+  <line class=idline x1=44 y1=270 x2=294 y2=20></line>
+  <line class=fitline x1=44 y1="253.8" x2=294 y2="70.4"></line>
+  <circle class=pt cx="202.1" cy="135.3" r=3></circle><text class=ptlabel x="206" y="132">playpause</text>
+  <circle class=pt cx="229.7" cy="118.7" r=3></circle><text class=ptlabel x="233" y="115">prev</text>
+  <circle class=pt cx="229.7" cy="118.8" r=3></circle><text class=ptlabel x="233" y="128">next</text>
+  <circle class=pt cx="257.3" cy="101.9" r=3></circle><text class=ptlabel x="220" y="99">repeat</text>
+  <circle class=pt cx="233.0" cy="114.6" r=3></circle><text class=ptlabel x="180" y="112">queue</text>
+  <circle class=pt cx="204.2" cy="134.2" r=3></circle><text class=ptlabel x="150" y="145">vol</text>
+  <circle class=pt cx="172.2" cy="156.5" r=3></circle><text class=ptlabel x="112" y="160">seek</text>
+  <circle class=pt cx="244.2" cy="106.0" r=3></circle><text class=ptlabel x="248" y="103">shuffle</text>
+  <circle class=pt cx="145.5" cy="177.6" r=3></circle><text class=ptlabel x="90" y="182">visualizer</text>
+  <circle class=pt cx="95.6" cy="220.2" r=3></circle><text class=ptlabel x="60" y="216">album_art</text>
+</svg>
+<div class=legend style="justify-content:center">
+<span><span class=sw style="background:#ff8a8a;border-radius:50%"></span>each control (10 pts)</span>
+<span><span class=sw style="background:#4fc3f7"></span>if the model reported y in the paint's own frame (y=x)</span>
+<span><span class=sw style="background:#ffaa33"></span>what it actually does — <code>gt = 0.7335&middot;pred + 0.0649</code>, RMS 38px</span>
+</div>
+</div>
+<p>Every one of the 10 points sits on the amber line, not the dashed blue "same frame" line —
+that's a real, consistent affine relationship, not scatter. <b>The model sees the layout
+correctly</b> — the ORDER and relative spacing of the 10 controls in its reported y matches the
+real image — <b>it just reports the number against some internal preprocessed view</b> (likely a
+resized/padded canvas it operates on internally) instead of the pixel frame of the image you
+actually sent it. Undo that one factor (plus a visualizer/album_art label swap the model also
+made) and arm A's mean IoU jumps from 0.003 to 0.53. The catch: that undo requires ground truth
+to fit — in production you don't have ground truth, so the raw output stays unusable.</p>
+<div class=callout>Arm C (the text model) does NOT have this bug — its raw y-coordinates land
+directly in the paint's own frame, no rescue needed. This frame-shift is specific to the
+<b>image</b> model, not a property of asking Gemini for coordinates in general.</div>
+
+<h2><span class=num>5</span>The scoreboard</h2>
+<table>
+<tr><th>arm</th><th>matched</th><th>mean IoU</th><th>mean center err</th><th>reading</th></tr>
+<tr><td>A — image model, JSON-only</td><td>10/10</td><td>0.003</td><td>507px</td>
+<td class=reading>Parses fine, geometrically useless as returned — wrong frame (§4).</td></tr>
+<tr><td>B — image model, interleaved</td><td>10/10</td><td>0.024</td><td>789px</td>
+<td class=reading>Same frame bug PLUS extra noise from generating an image in the same call —
+doesn't even recover with the affine fix that saves A.</td></tr>
+<tr><td>C — text model, prose (current pattern)</td><td>9/10</td><td>0.499</td><td>340px</td>
+<td class=reading>Good and frame-correct out of the box; one field silently dropped, two
+controls hit a real prompt ambiguity (not a model failure).</td></tr>
+<tr><td>s2 — text model, + responseSchema</td><td>10/10</td><td>0.442</td><td>306px</td>
+<td class=reading>Same spatial quality as C, but guarantees every row has all 5 fields —
+trades a sliver of IoU noise for zero silently-dropped rows.</td></tr>
+<tr><td>s4 — text model, fenced-JSON prompt</td><td>10/10</td><td>0.455</td><td>296px</td>
+<td class=reading>Indistinguishable from prose on spatial accuracy — structuring the ask
+doesn't move the needle either way.</td></tr>
+</table>
+<p class=reading>On the 8 controls free of the vol/shuffle sprite-strip ambiguity, C, s2, and s4
+all land within a px of each other on center error (13.2 / 12.6 / 13.1px on a 2304&times;3712
+image) — see <code>out/unambiguous_comparison.json</code>. The IoU spread between them is box-
+tightness noise, not a real quality gap.</p>
+
+<h2><span class=num>6</span>Verdicts</h2>
+<div class=verdict>
+<p><b>Image-model JSON output — dead for manifests and for detection.</b> It only speaks TEXT
+when IMAGE is also in the modality list, structured-output params are a hard HTTP 400 on this
+model, every response opens with ~2.5k chars of thinking-narration prose despite "STRICT JSON
+ONLY", and the y-axis lands in an uncalibratable internal frame. None of this is fixable from
+the prompt side.</p>
+<p><b><code>responseSchema</code> — adopt it on the director and on extraction.</b> Costs
+nothing in spatial quality, and it deletes exactly the failure modes <code>director.ts</code>
+currently hand-validates (missing fields, invalid enum values) — C's dropped-<code>h</code> bug
+above is precisely what a <code>required</code> schema field prevents by construction.</p>
+<p><b>Structured JSON-shaped prompts (s4) — measured neutral, not worth adopting alone.</b>
+13.1px vs C's 13.2px is noise. The paint-generation side of this (does a fenced-JSON blueprint
+spec help image gen itself) was <b>not tested</b> this round — untested, not refuted.</p>
+<p><b>extract12.py stays load-bearing.</b> Even the best VLM arm here (~13px centers on
+unambiguous controls) still carries a 20&ndash;30px tail and a real semantic-swap hazard
+(vol/shuffle, visualizer/album_art) that pixel-space detection doesn't have. A plausible future
+use: a cheap name&harr;position <em>sanity witness</em> that flags when detection and a VLM
+disagree — not a replacement for the detector itself.</p>
+</div>
+<div class=costline><b>Cost:</b> <code>gemini-3-pro-image-preview</code> (image model, $120/1M
+image-out tok, $2/1M in) — A $0.05, B $0.16 (incl. 1120 image-out tok for the re-render), 2
+modality probes $0.04, ~3 debug rolls $0.15 · <code>gemini-3.1-pro-preview</code> (text model,
+$12/1M text-out tok) — C + 6&times;s1 + s2 + s4, all 10 calls together $0.04 · s3 (image model +
+schema) rejected with HTTP 400 before any tokens billed = $0 · <b>total &asymp; $0.45.</b></div>
+
+</div>
+</body></html>
