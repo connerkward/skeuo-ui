@@ -1,0 +1,1484 @@
+{
+  "probe": "stability_of_box2d_transposition",
+  "prior_n1_result_ref": "jsonspec/bonus_probe.json (seed 71): transposed_reading.summary.mean_iou=0.7892 (median 0.8402, min 0.3732 album_art)",
+  "calls": [
+    {
+      "tag": "repeat_seed72",
+      "asset": "assets-wc-goldshield",
+      "seed": 72,
+      "source": "reconstructed_from_prev_probe_flags (raw swept, see docs/INCIDENTS.md 2026-07-11)",
+      "finishReason": "STOP",
+      "n_text_parts": 13,
+      "parse_ok": true,
+      "parse_error": null,
+      "seconds": 59.8,
+      "documented_reading": {
+        "summary": {
+          "n_returned": 10,
+          "n_matched": 10,
+          "mean_iou": 0.7211,
+          "median_iou": 0.6642,
+          "min_iou": 0.5829,
+          "mean_center_err_px": 11.6,
+          "max_center_err_px": 60.6,
+          "worst_control": "queue"
+        },
+        "per_control": {
+          "playpause": {
+            "pred": [
+              0.293,
+              0.499,
+              0.12,
+              0.077
+            ],
+            "gt": [
+              0.3025173611111111,
+              0.5067349137931034,
+              0.10243055555555555,
+              0.06384698275862069
+            ],
+            "iou": 0.7078,
+            "center_err_px": 4.6
+          },
+          "prev": {
+            "pred": [
+              0.193,
+              0.571,
+              0.115,
+              0.071
+            ],
+            "gt": [
+              0.20746527777777776,
+              0.5775862068965517,
+              0.08854166666666667,
+              0.05522629310344827
+            ],
+            "iou": 0.5989,
+            "center_err_px": 5.6
+          },
+          "next": {
+            "pred": [
+              0.4,
+              0.571,
+              0.115,
+              0.071
+            ],
+            "gt": [
+              0.4118923611111111,
+              0.5773168103448275,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.5959,
+            "center_err_px": 6.8
+          },
+          "repeat": {
+            "pred": [
+              0.31,
+              0.64,
+              0.111,
+              0.066
+            ],
+            "gt": [
+              0.3255208333333333,
+              0.6449353448275862,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.6642,
+            "center_err_px": 9.5
+          },
+          "queue": {
+            "pred": [
+              0.681,
+              0.586,
+              0.118,
+              0.068
+            ],
+            "gt": [
+              0.6983506944444445,
+              0.5945581896551724,
+              0.08637152777777778,
+              0.05414870689655173
+            ],
+            "iou": 0.5829,
+            "center_err_px": 7.0
+          },
+          "vol": {
+            "pred": [
+              0.571,
+              0.503,
+              0.144,
+              0.082
+            ],
+            "gt": [
+              0.5712239583333333,
+              0.49787176724137927,
+              0.14574652777777775,
+              0.0904633620689655
+            ],
+            "iou": 0.8929,
+            "center_err_px": 4.2
+          },
+          "seek": {
+            "pred": [
+              0.293,
+              0.436,
+              0.461,
+              0.047
+            ],
+            "gt": [
+              0.24305555555555555,
+              0.4381236530172414,
+              0.5112847222222222,
+              0.0318884698275862
+            ],
+            "iou": 0.6317,
+            "center_err_px": 60.6
+          },
+          "shuffle": {
+            "pred": [
+              0.564,
+              0.608,
+              0.096,
+              0.094
+            ],
+            "gt": [
+              0.5789257812500002,
+              0.6169261853448277,
+              0.0726171875,
+              0.07810883620689654
+            ],
+            "iou": 0.6286,
+            "center_err_px": 8.3
+          },
+          "visualizer": {
+            "pred": [
+              0.239,
+              0.325,
+              0.514,
+              0.094
+            ],
+            "gt": [
+              0.23697916666666666,
+              0.32623922413793105,
+              0.5186631944444444,
+              0.08701508620689655
+            ],
+            "iou": 0.918,
+            "center_err_px": 8.4
+          },
+          "album_art": {
+            "pred": [
+              0.323,
+              0.093,
+              0.347,
+              0.212
+            ],
+            "gt": [
+              0.3233506944444444,
+              0.09401939655172414,
+              0.3467881944444444,
+              0.2101293103448276
+            ],
+            "iou": 0.9898,
+            "center_err_px": 0.6
+          }
+        }
+      },
+      "transposed_reading": {
+        "summary": {
+          "n_returned": 10,
+          "n_matched": 10,
+          "mean_iou": 0.0633,
+          "median_iou": 0.0,
+          "min_iou": 0.0,
+          "mean_center_err_px": 478.3,
+          "max_center_err_px": 797.4,
+          "worst_control": "playpause"
+        },
+        "per_control": {
+          "playpause": {
+            "pred": [
+              0.293,
+              0.499,
+              0.283,
+              -0.086
+            ],
+            "gt": [
+              0.3025173611111111,
+              0.5067349137931034,
+              0.10243055555555555,
+              0.06384698275862069
+            ],
+            "iou": 0.0,
+            "center_err_px": 358.8
+          },
+          "prev": {
+            "pred": [
+              0.193,
+              0.571,
+              0.449,
+              -0.263
+            ],
+            "gt": [
+              0.20746527777777776,
+              0.5775862068965517,
+              0.08854166666666667,
+              0.05522629310344827
+            ],
+            "iou": 0.0,
+            "center_err_px": 724.0
+          },
+          "next": {
+            "pred": [
+              0.4,
+              0.571,
+              0.242,
+              -0.056
+            ],
+            "gt": [
+              0.4118923611111111,
+              0.5773168103448275,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.0,
+            "center_err_px": 274.4
+          },
+          "repeat": {
+            "pred": [
+              0.31,
+              0.64,
+              0.396,
+              -0.219
+            ],
+            "gt": [
+              0.3255208333333333,
+              0.6449353448275862,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.0,
+            "center_err_px": 616.2
+          },
+          "queue": {
+            "pred": [
+              0.681,
+              0.586,
+              -0.027,
+              0.213
+            ],
+            "gt": [
+              0.6983506944444445,
+              0.5945581896551724,
+              0.08637152777777778,
+              0.05414870689655173
+            ],
+            "iou": 0.0,
+            "center_err_px": 313.5
+          },
+          "vol": {
+            "pred": [
+              0.571,
+              0.503,
+              0.014,
+              0.212
+            ],
+            "gt": [
+              0.5712239583333333,
+              0.49787176724137927,
+              0.14574652777777775,
+              0.0904633620689655
+            ],
+            "iou": 0.0785,
+            "center_err_px": 288.1
+          },
+          "seek": {
+            "pred": [
+              0.293,
+              0.436,
+              0.19,
+              0.318
+            ],
+            "gt": [
+              0.24305555555555555,
+              0.4381236530172414,
+              0.5112847222222222,
+              0.0318884698275862
+            ],
+            "iou": 0.0857,
+            "center_err_px": 582.0
+          },
+          "shuffle": {
+            "pred": [
+              0.564,
+              0.608,
+              0.138,
+              0.052
+            ],
+            "gt": [
+              0.5789257812500002,
+              0.6169261853448277,
+              0.0726171875,
+              0.07810883620689654
+            ],
+            "iou": 0.3218,
+            "center_err_px": 91.3
+          },
+          "visualizer": {
+            "pred": [
+              0.239,
+              0.325,
+              0.18,
+              0.428
+            ],
+            "gt": [
+              0.23697916666666666,
+              0.32623922413793105,
+              0.5186631944444444,
+              0.08701508620689655
+            ],
+            "iou": 0.1471,
+            "center_err_px": 737.1
+          },
+          "album_art": {
+            "pred": [
+              0.323,
+              0.093,
+              -0.018,
+              0.577
+            ],
+            "gt": [
+              0.3233506944444444,
+              0.09401939655172414,
+              0.3467881944444444,
+              0.2101293103448276
+            ],
+            "iou": 0.0,
+            "center_err_px": 797.4
+          }
+        }
+      },
+      "transposition_flags": {
+        "playpause": {
+          "box_2d": [
+            499,
+            293,
+            576,
+            413
+          ],
+          "gt_xmax_1000": 405,
+          "gt_ymax_1000": 571,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "prev": {
+          "box_2d": [
+            571,
+            193,
+            642,
+            308
+          ],
+          "gt_xmax_1000": 296,
+          "gt_ymax_1000": 633,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "next": {
+          "box_2d": [
+            571,
+            400,
+            642,
+            515
+          ],
+          "gt_xmax_1000": 500,
+          "gt_ymax_1000": 633,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "repeat": {
+          "box_2d": [
+            640,
+            310,
+            706,
+            421
+          ],
+          "gt_xmax_1000": 414,
+          "gt_ymax_1000": 700,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "queue": {
+          "box_2d": [
+            586,
+            681,
+            654,
+            799
+          ],
+          "gt_xmax_1000": 785,
+          "gt_ymax_1000": 649,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "vol": {
+          "box_2d": [
+            503,
+            571,
+            585,
+            715
+          ],
+          "gt_xmax_1000": 717,
+          "gt_ymax_1000": 588,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "seek": {
+          "box_2d": [
+            436,
+            293,
+            483,
+            754
+          ],
+          "gt_xmax_1000": 754,
+          "gt_ymax_1000": 470,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "shuffle": {
+          "box_2d": [
+            608,
+            564,
+            702,
+            660
+          ],
+          "gt_xmax_1000": 652,
+          "gt_ymax_1000": 695,
+          "matches_transposed_reading": true,
+          "matches_documented_reading": true
+        },
+        "visualizer": {
+          "box_2d": [
+            325,
+            239,
+            419,
+            753
+          ],
+          "gt_xmax_1000": 756,
+          "gt_ymax_1000": 413,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "album_art": {
+          "box_2d": [
+            93,
+            323,
+            305,
+            670
+          ],
+          "gt_xmax_1000": 670,
+          "gt_ymax_1000": 304,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        }
+      }
+    },
+    {
+      "tag": "repeat_seed73",
+      "asset": "assets-wc-goldshield",
+      "seed": 73,
+      "source": "raw_file",
+      "finishReason": "STOP",
+      "n_text_parts": 5,
+      "parse_ok": true,
+      "parse_error": null,
+      "documented_reading": {
+        "summary": {
+          "n_returned": 10,
+          "n_matched": 10,
+          "mean_iou": 0.5423,
+          "median_iou": 0.6045,
+          "min_iou": 0.0,
+          "mean_center_err_px": 306.1,
+          "max_center_err_px": 1851.6,
+          "worst_control": "vol"
+        },
+        "per_control": {
+          "album_art": {
+            "pred": [
+              0.317,
+              0.094,
+              0.352,
+              0.214
+            ],
+            "gt": [
+              0.3233506944444444,
+              0.09401939655172414,
+              0.3467881944444444,
+              0.2101293103448276
+            ],
+            "iou": 0.9611,
+            "center_err_px": 11.2
+          },
+          "visualizer": {
+            "pred": [
+              0.237,
+              0.325,
+              0.517,
+              0.095
+            ],
+            "gt": [
+              0.23697916666666666,
+              0.32623922413793105,
+              0.5186631944444444,
+              0.08701508620689655
+            ],
+            "iou": 0.9133,
+            "center_err_px": 10.4
+          },
+          "seek": {
+            "pred": [
+              0.23,
+              0.435,
+              0.54,
+              0.049
+            ],
+            "gt": [
+              0.24305555555555555,
+              0.4381236530172414,
+              0.5112847222222222,
+              0.0318884698275862
+            ],
+            "iou": 0.6162,
+            "center_err_px": 20.4
+          },
+          "playpause": {
+            "pred": [
+              0.284,
+              0.492,
+              0.142,
+              0.088
+            ],
+            "gt": [
+              0.3025173611111111,
+              0.5067349137931034,
+              0.10243055555555555,
+              0.06384698275862069
+            ],
+            "iou": 0.5234,
+            "center_err_px": 10.3
+          },
+          "prev": {
+            "pred": [
+              0.19,
+              0.571,
+              0.118,
+              0.07
+            ],
+            "gt": [
+              0.20746527777777776,
+              0.5775862068965517,
+              0.08854166666666667,
+              0.05522629310344827
+            ],
+            "iou": 0.592,
+            "center_err_px": 7.0
+          },
+          "next": {
+            "pred": [
+              0.403,
+              0.571,
+              0.114,
+              0.069
+            ],
+            "gt": [
+              0.4118923611111111,
+              0.5773168103448275,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.6186,
+            "center_err_px": 9.6
+          },
+          "repeat": {
+            "pred": [
+              0.31,
+              0.637,
+              0.115,
+              0.07
+            ],
+            "gt": [
+              0.3255208333333333,
+              0.6449353448275862,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.6045,
+            "center_err_px": 5.2
+          },
+          "queue": {
+            "pred": [
+              0.685,
+              0.585,
+              0.111,
+              0.071
+            ],
+            "gt": [
+              0.6983506944444445,
+              0.5945581896551724,
+              0.08637152777777778,
+              0.05414870689655173
+            ],
+            "iou": 0.5934,
+            "center_err_px": 4.8
+          },
+          "vol": {
+            "pred": [
+              0.015,
+              0.856,
+              0.209,
+              0.13
+            ],
+            "gt": [
+              0.5712239583333333,
+              0.49787176724137927,
+              0.14574652777777775,
+              0.0904633620689655
+            ],
+            "iou": 0.0,
+            "center_err_px": 1851.6
+          },
+          "shuffle": {
+            "pred": [
+              0.263,
+              0.859,
+              0.216,
+              0.122
+            ],
+            "gt": [
+              0.5789257812500002,
+              0.6169261853448277,
+              0.0726171875,
+              0.07810883620689654
+            ],
+            "iou": 0.0,
+            "center_err_px": 1130.1
+          }
+        }
+      },
+      "transposed_reading": {
+        "summary": {
+          "n_returned": 10,
+          "n_matched": 10,
+          "mean_iou": 0.023,
+          "median_iou": 0.0,
+          "min_iou": 0.0,
+          "mean_center_err_px": 481.9,
+          "max_center_err_px": 799.2,
+          "worst_control": "album_art"
+        },
+        "per_control": {
+          "album_art": {
+            "pred": [
+              0.317,
+              0.094,
+              -0.009,
+              0.575
+            ],
+            "gt": [
+              0.3233506944444444,
+              0.09401939655172414,
+              0.3467881944444444,
+              0.2101293103448276
+            ],
+            "iou": 0.0,
+            "center_err_px": 799.2
+          },
+          "visualizer": {
+            "pred": [
+              0.237,
+              0.325,
+              0.183,
+              0.429
+            ],
+            "gt": [
+              0.23697916666666666,
+              0.32623922413793105,
+              0.5186631944444444,
+              0.08701508620689655
+            ],
+            "iou": 0.1478,
+            "center_err_px": 739.3
+          },
+          "seek": {
+            "pred": [
+              0.23,
+              0.435,
+              0.254,
+              0.335
+            ],
+            "gt": [
+              0.24305555555555555,
+              0.4381236530172414,
+              0.5112847222222222,
+              0.0318884698275862
+            ],
+            "iou": 0.082,
+            "center_err_px": 640.4
+          },
+          "playpause": {
+            "pred": [
+              0.284,
+              0.492,
+              0.296,
+              -0.066
+            ],
+            "gt": [
+              0.3025173611111111,
+              0.5067349137931034,
+              0.10243055555555555,
+              0.06384698275862069
+            ],
+            "iou": 0.0,
+            "center_err_px": 346.3
+          },
+          "prev": {
+            "pred": [
+              0.19,
+              0.571,
+              0.451,
+              -0.263
+            ],
+            "gt": [
+              0.20746527777777776,
+              0.5775862068965517,
+              0.08854166666666667,
+              0.05522629310344827
+            ],
+            "iou": 0.0,
+            "center_err_px": 721.6
+          },
+          "next": {
+            "pred": [
+              0.403,
+              0.571,
+              0.237,
+              -0.054
+            ],
+            "gt": [
+              0.4118923611111111,
+              0.5773168103448275,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.0,
+            "center_err_px": 272.0
+          },
+          "repeat": {
+            "pred": [
+              0.31,
+              0.637,
+              0.397,
+              -0.212
+            ],
+            "gt": [
+              0.3255208333333333,
+              0.6449353448275862,
+              0.0881076388888889,
+              0.05522629310344827
+            ],
+            "iou": 0.0,
+            "center_err_px": 615.2
+          },
+          "queue": {
+            "pred": [
+              0.685,
+              0.585,
+              -0.029,
+              0.211
+            ],
+            "gt": [
+              0.6983506944444445,
+              0.5945581896551724,
+              0.08637152777777778,
+              0.05414870689655173
+            ],
+            "iou": 0.0,
+            "center_err_px": 303.5
+          },
+          "vol": {
+            "pred": [
+              0.015,
+              0.856,
+              0.971,
+              -0.632
+            ],
+            "gt": [
+              0.5712239583333333,
+              0.49787176724137927,
+              0.14574652777777775,
+              0.0904633620689655
+            ],
+            "iou": 0.0,
+            "center_err_px": 331.0
+          },
+          "shuffle": {
+            "pred": [
+              0.263,
+              0.859,
+              0.718,
+              -0.38
+            ],
+            "gt": [
+              0.5789257812500002,
+              0.6169261853448277,
+              0.0726171875,
+              0.07810883620689654
+            ],
+            "iou": 0.0,
+            "center_err_px": 50.8
+          }
+        }
+      },
+      "transposition_flags": {
+        "album_art": {
+          "box_2d": [
+            94,
+            317,
+            308,
+            669
+          ],
+          "gt_xmax_1000": 670,
+          "gt_ymax_1000": 304,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "visualizer": {
+          "box_2d": [
+            325,
+            237,
+            420,
+            754
+          ],
+          "gt_xmax_1000": 756,
+          "gt_ymax_1000": 413,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "seek": {
+          "box_2d": [
+            435,
+            230,
+            484,
+            770
+          ],
+          "gt_xmax_1000": 754,
+          "gt_ymax_1000": 470,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "playpause": {
+          "box_2d": [
+            492,
+            284,
+            580,
+            426
+          ],
+          "gt_xmax_1000": 405,
+          "gt_ymax_1000": 571,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "prev": {
+          "box_2d": [
+            571,
+            190,
+            641,
+            308
+          ],
+          "gt_xmax_1000": 296,
+          "gt_ymax_1000": 633,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "next": {
+          "box_2d": [
+            571,
+            403,
+            640,
+            517
+          ],
+          "gt_xmax_1000": 500,
+          "gt_ymax_1000": 633,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "repeat": {
+          "box_2d": [
+            637,
+            310,
+            707,
+            425
+          ],
+          "gt_xmax_1000": 414,
+          "gt_ymax_1000": 700,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "queue": {
+          "box_2d": [
+            585,
+            685,
+            656,
+            796
+          ],
+          "gt_xmax_1000": 785,
+          "gt_ymax_1000": 649,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "vol": {
+          "box_2d": [
+            856,
+            15,
+            986,
+            224
+          ],
+          "gt_xmax_1000": 717,
+          "gt_ymax_1000": 588,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": false
+        },
+        "shuffle": {
+          "box_2d": [
+            859,
+            263,
+            981,
+            479
+          ],
+          "gt_xmax_1000": 652,
+          "gt_ymax_1000": 695,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": false
+        }
+      }
+    },
+    {
+      "tag": "crosscheck_diablo_seed74",
+      "asset": "assets-diablo-gothic",
+      "seed": 74,
+      "source": "raw_file",
+      "finishReason": "STOP",
+      "n_text_parts": 7,
+      "parse_ok": true,
+      "parse_error": null,
+      "documented_reading": {
+        "summary": {
+          "n_returned": 10,
+          "n_matched": 10,
+          "mean_iou": 0.3709,
+          "median_iou": 0.5488,
+          "min_iou": 0.0,
+          "mean_center_err_px": 265.1,
+          "max_center_err_px": 1094.9,
+          "worst_control": "queue"
+        },
+        "per_control": {
+          "vol": {
+            "pred": [
+              0.413,
+              0.381,
+              0.165,
+              0.105
+            ],
+            "gt": [
+              0.44100477430555557,
+              0.3988617995689655,
+              0.11191406250000001,
+              0.06946390086206897
+            ],
+            "iou": 0.4487,
+            "center_err_px": 3.4
+          },
+          "next": {
+            "pred": [
+              0.619,
+              0.161,
+              0.127,
+              0.079
+            ],
+            "gt": [
+              0.6371527777777778,
+              0.17429956896551724,
+              0.09375,
+              0.05872844827586207
+            ],
+            "iou": 0.5488,
+            "center_err_px": 12.3
+          },
+          "queue": {
+            "pred": [
+              0.574,
+              0.247,
+              0.126,
+              0.078
+            ],
+            "gt": [
+              0.6310763888888888,
+              0.1872252155172414,
+              0.03820312499999999,
+              0.04849676724137931
+            ],
+            "iou": 0.0,
+            "center_err_px": 278.3
+          },
+          "playpause": {
+            "pred": [
+              0.405,
+              0.144,
+              0.177,
+              0.11
+            ],
+            "gt": [
+              0.4240451388888889,
+              0.1570581896551724,
+              0.1462673611111111,
+              0.09078663793103449
+            ],
+            "iou": 0.682,
+            "center_err_px": 15.4
+          },
+          "seek": {
+            "pred": [
+              0.236,
+              0.512,
+              0.523,
+              0.055
+            ],
+            "gt": [
+              0.2682291666666667,
+              0.5162351831896552,
+              0.4848090277777778,
+              0.04484644396551724
+            ],
+            "iou": 0.7558,
+            "center_err_px": 30.4
+          },
+          "album_art": {
+            "pred": [
+              0.599,
+              0.347,
+              0.263,
+              0.12
+            ],
+            "gt": [
+              0.1467013888888889,
+              0.27936422413793105,
+              0.2300347222222222,
+              0.19019396551724138
+            ],
+            "iou": 0.0,
+            "center_err_px": 1086.8
+          },
+          "shuffle": {
+            "pred": [
+              0.405,
+              0.586,
+              0.189,
+              0.075
+            ],
+            "gt": [
+              0.4157986111111111,
+              0.5961624461206896,
+              0.15624999999999997,
+              0.05686691810344826
+            ],
+            "iou": 0.6268,
+            "center_err_px": 13.5
+          },
+          "visualizer": {
+            "pred": [
+              0.128,
+              0.268,
+              0.266,
+              0.207
+            ],
+            "gt": [
+              0.6241319444444444,
+              0.359375,
+              0.2165798611111111,
+              0.09886853448275862
+            ],
+            "iou": 0.0,
+            "center_err_px": 1094.9
+          },
+          "prev": {
+            "pred": [
+              0.244,
+              0.16,
+              0.126,
+              0.078
+            ],
+            "gt": [
+              0.26171875,
+              0.17349137931034483,
+              0.0954861111111111,
+              0.060075431034482756
+            ],
+            "iou": 0.5837,
+            "center_err_px": 17.7
+          },
+          "repeat": {
+            "pred": [
+              0.429,
+              0.28,
+              0.13,
+              0.079
+            ],
+            "gt": [
+              0.4742013888888889,
+              0.2885237068965517,
+              0.06095486111111113,
+              0.010625000000000015
+            ],
+            "iou": 0.0631,
+            "center_err_px": 98.4
+          }
+        }
+      },
+      "transposed_reading": {
+        "summary": {
+          "n_returned": 10,
+          "n_matched": 10,
+          "mean_iou": 0.0313,
+          "median_iou": 0.0,
+          "min_iou": 0.0,
+          "mean_center_err_px": 658.4,
+          "max_center_err_px": 1097.3,
+          "worst_control": "next"
+        },
+        "per_control": {
+          "vol": {
+            "pred": [
+              0.413,
+              0.381,
+              0.073,
+              0.197
+            ],
+            "gt": [
+              0.44100477430555557,
+              0.3988617995689655,
+              0.11191406250000001,
+              0.06946390086206897
+            ],
+            "iou": 0.1642,
+            "center_err_px": 202.5
+          },
+          "next": {
+            "pred": [
+              0.619,
+              0.161,
+              -0.379,
+              0.585
+            ],
+            "gt": [
+              0.6371527777777778,
+              0.17429956896551724,
+              0.09375,
+              0.05872844827586207
+            ],
+            "iou": 0.0,
+            "center_err_px": 1097.3
+          },
+          "queue": {
+            "pred": [
+              0.574,
+              0.247,
+              -0.249,
+              0.453
+            ],
+            "gt": [
+              0.6310763888888888,
+              0.1872252155172414,
+              0.03820312499999999,
+              0.04849676724137931
+            ],
+            "iou": 0.0,
+            "center_err_px": 1076.9
+          },
+          "playpause": {
+            "pred": [
+              0.405,
+              0.144,
+              -0.151,
+              0.438
+            ],
+            "gt": [
+              0.4240451388888889,
+              0.1570581896551724,
+              0.1462673611111111,
+              0.09078663793103449
+            ],
+            "iou": 0.0,
+            "center_err_px": 710.2
+          },
+          "seek": {
+            "pred": [
+              0.236,
+              0.512,
+              0.331,
+              0.247
+            ],
+            "gt": [
+              0.2682291666666667,
+              0.5162351831896552,
+              0.4848090277777778,
+              0.04484644396551724
+            ],
+            "iou": 0.1487,
+            "center_err_px": 438.7
+          },
+          "album_art": {
+            "pred": [
+              0.599,
+              0.347,
+              -0.132,
+              0.515
+            ],
+            "gt": [
+              0.1467013888888889,
+              0.27936422413793105,
+              0.2300347222222222,
+              0.19019396551724138
+            ],
+            "iou": 0.0,
+            "center_err_px": 1058.2
+          },
+          "shuffle": {
+            "pred": [
+              0.405,
+              0.586,
+              0.256,
+              0.008
+            ],
+            "gt": [
+              0.4157986111111111,
+              0.5961624461206896,
+              0.15624999999999997,
+              0.05686691810344826
+            ],
+            "iou": 0.0,
+            "center_err_px": 156.8
+          },
+          "visualizer": {
+            "pred": [
+              0.128,
+              0.268,
+              0.347,
+              0.126
+            ],
+            "gt": [
+              0.6241319444444444,
+              0.359375,
+              0.2165798611111111,
+              0.09886853448275862
+            ],
+            "iou": 0.0,
+            "center_err_px": 1034.0
+          },
+          "prev": {
+            "pred": [
+              0.244,
+              0.16,
+              -0.006,
+              0.21
+            ],
+            "gt": [
+              0.26171875,
+              0.17349137931034483,
+              0.0954861111111111,
+              0.060075431034482756
+            ],
+            "iou": 0.0,
+            "center_err_px": 277.4
+          },
+          "repeat": {
+            "pred": [
+              0.429,
+              0.28,
+              -0.07,
+              0.279
+            ],
+            "gt": [
+              0.4742013888888889,
+              0.2885237068965517,
+              0.06095486111111113,
+              0.010625000000000015
+            ],
+            "iou": 0.0,
+            "center_err_px": 531.6
+          }
+        }
+      },
+      "transposition_flags": {
+        "vol": {
+          "box_2d": [
+            381,
+            413,
+            486,
+            578
+          ],
+          "gt_xmax_1000": 553,
+          "gt_ymax_1000": 468,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "next": {
+          "box_2d": [
+            161,
+            619,
+            240,
+            746
+          ],
+          "gt_xmax_1000": 731,
+          "gt_ymax_1000": 233,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "queue": {
+          "box_2d": [
+            247,
+            574,
+            325,
+            700
+          ],
+          "gt_xmax_1000": 669,
+          "gt_ymax_1000": 236,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": false
+        },
+        "playpause": {
+          "box_2d": [
+            144,
+            405,
+            254,
+            582
+          ],
+          "gt_xmax_1000": 570,
+          "gt_ymax_1000": 248,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "seek": {
+          "box_2d": [
+            512,
+            236,
+            567,
+            759
+          ],
+          "gt_xmax_1000": 753,
+          "gt_ymax_1000": 561,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "album_art": {
+          "box_2d": [
+            347,
+            599,
+            467,
+            862
+          ],
+          "gt_xmax_1000": 377,
+          "gt_ymax_1000": 470,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": false
+        },
+        "shuffle": {
+          "box_2d": [
+            586,
+            405,
+            661,
+            594
+          ],
+          "gt_xmax_1000": 572,
+          "gt_ymax_1000": 653,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "visualizer": {
+          "box_2d": [
+            268,
+            128,
+            475,
+            394
+          ],
+          "gt_xmax_1000": 841,
+          "gt_ymax_1000": 458,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": false
+        },
+        "prev": {
+          "box_2d": [
+            160,
+            244,
+            238,
+            370
+          ],
+          "gt_xmax_1000": 357,
+          "gt_ymax_1000": 234,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": true
+        },
+        "repeat": {
+          "box_2d": [
+            280,
+            429,
+            359,
+            559
+          ],
+          "gt_xmax_1000": 535,
+          "gt_ymax_1000": 299,
+          "matches_transposed_reading": false,
+          "matches_documented_reading": false
+        }
+      }
+    }
+  ],
+  "cross_call_consistency": {
+    "verdicts": [
+      {
+        "tag": "repeat_seed72",
+        "asset": "assets-wc-goldshield",
+        "seed": 72,
+        "documented_mean_iou": 0.7211,
+        "transposed_mean_iou": 0.0633,
+        "transposed_wins": false,
+        "n_controls_flagged_transposed": 1,
+        "n_controls_flagged_documented": 10
+      },
+      {
+        "tag": "repeat_seed73",
+        "asset": "assets-wc-goldshield",
+        "seed": 73,
+        "documented_mean_iou": 0.5423,
+        "transposed_mean_iou": 0.023,
+        "transposed_wins": false,
+        "n_controls_flagged_transposed": 0,
+        "n_controls_flagged_documented": 8
+      },
+      {
+        "tag": "crosscheck_diablo_seed74",
+        "asset": "assets-diablo-gothic",
+        "seed": 74,
+        "documented_mean_iou": 0.3709,
+        "transposed_mean_iou": 0.0313,
+        "transposed_wins": false,
+        "n_controls_flagged_transposed": 0,
+        "n_controls_flagged_documented": 6
+      }
+    ],
+    "transposed_reading_wins_every_call": false,
+    "stable_quirk": false,
+    "conclusion": "UNSTABLE. Including bonus_probe's seed-71 call (transposed emission), the element order varies call-to-call: seed 71 emitted [ymin,xmin,XMAX,YMAX]; seeds 72/73/74 emitted Google's documented [ymin,xmin,ymax,xmax]. A fixed slot-swap calibration is therefore wrong on some calls; any consumer must disambiguate the order PER CALL (e.g. reject boxes whose documented reading yields non-positive w/h, or check both readings against a template prior)."
+  }
+}

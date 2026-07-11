@@ -953,7 +953,17 @@ entries already under "saved for later" above — those four stand as-is.
   that exact convention, the image model's boxes hit **IoU 0.79 / 9 of 10 controls at
   2-26px** once an element-order transposition ([ymin,xmin,XMAX,YMAX]) is corrected — the
   imgjson "broken y-frame" was our ad-hoc 0-1 convention, not the model's spatial sense
-  (n=1, order-stability untested; `jsonspec/bonus_probe.json`).
+  (`jsonspec/bonus_probe.json`).
+- **Stability probe follow-up (2026-07-11): transposition UNSTABLE → not witness-grade.**
+  3 more calls (`jsonspec/stability_probe.py`, ~$0.15): seeds 72/73/74 all emitted the
+  DOCUMENTED order (only seed 71 transposed) → order flips call-to-call, no fixed slot-swap
+  calibration. Best-reading mean IoU 0.79/0.72/0.54/0.37 across the 4 calls; whole-control
+  semantic swaps in 2/4 (vol/shuffle→strip sprites; visualizer↔album_art). **Verdict: NO —
+  not usable even as a cheap second-signal witness beside extract12**; the text model
+  (gemini-3.1-pro + responseSchema, stable convention, ~13px centers, cheaper) dominates
+  that role. imgjson pages + doc now carry a ROUND 2 CORRECTION
+  (`imgjson/explain.html#round2`, `imgjson/index.html`,
+  [docs/experiments/2026-07-11-image-model-json-output.md](docs/experiments/2026-07-11-image-model-json-output.md)).
 
 ## 2026-07-10 — later / think-about
 - **PARKED for skeuo v2 (2026-07-11) — Emissivity needs a better model/approach.** Full

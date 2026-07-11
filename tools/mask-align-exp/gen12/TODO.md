@@ -320,7 +320,7 @@ Media policy: paint.png + crops committed (page-referenced evidence); joint-4k/m
 gitignored per the media-policy revisit above (add knobticks to the Drive offload list when
 rclone reconnects).
 
-## imgjson: image-model JSON output + structured-I/O sweep — DONE 2026-07-11
+## imgjson: image-model JSON output + structured-I/O sweep — DONE 2026-07-11 (ROUND 2 CORRECTION below)
 
 Answered "can gemini-3-pro-image-preview emit usable JSON (bbox manifests) alongside its
 image output" + a structured-I/O viability sweep. Harness + results page: `imgjson/`
@@ -331,9 +331,37 @@ Headlines: image-model text output is real (TEXT must ride WITH IMAGE modality; 
 manifests or detection; `responseMimeType/responseSchema` on the image model = hard 400.
 Text model (`gemini-3.1-pro-preview`): ~13 px mean centers on unambiguous controls;
 `responseSchema` costs nothing and guarantees field/enum completeness → **worth adopting on
-the director's calls** (open follow-up: wire `responseSchema` into
-`src/generate/director.ts` `directorChat`, replacing the hand-rolled validation fallbacks).
-Structured (fenced-JSON) prompts: measured neutral on extraction; paint-side untested.
+the director's calls** — **DONE, commit `4535f8f3`**: `src/generate/director.ts`
+`directorChat` now takes an optional `schema` and every `deriveMaterial`/`deriveLayout`/
+`extractSlots`/`extractMasks` call passes one; `director_review.py` too. Structured
+(fenced-JSON) prompts: measured neutral on extraction; paint-side tested separately, see
+jsonspec entry below.
+
+**ROUND 2 CORRECTION (2026-07-11, jsonspec bonus + stability probe):** the "raw IoU 0.003,
+unusable" headline above was measured against an AD-HOC 0-1 `{x,y,w,h}` convention this
+experiment invented — not how Google documents boxes for this model. Asked in Google's own
+`box_2d=[ymin,xmin,ymax,xmax]@0-1000` convention (`jsonspec/bonus_probe.py` +
+`jsonspec/stability_probe.py`, 4 calls total ≈ $0.20), the SAME image model's boxes are
+real: best-reading mean IoU **0.79 / 0.72 / 0.54 / 0.37** (seeds 71-73 wc-goldshield, 74
+diablo-gothic), per-control centers ≤26px for 9/10, 9/10, 8/10, 5/10 controls. BUT the
+element order is **UNSTABLE call-to-call** — seed 71 emitted `[ymin,xmin,xmax,ymax]`
+(transposed), seeds 72/73/74 emitted the documented order — and 2/4 calls carry
+whole-control semantic swaps (vol/shuffle→strip sprites 1852/1130px; visualizer↔album_art
+~1090px). `imgjson/index.html` and `imgjson/explain.html#round2` both carry a "ROUND 2
+CORRECTION" section/banner now — the original tables are left intact (real, reproducible
+artifacts of the convention actually asked) but are no longer the final word on whether
+this model CAN report boxes at all.
+
+**VERDICT — is the image model's native-convention box output witness-grade (a cheap
+second signal alongside extract12, never load-bearing placement, per
+`ai-image-coords-rule`)? NO.** The spatial sense is real (11.6px mean centers on its best
+call), but (a) element order flips call-to-call → every consumer needs per-call order
+disambiguation (untested heuristic), (b) 2/4 calls contain ≥1 whole-control miss ≥278px,
+(c) per-call quality swings 0.37–0.79 mean IoU, and (d) the TEXT model
+(gemini-3.1-pro-preview + responseSchema) already gives ~13px centers under a STABLE
+convention at lower per-call cost — it dominates the image model for any witness role. If
+a VLM witness is ever wired over extract12, use the text model; the image model's boxes
+stay a documented curiosity. Numbers: `jsonspec/stability_probe.json`.
 
 ## Think-about notes (2026-07-11) — emissive, director-vision, drift-clause bisect
 

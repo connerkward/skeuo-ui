@@ -59,6 +59,12 @@ svg .axis{stroke:#3a3a46;stroke-width:1}
 .verdict b{color:#eaeaea}
 .costline{background:#1a1712;border:1px solid #3a3020;border-radius:8px;padding:.6rem 1rem;font-size:.8rem;color:#c9b98a;margin-top:.8rem}
 .imglink{display:block}
+.correction{background:#241608;border:2px solid #a85a1a;border-radius:12px;padding:1.2rem 1.4rem;margin:1.2rem 0 2rem}
+.correction h2{margin:0 0 .5rem;color:#ffb066;font-size:1.05rem;border:none;letter-spacing:.02em}
+.correction .tag{display:inline-block;background:#a85a1a;color:#1a1005;border-radius:5px;padding:.1rem .55rem;font:700 .72rem ui-monospace,monospace;letter-spacing:.03em;margin-right:.5rem;vertical-align:1px}
+.correction table{margin:.7rem 0}
+.correction .stable{color:#7ae08a;font-weight:700}
+.correction .unstable{color:#ff8a8a;font-weight:700}
 </style></head><body>
 
 <div class=topnav><div class=wrap>
@@ -77,6 +83,64 @@ image, JSON snippet, and number below is pulled directly from this experiment's 
 <code>gemini-3.1-pro-preview</code> (the pipeline's existing text/director model), both direct
 Vertex AI <code>generateContent</code> · <b>Total spend:</b> <b>≈$0.45</b> — see §6 for the
 breakdown.</div>
+
+<div class=correction id=round2>
+<h2><span class=tag>ROUND 2 CORRECTION</span>The "broken y-frame" (§4) was OUR convention artifact — but the boxes still aren't usable</h2>
+<p><b>What overturned it:</b> the jsonspec experiment's bonus probe
+(<a href="../jsonspec/bonus_probe.py">jsonspec/bonus_probe.py</a> /
+<a href="../jsonspec/bonus_probe.json">bonus_probe.json</a>) re-asked the SAME model for the
+SAME wc-goldshield boxes — but in <b>Google's own documented convention</b>
+(<code>box_2d=[ymin,xmin,ymax,xmax]</code> normalized 0-1000, per the image-understanding
+docs) instead of the ad-hoc 0-1 <code>{x,y,w,h}</code> ask arm A invented. The boxes came
+back real: the model reasons in its trained 0-1000 box space, and our 0..1 normalized ask was
+the frame-breaker. Arm A's mean IoU 0.003 measured our prompt, not the model's spatial sense.
+§4's affine analysis below is left intact as a correct diagnosis of the wrong-convention data;
+its conclusion ("reports against an internal frame, uncalibratable") is <b>withdrawn</b>.</p>
+<p><b>Stability probe</b> (<a href="../jsonspec/stability_probe.py">jsonspec/stability_probe.py</a> /
+<a href="../jsonspec/stability_probe.json">stability_probe.json</a>): the bonus probe's n=1 call
+came back with the last two elements <em>transposed</em> — <code>[ymin,xmin,XMAX,YMAX]</code> —
+so the make-or-break question was whether that quirk is stable (calibratable by a fixed slot
+swap) or not. 3 more calls, same documented convention: 2 repeats on the same wc-goldshield
+paint (seeds 72, 73) + 1 cross-check on a different skin (diablo-gothic, seed 74). Scored
+deterministically vs each skin's own <code>regions.json</code> under BOTH readings:</p>
+<table>
+<tr><th>call</th><th>emitted order</th><th>best-reading mean IoU</th><th>mean ctr err</th><th>controls ≤26px</th><th>whole-control misses</th></tr>
+<tr><td>seed 71 (bonus, wc-goldshield)</td><td class=unstable>TRANSPOSED [ymin,xmin,xmax,ymax]</td><td>0.789</td><td>69.3 px</td><td>9/10</td><td>album_art 603px</td></tr>
+<tr><td>seed 72 (wc-goldshield)</td><td class=stable>documented</td><td>0.721</td><td>11.6 px</td><td>9/10</td><td>none (worst: seek 61px)</td></tr>
+<tr><td>seed 73 (wc-goldshield)</td><td class=stable>documented</td><td>0.542</td><td>306.1 px</td><td>8/10</td><td>vol 1852px + shuffle 1130px (strip-sprite swap)</td></tr>
+<tr><td>seed 74 (diablo-gothic)</td><td class=stable>documented</td><td>0.371</td><td>265.1 px</td><td>5/10</td><td>visualizer 1095px + album_art 1087px (region swap)</td></tr>
+</table>
+<p><b>Verdict on the transposition: <span class=unstable>UNSTABLE</span></b> — 1 of 4 calls
+emitted the swapped order, the other 3 emitted Google's documented order. A fixed slot-swap
+calibration is wrong on some calls; a consumer would have to disambiguate the order <em>per
+call</em> (seed 71's transposed emission yields non-positive w/h on 4/10 boxes when read as
+documented — a usable tell, but untested as a reliable discriminator).</p>
+<p><b>What still stands from round 1</b> (each re-checked against the probe outputs):</p>
+<ul>
+<li><b>Thinking-narration prefix</b> despite a JSON-only ask — <b>re-confirmed in all 3 probe
+calls</b> (~880–905 chars of "**Locating Controls**…" narration before the array; the
+prefix-tolerant parser stays mandatory).</li>
+<li><b>No <code>responseMimeType</code>/<code>responseSchema</code> on the image model</b>
+(hard 400, s3) — not retested this round; all probe calls ran schema-less per that finding,
+nothing observed contradicts it.</li>
+<li><b>TEXT must ride with IMAGE modality</b> (TEXT-alone 400) — not retested; all probe calls
+used <code>["TEXT","IMAGE"]</code> per that finding and returned text-only parts as before.</li>
+<li><b>Interleaved-mode degradation</b> (arm B: asking for a re-render in the same call
+collapses box quality) — not retested; stands as an n=1 round-1 finding.</li>
+</ul>
+<p><b>Revised bottom line:</b> the image model <em>does</em> have real spatial sense in its
+native 0-1000 <code>box_2d</code> space — round 1's "y-frame is uncalibratable" conclusion is
+withdrawn. It is still <b>not witness-grade for the pipeline</b>: element order flips
+call-to-call, 2 of 4 calls carry ≥1 whole-control semantic swap (vol→strip sprite,
+visualizer↔album_art — the exact hazard class §6 already flagged), per-call quality ranges
+0.37–0.79 mean IoU, and the TEXT model (gemini-3.1-pro + responseSchema, stable convention,
+~13px centers, cheaper per call) dominates it for any witness role. extract12's pixel-space
+detection stays load-bearing; <code>ai-image-coords-rule</code> stands, with its calibration
+note updated: ask in 0-1000 <code>box_2d</code>, never 0-1 x/y/w/h.</p>
+<div class=costline><b>Round 2 cost:</b> bonus probe 1 call ≈ $0.05 + stability probe 3 calls
+≈ $0.15 (all <code>gemini-3-pro-image-preview</code>, text-out + thought tokens only, no image
+out) · scored deterministically vs <code>regions.json</code>, $0 — <b>round 2 total ≈ $0.20</b>.</div>
+</div>
 
 <h2><span class=num>1</span>The question</h2>
 <p class=lede>When you hand <code>gemini-3-pro-image-preview</code> — the same model that
@@ -298,6 +362,9 @@ measurable vs C's prose ask.</div>
 </div><!-- /armgrid -->
 
 <h2><span class=num>4</span>The broken-frame finding</h2>
+<p class=reading><b>Round-2 note:</b> this section's analysis is correct for the data it had,
+but its conclusion is <b>withdrawn</b> — the "internal frame" was an artifact of arm A's ad-hoc
+0-1 convention; see the <a href="#round2">ROUND 2 CORRECTION</a>.</p>
 <p>Arm A's raw score (mean IoU 0.003) looks like noise — as if the model just guessed. It
 isn't. Look at the <b>x</b> coordinates alone: they land almost exactly on target (scale 0.999
 against ground truth). It's specifically <b>y</b> that's off, and not randomly — every y comes
@@ -370,11 +437,18 @@ tightness noise, not a real quality gap.</p>
 
 <h2><span class=num>6</span>Verdicts</h2>
 <div class=verdict>
-<p><b>Image-model JSON output — dead for manifests and for detection.</b> It only speaks TEXT
+<p><b>Image-model JSON output — dead for manifests and for detection</b>
+<span class=warn>(PARTIALLY CORRECTED — see the <a href="#round2">ROUND 2 CORRECTION</a> at
+the top: the "uncalibratable internal frame" clause below was our 0-1 convention artifact;
+asked in Google's 0-1000 <code>box_2d</code> convention the boxes are real but the element
+order is unstable call-to-call and whole-control swaps persist — the operational verdict
+"not usable for manifests or detection" is unchanged)</span>. It only speaks TEXT
 when IMAGE is also in the modality list, structured-output params are a hard HTTP 400 on this
 model, every response opens with ~2.5k chars of thinking-narration prose despite "STRICT JSON
-ONLY", and the y-axis lands in an uncalibratable internal frame. None of this is fixable from
-the prompt side.</p>
+ONLY", and <s>the y-axis lands in an uncalibratable internal frame. None of this is fixable
+from the prompt side</s> — withdrawn: the frame WAS fixable from the prompt side (0-1000
+<code>box_2d</code>); what isn't fixable is the call-to-call element-order instability and the
+whole-control swaps (round 2).</p>
 <p><b><code>responseSchema</code> — adopt it on the director and on extraction.</b> Costs
 nothing in spatial quality, and it deletes exactly the failure modes <code>director.ts</code>
 currently hand-validates (missing fields, invalid enum values) — C's dropped-<code>h</code> bug

@@ -1,0 +1,64 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "**Locating Specific Controls**\n\nMy current focus is on precisely identifying and delineating the bounding boxes for ten distinct controls within the image. This involves pinpointing elements such as the central play/pause button and the adjacent rewind control.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Defining Control Locations**\n\nI'm currently defining the precise coordinates for ten UI controls. This involves marking the play/pause, previous, and next buttons, along with their surrounding elements like the repeat, queue, volume knob, and seek slider. I am also outlining the areas for visualizer and album art.\n\n",
+            "thought": true
+          },
+          {
+            "text": "**Marking All Elements**\n\nI'm continuing to refine the bounding boxes for all ten identified UI controls, ensuring accurate placement for the play/pause, prev, and next buttons, as well as the repeat, queue, volume, and shuffle toggles. I'm also defining the regions for the seek slider, visualizer, and album art.\n\n",
+            "thought": true
+          },
+          {
+            "text": "```json\n[\n  {\"box_2d\": [381, 413, 486, 578], \"label\": \"vol\"},\n  {\"box_2d\": [161, 619, 240, 746], \"label\": \"next\"},\n  {\"box_2d",
+            "thoughtSignature": "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"
+          },
+          {
+            "text": "\": [247, 574, 325, 700], \"label\": \"queue\"},\n  {\"box_2d\": [144, 405, 254, 582], \"label\": \"playpause\"},\n  {\"box_2d\": [512, 236, 567, 759], \"label\": \"seek\"},\n  {\"box_2d\": [347, 599, 467, 862], \"label\": \""
+          },
+          {
+            "text": "album_art\"},\n  {\"box_2d\": [586, 405, 661, 594], \"label\": \"shuffle\"},\n  {\"box_2d\": [268, 128, 475, 394], \"label\": \"visualizer\"},\n  {\"box_2d\": [160, 244, 238, 370], \"label\": \"prev\"},\n  {\"box_2d\": [280, 429, 35"
+          },
+          {
+            "text": "9, 559], \"label\": \"repeat\"}\n]\n```"
+          }
+        ]
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": 3.5056818181818183
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 747,
+    "candidatesTokenCount": 352,
+    "totalTokenCount": 1668,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 187
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 560
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 352
+      }
+    ],
+    "thoughtsTokenCount": 569
+  },
+  "modelVersion": "gemini-3-pro-image-preview",
+  "createTime": "2026-07-11T23:03:44.377065Z",
+  "responseId": "0MtSaumBF4mFpucPworVkAQ"
+}

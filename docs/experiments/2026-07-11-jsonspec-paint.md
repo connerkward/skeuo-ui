@@ -104,6 +104,24 @@ load-bearing" stands, but its calibration note should record: with the documente
 convention (order-corrected), the image model's boxes are ~10× better than the imgjson
 numbers suggested.
 
+**Stability probe (same day, follow-up — the caveats above, tested):** 3 more calls in the
+same documented convention (`stability_probe.py` / `stability_probe.json`; seeds 72/73
+repeat wc-goldshield, seed 74 cross-checks diablo-gothic, ~$0.15). The frame fix is
+**validated** — best-reading mean IoU 0.72 / 0.54 / 0.37 (vs 0.79 on the n=1 probe), with
+per-control centers ≤26px for 9/10, 8/10, 5/10 controls respectively — but the transposition
+is **refuted as a stable quirk**: seeds 72/73/74 all emitted Google's DOCUMENTED order
+([ymin,xmin,ymax,xmax]); only the original seed-71 call transposed. Element order varies
+call-to-call → a fixed slot-swap calibration is wrong on some calls; a consumer would need
+per-call disambiguation (non-positive w/h under the documented reading flagged 4/10 boxes on
+seed 71's call — a tell, untested as a discriminator). Whole-control semantic swaps also
+recur (seed 73: vol+shuffle boxed the strip sprites, 1852/1130px off; seed 74:
+visualizer↔album_art, ~1090px). Net: real spatial sense in the native convention, NOT
+witness-grade — the TEXT model (stable convention + responseSchema, ~13px centers, cheaper
+per call) dominates for any witness role; extract12 stays load-bearing. The imgjson
+experiment's pages + doc now carry a ROUND 2 CORRECTION reflecting this
+([2026-07-11-image-model-json-output.md](2026-07-11-image-model-json-output.md),
+`imgjson/explain.html#round2`, `imgjson/index.html` banner).
+
 ## Ops notes
 
 - `twoimg/score_twoimg.py` has an **unguarded top-level scoring loop** — importing it
@@ -119,8 +137,11 @@ numbers suggested.
 
 - `cd tools/mask-align-exp/gen12/jsonspec && python3 run_batch.py && python3
   score_jsonspec.py && python3 sota_eye_jsonspec.py && python3 bonus_probe.py && python3
-  build_page.py` (gcloud auth on the project; FAL_KEY in central/.env).
-- **Spend:** 8 gens × ~$0.24 = $1.92 + bonus probe ~$0.05 (text-out only) + 11 VLM calls
-  × ~$0.02 ≈ $0.22 → **≈ $2.2 total**.
+  stability_probe.py && python3 build_page.py` (gcloud auth on the project; FAL_KEY in
+  central/.env). `stability_probe.py --rescore` rescores from the saved raw responses, $0
+  (seed 72's raw was swept by the 2026-07-11 unscoped-commit incident — see
+  `docs/INCIDENTS.md`; --rescore reconstructs it from the recorded box_2d arrays).
+- **Spend:** 8 gens × ~$0.24 = $1.92 + bonus probe ~$0.05 (text-out only) + stability
+  probe 3 calls ≈ $0.15 + 11 VLM calls × ~$0.02 ≈ $0.22 → **≈ $2.35 total**.
 - Judged by: deterministic gates/metrics + SOTA-eye (gemini-2.5-pro) with per-claim pixel
   adjudication by the agent. **Human verdict: PENDING** — review `results.html`.

@@ -1,5 +1,25 @@
 # 2026-07-11 — Can the IMAGE model output usable JSON? (+ structured-I/O viability sweep)
 
+> **ROUND 2 CORRECTION (same day, jsonspec experiment):** the "broken y-frame /
+> uncalibratable internal frame" finding below was an artifact of THIS experiment's ad-hoc
+> 0-1 `{x,y,w,h}` convention, not the model's spatial sense. The jsonspec experiment's
+> bonus probe (`tools/mask-align-exp/gen12/jsonspec/bonus_probe.py`) re-asked in Google's
+> documented `box_2d=[ymin,xmin,ymax,xmax]@0-1000` convention and got real boxes (mean IoU
+> 0.79 under an element-order correction), and its stability probe
+> (`jsonspec/stability_probe.py`, 3 further calls: seeds 72/73 repeat wc-goldshield, 74
+> cross-checks diablo-gothic) measured best-reading mean IoU **0.79 / 0.72 / 0.54 / 0.37**
+> across the 4 total calls — BUT found the element order **unstable call-to-call** (seed 71
+> emitted `[ymin,xmin,xmax,ymax]`; 72/73/74 emitted the documented order) with
+> whole-control semantic swaps in 2/4 calls. The operational verdict (not usable for
+> manifests/detection; extract12 stays load-bearing) is unchanged; the mechanism claim is
+> corrected. Full re-read: the "ROUND 2 CORRECTION" section of `imgjson/explain.html`; the
+> "Bonus" section of [2026-07-11-jsonspec-paint.md](2026-07-11-jsonspec-paint.md);
+> raw: `jsonspec/bonus_probe.json`, `jsonspec/stability_probe.json`. Still-standing
+> round-1 claims (each re-checked against the probe outputs): thinking-narration prefix
+> (re-confirmed in all 3 probe calls, ~880–905 chars), image-model
+> responseMimeType/Schema hard-400 (not retested, nothing contradicts), TEXT-alone 400
+> (not retested), interleaved-mode box collapse (not retested, n=1).
+
 ## Question
 
 1. Can `gemini-3-pro-image-preview` (the paint model) return TEXT — specifically usable
@@ -110,7 +130,9 @@ box-tightness noise. Structure changes *reliability*, not *spatial quality*.
 - **Image model text/JSON output: real but NOT usable** — for (a) mask-cell manifests or
   (b) replacing detection. TEXT must ride with IMAGE modality; no structured-output
   params (hard 400); narration prefix always present; and box y-coords arrive in an
-  internal frame (raw IoU 0.003, only rescuable WITH ground truth). Interleaved
+  internal frame (raw IoU 0.003, only rescuable WITH ground truth) *(← this last clause
+  withdrawn in ROUND 2, see the correction banner at top — convention artifact; "NOT
+  usable" stands on order-instability + semantic swaps instead)*. Interleaved
   image+JSON works mechanically but box quality collapses (0.02–0.04 IoU).
 - **Structured OUTPUT viable: director YES, extraction YES, image-model manifest NO.**
   `responseSchema` on the text model costs nothing in quality and deletes the

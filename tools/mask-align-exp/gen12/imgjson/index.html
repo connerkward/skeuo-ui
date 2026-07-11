@@ -9,6 +9,8 @@ th,td{border:1px solid #333;padding:.45rem .6rem;text-align:left;vertical-align:
 th{background:#1e1e24} .sub{color:#9a9aa4;font-size:.75rem;margin-top:.2rem}
 .meta{background:#1e1e24;border:1px solid #333;border-radius:8px;padding:.7rem 1rem;font-size:.85rem;color:#c8c8d0}
 .verdict{background:#182418;border:1px solid #2c4a2c;border-radius:8px;padding:1rem;margin:1rem 0}
+.correction-banner{background:#241608;border:2px solid #a85a1a;border-radius:8px;padding:.8rem 1.1rem;margin:.8rem 0;color:#ffd4a3}
+.correction-banner b{color:#ffb066}
 .bad{color:#ff7a7a} .good{color:#7ae08a} .warn{color:#ffc266}
 img{max-width:100%;height:auto;border:1px solid #333;border-radius:6px}
 .grid{display:flex;flex-wrap:wrap;gap:1rem} .grid>div{flex:1 1 300px;min-width:280px}
@@ -17,6 +19,19 @@ figcaption{font-size:.78rem;color:#9a9aa4;margin-top:.3rem}
 </style></head><body>
 <h1>imgjson — can <code>gemini-3-pro-image-preview</code> output usable JSON?</h1>
 <p><a href="explain.html">&rarr; guided walkthrough of this eval (explain.html)</a> — start here if you weren't in the room for this experiment.</p>
+<div class=correction-banner><b>ROUND 2 CORRECTION (2026-07-11, jsonspec bonus + stability probes):</b> the
+"broken y-frame" finding in §3/§4 below (arm A, mean IoU 0.003) was an artifact of the AD-HOC
+0-1 <code>{x,y,w,h}</code> convention this experiment invented, not a limit of the model's
+spatial sense. Asked in <b>Google's own documented</b> <code>box_2d</code> convention
+(<code>[ymin,xmin,ymax,xmax]</code> normalized 0-1000), the same image model's boxes are real:
+best-reading mean IoU across 4 calls = <b>0.79 / 0.72 / 0.54 / 0.37</b> (seeds 71-74; seeds
+72/73 repeat wc-goldshield, 74 cross-checks diablo-gothic). BUT the element order is
+<b>unstable call-to-call</b> (1 of 4 calls emitted [ymin,xmin,xmax,ymax] instead of the
+documented order) and 2 of 4 calls carry whole-control semantic swaps — so the operational
+verdict (not usable for manifests/detection; extract12 stays load-bearing) is unchanged.
+Full re-read, stability table, and re-verified still-standing claims: the
+<a href="explain.html#round2">ROUND 2 CORRECTION section in explain.html</a> ·
+raw: <a href="../jsonspec/stability_probe.json">jsonspec/stability_probe.json</a>.</div>
 <div class=meta><b>Models:</b> gemini-3-pro-image-preview (image) + gemini-3.1-pro-preview (text/director), both direct Vertex AI
 (project muser-2605300220, generateContent) · <b>Source image:</b> gen12 assets-wc-goldshield/paint.png (2304×3712) ·
 <b>Ground truth:</b> its regions.json <code>device</code> boxes (extract12-detected geometry) ·
@@ -116,8 +131,11 @@ task. <b>Paint-generation-side structured prompts NOT tested</b> (needs image ge
 <h2>6 · Verdict</h2>
 <div class=verdict>
 <b>Image-model text/JSON output:</b> real but <b>NOT usable</b> for (a) mask-cell manifests or (b) replacing detection —
-TEXT must ride with IMAGE modality, no responseMimeType/Schema (400), narration prefix must be stripped, and box y-coords
-arrive in an internal frame (raw IoU 0.003; only affine-rescuable WITH ground truth you wouldn't have). Interleaved
+TEXT must ride with IMAGE modality, no responseMimeType/Schema (400), narration prefix must be stripped, and <s>box y-coords
+arrive in an internal frame (raw IoU 0.003; only affine-rescuable WITH ground truth you wouldn't have)</s>
+<span class=warn>ROUND 2: the internal-frame clause is withdrawn — asked in 0-1000 <code>box_2d</code> the boxes are real
+(mean IoU 0.37–0.79 per call) but the element ORDER is unstable call-to-call and whole-control swaps persist, so
+"NOT usable" stands (see banner at top)</span>. Interleaved
 image+JSON in one call works mechanically but box quality collapses (IoU 0.02–0.04 even after rescue).<br><br>
 <b>Structured output viability:</b> director <b>YES</b> (responseSchema: 3/3 parse + 3/3 field-complete + enum-safe styles,
 equal quality to prose arm — adopt, it deletes the validation failure modes) · extraction <b>YES</b> (equal spatial accuracy,
