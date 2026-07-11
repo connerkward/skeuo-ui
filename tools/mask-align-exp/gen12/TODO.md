@@ -406,3 +406,42 @@ Flip only **between** batches, never while `orchestrate12.py` is mid-run.
   differs) `abshape/genskin_ab.py:edit_vertex()`, which already ran 4 real
   generations today on this same project/auth — independent convergence on the
   same proven call shape, not a fresh untested integration.
+
+### Knob baked-rotation fix (`extract12.py` + `build_player.py`, 2026-07-11)
+
+- **Bug:** knobs started at a non-zero rotation on several skins (steam-porthole,
+  ps1-crunchy, myst-arcanum, fallout-vault) — the cap sprite is cut with its painted
+  pointer/notch baked at whatever angle the model drew, and the player rotated
+  RELATIVE to that raw cut, so value-0.5/init showed the indicator at the baked
+  angle instead of straight up.
+- **Fix (generalizable, both stages):**
+  - `extract12.py`: new `detect_knob_zero_deg()` — material-agnostic, relative-signal
+    detector. Finds the painted pointer/notch as a local radial anomaly in the cut
+    cap sprite's own gradient-magnitude angular profile (robust median+MAD z-score
+    vs the cap's otherwise radially-symmetric body), rejects anomalies that are
+    angularly WIDE (a directional specular highlight streak, not a carved notch).
+    Emits `regions[knob].knob_zero_deg` in degrees CW-from-up, or `null` when no
+    anomaly clears the bar (diablo-gothic, n64-prerender-character correctly null —
+    no reliable indicator, never guessed).
+  - `build_player.py`: counter-rotates the cap by `knob_zero_deg` so value 0.5/init
+    shows the indicator at 12 o'clock regardless of the raw cut's baked orientation;
+    documented convention: value 0 → -135° (~7 o'clock), value 1 → +135° (~5 o'clock).
+- **Verified:** re-extracted + rebuilt the 4 named skins + 2 regression skins
+  (fa-pod, n64-cutscene) from their EXISTING paints (no re-rolls); driven in the
+  real shipped `player.html` via Playwright (synthetic pointer drag), close-up
+  element crops at init + after-drag, cross-checked by `google/gemini-2.5-pro` via
+  fal `openrouter/router/vision` (reasoning:true) — VERDICT: PASS, all init crops
+  read pointer-at-12-o'clock, all drag crops read correct clockwise rotation, both
+  regression skins visually unchanged (fa-pod -4°, n64-cutscene 0°, imperceptible).
+- **Known limitation — myst-arcanum:** the cap sprite carries TWO carved marks (a
+  V-notch near 0° and a thin wedge slit at 94°) rotating together as one rigid cap.
+  The detector's relative-signal metric picked the wedge (z=17.3, ~4.8x the next
+  peak) as the stronger local radial anomaly; the VLM cross-check independently
+  argued the V-notch (design convention: indicators default to 12 o'clock) is more
+  likely the "intended" pointer. Neither geometric feature (fill-ratio, radial span)
+  disambiguates — the two marks measure nearly identically. This is a genuine
+  ambiguity in the SOURCE ART (two plausible indicator-like carvings baked onto one
+  sprite), not a detector bug to special-case per-skin (disallowed by
+  `fix-generalizable-rule`). The render is now internally consistent either way
+  (the sweep tracks correctly from whichever mark was chosen) and gate-PASSes;
+  flagging for human judgment call if the wedge reading looks wrong on review.

@@ -282,6 +282,64 @@ def rrect_fit(b):
                     if s > best[0]: best = (s, cx0 + dx, cy0 + dy, w0 * sw, h0 * sh)
     return best
 
+# ---- KNOB ZERO-ANGLE: detect the BAKED pointer/indicator angle on the cut cap sprite ----
+# The model paints the pointer/notch at whatever angle it feels like; the player then applies
+# rotation RELATIVE TO THE CUT, so value-0 shows the baked angle unless we counter-rotate.
+# Material-agnostic (relative signals only, no absolute luminance/colour constants): the
+# indicator is a LOCAL RADIAL ANOMALY — an angular bin of the cap's own gradient-magnitude
+# profile that stands out (robust median+MAD z-score) from the cap's otherwise
+# radially-symmetric body (brushed-metal conic texture, knurled rim) — AND is angularly
+# NARROW (a carved notch/tab), unlike a directional specular highlight streak which is wide.
+# Convention: degrees CLOCKWISE from "up" (12 o'clock), matching CSS rotate(), measured in the
+# CUT SPRITE's own axis-aligned frame (same frame build_player.py loads — a tight-crop does not
+# rotate, so this angle transfers directly). Returns None when no anomaly clears the bar —
+# never guess (placement-invariants-rule).
+def detect_knob_zero_deg(cap_path, nbins=180, r_lo=0.28, r_hi=0.94, z_thresh=5.0, prom=2.5, max_width_deg=40):
+    if not os.path.exists(cap_path): return None, "no-cap-file"
+    arr = np.asarray(Image.open(cap_path).convert("RGBA")).astype(float)
+    H, W = arr.shape[:2]
+    alpha = arr[:, :, 3] > 40
+    if alpha.sum() < 400: return None, "too-few-alpha-px"
+    ys, xs = np.where(alpha)
+    cy, cx = ys.mean(), xs.mean()
+    R = float(np.percentile(np.hypot(xs - cx, ys - cy), 97))
+    if R < 8: return None, "too-small"
+    gray = arr[:, :, :3].mean(2)
+    gyy, gxx = np.gradient(gray); gmag = np.hypot(gxx, gyy)
+    YY, XX = np.mgrid[0:H, 0:W]
+    dxp = XX - cx; dyp = YY - cy
+    rad = np.hypot(dxp, dyp)
+    theta = np.degrees(np.arctan2(dxp, -dyp)) % 360.0     # 0 = up, clockwise +ve (CSS rotate() sense)
+    ring = alpha & (rad > r_lo * R) & (rad < r_hi * R)
+    if ring.sum() < 300: return None, "ring-too-small"
+    bw = 360.0 / nbins
+    bin_idx = np.clip((theta[ring] / bw).astype(int), 0, nbins - 1)
+    prof = np.zeros(nbins); cnt = np.zeros(nbins)
+    np.add.at(prof, bin_idx, gmag[ring]); np.add.at(cnt, bin_idx, 1)
+    valid = cnt > 3
+    if valid.sum() < nbins * 0.5: return None, "insufficient-angular-coverage"
+    avgprof = np.full(nbins, np.nan); avgprof[valid] = prof[valid] / cnt[valid]
+    med = np.nanmedian(avgprof); mad = np.nanmedian(np.abs(avgprof - med)) + 1e-6
+    z = (avgprof - med) / mad; zz = np.nan_to_num(z, nan=-999)
+    peak = int(np.nanargmax(zz)); peak_z = float(z[peak])
+    others = np.delete(z, peak); others = others[np.isfinite(others)]
+    p90 = float(np.nanpercentile(others, 90)) if len(others) else 0.0
+    # reject WIDE humps (a directional specular streak along the bezel) — a real carved
+    # notch/pointer is angularly narrow. Width = contiguous arc around the peak above half its
+    # excess over baseline.
+    half = med + (avgprof[peak] - med) * 0.5
+    lo = peak
+    while zz[(lo - 1) % nbins] > -900 and avgprof[(lo - 1) % nbins] > half and (peak - lo) < nbins // 2: lo -= 1
+    hi = peak
+    while zz[(hi + 1) % nbins] > -900 and avgprof[(hi + 1) % nbins] > half and (hi - peak) < nbins // 2: hi += 1
+    width_deg = (hi - lo) * bw
+    if peak_z < z_thresh or (peak_z - p90) < prom:
+        return None, f"no-strong-anomaly (z={peak_z:.1f})"
+    if width_deg > max_width_deg:
+        return None, f"anomaly-too-wide (likely specular, width={width_deg:.0f}deg)"
+    return peak * bw, f"z={peak_z:.1f} width={width_deg:.0f}deg"
+
+
 drift_samples = []
 for k in KNOBS:
     r = regs.get(k)
@@ -295,6 +353,9 @@ for k in KNOBS:
     r["device"] = [(fx - fr) / GW, (fy - fr) / GH, 2 * fr / GW, 2 * fr / GH]
     r["seat"] = [fx / GW, fy / GH, fr / GW]
     print(f"[circle-fit] {k}: ({fx:.0f},{fy:.0f}) r={fr:.0f}px (mask offset {fx - mcx:+.0f},{fy - mcy:+.0f}px)")
+    zdeg, zinfo = detect_knob_zero_deg(os.path.join(BIREF, f"{k}.png"))
+    r["knob_zero_deg"] = zdeg
+    print(f"[knob-zero] {k}: {zdeg if zdeg is None else round(zdeg, 1)}  ({zinfo})")
 if drift_samples:
     gdx = float(np.median([d[0] for d in drift_samples])) / GW
     gdy = float(np.median([d[1] for d in drift_samples])) / GH

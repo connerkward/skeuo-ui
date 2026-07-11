@@ -216,8 +216,15 @@ const V='{V}';
     }}catch(e){{ el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%,#ffffff4d,#fff0 60%)'; }}
     // start at 0.5 → the -135..+135° rotation has SYMMETRIC headroom both directions
     // (review: "goes far left but not right at all" — a 0.7 start left only 81° of CW travel)
+    // ZERO-DEG CONVENTION: value 0 -> -135deg (~7 o'clock), value 1 -> +135deg (~5 o'clock),
+    // value 0.5 -> 0deg (12 o'clock/up). The cap sprite is cut with its painted pointer/notch
+    // baked at whatever angle the model drew (regions.json knob_zero_deg, CW-from-up, or null
+    // when extract12 found no reliable indicator) — counter-rotate by that baked angle so the
+    // ABOVE convention holds regardless of the raw cut's orientation (bug: without this, value
+    // 0.5/init showed the indicator at its baked angle instead of straight up).
     const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
-    const rend=()=>cap.style.transform='rotate('+(-135+val*270)+'deg)';rend();
+    const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
+    const rend=()=>cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)';rend();
     el.addEventListener('pointerdown',e=>{{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();}});
     el.addEventListener('pointermove',e=>{{if(drag){{val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));rend();}}}});
     addEventListener('pointerup',()=>drag=false);
