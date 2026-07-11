@@ -444,7 +444,7 @@ export function ringGate(
 
 // 3×3-cross binary dilation/erosion (scipy default structure, border_value=0 —
 // erosion always eats frame-border pixels)
-function dilateCross(src: Uint8Array, W: number, H: number, out: Uint8Array): void {
+function dilateCross(src: Uint8Array<ArrayBuffer>, W: number, H: number, out: Uint8Array<ArrayBuffer>): void {
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
@@ -454,7 +454,7 @@ function dilateCross(src: Uint8Array, W: number, H: number, out: Uint8Array): vo
     }
   }
 }
-function erodeCross(src: Uint8Array, W: number, H: number, out: Uint8Array): void {
+function erodeCross(src: Uint8Array<ArrayBuffer>, W: number, H: number, out: Uint8Array<ArrayBuffer>): void {
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
@@ -465,7 +465,7 @@ function erodeCross(src: Uint8Array, W: number, H: number, out: Uint8Array): voi
   }
 }
 // scipy.ndimage.binary_closing(iterations=n): n dilations then n erosions
-function binaryClosing(bin: Uint8Array, W: number, H: number, iterations: number): Uint8Array {
+function binaryClosing(bin: Uint8Array<ArrayBuffer>, W: number, H: number, iterations: number): Uint8Array<ArrayBuffer> {
   let a = bin, b = new Uint8Array(W * H);
   for (let i = 0; i < iterations; i++) { dilateCross(a, W, H, b); [a, b] = [b, a]; }
   for (let i = 0; i < iterations; i++) { erodeCross(a, W, H, b); [a, b] = [b, a]; }
