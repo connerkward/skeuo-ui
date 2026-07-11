@@ -61,6 +61,51 @@ def gen_cell(arm, seed, scores):
             f'</div>{summary}{table}</div>')
 
 
+def conclusion_section(scores):
+    """Verdict block, computed live from scores.json — never hand-typed numbers."""
+    def arm_vals(arm):
+        return [scores[f"{arm}-{s}"] for s in SEEDS if f"{arm}-{s}" in scores]
+
+    pos, num, col = arm_vals("position"), arm_vals("numbered"), arm_vals("color")
+    if not (pos and num and col):
+        return ""  # incomplete run — no verdict to draw yet
+
+    pos_n, num_n, col_n = len(pos), len(num), len(col)
+    pos_compliant = sum(1 for v in pos if v["iou_pass_at_0.5"] > 0)
+    pos_mirror_n = sum(1 for v in pos if v["detected_topology"] == "mirror")
+
+    num_topo_stack = sum(1 for v in num if v["detected_topology"] == "stack")
+    num_collapse = sum(1 for v in num if v["iou_pass_at_0.5"] == 0)
+    num_clean = sum(1 for v in num if v["iou_pass_at_0.5"] == v["iou_pass_total"])
+
+    col_topo_stack = sum(1 for v in col if v["detected_topology"] == "stack")
+    col_topo_mirror = sum(1 for v in col if v["detected_topology"] == "mirror")
+
+    return f"""<section class="conclusion">
+<h2>Conclusion</h2>
+<div class="verdict-box">
+<div class="verdict-badge">VERDICT</div>
+<p><b>Position-only correlation is unreliable</b> — {pos_compliant}/{pos_n} position seeds ever
+followed the requested reading-order stack (mean IoU stack = 0.000 in all {pos_mirror_n}/{pos_n}
+mirror-topology seeds). The model instead consistently reverted to mirroring the panel's own
+grid layout into the mask column rather than following the prose reading-order convention.</p>
+<p><b>Numbered tags got the topology right ({num_topo_stack}/{num_n} adopted the stack
+convention) but format-collapsed in {num_collapse}/{num_n}</b> (row-collapsing at N=8 cells) —
+only {num_clean}/{num_n} seeds cleanly passed IoU&ge;0.5 on every cell. Directionally the
+strongest colourless candidate, not yet reliable enough to ship.</p>
+<p><b>Color (today's mechanism) is bimodal</b> — {col_topo_stack}/{col_n} seed followed the
+stack convention cleanly, {col_topo_mirror}/{col_n} defaulted to mirror fallback, with no
+partial-credit middle ground.</p>
+<p><b>Recommendation:</b> do NOT de-colour the mask column on this result. Position-only is
+ruled out. If numbered tags are revisited, isolate why the N=8 format collapsed (seed-specific
+noise vs. a real per-cell-count ceiling) before considering it for the real pipeline.
+<b>n=3/arm — directional, not conclusive.</b></p>
+<p class="verdict-meta">Full method, per-seed table, and human verdict:
+<code>docs/experiments/2026-07-11-position-mask-correlation.md</code></p>
+</div>
+</section>"""
+
+
 def arm_section(arm, scores):
     cells = "".join(gen_cell(arm, s, scores) for s in SEEDS)
     vals = [scores[f"{arm}-{s}"] for s in SEEDS if f"{arm}-{s}" in scores]
@@ -83,7 +128,7 @@ def main():
     scores = json.load(open(os.path.join(HERE, "scores.json"))) if os.path.exists(os.path.join(HERE, "scores.json")) else {}
     n_gens = len(glob.glob(os.path.join(HERE, "assets-*", "paint.png")))
     cost = n_gens * COST_PER_GEN
-    body = "".join(arm_section(a, scores) for a in ARMS)
+    body = "".join(arm_section(a, scores) for a in ARMS) + conclusion_section(scores)
     html = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>poscorr — position-mask correlation experiment</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -110,6 +155,18 @@ th, td {{ padding:2px 5px; text-align:left; border-bottom:1px solid #23242e; }}
 th {{ color:#8a8d9e; font-weight:600; }}
 .good {{ color:#7ee787; }} .mid {{ color:#ffd479; }} .bad {{ color:#ff8080; }}
 .topo {{ font-family:ui-monospace,monospace; background:#23242e; padding:1px 6px; border-radius:4px; }}
+.conclusion {{ margin-top:36px; }}
+.conclusion h2 {{ border-bottom-color:#3a2f1a; }}
+.verdict-box {{ position:relative; background:#1c1710; border:1px solid #4a3a1a; border-left:4px solid #ffd479;
+  border-radius:10px; padding:18px 20px 16px; font-size:13.5px; line-height:1.55; color:#e8e2d0; }}
+.verdict-box p {{ margin:0 0 10px; }}
+.verdict-box p:last-of-type {{ margin-bottom:0; }}
+.verdict-box b {{ color:#ffd479; }}
+.verdict-badge {{ display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:0.08em;
+  color:#0d0e12; background:#ffd479; padding:2px 8px; border-radius:4px; margin-bottom:10px; }}
+.verdict-meta {{ font-size:11px; color:#8a8d9e; margin-top:12px !important; padding-top:10px;
+  border-top:1px solid #2a2b35; }}
+.verdict-meta code {{ color:#9fd3ff; }}
 </style></head><body>
 <h1>poscorr — position-mask correlation (pure-control, non-skin)</h1>
 <div class="hdr">
