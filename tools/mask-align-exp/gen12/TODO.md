@@ -1,5 +1,77 @@
 # gen12 TODO
 
+## Let the DIRECTOR decide whether optional pipeline stages are worth running per skin (2026-07-11, user directive)
+
+Not implemented. Currently every flag-gated optional stage (`PBR_PASS_ENABLED`,
+`DIRECTOR_REVIEW_ENABLED`, and any future one — see `orchestrate12.py`'s flag block, ~L52-67)
+is a global on/off: flip it `True` and it runs for **every** skin, flip it `False` and it runs
+for none. That's the wrong granularity — a matte-clay theme has no business paying for an
+emissive pass (nothing should glow), while an ember-runes theme clearly does. The fix isn't
+per-skin hand-toggling (that's the `fix-generalizable-rule` anti-pattern); it's letting the
+DIRECTOR decide, per skin, from the theme spec.
+
+**Where the decision hook lives:** `orchestrate12.py`'s flag block, right before each stage's
+`if <FLAG>_ENABLED: run([...])`. When the global flag is `True`, don't unconditionally `run()`
+the stage — first call a cheap director gate (a new thin wrapper, or a mode flag on
+`director_review.py`) that reads the theme spec and returns a verdict; only run the stage if
+the verdict says to. Global flag semantics change from "always run" to "director MAY choose to
+run" — the global flag becomes a *permission*, not a *command*.
+
+**Spec surface to decide from:** the director already has the right context object —
+`director_review.py` loads `theme_specs/<id>.json` (`spec_path`, ~L49) and already extracts
+`spec.get("css", {})` (~L132) and `spec.get("lighting", {})` (~L133, incl. `emissive_hint` /
+`pulse`) for its existing judgment prompt. The new per-stage gate reuses that same load — no
+new spec-reading code, just a narrower prompt asking "does THIS theme spec warrant stage X" vs
+the existing prompt's "how good is the finished render." Eventually (per the semantic-emissive
+research doc below) this could also see the painted image, not just the spec text — but the
+first cut should be spec-only, text-only, to keep it cheap and fast (see cost logic below).
+
+**Decision shape:** a structured JSON verdict, `{"run": bool, "why": "<one-line rationale>"}`
+per candidate stage, logged into `orch.json` (the per-skin run summary `orchestrate12.py`
+already writes) under a `director_decisions` key — e.g.
+`{"emissive": {"run": false, "why": "matte clay theme, no light-emitting elements in spec"}}` —
+so a skipped stage is auditable after the fact (why didn't ember-runes get its glow pass? check
+`orch.json`, not tribal memory or a re-run).
+
+**Cost logic — only worth it when skip-rate is meaningful:** a director gate call is
+text-only-on-spec, so it's cheap (~$0.01/call range, well under `director_review.py`'s own
+~$0.02-0.05 full-render judgment) but it's not free, and it's an extra round-trip added to
+every roll. It only pays for itself when a real fraction of skins would otherwise burn spend
+on a stage they don't need — e.g. gating a ~$0.03+ emissive/PBR pass ($0.01 gate ADDS cost on
+skins that WOULD run it, but SAVES the full $0.03+ on skins that wouldn't) nets positive once
+skip-rate is meaningful (rough breakeven: skip-rate > gate-cost / stage-cost, i.e. >~33% skipped
+for a $0.01 gate vs $0.03 stage). Don't wire this for a stage where every skin in the roster
+would say yes anyway — check the roster's actual theme_specs distribution before implementing,
+not after.
+
+**Generalizes to:** any future flag-gated optional stage, not just emissive/PBR — the pattern
+(global flag = permission, director spec-read = per-skin verdict, verdict logged to `orch.json`)
+should be the default shape for the *next* optional stage added, not a one-off for emissive.
+
+**Cross-links:**
+- Emissive rethink (§1, this doc's neighbor "think-about notes") — the concrete first use case:
+  [`docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink`](../../../docs/design/2026-07-11-think-about-notes.md#1-emissive-rethink)
+- Semantic-ML emissive landscape (2-stage VLM-judge + SAM-3-refiner) — a heavier per-skin
+  judgment call this pattern could eventually route into:
+  [`docs/design/2026-07-11-semantic-emissive-research.md`](../../../docs/design/2026-07-11-semantic-emissive-research.md)
+- `DIRECTOR_REVIEW_ENABLED` in `orchestrate12.py` (~L65) — the existing flag this pattern
+  generalizes; `director_review.py` — the existing director spec-read surface to reuse
+  (`spec_path`/`css`/`lighting` extraction, ~L49-158).
+
+## Position-mask correlation experiment (2026-07-11) — poscorr/
+
+Pure-control (non-skin, abstract) feasibility test: can `gemini-3-pro-image-preview` correlate
+an output mask CELL to its template REGION by POSITION ALONE (reading-order convention, no
+colour/number in the prompt), vs an explicit NUMBER-tag convention, vs today's COLOUR-key
+convention? Motivated by the twoimg NEUTRAL-arm finding that guide-colour bleed persists via
+the TEXT PROMPT (the mask spec must NAME each colour) even with a colourless reference image —
+this asks the prior question of whether position-only correlation is reliable enough to drop
+colour from the mask column entirely. Self-contained harness: `poscorr/template.py` (synthetic
+8-region template + ground truth), `poscorr/gen_poscorr.py` (Vertex gen, reuses
+`twoimg/genskin_twoimg.py`'s proven `edit_vertex_multi`), `poscorr/score_poscorr.py` ($0
+deterministic IoU/occupancy/contamination scoring), `poscorr/build_results.py` (results page).
+Record: `docs/experiments/2026-07-11-position-mask-correlation.md`.
+
 ## Director final-review stage added (2026-07-11) — flag-gated OFF
 
 `director_review.py` <assets-dir> — renders the REAL served `player.html` via a throwaway,
