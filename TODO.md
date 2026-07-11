@@ -403,10 +403,51 @@ the paint prompt (`src/generate/pipeline.ts`).
 - [ ] **Name + domain decision** — see Naming section below. Leaning `.fm` TLD (reads as a radio station, carries "player"). Top live candidates, all confirmed FREE on `.fm` (~$85/yr): **guise.fm** (skins = a guise you put on), **ruckus.fm** / **coup.fm** (rebellion/noise), **fib.fm** (the liar→shapeshifter angle). Highest *squat/resale* value = the 3-letter words **imp.fm / vex.fm / fib.fm**, or **racket.fm** for music-buyer resale. Cheap holds: `fib.fun` (~$15), `guise.lol` (~$8). No domain bought yet — still on free `skeuo-ui.pages.dev`.
 
 ## Generation feature — production hardening (from the build agent)
-- [ ] Loose alpha mask: `/api/generate` uses the constant region mask, so the silhouette doesn't trace horns/jaws like the Python pipeline (which thresholds the envelope PNG). Add a server-side envelope-threshold pass to tighten it.
-- [ ] Frames returned as ~7.6 MB data: URLs — bind an R2 bucket (uncomment `SKINS` in wrangler.toml) and store + re-compress instead.
-- [ ] Rate limit is in-memory (per-edge, not durable) — move to KV or Durable Objects for a real cap.
-- [ ] Synchronous request (~75s) — a "pending" poll branch exists in the contract but no queue is wired; add one before real traffic.
+> **Reconciled 2026-07-11** against what's ACTUALLY deployed (this TODO block was
+> stale — items 1-3 were already fixed, by different/better mechanisms than what's
+> literally written below, before this pass started). Full detail + live-verification
+> evidence in the header comment of `functions/api/generate.ts`. Verified against
+> production (skeuo.fm) with 3 real test generations, total spend $0.35.
+- [x] **Loose alpha mask** — DONE, but NOT via an envelope-threshold port (that was
+  never built). Instead the device frame + every control sprite are background-
+  removed by real ML segmentation (`fal-ai/birefnet/v2`, server-proxied through
+  `/api/cutout`) matting the actual painted pixels — strictly better than
+  thresholding a synthetic envelope PNG. Verified live 2026-07-11: the returned
+  alpha traces gear teeth/notches/cut-through holes (84% fill inside its bbox, not
+  a rectangle). The literal "constant region mask" fallback (`whiteKeyCanvas` in
+  `cutoutClient.ts`) still exists but is LEGACY/DEMO-only — never hit in a real
+  deployed generation (`GenerateDone.layout` is a required field in prod).
+- [x] **R2 for frames** — DONE. `SKINS` bucket (`skeuo-skins`, created 2026-06-17)
+  is bound in `wrangler.toml` and live; `paint.png`/`template.json`/`meta.json`
+  land in R2 at generation time, the browser uploads the cut `frame.png` +
+  `sprites/<bind>.png` after, everything serves immutably via `/api/asset/<key>`.
+  No data: URLs in production. Verified live 2026-07-11 (full generate → cutout →
+  finalize → asset-fetch round trip).
+- [x] **Durable rate limit** — DONE, via **KV** (not a Durable Object — a DO would
+  remove the documented eventual-consistency race but isn't warranted at this
+  traffic/spend level for a hobby endpoint). `src/generate/meter.ts` was already
+  live (edge-shared spend cap + per-IP/day bucket, reserve-before-spend). What
+  THIS pass did: deleted `src/generate/ratelimit.ts`, an in-memory per-isolate
+  duplicate still wired into `handler.ts` alongside the KV meter — redundant and
+  non-durable, now removed so there's exactly one (durable) limiter. Verified
+  live: `ip:gen:<ip>:<day>` KV key increments on real requests.
+- [~] **Async queue for the ~75s request** — PARTIAL, honestly not a real queue.
+  Checked Cloudflare's own docs first (verify-external-claims-rule): Pages
+  Functions can PRODUCE to a Queue but cannot CONSUME one — consuming needs a
+  separate standalone Worker (its own deploy), disproportionate for this hobby
+  app. `ctx.waitUntil()` only extends execution ~30s past a disconnect, not the
+  full 30-90s a paint can take. Shipped: the NDJSON stream stays the primary path
+  (unchanged UX — live progress via PipelineVisualizer); a `jobId` is minted up
+  front and streamed as the FIRST line; the pipeline run is checkpointed into KV
+  (`job:<jobId>`, 1h TTL) and wrapped in `ctx.waitUntil()`; `GET
+  /api/generate?jobId=<id>` (the `GeneratePending` branch already in
+  `src/generate/api.ts`) lets the client recover a result after a dropped
+  connection instead of silently wasting a paid generation, and `postGenerate.ts`
+  polls it automatically on stream failure. **Real limit, stated plainly:** a
+  disconnect more than ~30s before the pipeline finishes still loses the job —
+  nothing keeps the isolate alive past that window without Queues + a second
+  Worker. Verified live 2026-07-11: jobId line arrives first, GET polling returns
+  the persisted result for both a `done` and an `error` job.
 
 ## Naming (2026-06-13 exploration)
 Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader-Zim / lil' 😈 energy — NOT gross-out like Rat Fink). Naming mechanism that clicked: a word implying **deception/lying** doubles as the **shapeshifter/skins** concept, and **`.fm`** quietly carries "music player" — so the wordmark only needs to be cool + ownable, the mascot carries the devil, the product carries the skins.

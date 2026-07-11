@@ -6,7 +6,6 @@ import type { GenerateRequest, GenerateResponse } from "./api";
 import type { RuntimeDeps } from "./pipeline";
 import { generateSkin, DONOR_STYLES, MODELS, DEFAULT_MODEL, type DonorStyle, type ModelId } from "./pipeline";
 import { LAYOUT_VARIANTS, type LayoutVariant } from "./layouts";
-import { checkAndReserve, release } from "./ratelimit";
 import { deriveMaterial, deriveLayout, titleFromPrompt, blurbFromPrompt, type DirectorKeys } from "./director";
 import type { Region } from "../template/schema";
 
@@ -16,11 +15,14 @@ function slug(s: string): string {
 
 export interface HandlerInput {
   body: Partial<GenerateRequest>;
-  ip: string;
+  // Rate limiting lives in the CALLER now (meter.ts, KV-backed) — ip is no longer
+  // consulted inside this handler. Kept on the interface (optional) so callers don't
+  // need to change their call sites; a future per-request audit/log could use it.
+  ip?: string;
   deps: RuntimeDeps;
 }
 
-export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<GenerateResponse> {
+export async function handleGenerate({ body, deps }: HandlerInput): Promise<GenerateResponse> {
   const prompt = (body.prompt ?? "").trim();
   const reqStyle = body.style as DonorStyle | undefined;
   const variant = body.variant as LayoutVariant;
@@ -50,8 +52,14 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
   // an explicitly-requested donor still picks the PALETTE; else the Director's fit
   const style: DonorStyle = reqStyle && DONOR_STYLES.includes(reqStyle) ? reqStyle : derived.style;
 
-  const rl = checkAndReserve(ip);
-  if (!rl.ok) return { status: "error", error: rl.reason ?? "rate limited" };
+  // Rate limiting / spend cap: handled by the CALLER (functions/api/generate.ts,
+  // src/generate/meter.ts — an edge-shared KV ledger, RESERVE-before-spend). This
+  // handler used to also run its own in-memory per-isolate cap (ratelimit.ts) as a
+  // second, redundant, non-durable check — removed 2026-07 once the KV meter covered
+  // the same ground correctly (durable, edge-shared) so the stale duplicate wasn't
+  // left as dead/misleading code. The Node dev server (server/devApiPlugin.ts) has no
+  // RATELIMIT KV, so local iteration is intentionally uncapped, same as prod when the
+  // binding is absent (meter.ts: "no KV binding → don't block iteration").
 
   // optional reference image (data: URL) → upload to fal so it can ride the paint pass
   const refUrls: string[] = [];
@@ -87,7 +95,8 @@ export async function handleGenerate({ body, ip, deps }: HandlerInput): Promise<
       needsCutout: r.needsCutout, paintUrl: r.paintUrl, seed: r.seed, keyColor: r.keyColor, timingMs: r.timingMs,
     };
   } catch (e) {
-    release(ip);   // our failure — don't bill the user's quota
+    // spend-cap refund on failure is handled by the caller (generate.ts refund()),
+    // which reserved against the KV ledger before invoking this handler.
     return { status: "error", error: e instanceof Error ? e.message : String(e) };
   }
 }

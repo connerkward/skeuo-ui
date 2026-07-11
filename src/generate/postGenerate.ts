@@ -54,19 +54,26 @@ export async function postGenerate(
       "";
     return { status: "error", error: `server returned ${r.status || "no status"} (${ct || "non-JSON"})${hint}` };
   }
-  // Read the NDJSON stream line-by-line. Lines with a `stage` are live progress
-  // events; the line carrying `status` (no `stage`) is the final GenerateResponse.
-  // A single non-streamed JSON (e.g. the spend-cap 429) is just one line → final.
+  // Read the NDJSON stream line-by-line. The FIRST line is always {jobId} (see
+  // functions/api/generate.ts) — kept so a dropped connection can be recovered via
+  // GET /api/generate?jobId=… instead of silently wasting the paid generation. Lines
+  // with a `stage` are live progress events; the line carrying `status` (no `stage`)
+  // is the final GenerateResponse. A single non-streamed JSON (e.g. the spend-cap
+  // 429) is just one line → final.
   const reader = r.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
   let final: GenerateResponse | null = null;
+  let jobId: string | null = null;
   const handleLine = (line: string) => {
     const s = line.trim();
     if (!s) return;
     let obj: unknown;
     try { obj = JSON.parse(s); } catch { return; }
-    if (obj && typeof obj === "object" && "stage" in obj && !("status" in obj)) {
+    if (!obj || typeof obj !== "object") return;
+    if ("jobId" in obj && !("stage" in obj) && !("status" in obj)) {
+      jobId = (obj as { jobId: string }).jobId;
+    } else if ("stage" in obj && !("status" in obj)) {
       onStage?.(obj as GenStageEvent);
     } else {
       final = obj as GenerateResponse;
@@ -84,7 +91,44 @@ export async function postGenerate(
     }
     handleLine(buf);   // trailing line without a newline
   } catch (e) {
+    // The connection dropped mid-stream (flaky network, tab backgrounded on mobile).
+    // The server keeps running for up to ~30s past a disconnect (ctx.waitUntil — see
+    // functions/api/generate.ts "JOB STATE") and checkpoints the result into KV, so
+    // POLL for it instead of surfacing a hard error and silently wasting an already-
+    // paid-for generation. Only possible when we already captured a jobId (the first
+    // line); if the drop happened before that, nothing to recover.
+    if (jobId) {
+      const recovered = await pollJob(jobId);
+      if (recovered) return recovered;
+    }
     return { status: "error", error: `stream read failed: ${e instanceof Error ? e.message : String(e)}` };
   }
-  return final ?? { status: "error", error: `no result from /api/generate (HTTP ${r.status})` };
+  if (final) return final;
+  // Stream ended (done=true) with no final line — same recovery path.
+  if (jobId) {
+    const recovered = await pollJob(jobId);
+    if (recovered) return recovered;
+  }
+  return { status: "error", error: `no result from /api/generate (HTTP ${r.status})` };
+}
+
+// Recover a job's result after a dropped connection: GET /api/generate?jobId=…, a
+// few short attempts (the server may still be mid-flight inside its ~30s waitUntil
+// grace window). Returns null (not "pending") only when recovery is a dead end —
+// the job truly doesn't exist / isn't recoverable — so the caller falls back to its
+// normal error message instead of reporting a misleading "pending" forever.
+async function pollJob(jobId: string, attempts = 6, delayMs = 3000): Promise<GenerateResponse | null> {
+  for (let i = 0; i < attempts; i++) {
+    await new Promise((res) => setTimeout(res, delayMs));
+    let r: Response;
+    try {
+      r = await fetch(apiUrl(`/api/generate?jobId=${encodeURIComponent(jobId)}`));
+    } catch { continue; }
+    if (!r.ok && r.status !== 404) continue;
+    const obj = (await r.json().catch(() => null)) as GenerateResponse | null;
+    if (!obj) continue;
+    if (obj.status === "pending") continue;   // still running — try again
+    return obj;                                // done or error — recovered, stop polling
+  }
+  return null;
 }

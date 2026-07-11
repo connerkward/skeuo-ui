@@ -124,19 +124,26 @@ all four shells (sans widget, which has no Create UI) hit the same backend.
 
 ### 2.2 The two load-bearing decisions
 
-**A. Color-key device hybrid vs BiRefNet (`pipeline.ts:416-423`, `blueprint.ts:120-272`).**
-The device is painted on a **contrasting backdrop** chosen by material
-(`pickKeyColor()`: green→magenta, pink/red→cyan, blue→yellow, yellow→magenta).
-Cutout then keeps "not-backdrop-coloured" pixels, takes the largest connected
-component, fills enclosed non-backdrop pixels (dark screens stay solid; backdrop
-bleed in gaps stays transparent), erodes 1px, and despills the backdrop hue.
-- **Why color-key over BiRefNet for the device:** verified (2026-06-24) the colour
-  key beats BiRefNet on both failure modes — coloured-body-on-colour-backdrop
-  (93.5% vs BiRefNet 61% which ate the body) and near-white-body-on-white (BiRefNet
-  flops). **Fallback to white-key** (== `cutoutAlpha()`, no despill) for
-  translucent/iridescent materials, where despill would desaturate the real material.
+**A. ~~Color-key device hybrid vs BiRefNet~~ — SUPERSEDED 2026-07-01.**
+This section described the 2026-06-24 decision (color-key beat BiRefNet on the
+device). `cutoutClient.ts` has since switched the DEVICE cutout to BiRefNet too
+(comment: "DEVICE cutout = BiRefNet (object-based), same as the strip
+(2026-07-01)"), painted on a neutral grey/white/black backdrop chosen to CONTRAST
+the material (`pipeline.pickKeyColor`) rather than a saturated color-key — a
+saturated key was found to eat grey/chrome device parts and bleed a pink frame
+into translucent bodies. Verified live against skeuo.fm 2026-07-11 (production
+hardening pass, see TODO.md): the returned device alpha traces the real painted
+silhouette (gear teeth, notches, cut-through holes — 84% fill inside its bbox, not
+a rectangle). The color-key-only fallback (`cutoutColorAware`/`cutoutAlpha`, row 9
+above) is now LEGACY/DEMO-only — it fires when there's no `layout` or the paint is
+a `data:` URL, neither of which happens in a real deployed generation (see
+`functions/api/generate.ts` header comment for the current audited state of all
+four generation-pipeline production-hardening items).
 - **Sprite strip still uses BiRefNet + connected-components** — loose parts on a
-  clean white sweep is the case BiRefNet handles well.
+  clean white sweep is the case BiRefNet handles well, unchanged.
+- *(This doc (2.1-2.3) otherwise wasn't re-audited in this pass — row 1's "gpt-4o"
+  Director is also stale, replaced by Vertex/Gemini per `wrangler.toml`'s header
+  comment. Treat the rest of §2 as a snapshot, not current truth, until re-checked.)*
 
 **B. The alignment fix — repack only custom/Director rects (`pipeline.ts:383-407`).**
 Preset variants (simple/radial/capsule/minimal) are hand-authored with intentional
@@ -168,16 +175,23 @@ normalized sprite-strip cells.
 
 ### 2.4 Rate limit / spend cap
 
-Two distinct mechanisms — note the divergence:
+ONE mechanism now (2026-07-11: the old in-memory duplicate was deleted — see below):
 
-- **Authoritative (CF Function):** lifetime **spend cap** in cents in KV
-  `RATELIMIT` key `spend:cents`, default **1000 (= $10)**, override `SPEND_CAP_CENTS`.
-  Cost estimated *before* the fal call (`estCostCents`, `generate.ts:73`); refuse 429
-  if `spent + est > cap`; increment only on success. **No TTL — never auto-resets**
-  (manual reset via `wrangler kv key put … spend:cents 0`). `GET /api/budget` reads it.
-- **Per-IP (`src/generate/ratelimit.ts`):** in-memory per-isolate buckets,
-  `MAX_PER_IP_PER_DAY=5`, env-overridable. **Not edge-shared, not persistent** —
-  a production stub; real ceiling ≈ `isolates × cap`.
+- **`src/generate/meter.ts`, KV-backed, edge-shared.** Lifetime **spend cap** in cents
+  (`RATELIMIT` key `spend:cents`, default **1000 = $10**, override `SPEND_CAP_CENTS`)
+  PLUS a **per-IP/day bucket** (`GEN_BUCKET`, 5/day for `/api/generate`; `CUT_BUCKET`,
+  40/day for `/api/cutout`). Both are RESERVED before the paid fal call and refunded
+  on failure. Cost estimated *before* the fal call (`estCostCents`, `generate.ts`);
+  refuse 429 if `spent + est > cap` or the IP is over its daily bucket. Spend has
+  **no TTL — never auto-resets** (manual reset via `wrangler kv key put … spend:cents
+  0`); the IP bucket TTLs at ~25h. `GET /api/budget` reads the spend total.
+- **Known limitation, documented not hidden:** KV is eventually consistent, so a
+  concurrent burst can overshoot the cap slightly. A Durable Object would remove that
+  race; not worth it at this traffic level (hobby endpoint, single-digit-dollar cap).
+- **Deleted:** `src/generate/ratelimit.ts`, an in-memory per-isolate duplicate
+  (`MAX_PER_IP_PER_DAY=5`) that was still wired into `handler.ts` alongside the KV
+  meter above — redundant and non-durable (real ceiling ≈ `isolates × cap`). Removed
+  once confirmed the KV meter already covered the same ground correctly.
 
 ### 2.5 Create UI — CreatePanel vs CreateWizard
 

@@ -1,42 +1,64 @@
 // ============================================================
 // POST /api/generate — Cloudflare Pages Function.
+// GET  /api/generate?jobId=<id> — poll a job started by the POST above.
 //
 // Runs the LAYOUT-FIRST pipeline (radial/capsule/minimal) entirely
 // server-side: ports of layout_radial/capsule/minimal + the wells
-// blueprint draw, then the two fal passes (envelope → paint). The final
-// alpha is keyed out of the PAINTED silhouette (cutout), so the body
-// follows the expanded outline instead of shrink-wrapping the controls.
+// blueprint draw, then the fal paint pass. The final alpha is keyed out
+// of the PAINTED silhouette via BiRefNet (see below), so the body follows
+// the real painted outline instead of shrink-wrapping the controls.
 // FAL_KEY comes from the env binding and is NEVER sent to the client.
 //
 // ------------------------------------------------------------------
-// HONEST PRODUCTION-STUB LIST (what is NOT production-grade here):
-//   1. RATE LIMIT is in-memory per isolate (src/generate/ratelimit.ts).
-//      It does NOT persist across restarts and is NOT shared across CF
-//      edge locations — each isolate has its own counter, so the real
-//      ceiling is (locations × cap). For production, back it with KV or
-//      a Durable Object keyed by IP+day, and the cost cap with the same.
-//   2. STORAGE: with no R2 binding, the frame is returned as a data: URL
-//      (fine to demo, heavy on the wire). Bind R2 (env.SKINS) and the
-//      pipeline's store() persists frame.png + template.json + meta.json
-//      under skins/<id>/ and returns public /api/asset URLs, so every skin
-//      is a shared cloud artifact rebuildable by id (see /api/skin/<id>).
-//   3. (fixed) ALPHA MASK now traces the wild outline: it is keyed out of
-//      the PAINTED silhouette (cutout — non-white body, largest connected
-//      component, internal holes filled), so horns/jaws/legs are kept and
-//      the body no longer shrink-wraps to the control cluster. Controls
-//      never get holes (their dark wells are non-white → filled as body).
-//   4. SYNCHRONOUS: this awaits both fal passes inline (~30-90s). A CF
-//      Function can exceed the default execution window on slow paints;
-//      production should enqueue (Queues/DO) and let the client poll the
-//      /api/generate?jobId=… branch (contract already has "pending").
-//   5. No auth, no abuse detection beyond the IP cap; no input
-//      moderation on the free-text prompt.
+// PRODUCTION-HARDENING STATUS (2026-07-11 audit — see TODO.md "Generation
+// feature — production hardening" for the source ask). Reconciled honestly
+// against what's ACTUALLY deployed, not what a stale comment used to claim:
+//
+//   1. ALPHA MASK — DONE, via a better mechanism than originally proposed.
+//      The TODO asked for a server-side envelope-threshold pass (porting the
+//      Python pipeline's threshold-the-envelope-PNG approach). That's NOT
+//      what shipped — instead, the device frame AND every control sprite are
+//      background-removed by fal-ai/birefnet/v2 (a real trained segmentation
+//      model) called server-side via /api/cutout, matting the ACTUAL painted
+//      pixels rather than thresholding a synthetic envelope. Verified live
+//      against skeuo.fm 2026-07-11: the returned alpha traces gear teeth,
+//      notches and cut-through holes — an 84% fill ratio inside its bbox,
+//      not a rectangle/ellipse constant mask. The only remaining constant-
+//      mask path is the LEGACY/DEMO fallback in cutoutClient.ts
+//      (whiteKeyCanvas), which only fires when there's no `layout` (an old
+//      caller) or the paint is a data: URL (offline demo, no R2) — GenerateDone.layout
+//      is a REQUIRED field in production, so this path never runs for a real
+//      deployed generation.
+//   2. STORAGE — DONE. The SKINS R2 bucket (skeuo-skins, created 2026-06-17)
+//      is bound below and `store()` persists paint.png/template.json/meta.json
+//      under skins/<id>/ at generation time; the browser then uploads the cut
+//      frame.png + sprites/<bind>.png via /api/finalize (see cutoutClient.ts).
+//      Every asset is served publicly + immutably via /api/asset/<key>
+//      (functions/api/asset), and a whole skin is rebuildable by id via
+//      /api/skin/<id>. No response returns a data: URL frame in production.
+//   3. RATE LIMIT — DONE (KV, not a Durable Object — see justification
+//      below). src/generate/meter.ts is an edge-shared KV ledger: a lifetime
+//      spend cap (RATELIMIT key spend:cents, read by /api/budget) PLUS a
+//      per-IP/day bucket, both RESERVED before the paid fal call and
+//      refunded on failure. This already replaced the in-memory per-isolate
+//      limiter the TODO was written against; as of this pass the OLD
+//      duplicate (src/generate/ratelimit.ts, still wired into handler.ts as
+//      a second non-durable check) was deleted so there is exactly ONE rate
+//      limiter, and it's the durable one. KV over a Durable Object: this is
+//      a hobby endpoint with single-digit-dollar spend caps, not a system
+//      needing strict per-request atomicity — a DO would remove the
+//      documented eventual-consistency race (a concurrent burst can
+//      overshoot the cap slightly) but that's a acceptable coarse-window
+//      tradeoff here, not a real production risk at this traffic level.
+//   4. ASYNC / 75s SYNCHRONOUS REQUEST — PARTIAL, documented honestly below
+//      (search "JOB STATE").
 // ------------------------------------------------------------------
 import { initWasm, Resvg } from "@resvg/resvg-wasm";
 // @ts-expect-error — wasm asset import resolved by the CF/wrangler bundler
 import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
 import { handleGenerate } from "../../src/generate/handler";
 import { MODELS, DEFAULT_MODEL, type ModelId, type RuntimeDeps } from "../../src/generate/pipeline";
+import type { GenerateResponse, GenerateDone, GenerateError } from "../../src/generate/api";
 import { reserve, refund, GEN_BUCKET } from "../../src/generate/meter";
 
 interface Env {
@@ -63,9 +85,14 @@ interface Env {
   GCP_SERVICE_ACCOUNT_KEY?: string;
   SKINS?: R2Bucket;          // optional R2 bucket binding
   ASSETS_BASE_URL?: string;  // public base for stored frames (e.g. https://cdn/skins)
-  RATELIMIT?: KVNamespace;   // lifetime spend ledger (edge-shared) — see below
+  RATELIMIT?: KVNamespace;   // lifetime spend ledger (edge-shared) + job state — see below
   SPEND_CAP_CENTS?: string;  // lifetime budget ceiling in cents (default 1000 = $10)
 }
+
+// Cloudflare Pages Functions' EventContext carries `waitUntil` (extend execution past
+// the point the Response is returned / the client disconnects) even though the ad-hoc
+// ctx type below historically omitted it. Needed for JOB STATE below.
+type Ctx = { request: Request; env: Env; waitUntil: (promise: Promise<unknown>) => void };
 
 // ---- $10 LIFETIME spend cap (KV ledger, NOT auto-resetting) -----------------
 // A cumulative dollar budget for the whole public endpoint. We keep a single
@@ -106,8 +133,9 @@ async function rasterize(svg: string): Promise<Uint8Array> {
 
 // NOTE: the alpha cutout (UPNG decode/encode + cutoutAlpha connected-components/
 // flood-fill, ~2s of pure-JS CPU on a 2K paint) used to run HERE and tripped the
-// Pages Function CPU ceiling → CF 1102 "Worker exceeded CPU time limit". It now
-// runs in the BROWSER: this Function omits `cutout` from deps, so the pipeline
+// Pages Function CPU ceiling → CF error 1102 "Worker exceeded CPU time limit". It now
+// runs in the BROWSER via fal BiRefNet (server-proxied through /api/cutout so FAL_KEY
+// never reaches the client): this Function omits `cutout` from deps, so the pipeline
 // persists the raw paint and the client cuts + uploads frame.png back to R2 via
 // /api/finalize/<id> (a no-CPU write). See src/generate/pipeline.ts step 5/6 and
 // src/generate/cutoutClient.ts.
@@ -116,7 +144,72 @@ function clientIp(req: Request): string {
   return req.headers.get("CF-Connecting-IP") || req.headers.get("X-Forwarded-For") || "anon";
 }
 
-export const onRequestPost = async (ctx: { request: Request; env: Env }): Promise<Response> => {
+// ---- JOB STATE (item 4: async queue for the ~75s synchronous request) ------------
+//
+// HONEST CONSTRAINT, checked against Cloudflare's own docs before building this
+// (verify-external-claims-rule): Pages Functions CAN bind a Queues PRODUCER, but
+// CANNOT consume a queue — consuming requires a separate standalone Worker service
+// (its own deployment, its own wrangler.toml), not a Pages Function. Standing up a
+// second Worker just to consume one queue is disproportionate for a hobby app whose
+// whole generation feature lives in this one Pages project — ruled out.
+//
+// The other documented option, `ctx.waitUntil()`, extends execution AT MOST ~30s
+// past the point the client disconnects or the response is returned — it does NOT
+// make a 30-90s pipeline durable against an early disconnect. So this is NOT a real
+// queue: it's the best available shape given those two constraints —
+//   • the existing NDJSON stream stays the PRIMARY path (unchanged UX — the user
+//     watches their actual skin form, via PipelineVisualizer/AgentObserver);
+//   • a jobId is minted up front and the LAST-KNOWN state is checkpointed into KV
+//     (RATELIMIT, `job:<jobId>`, 1h TTL) as the pipeline runs;
+//   • the whole pipeline execution is also wrapped in ctx.waitUntil(), so a client
+//     disconnect in roughly the LAST 30s of a paint (mobile Safari backgrounding the
+//     tab, a flaky connection) still lets the run finish and land in KV instead of
+//     silently wasting the paid fal call;
+//   • GET /api/generate?jobId=<id> lets the client RECOVER that result instead of
+//     re-submitting (and re-paying for) a duplicate generation. This is the
+//     GeneratePending branch already defined in src/generate/api.ts.
+// A disconnect EARLIER than ~30s before completion genuinely loses the job — the
+// isolate is torn down and nothing runs to persist it. That's the honest limit of
+// what's available without standing up a second Worker + Queues consumer.
+const JOB_TTL_SECONDS = 3600;          // 1h — ample for polling/recovery, not a permanent store
+const JOB_STALE_MS = 150_000;          // longer than any observed paint (23-90s) + the waitUntil grace
+
+interface JobPendingState { status: "pending"; startedAt: number }
+// NOT `GenerateResponse` — that union's own GeneratePending has a DIFFERENT "pending"
+// shape ({status,jobId}, no startedAt). We only ever persist our own JobPendingState
+// while running, and a terminal GenerateDone/GenerateError once the pipeline finishes.
+type JobState = JobPendingState | GenerateDone | GenerateError;
+
+async function readJob(env: Env, jobId: string): Promise<JobState | null> {
+  if (!env.RATELIMIT) return null;
+  const raw = await env.RATELIMIT.get(`job:${jobId}`);
+  if (!raw) return null;
+  try { return JSON.parse(raw) as JobState; } catch { return null; }
+}
+async function writeJob(env: Env, jobId: string, state: JobState): Promise<void> {
+  if (!env.RATELIMIT) return;
+  try { await env.RATELIMIT.put(`job:${jobId}`, JSON.stringify(state), { expirationTtl: JOB_TTL_SECONDS }); }
+  catch { /* best-effort — the stream is still the primary path */ }
+}
+
+// GET /api/generate?jobId=<id> — poll a job. `{status:"pending", jobId}` matches
+// GeneratePending in src/generate/api.ts; the client already has that branch's shape.
+export const onRequestGet = async (ctx: Ctx): Promise<Response> => {
+  const { request, env } = ctx;
+  const jobId = new URL(request.url).searchParams.get("jobId");
+  if (!jobId) return json({ status: "error", error: "jobId required" }, 400);
+  const job = await readJob(env, jobId);
+  if (!job) return json({ status: "error", error: "job not found or expired" }, 404);
+  if (job.status === "pending") {
+    if (Date.now() - job.startedAt > JOB_STALE_MS) {
+      return json({ status: "error", error: "generation likely interrupted (connection lost) — try again" }, 200);
+    }
+    return json({ status: "pending", jobId }, 200);
+  }
+  return json(job, 200);
+};
+
+export const onRequestPost = async (ctx: Ctx): Promise<Response> => {
   const { request, env } = ctx;
   if (!env.FAL_KEY) return json({ status: "error", error: "server missing FAL_KEY" }, 500);
   let body: any;
@@ -154,30 +247,52 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
   const res0 = await reserve(env, ip, est, GEN_BUCKET);
   if (!res0.ok) return json({ status: "error", error: res0.reason }, 429);
 
+  const jobId = crypto.randomUUID();
+  await writeJob(env, jobId, { status: "pending", startedAt: Date.now() });
+
   // STREAM the response as NDJSON: each pipeline pass emits a {stage,url} line as it
   // completes (blueprint → grown body → painted skin) so the client can preview the
-  // user's ACTUAL skin forming, then the final GenerateResponse is the LAST line.
-  // The fal awaits are I/O (not CPU), so streaming doesn't change the Function's CPU
-  // budget — the cutout still runs in the browser. Spend pre-check already happened
-  // above (a plain JSON 429); billing the ledger happens after a successful gen here.
+  // user's ACTUAL skin forming, then the final GenerateResponse is the LAST line. The
+  // very FIRST line carries {jobId} so the client can recover via GET on disconnect
+  // (see "JOB STATE" above). The fal awaits are I/O (not CPU), so streaming doesn't
+  // change the Function's CPU budget — the cutout still runs in the browser. Spend
+  // pre-check already happened above (a plain JSON 429); billing the ledger happens
+  // after a successful gen here.
   const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      const write = (obj: unknown) => {
-        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n")); } catch { /* client disconnected */ }
-      };
-      const streamDeps: RuntimeDeps = { ...deps, onStage: (stage, url) => write({ stage, url }) };
-      let res: Awaited<ReturnType<typeof handleGenerate>>;
-      try {
-        res = await handleGenerate({ body, ip, deps: streamDeps });
-      } catch (e) {
-        res = { status: "error", error: e instanceof Error ? e.message : String(e) };
-      }
-      write(res);   // final line (carries `status`, no `stage`)
-      // Cost was RESERVED up front; refund it if the generation didn't actually
-      // incur fal cost (error / no paint pass run). A `done` keeps the reservation.
-      if (res.status !== "done") await refund(env, ip, est, GEN_BUCKET);
-      controller.close();
+  const run = async (controller: ReadableStreamDefaultController<Uint8Array>): Promise<void> => {
+    const write = (obj: unknown) => {
+      try { controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n")); } catch { /* client disconnected */ }
+    };
+    write({ jobId });
+    const streamDeps: RuntimeDeps = { ...deps, onStage: (stage, url) => write({ stage, url }) };
+    let res: GenerateResponse;
+    try {
+      res = await handleGenerate({ body, ip, deps: streamDeps });
+    } catch (e) {
+      res = { status: "error", error: e instanceof Error ? e.message : String(e) };
+    }
+    write(res);   // final line (carries `status`, no `stage`)
+    // handleGenerate only ever returns "done" | "error" (GeneratePending is purely a
+    // client-facing polling-response shape, never something the handler produces) —
+    // narrow defensively so a hypothetical future "pending" from the handler can't
+    // silently corrupt the job store's own pending marker (JobPendingState).
+    await writeJob(env, jobId, res.status === "pending"
+      ? { status: "error", error: "internal: handler returned pending unexpectedly" }
+      : res);
+    // Cost was RESERVED up front; refund it if the generation didn't actually
+    // incur fal cost (error / no paint pass run). A `done` keeps the reservation.
+    if (res.status !== "done") await refund(env, ip, est, GEN_BUCKET);
+    try { controller.close(); } catch { /* already closed by a client-disconnect cancel() */ }
+  };
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      // Extend execution ~30s past a client disconnect (Cloudflare's documented
+      // waitUntil ceiling) so a late-stage drop still finishes + lands in KV instead
+      // of silently discarding a paid fal call. Not awaited here — the stream stays
+      // open (and keeps writing) exactly as before for a connected client; waitUntil
+      // is purely the disconnect-survival path.
+      const p = run(controller);
+      ctx.waitUntil(p);
     },
   });
   return new Response(stream, { status: 200, headers: { "Content-Type": "application/x-ndjson", ...CORS } });
@@ -188,7 +303,7 @@ export const onRequestPost = async (ctx: { request: Request; env: Env }): Promis
 // preflight OPTIONS first. Generation is public + spend-capped — `*` is fine.
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Max-Age": "86400",
 };
