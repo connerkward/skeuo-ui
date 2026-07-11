@@ -678,3 +678,81 @@ benefits from a deterministic backstop on control geometry.
 - Params/prompts/request-ids/URLs/verdicts: `ambientvid/jobs7-final.json`. Live comparison page (ping-pong default, raw toggle): `ambientvid/round7.html`.
 - Desktop deliverables (winning ping-pong clips): `~/Desktop/cc-skeuo/2026-07-11-ambient-{steam-porthole-seedance1pro,diablo-gothic-seedance1pro,steam-porthole-ltxcinemagraph}.mp4`.
 - Cost: **≈ $2.35** this round (models: `fal-ai/bytedance/seedance/v1/pro/image-to-video`, `fal-ai/ltx-2.3-22b/image-to-video/lora` + `Lightricks/LTX-2.3-22b-LoRA-Cinemagraph`).
+
+## Round 7 addendum (2026-07-11) — ping-pong REJECTED by user verdict; redelivered raw; LTX native-loop probe
+
+**User verdict, verbatim intent:** "no for seedance and ltx i DONT WANT PING PONG. ltx did that automatically. i want
+it to generate not that. looks like shit." Ping-pong (forward+reverse bounce) presentation is **rejected everywhere**
+in this experiment, not just for the round-7 deliverables — round 5 and round 6's players had defaulted to
+ping-pong'd clips too (round 5: `loop5-*`/`loop4-*`/`loop2-*` files were 2× the raw frame count; round 6:
+`loop6-ltxP1/P2-*-25f.mp4` were 50-frame bounces of 25-frame raw generations), even though only round 7 had an
+explicit toggle exposing the raw pass.
+
+### What changed
+
+1. **`round7.html`**: the ping-pong/raw toggle buttons were removed; every `<video>` now points at the RAW,
+   unmodified `loop7-*-raw.mp4` (byte-identical to `raw7-*.mp4`, confirmed via md5) as the sole and default playback.
+   Captions updated to describe the clip as actually delivered (e.g. the LTX steam frame-0 VAE-blur defect is no
+   longer described as "trimmed" — it's in the raw clip, called out plainly instead). Verdict-table "ping-pong seam"
+   column reworded to "raw loop seam (hard cut, no post-process)".
+2. **`round5.html` / `round6.html`**: same fix applied retroactively — video `src` swapped from the ping-pong'd
+   `loop4-`/`loop5-`/`loop6-` files to their `raw2-`/`raw4-`/`raw5-`/`raw6-` equivalents (all already existed on
+   disk). A dated note was added to each page's header noting the swap; the original review prose/seam numbers were
+   left unchanged since they describe the clip content as originally judged, not the bounce artifact.
+3. **Desktop deliverables** (`~/Desktop/cc-skeuo/2026-07-11-ambient-*.mp4`) were all three confirmed via md5 to be
+   the ping-pong versions (matching `loop7-*-pingpong.mp4`, not `-raw.mp4`). Trashed (`trash`, not `rm`, per
+   `media-rm-rule`) and replaced with the raw clips under the same filenames:
+   - `2026-07-11-ambient-diablo-gothic-seedance1pro.mp4` ← `raw7-seedancepro-diablo-1080p.mp4` (1248×1664, 121f/5.04s, h264)
+   - `2026-07-11-ambient-steam-porthole-ltxcinemagraph.mp4` ← `raw7-ltx-steam-768-25f.mp4` (768×1024, 25f/1.04s, h264 — the *delivered* 768×1024 recipe, not the rejected 960×1280 probe)
+   - `2026-07-11-ambient-steam-porthole-seedance1pro.mp4` ← `raw7-seedancepro-steam-1080p-v2.mp4` (1248×1664, 121f/5.04s, h264 — the re-roll/seed-4242 clip, not the discarded slider-drift roll 1)
+
+   All three verified via `ffprobe` (correct resolution/fps/frame-count/codec) and frame-extraction at start/mid/end
+   (visually match the verdicts already documented above — diablo's skulls/runes/slider pixel-stable with drifting
+   ash, LTX steam's frame-0 blur genuinely present since it's unmodified raw, Seedance steam's growing plume).
+
+### LTX native-loop investigation — does the model have a "generate a loop" mechanism?
+
+Before accepting "LTX at 25f is a ~1s asset, full stop," checked whether the endpoint can be asked to generate a
+seamless loop natively (per the task's ask: check the fal schema for `last_image`/loop params).
+
+**Found:** `fal-ai/ltx-2.3-22b/image-to-video/lora`'s schema exposes `end_image_url` (+ `end_image_strength`,
+`interpolation_direction`) — a first/last-frame-conditioning input (same shape as Kling/Veo start+end-frame video).
+This is a genuine, documented, native mechanism — not a prompt trick.
+
+Ran 2 probes on steam-porthole (≈$0.071 total, well under the $0.2 cap), same recipe as the delivered round-7 LTX
+clip (768×1024, 25f, steps 30, cfg 4, stg 0, multiscale off, quality=maximum, seed 1207), with `end_image_url` set to
+the SAME frozen source image used for `image_url`:
+
+| probe | prompt | frame0↔frame24 mean abs pixel diff (95th pct) |
+|---|---|---|
+| baseline (delivered, no `end_image_url`) | round-7 wording | **21.1** (69) |
+| Probe A | round-7 wording + "seamless natural loop that returns exactly to its starting frame" | **5.8** (17) — 3.6× tighter |
+| Probe B | round-7 wording, unchanged (isolates the parameter from the prompt) | **8.4** (26) — 2.5× tighter |
+
+Diff measured independently via direct pixel comparison (numpy mean abs diff over full RGB frames), not a metric
+defined by the thing being tuned. **Bonus, unexpected:** both probes also eliminated the frame-0 VAE-blur defect
+present in every prior LTX round — anchoring both ends appears to stabilize the first frame too.
+
+**Harsh evaluation:** this is anchoring, not a true seamless loop. The steam wisp still visibly grows from frame 0
+(none) to frame 24 (present) in both probes — a hard cut back to frame 0 would still pop on steam volume, just far
+less than the baseline's geometry shimmer/drift. It does not touch the 25-frame length limit either — `num_frames`
+defaults to 121 on this endpoint (not a hard cap), but 25 frames is the Cinemagraph LoRA's stated training/best-result
+length; going longer with this LoRA risks the resynthesis failures rounds 5–7 already catalogued and was not tested
+here (out of scope for a $0.2-capped probe).
+
+**Disposition:** promising secondary finding, **not swapped into the round-7 delivered asset** — it changes the
+recipe (adds an end-frame condition never present in the round-6/7 "proven" recipe) and was validated once per
+variant on one subject only. Documented as an addendum section in `round7.html` with both probe clips and the
+diff crops; worth a dedicated round if LTX stays in the roster. The delivered LTX steam clip stays the plain
+`image_url`-only raw generation, frame-0 blur and all — stated plainly rather than papered over.
+
+### Cost (this addendum)
+
+2 LTX probes, 768×1024 × 25f × $0.001805/MP ≈ **$0.071**. Series total (rounds 1–7 + this addendum) ≈ **$3.12**.
+
+### Artifacts (addendum)
+
+- Probe clips: `ambientvid/probe-ltx-endimg-steam.mp4` (Probe A), `ambientvid/probe2-ltx-endimg-steam-origprompt.mp4` (Probe B).
+- Diff-evidence crops: `ambientvid/frame7b-ltx-endimgurl-vs-baseline.png`, `ambientvid/frame7b-ltx-endimgurl-probe2-origprompt.png`.
+- Updated pages: `ambientvid/round7.html` (new "Addendum — LTX native loop probe" section), `ambientvid/round5.html`, `ambientvid/round6.html`.
+- Redelivered Desktop assets: `~/Desktop/cc-skeuo/2026-07-11-ambient-{diablo-gothic-seedance1pro,steam-porthole-ltxcinemagraph,steam-porthole-seedance1pro}.mp4` (raw, no ping-pong).

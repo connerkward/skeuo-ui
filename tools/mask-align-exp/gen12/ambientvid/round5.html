@@ -50,6 +50,11 @@
     comparison clips: round 4 <code>ltx/distilled+lora</code> (~$0.15), round 2 <code>bytedance/seedance/v1/pro/fast</code> (~$0.108/clip).
     fal storage/CDN hosting = <b class="good">FREE</b>.
   </p>
+  <p class="cost" style="border-color:#5a2731;color:#ff9db0;">
+    <b>2026-07-11 update:</b> players below were swapped from ping-pong (forward+reverse bounce) to the RAW
+    model-generated clip — ping-pong was rejected by the user as a presentation choice ("looks like shit") across
+    the whole experiment. Text/seam numbers below describe the clip as originally reviewed and are unchanged.
+  </p>
 </header>
 <main>
 
@@ -66,17 +71,17 @@
     <p class="sub">Motion is particle/smoke/dust only, glow-free — but device identity is the bar.</p>
     <div class="grid">
       <figure class="fail">
-        <video src="loop5-ltxcinemagraph2-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+        <video src="raw5-ltxcinemagraph2-diablo-gothic.mp4" autoplay muted loop playsinline></video>
         <figcaption><span class="tag t-fail">HARD FAIL</span><br>
           <b>diablo 121f.</b> From t≈25% the model <b class="bad">resynthesizes the device</b>: dark wells → bright blue/yellow <b class="bad">glowing</b> gauges (banned), invented icon strip + skeleton screen, then melts. Dust/smoke present but device destroyed. <b class="bad">Worse than round 4.</b> Seam 12.63.</figcaption>
       </figure>
       <figure class="fail">
-        <video src="loop5-ltxcinemagraph2-steam-porthole.mp4" autoplay muted loop playsinline></video>
+        <video src="raw5-ltxcinemagraph2-steam-porthole.mp4" autoplay muted loop playsinline></video>
         <figcaption><span class="tag t-fail">FAIL</span><br>
           <b>steam 121f.</b> Steam wisp + dust motes on-brief, glow-free. But a <b class="bad">second gauge appears</b>, gears rearrange, play/pause glyph <b class="bad">morphs to an X</b> by end. Better than round-4 steam but still fails "icons never deform." Seam 2.71.</figcaption>
       </figure>
       <figure class="near">
-        <video src="loop5-ltxcinemagraph2-steam-porthole-25f.mp4" autoplay muted loop playsinline></video>
+        <video src="raw5-ltxcinemagraph2-steam-porthole-25f.mp4" autoplay muted loop playsinline></video>
         <figcaption><span class="tag t-near">NEAR-PASS · best LTX</span><br>
           <b>steam 25f (training length, ping-pong loop).</b> Button glyphs <b class="good">legible</b>, gauge <b class="good">holds</b>, only gear shimmer; steam+dust, no glow. Worked <b class="hl">because num_frames matched the 25-frame training length.</b> Only 1.04s raw. Seam 1.54.</figcaption>
       </figure>
@@ -88,11 +93,11 @@
     <p class="sub">The overruled round. Diablo held geometry but relied on rune-glow; steam destroyed its buttons.</p>
     <div class="grid">
       <figure class="fail">
-        <video src="loop4-ltxcinemagraph-diablo-gothic.mp4" autoplay muted loop playsinline></video>
+        <video src="raw4-ltxcinemagraph-diablo-gothic.mp4" autoplay muted loop playsinline></video>
         <figcaption><span class="tag t-fail">OVERRULED</span><br><b>diablo (round 4).</b> Device stable, but motion = <b class="bad">red rune glow</b> (now banned). Geometrically more stable than round-5 diablo.</figcaption>
       </figure>
       <figure class="fail">
-        <video src="loop4-ltxcinemagraph-steam-porthole.mp4" autoplay muted loop playsinline></video>
+        <video src="raw4-ltxcinemagraph-steam-porthole.mp4" autoplay muted loop playsinline></video>
         <figcaption><span class="tag t-fail">FAIL (round 4)</span><br><b>steam (round 4).</b> Buttons dissolve into <b class="bad">blank white dials</b>, glyphs destroyed. Round-5 correct usage clearly beats this.</figcaption>
       </figure>
     </div>
@@ -103,11 +108,11 @@
     <p class="sub">Preserves device identity cleanly on both skins — but its motion was glow (diablo) / gauge-quiver (steam); no-glow particle behavior untested.</p>
     <div class="grid">
       <figure class="champ">
-        <video src="loop2-seedancefast-diablo-gothic-v2.mp4" autoplay muted loop playsinline></video>
+        <video src="raw2-seedancefast-diablo-gothic-v2.mp4" autoplay muted loop playsinline></video>
         <figcaption><span class="tag t-champ">IDENTITY OK</span><br><b>diablo (Seedance).</b> Device pixel-stable across all frames — but motion = <b class="bad">rune glow</b> (now banned).</figcaption>
       </figure>
       <figure class="champ">
-        <video src="loop2-seedancefast-steam-porthole.mp4" autoplay muted loop playsinline></video>
+        <video src="raw2-seedancefast-steam-porthole.mp4" autoplay muted loop playsinline></video>
         <figcaption><span class="tag t-champ">IDENTITY OK</span><br><b>steam (Seedance).</b> Buttons/gauges intact across all frames; gauge-needle quiver + subtle steam. Best identity preservation of any model.</figcaption>
       </figure>
     </div>

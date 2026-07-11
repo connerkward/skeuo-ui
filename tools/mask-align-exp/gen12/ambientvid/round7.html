@@ -26,9 +26,6 @@
   figure.pass { border-color:#255a37; }
   video, img { width:100%; height:auto; display:block; background:#0b0d11; object-fit:contain; }
   .vidwrap { position:relative; }
-  .togglebar { display:flex; gap:6px; padding:6px 8px; background:#12151b; border-top:1px solid #232732; }
-  .togglebar button { flex:1; font-size:11px; padding:5px 6px; border-radius:5px; border:1px solid #2c313d; background:#1b1f28; color:#aeb6c6; cursor:pointer; }
-  .togglebar button.active { background:#2a3a22; border-color:#4d6a35; color:#d7e78a; }
   figcaption { padding:10px 12px 13px; font-size:12.5px; }
   .tag { display:inline-block; font-weight:700; font-size:11px; letter-spacing:.03em; padding:2px 7px; border-radius:5px; margin-bottom:6px; }
   .t-fail { background:#3a1620; color:#ff9db0; }
@@ -58,8 +55,10 @@
     Same two subjects as rounds 2–6 (<code>steam-porthole</code>, <code>diablo-gothic</code>), frozen inputs reused
     byte-identical from the fal CDN. Brief: motion ONLY as particles/smoke/dust/steam/drifting motes — NO glow, NO light
     pulsing, NO emissive language. Verdict bar unchanged from rounds 5–6: ANY geometry drift / glyph smear / invented
-    elements / glow-style motion = FAIL. Delivery: every clip shipped BOTH raw and ping-pong (forward+reverse concat);
-    ping-pong is the default player below per the user's stated preference — use the toggle to see the raw pass.
+    elements / glow-style motion = FAIL. Delivery: the RAW model-generated clip, unmodified — <b>no ping-pong
+    (forward+reverse bounce) post-processing.</b> Ping-pong was tried in an earlier pass and rejected by the user
+    ("looks like shit") — the model's own output is what ships, and LTX's 25-frame (~1s) length is a model limitation
+    stated plainly below, not something masked with a bounce edit.
   </div>
   <div class="costband">
     <b>Models used:</b> <code>fal-ai/bytedance/seedance/v1/pro/image-to-video</code> (Seedance 1.0 Pro, 1080p, non-fast
@@ -88,35 +87,29 @@
 
       <figure class="near">
         <div class="vidwrap">
-          <video id="v-ltx-steam" autoplay muted loop playsinline src="loop7-ltx-steam-768-25f-pingpong.mp4"></video>
-        </div>
-        <div class="togglebar">
-          <button class="active" onclick="swap('v-ltx-steam','loop7-ltx-steam-768-25f-pingpong.mp4',this)">ping-pong</button>
-          <button onclick="swap('v-ltx-steam','loop7-ltx-steam-768-25f-raw.mp4',this)">raw</button>
+          <video id="v-ltx-steam" autoplay muted loop playsinline src="loop7-ltx-steam-768-25f-raw.mp4"></video>
         </div>
         <figcaption>
           <span class="tag t-near">NEAR-PASS</span>
           <span class="model-id"><code>fal-ai/ltx-2.3-22b/image-to-video/lora</code> + Cinemagraph LoRA (scale 1.0) ·
-          768×1024 · 25f · steps 30 · cfg 4.0 · stg 0 · multiscale off · quality=maximum · seed 1207 ·
-          ~$0.0355</span>
+          768×1024 · 25f (~1.04s raw, unmodified) · steps 30 · cfg 4.0 · stg 0 · multiscale off · quality=maximum ·
+          seed 1207 · ~$0.0355</span>
           <div class="note"><b>Identity:</b> all 5 button glyphs (play/pause, rewind, ff, repeat, list), both gauges,
           gear cluster and slider stay legible and correctly shaped end-to-end — the best LTX steam result of all 7
           rounds, confirming round 6's finding.</div>
-          <div class="note defect"><b>Defect:</b> frame 0 (the very first output frame, 1/24s) decodes as a soft
-          painterly blur with unlegible glyphs — a single-frame VAE artifact that fully resolves by frame 1 and never
-          recurs. <b>Trimmed</b> from the delivered ping-pong (starts at frame 1); visible only in the raw toggle.</div>
-          <div class="note"><b>Seam / motion:</b> steam wisp emerges cleanly top-right, no glow; mild global tonal
-          drift + minor gear/emblem shimmer across the 25 frames masks acceptably under ping-pong.</div>
+          <div class="note defect"><b>Defect:</b> frame 0 (the very first output frame, 1/24s, visible in the loop
+          seam) decodes as a soft painterly blur with unlegible glyphs — a single-frame VAE artifact that fully
+          resolves by frame 1 and never recurs. This is the model's raw output, delivered as-is — not trimmed or
+          post-processed.</div>
+          <div class="note"><b>Motion:</b> steam wisp emerges cleanly top-right, no glow; mild global tonal drift +
+          minor gear/emblem shimmer across the 25 frames. See the "LTX native loop probe" section below for whether
+          <code>end_image_url</code> can close this seam without post-processing.</div>
         </figcaption>
       </figure>
 
       <figure class="near">
         <div class="vidwrap">
-          <video id="v-ltx-steam960" autoplay muted loop playsinline src="loop7-ltx-steam-960-25f-pingpong.mp4"></video>
-        </div>
-        <div class="togglebar">
-          <button class="active" onclick="swap('v-ltx-steam960','loop7-ltx-steam-960-25f-pingpong.mp4',this)">ping-pong</button>
-          <button onclick="swap('v-ltx-steam960','loop7-ltx-steam-960-25f-raw.mp4',this)">raw</button>
+          <video id="v-ltx-steam960" autoplay muted loop playsinline src="loop7-ltx-steam-960-25f-raw.mp4"></video>
         </div>
         <figcaption>
           <span class="tag t-fail">HIGHER-RES PROBE — REJECTED</span>
@@ -131,16 +124,13 @@
 
       <figure class="pass">
         <div class="vidwrap">
-          <video id="v-sd-steam" autoplay muted loop playsinline src="loop7-seedancepro-steam-1080p-pingpong.mp4"></video>
-        </div>
-        <div class="togglebar">
-          <button class="active" onclick="swap('v-sd-steam','loop7-seedancepro-steam-1080p-pingpong.mp4',this)">ping-pong</button>
-          <button onclick="swap('v-sd-steam','loop7-seedancepro-steam-1080p-raw.mp4',this)">raw</button>
+          <video id="v-sd-steam" autoplay muted loop playsinline src="loop7-seedancepro-steam-1080p-raw.mp4"></video>
         </div>
         <figcaption>
           <span class="tag t-near">NEAR-PASS (winner, after 1 re-roll)</span>
           <span class="model-id"><code>fal-ai/bytedance/seedance/v1/pro/image-to-video</code> (Seedance 1.0 Pro) ·
-          1080p (1248×1664) · 5s/121f · aspect 3:4 · camera_fixed=true · seed 4242 (re-roll) · ~$0.74</span>
+          1080p (1248×1664) · 5s/121f raw, unmodified · aspect 3:4 · camera_fixed=true · seed 4242 (re-roll) ·
+          ~$0.74</span>
           <div class="note"><b>Identity:</b> all 5 button glyphs, both gauges, gear cluster and slider position stay
           pixel-stable across the full 5s clip — no morph, no invented parts.</div>
           <div class="note defect"><b>Defect found on roll 1 (seed 1207, discarded):</b> the slider thumb visibly slid
@@ -165,16 +155,13 @@
 
       <figure class="fail">
         <div class="vidwrap">
-          <video id="v-ltx-diablo" autoplay muted loop playsinline src="loop7-ltx-diablo-768-25f-pingpong.mp4"></video>
-        </div>
-        <div class="togglebar">
-          <button class="active" onclick="swap('v-ltx-diablo','loop7-ltx-diablo-768-25f-pingpong.mp4',this)">ping-pong</button>
-          <button onclick="swap('v-ltx-diablo','loop7-ltx-diablo-768-25f-raw.mp4',this)">raw</button>
+          <video id="v-ltx-diablo" autoplay muted loop playsinline src="loop7-ltx-diablo-768-25f-raw.mp4"></video>
         </div>
         <figcaption>
           <span class="tag t-fail">HARD FAIL (unchanged from round 6)</span>
           <span class="model-id"><code>fal-ai/ltx-2.3-22b/image-to-video/lora</code> + Cinemagraph LoRA · 768×1024
-          (bumped from round 6's 512×704) · 25f · same settings as steam · quality=maximum · seed 1207 · ~$0.0355</span>
+          (bumped from round 6's 512×704) · 25f raw, unmodified · same settings as steam · quality=maximum · seed 1207
+          · ~$0.0355</span>
           <div class="note defect"><b>Device fully resynthesized</b> by mid-clip: the top loop button becomes a gold
           glowing circle, the center play/pause becomes an eyeball icon, the left rewind becomes a green ring, and the
           two dark glass screens become an invented 4-icon app grid with skull/monster glyphs. <b>Glow present</b>
@@ -186,16 +173,12 @@
 
       <figure class="pass">
         <div class="vidwrap">
-          <video id="v-sd-diablo" autoplay muted loop playsinline src="loop7-seedancepro-diablo-1080p-pingpong.mp4"></video>
-        </div>
-        <div class="togglebar">
-          <button class="active" onclick="swap('v-sd-diablo','loop7-seedancepro-diablo-1080p-pingpong.mp4',this)">ping-pong</button>
-          <button onclick="swap('v-sd-diablo','loop7-seedancepro-diablo-1080p-raw.mp4',this)">raw</button>
+          <video id="v-sd-diablo" autoplay muted loop playsinline src="loop7-seedancepro-diablo-1080p-raw.mp4"></video>
         </div>
         <figcaption>
           <span class="tag t-pass">PASS — best diablo-gothic result of all 7 rounds</span>
           <span class="model-id"><code>fal-ai/bytedance/seedance/v1/pro/image-to-video</code> (Seedance 1.0 Pro) ·
-          1080p (1248×1664) · 5s/121f · aspect 3:4 · camera_fixed=true · seed 1207 · ~$0.74</span>
+          1080p (1248×1664) · 5s/121f raw, unmodified · aspect 3:4 · camera_fixed=true · seed 1207 · ~$0.74</span>
           <div class="note"><b>Identity:</b> every skull, rune glyph, button icon, screen edge and the slider position
           are pixel-stable across all 5 sampled frames (start/25%/50%/75%/end) — no drift, no morph, no invented
           content, confirmed at full-res close-up crop below.</div>
@@ -212,26 +195,26 @@
   <section>
     <h2>Verdict table</h2>
     <table>
-      <tr><th>clip</th><th>model</th><th>res</th><th>identity</th><th>motion quality</th><th>ping-pong seam</th><th>verdict</th></tr>
+      <tr><th>clip</th><th>model</th><th>res</th><th>identity</th><th>motion quality</th><th>raw loop seam (hard cut, no post-process)</th><th>verdict</th></tr>
       <tr>
         <td>steam · LTX 768×1024</td><td>LTX-2.3 + Cinemagraph LoRA</td><td>768×1024</td>
         <td class="good">5/5 button glyphs legible, gauges/gear cluster intact</td>
         <td class="good">clean steam wisp, no glow</td>
-        <td class="warn">frame-0 blur trimmed pre-ping-pong; otherwise clean</td>
+        <td class="warn">frame-0 VAE blur visible at the hard-cut seam (not trimmed — raw, as generated)</td>
         <td class="warn">NEAR-PASS</td>
       </tr>
       <tr>
         <td>steam · LTX 960×1280 probe</td><td>LTX-2.3 + Cinemagraph LoRA</td><td>960×1280</td>
         <td class="bad">buttons occluded by over-grown plume</td>
         <td class="bad">plume grows uncontrolled</td>
-        <td class="bad">occlusion persists both directions</td>
+        <td class="bad">occlusion present at both ends</td>
         <td class="bad">REJECTED</td>
       </tr>
       <tr>
         <td>steam · Seedance 1.0 Pro (seed 4242, re-roll)</td><td>Seedance 1.0 Pro</td><td>1080p</td>
         <td class="good">buttons/gauges/gear/slider all static</td>
         <td class="warn">steam plume moderately over-grown, hazes glass</td>
-        <td class="good">clean bounce, no pop</td>
+        <td class="warn">hard cut, start/end frames close but not identical (device is)</td>
         <td class="warn">NEAR-PASS</td>
       </tr>
       <tr>
@@ -245,7 +228,7 @@
         <td>diablo · Seedance 1.0 Pro (seed 1207)</td><td>Seedance 1.0 Pro</td><td>1080p</td>
         <td class="good">pixel-stable: skulls, runes, buttons, slider, screens</td>
         <td class="good">grey dust/ash + thin smoke, on-brief, no glow</td>
-        <td class="good">clean bounce, no pop</td>
+        <td class="good">hard cut but device pixel-stable start↔end, reads clean</td>
         <td class="good">PASS</td>
       </tr>
     </table>
@@ -289,6 +272,79 @@
     </div>
   </section>
 
+  <section>
+    <h2>Addendum — LTX native loop probe (<code>end_image_url</code>)</h2>
+    <div class="sub">Ping-pong (forward+reverse bounce) was rejected by the user as a fix for LTX's short 25-frame
+    (~1.04s) clips — "looks like shit." Before conceding the length is unfixable, checked whether LTX can be asked to
+    <b>generate</b> a loop instead of faking one in post. 2 probes on steam-porthole, ≈$0.071, model unchanged
+    (<code>fal-ai/ltx-2.3-22b/image-to-video/lora</code>).</div>
+    <div class="rec" style="border-color:#1e4a63;">
+      <b>Finding: a native mechanism EXISTS but does not fully solve it.</b> The fal schema for this endpoint exposes
+      <code>end_image_url</code> (+ <code>end_image_strength</code>, <code>interpolation_direction</code>) — a
+      first/last-frame-conditioning input, same shape as Kling/Veo's start+end-frame video. Setting
+      <code>end_image_url</code> = the SAME frozen source image as <code>image_url</code> (asking the model to close
+      the loop back to its own start) was tested twice on the steam subject, same recipe as the delivered round-7 LTX
+      clip otherwise unchanged (768×1024, 25f, steps 30, cfg 4, stg 0, multiscale off, quality=maximum, seed 1207):
+      <ul style="margin:8px 0 4px;padding-left:20px;">
+        <li><b>Probe A</b> (prompt appended "seamless natural loop that returns exactly to its starting frame"):
+        frame0↔frame24 mean pixel abs-diff <b>5.8</b> (95th pct 17) vs the delivered raw clip's <b>21.1</b> (95th pct
+        69) — a real, independently-measured ~3.6× tighter seam.</li>
+        <li><b>Probe B</b> (prompt unchanged, verbatim round-5/6/7 wording — isolates whether <code>end_image_url</code>
+        alone does the work, not a prompt trick): mean diff <b>8.4</b> (95th pct 26) — still ~2.5× tighter than
+        baseline, confirming the improvement is the API parameter, not phrasing.</li>
+      </ul>
+      <b>Bonus, unexpected:</b> both probes ALSO eliminated the frame-0 VAE-blur defect present in every prior LTX
+      round (baseline frame 0 is a soft unlegible mess; both probe frame 0s are sharp and match the source). Anchoring
+      the generation at both ends appears to stabilize the first frame too.
+      <br><br>
+      <b>Harsh part:</b> this is anchoring, not a true seamless loop. The steam wisp still visibly GROWS from frame 0
+      (none) to frame 24 (present) in both probes — see the crops below. A hard cut back to frame 0 would still pop
+      on steam volume, just far less than the baseline's geometry shimmer/drift. It also does not touch the 25-frame
+      length; that stays LoRA-recommended (<code>25 frames</code> is the Cinemagraph LoRA's stated training/best-result
+      length, not a hard API cap — <code>num_frames</code> defaults to 121 on this endpoint, but going longer with
+      this LoRA was never validated and risks the drift/resynthesis failures rounds 5–7 already catalogued).
+      <br><br>
+      <b>Disposition:</b> promising secondary finding, <b>not swapped into this round's delivered asset</b> — it
+      changes the recipe (adds an end-frame condition never present in the round-6/7 "proven" recipe) and was only
+      validated once per variant on one subject. Worth a dedicated round if LTX stays in the roster. The round-7
+      deliverable stays the plain <code>image_url</code>-only raw generation documented above.
+    </div>
+    <div class="grid">
+      <figure class="near">
+        <div class="vidwrap">
+          <video autoplay muted loop playsinline src="probe-ltx-endimg-steam.mp4"></video>
+        </div>
+        <figcaption>
+          <span class="tag t-near">PROBE A — end_image_url, loop-wording prompt</span>
+          <span class="model-id">Same recipe as delivered LTX steam, <code>end_image_url</code> = source image,
+          <code>end_image_strength</code>=1, <code>interpolation_direction</code>=forward · ~$0.0355</span>
+          <div class="note">Frame 0↔24 diff 5.8 (vs 21.1 baseline). Frame-0 blur gone. Steam still visibly advances
+          end vs start.</div>
+        </figcaption>
+      </figure>
+      <figure class="near">
+        <div class="vidwrap">
+          <video autoplay muted loop playsinline src="probe2-ltx-endimg-steam-origprompt.mp4"></video>
+        </div>
+        <figcaption>
+          <span class="tag t-near">PROBE B — end_image_url, ORIGINAL prompt (no loop wording)</span>
+          <span class="model-id">Identical to Probe A except the prompt is verbatim round-5/6/7 text (isolates the
+          <code>end_image_url</code> parameter's effect) · ~$0.0355</span>
+          <div class="note">Frame 0↔24 diff 8.4 (vs 21.1 baseline) — confirms the tightening is the parameter, not the
+          prompt wording.</div>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="cropgrid" style="margin-top:14px;">
+      <figure><img src="frame7b-ltx-endimgurl-vs-baseline.png"><figcaption>Left→right: baseline frame0 (VAE blur),
+      baseline frame24, Probe A frame0 (sharp), Probe A frame24 (sharp + steam). Baseline is the delivered round-7
+      raw clip; probes use <code>end_image_url</code>.</figcaption></figure>
+      <figure><img src="frame7b-ltx-endimgurl-probe2-origprompt.png"><figcaption>Probe B (original prompt) frame0 /
+      frame12 / frame24 — geometry stays anchored and frame0 stays sharp even without the loop-wording prompt
+      change.</figcaption></figure>
+    </div>
+  </section>
+
 </main>
 <footer>
   Round 7 of the ambient-video-loops experiment. Full write-up:
@@ -296,21 +352,5 @@
   (round 7 section). Prior rounds: <a href="index.html">round 1</a>, <a href="round5.html">round 5</a>,
   <a href="round6.html">round 6</a>. Raw job params/request-ids/URLs: <code>jobs7-final.json</code>.
 </footer>
-<script>
-function swap(id, src, btn){
-  const v = document.getElementById(id);
-  const t = v.currentTime; const wasPlaying = !v.paused;
-  v.pause();
-  v.src = src;
-  v.load();
-  v.addEventListener('loadeddata', function once(){
-    v.removeEventListener('loadeddata', once);
-    if (wasPlaying) v.play();
-  });
-  const bar = btn.parentElement;
-  [...bar.children].forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-</script>
 </body>
 </html>

@@ -521,6 +521,18 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
   [`docs/experiments/2026-07-09-ambient-video-loops.md`](docs/experiments/2026-07-09-ambient-video-loops.md#round-7-2026-07-11--final-seedance-10-pro-vs-ltx-cinemagraph-lora-no-glow-brief-ping-pong-delivery)
   round 7, and the live comparison page
   [`tools/mask-align-exp/gen12/ambientvid/round7.html`](tools/mask-align-exp/gen12/ambientvid/round7.html).
+  **2026-07-11 correction — ping-pong REJECTED by user ("looks like shit"), do not use it anywhere
+  for LTX/Seedance.** `round7.html` (and retroactively `round5.html`/`round6.html`) now default to
+  and ONLY play the raw model-generated clip; toggle buttons removed. Desktop deliverables
+  (`~/Desktop/cc-skeuo/2026-07-11-ambient-*.mp4`) were confirmed via md5 to be ping-pong, trashed,
+  and redelivered as raw under the same filenames. Checked whether LTX has a native loop mechanism
+  before accepting the 25f/~1s length as unfixable: **it does** —
+  `fal-ai/ltx-2.3-22b/image-to-video/lora` exposes `end_image_url` (first/last-frame conditioning).
+  Setting it to the same source image tightens the frame0↔frame24 pixel diff ~2.5–3.6× (21.1→5.8-8.4
+  mean abs diff) and as a bonus kills the recurring frame-0 VAE-blur defect — but it's anchoring, not
+  a true seamless loop (steam motion still visibly advances end vs start), and doesn't extend the
+  25-frame length. Not swapped into the delivered asset this round; documented as a probed addendum
+  (≈$0.071, 2 runs) for a future round. See the "Round 7 addendum" section of the same doc.
 - **Enable emissivity/PBR pass in mainline**: flip PBR_PASS_ENABLED on (orchestrate12) once proven
   across the roster; wire the dashboard card link (WIRE-pbr.md, 2 lines); make the PBR player the
   featured path for skins with strong emissive themes.

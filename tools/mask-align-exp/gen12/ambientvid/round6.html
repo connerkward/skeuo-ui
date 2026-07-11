@@ -43,6 +43,10 @@
     (<code>video_stg_scale=0</code>, <code>use_multiscale=false</code>, 25 frames). Verdict bar = device identity:
     ANY glyph morph / geometry drift / glow = FAIL.
     <div class="cost">Round-6 spend ≈ <b>$0.052</b> (28.66 MP × $0.001805/MP, 2 probes @ 25f). All prior rounds ≈ $0.5 total.</div>
+    <div class="cost" style="color:#ff9db0;"><b>2026-07-11 update:</b> players below were swapped from ping-pong
+    (forward+reverse bounce) to the RAW model-generated clip — ping-pong was rejected by the user as a presentation
+    choice across the whole experiment. Text/seam numbers below describe the clip as originally reviewed and are
+    unchanged.</div>
   </div>
 </header>
 <main>
@@ -52,12 +56,12 @@
     <p class="sub">Both 25f (LoRA training length), STG global knob off, multiscale off. P1 also bumps output res to 768×1024 to test the "did low res cause the glyph smear" question.</p>
     <div class="grid">
       <figure class="near">
-        <video src="loop6-ltxP1-steam-768-25f.mp4" autoplay loop muted playsinline></video>
+        <video src="raw6-ltxP1-steam-768-25f.mp4" autoplay loop muted playsinline></video>
         <figcaption><span class="tag t-near">P1 · NEAR-PASS · best LTX steam yet</span>
           steam-porthole · <b>768×1024</b> · 25f. Device identity holds — all 5 button glyphs legible, gauges + gears + slider present, steam wisp top-right, no glow. Higher res preserved glyphs far better than the 512 runs. Caveat: global tonal drift + minor gear shimmer (device-region seam 9.74) → ping-pong masks the seam.</figcaption>
       </figure>
       <figure class="fail">
-        <video src="loop6-ltxP2-diablo-512-25f.mp4" autoplay loop muted playsinline></video>
+        <video src="raw6-ltxP2-diablo-512-25f.mp4" autoplay loop muted playsinline></video>
         <figcaption><span class="tag t-fail">P2 · HARD FAIL · unchanged</span>
           diablo-gothic · 512×704 · 25f. By end the device is fully resynthesized — green/red <b>glowing</b> buttons, invented app-icon strip, a <b>cartoon creature</b> in the right screen. Killing STG + multiscale at training length did NOT rescue it. Confirms OOD, not a setting.</figcaption>
       </figure>
