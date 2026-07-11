@@ -565,7 +565,12 @@ entries already under "saved for later" above — those four stand as-is.
    complaint was about the OLD render) or whether the whole theme should still be cut. Do not
    delete unilaterally either way.
 
-4. **B-pivot decision + its own experiment record.**
+4. [x] **B-pivot decision + its own experiment record — DONE 2026-07-11.** Decided: heavy
+   structural-constraint prompt STAYS the production architecture, no beauty-first two-pass
+   pivot; the measured quality cost is accepted as the price of reliable empty sockets / runtime
+   detectability. See [`docs/DECISIONS.md`](docs/DECISIONS.md) (2026-07-11 entry)
+   and [`docs/experiments/2026-07-10-bproof-constraint-load.md`](docs/experiments/2026-07-10-bproof-constraint-load.md).
+   Original task notes below (kept for context):
    [tools/mask-align-exp/gen12/bproof/](tools/mask-align-exp/gen12/bproof/) (commit `e8546e22`,
    "B-proof harness") CONFIRMED that heavy constraint-laden prompts measurably degrade paint
    quality — same model/seed/theme, comparing a lean froggo-style prompt (~618 chars,
@@ -575,16 +580,13 @@ entries already under "saved for later" above — those four stand as-is.
    [run_bproof.py](tools/mask-align-exp/gen12/bproof/run_bproof.py) /
    `run_bproof_vertex.py` for the exact method. This was mitigated within gen12's existing
    architecture but the actual architectural fork was never decided or built:
-   - **Decide**: adopt a froggo-style **two-pass architecture** — (1) one lean, unconstrained
-     "beautiful" paint pass with no socket/legend clutter in the prompt, then (2) a SEPARATE
-     detection/mask pass (VLM or CV) that finds control positions on the clean paint — vs
-     staying single-pass with prompt engineering as the only lever.
-   - **Write it up**: this result is currently only folded partially into
-     [docs/experiments/2026-07-09-pbr-delight-emissive.md](docs/experiments/2026-07-09-pbr-delight-emissive.md)
-     (which does NOT actually mention it — checked, no `B-proof`/`bproof`/char-count hits in that
-     file). Write a standalone `docs/experiments/2026-07-09-bproof-prompt-length.md` per
-     [[empirical-testing-rule]]: question, method (model/seed/char-counts), the crop comparisons
-     as evidence, and the verdict once decided above.
+   - [x] **Decide — RESOLVED 2026-07-11: stay single-pass**, prompt engineering as the only
+     lever; the froggo-style two-pass (beautiful-render-first, detect-second) architecture is
+     rejected. See the DECISIONS link above.
+   - [x] **Write it up — DONE.** Superseded the originally-planned filename: two rounds landed
+     in [`docs/experiments/2026-07-10-bproof-constraint-load.md`](docs/experiments/2026-07-10-bproof-constraint-load.md)
+     (question, method, model/seed/char-counts, crop-comparison evidence, verdict) instead of
+     the stub `2026-07-09-bproof-prompt-length.md` name below.
 
 5. [x] **Dashboard PBR-player link hook — DONE 2026-07-10.**
    [tools/mask-align-exp/gen12/WIRE-pbr.md](tools/mask-align-exp/gen12/WIRE-pbr.md)'s hook wired

@@ -89,8 +89,7 @@ the drop happen in one jump?]
 
 ## Human verdict
 
-**PENDING — lookbook served for evaluation.** See `bproof/index.html`.
-
-Decision this evidence feeds: adopt beautiful-render-first/detect-second (the B-pivot) vs. keep
-the constrained single-pass pipeline. Not yet recorded in `docs/DECISIONS.md` — only add that
-entry once the human has decided.
+**Heavy prompt ACCEPTED — 2026-07-11, user's call.** No B-pivot. The measured quality cost is
+accepted as the price of reliable empty sockets / runtime detectability; gen12's heavy
+structural-constraint prompt stays the production architecture. Recorded in
+[`docs/DECISIONS.md`](../DECISIONS.md) (2026-07-11 entry).

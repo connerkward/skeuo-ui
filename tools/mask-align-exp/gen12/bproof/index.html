@@ -46,6 +46,7 @@
   .verdict h3 { font-size:14px; color:var(--acc); margin-bottom:6px; }
   .verdict li { margin:4px 0 4px 18px; color:#a9d8c9; }
   .pending { background:#2a1414; border:1px solid #5c2323; border-radius:10px; padding:12px 16px; margin-top:16px; font-size:13.5px; max-width:120ch; color:#f0b8b8; }
+  .decided { background:#12241d; border:1px solid #1f4d3a; border-radius:10px; padding:12px 16px; margin-top:16px; font-size:13.5px; max-width:120ch; color:#a9d8c9; }
   .navtabs { display:flex; gap:8px; margin:20px 0 6px; flex-wrap:wrap; }
   .navtabs a { color:var(--dim); text-decoration:none; font-size:12.5px; padding:5px 12px; border:1px solid #2c2c34; border-radius:99px; }
   .navtabs a:hover { color:var(--ink); border-color:#444; }
@@ -445,10 +446,12 @@ paragraph). All via Vertex AI, same serving path as round 1's froggo-style rende
   device rather than asking the model to paint it in from the start).</li>
 </div>
 
-<div class="pending">
-  <b>Human verdict: PENDING.</b> This lookbook is served for your evaluation &mdash; nothing has been decided.
-  Once you weigh in, the decision (adopt B-pivot / keep current / something narrower like "fix only the
-  empty-cavity ask") gets recorded in docs/DECISIONS.md, linking back to
+<div class="decided">
+  <b>Decided — 2026-07-11.</b> Heavy prompt ACCEPTED, no B-pivot. The measured quality cost is
+  accepted as the price of reliable empty sockets / runtime detectability; gen12's heavy
+  structural-constraint prompt stays the production architecture. Full ADR:
+  docs/DECISIONS.md ("2026-07-11 &mdash; gen12's heavy structural-constraint prompt STAYS the
+  production architecture; no beauty-first two-pass pivot"), evidence in
   docs/experiments/2026-07-10-bproof-constraint-load.md.
 </div>
 
