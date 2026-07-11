@@ -1,0 +1,252 @@
+<!doctype html><html><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>drift-clause bisect — gen12</title>
+<style>
+ body{font:15px/1.5 -apple-system,system-ui,sans-serif;background:#111;color:#ddd;margin:0;padding:1.2rem;max-width:100%;}
+ h1{font-size:1.4rem} h2{margin-top:2rem;border-bottom:1px solid #333;padding-bottom:.3rem}
+ .dim{color:#888;font-size:.85em} .ok{color:#5c5} .warn{color:#dbaa2a} .bad{color:#e55}
+ .row{display:flex;flex-wrap:wrap;gap:1rem;margin:.8rem 0}
+ .cell{flex:1 1 300px;min-width:280px;background:#1a1a1e;border:1px solid #2a2a30;border-radius:8px;padding:.8rem}
+ .cell h4{margin:.1rem 0 .4rem;font-size:.95rem}
+ .imgs{display:flex;gap:.5rem;flex-wrap:wrap} figure{margin:0;flex:1 1 130px;min-width:120px}
+ img{width:100%;height:auto;border-radius:4px} figcaption{font-size:.75rem;color:#999}
+ table{border-collapse:collapse;font-size:.85rem} td{border:1px solid #333;padding:.15rem .5rem}
+ .summ{background:#1c2026;padding:.5rem .8rem;border-radius:6px}
+ .conclusion{background:#20262e;border:1px solid #3a4a5a;border-radius:8px;padding:1rem 1.2rem;margin-top:2.5rem}
+ .meta{background:#191d16;border:1px solid #2e3a26;border-radius:6px;padding:.6rem .9rem;font-size:.85rem}
+</style></head><body>
+<h1>Drift-clause bisect — is the BOLD-silhouette clause driving template drift?</h1>
+<div class='meta'><b>models + cost:</b> paint = <code>gemini-3-pro-image-preview</code> via Vertex AI
+(project muser-2605300220, 4K, 5:4, $0.24/gen) — 12 kept gens + 1 unbilled 429 retry ≈ <b>$2.88</b>;
+matte = local BiRefNet_HR@2048 (MPS, $0); extraction/scoring deterministic ($0). Total ≈ <b>$2.88</b>.
+All arms FORCED conditioning='solid' (blueprint arm-draw trial and twoimg both bypassed).</div>
+
+<p>Metric: <code>mean_drift_px</code> — mean over controls of the distance between the authored template
+centre and extract12's detected device centre, on the paint's own pixel grid (~2300&times;3712) —
+computed by the SAME <code>drift_table()</code> code as <code>twoimg/roster_audit.py</code>
+(imported, not reimplemented). Noise floor: <b>150px</b> (roster audit measured ±82–99px arm-less
+run-to-run swings; the design note requires an effect clearly above ~100–150px on BOTH themes).</p>
+
+<h2>Per-arm pooled result (n=4 gens/arm)</h2>
+<table><tr><td><b>arm</b></td><td><b>mean of per-gen means</b></td><td><b>per-gen values (px)</b></td></tr><tr><td>A — production prompt verbatim (bold-silhouette clause present)</td><td>485.2px</td><td>392.3, 483.5, 570.5, 494.5</td></tr><tr><td>B — clause REMOVED (conservative locked housing)</td><td>496.1px</td><td>744.3, 635.8, 266.8, 337.6</td></tr><tr><td>C — clause kept + numeric position-lock addendum (centres within 2%)</td><td>629.3px</td><td>550.2, 630.1, 603.1, 733.7</td></tr></table>
+<p>Noise-floor check (&Delta; vs A must be &gt; +150px on both themes):
+B → both themes: <b class='bad'>False</b>
+(wc -252px, fa-pod +230px) ·
+C → both themes: <b class='bad'>False</b>
+(wc -152px, fa-pod -136px)</p>
+
+
+<h2>wc-goldshield</h2>
+<p class='summ'>theme mean drift (2 seeds): A <b>437.9px</b> · B <b>690.0px</b>
+(&Delta; vs A -252px) · C <b>590.2px</b> (&Delta; vs A -152px)
+&nbsp;<span class='dim'>positive &Delta; = arm reduced drift; must exceed +150px on BOTH themes to clear the noise floor</span></p>
+<div class='row'>
+  <div class='cell'>
+    <h4>A — production prompt verbatim (bold-silhouette clause present) · seed 736</h4>
+    <p><b class='warn'>mean drift 392.3px</b>
+       · worst playpause (994.5px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>biref-parts</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-wc-goldshield-a-736/overlay-drift.png'><img src='assets-bisect-wc-goldshield-a-736/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-wc-goldshield-a-736/paint.png'><img src='assets-bisect-wc-goldshield-a-736/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-wc-goldshield-a-736/paint.png'>raw paint</a> · <a href='assets-bisect-wc-goldshield-a-736/blueprint.png'>blueprint</a> · <a href='assets-bisect-wc-goldshield-a-736/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>playpause</td><td class='bad'>994.5</td></tr><tr><td>vol</td><td class='warn'>492.7</td></tr><tr><td>shuffle</td><td class='warn'>483.5</td></tr><tr><td>visualizer</td><td class='warn'>424.9</td></tr><tr><td>seek</td><td class='warn'>394.5</td></tr><tr><td>next</td><td class='ok'>348.5</td></tr><tr><td>prev</td><td class='ok'>334.1</td></tr><tr><td>album_art</td><td class='ok'>244.1</td></tr><tr><td>queue</td><td class='ok'>206.4</td></tr><tr><td>repeat</td><td class='ok'>0.0</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>B — clause REMOVED (conservative locked housing) · seed 736</h4>
+    <p><b class='bad'>mean drift 744.3px</b>
+       · worst shuffle (1574.7px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>emptiness, biref-parts</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-wc-goldshield-b-736/overlay-drift.png'><img src='assets-bisect-wc-goldshield-b-736/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-wc-goldshield-b-736/paint.png'><img src='assets-bisect-wc-goldshield-b-736/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-wc-goldshield-b-736/paint.png'>raw paint</a> · <a href='assets-bisect-wc-goldshield-b-736/blueprint.png'>blueprint</a> · <a href='assets-bisect-wc-goldshield-b-736/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>shuffle</td><td class='bad'>1574.7</td></tr><tr><td>next</td><td class='bad'>1282.6</td></tr><tr><td>playpause</td><td class='bad'>1012.6</td></tr><tr><td>seek</td><td class='bad'>895.3</td></tr><tr><td>visualizer</td><td class='bad'>795.6</td></tr><tr><td>album_art</td><td class='warn'>575.0</td></tr><tr><td>prev</td><td class='warn'>526.9</td></tr><tr><td>vol</td><td class='ok'>336.1</td></tr><tr><td>queue</td><td class='ok'>229.4</td></tr><tr><td>repeat</td><td class='ok'>214.8</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>C — clause kept + numeric position-lock addendum (centres within 2%) · seed 736</h4>
+    <p><b class='warn'>mean drift 550.2px</b>
+       · worst playpause (993.4px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>region-misplaced:album_art, biref-parts</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-wc-goldshield-c-736/overlay-drift.png'><img src='assets-bisect-wc-goldshield-c-736/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-wc-goldshield-c-736/paint.png'><img src='assets-bisect-wc-goldshield-c-736/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-wc-goldshield-c-736/paint.png'>raw paint</a> · <a href='assets-bisect-wc-goldshield-c-736/blueprint.png'>blueprint</a> · <a href='assets-bisect-wc-goldshield-c-736/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>playpause</td><td class='bad'>993.4</td></tr><tr><td>shuffle</td><td class='bad'>903.2</td></tr><tr><td>album_art</td><td class='bad'>673.0</td></tr><tr><td>vol</td><td class='warn'>474.5</td></tr><tr><td>next</td><td class='warn'>465.1</td></tr><tr><td>prev</td><td class='warn'>461.2</td></tr><tr><td>visualizer</td><td class='warn'>420.4</td></tr><tr><td>seek</td><td class='warn'>392.4</td></tr><tr><td>queue</td><td class='warn'>370.7</td></tr><tr><td>repeat</td><td class='ok'>347.8</td></tr></table></details>
+  </div></div><div class='row'>
+  <div class='cell'>
+    <h4>A — production prompt verbatim (bold-silhouette clause present) · seed 841</h4>
+    <p><b class='warn'>mean drift 483.5px</b>
+       · worst repeat (858.4px)
+       · gate <span class='ok'>PASS</span>
+       <span class='dim'></span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-wc-goldshield-a-841/overlay-drift.png'><img src='assets-bisect-wc-goldshield-a-841/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-wc-goldshield-a-841/paint.png'><img src='assets-bisect-wc-goldshield-a-841/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-wc-goldshield-a-841/paint.png'>raw paint</a> · <a href='assets-bisect-wc-goldshield-a-841/blueprint.png'>blueprint</a> · <a href='assets-bisect-wc-goldshield-a-841/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>repeat</td><td class='bad'>858.4</td></tr><tr><td>vol</td><td class='bad'>741.7</td></tr><tr><td>playpause</td><td class='bad'>634.2</td></tr><tr><td>next</td><td class='bad'>606.5</td></tr><tr><td>album_art</td><td class='warn'>520.3</td></tr><tr><td>seek</td><td class='warn'>409.2</td></tr><tr><td>visualizer</td><td class='warn'>382.6</td></tr><tr><td>prev</td><td class='warn'>377.5</td></tr><tr><td>queue</td><td class='ok'>166.1</td></tr><tr><td>shuffle</td><td class='ok'>138.4</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>B — clause REMOVED (conservative locked housing) · seed 841</h4>
+    <p><b class='bad'>mean drift 635.8px</b>
+       · worst repeat (1156.4px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>biref-parts</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-wc-goldshield-b-841/overlay-drift.png'><img src='assets-bisect-wc-goldshield-b-841/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-wc-goldshield-b-841/paint.png'><img src='assets-bisect-wc-goldshield-b-841/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-wc-goldshield-b-841/paint.png'>raw paint</a> · <a href='assets-bisect-wc-goldshield-b-841/blueprint.png'>blueprint</a> · <a href='assets-bisect-wc-goldshield-b-841/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>repeat</td><td class='bad'>1156.4</td></tr><tr><td>playpause</td><td class='bad'>831.7</td></tr><tr><td>next</td><td class='bad'>797.9</td></tr><tr><td>queue</td><td class='bad'>791.6</td></tr><tr><td>visualizer</td><td class='bad'>616.4</td></tr><tr><td>prev</td><td class='bad'>607.5</td></tr><tr><td>seek</td><td class='warn'>578.6</td></tr><tr><td>album_art</td><td class='warn'>499.8</td></tr><tr><td>shuffle</td><td class='ok'>310.7</td></tr><tr><td>vol</td><td class='ok'>167.2</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>C — clause kept + numeric position-lock addendum (centres within 2%) · seed 841</h4>
+    <p><b class='bad'>mean drift 630.1px</b>
+       · worst next (798.8px)
+       · gate <span class='ok'>PASS</span>
+       <span class='dim'></span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-wc-goldshield-c-841/overlay-drift.png'><img src='assets-bisect-wc-goldshield-c-841/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-wc-goldshield-c-841/paint.png'><img src='assets-bisect-wc-goldshield-c-841/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-wc-goldshield-c-841/paint.png'>raw paint</a> · <a href='assets-bisect-wc-goldshield-c-841/blueprint.png'>blueprint</a> · <a href='assets-bisect-wc-goldshield-c-841/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>next</td><td class='bad'>798.8</td></tr><tr><td>prev</td><td class='bad'>796.0</td></tr><tr><td>queue</td><td class='bad'>752.0</td></tr><tr><td>playpause</td><td class='bad'>734.6</td></tr><tr><td>repeat</td><td class='bad'>718.4</td></tr><tr><td>visualizer</td><td class='bad'>649.4</td></tr><tr><td>seek</td><td class='bad'>636.0</td></tr><tr><td>vol</td><td class='warn'>484.7</td></tr><tr><td>shuffle</td><td class='warn'>390.4</td></tr><tr><td>album_art</td><td class='ok'>341.1</td></tr></table></details>
+  </div></div>
+<h2>fa-pod</h2>
+<p class='summ'>theme mean drift (2 seeds): A <b>532.5px</b> · B <b>302.2px</b>
+(&Delta; vs A +230px) · C <b>668.4px</b> (&Delta; vs A -136px)
+&nbsp;<span class='dim'>positive &Delta; = arm reduced drift; must exceed +150px on BOTH themes to clear the noise floor</span></p>
+<div class='row'>
+  <div class='cell'>
+    <h4>A — production prompt verbatim (bold-silhouette clause present) · seed 673</h4>
+    <p><b class='warn'>mean drift 570.5px</b>
+       · worst queue (1844.6px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>biref-parts, leak=0.008687</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-fa-pod-a-673/overlay-drift.png'><img src='assets-bisect-fa-pod-a-673/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-fa-pod-a-673/paint.png'><img src='assets-bisect-fa-pod-a-673/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-fa-pod-a-673/paint.png'>raw paint</a> · <a href='assets-bisect-fa-pod-a-673/blueprint.png'>blueprint</a> · <a href='assets-bisect-fa-pod-a-673/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>queue</td><td class='bad'>1844.6</td></tr><tr><td>repeat</td><td class='bad'>904.9</td></tr><tr><td>playpause</td><td class='bad'>687.0</td></tr><tr><td>prev</td><td class='warn'>590.2</td></tr><tr><td>visualizer</td><td class='warn'>413.4</td></tr><tr><td>seek</td><td class='warn'>379.1</td></tr><tr><td>shuffle</td><td class='ok'>310.6</td></tr><tr><td>vol</td><td class='ok'>295.9</td></tr><tr><td>album_art</td><td class='ok'>279.4</td></tr><tr><td>next</td><td class='ok'>0.0</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>B — clause REMOVED (conservative locked housing) · seed 673</h4>
+    <p><b class='ok'>mean drift 266.8px</b>
+       · worst vol (463.2px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>emptiness</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-fa-pod-b-673/overlay-drift.png'><img src='assets-bisect-fa-pod-b-673/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-fa-pod-b-673/paint.png'><img src='assets-bisect-fa-pod-b-673/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-fa-pod-b-673/paint.png'>raw paint</a> · <a href='assets-bisect-fa-pod-b-673/blueprint.png'>blueprint</a> · <a href='assets-bisect-fa-pod-b-673/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>vol</td><td class='warn'>463.2</td></tr><tr><td>queue</td><td class='warn'>452.2</td></tr><tr><td>repeat</td><td class='warn'>386.2</td></tr><tr><td>shuffle</td><td class='warn'>368.4</td></tr><tr><td>visualizer</td><td class='ok'>324.6</td></tr><tr><td>album_art</td><td class='ok'>252.6</td></tr><tr><td>seek</td><td class='ok'>144.7</td></tr><tr><td>next</td><td class='ok'>111.5</td></tr><tr><td>prev</td><td class='ok'>96.5</td></tr><tr><td>playpause</td><td class='ok'>68.3</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>C — clause kept + numeric position-lock addendum (centres within 2%) · seed 673</h4>
+    <p><b class='bad'>mean drift 603.1px</b>
+       · worst queue (1902.4px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>biref-parts</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-fa-pod-c-673/overlay-drift.png'><img src='assets-bisect-fa-pod-c-673/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-fa-pod-c-673/paint.png'><img src='assets-bisect-fa-pod-c-673/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-fa-pod-c-673/paint.png'>raw paint</a> · <a href='assets-bisect-fa-pod-c-673/blueprint.png'>blueprint</a> · <a href='assets-bisect-fa-pod-c-673/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>queue</td><td class='bad'>1902.4</td></tr><tr><td>vol</td><td class='bad'>1005.4</td></tr><tr><td>prev</td><td class='bad'>963.3</td></tr><tr><td>visualizer</td><td class='warn'>418.0</td></tr><tr><td>playpause</td><td class='warn'>399.2</td></tr><tr><td>repeat</td><td class='warn'>392.7</td></tr><tr><td>seek</td><td class='warn'>389.7</td></tr><tr><td>shuffle</td><td class='ok'>326.7</td></tr><tr><td>album_art</td><td class='ok'>233.9</td></tr><tr><td>next</td><td class='ok'>0.0</td></tr></table></details>
+  </div></div><div class='row'>
+  <div class='cell'>
+    <h4>A — production prompt verbatim (bold-silhouette clause present) · seed 918</h4>
+    <p><b class='warn'>mean drift 494.5px</b>
+       · worst queue (1794.4px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>knob-template-fallback:vol, emptiness, biref-parts</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-fa-pod-a-918/overlay-drift.png'><img src='assets-bisect-fa-pod-a-918/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-fa-pod-a-918/paint.png'><img src='assets-bisect-fa-pod-a-918/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-fa-pod-a-918/paint.png'>raw paint</a> · <a href='assets-bisect-fa-pod-a-918/blueprint.png'>blueprint</a> · <a href='assets-bisect-fa-pod-a-918/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>queue</td><td class='bad'>1794.4</td></tr><tr><td>repeat</td><td class='warn'>509.3</td></tr><tr><td>shuffle</td><td class='warn'>431.1</td></tr><tr><td>visualizer</td><td class='warn'>427.6</td></tr><tr><td>prev</td><td class='warn'>411.9</td></tr><tr><td>seek</td><td class='warn'>392.3</td></tr><tr><td>next</td><td class='warn'>361.0</td></tr><tr><td>playpause</td><td class='ok'>309.4</td></tr><tr><td>album_art</td><td class='ok'>307.6</td></tr><tr><td>vol</td><td class='ok'>0.0</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>B — clause REMOVED (conservative locked housing) · seed 918</h4>
+    <p><b class='ok'>mean drift 337.6px</b>
+       · worst seek (1176.2px)
+       · gate <span class='ok'>PASS</span>
+       <span class='dim'></span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-fa-pod-b-918/overlay-drift.png'><img src='assets-bisect-fa-pod-b-918/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-fa-pod-b-918/paint.png'><img src='assets-bisect-fa-pod-b-918/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-fa-pod-b-918/paint.png'>raw paint</a> · <a href='assets-bisect-fa-pod-b-918/blueprint.png'>blueprint</a> · <a href='assets-bisect-fa-pod-b-918/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>seek</td><td class='bad'>1176.2</td></tr><tr><td>shuffle</td><td class='warn'>513.3</td></tr><tr><td>vol</td><td class='warn'>500.0</td></tr><tr><td>visualizer</td><td class='warn'>353.0</td></tr><tr><td>album_art</td><td class='ok'>321.6</td></tr><tr><td>queue</td><td class='ok'>166.0</td></tr><tr><td>playpause</td><td class='ok'>161.1</td></tr><tr><td>repeat</td><td class='ok'>115.6</td></tr><tr><td>next</td><td class='ok'>36.5</td></tr><tr><td>prev</td><td class='ok'>32.5</td></tr></table></details>
+  </div>
+  <div class='cell'>
+    <h4>C — clause kept + numeric position-lock addendum (centres within 2%) · seed 918</h4>
+    <p><b class='bad'>mean drift 733.7px</b>
+       · worst album_art (2007.4px)
+       · gate <span class='bad'>FAIL</span>
+       <span class='dim'>biref-parts</span></p>
+    <div class='imgs'>
+      <figure><a href='assets-bisect-fa-pod-c-918/overlay-drift.png'><img src='assets-bisect-fa-pod-c-918/overlay-drift.png' loading='lazy'></a>
+        <figcaption>drift overlay (studio annotation — toggleable to raw paint via link)</figcaption></figure>
+      <figure><a href='assets-bisect-fa-pod-c-918/paint.png'><img src='assets-bisect-fa-pod-c-918/paint.png' loading='lazy'></a>
+        <figcaption><a href='assets-bisect-fa-pod-c-918/paint.png'>raw paint</a> · <a href='assets-bisect-fa-pod-c-918/blueprint.png'>blueprint</a> · <a href='assets-bisect-fa-pod-c-918/mask.png'>mask</a></figcaption></figure>
+    </div>
+    <details><summary>per-control drift px</summary><table><tr><td>album_art</td><td class='bad'>2007.4</td></tr><tr><td>repeat</td><td class='bad'>1229.9</td></tr><tr><td>shuffle</td><td class='bad'>802.5</td></tr><tr><td>queue</td><td class='bad'>675.6</td></tr><tr><td>playpause</td><td class='bad'>618.2</td></tr><tr><td>vol</td><td class='warn'>489.7</td></tr><tr><td>seek</td><td class='warn'>464.2</td></tr><tr><td>next</td><td class='warn'>456.4</td></tr><tr><td>prev</td><td class='warn'>412.7</td></tr><tr><td>visualizer</td><td class='ok'>180.3</td></tr></table></details>
+  </div></div>
+
+<div class='conclusion'>
+<h2 style='margin-top:0'>Conclusion</h2>
+<p><b>Neither arm clears the noise floor on both themes — the bold-silhouette clause is NOT
+confirmed as the drift driver, and no prompt change should ship from this result.</b></p>
+<ul>
+<li><b>B (clause removed)</b> is a clean MIXED result: fa-pod improved (+230px, clears the floor
+alone) but wc-goldshield got WORSE (−252px) — consistent within each theme across both seeds
+(wc 744/636 vs A's 392/484; fa-pod 267/338 vs A's 570/494). Under the design note's decision
+rule a mixed result means a theme-specific confound, not a clean clause effect: do not ship a
+global prompt change off it.</li>
+<li><b>C (clause + numeric position-lock)</b> helped NOTHING: numerically worse than A on both
+themes (−152px / −136px), both below the floor. An explicit "centres within 2%" sentence does
+not buy adherence from this model — consistent with the bproof constraint-load finding that
+piling on constraint text has diminishing/negative returns.</li>
+<li><b>Visual check (real artifacts):</b> B's paints ARE visibly more conservative (plain shield /
+plain capsule vs A's ornate winged housings) — the clause does control silhouette boldness. It
+just doesn't control drift monotonically: wc-goldshield's conservative B gens rearranged the
+control LAYOUT (buttons collapsed to one row) more than the bold A gens did.</li>
+<li><b>Baseline validity:</b> arm A's means (392–570px) closely reproduce the live roster audit's
+current values (fa-pod 503, wc 462) under FORCED solid conditioning — so the audit-measured drift
+level is reproducible without the random arm-draw, ruling the arm-draw out as the sole driver too.</li>
+<li><b>Caveat:</b> per the task spec this bisect ran on wc-goldshield + fa-pod — the audit's two
+IMPROVERS, not the two worst regressors (fallout-pipboy +808px, steam-porthole +335px). A clause
+effect that only manifests on the regressing themes would be invisible here.</li>
+<li><b>Recommended next step</b> (per the design note's fall-through): bisect the remaining
+suspects — the extraction-algorithm commits (<code>ac28cd74</code>, <code>86f69c75</code>,
+<code>a8bbaad0</code>) by re-running CURRENT extract12 against the ORIGINAL baseline paints
+(zero new gens, $0 — separates "the paint drifted more" from "the detector measures differently"),
+and if that's clean, repeat this bisect on fallout-pipboy + steam-porthole.</li>
+</ul>
+<p class='dim'>n=2 seeds/theme/arm; every number above sits against a ±150px noise floor. Nothing
+here is significant in a statistical sense — the decision rule is the design note's "clears the
+floor on both themes" bar, which nothing cleared.</p>
+</div>
+</body></html>

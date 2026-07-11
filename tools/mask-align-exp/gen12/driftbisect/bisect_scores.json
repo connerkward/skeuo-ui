@@ -1,0 +1,437 @@
+{
+ "note": "mean_drift_px per gen = mean over controls of |authored-template-centre - extract12-detected-device-centre| in px, IDENTICAL metric/code to twoimg/roster_audit.py's drift_table(). noise_floor_px is the conservative 150px bar from docs/design/2026-07-11-think-about-notes.md \u00a73 (two skins moved -82/-99px under an unchanged pipeline with no prompt change -- a regression/improvement below ~150px is not distinguishable from run-to-run variance).",
+ "noise_floor_px": 150,
+ "runs": [
+  {
+   "id": "wc-goldshield",
+   "seed": 736,
+   "arm": "A",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 392.3,
+   "max_drift_control": "playpause",
+   "max_drift_px": 994.5,
+   "per_control_drift_px": {
+    "album_art": 244.1,
+    "visualizer": 424.9,
+    "seek": 394.5,
+    "prev": 334.1,
+    "playpause": 994.5,
+    "next": 348.5,
+    "repeat": 0.0,
+    "vol": 492.7,
+    "shuffle": 483.5,
+    "queue": 206.4
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "biref-parts"
+   ],
+   "leak": 0.002979
+  },
+  {
+   "id": "wc-goldshield",
+   "seed": 736,
+   "arm": "B",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 744.3,
+   "max_drift_control": "shuffle",
+   "max_drift_px": 1574.7,
+   "per_control_drift_px": {
+    "album_art": 575.0,
+    "visualizer": 795.6,
+    "seek": 895.3,
+    "prev": 526.9,
+    "playpause": 1012.6,
+    "next": 1282.6,
+    "repeat": 214.8,
+    "vol": 336.1,
+    "shuffle": 1574.7,
+    "queue": 229.4
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "emptiness",
+    "biref-parts"
+   ],
+   "leak": 0.000132
+  },
+  {
+   "id": "wc-goldshield",
+   "seed": 736,
+   "arm": "C",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 550.2,
+   "max_drift_control": "playpause",
+   "max_drift_px": 993.4,
+   "per_control_drift_px": {
+    "album_art": 673.0,
+    "visualizer": 420.4,
+    "seek": 392.4,
+    "prev": 461.2,
+    "playpause": 993.4,
+    "next": 465.1,
+    "repeat": 347.8,
+    "vol": 474.5,
+    "shuffle": 903.2,
+    "queue": 370.7
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "region-misplaced:album_art",
+    "biref-parts"
+   ],
+   "leak": 0.000103
+  },
+  {
+   "id": "wc-goldshield",
+   "seed": 841,
+   "arm": "A",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 483.5,
+   "max_drift_control": "repeat",
+   "max_drift_px": 858.4,
+   "per_control_drift_px": {
+    "album_art": 520.3,
+    "visualizer": 382.6,
+    "seek": 409.2,
+    "prev": 377.5,
+    "playpause": 634.2,
+    "next": 606.5,
+    "repeat": 858.4,
+    "vol": 741.7,
+    "shuffle": 138.4,
+    "queue": 166.1
+   },
+   "gate_pass": true,
+   "gate_reasons": [],
+   "leak": 0.000393
+  },
+  {
+   "id": "wc-goldshield",
+   "seed": 841,
+   "arm": "B",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 635.8,
+   "max_drift_control": "repeat",
+   "max_drift_px": 1156.4,
+   "per_control_drift_px": {
+    "album_art": 499.8,
+    "visualizer": 616.4,
+    "seek": 578.6,
+    "prev": 607.5,
+    "playpause": 831.7,
+    "next": 797.9,
+    "repeat": 1156.4,
+    "vol": 167.2,
+    "shuffle": 310.7,
+    "queue": 791.6
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "biref-parts"
+   ],
+   "leak": 0.000179
+  },
+  {
+   "id": "wc-goldshield",
+   "seed": 841,
+   "arm": "C",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 630.1,
+   "max_drift_control": "next",
+   "max_drift_px": 798.8,
+   "per_control_drift_px": {
+    "album_art": 341.1,
+    "visualizer": 649.4,
+    "seek": 636.0,
+    "prev": 796.0,
+    "playpause": 734.6,
+    "next": 798.8,
+    "repeat": 718.4,
+    "vol": 484.7,
+    "shuffle": 390.4,
+    "queue": 752.0
+   },
+   "gate_pass": true,
+   "gate_reasons": [],
+   "leak": 0.000181
+  },
+  {
+   "id": "fa-pod",
+   "seed": 673,
+   "arm": "A",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 570.5,
+   "max_drift_control": "queue",
+   "max_drift_px": 1844.6,
+   "per_control_drift_px": {
+    "album_art": 279.4,
+    "visualizer": 413.4,
+    "seek": 379.1,
+    "prev": 590.2,
+    "playpause": 687.0,
+    "next": 0.0,
+    "repeat": 904.9,
+    "vol": 295.9,
+    "shuffle": 310.6,
+    "queue": 1844.6
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "biref-parts",
+    "leak=0.008687"
+   ],
+   "leak": 0.008687
+  },
+  {
+   "id": "fa-pod",
+   "seed": 673,
+   "arm": "B",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 266.8,
+   "max_drift_control": "vol",
+   "max_drift_px": 463.2,
+   "per_control_drift_px": {
+    "album_art": 252.6,
+    "visualizer": 324.6,
+    "seek": 144.7,
+    "prev": 96.5,
+    "playpause": 68.3,
+    "next": 111.5,
+    "repeat": 386.2,
+    "vol": 463.2,
+    "shuffle": 368.4,
+    "queue": 452.2
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "emptiness"
+   ],
+   "leak": 0.0
+  },
+  {
+   "id": "fa-pod",
+   "seed": 673,
+   "arm": "C",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 603.1,
+   "max_drift_control": "queue",
+   "max_drift_px": 1902.4,
+   "per_control_drift_px": {
+    "album_art": 233.9,
+    "visualizer": 418.0,
+    "seek": 389.7,
+    "prev": 963.3,
+    "playpause": 399.2,
+    "next": 0.0,
+    "repeat": 392.7,
+    "vol": 1005.4,
+    "shuffle": 326.7,
+    "queue": 1902.4
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "biref-parts"
+   ],
+   "leak": 0.0
+  },
+  {
+   "id": "fa-pod",
+   "seed": 918,
+   "arm": "A",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 494.5,
+   "max_drift_control": "queue",
+   "max_drift_px": 1794.4,
+   "per_control_drift_px": {
+    "album_art": 307.6,
+    "visualizer": 427.6,
+    "seek": 392.3,
+    "prev": 411.9,
+    "playpause": 309.4,
+    "next": 361.0,
+    "repeat": 509.3,
+    "vol": 0.0,
+    "shuffle": 431.1,
+    "queue": 1794.4
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "knob-template-fallback:vol",
+    "emptiness",
+    "biref-parts"
+   ],
+   "leak": 0.001218
+  },
+  {
+   "id": "fa-pod",
+   "seed": 918,
+   "arm": "B",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 337.6,
+   "max_drift_control": "seek",
+   "max_drift_px": 1176.2,
+   "per_control_drift_px": {
+    "album_art": 321.6,
+    "visualizer": 353.0,
+    "seek": 1176.2,
+    "prev": 32.5,
+    "playpause": 161.1,
+    "next": 36.5,
+    "repeat": 115.6,
+    "vol": 500.0,
+    "shuffle": 513.3,
+    "queue": 166.0
+   },
+   "gate_pass": true,
+   "gate_reasons": [],
+   "leak": 0.0
+  },
+  {
+   "id": "fa-pod",
+   "seed": 918,
+   "arm": "C",
+   "dims": [
+    2304,
+    3712
+   ],
+   "n_controls": 10,
+   "mean_drift_px": 733.7,
+   "max_drift_control": "album_art",
+   "max_drift_px": 2007.4,
+   "per_control_drift_px": {
+    "album_art": 2007.4,
+    "visualizer": 180.3,
+    "seek": 464.2,
+    "prev": 412.7,
+    "playpause": 618.2,
+    "next": 456.4,
+    "repeat": 1229.9,
+    "vol": 489.7,
+    "shuffle": 802.5,
+    "queue": 675.6
+   },
+   "gate_pass": false,
+   "gate_reasons": [
+    "biref-parts"
+   ],
+   "leak": 0.0
+  }
+ ],
+ "by_arm": {
+  "A": {
+   "n": 4,
+   "mean_of_means_px": 485.2,
+   "values": [
+    392.3,
+    483.5,
+    570.5,
+    494.5
+   ]
+  },
+  "B": {
+   "n": 4,
+   "mean_of_means_px": 496.1,
+   "values": [
+    744.3,
+    635.8,
+    266.8,
+    337.6
+   ]
+  },
+  "C": {
+   "n": 4,
+   "mean_of_means_px": 629.3,
+   "values": [
+    550.2,
+    630.1,
+    603.1,
+    733.7
+   ]
+  }
+ },
+ "by_theme_arm": {
+  "wc-goldshield": {
+   "A": 437.9,
+   "B": 690.0,
+   "C": 590.2
+  },
+  "fa-pod": {
+   "A": 532.5,
+   "B": 302.2,
+   "C": 668.4
+  }
+ },
+ "delta_vs_A_px": {
+  "wc-goldshield": {
+   "B": -252.1,
+   "C": -152.3
+  },
+  "fa-pod": {
+   "B": 230.3,
+   "C": -135.9
+  }
+ },
+ "clears_noise_floor": {
+  "B": {
+   "both_themes": false,
+   "any_theme": true,
+   "per_theme_delta_px": {
+    "wc-goldshield": -252.1,
+    "fa-pod": 230.3
+   }
+  },
+  "C": {
+   "both_themes": false,
+   "any_theme": false,
+   "per_theme_delta_px": {
+    "wc-goldshield": -152.3,
+    "fa-pod": -135.9
+   }
+  }
+ }
+}

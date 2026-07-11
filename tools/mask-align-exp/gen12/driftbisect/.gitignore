@@ -1,0 +1,6 @@
+# $0-recomputable artifacts stay out (policy: gen12/.gitignore) — paid Vertex outputs
+# (joint-4k/paint/mask) + provenance (blueprint, results/regions json) ARE committed.
+assets-bisect-*_biref/
+assets-bisect-*/overlay.png
+.playwright-mcp/
+.serve-url

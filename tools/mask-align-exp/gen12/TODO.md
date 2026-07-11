@@ -382,6 +382,16 @@ implemented: [`docs/design/2026-07-11-think-about-notes.md`](../../../docs/desig
   NOT run) is in the doc, including a verify-rule flag: the suspected clause's wording is
   actually unchanged since baseline, so the bisect must isolate it from other confounds
   (conditioning-arm draw, extraction-algorithm changes) rather than assume it's guilty.
+  **RUN 2026-07-11** (`driftbisect/`, 12 gens ≈ $2.88, wc-goldshield + fa-pod × 2 seeds ×
+  3 arms, conditioning forced solid): **clause NOT confirmed as the drift driver — no
+  prompt change ships.** B (clause removed) was MIXED (fa-pod +230px better, wc −252px
+  worse, consistent across seeds); C (clause + numeric 2%-centre lock) was worse than
+  production on both themes. Neither cleared the 150px noise floor on both themes. Full
+  record: [`docs/experiments/2026-07-11-drift-clause-bisect.md`](../../../docs/experiments/2026-07-11-drift-clause-bisect.md)
+  + `driftbisect/results.html`. Fall-through next steps ($0-first): re-run CURRENT
+  extract12 on the ORIGINAL `794da20e` baseline paints to bisect the extraction commits
+  (`ac28cd74`/`86f69c75`/`a8bbaad0`); then repeat on the true regressors
+  (fallout-pipboy/steam-porthole) if extraction is clean.
 
 ## Review the longitudinal blueprint-conditioning randomization study (once n accumulates)
 
