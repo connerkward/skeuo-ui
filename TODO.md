@@ -82,7 +82,9 @@ the paint prompt (`src/generate/pipeline.ts`).
 
 ## Open
 
-- [ ] **★ #1 PRIORITY — Merge `spritesheet-pipeline` → main: single-pass skin generation + sprite-sheet (decision A locked 2026-06-23).**
+> **SUPERSEDED (2026-07-11):** obsoleted by the 2026-06-27 generation-system revamp directive and the gen12 pipeline (tools/mask-align-exp/gen12/), which reimplements single-pass paint+strip generation with gates; the 2026-07-11 DECISIONS.md ADR fixes the architecture. Branch preserved in git if ever needed.
+
+- [x] ~~**★ #1 PRIORITY — Merge `spritesheet-pipeline` → main: single-pass skin generation + sprite-sheet (decision A locked 2026-06-23).**
       **→ Full design + decisions + rejected approaches: [`docs/skin-pipeline-sota.md`](docs/skin-pipeline-sota.md) (READ FIRST).**
       ONE generative paint pass renders the device body + all button/knob/slider parts together
       (combined blueprint); then non-generative BiRefNet mask + local cut + heuristic snap. Generated
@@ -415,6 +417,8 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
 - **Cost note:** `.fm` is ~$85/yr (premium ccTLD, normal price). Cheap holds: `fib.fun` ~$15, `guise.lol` ~$8. Recommendation: don't buy speculatively; rename repo/Pages to the pick (free), buy `.fm` at launch.
 
 ## Earlier follow-ups (still open)
+> **SUPERSEDED (2026-07-11):** these target the pre-gen12 generation stack (freeform.py grammars/refs); gen12 + the 2026-07-11 architecture ADR replace that stack. Revive only if the old stack returns.
+
 - [ ] Isolate the reference-steering effect (no-ref control or off-prompt reference) — winamp material prompt already implies chrome, so War Slab doesn't independently prove the ref moved the output.
 - [ ] Capture real WMP9/Halo2 references into `assets/refs/` and regenerate those homages.
 - [ ] Regenerate the older blob-like sculpts (frog2/burger2/bondi2/toilet2/biomech2/fiend2) with the relaxed prompt.
@@ -422,6 +426,8 @@ Direction landed on: a **smiling-guilty bratty 90s demon-child** mascot (Invader
 - [ ] EQ/playlist crowding on hero (obelisk).
 
 ## Follow-ups
+> **SUPERSEDED (2026-07-11):** these target the pre-gen12 generation stack (freeform.py grammars/refs); gen12 + the 2026-07-11 architecture ADR replace that stack. Revive only if the old stack returns.
+
 - [ ] **Isolate the reference-steering effect.** Mechanism is wired + runs, but the winamp material prompt already implies chrome, so War Slab doesn't independently prove the ref moved the output. Generate a no-ref control of the same blueprint and diff, OR steer with a strongly off-prompt reference (e.g. a bright reference on a dark style) to confirm influence.
 - [ ] **Capture real homage references.** WMP9 / Halo 2 / noirotic / Illusion screenshots were never obtained as files. Drop them in `assets/refs/` and regenerate `wmp` / `halo` with `--ref` so the homages actually trace the source UIs.
 - [ ] **Diversity is 3 new bodies, not a sweep.** The older blob-like sculpts (frog2, burger2, bondi2, toilet2, biomech2, fiend2) predate the relaxed prompt. Regenerate them to break the morphological sameness across the whole set.
