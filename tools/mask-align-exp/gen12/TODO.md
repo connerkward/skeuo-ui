@@ -109,6 +109,66 @@ scoped only to `docs/experiments/assets/*.png|*.jpg` — recommend extending LFS
 `blueprint.png` ($0 deterministic) and `assets-*_biref/` as a bulk ignore pattern stay/stayed
 ignored — see `.gitignore` for the itemized policy comment.
 
+## Media policy revisit (2026-07-11, later) — non-vital bulk should move to Drive, offload BLOCKED
+
+User correction of the commit above: don't commit large non-vital volume media, store in
+Drive and link in. Re-classified the ~786MB currently tracked under `assets-*` by hard
+evidence (grep for actual runtime `img`/`url()`/`fetch` refs in the *committed* `player.html`
+/ `player-pbr.html` / `dashboard12.html`, not assumption):
+
+**Stays committed (runtime-required):**
+- `assets-*/paint.png` (149MB/15) — `player.html` background + `player-pbr.html` `loadImg`.
+- `assets-*/mask.png` (77MB/15) — `player.html` line ~224, `new Image(); mi.src='mask.png?v='+V`
+  compositing. (A parallel-lane message claimed this was non-runtime and safe to offload —
+  **false**, verified by grep across all 15 `assets-*/player.html`; did not act on it.)
+- `assets-*_biref/{device,seek,vol,shuffle_off,shuffle_on,extra-*}.png` (~242MB) — `BREF` path
+  loaded by both players.
+- `assets-*_pbr/{basecolor,normal,roughness,metalness,glass,btn-ids,emissive,art-mask,
+  viz-mask,meta.json}` (~83.6MB) — `player-pbr.html` runtime loads.
+- `assets-steam-porthole_biref/global-matte.png` only — `dashboard12.html`'s embedded
+  `explainer_anim.js` hardcodes `KNOB_SKIN="assets-steam-porthole"` and `loadImg`s this exact
+  file for the committed interactive pipeline walkthrough. The other 14 skins' copies are not
+  referenced by anything.
+
+**Non-vital, offload-intended (NOT yet moved — see blocker below), ~341.8MB/36 files:**
+- `assets-*/joint-4k.png` (231MB/15) — 4K joint sheet, no runtime ref anywhere; paid Vertex
+  roll (not free to regenerate) but already fully recoverable from origin's git history
+  (commit `39d76200`) regardless of a Drive copy.
+- `assets-*_pbr/height.png` (2.4MB/7) — no runtime ref anywhere (checked `player-pbr.html`,
+  `build_player_pbr.py`, `pbr_pass.py`).
+- `assets-*_biref/global-matte.png` EXCEPT steam-porthole (108.4MB/14) — no runtime ref;
+  documented elsewhere as $0-recomputable via local BiRefNet (`BIREF_LOCAL=True`).
+
+**Drive offload — BLOCKED, not attempted beyond a mechanism test:**
+- `rclone`'s configured `gdrive:` remote has an empty/expired OAuth token
+  (`rclone lsd gdrive:` → "empty token found — please run rclone config reconnect gdrive:").
+  Reconnecting is a one-time interactive browser OAuth flow — a legitimate human handoff, not
+  something to do headlessly.
+- Fell back to the claude.ai Google Drive MCP connector (`mcp__claude_ai_Google_Drive__*`).
+  Created the target folder `skeuo-ui/gen12-media/2026-07-11/` (empty, ready:
+  https://drive.google.com/drive/folders/1k7qEh9sfYBSu-xCUqzLpPTSCLBTmL03r). Its `create_file`
+  tool only accepts inline `base64Content`/`textContent` — no file-path/streaming/URL upload,
+  no chunked/append write. Tested with the smallest real offload candidate
+  (`assets-fallout-vault_pbr/height.png`, 277KB raw / 370KB base64): **both** the `Read` tool
+  (256KB text cap) and the `Bash` tool's own stdout capture (same ~256KB cap, "Output too
+  large") refuse to surface the base64 text into a tool-call parameter. Ceiling is a hard
+  ~190KB raw / ~256KB base64 per file — every one of the 36 offload candidates (277KB–17MB)
+  exceeds it, and zipping would make it worse (constraint is per-call payload size, not file
+  count), so no partial/half upload was attempted.
+- **Unblock:** run `rclone config reconnect gdrive:` interactively once, then
+  `rclone copy <files> gdrive:skeuo-ui/gen12-media/2026-07-11/` streams natively with no
+  context/payload bottleneck — trivial once the token is valid.
+- No files were `git rm --cached`, `.gitignore` was left as-is, and nothing was pushed for
+  this reclassification — untracking now, with no working Drive mirror, would leave the
+  manifest linking to nothing. Re-run once `rclone` is reconnected.
+
+**History honesty (for whenever the offload+untrack does complete):** removing files from the
+tip does NOT shrink `origin`'s already-pushed pack — `39d76200`'s blobs stay in history until
+a coordinated `git filter-repo`/BFG rewrite + force-push. Repo-wide (not gen12-scoped)
+`git count-objects -vH` right now: 5364 loose + 19867 in-pack objects, 16.68 GiB total,
+5.25 GiB in 18 packs — a tip-level `git rm --cached` changes none of this; only a history
+rewrite would, and that needs explicit user sign-off (shared `main`, force-push implications).
+
 ## imgjson: image-model JSON output + structured-I/O sweep — DONE 2026-07-11
 
 Answered "can gemini-3-pro-image-preview emit usable JSON (bbox manifests) alongside its
