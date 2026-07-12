@@ -1,0 +1,95 @@
+{
+  "diablo-gothic": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-diablo-gothic/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/slotwide/crops/diablo-gothic-slotcrop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/slotwide/crops/diablo-gothic-slotmask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "slot_box_px": [
+      1371.7,
+      1063.0,
+      1568.3,
+      2288.0
+    ],
+    "crop_box": [
+      1022,
+      879,
+      1918,
+      2472
+    ],
+    "mask_in_crop": [
+      339,
+      174,
+      556,
+      1419
+    ],
+    "vertical": true,
+    "vertex_aspect": "9:16",
+    "seed": 736,
+    "material": "dark carved obsidian/gothic metal channel with glowing rune inlay"
+  },
+  "wc-goldshield": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-wc-goldshield/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/slotwide/crops/wc-goldshield-slotcrop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/slotwide/crops/wc-goldshield-slotmask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "slot_box_px": [
+      547.0,
+      1640.0,
+      1740.0,
+      1738.0
+    ],
+    "crop_box": [
+      368,
+      1357,
+      1919,
+      2021
+    ],
+    "mask_in_crop": [
+      169,
+      272,
+      1382,
+      391
+    ],
+    "vertical": false,
+    "vertex_aspect": "21:9",
+    "seed": 736,
+    "material": "ornate gold-shield emblem metal groove, warm brass tones"
+  },
+  "fallout-vault": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-fallout-vault/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/slotwide/crops/fallout-vault-slotcrop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/slotwide/crops/fallout-vault-slotmask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "slot_box_px": [
+      791.0,
+      1753.4,
+      2001.0,
+      1903.6
+    ],
+    "crop_box": [
+      610,
+      1491,
+      2182,
+      2166
+    ],
+    "mask_in_crop": [
+      171,
+      252,
+      1401,
+      422
+    ],
+    "vertical": false,
+    "vertex_aspect": "21:9",
+    "seed": 649,
+    "material": "brushed steel vault-door control channel with yellow hazard trim"
+  }
+}

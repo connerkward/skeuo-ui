@@ -217,3 +217,27 @@ VLM judging: 30 calls = **$0.350**.
 - `tools/mask-align-exp/gen12/inpaintbake/index.html` (+ `build_page.py`) — the results page.
 - `tools/mask-align-exp/gen12/inpaintbake/crops/`, `results/`, `web/` — inputs, raw model
   outputs, and display thumbnails/full-res.
+
+## Addendum (2026-07-12) — Arm 2: whole-slot masking (Vertex vs Bria vs LaMa)
+
+Question: does giving the eraser the ENTIRE slider slot (mask the whole groove, repaint a
+clean track) blend more coherently than a tight patch around the baked thumb?
+
+Method: 3 skins (diablo-gothic, wc-goldshield, fallout-vault), slot geometry from each
+`regions.json` `seek.device` rect (no hand coords), crop aspect expanded to nearest
+Vertex-supported enum (ai-image-coords-rule). Ran LaMa ($0) / Bria ($0.04) / Vertex ($0.13);
+z-image dropped (hallucinator). Composited back with erase12's feather. Spend $0.52.
+
+Result — **whole-slot masking is NEGATIVE for generative erasers:**
+- diablo-gothic: LaMa partial · Bria FAIL (quilted-texture hallucination) · Vertex FAIL (added rune glyphs, didn't erase)
+- wc-goldshield: LaMa PASS · Bria FAIL (thumb untouched) · Vertex FAIL (thumb untouched)
+- fallout-vault: LaMa partial · Bria PASS · Vertex PASS
+
+Inversion vs Arm 1 (tight crop): there Vertex was the reliable 5/5; at whole-slot scale it
+fails 2/3. A wide unmasked context reads as "design permission" to a prompt-driven model
+rather than "match this material." Only LaMa (classical, no hallucination capacity) stays
+consistent at slot scale.
+
+**Routing decision: keep erase12's mask TIGHT for generative erasers (Vertex/Bria). Only
+pair whole-slot masking with a classical eraser (LaMa).** Do not widen the erase mask as a
+blanket policy. Page: `inpaintbake/slotwide/index.html`.
