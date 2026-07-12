@@ -48,6 +48,111 @@ sat = ((flat.max(1) - flat.min(1)) > 55) & (flat.max(1) > 90)
 d = np.sqrt(((flat[:, None, :] - COLS[None, :, :]) ** 2).sum(2))
 assign = np.where(sat & (d.min(1) < 95), d.argmin(1), -1).reshape(MH, MW)
 
+# ---- DEVICE-BAND EXCLUSIVE BLOB->KEY REASSIGNMENT ----
+# Root cause of the 2026-07-11 "button hitbox landed on a DIFFERENT control" review round
+# (wmp-quicksilver: playpause->vol's knob, prev->the seek groove; myst-arcanum: repeat
+# reduced to a degenerate sliver). mask.png is NOT flat key-colour fills -- genskin's guide
+# render bakes shading/gradient on top of each control's key colour (measured: playpause
+# (255,255,0) painted as ~(249,224,71), 78px euclidean from its OWN key). The OLD per-PIXEL
+# nearest-key argmin above lets a shading-drifted pixel of one control's blob defect to a
+# DIFFERENT, merely-closer-after-shading key -- two visually distinct, non-touching blobs
+# (playpause's circle + vol's circle) then both label under the SAME index, and
+# largest_cc_bbox coin-flips which one "wins" (confirmed: both were within 6% pixel-count of
+# each other), handing playpause's device bbox to the volume knob. The same per-pixel leak
+# also FRAGMENTS a single blob across two indices (myst-arcanum repeat lost its outer ring to
+# neighbouring keys, leaving only a thin sliver assigned to its own index).
+#
+# Fix: segment the DEVICE band first (role-agnostic connected components of "any
+# sufficiently saturated pixel" -- backdrop is flat/unsaturated between controls, so this
+# cleanly separates distinct painted shapes regardless of their internal colour drift), THEN
+# assign each WHOLE BLOB to its nearest-median-colour key via greedy EXCLUSIVE bipartite
+# matching (closest blob/key pairs claimed first; a blob or key claimed once is removed from
+# the pool). Immune to intra-blob gradient (uses the blob's MEDIAN colour, not per-pixel) and
+# immune to cross-blob theft (one key claims exactly one blob, one blob is claimed by exactly
+# one key) -- the actual invariant a "device bbox" needs. Scoped to the device band only
+# (STRIP band keeps the old per-pixel path unchanged) because the strip band's TOGGLE case
+# intentionally needs TWO cells to share one key -- an exclusive 1-blob-per-key match would
+# break that; the button-misassignment bug is device-band only anyway (verified).
+_dcut = int(DEVF * MH)
+_devrows = np.zeros((MH, MW), bool); _devrows[:_dcut] = True
+_sat2d = sat.reshape(MH, MW)
+def _exclusive_blob_assign(mask2d):
+    lbl, n = ndimage.label(mask2d)
+    out = np.full((MH, MW), -1, dtype=int)
+    if n == 0: return out
+    blobs = []
+    for c in range(1, n + 1):
+        ys, xs = np.where(lbl == c)
+        if len(xs) < 120: continue
+        med = np.median(m[ys, xs], axis=0)
+        dists = np.sqrt(((med[None, :] - COLS) ** 2).sum(1))
+        bw = int(xs.max() - xs.min()) + 1; bh = int(ys.max() - ys.min()) + 1
+        elong = max(bw, bh) / max(1, min(bw, bh))
+        blobs.append((c, len(xs), dists, elong))
+    if not blobs: return out
+    # ROLE-SIZE TIE-BREAK for a genuine colour near-tie (myst-arcanum: one blob measured 69.9
+    # to 'vol' and 75.2 to 'repeat' -- a 7% gap, essentially a coin flip on colour alone,
+    # because the model painted this blob at a shade almost exactly between the two keys). A
+    # blob's SIZE is an independent signal: buttons in one skin are drawn near-identically
+    # sized by convention (confirmed: 3 other unambiguous button blobs measured
+    # 97591-98522px; the disputed blob measured 98192px, matching to within 0.2%), while a
+    # knob is a structurally different control and won't coincidentally match that size. Build
+    # a per-ROLE median size from only UNAMBIGUOUS blobs (colour distance < 50, no ambiguity to
+    # resolve) and use it as a bounded nudge -- never enough to override a clear match, only to
+    # break a close one.
+    role_sizes = {}
+    for c, sz, dists, elong in blobs:
+        order = np.argsort(dists)
+        # "unambiguous" = a clear GAP to the runner-up (relative separation), not an absolute
+        # distance cutoff — a heavily-shaded mask.png can push EVERY match past a fixed bar
+        # (this roster: correct matches ran 60-135) while still being obviously correct
+        # relative to the next-best candidate.
+        if len(order) >= 2 and (dists[order[1]] - dists[order[0]]) > 40:
+            role = ROLES.get(NAMES[int(order[0])])
+            if role: role_sizes.setdefault(role, []).append(sz)
+    # >=3 samples (not 2): a role's "typical size" must be a MEDIAN over enough same-role
+    # controls to resist a single outlier — playpause is legitimately drawn larger than its
+    # sibling buttons, and with only 2 samples that outlier IS the median.
+    role_med = {r: float(np.median(v)) for r, v in role_sizes.items() if len(v) >= 3}
+    cands = []
+    for c, sz, dists, elong in blobs:
+        order = np.argsort(dists)[:3]                 # keep top-3 keys/blob so greedy can fall
+        for ki in order:                               # through when the #1 pick is taken
+            base = float(dists[ki])
+            role = ROLES.get(NAMES[int(ki)])
+            if role in role_med:
+                rel = abs(sz - role_med[role]) / role_med[role]
+                adj = min(40.0, rel * 60.0) - 8.0        # good size match => bonus; bad => penalty
+            else:
+                adj = 6.0                                # no size reference for this role -> mild
+                                                          # uncertainty penalty, not a free pass
+            # SHAPE CONSISTENCY: a 'slider' groove or 'toggle' housing is ALWAYS an elongated
+            # bar/pill by construction (this roster's real grooves measured elongation 4-9x,
+            # toggle pills ~2.5x) — a near-square/circular blob (elongation ~1) can NEVER be
+            # either, regardless of how close its shaded colour lands to that key. Caught TWO
+            # real cross-assignments on the same skin (wmp-quicksilver): the ROUND rewind/prev
+            # button (elongation 1.0) drifted to 93.1 colour-distance from 'seek', narrowly
+            # beating prev's own 110.7 to its own blob; the ROUND repeat button (elongation
+            # 1.0) likewise drifted closer to 'shuffle' than repeat's own key. Pure
+            # colour-distance greedily handed both sprite roles a circular BUTTON blob instead
+            # of their own elongated housing. A large, role-appropriate-shape penalty is a
+            # hard physical prior, not a fragile tuning knob: it only fires when the shape is
+            # CATEGORICALLY wrong for the role.
+            if role in ("slider", "toggle") and elong < 1.8:
+                adj += 80.0
+            cands.append((base + adj, base, c, int(ki)))
+    cands.sort(key=lambda t: t[0])
+    claimed_blob, claimed_key = set(), set()
+    for _score, dist, c, ki in cands:
+        if dist > 170: break                        # sanity ceiling (on the RAW colour distance,
+                                                       # never on the adjusted score) -- unrelated
+                                                       # blob/key stays unrelated regardless of size
+        if c in claimed_blob or ki in claimed_key: continue
+        claimed_blob.add(c); claimed_key.add(ki)
+        out[lbl == c] = ki
+    return out
+assign[_devrows] = _exclusive_blob_assign(_sat2d & _devrows)[_devrows]
+
 
 def bb(ys, xs):
     if len(xs) < 120: return None
@@ -187,6 +292,19 @@ def snap_to_paint(name, b):
     ys, xs = np.where(sel)
     if len(xs) < 80: return b
     ncx = (wx0 + xs.mean()) / PPW2
+    # MAGNITUDE CAP (buttons only): on a weathered/textured body (rust patina, gold trim) the
+    # "vivid" pixel test (mx-mn>60) can find a genuinely colourful DECORATIVE patch beside the
+    # button rather than the button's own icon -- fallout-vault: prev/repeat's engraved icon is
+    # low-saturation grey metal, but a rust/gold trim strip sits just to their left and IS
+    # colourful, so the un-bounded recentre dragged both boxes a full button-width onto that
+    # trim (confirmed: the raw, un-snapped mask position was already dead-on; snapping made it
+    # worse). A small icon-content nudge is legitimate; a big jump onto neighbouring material is
+    # not -- cap the shift to a modest fraction of the button's own size, consistent with the
+    # bounded-search-window pattern used elsewhere in this file (rrect-fit +-30%, seek clamp
+    # +-12%).
+    if name in HB:
+        cap = b[2] * 0.20
+        ncx = max(cx - cap, min(cx + cap, ncx))
     return [ncx - b[2] / 2, b[1], b[2], b[3]]
 for name in NAMES:
     r = regs.get(name)
@@ -330,7 +448,20 @@ if drift_samples:
     gdx = float(np.median([d[0] for d in drift_samples])) / GW
     gdy = float(np.median([d[1] for d in drift_samples])) / GH
     print(f"[global drift] mask->paint = ({gdx * 100:+.2f}%, {gdy * 100:+.2f}%)")
-    for k in [*HB] + ([SLIDER] if SLIDER else []) + ([TOGGLE] if TOGGLE else []) + list(SC):
+    # BUTTONS (HB) are DELIBERATELY EXCLUDED here. This drift is measured from KNOB circle-fit
+    # (gradient-fit centre) vs each knob's own mask-blob centre -- a correction for how ROUND
+    # dials render (matte-hole vs guide-circle offset), not a proven whole-canvas rigid
+    # translation. Applying it to buttons overwrote their own already-computed `device`
+    # (mask-assign + the paint-aware X-snap above) with `maskDevice + gdx,gdy` -- discarding a
+    # per-button local signal in favour of an unrelated knob-derived shift. Root-caused
+    # 2026-07-11: fallout-vault's prev/repeat measured a UNIFORM -64px (=gdx) shift on EVERY
+    # button, while the RAW pre-snap mask position was already dead-on the painted icon (visual
+    # crop confirmed) -- the blind overwrite is what introduced the "shifted a full
+    # button-width left" defect. SLIDER/TOGGLE/SC are NOT excluded: each gets its own further
+    # gradient-fit / region-refit pass right after this (rrect_fit, region_refit) that
+    # self-corrects a modest starting drift via local search -- buttons get no such downstream
+    # refinement, so a wrong drift here is final and uncorrectable.
+    for k in ([SLIDER] if SLIDER else []) + ([TOGGLE] if TOGGLE else []) + list(SC):
         r = regs.get(k)
         if not r or not r.get("maskDevice"): continue
         mb = r["maskDevice"]
@@ -529,8 +660,21 @@ if SLIDER:
         Dfloor = float(np.percentile(slot, 10))                # darkest fraction, not centre-biased
         fw = max(30, int(cw * 0.20))                           # per-side flank window
         def _body(sl):                                         # local plateau, recesses+backdrop out
-            fl = med[sl]
-            fl = fl[(fl > bgd + 25) & (fl > Dfloor + 15)]
+            fl = med[sl]; cd = cdist[sl]
+            # DISTANCE FROM BACKDROP COLOUR, not "brighter than backdrop": the old
+            # `fl > bgd+25` inequality silently assumed the device body is BRIGHTER than the
+            # (near-white) canvas backdrop — true for a metallic/bright skin but WRONG-SIGNED
+            # for a dark-bodied skin on the same light backdrop. ps1-crunchy: chassis ~40-100
+            # vs backdrop 235 → `fl>bgd+25` never once passes, both flank windows return None,
+            # and the coarse whole-row 85th-percentile fallback then blends groove+body+
+            # backdrop into one number that's too PERMISSIVE — the walk rode 44px past the
+            # slot's own declared mask cell onto the surrounding chassis plate before stopping
+            # (confirmed: raw mask cell edge was already correct, the WALK overshot it).
+            # `cdist` (already computed for this window) is the material-agnostic version:
+            # exclude pixels near backdrop colour in EITHER brightness direction, keep the rest
+            # as body candidates — works for bright-body-on-dark-backdrop and
+            # dark-body-on-light-backdrop alike.
+            fl = fl[(cd > 30) & (fl > Dfloor + 15)]
             # 70th percentile, NOT median: the flank is often BIMODAL (a neighbour control's
             # shadow next to the raised body plate — quicksilver: knob shadow ~94 / plate ~196).
             # A median lands between the modes, the plate then reads as "bright bezel rim" and
@@ -538,13 +682,40 @@ if SLIDER:
             return float(np.percentile(fl, 70)) if len(fl) >= 8 else None
         bodyL = _body(np.s_[max(0, mx0 - 4 - fw):max(0, mx0 - 4)])
         bodyR = _body(np.s_[mx1 + 4:mx1 + 4 + fw])
+        # LOCAL fallback when the immediate flank has too few valid samples (low local
+        # contrast between this slot's body and floor): widen progressively (2x, 3x, 5x fw)
+        # before resorting to the whole search window. The whole-row `med` can reach deep into
+        # a NEIGHBOURING control (wmp-vario: the volume knob's own glowing rim sat within the
+        # 40%-padded search window; its brightness dominated a whole-row percentile, inflating
+        # the body reference to 197.5 -- far above this slot's own ~85 immediate material -- so
+        # `below` never dropped low enough and the walk rode the flat low-contrast body clear
+        # through to the knob's edge, 88px past the model's own declared slot cell). A
+        # progressively-widened but still LOCAL window keeps the reference honest to nearby
+        # material instead of jumping straight to "anything in the whole search box."
+        def _local_glob(edge, direction):
+            for mult in (2, 3, 5):
+                w = fw * mult
+                sl = np.s_[max(0, edge - w):edge] if direction < 0 else np.s_[edge:edge + w]
+                v = _body(sl)
+                if v is not None: return v
+            return None
+        if bodyL is None: bodyL = _local_glob(mx0 - 4, -1)
+        if bodyR is None: bodyR = _local_glob(mx1 + 4, +1)
         glob = _body(np.s_[:]) or float(np.percentile(med, 85))
         bodyL = bodyL if bodyL is not None else glob; bodyR = bodyR if bodyR is not None else glob
         rimcap = max(8, int(cw * 0.03))                        # TOTAL bright budget per walk — a real
         # bezel end-cap is THIN; 6% of a 950px cell (57px) let a mis-read body plate extend travel
         stopcap = max(6, int(cw * 0.02))                       # sustained near-body = past the slot
         def _walk(edge, step, body):
-            below = body - max(14.0, 0.22 * max(0.0, body - Dfloor))   # "clearly below body"
+            below = body - max(18.0, 0.35 * max(0.0, body - Dfloor))   # "clearly below body" —
+            # wider margin than a flat body-to-floor split alone: a curved wall/bevel fillet
+            # right at the slot's TRUE edge has its own shading gradient (a highlight-then-
+            # shadow "bump"), which a narrow margin misreads as still-recessed and rides
+            # straight through onto the material beyond (steam-porthole: the bevel's smoothed
+            # brightness bounced 62-136 across a ~100px transition, repeatedly dipping back
+            # under a too-close `below` and resetting progress). A wider margin keeps genuine
+            # deep recess (near Dfloor) classified correctly while excluding more of that
+            # transitional bounce as "already past the slot."
             rimhi = body + 20.0                                # bright bezel above the plateau
             x = edge + step; last = edge; nrun = 0; rrun = 0
             while 0 <= x < len(med):
@@ -572,7 +743,20 @@ if SLIDER:
         lo = bx0 + _walk(mx0, -1, bodyL); hi = bx0 + _walk(mx1 - 1, +1, bodyR)
         if hi - lo < 0.5 * (gx1 - gx0):                        # detection collapsed → keep fit bbox
             lo, hi = gx0, gx1
-        lo = max(lo, bx0 + mx0 - int(0.12 * cw)); hi = min(hi, bx0 + mx1 + int(0.12 * cw))
+        # SATURATED-WALK DISTRUST (per side): a real end-cap completion stops on its own — a
+        # bezel rim, a body plateau, or the backdrop. A walk that rides all the way PAST the
+        # ±12% clamp never found ANY stop signal (wmp-vario: a wide decorative outer trough
+        # around the true channel is uniformly low-contrast "recessed", so both walks ran to
+        # the clamp and shipped the full 88px-per-side overshoot — the reviewed "css slider
+        # bar too far left. too far right also" defect). A measurement that saturates its own
+        # sanity bound is not a measurement; that side falls back to the model's own declared
+        # slot-cell edge (the walk's base span by design). Sides that stop WITHIN the clamp
+        # (fallout-vault's genuine stepped-recess widening, thin bezel caps) keep their walked
+        # extent unchanged.
+        loClamp = bx0 + mx0 - int(0.12 * cw); hiClamp = bx0 + mx1 + int(0.12 * cw)
+        if lo <= loClamp: lo = bx0 + mx0
+        if hi >= hiClamp: hi = bx0 + mx1
+        lo = max(lo, loClamp); hi = min(hi, hiClamp)
         M = int((hi - lo) * 0.02)
         tvv = [round(max(0, lo - M) / _W, 5), round(min(_W, hi + M) / _W, 5)]
         if VERT:
