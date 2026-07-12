@@ -1311,13 +1311,28 @@ def _alpha_bbox(path):
 
 if os.path.exists(BIREF):
     print("sprite-fit gate (biref-cut sprite vs detected slot, area/size ratio):")
-    if TOGGLE and TOGGLE_TRACK:
-        # TOGGLE_TRACK contract: the LEVER is SUPPOSED to be smaller than its track (it slides
+    # Branch on the toggle's ACTUAL DATA SHAPE in regions.json — `track`/`detents` present means
+    # the TWO-DETENT TRACK LEVER contract ran upstream (the SHUFFLE TRACK + DETENTS block, itself
+    # gated on TOGGLE_TRACK at extraction time); their absence means the legacy two-state
+    # stateAlign contract ran. This mirrors build_player.py's own render-time branch EXACTLY
+    # (`const isTrackArch = !!(tgR && (tgR.track || tgR.detents))`) instead of re-deriving the
+    # same decision from RES["toggle_track_enabled"] a second, independent way — one flag drives
+    # both extraction paths already, so today the two conditions never disagree, but keying the
+    # GATE off the same data shape the PLAYER keys off (not off a module-level flag snapshot)
+    # means the two can never silently diverge if a future run mixes flag/regions.json state
+    # (a hand-edit, a partial re-run, a stale cache) — same principle as biref12.py's cell-count
+    # branch, which already explicitly avoids trusting RES["toggle_track_enabled"] for the same
+    # reason ("reads any regions.json correctly regardless of which genskin.py flag state
+    # produced it").
+    _togR = regs.get(TOGGLE) if TOGGLE else None
+    is_track_arch = bool(_togR and (_togR.get("track") or _togR.get("detents")))
+    if TOGGLE and is_track_arch:
+        # TRACK-LEVER contract: the LEVER is SUPPOSED to be smaller than its track (it slides
         # within, like the seek thumb in its groove) — the legacy fill-the-slot area-ratio test
         # is wrong-shaped here. Use the slider-thumb-style CROSS-dim bounds instead: lever
         # cross-dim (perpendicular to the slide axis) vs track cross-dim. Same wide-bound
         # philosophy as SLIDER_CROSS_LO/HI (catch gross degenerates, not taste).
-        r = regs.get(TOGGLE)
+        r = _togR
         dev = (r or {}).get("device")
         if dev:
             sbb = _alpha_bbox(os.path.join(BIREF, TOGGLE + "_lever.png"))
@@ -1332,7 +1347,7 @@ if os.path.exists(BIREF):
                       f"ratio={ratio:.2f}  {'FAIL - lever size mismatch' if flag else 'ok'}")
                 if flag: sprite_fit_flagged.append(TOGGLE)
     elif TOGGLE:
-        r = regs.get(TOGGLE)
+        r = _togR
         dev = r.get("device") if r else None
         if dev:
             sbb = _alpha_bbox(os.path.join(BIREF, TOGGLE + "_off.png"))
