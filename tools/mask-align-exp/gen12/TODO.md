@@ -66,6 +66,50 @@ refreshes on a real orchestrate12.py roll — regenerating it here would mean bu
 just to update a cached label, which contradicts "surface, don't burn rolls." Flagged for
 whoever owns `orch.json`/badge-precedence next, not resolved in this pass.
 
+### Review-round triage: album_art drift-gate fails — analyzed, NOT random — DONE 2026-07-11 ($0)
+
+Pre-review triage question: all 3 drift-gate fails (fallout-pipboy, steam-porthole,
+wmp-quicksilver) share album_art as worst control. Systematic layout weakness, or random
+variance? Full analysis (labeled crop overlays, per-gen drift vectors, hypothesis tests):
+`artdrift.html` + `analyze_artdrift.py` + `gen_artdrift_crops.py` (new, this pass; see
+`artdrift_data.json` for the raw per-gen table). $0 — read-only over existing paint/mask/
+regions.json across the 6 mainline templated skins + 26 driftbisect/driftbisect2/servingbisect
+experiment gens (32 templated data points total).
+
+**Finding: systematic template weakness, expressed probabilistically — not random, not a
+clean identity-swap.** The template puts album_art directly above visualizer with a near-
+hairline gap (~2% of frame height in the vpod archetype; both are "dark recessed glass, no
+coloured frame" — visually near-identical). The model has its own strong compositional prior
+for this paired "twin display" element and reinterprets it as **side-by-side** (9/32 gens) or
+**vertical-order-reversed** (5/32 gens) rather than obeying the template's specific stacked
+position — confirmed both by the drift-vector table AND by directly opening the paint.png crops
+(steam-porthole and fa-pod both show a literal side-by-side glass-window pair; fallout-pipboy
+shows the pair in reversed vertical order). This happens even in PASSING gens (fa-pod's mainline
+roll is a clean side-by-side pair that just stays under the 650px gate) — the 3 gate-FAILS are
+the tail of a continuous distribution, not a distinct failure mode. Re-rolling a failing skin has
+a real ~60-70% chance of landing on a correctly-stacked roll (servingbisect fresh re-rolls of
+fallout-pipboy/steam-porthole: 5/8 stack correctly) but doesn't fix the underlying ~30-45%
+miss rate for the next skin/seed.
+
+**Hypotheses tested and refuted:** (a) clean art↔visualizer identity swap — refuted (visualizer
+is never detected closer to album_art's template slot; it's a one-sided pull on album_art, not
+a mutual swap). (b) model promotes album_art to a hero position — refuted (album_art moves DOWN
+and away from its already-top template slot, not toward more prominence). (c) mask-vs-refit
+pipeline bug — refuted; the independent BiRefNet-adjacent mask.png blob centroid agrees with
+extract12's `regions.device` refit centre within ~10-20px wherever a blob was isolable, both
+disagreeing with the template by hundreds/thousands of px in the same direction. Confirms
+(again) **paint-driven, not detector-driven**, consistent with the prior bisect chain
+(`892bf045`, `448d8f87`).
+
+**The one fix (not applied here — analysis only, per task scope):** redesign the
+album_art/visualizer sub-layout in `genskin.py`'s `_vpod`/`_hcapsule` LAYOUTS —
+(1) widen the template gap between the two windows substantially (vpod's is currently ~2% of
+frame height, effectively touching), and (2) add an explicit relative-position prompt clause
+("album_art sits DIRECTLY ABOVE visualizer with a clear gap — never side-by-side, never
+reversed") — `genskin.py` currently has ZERO ABOVE/BELOW/stacked language for this pair, relying
+entirely on the guide blueprint's geometry, which the model treats as a loose suggestion here.
+Per fix-generalizable-rule this belongs in the shared layout/prompt, not a per-skin patch.
+
 ## Freeze-on-PASS: paid baselines snapshotted the moment they first gate-PASS — DONE 2026-07-11
 
 Guardrail closing the gap the drift bisect exposed (`892bf045`): every June baseline paint

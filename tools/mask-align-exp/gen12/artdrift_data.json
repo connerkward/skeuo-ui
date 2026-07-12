@@ -1,0 +1,7136 @@
+{
+  "generated_from": "analyze_artdrift.py ($0, no new generations)",
+  "n_gens": 32,
+  "n_swap_hits": 24,
+  "gens": [
+    {
+      "group": "mainline",
+      "id": "fa-pod",
+      "dir": "assets-fa-pod",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": 502.9,
+      "drift_worst": [
+        "repeat",
+        777.3
+      ],
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -388.5,
+          "dy_px": 295.9,
+          "mag_px": 488.4,
+          "angle_deg": 142.7,
+          "det_center_frac": [
+            0.3314,
+            0.1922
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.3444,
+            0.1933
+          ],
+          "mask_blob_px": 423449
+        },
+        "visualizer": {
+          "dx_px": 370.0,
+          "dy_px": -218.1,
+          "mag_px": 429.5,
+          "angle_deg": -30.5,
+          "det_center_frac": [
+            0.6606,
+            0.1925
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.684,
+            0.1934
+          ],
+          "mask_blob_px": 389577
+        },
+        "seek": {
+          "dx_px": 250.0,
+          "dy_px": 731.0,
+          "mag_px": 772.6,
+          "angle_deg": 71.1,
+          "det_center_frac": [
+            0.6085,
+            0.5494
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 459.4,
+          "dy_px": -340.9,
+          "mag_px": 572.1,
+          "angle_deg": -36.6,
+          "det_center_frac": [
+            0.4794,
+            0.3582
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -555.5,
+          "dy_px": -336.9,
+          "mag_px": 649.7,
+          "angle_deg": -148.8,
+          "det_center_frac": [
+            0.2589,
+            0.3592
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -38.9,
+          "dy_px": -340.9,
+          "mag_px": 343.1,
+          "angle_deg": -96.5,
+          "det_center_frac": [
+            0.7031,
+            0.3582
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 686.5,
+          "dy_px": -364.5,
+          "mag_px": 777.3,
+          "angle_deg": -28.0,
+          "det_center_frac": [
+            0.538,
+            0.4643
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -374.2,
+          "dy_px": -111.3,
+          "mag_px": 390.4,
+          "angle_deg": -163.4,
+          "det_center_frac": [
+            0.2576,
+            0.54
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -110.4,
+          "dy_px": 183.2,
+          "mag_px": 213.9,
+          "angle_deg": 121.1,
+          "det_center_frac": [
+            0.5521,
+            0.6193
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -143.1,
+          "dy_px": -365.0,
+          "mag_px": 392.1,
+          "angle_deg": -111.4,
+          "det_center_frac": [
+            0.7179,
+            0.4642
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "assets-fa-pod/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1865,
+        "album_art_dist_other_frac": 0.1787,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "mainline",
+      "id": "fallout-pipboy",
+      "dir": "assets-fallout-pipboy",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": 950.5,
+      "drift_worst": [
+        "album_art",
+        2063.5
+      ],
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 287.0,
+          "dy_px": 2043.4,
+          "mag_px": 2063.5,
+          "angle_deg": 82.0,
+          "det_center_frac": [
+            0.6246,
+            0.663
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": 287.5,
+          "dy_px": 775.9,
+          "mag_px": 827.4,
+          "angle_deg": 69.7,
+          "det_center_frac": [
+            0.6248,
+            0.4603
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.6306,
+            0.4617
+          ],
+          "mask_blob_px": 264370
+        },
+        "seek": {
+          "dx_px": -443.0,
+          "dy_px": 1003.0,
+          "mag_px": 1096.5,
+          "angle_deg": 113.8,
+          "det_center_frac": [
+            0.3077,
+            0.6227
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 141.9,
+          "dy_px": -689.4,
+          "mag_px": 703.8,
+          "angle_deg": -78.4,
+          "det_center_frac": [
+            0.3416,
+            0.2643
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -365.5,
+          "dy_px": -925.4,
+          "mag_px": 995.0,
+          "angle_deg": -111.6,
+          "det_center_frac": [
+            0.3414,
+            0.2007
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -871.9,
+          "dy_px": -451.9,
+          "mag_px": 982.0,
+          "angle_deg": -152.6,
+          "det_center_frac": [
+            0.3416,
+            0.3283
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 234.5,
+          "dy_px": -633.0,
+          "mag_px": 675.1,
+          "angle_deg": -69.7,
+          "det_center_frac": [
+            0.3418,
+            0.392
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -255.7,
+          "dy_px": -89.3,
+          "mag_px": 270.8,
+          "angle_deg": -160.7,
+          "det_center_frac": [
+            0.309,
+            0.5459
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -674.4,
+          "dy_px": 440.7,
+          "mag_px": 805.6,
+          "angle_deg": 146.8,
+          "det_center_frac": [
+            0.3073,
+            0.6887
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -1009.6,
+          "dy_px": -398.5,
+          "mag_px": 1085.4,
+          "angle_deg": -158.5,
+          "det_center_frac": [
+            0.3418,
+            0.4551
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "assets-fallout-pipboy/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5644,
+        "album_art_dist_other_frac": 0.4301,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "mainline",
+      "id": "ps1-crunchy",
+      "dir": "assets-ps1-crunchy",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "hcapsule",
+      "gate_pass": true,
+      "drift_mean_px": 415.4,
+      "drift_worst": [
+        "vol",
+        1379.7
+      ],
+      "template": {
+        "album_art": [
+          0.28,
+          0.225
+        ],
+        "visualizer": [
+          0.28,
+          0.45
+        ],
+        "seek": [
+          0.3,
+          0.615
+        ],
+        "prev": [
+          0.66,
+          0.21
+        ],
+        "playpause": [
+          0.78,
+          0.3
+        ],
+        "next": [
+          0.9,
+          0.21
+        ],
+        "repeat": [
+          0.66,
+          0.4125
+        ],
+        "vol": [
+          0.9,
+          0.435
+        ],
+        "shuffle": [
+          0.78,
+          0.51
+        ],
+        "queue": [
+          0.66,
+          0.585
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 109.4,
+          "dy_px": -76.2,
+          "mag_px": 133.3,
+          "angle_deg": -34.9,
+          "det_center_frac": [
+            0.3275,
+            0.2045
+          ],
+          "template_center_frac": [
+            0.28,
+            0.225
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4069,
+            0.2214
+          ],
+          "mask_blob_px": 294634
+        },
+        "visualizer": {
+          "dx_px": 109.4,
+          "dy_px": -185.4,
+          "mag_px": 215.3,
+          "angle_deg": -59.5,
+          "det_center_frac": [
+            0.3275,
+            0.4001
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.3279,
+            0.4029
+          ],
+          "mask_blob_px": 298275
+        },
+        "seek": {
+          "dx_px": 81.8,
+          "dy_px": -1.4,
+          "mag_px": 81.8,
+          "angle_deg": -1.0,
+          "det_center_frac": [
+            0.3355,
+            0.6146
+          ],
+          "template_center_frac": [
+            0.3,
+            0.615
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 266.4,
+          "dy_px": 352.0,
+          "mag_px": 441.4,
+          "angle_deg": 52.9,
+          "det_center_frac": [
+            0.7756,
+            0.3048
+          ],
+          "template_center_frac": [
+            0.66,
+            0.21
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -289.6,
+          "dy_px": -329.6,
+          "mag_px": 438.8,
+          "angle_deg": -131.3,
+          "det_center_frac": [
+            0.6543,
+            0.2112
+          ],
+          "template_center_frac": [
+            0.78,
+            0.3
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -11.1,
+          "dy_px": 4.5,
+          "mag_px": 12.0,
+          "angle_deg": 158.0,
+          "det_center_frac": [
+            0.8952,
+            0.2112
+          ],
+          "template_center_frac": [
+            0.9,
+            0.21
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": -13.6,
+          "dy_px": 4.8,
+          "mag_px": 14.5,
+          "angle_deg": 160.6,
+          "det_center_frac": [
+            0.6541,
+            0.4138
+          ],
+          "template_center_frac": [
+            0.66,
+            0.4125
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -1336.1,
+          "dy_px": 344.3,
+          "mag_px": 1379.7,
+          "angle_deg": 165.6,
+          "det_center_frac": [
+            0.3201,
+            0.5277
+          ],
+          "template_center_frac": [
+            0.9,
+            0.435
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -300.1,
+          "dy_px": 522.4,
+          "mag_px": 602.5,
+          "angle_deg": 119.9,
+          "det_center_frac": [
+            0.6497,
+            0.6507
+          ],
+          "template_center_frac": [
+            0.78,
+            0.51
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 541.9,
+          "dy_px": -635.0,
+          "mag_px": 834.8,
+          "angle_deg": -49.5,
+          "det_center_frac": [
+            0.8952,
+            0.4139
+          ],
+          "template_center_frac": [
+            0.66,
+            0.585
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "assets-ps1-crunchy/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.0517,
+        "album_art_dist_other_frac": 0.2501,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "mainline",
+      "id": "steam-porthole",
+      "dir": "assets-steam-porthole",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": 858.3,
+      "drift_worst": [
+        "album_art",
+        2043.3
+      ],
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 526.0,
+          "dy_px": 1974.4,
+          "mag_px": 2043.3,
+          "angle_deg": 75.1,
+          "det_center_frac": [
+            0.7283,
+            0.6444
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.7465,
+            0.6451
+          ],
+          "mask_blob_px": 324610
+        },
+        "visualizer": {
+          "dx_px": -246.5,
+          "dy_px": 1458.9,
+          "mag_px": 1479.5,
+          "angle_deg": 99.6,
+          "det_center_frac": [
+            0.393,
+            0.6443
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4203,
+            0.6451
+          ],
+          "mask_blob_px": 368460
+        },
+        "seek": {
+          "dx_px": 321.5,
+          "dy_px": 313.0,
+          "mag_px": 448.7,
+          "angle_deg": 44.2,
+          "det_center_frac": [
+            0.6395,
+            0.4368
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 300.9,
+          "dy_px": -358.4,
+          "mag_px": 468.0,
+          "angle_deg": -50.0,
+          "det_center_frac": [
+            0.4106,
+            0.3534
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -544.6,
+          "dy_px": -356.9,
+          "mag_px": 651.2,
+          "angle_deg": -146.8,
+          "det_center_frac": [
+            0.2636,
+            0.3539
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -390.4,
+          "dy_px": -357.9,
+          "mag_px": 529.6,
+          "angle_deg": -137.5,
+          "det_center_frac": [
+            0.5506,
+            0.3536
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 1036.5,
+          "dy_px": -776.0,
+          "mag_px": 1294.8,
+          "angle_deg": -36.8,
+          "det_center_frac": [
+            0.6899,
+            0.3534
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -261.2,
+          "dy_px": -368.3,
+          "mag_px": 451.5,
+          "angle_deg": -125.3,
+          "det_center_frac": [
+            0.3066,
+            0.4708
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 376.1,
+          "dy_px": -212.8,
+          "mag_px": 432.1,
+          "angle_deg": -29.5,
+          "det_center_frac": [
+            0.7632,
+            0.5127
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 111.4,
+          "dy_px": -776.5,
+          "mag_px": 784.4,
+          "angle_deg": -81.8,
+          "det_center_frac": [
+            0.8283,
+            0.3533
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "assets-steam-porthole/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5788,
+        "album_art_dist_other_frac": 0.4546,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "mainline",
+      "id": "wc-goldshield",
+      "dir": "assets-wc-goldshield",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": 461.6,
+      "drift_worst": [
+        "next",
+        837.2
+      ],
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -7.5,
+          "dy_px": 321.4,
+          "mag_px": 321.5,
+          "angle_deg": 91.3,
+          "det_center_frac": [
+            0.4967,
+            0.1991
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.503,
+            0.2014
+          ],
+          "mask_blob_px": 565593
+        },
+        "visualizer": {
+          "dx_px": -8.5,
+          "dy_px": 439.9,
+          "mag_px": 439.9,
+          "angle_deg": 91.1,
+          "det_center_frac": [
+            0.4963,
+            0.3697
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5033,
+            0.372
+          ],
+          "mask_blob_px": 339669
+        },
+        "seek": {
+          "dx_px": -3.0,
+          "dy_px": 377.0,
+          "mag_px": 377.0,
+          "angle_deg": 90.5,
+          "det_center_frac": [
+            0.4987,
+            0.4541
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": -65.1,
+          "dy_px": 576.1,
+          "mag_px": 579.8,
+          "angle_deg": 96.4,
+          "det_center_frac": [
+            0.2517,
+            0.6052
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -337.0,
+          "dy_px": 329.1,
+          "mag_px": 471.0,
+          "angle_deg": 135.7,
+          "det_center_frac": [
+            0.3537,
+            0.5387
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -608.4,
+          "dy_px": 575.1,
+          "mag_px": 837.2,
+          "angle_deg": 136.6,
+          "det_center_frac": [
+            0.4559,
+            0.6049
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 298.5,
+          "dy_px": 408.5,
+          "mag_px": 506.0,
+          "angle_deg": 53.8,
+          "det_center_frac": [
+            0.3696,
+            0.6725
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 516.3,
+          "dy_px": -99.8,
+          "mag_px": 525.9,
+          "angle_deg": -10.9,
+          "det_center_frac": [
+            0.6441,
+            0.5431
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 35.1,
+          "dy_px": 319.2,
+          "mag_px": 321.1,
+          "angle_deg": 83.7,
+          "det_center_frac": [
+            0.6152,
+            0.656
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -88.6,
+          "dy_px": 219.5,
+          "mag_px": 236.7,
+          "angle_deg": 112.0,
+          "det_center_frac": [
+            0.7415,
+            0.6216
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "assets-wc-goldshield/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.0867,
+        "album_art_dist_other_frac": 0.0523,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "mainline",
+      "id": "wmp-quicksilver",
+      "dir": "assets-wmp-quicksilver",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "hcapsule",
+      "gate_pass": false,
+      "drift_mean_px": 1112.8,
+      "drift_worst": [
+        "album_art",
+        1763.4
+      ],
+      "template": {
+        "album_art": [
+          0.28,
+          0.225
+        ],
+        "visualizer": [
+          0.28,
+          0.45
+        ],
+        "seek": [
+          0.3,
+          0.615
+        ],
+        "prev": [
+          0.66,
+          0.21
+        ],
+        "playpause": [
+          0.78,
+          0.3
+        ],
+        "next": [
+          0.9,
+          0.21
+        ],
+        "repeat": [
+          0.66,
+          0.4125
+        ],
+        "vol": [
+          0.9,
+          0.435
+        ],
+        "shuffle": [
+          0.78,
+          0.51
+        ],
+        "queue": [
+          0.66,
+          0.585
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 961.4,
+          "dy_px": 1478.3,
+          "mag_px": 1763.4,
+          "angle_deg": 57.0,
+          "det_center_frac": [
+            0.6973,
+            0.6232
+          ],
+          "template_center_frac": [
+            0.28,
+            0.225
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.7171,
+            0.6249
+          ],
+          "mask_blob_px": 551682
+        },
+        "visualizer": {
+          "dx_px": 72.9,
+          "dy_px": 643.1,
+          "mag_px": 647.2,
+          "angle_deg": 83.5,
+          "det_center_frac": [
+            0.3116,
+            0.6232
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.3402,
+            0.625
+          ],
+          "mask_blob_px": 585721
+        },
+        "seek": {
+          "dx_px": 814.8,
+          "dy_px": -1055.4,
+          "mag_px": 1333.3,
+          "angle_deg": -52.3,
+          "det_center_frac": [
+            0.6536,
+            0.3307
+          ],
+          "template_center_frac": [
+            0.3,
+            0.615
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": -706.6,
+          "dy_px": -156.5,
+          "mag_px": 723.8,
+          "angle_deg": -167.5,
+          "det_center_frac": [
+            0.3533,
+            0.1678
+          ],
+          "template_center_frac": [
+            0.66,
+            0.21
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -1332.6,
+          "dy_px": -488.1,
+          "mag_px": 1419.2,
+          "angle_deg": -159.9,
+          "det_center_frac": [
+            0.2016,
+            0.1685
+          ],
+          "template_center_frac": [
+            0.78,
+            0.3
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -920.6,
+          "dy_px": -156.5,
+          "mag_px": 933.8,
+          "angle_deg": -170.4,
+          "det_center_frac": [
+            0.5004,
+            0.1678
+          ],
+          "template_center_frac": [
+            0.9,
+            0.21
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": -28.1,
+          "dy_px": -908.2,
+          "mag_px": 908.6,
+          "angle_deg": -91.8,
+          "det_center_frac": [
+            0.6478,
+            0.1678
+          ],
+          "template_center_frac": [
+            0.66,
+            0.4125
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -1503.6,
+          "dy_px": -378.7,
+          "mag_px": 1550.6,
+          "angle_deg": -165.9,
+          "det_center_frac": [
+            0.2474,
+            0.333
+          ],
+          "template_center_frac": [
+            0.9,
+            0.435
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -83.6,
+          "dy_px": -255.6,
+          "mag_px": 268.9,
+          "angle_deg": -108.1,
+          "det_center_frac": [
+            0.7437,
+            0.4411
+          ],
+          "template_center_frac": [
+            0.78,
+            0.51
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 310.9,
+          "dy_px": -1548.5,
+          "mag_px": 1579.4,
+          "angle_deg": -78.6,
+          "det_center_frac": [
+            0.7949,
+            0.1678
+          ],
+          "template_center_frac": [
+            0.66,
+            0.585
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "assets-wmp-quicksilver/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5768,
+        "album_art_dist_other_frac": 0.4518,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-fa-pod-a-673",
+      "dir": "driftbisect/assets-bisect-fa-pod-a-673",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -4.0,
+          "dy_px": 279.4,
+          "mag_px": 279.4,
+          "angle_deg": 90.8,
+          "det_center_frac": [
+            0.4983,
+            0.1878
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5255,
+            0.2181
+          ],
+          "mask_blob_px": 493504
+        },
+        "visualizer": {
+          "dx_px": -6.5,
+          "dy_px": 413.4,
+          "mag_px": 413.4,
+          "angle_deg": 90.9,
+          "det_center_frac": [
+            0.4972,
+            0.3626
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 6.5,
+          "dy_px": 379.0,
+          "mag_px": 379.1,
+          "angle_deg": 89.0,
+          "det_center_frac": [
+            0.5028,
+            0.4546
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 501.9,
+          "dy_px": 310.6,
+          "mag_px": 590.2,
+          "angle_deg": 31.8,
+          "det_center_frac": [
+            0.4978,
+            0.5337
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -613.0,
+          "dy_px": 310.1,
+          "mag_px": 687.0,
+          "angle_deg": 153.2,
+          "det_center_frac": [
+            0.2339,
+            0.5335
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.72,
+            0.45
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": true
+        },
+        "repeat": {
+          "dx_px": 898.5,
+          "dy_px": -107.0,
+          "mag_px": 904.9,
+          "angle_deg": -6.8,
+          "det_center_frac": [
+            0.63,
+            0.5337
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 20.3,
+          "dy_px": 295.2,
+          "mag_px": 295.9,
+          "angle_deg": 86.1,
+          "det_center_frac": [
+            0.4288,
+            0.6495
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 95.1,
+          "dy_px": 295.7,
+          "mag_px": 310.6,
+          "angle_deg": 72.2,
+          "det_center_frac": [
+            0.6413,
+            0.6496
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -650.6,
+          "dy_px": -1726.0,
+          "mag_px": 1844.6,
+          "angle_deg": -110.7,
+          "det_center_frac": [
+            0.4976,
+            0.0975
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-fa-pod-a-673/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.0753,
+        "album_art_dist_other_frac": 0.0635,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-fa-pod-a-918",
+      "dir": "driftbisect/assets-bisect-fa-pod-a-918",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 32.5,
+          "dy_px": 305.9,
+          "mag_px": 307.6,
+          "angle_deg": 83.9,
+          "det_center_frac": [
+            0.5141,
+            0.1949
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5206,
+            0.2208
+          ],
+          "mask_blob_px": 602201
+        },
+        "visualizer": {
+          "dx_px": 32.5,
+          "dy_px": 426.4,
+          "mag_px": 427.6,
+          "angle_deg": 85.6,
+          "det_center_frac": [
+            0.5141,
+            0.3661
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 42.5,
+          "dy_px": 390.0,
+          "mag_px": 392.3,
+          "angle_deg": 83.8,
+          "det_center_frac": [
+            0.5184,
+            0.4576
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 219.4,
+          "dy_px": 348.6,
+          "mag_px": 411.9,
+          "angle_deg": 57.8,
+          "det_center_frac": [
+            0.3752,
+            0.5439
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": 62.0,
+          "dy_px": 303.1,
+          "mag_px": 309.4,
+          "angle_deg": 78.4,
+          "det_center_frac": [
+            0.5269,
+            0.5317
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -97.4,
+          "dy_px": 347.6,
+          "mag_px": 361.0,
+          "angle_deg": 105.7,
+          "det_center_frac": [
+            0.6777,
+            0.5436
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 482.0,
+          "dy_px": 164.5,
+          "mag_px": 509.3,
+          "angle_deg": 18.8,
+          "det_center_frac": [
+            0.4492,
+            0.6068
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.42,
+            0.57
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": true
+        },
+        "shuffle": {
+          "dx_px": 119.1,
+          "dy_px": 414.3,
+          "mag_px": 431.1,
+          "angle_deg": 74.0,
+          "det_center_frac": [
+            0.6517,
+            0.6816
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -608.6,
+          "dy_px": -1688.0,
+          "mag_px": 1794.4,
+          "angle_deg": -109.8,
+          "det_center_frac": [
+            0.5158,
+            0.1078
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-fa-pod-a-918/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.0836,
+        "album_art_dist_other_frac": 0.0581,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-fa-pod-b-673",
+      "dir": "driftbisect/assets-bisect-fa-pod-b-673",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -11.0,
+          "dy_px": 252.4,
+          "mag_px": 252.6,
+          "angle_deg": 92.5,
+          "det_center_frac": [
+            0.4952,
+            0.1805
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5033,
+            0.1822
+          ],
+          "mask_blob_px": 511673
+        },
+        "visualizer": {
+          "dx_px": -11.5,
+          "dy_px": 324.4,
+          "mag_px": 324.6,
+          "angle_deg": 92.0,
+          "det_center_frac": [
+            0.495,
+            0.3386
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.503,
+            0.3225
+          ],
+          "mask_blob_px": 301947
+        },
+        "seek": {
+          "dx_px": 74.5,
+          "dy_px": 124.0,
+          "mag_px": 144.7,
+          "angle_deg": 59.0,
+          "det_center_frac": [
+            0.5323,
+            0.3859
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 69.9,
+          "dy_px": 66.6,
+          "mag_px": 96.5,
+          "angle_deg": 43.6,
+          "det_center_frac": [
+            0.3103,
+            0.4679
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -10.0,
+          "dy_px": 67.6,
+          "mag_px": 68.3,
+          "angle_deg": 98.4,
+          "det_center_frac": [
+            0.4957,
+            0.4682
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -89.4,
+          "dy_px": 66.6,
+          "mag_px": 111.5,
+          "angle_deg": 143.3,
+          "det_center_frac": [
+            0.6812,
+            0.4679
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 385.5,
+          "dy_px": 22.0,
+          "mag_px": 386.2,
+          "angle_deg": 3.3,
+          "det_center_frac": [
+            0.4073,
+            0.5684
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 174.3,
+          "dy_px": 429.2,
+          "mag_px": 463.2,
+          "angle_deg": 67.9,
+          "det_center_frac": [
+            0.4957,
+            0.6856
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 210.6,
+          "dy_px": 302.3,
+          "mag_px": 368.4,
+          "angle_deg": 55.1,
+          "det_center_frac": [
+            0.6914,
+            0.6514
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -451.6,
+          "dy_px": 22.5,
+          "mag_px": 452.2,
+          "angle_deg": 177.1,
+          "det_center_frac": [
+            0.584,
+            0.5686
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-fa-pod-b-673/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.0682,
+        "album_art_dist_other_frac": 0.071,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-fa-pod-b-918",
+      "dir": "driftbisect/assets-bisect-fa-pod-b-918",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -12.0,
+          "dy_px": 321.4,
+          "mag_px": 321.6,
+          "angle_deg": 92.1,
+          "det_center_frac": [
+            0.4948,
+            0.1991
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.504,
+            0.2012
+          ],
+          "mask_blob_px": 753105
+        },
+        "visualizer": {
+          "dx_px": -11.5,
+          "dy_px": 352.9,
+          "mag_px": 353.0,
+          "angle_deg": 91.9,
+          "det_center_frac": [
+            0.495,
+            0.3463
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5041,
+            0.3485
+          ],
+          "mask_blob_px": 306771
+        },
+        "seek": {
+          "dx_px": 99.5,
+          "dy_px": 1172.0,
+          "mag_px": 1176.2,
+          "angle_deg": 85.1,
+          "det_center_frac": [
+            0.5432,
+            0.6682
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 17.9,
+          "dy_px": 27.1,
+          "mag_px": 32.5,
+          "angle_deg": 56.6,
+          "det_center_frac": [
+            0.2878,
+            0.4573
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -3.5,
+          "dy_px": 161.1,
+          "mag_px": 161.1,
+          "angle_deg": 91.2,
+          "det_center_frac": [
+            0.4985,
+            0.4934
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -23.9,
+          "dy_px": 27.6,
+          "mag_px": 36.5,
+          "angle_deg": 130.9,
+          "det_center_frac": [
+            0.7096,
+            0.4574
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 110.0,
+          "dy_px": -35.5,
+          "mag_px": 115.6,
+          "angle_deg": -17.9,
+          "det_center_frac": [
+            0.2878,
+            0.5529
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -336.7,
+          "dy_px": 369.7,
+          "mag_px": 500.0,
+          "angle_deg": 132.3,
+          "det_center_frac": [
+            0.2739,
+            0.6696
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 354.6,
+          "dy_px": 371.2,
+          "mag_px": 513.3,
+          "angle_deg": 46.3,
+          "det_center_frac": [
+            0.7539,
+            0.67
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -162.1,
+          "dy_px": -35.5,
+          "mag_px": 166.0,
+          "angle_deg": -167.6,
+          "det_center_frac": [
+            0.7096,
+            0.5529
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-fa-pod-b-918/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.0868,
+        "album_art_dist_other_frac": 0.0525,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-fa-pod-c-673",
+      "dir": "driftbisect/assets-bisect-fa-pod-c-673",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -4.5,
+          "dy_px": 233.9,
+          "mag_px": 233.9,
+          "angle_deg": 91.1,
+          "det_center_frac": [
+            0.498,
+            0.1755
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5041,
+            0.1785
+          ],
+          "mask_blob_px": 607819
+        },
+        "visualizer": {
+          "dx_px": -106.0,
+          "dy_px": 404.4,
+          "mag_px": 418.0,
+          "angle_deg": 104.7,
+          "det_center_frac": [
+            0.454,
+            0.3602
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 11.5,
+          "dy_px": 389.5,
+          "mag_px": 389.7,
+          "angle_deg": 88.3,
+          "det_center_frac": [
+            0.505,
+            0.4574
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 915.9,
+          "dy_px": 298.6,
+          "mag_px": 963.3,
+          "angle_deg": 18.1,
+          "det_center_frac": [
+            0.6775,
+            0.5304
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -265.0,
+          "dy_px": 298.6,
+          "mag_px": 399.2,
+          "angle_deg": 131.6,
+          "det_center_frac": [
+            0.385,
+            0.5304
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.72,
+            0.45
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": true
+        },
+        "repeat": {
+          "dx_px": 334.0,
+          "dy_px": 206.5,
+          "mag_px": 392.7,
+          "angle_deg": 31.7,
+          "det_center_frac": [
+            0.385,
+            0.6181
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 641.8,
+          "dy_px": -773.8,
+          "mag_px": 1005.4,
+          "angle_deg": -50.3,
+          "det_center_frac": [
+            0.6986,
+            0.3615
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 116.6,
+          "dy_px": 305.2,
+          "mag_px": 326.7,
+          "angle_deg": 69.1,
+          "det_center_frac": [
+            0.6506,
+            0.6522
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -588.6,
+          "dy_px": -1809.0,
+          "mag_px": 1902.4,
+          "angle_deg": -108.0,
+          "det_center_frac": [
+            0.5245,
+            0.0752
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-fa-pod-c-673/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.063,
+        "album_art_dist_other_frac": 0.0758,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-fa-pod-c-918",
+      "dir": "driftbisect/assets-bisect-fa-pod-c-918",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -0.5,
+          "dy_px": 2007.4,
+          "mag_px": 2007.4,
+          "angle_deg": 90.0,
+          "det_center_frac": [
+            0.4998,
+            0.6533
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.6135,
+            0.6541
+          ],
+          "mask_blob_px": 730875
+        },
+        "visualizer": {
+          "dx_px": 67.5,
+          "dy_px": -167.1,
+          "mag_px": 180.3,
+          "angle_deg": -68.0,
+          "det_center_frac": [
+            0.5293,
+            0.2062
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.6009,
+            0.2073
+          ],
+          "mask_blob_px": 903875
+        },
+        "seek": {
+          "dx_px": 261.5,
+          "dy_px": 383.5,
+          "mag_px": 464.2,
+          "angle_deg": 55.7,
+          "det_center_frac": [
+            0.6135,
+            0.4558
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 326.9,
+          "dy_px": -251.9,
+          "mag_px": 412.7,
+          "angle_deg": -37.6,
+          "det_center_frac": [
+            0.4219,
+            0.3821
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -532.0,
+          "dy_px": -314.9,
+          "mag_px": 618.2,
+          "angle_deg": -149.4,
+          "det_center_frac": [
+            0.2691,
+            0.3652
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -380.9,
+          "dy_px": -251.4,
+          "mag_px": 456.4,
+          "angle_deg": -146.6,
+          "det_center_frac": [
+            0.5547,
+            0.3823
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 1032.0,
+          "dy_px": -669.0,
+          "mag_px": 1229.9,
+          "angle_deg": -33.0,
+          "det_center_frac": [
+            0.6879,
+            0.3823
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -347.7,
+          "dy_px": -344.8,
+          "mag_px": 489.7,
+          "angle_deg": -135.2,
+          "det_center_frac": [
+            0.2691,
+            0.4771
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -753.9,
+          "dy_px": 275.2,
+          "mag_px": 802.5,
+          "angle_deg": 159.9,
+          "det_center_frac": [
+            0.2728,
+            0.6441
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 93.9,
+          "dy_px": -669.0,
+          "mag_px": 675.6,
+          "angle_deg": -82.0,
+          "det_center_frac": [
+            0.8207,
+            0.3823
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-fa-pod-c-918/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5408,
+        "album_art_dist_other_frac": 0.402,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-wc-goldshield-a-736",
+      "dir": "driftbisect/assets-bisect-wc-goldshield-a-736",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -9.0,
+          "dy_px": 243.9,
+          "mag_px": 244.1,
+          "angle_deg": 92.1,
+          "det_center_frac": [
+            0.4961,
+            0.1782
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": -2.5,
+          "dy_px": 424.9,
+          "mag_px": 424.9,
+          "angle_deg": 90.3,
+          "det_center_frac": [
+            0.4989,
+            0.3657
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 4.5,
+          "dy_px": 394.5,
+          "mag_px": 394.5,
+          "angle_deg": 89.3,
+          "det_center_frac": [
+            0.502,
+            0.4588
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": -5.1,
+          "dy_px": 334.1,
+          "mag_px": 334.1,
+          "angle_deg": 90.9,
+          "det_center_frac": [
+            0.2778,
+            0.54
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -15.5,
+          "dy_px": -994.4,
+          "mag_px": 994.5,
+          "angle_deg": -90.9,
+          "det_center_frac": [
+            0.4933,
+            0.1821
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -100.9,
+          "dy_px": 333.6,
+          "mag_px": 348.5,
+          "angle_deg": 106.8,
+          "det_center_frac": [
+            0.6762,
+            0.5399
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": true
+        },
+        "vol": {
+          "dx_px": -325.2,
+          "dy_px": 370.2,
+          "mag_px": 492.7,
+          "angle_deg": 131.3,
+          "det_center_frac": [
+            0.2789,
+            0.6697
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 137.1,
+          "dy_px": 463.7,
+          "mag_px": 483.5,
+          "angle_deg": 73.5,
+          "det_center_frac": [
+            0.6595,
+            0.6949
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -77.1,
+          "dy_px": 191.5,
+          "mag_px": 206.4,
+          "angle_deg": 111.9,
+          "det_center_frac": [
+            0.7465,
+            0.6141
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-wc-goldshield-a-736/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.0658,
+        "album_art_dist_other_frac": 0.0732,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-wc-goldshield-a-841",
+      "dir": "driftbisect/assets-bisect-wc-goldshield-a-841",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 330.5,
+          "dy_px": 401.9,
+          "mag_px": 520.3,
+          "angle_deg": 50.6,
+          "det_center_frac": [
+            0.6434,
+            0.2208
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.6466,
+            0.2387
+          ],
+          "mask_blob_px": 7433
+        },
+        "visualizer": {
+          "dx_px": -365.5,
+          "dy_px": -113.1,
+          "mag_px": 382.6,
+          "angle_deg": -162.8,
+          "det_center_frac": [
+            0.3414,
+            0.2208
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.3841,
+            0.2358
+          ],
+          "mask_blob_px": 4056
+        },
+        "seek": {
+          "dx_px": -11.0,
+          "dy_px": 409.0,
+          "mag_px": 409.2,
+          "angle_deg": 91.5,
+          "det_center_frac": [
+            0.4952,
+            0.4627
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 220.9,
+          "dy_px": 306.1,
+          "mag_px": 377.5,
+          "angle_deg": 54.2,
+          "det_center_frac": [
+            0.3759,
+            0.5325
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -556.0,
+          "dy_px": 305.1,
+          "mag_px": 634.2,
+          "angle_deg": 151.2,
+          "det_center_frac": [
+            0.2587,
+            0.5322
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -523.9,
+          "dy_px": 305.6,
+          "mag_px": 606.5,
+          "angle_deg": 149.7,
+          "det_center_frac": [
+            0.4926,
+            0.5323
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 851.0,
+          "dy_px": -112.5,
+          "mag_px": 858.4,
+          "angle_deg": -7.5,
+          "det_center_frac": [
+            0.6094,
+            0.5322
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 166.3,
+          "dy_px": -722.8,
+          "mag_px": 741.7,
+          "angle_deg": -77.0,
+          "det_center_frac": [
+            0.4922,
+            0.3753
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -95.5,
+          "dy_px": 100.2,
+          "mag_px": 138.4,
+          "angle_deg": 133.6,
+          "det_center_frac": [
+            0.5586,
+            0.597
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -122.6,
+          "dy_px": -112.0,
+          "mag_px": 166.1,
+          "angle_deg": -137.6,
+          "det_center_frac": [
+            0.7268,
+            0.5323
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-wc-goldshield-a-841/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1797,
+        "album_art_dist_other_frac": 0.1466,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-wc-goldshield-b-736",
+      "dir": "driftbisect/assets-bisect-wc-goldshield-b-736",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -9.0,
+          "dy_px": 574.9,
+          "mag_px": 575.0,
+          "angle_deg": 90.9,
+          "det_center_frac": [
+            0.4961,
+            0.2674
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.421,
+            0.2899
+          ],
+          "mask_blob_px": 7736
+        },
+        "visualizer": {
+          "dx_px": -21.0,
+          "dy_px": 795.4,
+          "mag_px": 795.6,
+          "angle_deg": 91.5,
+          "det_center_frac": [
+            0.4909,
+            0.4655
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 312.5,
+          "dy_px": 839.0,
+          "mag_px": 895.3,
+          "angle_deg": 69.6,
+          "det_center_frac": [
+            0.6356,
+            0.5785
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 95.9,
+          "dy_px": 518.1,
+          "mag_px": 526.9,
+          "angle_deg": 79.5,
+          "det_center_frac": [
+            0.3216,
+            0.5896
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -146.5,
+          "dy_px": -1001.9,
+          "mag_px": 1012.6,
+          "angle_deg": -98.3,
+          "det_center_frac": [
+            0.4364,
+            0.1801
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -1204.4,
+          "dy_px": 441.1,
+          "mag_px": 1282.6,
+          "angle_deg": 159.9,
+          "det_center_frac": [
+            0.1973,
+            0.5688
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 189.1,
+          "dy_px": 102.0,
+          "mag_px": 214.8,
+          "angle_deg": 28.3,
+          "det_center_frac": [
+            0.3221,
+            0.59
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 34.8,
+          "dy_px": -334.3,
+          "mag_px": 336.1,
+          "angle_deg": -84.1,
+          "det_center_frac": [
+            0.4351,
+            0.4799
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -620.3,
+          "dy_px": -1447.3,
+          "mag_px": 1574.7,
+          "angle_deg": -113.2,
+          "det_center_frac": [
+            0.3308,
+            0.1801
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -229.1,
+          "dy_px": 11.5,
+          "mag_px": 229.4,
+          "angle_deg": 177.1,
+          "det_center_frac": [
+            0.6806,
+            0.5656
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-wc-goldshield-b-736/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1549,
+        "album_art_dist_other_frac": 0.0166,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-wc-goldshield-b-841",
+      "dir": "driftbisect/assets-bisect-wc-goldshield-b-841",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -73.5,
+          "dy_px": 494.4,
+          "mag_px": 499.8,
+          "angle_deg": 98.5,
+          "det_center_frac": [
+            0.4681,
+            0.2457
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": -78.5,
+          "dy_px": 611.4,
+          "mag_px": 616.4,
+          "angle_deg": 97.3,
+          "det_center_frac": [
+            0.4659,
+            0.4159
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 576.0,
+          "dy_px": -54.5,
+          "mag_px": 578.6,
+          "angle_deg": -5.4,
+          "det_center_frac": [
+            0.75,
+            0.3378
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": -77.1,
+          "dy_px": 602.6,
+          "mag_px": 607.5,
+          "angle_deg": 97.3,
+          "det_center_frac": [
+            0.2465,
+            0.6123
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -325.0,
+          "dy_px": 765.6,
+          "mag_px": 831.7,
+          "angle_deg": 113.0,
+          "det_center_frac": [
+            0.3589,
+            0.6562
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -226.4,
+          "dy_px": 765.1,
+          "mag_px": 797.9,
+          "angle_deg": 106.5,
+          "det_center_frac": [
+            0.6217,
+            0.6561
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 1141.5,
+          "dy_px": 184.5,
+          "mag_px": 1156.4,
+          "angle_deg": 9.2,
+          "det_center_frac": [
+            0.7355,
+            0.6122
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 161.3,
+          "dy_px": -43.8,
+          "mag_px": 167.2,
+          "angle_deg": -15.2,
+          "det_center_frac": [
+            0.49,
+            0.5582
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 271.1,
+          "dy_px": -151.8,
+          "mag_px": 310.7,
+          "angle_deg": -29.3,
+          "det_center_frac": [
+            0.7177,
+            0.5291
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -668.1,
+          "dy_px": 424.5,
+          "mag_px": 791.6,
+          "angle_deg": 147.6,
+          "det_center_frac": [
+            0.49,
+            0.6769
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-wc-goldshield-b-841/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.137,
+        "album_art_dist_other_frac": 0.0324,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-wc-goldshield-c-736",
+      "dir": "driftbisect/assets-bisect-wc-goldshield-c-736",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -13.5,
+          "dy_px": 672.9,
+          "mag_px": 673.0,
+          "angle_deg": 91.1,
+          "det_center_frac": [
+            0.4941,
+            0.2938
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": -7.0,
+          "dy_px": 420.4,
+          "mag_px": 420.4,
+          "angle_deg": 91.0,
+          "det_center_frac": [
+            0.497,
+            0.3645
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5026,
+            0.365
+          ],
+          "mask_blob_px": 499180
+        },
+        "seek": {
+          "dx_px": 65.0,
+          "dy_px": 387.0,
+          "mag_px": 392.4,
+          "angle_deg": 80.5,
+          "det_center_frac": [
+            0.5282,
+            0.4568
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 142.7,
+          "dy_px": 438.6,
+          "mag_px": 461.2,
+          "angle_deg": 72.0,
+          "det_center_frac": [
+            0.3419,
+            0.5682
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -5.0,
+          "dy_px": -993.4,
+          "mag_px": 993.4,
+          "angle_deg": -90.3,
+          "det_center_frac": [
+            0.4978,
+            0.1824
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -154.9,
+          "dy_px": 438.6,
+          "mag_px": 465.1,
+          "angle_deg": 109.4,
+          "det_center_frac": [
+            0.6528,
+            0.5682
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 115.5,
+          "dy_px": 328.0,
+          "mag_px": 347.8,
+          "angle_deg": 70.6,
+          "det_center_frac": [
+            0.2901,
+            0.6509
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 177.3,
+          "dy_px": 440.2,
+          "mag_px": 474.5,
+          "angle_deg": 68.1,
+          "det_center_frac": [
+            0.497,
+            0.6886
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -902.4,
+          "dy_px": -37.8,
+          "mag_px": 903.2,
+          "angle_deg": -177.6,
+          "det_center_frac": [
+            0.2083,
+            0.5598
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -172.6,
+          "dy_px": 328.0,
+          "mag_px": 370.7,
+          "angle_deg": 117.8,
+          "det_center_frac": [
+            0.7051,
+            0.6509
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-wc-goldshield-c-736/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1814,
+        "album_art_dist_other_frac": 0.0429,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect",
+      "id": "assets-bisect-wc-goldshield-c-841",
+      "dir": "driftbisect/assets-bisect-wc-goldshield-c-841",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -11.0,
+          "dy_px": 340.9,
+          "mag_px": 341.1,
+          "angle_deg": 91.8,
+          "det_center_frac": [
+            0.4952,
+            0.2043
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5019,
+            0.2398
+          ],
+          "mask_blob_px": 762327
+        },
+        "visualizer": {
+          "dx_px": -10.0,
+          "dy_px": 649.4,
+          "mag_px": 649.4,
+          "angle_deg": 90.9,
+          "det_center_frac": [
+            0.4957,
+            0.4262
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5025,
+            0.4289
+          ],
+          "mask_blob_px": 308007
+        },
+        "seek": {
+          "dx_px": 6.0,
+          "dy_px": 636.0,
+          "mag_px": 636.0,
+          "angle_deg": 89.5,
+          "det_center_frac": [
+            0.5026,
+            0.5238
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 165.4,
+          "dy_px": 778.6,
+          "mag_px": 796.0,
+          "angle_deg": 78.0,
+          "det_center_frac": [
+            0.3518,
+            0.6598
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -7.5,
+          "dy_px": 734.6,
+          "mag_px": 734.6,
+          "angle_deg": 90.6,
+          "det_center_frac": [
+            0.4967,
+            0.6479
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -178.4,
+          "dy_px": 778.6,
+          "mag_px": 798.8,
+          "angle_deg": 102.9,
+          "det_center_frac": [
+            0.6426,
+            0.6598
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 393.5,
+          "dy_px": 601.0,
+          "mag_px": 718.4,
+          "angle_deg": 56.8,
+          "det_center_frac": [
+            0.4108,
+            0.7244
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -454.2,
+          "dy_px": 169.2,
+          "mag_px": 484.7,
+          "angle_deg": 159.6,
+          "det_center_frac": [
+            0.2229,
+            0.6156
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 372.6,
+          "dy_px": 116.7,
+          "mag_px": 390.4,
+          "angle_deg": 17.4,
+          "det_center_frac": [
+            0.7617,
+            0.6014
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -452.6,
+          "dy_px": 600.5,
+          "mag_px": 752.0,
+          "angle_deg": 127.0,
+          "det_center_frac": [
+            0.5836,
+            0.7243
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect/assets-bisect-wc-goldshield-c-841/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.0919,
+        "album_art_dist_other_frac": 0.0472,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect2",
+      "id": "assets-fa-pod-cur",
+      "dir": "driftbisect2/assets-fa-pod-cur",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -388.5,
+          "dy_px": 295.9,
+          "mag_px": 488.4,
+          "angle_deg": 142.7,
+          "det_center_frac": [
+            0.3314,
+            0.1922
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.3444,
+            0.1933
+          ],
+          "mask_blob_px": 423449
+        },
+        "visualizer": {
+          "dx_px": 370.0,
+          "dy_px": -218.1,
+          "mag_px": 429.5,
+          "angle_deg": -30.5,
+          "det_center_frac": [
+            0.6606,
+            0.1925
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.684,
+            0.1934
+          ],
+          "mask_blob_px": 389577
+        },
+        "seek": {
+          "dx_px": 250.0,
+          "dy_px": 731.0,
+          "mag_px": 772.6,
+          "angle_deg": 71.1,
+          "det_center_frac": [
+            0.6085,
+            0.5494
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 459.4,
+          "dy_px": -340.9,
+          "mag_px": 572.1,
+          "angle_deg": -36.6,
+          "det_center_frac": [
+            0.4794,
+            0.3582
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -555.5,
+          "dy_px": -336.9,
+          "mag_px": 649.7,
+          "angle_deg": -148.8,
+          "det_center_frac": [
+            0.2589,
+            0.3592
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -38.9,
+          "dy_px": -340.9,
+          "mag_px": 343.1,
+          "angle_deg": -96.5,
+          "det_center_frac": [
+            0.7031,
+            0.3582
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 686.5,
+          "dy_px": -364.5,
+          "mag_px": 777.3,
+          "angle_deg": -28.0,
+          "det_center_frac": [
+            0.538,
+            0.4643
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -374.2,
+          "dy_px": -111.3,
+          "mag_px": 390.4,
+          "angle_deg": -163.4,
+          "det_center_frac": [
+            0.2576,
+            0.54
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -110.4,
+          "dy_px": 183.2,
+          "mag_px": 213.9,
+          "angle_deg": 121.1,
+          "det_center_frac": [
+            0.5521,
+            0.6193
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -143.1,
+          "dy_px": -365.0,
+          "mag_px": 392.1,
+          "angle_deg": -111.4,
+          "det_center_frac": [
+            0.7179,
+            0.4642
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect2/assets-fa-pod-cur/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1865,
+        "album_art_dist_other_frac": 0.1787,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect2",
+      "id": "assets-fa-pod-old",
+      "dir": "driftbisect2/assets-fa-pod-old",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -380.5,
+          "dy_px": 295.4,
+          "mag_px": 481.7,
+          "angle_deg": 142.2,
+          "det_center_frac": [
+            0.3349,
+            0.1921
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.3444,
+            0.1933
+          ],
+          "mask_blob_px": 423449
+        },
+        "visualizer": {
+          "dx_px": 402.0,
+          "dy_px": -218.6,
+          "mag_px": 457.6,
+          "angle_deg": -28.5,
+          "det_center_frac": [
+            0.6745,
+            0.1923
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.684,
+            0.1934
+          ],
+          "mask_blob_px": 389577
+        },
+        "seek": {
+          "dx_px": 218.0,
+          "dy_px": 731.0,
+          "mag_px": 762.8,
+          "angle_deg": 73.4,
+          "det_center_frac": [
+            0.5946,
+            0.5494
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.28,
+            0.45
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": true
+        },
+        "playpause": {
+          "dx_px": -555.5,
+          "dy_px": -336.9,
+          "mag_px": 649.7,
+          "angle_deg": -148.8,
+          "det_center_frac": [
+            0.2589,
+            0.3592
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -38.9,
+          "dy_px": -340.9,
+          "mag_px": 343.1,
+          "angle_deg": -96.5,
+          "det_center_frac": [
+            0.7031,
+            0.3582
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 686.5,
+          "dy_px": -364.5,
+          "mag_px": 777.3,
+          "angle_deg": -28.0,
+          "det_center_frac": [
+            0.538,
+            0.4643
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -374.2,
+          "dy_px": -111.3,
+          "mag_px": 390.4,
+          "angle_deg": -163.4,
+          "det_center_frac": [
+            0.2576,
+            0.54
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -110.4,
+          "dy_px": 183.2,
+          "mag_px": 213.9,
+          "angle_deg": 121.1,
+          "det_center_frac": [
+            0.5521,
+            0.6193
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -143.1,
+          "dy_px": -365.0,
+          "mag_px": 392.1,
+          "angle_deg": -111.4,
+          "det_center_frac": [
+            0.7179,
+            0.4642
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect2/assets-fa-pod-old/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1833,
+        "album_art_dist_other_frac": 0.1754,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect2",
+      "id": "assets-fallout-pipboy-cur",
+      "dir": "driftbisect2/assets-fallout-pipboy-cur",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 287.0,
+          "dy_px": 2043.4,
+          "mag_px": 2063.5,
+          "angle_deg": 82.0,
+          "det_center_frac": [
+            0.6246,
+            0.663
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": 287.5,
+          "dy_px": 775.9,
+          "mag_px": 827.4,
+          "angle_deg": 69.7,
+          "det_center_frac": [
+            0.6248,
+            0.4603
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.6306,
+            0.4617
+          ],
+          "mask_blob_px": 264370
+        },
+        "seek": {
+          "dx_px": -443.0,
+          "dy_px": 1003.0,
+          "mag_px": 1096.5,
+          "angle_deg": 113.8,
+          "det_center_frac": [
+            0.3077,
+            0.6227
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 141.9,
+          "dy_px": -689.4,
+          "mag_px": 703.8,
+          "angle_deg": -78.4,
+          "det_center_frac": [
+            0.3416,
+            0.2643
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -365.5,
+          "dy_px": -925.4,
+          "mag_px": 995.0,
+          "angle_deg": -111.6,
+          "det_center_frac": [
+            0.3414,
+            0.2007
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -871.9,
+          "dy_px": -451.9,
+          "mag_px": 982.0,
+          "angle_deg": -152.6,
+          "det_center_frac": [
+            0.3416,
+            0.3283
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 234.5,
+          "dy_px": -633.0,
+          "mag_px": 675.1,
+          "angle_deg": -69.7,
+          "det_center_frac": [
+            0.3418,
+            0.392
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -255.7,
+          "dy_px": -89.3,
+          "mag_px": 270.8,
+          "angle_deg": -160.7,
+          "det_center_frac": [
+            0.309,
+            0.5459
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -674.4,
+          "dy_px": 440.7,
+          "mag_px": 805.6,
+          "angle_deg": 146.8,
+          "det_center_frac": [
+            0.3073,
+            0.6887
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -1009.6,
+          "dy_px": -398.5,
+          "mag_px": 1085.4,
+          "angle_deg": -158.5,
+          "det_center_frac": [
+            0.3418,
+            0.4551
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect2/assets-fallout-pipboy-cur/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5644,
+        "album_art_dist_other_frac": 0.4301,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect2",
+      "id": "assets-fallout-pipboy-old",
+      "dir": "driftbisect2/assets-fallout-pipboy-old",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 300.0,
+          "dy_px": 2047.4,
+          "mag_px": 2069.3,
+          "angle_deg": 81.7,
+          "det_center_frac": [
+            0.6302,
+            0.6641
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": 301.0,
+          "dy_px": 781.4,
+          "mag_px": 837.3,
+          "angle_deg": 68.9,
+          "det_center_frac": [
+            0.6306,
+            0.4617
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.6306,
+            0.4617
+          ],
+          "mask_blob_px": 264370
+        },
+        "seek": {
+          "dx_px": -280.0,
+          "dy_px": 1015.0,
+          "mag_px": 1052.9,
+          "angle_deg": 105.4,
+          "det_center_frac": [
+            0.3785,
+            0.6259
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 134.7,
+          "dy_px": -689.4,
+          "mag_px": 702.4,
+          "angle_deg": -78.9,
+          "det_center_frac": [
+            0.3384,
+            0.2643
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -236.3,
+          "dy_px": -925.4,
+          "mag_px": 955.1,
+          "angle_deg": -104.3,
+          "det_center_frac": [
+            0.3974,
+            0.2007
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -865.9,
+          "dy_px": -451.9,
+          "mag_px": 976.7,
+          "angle_deg": -152.4,
+          "det_center_frac": [
+            0.3442,
+            0.3283
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 241.2,
+          "dy_px": -633.0,
+          "mag_px": 677.4,
+          "angle_deg": -69.1,
+          "det_center_frac": [
+            0.3447,
+            0.392
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.42,
+            0.57
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": true
+        },
+        "shuffle": {
+          "dx_px": -673.3,
+          "dy_px": 432.7,
+          "mag_px": 800.3,
+          "angle_deg": 147.3,
+          "det_center_frac": [
+            0.3078,
+            0.6866
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -1003.6,
+          "dy_px": -398.5,
+          "mag_px": 1079.8,
+          "angle_deg": -158.3,
+          "det_center_frac": [
+            0.3444,
+            0.4551
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect2/assets-fallout-pipboy-old/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5668,
+        "album_art_dist_other_frac": 0.4328,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect2",
+      "id": "assets-steam-porthole-cur",
+      "dir": "driftbisect2/assets-steam-porthole-cur",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 526.0,
+          "dy_px": 1974.4,
+          "mag_px": 2043.3,
+          "angle_deg": 75.1,
+          "det_center_frac": [
+            0.7283,
+            0.6444
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.7465,
+            0.6451
+          ],
+          "mask_blob_px": 324610
+        },
+        "visualizer": {
+          "dx_px": -246.5,
+          "dy_px": 1458.9,
+          "mag_px": 1479.5,
+          "angle_deg": 99.6,
+          "det_center_frac": [
+            0.393,
+            0.6443
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4203,
+            0.6451
+          ],
+          "mask_blob_px": 368460
+        },
+        "seek": {
+          "dx_px": 321.5,
+          "dy_px": 313.0,
+          "mag_px": 448.7,
+          "angle_deg": 44.2,
+          "det_center_frac": [
+            0.6395,
+            0.4368
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 300.9,
+          "dy_px": -358.4,
+          "mag_px": 468.0,
+          "angle_deg": -50.0,
+          "det_center_frac": [
+            0.4106,
+            0.3534
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -544.6,
+          "dy_px": -356.9,
+          "mag_px": 651.2,
+          "angle_deg": -146.8,
+          "det_center_frac": [
+            0.2636,
+            0.3539
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -390.4,
+          "dy_px": -357.9,
+          "mag_px": 529.6,
+          "angle_deg": -137.5,
+          "det_center_frac": [
+            0.5506,
+            0.3536
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 1036.5,
+          "dy_px": -776.0,
+          "mag_px": 1294.8,
+          "angle_deg": -36.8,
+          "det_center_frac": [
+            0.6899,
+            0.3534
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -261.2,
+          "dy_px": -368.3,
+          "mag_px": 451.5,
+          "angle_deg": -125.3,
+          "det_center_frac": [
+            0.3066,
+            0.4708
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 376.1,
+          "dy_px": -212.8,
+          "mag_px": 432.1,
+          "angle_deg": -29.5,
+          "det_center_frac": [
+            0.7632,
+            0.5127
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 111.4,
+          "dy_px": -776.5,
+          "mag_px": 784.4,
+          "angle_deg": -81.8,
+          "det_center_frac": [
+            0.8283,
+            0.3533
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect2/assets-steam-porthole-cur/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5788,
+        "album_art_dist_other_frac": 0.4546,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "driftbisect2",
+      "id": "assets-steam-porthole-old",
+      "dir": "driftbisect2/assets-steam-porthole-old",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 601.6,
+          "dy_px": 1972.4,
+          "mag_px": 2062.1,
+          "angle_deg": 73.0,
+          "det_center_frac": [
+            0.7611,
+            0.6439
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.7465,
+            0.6451
+          ],
+          "mask_blob_px": 324610
+        },
+        "visualizer": {
+          "dx_px": -149.5,
+          "dy_px": 1456.9,
+          "mag_px": 1464.5,
+          "angle_deg": 95.9,
+          "det_center_frac": [
+            0.4351,
+            0.6437
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4203,
+            0.6451
+          ],
+          "mask_blob_px": 368460
+        },
+        "seek": {
+          "dx_px": 449.5,
+          "dy_px": 313.0,
+          "mag_px": 547.8,
+          "angle_deg": 34.9,
+          "det_center_frac": [
+            0.6951,
+            0.4368
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 300.9,
+          "dy_px": -358.4,
+          "mag_px": 468.0,
+          "angle_deg": -50.0,
+          "det_center_frac": [
+            0.4106,
+            0.3534
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -544.6,
+          "dy_px": -356.9,
+          "mag_px": 651.2,
+          "angle_deg": -146.8,
+          "det_center_frac": [
+            0.2636,
+            0.3539
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -390.4,
+          "dy_px": -357.9,
+          "mag_px": 529.6,
+          "angle_deg": -137.5,
+          "det_center_frac": [
+            0.5506,
+            0.3536
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 1036.5,
+          "dy_px": -776.0,
+          "mag_px": 1294.8,
+          "angle_deg": -36.8,
+          "det_center_frac": [
+            0.6899,
+            0.3534
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -261.2,
+          "dy_px": -368.3,
+          "mag_px": 451.5,
+          "angle_deg": -125.3,
+          "det_center_frac": [
+            0.3066,
+            0.4708
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 376.1,
+          "dy_px": -212.8,
+          "mag_px": 432.1,
+          "angle_deg": -29.5,
+          "det_center_frac": [
+            0.7632,
+            0.5127
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 111.4,
+          "dy_px": -776.5,
+          "mag_px": 784.4,
+          "angle_deg": -81.8,
+          "det_center_frac": [
+            0.8283,
+            0.3533
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "driftbisect2/assets-steam-porthole-old/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5921,
+        "album_art_dist_other_frac": 0.4715,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-fallout-pipboy-fal-571",
+      "dir": "servingbisect/assets-fallout-pipboy-fal-571",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -305.5,
+          "dy_px": 900.4,
+          "mag_px": 950.8,
+          "angle_deg": 108.7,
+          "det_center_frac": [
+            0.3674,
+            0.3551
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": 281.5,
+          "dy_px": 385.4,
+          "mag_px": 477.2,
+          "angle_deg": 53.9,
+          "det_center_frac": [
+            0.6222,
+            0.3551
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 7.0,
+          "dy_px": 421.0,
+          "mag_px": 421.1,
+          "angle_deg": 89.0,
+          "det_center_frac": [
+            0.503,
+            0.4659
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 44.9,
+          "dy_px": 355.1,
+          "mag_px": 357.9,
+          "angle_deg": 82.8,
+          "det_center_frac": [
+            0.2995,
+            0.5457
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -184.5,
+          "dy_px": 355.1,
+          "mag_px": 400.2,
+          "angle_deg": 117.5,
+          "det_center_frac": [
+            0.4199,
+            0.5457
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -410.9,
+          "dy_px": 355.1,
+          "mag_px": 543.1,
+          "angle_deg": 139.2,
+          "det_center_frac": [
+            0.5417,
+            0.5457
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 999.5,
+          "dy_px": -88.0,
+          "mag_px": 1003.4,
+          "angle_deg": -5.0,
+          "det_center_frac": [
+            0.6738,
+            0.5388
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 559.8,
+          "dy_px": 212.7,
+          "mag_px": 598.9,
+          "angle_deg": 20.8,
+          "det_center_frac": [
+            0.663,
+            0.6273
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -343.9,
+          "dy_px": 257.7,
+          "mag_px": 429.7,
+          "angle_deg": 143.2,
+          "det_center_frac": [
+            0.4507,
+            0.6394
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -1106.6,
+          "dy_px": -62.5,
+          "mag_px": 1108.4,
+          "angle_deg": -176.8,
+          "det_center_frac": [
+            0.2997,
+            0.5457
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-fallout-pipboy-fal-571/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.2765,
+        "album_art_dist_other_frac": 0.1684,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-fallout-pipboy-fal-671",
+      "dir": "servingbisect/assets-fallout-pipboy-fal-671",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -14.5,
+          "dy_px": -2.6,
+          "mag_px": 14.7,
+          "angle_deg": -169.8,
+          "det_center_frac": [
+            0.4937,
+            0.1118
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5973,
+            0.1202
+          ],
+          "mask_blob_px": 306200
+        },
+        "visualizer": {
+          "dx_px": -10.0,
+          "dy_px": -1.6,
+          "mag_px": 10.1,
+          "angle_deg": -170.7,
+          "det_center_frac": [
+            0.4957,
+            0.2508
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5161,
+            0.4185
+          ],
+          "mask_blob_px": 610835
+        },
+        "seek": {
+          "dx_px": 96.5,
+          "dy_px": -12.0,
+          "mag_px": 97.2,
+          "angle_deg": -7.1,
+          "det_center_frac": [
+            0.5419,
+            0.3493
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 350.4,
+          "dy_px": 444.6,
+          "mag_px": 566.1,
+          "angle_deg": 51.8,
+          "det_center_frac": [
+            0.4321,
+            0.5698
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": 28.5,
+          "dy_px": 0.6,
+          "mag_px": 28.5,
+          "angle_deg": 1.2,
+          "det_center_frac": [
+            0.5124,
+            0.4502
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": 33.1,
+          "dy_px": 1.1,
+          "mag_px": 33.1,
+          "angle_deg": 1.9,
+          "det_center_frac": [
+            0.7344,
+            0.4503
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 22.0,
+          "dy_px": 1.0,
+          "mag_px": 22.1,
+          "angle_deg": 2.6,
+          "det_center_frac": [
+            0.2496,
+            0.5628
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.42,
+            0.57
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": true
+        },
+        "shuffle": {
+          "dx_px": -37.7,
+          "dy_px": 1.2,
+          "mag_px": 37.7,
+          "angle_deg": 178.2,
+          "det_center_frac": [
+            0.5836,
+            0.5703
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 33.9,
+          "dy_px": 1.0,
+          "mag_px": 33.9,
+          "angle_deg": 1.7,
+          "det_center_frac": [
+            0.7947,
+            0.5628
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-fallout-pipboy-fal-671/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.0063,
+        "album_art_dist_other_frac": 0.1396,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-fallout-pipboy-vertex-571",
+      "dir": "servingbisect/assets-fallout-pipboy-vertex-571",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 267.0,
+          "dy_px": 182.9,
+          "mag_px": 323.6,
+          "angle_deg": 34.4,
+          "det_center_frac": [
+            0.6159,
+            0.1618
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": 339.5,
+          "dy_px": -131.1,
+          "mag_px": 363.9,
+          "angle_deg": -21.1,
+          "det_center_frac": [
+            0.6474,
+            0.2159
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.613,
+            0.2158
+          ],
+          "mask_blob_px": 812753
+        },
+        "seek": {
+          "dx_px": 95.5,
+          "dy_px": 631.0,
+          "mag_px": 638.2,
+          "angle_deg": 81.4,
+          "det_center_frac": [
+            0.5414,
+            0.5225
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 504.4,
+          "dy_px": -197.4,
+          "mag_px": 541.6,
+          "angle_deg": -21.4,
+          "det_center_frac": [
+            0.4989,
+            0.3968
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -222.0,
+          "dy_px": -197.4,
+          "mag_px": 297.1,
+          "angle_deg": -138.4,
+          "det_center_frac": [
+            0.4036,
+            0.3968
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -290.4,
+          "dy_px": -197.4,
+          "mag_px": 351.1,
+          "angle_deg": -145.8,
+          "det_center_frac": [
+            0.594,
+            0.3968
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 1045.0,
+          "dy_px": -607.5,
+          "mag_px": 1208.8,
+          "angle_deg": -30.2,
+          "det_center_frac": [
+            0.6936,
+            0.3988
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -479.7,
+          "dy_px": -120.8,
+          "mag_px": 494.7,
+          "angle_deg": -165.9,
+          "det_center_frac": [
+            0.2118,
+            0.5374
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 452.1,
+          "dy_px": -153.3,
+          "mag_px": 477.4,
+          "angle_deg": -18.7,
+          "det_center_frac": [
+            0.7962,
+            0.5287
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 10.9,
+          "dy_px": -615.0,
+          "mag_px": 615.1,
+          "angle_deg": -89.0,
+          "det_center_frac": [
+            0.7847,
+            0.3968
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-fallout-pipboy-vertex-571/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.1259,
+        "album_art_dist_other_frac": 0.1464,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-fallout-pipboy-vertex-671",
+      "dir": "servingbisect/assets-fallout-pipboy-vertex-671",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": true,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -38.5,
+          "dy_px": 23.4,
+          "mag_px": 45.1,
+          "angle_deg": 148.7,
+          "det_center_frac": [
+            0.4833,
+            0.1188
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4864,
+            0.1201
+          ],
+          "mask_blob_px": 255722
+        },
+        "visualizer": {
+          "dx_px": -41.0,
+          "dy_px": 43.4,
+          "mag_px": 59.7,
+          "angle_deg": 133.4,
+          "det_center_frac": [
+            0.4822,
+            0.2629
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4867,
+            0.2629
+          ],
+          "mask_blob_px": 540297
+        },
+        "seek": {
+          "dx_px": -29.5,
+          "dy_px": 183.5,
+          "mag_px": 185.9,
+          "angle_deg": 99.1,
+          "det_center_frac": [
+            0.4872,
+            0.4019
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 235.4,
+          "dy_px": 566.1,
+          "mag_px": 613.1,
+          "angle_deg": 67.4,
+          "det_center_frac": [
+            0.3822,
+            0.6025
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -536.5,
+          "dy_px": 566.1,
+          "mag_px": 779.9,
+          "angle_deg": 133.5,
+          "det_center_frac": [
+            0.2671,
+            0.6025
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -513.9,
+          "dy_px": 566.1,
+          "mag_px": 764.6,
+          "angle_deg": 132.2,
+          "det_center_frac": [
+            0.497,
+            0.6025
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 857.0,
+          "dy_px": 148.5,
+          "mag_px": 869.8,
+          "angle_deg": 9.8,
+          "det_center_frac": [
+            0.612,
+            0.6025
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 177.3,
+          "dy_px": -260.8,
+          "mag_px": 315.4,
+          "angle_deg": -55.8,
+          "det_center_frac": [
+            0.497,
+            0.4997
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -233.4,
+          "dy_px": 400.7,
+          "mag_px": 463.7,
+          "angle_deg": 120.2,
+          "det_center_frac": [
+            0.4987,
+            0.6779
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -122.1,
+          "dy_px": 148.5,
+          "mag_px": 192.3,
+          "angle_deg": 129.4,
+          "det_center_frac": [
+            0.727,
+            0.6025
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-fallout-pipboy-vertex-671/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.0178,
+        "album_art_dist_other_frac": 0.1335,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-steam-porthole-fal-623",
+      "dir": "servingbisect/assets-steam-porthole-fal-623",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 259.5,
+          "dy_px": 1843.9,
+          "mag_px": 1862.1,
+          "angle_deg": 82.0,
+          "det_center_frac": [
+            0.6126,
+            0.6092
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": 103.5,
+          "dy_px": 572.9,
+          "mag_px": 582.1,
+          "angle_deg": 79.8,
+          "det_center_frac": [
+            0.5449,
+            0.4056
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": -157.0,
+          "dy_px": 944.5,
+          "mag_px": 957.5,
+          "angle_deg": 99.4,
+          "det_center_frac": [
+            0.4319,
+            0.607
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.28,
+            0.45
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": true
+        },
+        "playpause": {
+          "dx_px": 208.5,
+          "dy_px": 335.6,
+          "mag_px": 395.1,
+          "angle_deg": 58.1,
+          "det_center_frac": [
+            0.5905,
+            0.5404
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -298.4,
+          "dy_px": 335.6,
+          "mag_px": 449.1,
+          "angle_deg": 131.6,
+          "det_center_frac": [
+            0.5905,
+            0.5404
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 663.0,
+          "dy_px": -324.0,
+          "mag_px": 738.0,
+          "angle_deg": -26.0,
+          "det_center_frac": [
+            0.5278,
+            0.4752
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 68.3,
+          "dy_px": -109.8,
+          "mag_px": 129.4,
+          "angle_deg": -58.1,
+          "det_center_frac": [
+            0.4497,
+            0.5404
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": -123.9,
+          "dy_px": -1222.3,
+          "mag_px": 1228.6,
+          "angle_deg": -95.8,
+          "det_center_frac": [
+            0.5462,
+            0.2407
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": 9.4,
+          "dy_px": 120.3,
+          "mag_px": 120.7,
+          "angle_deg": 85.5,
+          "det_center_frac": [
+            0.7841,
+            0.5949
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-steam-porthole-fal-623/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.5093,
+        "album_art_dist_other_frac": 0.3752,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-steam-porthole-fal-723",
+      "dir": "servingbisect/assets-steam-porthole-fal-723",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -15.0,
+          "dy_px": 105.4,
+          "mag_px": 106.5,
+          "angle_deg": 98.1,
+          "det_center_frac": [
+            0.4935,
+            0.1409
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5034,
+            0.1127
+          ],
+          "mask_blob_px": 624698
+        },
+        "visualizer": {
+          "dx_px": -9.0,
+          "dy_px": 183.4,
+          "mag_px": 183.6,
+          "angle_deg": 92.8,
+          "det_center_frac": [
+            0.4961,
+            0.3006
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.5035,
+            0.2512
+          ],
+          "mask_blob_px": 367248
+        },
+        "seek": {
+          "dx_px": -10.0,
+          "dy_px": -1.5,
+          "mag_px": 10.1,
+          "angle_deg": -171.6,
+          "det_center_frac": [
+            0.4957,
+            0.3521
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": -17.1,
+          "dy_px": 0.1,
+          "mag_px": 17.1,
+          "angle_deg": 179.7,
+          "det_center_frac": [
+            0.2726,
+            0.45
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -14.0,
+          "dy_px": 0.1,
+          "mag_px": 14.0,
+          "angle_deg": 179.6,
+          "det_center_frac": [
+            0.4939,
+            0.45
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -9.9,
+          "dy_px": 0.4,
+          "mag_px": 9.9,
+          "angle_deg": 177.8,
+          "det_center_frac": [
+            0.7157,
+            0.4501
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 399.0,
+          "dy_px": 27.5,
+          "mag_px": 400.0,
+          "angle_deg": 3.9,
+          "det_center_frac": [
+            0.4132,
+            0.5699
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": -495.2,
+          "dy_px": 211.2,
+          "mag_px": 538.3,
+          "angle_deg": 156.9,
+          "det_center_frac": [
+            0.2051,
+            0.6269
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 398.1,
+          "dy_px": 110.7,
+          "mag_px": 413.2,
+          "angle_deg": 15.5,
+          "det_center_frac": [
+            0.7728,
+            0.5998
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -428.1,
+          "dy_px": 27.0,
+          "mag_px": 429.0,
+          "angle_deg": 176.4,
+          "det_center_frac": [
+            0.5942,
+            0.5698
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-steam-porthole-fal-723/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": false,
+        "album_art_dist_own_frac": 0.0291,
+        "album_art_dist_other_frac": 0.1106,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-steam-porthole-vertex-623",
+      "dir": "servingbisect/assets-steam-porthole-vertex-623",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": -11.0,
+          "dy_px": 384.9,
+          "mag_px": 385.1,
+          "angle_deg": 91.6,
+          "det_center_frac": [
+            0.4952,
+            0.2162
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4942,
+            0.2158
+          ],
+          "mask_blob_px": 450300
+        },
+        "visualizer": {
+          "dx_px": -9.5,
+          "dy_px": 594.4,
+          "mag_px": 594.4,
+          "angle_deg": 90.9,
+          "det_center_frac": [
+            0.4959,
+            0.4114
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": [
+            0.4944,
+            0.4122
+          ],
+          "mask_blob_px": 292498
+        },
+        "seek": {
+          "dx_px": -56.0,
+          "dy_px": 486.5,
+          "mag_px": 489.7,
+          "angle_deg": 96.6,
+          "det_center_frac": [
+            0.4757,
+            0.4836
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 195.9,
+          "dy_px": 876.1,
+          "mag_px": 897.7,
+          "angle_deg": 77.4,
+          "det_center_frac": [
+            0.365,
+            0.686
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -9.0,
+          "dy_px": 998.1,
+          "mag_px": 998.1,
+          "angle_deg": 90.5,
+          "det_center_frac": [
+            0.4961,
+            0.7189
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": -213.9,
+          "dy_px": 875.6,
+          "mag_px": 901.3,
+          "angle_deg": 103.7,
+          "det_center_frac": [
+            0.6272,
+            0.6859
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "repeat": {
+          "dx_px": 144.0,
+          "dy_px": 55.5,
+          "mag_px": 154.4,
+          "angle_deg": 21.1,
+          "det_center_frac": [
+            0.3025,
+            0.5775
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 173.8,
+          "dy_px": 37.2,
+          "mag_px": 177.7,
+          "angle_deg": 12.1,
+          "det_center_frac": [
+            0.4954,
+            0.58
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 295.1,
+          "dy_px": 378.7,
+          "mag_px": 480.1,
+          "angle_deg": 52.1,
+          "det_center_frac": [
+            0.7281,
+            0.672
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -209.6,
+          "dy_px": 55.0,
+          "mag_px": 216.7,
+          "angle_deg": 165.3,
+          "det_center_frac": [
+            0.689,
+            0.5773
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-steam-porthole-vertex-623/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1038,
+        "album_art_dist_other_frac": 0.0354,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    },
+    {
+      "group": "servingbisect",
+      "id": "assets-steam-porthole-vertex-723",
+      "dir": "servingbisect/assets-steam-porthole-vertex-723",
+      "dims": [
+        2304,
+        3712
+      ],
+      "archetype": "vpod",
+      "gate_pass": false,
+      "drift_mean_px": null,
+      "drift_worst": null,
+      "template": {
+        "album_art": [
+          0.5,
+          0.1125
+        ],
+        "visualizer": [
+          0.5,
+          0.2513
+        ],
+        "seek": [
+          0.5,
+          0.3525
+        ],
+        "prev": [
+          0.28,
+          0.45
+        ],
+        "playpause": [
+          0.5,
+          0.45
+        ],
+        "next": [
+          0.72,
+          0.45
+        ],
+        "repeat": [
+          0.24,
+          0.5625
+        ],
+        "vol": [
+          0.42,
+          0.57
+        ],
+        "shuffle": [
+          0.6,
+          0.57
+        ],
+        "queue": [
+          0.78,
+          0.5625
+        ]
+      },
+      "controls": {
+        "album_art": {
+          "dx_px": 256.0,
+          "dy_px": 430.4,
+          "mag_px": 500.8,
+          "angle_deg": 59.3,
+          "det_center_frac": [
+            0.6111,
+            0.2284
+          ],
+          "template_center_frac": [
+            0.5,
+            0.1125
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "visualizer": {
+          "dx_px": 254.5,
+          "dy_px": 755.9,
+          "mag_px": 797.6,
+          "angle_deg": 71.4,
+          "det_center_frac": [
+            0.6105,
+            0.4549
+          ],
+          "template_center_frac": [
+            0.5,
+            0.2513
+          ],
+          "from_template_fallback": false,
+          "mask_blob_center_frac": null,
+          "mask_blob_px": null
+        },
+        "seek": {
+          "dx_px": 353.0,
+          "dy_px": 1168.2,
+          "mag_px": 1220.4,
+          "angle_deg": 73.2,
+          "det_center_frac": [
+            0.6532,
+            0.6672
+          ],
+          "template_center_frac": [
+            0.5,
+            0.3525
+          ],
+          "from_template_fallback": false
+        },
+        "prev": {
+          "dx_px": 624.9,
+          "dy_px": 734.6,
+          "mag_px": 964.4,
+          "angle_deg": 49.6,
+          "det_center_frac": [
+            0.5512,
+            0.6479
+          ],
+          "template_center_frac": [
+            0.28,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "playpause": {
+          "dx_px": -146.5,
+          "dy_px": 735.1,
+          "mag_px": 749.6,
+          "angle_deg": 101.3,
+          "det_center_frac": [
+            0.4364,
+            0.648
+          ],
+          "template_center_frac": [
+            0.5,
+            0.45
+          ],
+          "from_template_fallback": false
+        },
+        "next": {
+          "dx_px": 0.0,
+          "dy_px": 0.0,
+          "mag_px": 0.0,
+          "angle_deg": 0.0,
+          "det_center_frac": [
+            0.72,
+            0.45
+          ],
+          "template_center_frac": [
+            0.72,
+            0.45
+          ],
+          "from_template_fallback": true
+        },
+        "repeat": {
+          "dx_px": 845.5,
+          "dy_px": 20.5,
+          "mag_px": 845.8,
+          "angle_deg": 1.4,
+          "det_center_frac": [
+            0.607,
+            0.568
+          ],
+          "template_center_frac": [
+            0.24,
+            0.5625
+          ],
+          "from_template_fallback": false
+        },
+        "vol": {
+          "dx_px": 36.3,
+          "dy_px": 288.2,
+          "mag_px": 290.4,
+          "angle_deg": 82.8,
+          "det_center_frac": [
+            0.4358,
+            0.6476
+          ],
+          "template_center_frac": [
+            0.42,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "shuffle": {
+          "dx_px": 16.6,
+          "dy_px": 584.7,
+          "mag_px": 584.9,
+          "angle_deg": 88.4,
+          "det_center_frac": [
+            0.6072,
+            0.7275
+          ],
+          "template_center_frac": [
+            0.6,
+            0.57
+          ],
+          "from_template_fallback": false
+        },
+        "queue": {
+          "dx_px": -19.7,
+          "dy_px": 317.0,
+          "mag_px": 317.6,
+          "angle_deg": 93.5,
+          "det_center_frac": [
+            0.7715,
+            0.6479
+          ],
+          "template_center_frac": [
+            0.78,
+            0.5625
+          ],
+          "from_template_fallback": false
+        }
+      },
+      "mask_path_used": "servingbisect/assets-steam-porthole-vertex-723/mask.png",
+      "swap_test": {
+        "album_art_closer_to_visualizer_slot": true,
+        "album_art_dist_own_frac": 0.1605,
+        "album_art_dist_other_frac": 0.1134,
+        "visualizer_closer_to_album_art_slot": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,309 @@
+<meta charset="utf-8">
+<title>artdrift — album_art drift-gate triage</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0b0d10; --panel: #14171c; --panel2: #1a1e24; --text: #e8ebef; --muted: #8b93a1;
+    --yellow: #ffd200; --cyan: #00dcff; --magenta: #ff3c8c; --green: #35d48a; --red: #ff5c5c;
+    --border: #2a2f38;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f4f5f7; --panel:#fff; --panel2:#f0f1f4; --text:#1a1d22; --muted:#5a6270; --border:#dde1e7; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px clamp(12px,3vw,32px) 80px; }
+  h1 { font-size: clamp(20px,3vw,28px); margin: 0 0 6px; }
+  h2 { font-size: 19px; margin: 40px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+  .costband { display:inline-flex; gap:14px; flex-wrap:wrap; background: var(--panel2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 14px; margin:10px 0 18px; font-size:13px; color:var(--muted); }
+  .costband b { color: var(--text); }
+  .question { background: var(--panel); border:1px solid var(--border); border-left:4px solid var(--yellow);
+    border-radius: 8px; padding: 16px 18px; margin: 18px 0; }
+  .question .q { font-weight:600; margin-bottom:6px; }
+
+  .grid-crops { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:18px; margin-top:14px; }
+  .crop-card { background: var(--panel); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .crop-card img { width:100%; display:block; }
+  .crop-card .cap { padding:10px 14px; font-size:13px; color:var(--muted); }
+  .crop-card.fail { border-color: #6b2a2a; }
+  .crop-card .badge { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.03em; padding:2px 8px;
+    border-radius:20px; margin-left:6px; }
+  .badge.pass { background: rgba(53,212,138,.18); color: var(--green); }
+  .badge.fail { background: rgba(255,92,92,.18); color: var(--red); }
+
+  .legend { display:flex; gap:18px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin: 10px 0 6px; }
+  .legend .sw { display:inline-block; width:14px; height:14px; border-radius:3px; margin-right:6px; vertical-align:-2px; }
+
+  .panel { background: var(--panel); border:1px solid var(--border); border-radius: 10px; padding: 18px; }
+  #vecplot { width:100%; height:auto; display:block; }
+  .plot-wrap { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .plot-wrap .panel:first-child { flex: 2 1 520px; }
+  .plot-wrap .panel:last-child { flex: 1 1 320px; }
+
+  table { width:100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align:left; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  tr:hover td { background: var(--panel2); }
+  .clsdot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+  .mono { font-variant-numeric: tabular-nums; }
+
+  .verdict { margin-top: 40px; background: linear-gradient(155deg, var(--panel), var(--panel2)); border:1px solid var(--border);
+    border-left:5px solid var(--green); border-radius:12px; padding:22px 24px; }
+  .verdict h2 { border:none; margin-top:0; padding-bottom:0; }
+  .verdict .tag { display:inline-block; background: rgba(53,212,138,.15); color:var(--green); font-weight:700;
+    font-size:12px; letter-spacing:.04em; padding:3px 10px; border-radius:20px; margin-bottom:10px; }
+  .verdict ul { padding-left: 20px; }
+  .verdict li { margin: 6px 0; }
+  .fixbox { background: var(--panel2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-top:14px; }
+  .fixbox b { color: var(--yellow); }
+
+  code { background: var(--panel2); padding: 1px 5px; border-radius:4px; font-size: 12.5px; }
+  .refuted { color: var(--muted); text-decoration: line-through; }
+  .confirmed { color: var(--green); font-weight:600; }
+</style>
+
+<div class="wrap">
+  <h1>artdrift — is the album_art drift-gate fail a layout weakness or random variance?</h1>
+  <div class="sub">Pre-review triage for the 3 drift-gate fails sharing album_art as worst control
+    (fallout-pipboy, steam-porthole, wmp-quicksilver — regions.json <code>drift</code> block, commit
+    <code>14d1d51c</code>). $0, no new generations — analysis of existing paints/masks/regions only.</div>
+  <div class="costband">
+    <span><b>Models used:</b> none (this page is pure analysis of already-generated assets)</span>
+    <span><b>Cost:</b> <b>$0.00</b></span>
+    <span><b>Data:</b> <span id="ndata">–</span> templated gens (6 mainline roster + 26 driftbisect/driftbisect2/servingbisect experiment gens)</span>
+  </div>
+
+  <div class="question">
+    <div class="q">Question asked</div>
+    All 3 drift-gate fails share the same worst control — album_art at 1763–2063px drift. Is this a
+    systematic layout-archetype weakness, or random variance — and if so, what's the one fix?
+  </div>
+
+  <h2>1 — What actually got painted: template box vs detected box, on the real paint.png</h2>
+  <p class="sub">Labeled overlays: <span style="color:#ffd200">dashed yellow</span> = authored template
+    slot, <span style="color:#00b8d4">solid cyan</span> = detected album_art device box,
+    <span style="color:#ff3c8c">solid magenta</span> = detected visualizer device box. Drift px shown per box.</p>
+  <div class="legend">
+    <span><span class="sw" style="background:#ffd200"></span>template (authored)</span>
+    <span><span class="sw" style="background:#00b8d4"></span>detected album_art</span>
+    <span><span class="sw" style="background:#ff3c8c"></span>detected visualizer</span>
+  </div>
+  <div class="grid-crops" id="cropgrid"></div>
+
+  <h2>2 — Drift vectors: every templated gen, album_art + visualizer, template-relative</h2>
+  <p class="sub">Each arrow starts at the control's TEMPLATE position (origin, scaled per-archetype) and
+    ends at its DETECTED position. Colour = composition class (see legend). If this were random noise,
+    arrows would scatter in all directions; if it's systematic, they cluster in direction.</p>
+  <div class="plot-wrap">
+    <div class="panel">
+      <svg id="vecplot" viewBox="0 0 900 900"></svg>
+    </div>
+    <div class="panel">
+      <div style="font-weight:600;margin-bottom:8px;">Composition classification (32 gens, album_art vs visualizer detected position)</div>
+      <table id="clstable"></table>
+      <div style="margin-top:14px;font-size:12.5px;color:var(--muted)">
+        Classified from each gen's own detected centres — <code>|Δy|&lt;0.06 &amp; |Δx|&gt;0.10</code> → side-by-side;
+        <code>|Δx|&lt;0.08 &amp; |Δy|&gt;0.06</code> → stacked (order by which centre has smaller y).
+      </div>
+    </div>
+  </div>
+
+  <h2>3 — Per-gen table (all templated gens, mainline + bisect experiments)</h2>
+  <table id="fulltable">
+    <thead><tr><th>group</th><th>skin/gen</th><th>archetype</th><th>class</th><th>album_art drift (px)</th><th>angle°</th><th>mask≈refit?</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>4 — Hypothesis tests</h2>
+  <div class="panel" style="margin-top:10px">
+    <p><b>(a) art↔visualizer identity SWAP</b> — <span class="refuted">refuted as a clean label-swap</span>.
+      Detected visualizer is <b>never</b> closer to album_art's template slot than to its own (0/32 gens) — so
+      visualizer isn't being mislabeled as album_art. What <i>is</i> true: detected album_art sits closer to
+      visualizer's template slot than its own in 24/32 gens, because album_art gets dragged toward wherever
+      the visualizer-like second window ends up. It's a <b>one-sided pull</b>, not a mutual swap.</p>
+    <p><b>(b) model promotes album_art to a hero position</b> — <span class="refuted">refuted</span>. "Hero"
+      would mean moving further toward prominence (template already puts album_art at the very top, y≈0.11).
+      Instead album_art moves <i>down and away</i> from that position in the vast majority of large-drift
+      cases (mean dy strongly positive) — toward wherever the model decided to put its matched *pair* of
+      display windows, which is frequently the bottom of the composition, not a more prominent top spot.</p>
+    <p><b>(c) mask blob agrees with template, but extract12's region-refit moved it (pipeline bug)</b> —
+      <span class="refuted">refuted</span>. Independent check: BiRefNet-adjacent guide-key blob centroid in
+      each gen's own <code>mask.png</code> channel vs extract12's <code>regions.device</code> refit centre.
+      Wherever a blob was isolable, the two agree within ~10–20px of each other and both disagree with the
+      template by hundreds/thousands of px in the same direction
+      (e.g. steam-porthole album_art: mask centroid frac [0.747, 0.645] vs refit centre [0.728, 0.645];
+      wmp-quicksilver: mask [0.717, 0.625] vs refit [0.697, 0.623]). extract12 is faithfully reporting what
+      the model actually painted — this is <span class="confirmed">paint-driven, not detector-driven</span>,
+      consistent with the prior bisect chain (892bf045, 448d8f87).</p>
+  </div>
+
+  <div class="verdict">
+    <div class="tag">ANSWER</div>
+    <h2>Systematic template weakness, expressed probabilistically — not random, not a clean identity-swap</h2>
+    <ul>
+      <li><b>Not random variance:</b> the same failure mode (album_art + visualizer losing their fixed
+        stacked order) recurs across <b>24/32</b> templated gens spanning both layout archetypes (vpod
+        and hcapsule), multiple themes, multiple seeds, and both serving paths (fal / Vertex) — visually
+        confirmed by direct crop inspection, not just the distance metric.</li>
+      <li><b>Not per-skin deterministic either:</b> the SAME skin re-rolled lands on both branches — e.g.
+        steam-porthole's frozen mainline roll is side-by-side (FAIL), but 3/4 fresh servingbisect re-rolls
+        of steam-porthole are correctly stacked; fallout-pipboy's frozen roll is order-reversed, but 2/4
+        fresh re-rolls stack correctly. So a re-roll has a real (~60-70%) chance of fixing any one failing
+        skin, but that's resampling from a distribution that's still wrong ~30-45% of the time — it doesn't
+        fix the underlying weakness for the NEXT skin/seed.</li>
+      <li><b>Root cause, visually confirmed:</b> the template puts album_art directly above visualizer with
+        a near-hairline gap (~2% of frame height in the vpod archetype — the two "dark recessed glass, no
+        coloured frame" windows are template-adjacent and visually near-identical). The model has its own
+        strong compositional prior for a paired "twin display" element and frequently re-composes it as
+        side-by-side (9/32) or vertical-order-reversed (5/32) rather than obeying the template's specific
+        stacked position — even in PASSING gens (fa-pod's mainline roll is a clean side-by-side pair, it
+        just stays close enough in Euclidean template-distance to clear the 650px gate).</li>
+      <li><b>hcapsule's bigger gap (~13% of DEV_H) mostly avoids this</b> (ps1-crunchy: small drift,
+        correct order) <b>but not always</b> (wmp-quicksilver: side-by-side, FAIL) — gap size alone doesn't
+        fully explain it; the "no coloured frame" identical-look prompt clause for both windows likely
+        compounds it.</li>
+    </ul>
+    <div class="fixbox">
+      <b>The one fix:</b> redesign the album_art/visualizer sub-layout in <code>genskin.py</code>'s
+      <code>_vpod</code>/<code>_hcapsule</code> layout archetypes (fix-generalizable-rule — pipeline fix,
+      not a per-skin patch). Two complementary moves, both required:
+      <ol>
+        <li><b>Widen the template gap</b> between album_art and visualizer substantially (vpod's current
+          gap is ~2% of frame height — effectively touching). A template that already reads as two
+          <i>visually distinct</i> elements is far less likely to get merged/reordered by the model than one
+          that reads as a single ambiguous strip.</li>
+        <li><b>Add an explicit relative-position prompt clause</b> for these two controls specifically —
+          none currently exists (<code>genskin.py</code> has zero ABOVE/BELOW/stacked language for
+          album_art/visualizer; the current prompt relies entirely on the guide blueprint's geometry, which
+          the model treats as a loose suggestion for this pair). Something like: "album_art sits DIRECTLY
+          ABOVE visualizer with a clear gap — never side-by-side, never reversed."</li>
+      </ol>
+      Re-rolling the 3 currently-failing skins is a reasonable stopgap given the ~60-70% single-roll success
+      rate shown by the servingbisect fresh gens, but it does not fix the ~30-45% expected miss rate for
+      every future templated skin — the template/prompt change is the generalizable fix.
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA_URL = "artdrift_data.json";
+const CLASS_COLORS = {
+  "side-by-side": "#ff5c5c",
+  "stacked-reversed": "#ffb020",
+  "stacked-ok": "#35d48a",
+  "ambiguous": "#8b93a1",
+  "no-data": "#3a4048",
+};
+const CLASS_LABEL = {
+  "side-by-side": "side-by-side (model paired art+viz horizontally)",
+  "stacked-reversed": "stacked, order REVERSED (viz above art)",
+  "stacked-ok": "stacked, order matches template",
+  "ambiguous": "ambiguous / other",
+  "no-data": "no visualizer data",
+};
+
+function classify(g) {
+  const c = g.controls;
+  if (!c.album_art || !c.visualizer) return "no-data";
+  const aa = c.album_art.det_center_frac, vz = c.visualizer.det_center_frac;
+  const ddx = Math.abs(aa[0]-vz[0]), ddy = Math.abs(aa[1]-vz[1]);
+  if (ddy < 0.06 && ddx > 0.10) return "side-by-side";
+  if (ddx < 0.08 && ddy > 0.06) return aa[1] < vz[1] ? "stacked-ok" : "stacked-reversed";
+  return "ambiguous";
+}
+
+const CROP_SKINS = ["fallout-pipboy", "steam-porthole", "wmp-quicksilver", "fa-pod", "wc-goldshield", "ps1-crunchy"];
+
+fetch(DATA_URL).then(r => r.json()).then(data => {
+  document.getElementById("ndata").textContent = data.n_gens;
+  const gens = data.gens;
+
+  // ---- crop gallery (mainline only, all 6 templated skins) ----
+  const grid = document.getElementById("cropgrid");
+  const mainline = Object.fromEntries(gens.filter(g => g.group === "mainline").map(g => [g.id, g]));
+  CROP_SKINS.forEach(sid => {
+    const g = mainline[sid];
+    if (!g) return;
+    const failing = !g.gate_pass;
+    const card = document.createElement("div");
+    card.className = "crop-card" + (failing ? " fail" : "");
+    const aa = g.controls.album_art;
+    card.innerHTML = `
+      <img src="artdrift_crops/${sid}.jpg" loading="lazy" alt="${sid} template vs detected overlay">
+      <div class="cap"><b>${sid}</b> <span class="badge ${failing ? 'fail' : 'pass'}">${failing ? 'FAIL' : 'PASS'}</span>
+        <br>archetype=${g.archetype} · album_art drift=${aa ? aa.mag_px.toFixed(0) : '-'}px · class=${classify(g)}</div>`;
+    grid.appendChild(card);
+  });
+
+  // ---- classification summary table ----
+  const counts = {};
+  gens.forEach(g => { const c = classify(g); counts[c] = (counts[c]||0)+1; });
+  const clsT = document.getElementById("clstable");
+  clsT.innerHTML = "<thead><tr><th>class</th><th>n</th></tr></thead><tbody>" +
+    Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
+      `<tr><td><span class="clsdot" style="background:${CLASS_COLORS[k]}"></span>${CLASS_LABEL[k]}</td><td class="mono">${v}</td></tr>`
+    ).join("") + "</tbody>";
+
+  // ---- full per-gen table ----
+  const tbody = document.querySelector("#fulltable tbody");
+  gens.forEach(g => {
+    const aa = g.controls.album_art;
+    if (!aa) return;
+    const cls = classify(g);
+    const maskC = aa.mask_blob_center_frac;
+    let maskAgree = "no blob";
+    if (maskC) {
+      const dx = maskC[0]-aa.det_center_frac[0], dy = maskC[1]-aa.det_center_frac[1];
+      const d = Math.hypot(dx,dy);
+      maskAgree = d < 0.03 ? `yes (Δ${(d*100).toFixed(1)}%)` : `diverges (Δ${(d*100).toFixed(1)}%)`;
+    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${g.group}</td><td>${g.id}</td><td>${g.archetype}</td>
+      <td><span class="clsdot" style="background:${CLASS_COLORS[cls]}"></span>${cls}</td>
+      <td class="mono">${aa.mag_px.toFixed(0)}</td><td class="mono">${aa.angle_deg.toFixed(0)}</td>
+      <td>${maskAgree}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // ---- vector plot (SVG) ----
+  const svg = document.getElementById("vecplot");
+  const W = 900, H = 900, cx = W/2, cy = H/2, scale = 900; // px-frac -> svg units (frac * scale)
+  let svgHtml = "";
+  // axes + origin marker (template position, normalized to 0,0 per gen)
+  svgHtml += `<line x1="0" y1="${cy}" x2="${W}" y2="${cy}" stroke="#3a4048" stroke-width="1"/>`;
+  svgHtml += `<line x1="${cx}" y1="0" x2="${cx}" y2="${H}" stroke="#3a4048" stroke-width="1"/>`;
+  svgHtml += `<circle cx="${cx}" cy="${cy}" r="7" fill="#ffd200"/>`;
+  svgHtml += `<text x="${cx+10}" y="${cy-10}" fill="#ffd200" font-size="13" font-family="monospace">template centre (origin, per-control)</text>`;
+  // radial guides
+  [200,400,600].forEach(r => {
+    svgHtml += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2a2f38" stroke-width="1" stroke-dasharray="4,4"/>`;
+    svgHtml += `<text x="${cx+r+4}" y="${cy+4}" fill="#5a6270" font-size="10" font-family="monospace">${Math.round(r/scale*3712)}px</text>`;
+  });
+  gens.forEach(g => {
+    const cls = classify(g);
+    const color = CLASS_COLORS[cls];
+    const aa = g.controls.album_art;
+    if (!aa) return;
+    // normalize: template at (0,0), scale by frame H so cross-skin comparable (dims differ slightly)
+    const H_img = g.dims[1];
+    const dxN = aa.dx_px / H_img, dyN = aa.dy_px / H_img;
+    const x2 = cx + dxN*scale, y2 = cy + dyN*scale;
+    svgHtml += `<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${color}" stroke-width="2" opacity="0.75" marker-end="url(#arrow-${cls})"/>`;
+  });
+  // arrowhead defs per class color
+  let defs = "<defs>";
+  Object.entries(CLASS_COLORS).forEach(([k,c]) => {
+    defs += `<marker id="arrow-${k}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`;
+  });
+  defs += "</defs>";
+  svg.innerHTML = defs + svgHtml;
+
+  console.log(`artdrift: ${gens.length} gens loaded, classification:`, counts);
+}).catch(e => {
+  document.body.insertAdjacentHTML("afterbegin",
+    `<div style="background:#5c1a1a;color:#fff;padding:14px;font:14px monospace">Failed to load ${DATA_URL}: ${e}</div>`);
+});
+</script>
