@@ -1,0 +1,92 @@
+{
+  "claymation": {
+    "gate": "fail",
+    "notes": "baked slider knob. switch looks weird. buttons are completely fucked and misaligned. ",
+    "seed": "662",
+    "paint_sha": "1449b99f1b39"
+  },
+  "diablo-gothic": {
+    "gate": "fail",
+    "notes": "switch is weird. repeat button depression alginemnt off to right. css slider goes too far on top. ",
+    "seed": "736",
+    "paint_sha": "1023639b5ced"
+  },
+  "fa-pod": {
+    "gate": "fail",
+    "notes": "switch is way too huge now. silhouettes still not aligning correctly. ",
+    "seed": "673",
+    "paint_sha": "3bc22bca2c5f"
+  },
+  "fa-sky": {
+    "gate": "fail",
+    "notes": "phantom button play pause still issue. reroll. ",
+    "seed": "840",
+    "paint_sha": "afe04cc83c41"
+  },
+  "fallout-pipboy": {
+    "gate": "pass",
+    "notes": "almost perfect. switch is just a little to big. ",
+    "seed": "571",
+    "paint_sha": "2e10a535f9b4"
+  },
+  "fallout-vault": {
+    "gate": "fail",
+    "notes": "button issue mentioend before still not fixed.",
+    "seed": "649",
+    "paint_sha": "f37d3326e7c7"
+  },
+  "myst-arcanum": {
+    "gate": "unset",
+    "notes": "",
+    "seed": "649",
+    "paint_sha": "0c54123937ad"
+  },
+  "n64-cutscene": {
+    "gate": "fail",
+    "notes": "ugly. vss slider too wide on left side. siwtch weird looking. ",
+    "seed": "610",
+    "paint_sha": "1f53f284e789"
+  },
+  "n64-prerender-character": {
+    "gate": "fail",
+    "notes": "just delete this. ",
+    "seed": "849",
+    "paint_sha": "51bb17a0b364"
+  },
+  "ps1-crunchy": {
+    "gate": "fail",
+    "notes": "mismapped buttons. two repeat buttons, queue button not operational. switch sprites completely differnt sizes. ",
+    "seed": "623",
+    "paint_sha": "7e59ca84714d"
+  },
+  "ps1-wild": {
+    "gate": "fail",
+    "notes": "just delete this. ",
+    "seed": "982",
+    "paint_sha": "c4d28fa81917"
+  },
+  "steam-porthole": {
+    "gate": "pass",
+    "notes": "swapped knob and play button. still need to paint out baked slider knob. ",
+    "seed": "623",
+    "paint_sha": "b136856c2f9d"
+  },
+  "wc-goldshield": {
+    "gate": "pass",
+    "notes": "some issue with slot / swtich coherence, but hides nearly perfectly. ",
+    "seed": "736",
+    "paint_sha": "f1f627071939"
+  },
+  "wmp-quicksilver": {
+    "gate": "pass",
+    "notes": "fine",
+    "seed": "688",
+    "paint_sha": "2dde8d3d2156"
+  },
+  "wmp-vario": {
+    "gate": "pass",
+    "notes": "switch / slot coherenece but nearly perfect.",
+    "seed": "636",
+    "paint_sha": "9ecff4a4fd00"
+  }
+}
