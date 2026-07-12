@@ -1,5 +1,27 @@
 # 2026-07-11 — Knob tick-mark provisioning + in-call rotation metadata
 
+> **2026-07-12 correction — read this before the "Human verdict" section below.** This doc's
+> headline "0/8 adjudicated PASS" / "**Baked ticks: UNRELIABLE**" verdict (in "Human verdict"
+> just below) is a **full-contract AND-gate** score and is easy to misread in isolation as "the
+> model can't paint tick marks." It cannot paint tick marks *and* stay 100% clean of an unrelated
+> collateral defect (baked label text, layout drift, icon-colour bleed) in the same roll. **The
+> TICK MARKS THEMSELVES are not the failure.** This was already corrected same-day in
+> ["Human overrule + axis-separated re-score"](#human-overrule--axis-separated-re-score-2026-07-11)
+> below, based on Conner's first-hand review: *"the baked tik marks are all actually perfect,
+> except maybe the baked text… they look great."* Re-verified again 2026-07-12 by direct
+> full-res inspection of the committed crops (`knobticks/assets-knobticks-fa-pod-ticks_ctr-501/
+> crop-knob-labeled.png`, `…-steam-porthole-ticks01-401/crop-knob-labeled.png`,
+> `…-fa-pod-ticks_ctr-502/crop-knob-labeled.png`) — tick-mark rendering (diamond CENTER,
+> tapered minor ticks, LED-style start/end markers, gear-tooth ring + L-bracket end-stops) is
+> genuinely excellent on 6/7 painted gens; the ONE real, recurring defect is the clause's own
+> vocabulary (`MIN`/`MAX`/`CENTER`) baking in as literal engraved TEXT on 3/7 — a
+> **prompt-wording bug**, not a capability failure. This is also why `theme_specs/*.json`
+> (commit `8679c132`, same day) already flipped 6/15 themes back to `"ticks":{"skin":"baked",
+> "sprite":"baked"}` — the record and the shipped pipeline default already reflect this, not
+> the flat "abandoned for CSS" framing repeated in a couple of terse `TODO.md` entries (now
+> annotated with pointers to this correction). See "Recommendation on the default" at the very
+> bottom of this doc for the open flip-back-further question.
+
 ## Question
 
 Can the paint model be PROVISIONED via prompt to (a) bake a themed tick-mark / start-end
@@ -245,6 +267,45 @@ Two axis-3 layout-severity calls were **wrong and corrected**: `steam-porthole-t
 and `steam-porthole-ticks_ctr-402` were labeled "minor" but measure 2.68×/2.75× knob-radius
 displacement — comparable to gens already labeled MAJOR — reclassified to **MAJOR**.
 `fa-pod-ticks01-502` was labeled "none" but measures 1.41× — reclassified to **minor**.
+
+## Correction + recommendation on the default (2026-07-12)
+
+Restated for anyone who read only the top-level "Human verdict" (0/8 UNRELIABLE) and stopped
+there: that verdict is real but narrow — it is a full-contract AND-gate that fails a gen for
+ANY collateral defect, and it has already been superseded, same-day, by the axis-separated
+re-score above following Conner's direct first-hand review of the paint. Restating his verdict
+here in the record's own words, unedited: *"the baked tik marks are all actually perfect,
+except maybe the baked text… ticks look near perfect."*
+
+**What was actually unreliable, precisely:**
+- The clause's own labeling vocabulary (`MIN`/`MAX`/`CENTER`) baking in as literal engraved
+  TEXT on 3/7 gens — a prompt-wording defect (same class as the already-fixed ON/OFF/I/O
+  negative-prompt backfire, commit `3eeccc55`), not evidence the model can't draw ticks.
+- The in-call JSON rotation self-report — 4/7 parseable, and every parse a verbatim echo of
+  the prompt's own example angles. This part of the experiment's finding stands unchanged:
+  the model does not measure what it painted; don't ask it to.
+
+**What was NOT unreliable, contrary to a skim of the top-level verdict:** tick-mark rendering
+itself. 6/7 painted gens produced a coherent, theme-appropriate mark system; 5/7 were
+shape-distinct without relying on the offending text at all (diamonds, LED dots, gear-tooth
+rings, L-brackets — see the axis-rescore table above). Layout drift (2-6x knob-radius
+displacement on several gens) is a separate, pre-existing baseline failure mode unrelated to
+the tick clause.
+
+**Is the shipped default still right?** Commit `8679c132` (same day) already replaced the
+blanket CSS-only fallback with a per-skin director choice, and 6/15 themes
+(diablo-gothic, fallout-pipboy, fallout-vault, myst-arcanum, steam-porthole, wc-goldshield)
+are already set to `"baked"` on both axes — so the pipeline default already moved back toward
+baked ticks for the themes where it fits, and the record already reflects that. **Not decided
+here, flagged for the user/orchestrator:** whether to push further — e.g. flip more of the
+remaining 9 `"css"`-default themes to `"baked"` given how strong this evidence now looks — is
+a product call this doc does not make unilaterally, consistent with `fix-generalizable-rule`
+(a real pipeline-level decision, not a per-skin patch). The one real open risk before any
+further flip: the LIGHT rehab clause now shipped in `genskin.py` (no MIN/MAX/CENTER vocabulary)
+has **not yet been validated by an actual regen** — WIRE-pbr.md's own caveat — so the 6 themes
+already on `"baked"` are running on an untested-at-scale clause today. Recommend a small
+validation batch (~2-4 regens, ~$1, per the "Rehab path" above) before trusting it broadly,
+not a reason to distrust the tick-drawing capability itself.
 
 **Effect on the product conclusion:** unchanged in direction, strengthened in one respect.
 Tick-drawing quality is still strong-to-excellent on 6/7 and the collateral axes are still the

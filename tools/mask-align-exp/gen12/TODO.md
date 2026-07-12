@@ -1003,6 +1003,16 @@ rewrite would, and that needs explicit user sign-off (shared `main`, force-push 
 
 ## knobticks: baked knob tick-arcs + in-call rotation metadata — DONE 2026-07-11, UNRELIABLE
 
+> **CORRECTED 2026-07-12 — see the experiment doc's own
+> ["Human overrule + axis-separated re-score"](../../../docs/experiments/2026-07-11-knob-tick-provisioning.md#human-overrule--axis-separated-re-score-2026-07-11)
+> and ["Correction + recommendation on the default"](../../../docs/experiments/2026-07-11-knob-tick-provisioning.md#correction--recommendation-on-the-default-2026-07-12)
+> sections.** The "UNRELIABLE"/"0/8" verdict below is a full-contract AND-gate; TICK-MARK
+> RENDERING ITSELF is strong-to-excellent on 6/7 gens (Conner's first-hand verdict: "the baked
+> tik marks are all actually perfect, except maybe the baked text"). The real defects were
+> prompt-vocabulary text leakage (fixable) and an unusable in-call JSON self-report (unrelated
+> to tick quality). `theme_specs/*.json` (commit `8679c132`, same day) already reflects this —
+> 6/15 themes default to `"baked"`, not a blanket CSS fallback.
+
 Can the paint prompt provision a themed tick/start-end system around knob sockets AND
 self-report the sweep as JSON in the same TEXT+IMAGE Vertex call? Harness + adjudicated
 results page: `knobticks/` (`gen_knobticks.py`, `score_knobticks.py`, `adjudication.json`,
@@ -1411,6 +1421,14 @@ Flip only **between** batches, never while `orchestrate12.py` is mid-run.
     still unresolved and still pending human call.
 
 ## Knob tick marks shipped as a CSS/SVG overlay, not baked into the paint (2026-07-11)
+
+> **SUPERSEDED same day by commit `8679c132`** (per-axis director choice — see the
+> `## Director-decided knob tick provisioning` entry above in this file) and **corrected
+> 2026-07-12** — the "tried and rejected" framing below overstates it: tick-MARK rendering
+> quality was never the problem (see the experiment doc's
+> [2026-07-12 correction](../../../docs/experiments/2026-07-11-knob-tick-provisioning.md#2026-07-12-correction--read-this-before-the-human-verdict-section-below)).
+> This entry is kept verbatim as the historical record of what shipped in this one commit;
+> it was not the final state even on 2026-07-11.
 
 `KNOB_TICKS_ENABLED = True` in `build_player.py`. Baked-tick provisioning was tried and
 rejected first — see
