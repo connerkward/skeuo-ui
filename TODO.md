@@ -12,6 +12,16 @@ section for the PUBLISHABLE definition, verdict-to-generation binding (`review.j
 `seed`+`paint_sha` per verdict), the `roster-vN.json` shape the future manifest reads, and the
 re-roll/re-review lifecycle. Milestone 2 item 1 (manifest generator) still needs building against it.
 
+**Inpaint-repair pricing research (2026-07-12):** live-priced the crop-repair step (erase baked
+defects — handles, socket residue — from 4K skin paints) across the current Vertex
+gemini-3-pro-image path, 12 fal-hosted mask/inpaint models, and local LaMa. Verified Vertex cost
+is **~$0.136/repair at a 1MP crop** (higher than the ~$0.05-0.10 assumed range — two independent
+Google pricing pages cross-checked). Cheapest viable fal candidates: `z-image/turbo/inpaint`
+($0.01/MP), `qwen-image-edit/inpaint` ($0.03/MP). Recommendation: don't build a router yet at
+today's volume (~$0.61/batch worst case); a free local-LaMa pre-pass is worth adding once
+seed-mining volume (10-30 repairs/batch) materializes. Full table + bake-off spec:
+[`docs/design/2026-07-12-inpaint-pricing.md`](docs/design/2026-07-12-inpaint-pricing.md).
+
 ---
 ## PARKED for skeuo v2 (2026-07-11) — emissive / PBR, NOT v1 work
 
