@@ -83,8 +83,34 @@ the chain's 2nd attempt after gemini's borderline flag — not code-verified-onl
 Idempotency sha-skip guard (top of `main()`, unchanged) still gates every real run regardless of
 which model chain fires.
 
-**Not done here (flagged, not fixed — the detect_bbox() targeting bug this task was told to
-surface):** `detect_bbox()` mis-targets the wrong slot on AMBIGUOUS skins. Confirmed by arm5:
+**`detect_bbox()` targeting bug — FIXED, 2026-07-12 ($0, no regen):** re-investigated against the
+real function on git-recovered pre-erase pixels (verify-outputs-rule: don't trust the prior
+retelling, check the actual artifact). The precise root cause differs from this entry's original
+description above (kept verbatim below for the record) — it's not steam-porthole's `seek` groove
+wandering onto the real playpause *button*; erase12-log.json shows the confirmed live defect was
+on `vol` (steam-porthole's round knob, a duplicated play/pause **pictogram** wrong-icon defect
+baked into the knob's own socket — see `inpaintbake/arm5/build_arm5_crops.py`'s docstring for the
+git-diff-verified ground truth). `detect_bbox()`'s search window was already correctly scoped to
+`vol`'s own `device` bbox; the bug was that its 1-D long-axis-groove algorithm — designed for an
+elongated slider channel and built to force-extend a found run to the window's FULL cross-axis —
+collapsed the knob's compact 2-D icon defect into a 21×313px sliver (reproduced live:
+`(1136,2042,1157,2355)`, matches the logged `[1133,2051,1157,2346]`) instead of its true
+~314×313px extent. Both models "failed" on that sliver regardless of quality, exactly as
+diagnosed. **Fix:** `detect_bbox()` now gates on the device window's own aspect ratio
+(`GROOVE_ASPECT_MIN = 2.0`, comfortably separating this roster's real slider windows [3.87–24.0]
+from knob windows [1.61 flat]) — elongated windows keep the original, unchanged 1-D groove path;
+compact/near-square windows route to a new `_compact_blob_bbox()` doing real 2-D connected-
+component detection with a minimum-both-axes plausibility floor (`MIN_BLOB_FRAC`), never force-
+extending an axis. Verified live: re-run on the git-recovered pre-erase `vol` pixels now returns
+`(980,2042,1294,2355)` (314×313, visually confirmed via the real `erase-verify/` crop to bound the
+FULL play/pause pictogram defect); re-run on claymation's real, previously-successful `seek`
+thumb detection (`erase12-log.json` `status:"erased"`) is byte-identical to the pre-fix code
+(`(1705,1653,1846,1823)`, groove path untouched) — no regression. `erase12.py` only; scoped commit.
+
+<details><summary>Original diagnosis (2026-07-12, superseded by the re-investigation above)</summary>
+
+Not done here (flagged, not fixed — the detect_bbox() targeting bug this task was told to
+surface): `detect_bbox()` mis-targets the wrong slot on AMBIGUOUS skins. Confirmed by arm5:
 on steam-porthole, the crop `detect_bbox()` selected was actually a legitimate play/pause
 button (rewind|play/pause|ff row), not the seek slider thumb — gemini-2.5-flash correctly
 declined to erase it (regenerated the button in place, no damage) while gpt-image-2
@@ -95,6 +121,8 @@ to.** This gates erase quality more than model choice does and should be the nex
 from an unrelated round button sitting near the seek `device` bbox (verify the masked region
 plausibly contains an elongated slot before erasing it, not just "an anomaly exists inside the
 seek device window").
+
+</details>
 
 Files touched: `erase12.py`, `genskin.py` (scope-limited, per this task's brief — `extract12.py`/
 `build_player.py` are out of scope and were being actively worked by other concurrent sessions).

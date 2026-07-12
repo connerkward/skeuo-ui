@@ -90,6 +90,33 @@ COMPACT_CAP_FRAC = 0.55   # an anomaly wider than this fraction of the groove is
                           # be a compact baked PART (texture/lighting drift, not an object) —
                           # treated as "nothing compact found", not auto-erased
 
+# GROOVE_ASPECT_MIN / MIN_BLOB_FRAC: fix for the confirmed steam-porthole targeting bug (TODO.md
+# "detect_bbox() targeting bug" entry). Root cause, reproduced live against the real function on
+# the git-recovered pre-erase paint.png (sha 163f3beb1247): the ORIGINAL detect_bbox() always
+# collapsed the device window to a 1-D profile along a single "long axis" and then blindly
+# EXTENDED the result to the window's FULL cross-axis (by design — a real groove thumb usually
+# does fill the groove's own width, and a softened rim edge needs the extension). That's correct
+# for a genuinely elongated slider groove (this roster's real "seek" windows are all aspect >=
+# 3.87 — see the audit in the commit that added this comment) but WRONG for a compact, near-
+# square control like a knob's device rect (this roster's "vol" windows are all aspect 1.61):
+# collapsing a round knob's 2-D wrong-icon defect (a duplicated play/pause pictogram baked into
+# steam-porthole's vol socket, see inpaintbake/arm5/build_arm5_crops.py) to a 1-D profile and then
+# force-extending it to the FULL window height produced a 21x313px SLIVER
+# ((1136,2042,1157,2355) — confirmed by re-running detect_bbox() on the real recovered paint,
+# vs. the true ~311x313px defect) instead of the object's real 2-D extent. Both erase models then
+# "failed" on that garbage crop regardless of model quality (gemini regenerated the icon in
+# place; gpt-image-2 returned a solid black square over the sliver). GROOVE_ASPECT_MIN gates which
+# path runs: elongated windows (a real groove) keep the original validated 1-D long-axis path
+# unchanged; compact/near-square windows (a knob, or any control whose device rect isn't
+# elongated) now run `_compact_blob_bbox()` — a real 2-D connected-component search that reports
+# the anomalous blob's OWN measured bounding box on both axes, never force-extending either one.
+GROOVE_ASPECT_MIN = 2.0   # long/short device-window ratio required to trust the groove path.
+                          # Comfortably separates this roster's two shapes (slider windows 3.87-
+                          # 24.0, knob windows all 1.61) with margin on both sides.
+MIN_BLOB_FRAC = 0.15      # a compact-path blob whose extent on EITHER axis is under this fraction
+                          # of the window's own extent on that axis is too thin to be a real baked
+                          # part (rim seam / texture noise) — rejected, not auto-erased.
+
 # ERASE_MODEL_CHAIN: default two-model fallback chain for the model-edit escalation step,
 # REPLACING the old single Vertex gemini-3-pro-image-preview default (2026-07-12, user-chosen
 # per docs/experiments/2026-07-12-inpaint-bakeoff.md's arm5 — 5 genuine slider-groove skins,
@@ -176,15 +203,57 @@ def _long_axis_profile(win, vertical):
     return colstd, colmed
 
 
+def _compact_blob_bbox(win):
+    """2-D connected-component anomaly locator for a NON-elongated (knob/round) control window —
+    see the GROOVE_ASPECT_MIN comment for why this exists. Unlike the groove path below, this
+    measures the anomalous blob's TRUE bounding box on both axes directly from its pixel
+    footprint — no 1-D profile collapse, no forced full-cross-axis extension — so a compact 2-D
+    defect (a wrong-icon glyph baked into a round socket) is bounded by where it actually is.
+    Returns a (x0,y0,x1,y1) bbox LOCAL to `win`, or None if nothing compact/plausible was found."""
+    lum = win.max(2).astype(float)
+    h, w = lum.shape
+    k = 9
+    local_mean = ndimage.uniform_filter(lum, size=k)
+    local_sqmean = ndimage.uniform_filter(lum * lum, size=k)
+    local_std = np.sqrt(np.clip(local_sqmean - local_mean ** 2, 0, None))
+    base_std = np.percentile(local_std, 30)
+    base_med = np.percentile(lum, 30)
+    anomaly = (local_std > base_std * 1.6 + 3) | (lum > base_med + 35)
+    lbl, n = ndimage.label(anomaly)
+    if n == 0:
+        return None
+    sizes = ndimage.sum(anomaly, lbl, range(1, n + 1))
+    biggest = int(np.argmax(sizes)) + 1
+    ys, xs = np.where(lbl == biggest)
+    bx0, bx1 = int(xs.min()), int(xs.max()) + 1
+    by0, by1 = int(ys.min()), int(ys.max()) + 1
+    if (bx1 - bx0) / w < MIN_BLOB_FRAC or (by1 - by0) / h < MIN_BLOB_FRAC:
+        return None  # too thin on one axis to be a real compact part — noise, not a bake
+    return bx0, by0, bx1, by1
+
+
 def detect_bbox(paint_arr, dev_bbox, vertical=None):
     """Groove-shaped baked-part locator — see module docstring for why this replaces a naive
     bright-pixel/shrink test. Returns (x0,y0,x1,y1) PIXEL bbox spanning the full cross-axis
-    and the detected long-axis run, or None if nothing compact was found."""
+    and the detected long-axis run, or None if nothing compact was found.
+
+    Only runs the 1-D long-axis collapse on windows that are actually ELONGATED
+    (GROOVE_ASPECT_MIN) — a genuine slider/seek groove. A compact/near-square window (a knob's
+    device rect) routes to `_compact_blob_bbox()` instead, which never force-extends either axis.
+    See the GROOVE_ASPECT_MIN module comment for the confirmed steam-porthole failure this fixes."""
     H, W = paint_arr.shape[:2]
     x0, y0, x1, y1 = _device_window(dev_bbox, W, H)
     win = paint_arr[y0:y1, x0:x1]
     if win.size == 0:
         return None
+    w_span, h_span = x1 - x0, y1 - y0
+    aspect = max(w_span, h_span) / max(1, min(w_span, h_span))
+    if aspect < GROOVE_ASPECT_MIN:
+        blob = _compact_blob_bbox(win)
+        if blob is None:
+            return None
+        bx0, by0, bx1, by1 = blob
+        return (x0 + bx0, y0 + by0, x0 + bx1, y0 + by1)
     if vertical is None:
         vertical = (y1 - y0) > (x1 - x0) * 1.3
     colstd, colmed = _long_axis_profile(win, vertical)
