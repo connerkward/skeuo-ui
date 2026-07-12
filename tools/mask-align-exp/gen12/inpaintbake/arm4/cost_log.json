@@ -1,0 +1,65 @@
+[
+  {
+    "skin": "diablo-gothic",
+    "model": "flux-pro-erase",
+    "cost": 0.00419,
+    "seconds": 12.4,
+    "endpoint": "fal-ai/flux-pro/v1/erase"
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "flux-pro-erase",
+    "cost": 0.00419,
+    "seconds": 12.0,
+    "endpoint": "fal-ai/flux-pro/v1/erase"
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "flux-pro-erase",
+    "cost": 0.00419,
+    "seconds": 8.4,
+    "endpoint": "fal-ai/flux-pro/v1/erase"
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "object-removal",
+    "cost": 0.006,
+    "seconds": 69.6,
+    "endpoint": "fal-ai/object-removal/mask"
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "object-removal",
+    "cost": 0.006,
+    "seconds": 5.7,
+    "endpoint": "fal-ai/object-removal/mask"
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "object-removal",
+    "cost": 0.006,
+    "seconds": 5.6,
+    "endpoint": "fal-ai/object-removal/mask"
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "gemini25-flash-glow",
+    "cost": 0.039,
+    "seconds": 9.1,
+    "endpoint": "vertex:gemini-2.5-flash-image"
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "gemini25-flash-glow",
+    "cost": 0.039,
+    "seconds": 8.6,
+    "endpoint": "vertex:gemini-2.5-flash-image"
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "gemini25-flash-glow",
+    "cost": 0.039,
+    "seconds": 36.8,
+    "endpoint": "vertex:gemini-2.5-flash-image"
+  }
+]

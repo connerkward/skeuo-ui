@@ -1,0 +1,23 @@
+{
+  "diablo-gothic": {
+    "vertex": {"v": "PASS", "note": "Defect (glowing horned-skull baked thumb) fully removed; groove continues smoothly with the glowing Y-rune crack preserved. Best-in-class."},
+    "gemini25-flash": {"v": "FAIL", "note": "Thumb removed cleanly, no hallucinated object -- but erases the glowing rune-inlay crack entirely, replacing it with plain flat dark material. Loses a material feature vertex kept. (VLM-confirmed, my own crop agrees.)"},
+    "gemini31-flash": {"v": "FAIL", "note": "Horn shapes from the baked thumb are still largely present (fangs/horns visible), rune inlay also lost. Incomplete erasure."},
+    "finegrain": {"v": "FAIL", "note": "Barely erased -- horns nearly identical to BEFORE, just softened. Confirms dedicated erasers don't understand ornate carved material."},
+    "gpt-image-2": {"v": "FAIL", "note": "No horns/skull remain, but hallucinates a new diamond-facet cracked-stone pattern inconsistent with the frame's Y-rune motif and the smooth carved style elsewhere."}
+  },
+  "wc-goldshield": {
+    "vertex": {"v": "PASS", "note": "Bump fully removed, pointed groove end continues cleanly matching the chevron shape seen elsewhere on the frame."},
+    "gemini25-flash": {"v": "PASS", "note": "Matches vertex quality -- clean pointed groove, no hallucination, brass texture and lighting consistent."},
+    "gemini31-flash": {"v": "FAIL", "note": "Hallucinates a new spiral/scroll (volute) decorative motif filling the groove opening -- not present anywhere in the surrounding material."},
+    "finegrain": {"v": "FAIL", "note": "Leaves a large smooth 'C'-shaped claw/hook remnant -- thumb effectively still present as an altered object, not erased."},
+    "gpt-image-2": {"v": "FAIL (borderline)", "note": "No hallucinated object and shape is correct, but texture is slightly smudged/blurred versus the crisp brass grain right above the repair -- a real, if minor, material mismatch."}
+  },
+  "fallout-vault": {
+    "vertex": {"v": "PASS", "note": "Thumb fully removed; groove floor texture slightly softer/blurrier than surrounding rust but color-correct and coherent."},
+    "gemini25-flash": {"v": "PASS", "note": "Thumb removed cleanly. VLM initially flagged the continued inner slot line as 'hallucinated' -- overruled: that slot is a real pre-existing feature visible in BEFORE to the right of the thumb, not an invention. Texture slightly flatter than vertex but acceptable."},
+    "gemini31-flash": {"v": "PASS", "note": "Thumb removed, best texture match of all candidates per VLM -- rust/brushed-steel grain continues convincingly."},
+    "finegrain": {"v": "FAIL", "note": "Replaced the original thumb with a different, cleaner/smoother filler object that still fills the groove like a slider thumb -- did not achieve an empty groove."},
+    "gpt-image-2": {"v": "PASS", "note": "Thumb removed, rust/wear texture integrates very well, on par with or better than vertex per VLM. Same 'inner slot' false-positive overruled as with gemini25-flash."}
+  }
+}

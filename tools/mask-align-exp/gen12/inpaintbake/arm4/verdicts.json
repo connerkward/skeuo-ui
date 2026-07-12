@@ -1,0 +1,23 @@
+{
+  "diablo-gothic": {
+    "vertex": {"v": "PASS", "note": "REUSED baseline (arm-1/3). Horned-skull thumb fully removed, Y-rune glow preserved, clean carved channel. Confirmed by direct pixel crop here (skull-face plate entirely gone, only frame's own horn-tendril decoration remains)."},
+    "gemini31-flash": {"v": "FAIL", "note": "REUSED (arm-3). Horn shapes from the baked thumb still largely present."},
+    "gemini25-flash-glow": {"v": "FAIL", "note": "NEW. Thumb fully removed, but the glow-preserve instruction over-corrected: HALLUCINATED a new glowing rune-chain/filigree pattern running the ENTIRE length of the groove on both edges -- not present in BEFORE or anywhere else on the frame (the rest of the frame's grooves/borders are plain metal). Different failure mode than arm-3's non-glow gemini25-flash (which erased the glow entirely) but still a FAIL: net new invented ornamentation. VLM (google/gemini-2.5-pro) independently flagged this exact same issue."},
+    "flux-pro-erase": {"v": "FAIL", "note": "NEW. Dedicated no-prompt eraser barely touched the defect -- pixel crop shows the horned ram-skull face-plate (eye sockets, twin fangs, curved horn) nearly IDENTICAL to BEFORE, just marginally softened. VLM initially called this PASS (misread) -- OVERRULED after a tight deterministic crop comparison against BEFORE showed the skull-face essentially unchanged; confirms dedicated erasers don't understand ornate carved material as an object to remove."},
+    "object-removal": {"v": "FAIL", "note": "NEW. Same failure class as flux-pro-erase -- horn/fang remnant of the skull-face still clearly present, slightly distorted/smudged but not erased. VLM agreed FAIL."}
+  },
+  "wc-goldshield": {
+    "vertex": {"v": "PASS", "note": "REUSED baseline (arm-1/3). Clean pointed chevron groove end, brass texture matches surroundings. VLM flagged this as 'smudged/FAIL' -- OVERRULED: a 1600px pixel-level crop shows vertex and gemini25-flash-glow are visually indistinguishable in texture, both consistent with this skin's own painterly (non-photoreal) render style; the VLM was hypercritical against an idealized sharpness the source art never has."},
+    "gemini31-flash": {"v": "FAIL", "note": "REUSED (arm-3). Hallucinated a spiral/scroll motif filling the groove opening."},
+    "gemini25-flash-glow": {"v": "PASS", "note": "NEW. Thumb bump fully removed, clean pointed chevron groove end -- visually near-identical to vertex at full-res crop. VLM independently confirmed PASS. Matches arm-3's non-glow gemini25-flash result (also PASS here) -- the glow clause didn't hurt this skin (no glow feature present to over-correct)."},
+    "flux-pro-erase": {"v": "FAIL", "note": "NEW. Did not erase the thumb -- replaced it with a different rounded oval dome/rivet shape, still clearly an object sitting in the groove opening. VLM agreed FAIL."},
+    "object-removal": {"v": "FAIL", "note": "NEW. Left a smudged, blunted hook/blob remnant where the thumb was -- object not erased, groove tip not restored to a clean point. VLM agreed FAIL."}
+  },
+  "fallout-vault": {
+    "vertex": {"v": "PASS", "note": "REUSED baseline (arm-1/3). Pill-shaped thumb fully removed, clean flat groove. VLM flagged 'smudged/FAIL' -- OVERRULED: same softness arm-3's own human reviewer already noted on this skin ('slightly softer/blurrier than surrounding rust but color-correct and coherent') and still scored PASS; not a new defect."},
+    "gemini31-flash": {"v": "PASS", "note": "REUSED (arm-3). Best texture match of all candidates per arm-3's VLM."},
+    "gemini25-flash-glow": {"v": "PASS", "note": "NEW. Pill-shaped bump fully removed, clean continuous groove, rust/steel texture consistent -- near-identical to vertex. VLM independently confirmed PASS. This is the SIMPLEST material of the 3 skins and both new dedicated erasers still failed it (see below) -- confirms the failure is about lacking a world-model, not material complexity."},
+    "flux-pro-erase": {"v": "FAIL", "note": "NEW. Pill-shaped bump essentially UNCHANGED from BEFORE -- 3D form, highlights and shadows all intact. Did not erase at all, even on the simplest/flattest material tested. VLM agreed FAIL."},
+    "object-removal": {"v": "FAIL", "note": "NEW. Pill-shaped bump also essentially unchanged, plus a new scratch/gash artifact added near it. Did not erase, even on the simplest material tested. VLM agreed FAIL."}
+  }
+}

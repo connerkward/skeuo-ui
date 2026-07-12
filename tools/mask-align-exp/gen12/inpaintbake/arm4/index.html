@@ -1,0 +1,361 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>inpaint bake-off arm 4 -- cheap erasers vs Vertex baseline</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  background:#0a0a0d; color:#e4e4e8; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  margin:0; padding:20px; line-height:1.5;
+}
+h1 { font-size:1.4rem; margin:0 0 6px; }
+h2 { font-size:1.1rem; margin:32px 0 12px; border-bottom:1px solid #2a2a32; padding-bottom:6px; }
+.sub { color:#9a9aa8; font-size:.88rem; margin-bottom:4px; }
+.cost-banner {
+  background:#14141a; border:1px solid #2a2a32; border-radius:8px; padding:12px 16px;
+  margin:16px 0; font-size:.85rem; color:#c8c8d4;
+}
+.cost-banner b { color:#e4e4e8; }
+.cost-table { width:100%; border-collapse:collapse; margin:10px 0 24px; font-size:.82rem; }
+.cost-table th, .cost-table td { text-align:left; padding:6px 10px; border-bottom:1px solid #22222a; }
+.cost-table th { color:#9a9aa8; font-weight:600; }
+.skin-block { margin-bottom:40px; }
+.skin-title { font-size:1.05rem; font-weight:600; margin-bottom:4px; }
+.skin-material { color:#9a9aa8; font-size:.82rem; margin-bottom:14px; font-style:italic; }
+.row {
+  display:flex; flex-wrap:wrap; gap:14px;
+}
+.cell {
+  flex:1 1 220px; max-width:280px; background:#131318; border:1px solid #24242c; border-radius:10px;
+  padding:10px; display:flex; flex-direction:column; gap:6px;
+}
+.cell.before { border-color:#4a2a2a; background:#181212; }
+.cell.new { border-color:#2d5f7f; }
+.cell img { width:100%; border-radius:6px; display:block; background:#000; }
+.cell-label { font-weight:600; font-size:.88rem; }
+.new-badge { display:inline-block; font-size:.62rem; font-weight:700; color:#6fb8e8; border:1px solid #2d5f7f; border-radius:3px; padding:1px 5px; margin-left:6px; vertical-align:middle; }
+.cell-endpoint { font-size:.72rem; color:#8a8a96; word-break:break-word; }
+.cell-cost { font-size:.78rem; color:#c8b060; }
+.badge {
+  display:inline-block; padding:2px 8px; border-radius:4px; font-size:.72rem; font-weight:700;
+  color:#fff; width:fit-content;
+}
+.note { font-size:.76rem; color:#b8b8c4; }
+.img-cap { font-size:.68rem; color:#7a7a86; text-align:center; }
+a.imglink { text-decoration:none; }
+.verdict-section {
+  background:#101014; border:2px solid #3a3a44; border-radius:12px; padding:20px; margin-top:40px;
+}
+.verdict-section h2 { border:none; margin-top:0; }
+.verdict-table { width:100%; border-collapse:collapse; margin:12px 0; font-size:.85rem; }
+.verdict-table th, .verdict-table td { text-align:left; padding:8px 10px; border-bottom:1px solid #24242c; }
+.verdict-table th { color:#9a9aa8; }
+.rec { background:#14241a; border:1px solid #2d5f3f; border-radius:8px; padding:14px; margin-top:16px; }
+.adjudication { background:#1a1408; border:1px solid #5f4d2d; border-radius:8px; padding:14px; margin-top:16px; font-size:.85rem; }
+</style>
+<body>
+  <h1>Inpaint bake-off -- ARM 4: 3 CHEAPER erase options vs arm-3's results</h1>
+  <div class="sub">Goal: settle whether any cheap model is viable for the baked-slider-thumb erase. Tests 2 dedicated no-prompt erasers (flux-pro-erase $0.004/MP, object-removal $0.006/img -- both 10-30x cheaper than Vertex) plus a retry of gemini25-flash with an explicit glow-preserve prompt clause (arm-3's closest cheap candidate, which failed diablo-gothic only by erasing the rune-glow).</div>
+  <div class="sub">vertex and gemini31-flash columns are REUSED from arm 1 / arm 3 respectively -- zero fresh spend on those two. Only flux-pro-erase, object-removal, and gemini25-flash-glow are new generations this arm.</div>
+
+  <div class="cost-banner">
+    <b>Models used + real per-call cost:</b>
+    <table class="cost-table">
+      <tr><th>Model</th><th>Endpoint</th><th>Cost</th></tr>
+      <tr><td>Vertex gemini-3-pro-image (incumbent baseline)</td><td>genskin.py:edit_vertex() -- Google Vertex, direct</td><td>$0.241/repair (4K tier) -- REUSED from arm 1, no fresh spend here</td></tr><tr><td>Gemini 3.1 Flash Image Preview (arm-3's best cheap candidate)</td><td>fal-ai/gemini-3.1-flash-image-preview/edit</td><td>$0.080/call -- REUSED from arm 3, no fresh spend here</td></tr><tr><td>Flux Pro Erase (dedicated no-prompt eraser, NEW this arm)</td><td>fal-ai/flux-pro/v1/erase</td><td>$0.004/MP -> $0.00419/call @ 1024x1024</td></tr><tr><td>Object Removal (dedicated no-prompt eraser, NEW this arm)</td><td>fal-ai/object-removal/mask</td><td>$0.006/call flat</td></tr><tr><td>Gemini 2.5 Flash Image + glow-preserve clause (NEW this arm)</td><td>vertex:gemini-2.5-flash-image (direct, not fal-wrapped)</td><td>$0.039/call Vertex-direct (vs fal's $0.0398/call for the same model -- Vertex marginally cheaper, used here)</td></tr>
+    </table>
+    <b>Total NEW generation spend this arm:</b> $0.1476 (9 calls: 3 skins x 3 new models; vertex + gemini31-flash reused at $0 fresh spend) &nbsp;|&nbsp;
+    <b>SOTA vision review spend</b> (google/gemini-2.5-pro via openrouter/router/vision, 3 calls, one per skin, per sota-eye-review-rule since this arm ran on Sonnet not Opus/Fable): $0.0676 &nbsp;|&nbsp;
+    <b>Grand total: $0.2151</b> (cap was $0.50)
+  </div>
+
+  
+    <div class="skin-block">
+      <div class="skin-title">diablo-gothic</div>
+      <div class="skin-material">material: dark carved obsidian/gothic metal channel with glowing rune inlay</div>
+      <div class="row">
+        <div class="cell before">
+      <div class="cell-label">BEFORE (baked defect)</div>
+      <a class="imglink" href="web/composite/diablo-gothic__BEFORE-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__BEFORE-seam-thumb.jpg" loading="lazy" alt="diablo-gothic before repair -- baked defect, seam-zoom crop">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic before repair -- full skin context">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+    </div><div class="cell">
+      <div class="cell-label">Vertex gemini-3-pro-image (incumbent baseline)</div>
+      <div class="cell-endpoint">genskin.py:edit_vertex() -- Google Vertex, direct</div>
+      <div class="cell-cost">$0.241/repair (4K tier) -- REUSED from arm 1, no fresh spend here</div>
+      <a class="imglink" href="web/composite/diablo-gothic__vertex-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__vertex-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x vertex seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__vertex-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__vertex-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x vertex full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">REUSED baseline (arm-1/3). Horned-skull thumb fully removed, Y-rune glow preserved, clean carved channel. Confirmed by direct pixel crop here (skull-face plate entirely gone, only frame's own horn-tendril decoration remains).</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 3.1 Flash Image Preview (arm-3's best cheap candidate)</div>
+      <div class="cell-endpoint">fal-ai/gemini-3.1-flash-image-preview/edit</div>
+      <div class="cell-cost">$0.080/call -- REUSED from arm 3, no fresh spend here</div>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini31-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini31-flash-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini31-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini31-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini31-flash-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini31-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">REUSED (arm-3). Horn shapes from the baked thumb still largely present.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Flux Pro Erase (dedicated no-prompt eraser, NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">fal-ai/flux-pro/v1/erase</div>
+      <div class="cell-cost">$0.004/MP -> $0.00419/call @ 1024x1024</div>
+      <a class="imglink" href="web/composite/diablo-gothic__flux-pro-erase-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__flux-pro-erase-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x flux-pro-erase seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__flux-pro-erase-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__flux-pro-erase-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x flux-pro-erase full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">NEW. Dedicated no-prompt eraser barely touched the defect -- pixel crop shows the horned ram-skull face-plate (eye sockets, twin fangs, curved horn) nearly IDENTICAL to BEFORE, just marginally softened. VLM initially called this PASS (misread) -- OVERRULED after a tight deterministic crop comparison against BEFORE showed the skull-face essentially unchanged; confirms dedicated erasers don't understand ornate carved material as an object to remove.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Object Removal (dedicated no-prompt eraser, NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">fal-ai/object-removal/mask</div>
+      <div class="cell-cost">$0.006/call flat</div>
+      <a class="imglink" href="web/composite/diablo-gothic__object-removal-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__object-removal-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x object-removal seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__object-removal-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__object-removal-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x object-removal full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">NEW. Same failure class as flux-pro-erase -- horn/fang remnant of the skull-face still clearly present, slightly distorted/smudged but not erased. VLM agreed FAIL.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Gemini 2.5 Flash Image + glow-preserve clause (NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">vertex:gemini-2.5-flash-image (direct, not fal-wrapped)</div>
+      <div class="cell-cost">$0.039/call Vertex-direct (vs fal's $0.0398/call for the same model -- Vertex marginally cheaper, used here)</div>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini25-flash-glow-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini25-flash-glow-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini25-flash-glow seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini25-flash-glow-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini25-flash-glow-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini25-flash-glow full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">NEW. Thumb fully removed, but the glow-preserve instruction over-corrected: HALLUCINATED a new glowing rune-chain/filigree pattern running the ENTIRE length of the groove on both edges -- not present in BEFORE or anywhere else on the frame (the rest of the frame's grooves/borders are plain metal). Different failure mode than arm-3's non-glow gemini25-flash (which erased the glow entirely) but still a FAIL: net new invented ornamentation. VLM (google/gemini-2.5-pro) independently flagged this exact same issue.</div>
+    </div>
+      </div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">wc-goldshield</div>
+      <div class="skin-material">material: ornate gold-shield emblem metal groove, warm brass tones</div>
+      <div class="row">
+        <div class="cell before">
+      <div class="cell-label">BEFORE (baked defect)</div>
+      <a class="imglink" href="web/composite/wc-goldshield__BEFORE-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__BEFORE-seam-thumb.jpg" loading="lazy" alt="wc-goldshield before repair -- baked defect, seam-zoom crop">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield before repair -- full skin context">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+    </div><div class="cell">
+      <div class="cell-label">Vertex gemini-3-pro-image (incumbent baseline)</div>
+      <div class="cell-endpoint">genskin.py:edit_vertex() -- Google Vertex, direct</div>
+      <div class="cell-cost">$0.241/repair (4K tier) -- REUSED from arm 1, no fresh spend here</div>
+      <a class="imglink" href="web/composite/wc-goldshield__vertex-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__vertex-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x vertex seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__vertex-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__vertex-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x vertex full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">REUSED baseline (arm-1/3). Clean pointed chevron groove end, brass texture matches surroundings. VLM flagged this as 'smudged/FAIL' -- OVERRULED: a 1600px pixel-level crop shows vertex and gemini25-flash-glow are visually indistinguishable in texture, both consistent with this skin's own painterly (non-photoreal) render style; the VLM was hypercritical against an idealized sharpness the source art never has.</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 3.1 Flash Image Preview (arm-3's best cheap candidate)</div>
+      <div class="cell-endpoint">fal-ai/gemini-3.1-flash-image-preview/edit</div>
+      <div class="cell-cost">$0.080/call -- REUSED from arm 3, no fresh spend here</div>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini31-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini31-flash-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini31-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini31-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini31-flash-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini31-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">REUSED (arm-3). Hallucinated a spiral/scroll motif filling the groove opening.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Flux Pro Erase (dedicated no-prompt eraser, NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">fal-ai/flux-pro/v1/erase</div>
+      <div class="cell-cost">$0.004/MP -> $0.00419/call @ 1024x1024</div>
+      <a class="imglink" href="web/composite/wc-goldshield__flux-pro-erase-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__flux-pro-erase-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x flux-pro-erase seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__flux-pro-erase-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__flux-pro-erase-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x flux-pro-erase full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">NEW. Did not erase the thumb -- replaced it with a different rounded oval dome/rivet shape, still clearly an object sitting in the groove opening. VLM agreed FAIL.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Object Removal (dedicated no-prompt eraser, NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">fal-ai/object-removal/mask</div>
+      <div class="cell-cost">$0.006/call flat</div>
+      <a class="imglink" href="web/composite/wc-goldshield__object-removal-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__object-removal-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x object-removal seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__object-removal-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__object-removal-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x object-removal full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">NEW. Left a smudged, blunted hook/blob remnant where the thumb was -- object not erased, groove tip not restored to a clean point. VLM agreed FAIL.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Gemini 2.5 Flash Image + glow-preserve clause (NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">vertex:gemini-2.5-flash-image (direct, not fal-wrapped)</div>
+      <div class="cell-cost">$0.039/call Vertex-direct (vs fal's $0.0398/call for the same model -- Vertex marginally cheaper, used here)</div>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini25-flash-glow-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini25-flash-glow-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini25-flash-glow seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini25-flash-glow-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini25-flash-glow-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini25-flash-glow full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">NEW. Thumb bump fully removed, clean pointed chevron groove end -- visually near-identical to vertex at full-res crop. VLM independently confirmed PASS. Matches arm-3's non-glow gemini25-flash result (also PASS here) -- the glow clause didn't hurt this skin (no glow feature present to over-correct).</div>
+    </div>
+      </div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">fallout-vault</div>
+      <div class="skin-material">material: brushed steel vault-door control channel with yellow hazard trim</div>
+      <div class="row">
+        <div class="cell before">
+      <div class="cell-label">BEFORE (baked defect)</div>
+      <a class="imglink" href="web/composite/fallout-vault__BEFORE-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__BEFORE-seam-thumb.jpg" loading="lazy" alt="fallout-vault before repair -- baked defect, seam-zoom crop">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault before repair -- full skin context">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+    </div><div class="cell">
+      <div class="cell-label">Vertex gemini-3-pro-image (incumbent baseline)</div>
+      <div class="cell-endpoint">genskin.py:edit_vertex() -- Google Vertex, direct</div>
+      <div class="cell-cost">$0.241/repair (4K tier) -- REUSED from arm 1, no fresh spend here</div>
+      <a class="imglink" href="web/composite/fallout-vault__vertex-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__vertex-seam-thumb.jpg" loading="lazy" alt="fallout-vault x vertex seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__vertex-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__vertex-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x vertex full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">REUSED baseline (arm-1/3). Pill-shaped thumb fully removed, clean flat groove. VLM flagged 'smudged/FAIL' -- OVERRULED: same softness arm-3's own human reviewer already noted on this skin ('slightly softer/blurrier than surrounding rust but color-correct and coherent') and still scored PASS; not a new defect.</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 3.1 Flash Image Preview (arm-3's best cheap candidate)</div>
+      <div class="cell-endpoint">fal-ai/gemini-3.1-flash-image-preview/edit</div>
+      <div class="cell-cost">$0.080/call -- REUSED from arm 3, no fresh spend here</div>
+      <a class="imglink" href="web/composite/fallout-vault__gemini31-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini31-flash-seam-thumb.jpg" loading="lazy" alt="fallout-vault x gemini31-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__gemini31-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini31-flash-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x gemini31-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">REUSED (arm-3). Best texture match of all candidates per arm-3's VLM.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Flux Pro Erase (dedicated no-prompt eraser, NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">fal-ai/flux-pro/v1/erase</div>
+      <div class="cell-cost">$0.004/MP -> $0.00419/call @ 1024x1024</div>
+      <a class="imglink" href="web/composite/fallout-vault__flux-pro-erase-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__flux-pro-erase-seam-thumb.jpg" loading="lazy" alt="fallout-vault x flux-pro-erase seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__flux-pro-erase-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__flux-pro-erase-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x flux-pro-erase full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">NEW. Pill-shaped bump essentially UNCHANGED from BEFORE -- 3D form, highlights and shadows all intact. Did not erase at all, even on the simplest/flattest material tested. VLM agreed FAIL.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Object Removal (dedicated no-prompt eraser, NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">fal-ai/object-removal/mask</div>
+      <div class="cell-cost">$0.006/call flat</div>
+      <a class="imglink" href="web/composite/fallout-vault__object-removal-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__object-removal-seam-thumb.jpg" loading="lazy" alt="fallout-vault x object-removal seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__object-removal-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__object-removal-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x object-removal full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">NEW. Pill-shaped bump also essentially unchanged, plus a new scratch/gash artifact added near it. Did not erase, even on the simplest material tested. VLM agreed FAIL.</div>
+    </div><div class="cell new">
+      <div class="cell-label">Gemini 2.5 Flash Image + glow-preserve clause (NEW this arm)<span class="new-badge">NEW</span></div>
+      <div class="cell-endpoint">vertex:gemini-2.5-flash-image (direct, not fal-wrapped)</div>
+      <div class="cell-cost">$0.039/call Vertex-direct (vs fal's $0.0398/call for the same model -- Vertex marginally cheaper, used here)</div>
+      <a class="imglink" href="web/composite/fallout-vault__gemini25-flash-glow-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini25-flash-glow-seam-thumb.jpg" loading="lazy" alt="fallout-vault x gemini25-flash-glow seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__gemini25-flash-glow-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini25-flash-glow-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x gemini25-flash-glow full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">NEW. Pill-shaped bump fully removed, clean continuous groove, rust/steel texture consistent -- near-identical to vertex. VLM independently confirmed PASS. This is the SIMPLEST material of the 3 skins and both new dedicated erasers still failed it (see below) -- confirms the failure is about lacking a world-model, not material complexity.</div>
+    </div>
+      </div>
+    </div>
+
+  <div class="verdict-section">
+    <h2>CONCLUSION / VERDICT</h2>
+    <table class="verdict-table">
+      <tr><th>Model</th><th>Score (of 3 skins)</th><th>Cost</th></tr>
+      <tr><td>Vertex gemini-3-pro-image (incumbent baseline)</td><td>3/3 PASS</td><td>$0.241/repair (4K tier) -- REUSED from arm 1, no fresh spend here</td></tr><tr><td>Gemini 3.1 Flash Image Preview (arm-3's best cheap candidate)</td><td>1/3 PASS</td><td>$0.080/call -- REUSED from arm 3, no fresh spend here</td></tr><tr><td>Flux Pro Erase (dedicated no-prompt eraser, NEW this arm)</td><td>0/3 PASS</td><td>$0.004/MP -> $0.00419/call @ 1024x1024</td></tr><tr><td>Object Removal (dedicated no-prompt eraser, NEW this arm)</td><td>0/3 PASS</td><td>$0.006/call flat</td></tr><tr><td>Gemini 2.5 Flash Image + glow-preserve clause (NEW this arm)</td><td>2/3 PASS</td><td>$0.039/call Vertex-direct (vs fal's $0.0398/call for the same model -- Vertex marginally cheaper, used here)</td></tr>
+    </table>
+
+    <div class="adjudication">
+      <b>VLM adjudication note (verify-outputs-rule: VLM is a witness, not a judge):</b> the google/gemini-2.5-pro SOTA cross-check was run per sota-eye-review-rule (this arm ran on Sonnet). It agreed with the human/pixel read on 10 of 15 cells. It was OVERRULED on 3 cells after a deterministic tight-crop pixel comparison directly contradicted it: (1) diablo-gothic vertex -- VLM said "noticeable smooth bump remains, FAIL"; a tight crop shows the skull-face plate is completely gone, only the Y-rune and the frame's own separate horn-tendril decoration remain -- PASS. (2) diablo-gothic flux-pro-erase -- VLM said "completely and cleanly removed, PASS"; a tight crop shows the horned ram-skull face (eye sockets, twin fangs, curved horn) nearly PIXEL-IDENTICAL to BEFORE -- FAIL. (3+4) wc-goldshield and fallout-vault vertex -- VLM called both "smudged, FAIL"; a 1600px crop shows vertex and gemini25-flash-glow are visually indistinguishable in texture, and arm-3's own human reviewer already noted this same softness on fallout-vault while still scoring it PASS -- not a new defect, OVERRULED. The VLM's diablo-gothic vertex/flux-pro-erase read was flatly backwards; this is a reminder the VLM is unreliable for fine object-presence judgments and must always be checked against pixels before acting on its verdict.
+    </div>
+
+    <p><b>Vertex gemini-3-pro-image: 3/3 PASS</b> (unchanged from arm 1/3 -- reused, no fresh spend). Remains the quality ceiling.</p>
+    <p><b>gemini25-flash-glow (NEW, $0.039/call, ~6x cheaper than Vertex): 2/3 PASS.</b> Clean, vertex-matching results on wc-goldshield and fallout-vault. On diablo-gothic, the explicit "preserve any glowing rune/inlay" instruction OVER-corrected: instead of losing the glow (arm-3's non-glow failure mode), it HALLUCINATED an entirely new glowing rune-chain/filigree pattern running the full length of the groove -- ornamentation that exists nowhere else on the frame. <b>Net result: still 2/3, same score as arm-3's non-glow gemini25-flash, just a different failure mode.</b> The glow-preserve clause did not fix the underlying problem -- it swapped "under-preserve" for "over-invent." A more targeted instruction (something closer to "continue the EXISTING glow crack exactly as-is, do not add new glowing elements") would need its own retry to test whether a further-refined prompt can actually reach 3/3; this arm did not find that prompt.</p>
+    <p><b>flux-pro-erase (NEW, dedicated no-prompt eraser, $0.004/MP, ~57x cheaper than Vertex): 0/3 PASS.</b> Failed on ALL THREE skins, including fallout-vault -- the SIMPLEST material tested (plain rusted steel, no carving, no ornamentation). The pill-shaped thumb bump on fallout-vault came back essentially pixel-unchanged, 3D form and shadows intact. This is decisive: the failure is not about ornate-material complexity, it's that a no-prompt eraser with no "what is this object" understanding simply doesn't register a painted/rendered raised control as an erasable object at all, regardless of material.</p>
+    <p><b>object-removal (NEW, dedicated no-prompt eraser, $0.006/call, ~40x cheaper than Vertex): 0/3 PASS.</b> Same story -- failed on all 3 skins including fallout-vault, often leaving the bump plus a new scratch/smudge artifact. Confirms the same conclusion as flux-pro-erase: dedicated no-prompt erasers are not viable for this task at any material complexity tested here.</p>
+
+    <div class="rec">
+      <b>Routing recommendation for erase12.py:</b>
+      <br><br>
+      (a) <b>Neither cheap dedicated eraser (flux-pro-erase, object-removal) is viable as a cost tier for ANY material complexity</b> tested, including the flattest/simplest skin. Both scored 0/3, failing to even recognize the baked thumb as an object to remove on plain rusted steel. Do not route any erase to either model.
+      <br><br>
+      (b) <b>gemini25-flash-glow did NOT reach 3/3</b> and does not yet displace Vertex as the default. It ties arm-3's non-glow gemini25-flash at 2/3 -- the glow-preserve clause traded one diablo-gothic failure mode (erasing the glow) for another (inventing new glow ornamentation), netting no improvement. It remains a candidate worth a further prompt-refinement retry specifically targeting "continue the glow crack exactly, do not add new glowing elements elsewhere" -- untested here.
+      <br><br>
+      <b>Overall: this arm found no cheap model that fully matches Vertex.</b> Vertex gemini-3-pro remains the safe default for erase12.py. gemini25-flash(-glow) remains a cheap first-pass candidate (2/3 across two independent tries) worth one more targeted prompt iteration before any routing change; the two no-prompt dedicated erasers are ruled out entirely, at any cost tier.
+    </div>
+  </div>
+</body>

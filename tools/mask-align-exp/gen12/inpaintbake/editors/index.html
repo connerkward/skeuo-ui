@@ -1,0 +1,349 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>inpaint bake-off arm 3 -- general editors vs Vertex baseline</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  background:#0a0a0d; color:#e4e4e8; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  margin:0; padding:20px; line-height:1.5;
+}
+h1 { font-size:1.4rem; margin:0 0 6px; }
+h2 { font-size:1.1rem; margin:32px 0 12px; border-bottom:1px solid #2a2a32; padding-bottom:6px; }
+.sub { color:#9a9aa8; font-size:.88rem; margin-bottom:4px; }
+.cost-banner {
+  background:#14141a; border:1px solid #2a2a32; border-radius:8px; padding:12px 16px;
+  margin:16px 0; font-size:.85rem; color:#c8c8d4;
+}
+.cost-banner b { color:#e4e4e8; }
+.cost-table { width:100%; border-collapse:collapse; margin:10px 0 24px; font-size:.82rem; }
+.cost-table th, .cost-table td { text-align:left; padding:6px 10px; border-bottom:1px solid #22222a; }
+.cost-table th { color:#9a9aa8; font-weight:600; }
+.skin-block { margin-bottom:40px; }
+.skin-title { font-size:1.05rem; font-weight:600; margin-bottom:4px; }
+.skin-material { color:#9a9aa8; font-size:.82rem; margin-bottom:14px; font-style:italic; }
+.row {
+  display:flex; flex-wrap:wrap; gap:14px;
+}
+.cell {
+  flex:1 1 220px; max-width:280px; background:#131318; border:1px solid #24242c; border-radius:10px;
+  padding:10px; display:flex; flex-direction:column; gap:6px;
+}
+.cell.before { border-color:#4a2a2a; background:#181212; }
+.cell img { width:100%; border-radius:6px; display:block; background:#000; }
+.cell-label { font-weight:600; font-size:.88rem; }
+.cell-endpoint { font-size:.72rem; color:#8a8a96; word-break:break-word; }
+.cell-cost { font-size:.78rem; color:#c8b060; }
+.badge {
+  display:inline-block; padding:2px 8px; border-radius:4px; font-size:.72rem; font-weight:700;
+  color:#fff; width:fit-content;
+}
+.note { font-size:.76rem; color:#b8b8c4; }
+.img-cap { font-size:.68rem; color:#7a7a86; text-align:center; }
+a.imglink { text-decoration:none; }
+.verdict-section {
+  background:#101014; border:2px solid #3a3a44; border-radius:12px; padding:20px; margin-top:40px;
+}
+.verdict-section h2 { border:none; margin-top:0; }
+.verdict-table { width:100%; border-collapse:collapse; margin:12px 0; font-size:.85rem; }
+.verdict-table th, .verdict-table td { text-align:left; padding:8px 10px; border-bottom:1px solid #24242c; }
+.verdict-table th { color:#9a9aa8; }
+.rec { background:#14241a; border:1px solid #2d5f3f; border-radius:8px; padding:14px; margin-top:16px; }
+</style>
+<body>
+  <h1>Inpaint bake-off -- ARM 3: general image-editing models vs Vertex gemini-3-pro baseline</h1>
+  <div class="sub">Goal: find a model CHEAPER than Vertex that matches its quality erasing baked slider thumbs on ORNATE (carved/rune/gothic) skins, where dedicated erasers (LaMa, Bria, and here Finegrain) fail to understand the material.</div>
+  <div class="sub">All edits sent the TIGHT crop_box from arm 1/2's crops_meta.json (not whole-slot) for apples-to-apples comparison. Vertex column is REUSED from arm 1's results -- zero fresh spend.</div>
+
+  <div class="cost-banner">
+    <b>Models used + real per-call cost:</b>
+    <table class="cost-table">
+      <tr><th>Model</th><th>Endpoint</th><th>Cost</th></tr>
+      <tr><td>Vertex gemini-3-pro-image (incumbent baseline)</td><td>genskin.py:edit_vertex() -- Google Vertex, direct</td><td>$0.241/repair (4K output tier) -- REUSED from arm 1, no fresh spend here</td></tr><tr><td>Gemini 2.5 Flash Image (“Nano Banana”)</td><td>fal-ai/gemini-25-flash-image/edit</td><td>$0.040/call (fal listed price, flat per image)</td></tr><tr><td>Gemini 3.1 Flash Image Preview (“Nano Banana 2”)</td><td>fal-ai/gemini-3.1-flash-image-preview/edit</td><td>$0.080/call (fal listed price, flat per image)</td></tr><tr><td>Finegrain Eraser (dedicated eraser, mask-based, premium mode)</td><td>fal-ai/finegrain-eraser/mask</td><td>$0.045/call (fal listed price, unit=images)</td></tr><tr><td>GPT Image 2 (OpenAI, via fal)</td><td>openai/gpt-image-2/edit</td><td>$0.0612/call REAL BILLED cost (x-fal-billable-units header x $1/unit list price) -- NOT the ambiguous $1/“unit” fal shows; actual measured across 3 calls: $0.0613, $0.0612, $0.0612</td></tr>
+    </table>
+    <b>Total generation spend:</b> $0.6787 (9 edit calls across 3 models x 3 skins, Vertex reused at $0) &nbsp;|&nbsp;
+    <b>SOTA vision review spend</b> (google/gemini-2.5-pro via openrouter/router/vision, 3 calls, one per skin, per sota-eye-review-rule since this arm ran on Sonnet not Opus/Fable): $0.0970 &nbsp;|&nbsp;
+    <b>Grand total: $0.7757</b> (cap was $1.00)
+  </div>
+
+  
+    <div class="skin-block">
+      <div class="skin-title">diablo-gothic</div>
+      <div class="skin-material">material: dark carved obsidian/gothic metal channel with glowing rune inlay</div>
+      <div class="row">
+        <div class="cell before">
+      <div class="cell-label">BEFORE (baked defect)</div>
+      <a class="imglink" href="web/composite/diablo-gothic__BEFORE-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__BEFORE-seam-thumb.jpg" loading="lazy" alt="diablo-gothic before repair -- baked defect, seam-zoom crop">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic before repair -- full skin context">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+    </div><div class="cell">
+      <div class="cell-label">Vertex gemini-3-pro-image (incumbent baseline)</div>
+      <div class="cell-endpoint">genskin.py:edit_vertex() -- Google Vertex, direct</div>
+      <div class="cell-cost">$0.241/repair (4K output tier) -- REUSED from arm 1, no fresh spend here</div>
+      <a class="imglink" href="web/composite/diablo-gothic__vertex-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__vertex-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x vertex seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__vertex-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__vertex-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x vertex full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">Defect (glowing horned-skull baked thumb) fully removed; groove continues smoothly with the glowing Y-rune crack preserved. Best-in-class.</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">fal-ai/gemini-25-flash-image/edit</div>
+      <div class="cell-cost">$0.040/call (fal listed price, flat per image)</div>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini25-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini25-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">Thumb removed cleanly, no hallucinated object -- but erases the glowing rune-inlay crack entirely, replacing it with plain flat dark material. Loses a material feature vertex kept. (VLM-confirmed, my own crop agrees.)</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 3.1 Flash Image Preview (“Nano Banana 2”)</div>
+      <div class="cell-endpoint">fal-ai/gemini-3.1-flash-image-preview/edit</div>
+      <div class="cell-cost">$0.080/call (fal listed price, flat per image)</div>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini31-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini31-flash-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini31-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__gemini31-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gemini31-flash-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini31-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">Horn shapes from the baked thumb are still largely present (fangs/horns visible), rune inlay also lost. Incomplete erasure.</div>
+    </div><div class="cell">
+      <div class="cell-label">Finegrain Eraser (dedicated eraser, mask-based, premium mode)</div>
+      <div class="cell-endpoint">fal-ai/finegrain-eraser/mask</div>
+      <div class="cell-cost">$0.045/call (fal listed price, unit=images)</div>
+      <a class="imglink" href="web/composite/diablo-gothic__finegrain-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__finegrain-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x finegrain seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__finegrain-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__finegrain-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x finegrain full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">Barely erased -- horns nearly identical to BEFORE, just softened. Confirms dedicated erasers don't understand ornate carved material.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">openai/gpt-image-2/edit</div>
+      <div class="cell-cost">$0.0612/call REAL BILLED cost (x-fal-billable-units header x $1/unit list price) -- NOT the ambiguous $1/“unit” fal shows; actual measured across 3 calls: $0.0613, $0.0612, $0.0612</div>
+      <a class="imglink" href="web/composite/diablo-gothic__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x gpt-image-2 seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/diablo-gothic__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/diablo-gothic__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x gpt-image-2 full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">No horns/skull remain, but hallucinates a new diamond-facet cracked-stone pattern inconsistent with the frame's Y-rune motif and the smooth carved style elsewhere.</div>
+    </div>
+      </div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">wc-goldshield</div>
+      <div class="skin-material">material: ornate gold-shield emblem metal groove, warm brass tones</div>
+      <div class="row">
+        <div class="cell before">
+      <div class="cell-label">BEFORE (baked defect)</div>
+      <a class="imglink" href="web/composite/wc-goldshield__BEFORE-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__BEFORE-seam-thumb.jpg" loading="lazy" alt="wc-goldshield before repair -- baked defect, seam-zoom crop">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield before repair -- full skin context">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+    </div><div class="cell">
+      <div class="cell-label">Vertex gemini-3-pro-image (incumbent baseline)</div>
+      <div class="cell-endpoint">genskin.py:edit_vertex() -- Google Vertex, direct</div>
+      <div class="cell-cost">$0.241/repair (4K output tier) -- REUSED from arm 1, no fresh spend here</div>
+      <a class="imglink" href="web/composite/wc-goldshield__vertex-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__vertex-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x vertex seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__vertex-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__vertex-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x vertex full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">Bump fully removed, pointed groove end continues cleanly matching the chevron shape seen elsewhere on the frame.</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">fal-ai/gemini-25-flash-image/edit</div>
+      <div class="cell-cost">$0.040/call (fal listed price, flat per image)</div>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini25-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini25-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">Matches vertex quality -- clean pointed groove, no hallucination, brass texture and lighting consistent.</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 3.1 Flash Image Preview (“Nano Banana 2”)</div>
+      <div class="cell-endpoint">fal-ai/gemini-3.1-flash-image-preview/edit</div>
+      <div class="cell-cost">$0.080/call (fal listed price, flat per image)</div>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini31-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini31-flash-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini31-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__gemini31-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gemini31-flash-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x gemini31-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">Hallucinates a new spiral/scroll (volute) decorative motif filling the groove opening -- not present anywhere in the surrounding material.</div>
+    </div><div class="cell">
+      <div class="cell-label">Finegrain Eraser (dedicated eraser, mask-based, premium mode)</div>
+      <div class="cell-endpoint">fal-ai/finegrain-eraser/mask</div>
+      <div class="cell-cost">$0.045/call (fal listed price, unit=images)</div>
+      <a class="imglink" href="web/composite/wc-goldshield__finegrain-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__finegrain-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x finegrain seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__finegrain-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__finegrain-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x finegrain full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">Leaves a large smooth 'C'-shaped claw/hook remnant -- thumb effectively still present as an altered object, not erased.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">openai/gpt-image-2/edit</div>
+      <div class="cell-cost">$0.0612/call REAL BILLED cost (x-fal-billable-units header x $1/unit list price) -- NOT the ambiguous $1/“unit” fal shows; actual measured across 3 calls: $0.0613, $0.0612, $0.0612</div>
+      <a class="imglink" href="web/composite/wc-goldshield__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="wc-goldshield x gpt-image-2 seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/wc-goldshield__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/wc-goldshield__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="wc-goldshield x gpt-image-2 full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#b8860b">FAIL (borderline)</div>
+      <div class="note">No hallucinated object and shape is correct, but texture is slightly smudged/blurred versus the crisp brass grain right above the repair -- a real, if minor, material mismatch.</div>
+    </div>
+      </div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">fallout-vault</div>
+      <div class="skin-material">material: brushed steel vault-door control channel with yellow hazard trim</div>
+      <div class="row">
+        <div class="cell before">
+      <div class="cell-label">BEFORE (baked defect)</div>
+      <a class="imglink" href="web/composite/fallout-vault__BEFORE-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__BEFORE-seam-thumb.jpg" loading="lazy" alt="fallout-vault before repair -- baked defect, seam-zoom crop">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault before repair -- full skin context">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+    </div><div class="cell">
+      <div class="cell-label">Vertex gemini-3-pro-image (incumbent baseline)</div>
+      <div class="cell-endpoint">genskin.py:edit_vertex() -- Google Vertex, direct</div>
+      <div class="cell-cost">$0.241/repair (4K output tier) -- REUSED from arm 1, no fresh spend here</div>
+      <a class="imglink" href="web/composite/fallout-vault__vertex-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__vertex-seam-thumb.jpg" loading="lazy" alt="fallout-vault x vertex seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__vertex-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__vertex-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x vertex full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">Thumb fully removed; groove floor texture slightly softer/blurrier than surrounding rust but color-correct and coherent.</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">fal-ai/gemini-25-flash-image/edit</div>
+      <div class="cell-cost">$0.040/call (fal listed price, flat per image)</div>
+      <a class="imglink" href="web/composite/fallout-vault__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="fallout-vault x gemini25-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x gemini25-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">Thumb removed cleanly. VLM initially flagged the continued inner slot line as 'hallucinated' -- overruled: that slot is a real pre-existing feature visible in BEFORE to the right of the thumb, not an invention. Texture slightly flatter than vertex but acceptable.</div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 3.1 Flash Image Preview (“Nano Banana 2”)</div>
+      <div class="cell-endpoint">fal-ai/gemini-3.1-flash-image-preview/edit</div>
+      <div class="cell-cost">$0.080/call (fal listed price, flat per image)</div>
+      <a class="imglink" href="web/composite/fallout-vault__gemini31-flash-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini31-flash-seam-thumb.jpg" loading="lazy" alt="fallout-vault x gemini31-flash seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__gemini31-flash-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gemini31-flash-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x gemini31-flash full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">Thumb removed, best texture match of all candidates per VLM -- rust/brushed-steel grain continues convincingly.</div>
+    </div><div class="cell">
+      <div class="cell-label">Finegrain Eraser (dedicated eraser, mask-based, premium mode)</div>
+      <div class="cell-endpoint">fal-ai/finegrain-eraser/mask</div>
+      <div class="cell-cost">$0.045/call (fal listed price, unit=images)</div>
+      <a class="imglink" href="web/composite/fallout-vault__finegrain-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__finegrain-seam-thumb.jpg" loading="lazy" alt="fallout-vault x finegrain seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__finegrain-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__finegrain-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x finegrain full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="note">Replaced the original thumb with a different, cleaner/smoother filler object that still fills the groove like a slider thumb -- did not achieve an empty groove.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">openai/gpt-image-2/edit</div>
+      <div class="cell-cost">$0.0612/call REAL BILLED cost (x-fal-billable-units header x $1/unit list price) -- NOT the ambiguous $1/“unit” fal shows; actual measured across 3 calls: $0.0613, $0.0612, $0.0612</div>
+      <a class="imglink" href="web/composite/fallout-vault__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="fallout-vault x gpt-image-2 seam-zoom crop, composited onto full skin">
+        <div class="img-cap">seam-zoom (click for full-res)</div>
+      </a>
+      <a class="imglink" href="web/composite/fallout-vault__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener">
+        <img src="web/composite/fallout-vault__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="fallout-vault x gpt-image-2 full skin composite">
+        <div class="img-cap">full skin, crop_box boxed (click for full-res)</div>
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="note">Thumb removed, rust/wear texture integrates very well, on par with or better than vertex per VLM. Same 'inner slot' false-positive overruled as with gemini25-flash.</div>
+    </div>
+      </div>
+    </div>
+
+  <div class="verdict-section">
+    <h2>CONCLUSION / VERDICT</h2>
+    <table class="verdict-table">
+      <tr><th>Model</th><th>Score (of 3 ornate skins)</th><th>Cost</th></tr>
+      <tr><td>Vertex gemini-3-pro-image (incumbent baseline)</td><td>3/3 PASS</td><td>$0.241/repair (4K output tier) -- REUSED from arm 1, no fresh spend here</td></tr><tr><td>Gemini 2.5 Flash Image (“Nano Banana”)</td><td>2/3 PASS</td><td>$0.040/call (fal listed price, flat per image)</td></tr><tr><td>Gemini 3.1 Flash Image Preview (“Nano Banana 2”)</td><td>1/3 PASS</td><td>$0.080/call (fal listed price, flat per image)</td></tr><tr><td>Finegrain Eraser (dedicated eraser, mask-based, premium mode)</td><td>0/3 PASS</td><td>$0.045/call (fal listed price, unit=images)</td></tr><tr><td>GPT Image 2 (OpenAI, via fal)</td><td>1/3 PASS</td><td>$0.0612/call REAL BILLED cost (x-fal-billable-units header x $1/unit list price) -- NOT the ambiguous $1/“unit” fal shows; actual measured across 3 calls: $0.0613, $0.0612, $0.0612</td></tr>
+    </table>
+    <p><b>Vertex gemini-3-pro-image scored 3/3 PASS</b> -- clean erasure, no hallucination, material-consistent on every skin tested. It remains the quality ceiling in this bake-off.</p>
+    <p><b>gemini25-flash (Nano Banana, $0.040/call, ~6x cheaper than Vertex) scored 2/3 PASS.</b> It matched Vertex cleanly on wc-goldshield and fallout-vault (no hallucinated objects, correct groove geometry, texture close to Vertex). Its one failure (diablo-gothic) was NOT object hallucination -- it erased the glowing rune-inlay crack detail entirely, leaving flat material where Vertex preserved the glow. That is a describable, narrower failure mode than the other candidates' outright invented geometry.</p>
+    <p><b>gemini31-flash ($0.080/call) scored 1/3</b> -- hallucinated a spiral/scroll motif on wc-goldshield and left residual horn shapes on diablo-gothic; only clean on fallout-vault.</p>
+    <p><b>finegrain-eraser (dedicated eraser, $0.045/call) scored 0/3</b> -- confirms the bake-off's core hypothesis: a dedicated eraser without real "understanding" of ornate carved/gothic material either barely erases the defect (diablo-gothic: horns nearly untouched) or replaces it with a different, ill-fitting blob/claw shape (wc-goldshield, fallout-vault) rather than reconstructing plausible surrounding material.</p>
+    <p><b>gpt-image-2 (real cost $0.0612/call, not the ambiguous $1/"unit" fal lists) scored 1/3 clean + 1 borderline.</b> Clean on fallout-vault (VLM: texture "far superior" to Vertex there), borderline-fail on wc-goldshield (correct shape, slightly smudged texture), and failed on diablo-gothic (invented a mismatched diamond-facet pattern instead of continuing the Y-rune).</p>
+    <div class="rec">
+      <b>Routing recommendation:</b> No cheaper model FULLY matches Vertex across all 3 ornate skins tested. <b>gemini25-flash is the closest cheaper candidate</b> (2/3 clean matches, ~$0.04 vs Vertex's $0.241 -- a 6x cost reduction) and its one failure mode (losing a glow/inlay highlight, not inventing geometry) is arguably the least damaging kind of miss and may be fixable with a prompt addition explicitly instructing "preserve and continue any glowing crack/rune/inlay pattern through the erased region" (untested here, would need a follow-up arm).
+      <br><br>
+      Given the mixed record, the safe default for erase12.py remains <b>Vertex gemini-3-pro</b> for ornate/rune-carved material specifically, with <b>gemini25-flash as a cheap first-pass candidate</b> worth a scored retry with the inlay-preservation prompt fix before displacing Vertex as the default. Do not route ornate-material erases to finegrain-eraser (or by extension LaMa/Bria per arms 1-2) -- 0/3 confirms dedicated erasers don't generalize to this material class.
+    </div>
+  </div>
+</body>
