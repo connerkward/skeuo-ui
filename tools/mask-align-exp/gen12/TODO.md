@@ -1471,3 +1471,6 @@ one; that's the extract/player-owning agents' lane).
 ## User decisions (2026-07-12)
 - **Seed-mine/rescue: DROPPED** — user: "forget seed min thing." No mining round; roster quality comes from the fix chain + re-rolls.
 - **Repeat button: STAYS, director-decided** — like ticks/optional stages, the director spec decides per theme whether repeat appears. (Roster schema: repeat becomes a director-optional control — implement with the next director-responsibilities pass, cross-ref the director-gates-stages TODO.)
+
+## Infra (2026-07-12)
+- **Canonical review server = http://localhost:8899/** (launchd-pinned, `com.skeuo.gen12-serve`, KeepAlive/RunAtLoad). Fixes the ad-hoc `serve` helper dying/hopping ports repeatedly and rotting handed-out links. Machine-local plist + reversal recipe documented in central's `per_lappy_heavy.md`.
