@@ -142,6 +142,24 @@ SEEK_STRIP_BULLET = (
 # generated regions.json / assets keep rendering unchanged.
 TOGGLE_TRACK_ENABLED = True
 
+# SHUFFLE_ICON_BUTTON_ENABLED: Round-4 consistency fix — shuffle retired from the toggle/
+# track-lever path ENTIRELY and rendered as a plain ICON BUTTON (STATEFUL_LIT_ICON,
+# build_player.py), a 6th transport button with a baked crossed-arrows glyph, exactly like
+# playpause/prev/next/repeat/queue. build_player.py already renders shuffle this way
+# (STATEFUL_LIT_ICON=True, shuffleAsButton, commit a1a95228) whenever regs.shuffle.device
+# exists, but genskin.py's PAINT prompt still described shuffle as a two-detent TRACK/switch
+# slot (the TOGGLE_TRACK_ENABLED clauses below) — baking a vestigial painted switch cavity
+# under what the player renders as a plain button. This flag takes precedence over
+# TOGGLE_TRACK_ENABLED for every shuffle-specific clause (cavity, mechanism, strip cell,
+# exact-fit, camera); TOGGLE_TRACK_ENABLED and its clauses stay fully intact for rollback
+# (flip this False to restore the old track-slider prompt).
+# NOTE: shuffle's control id/role stay "shuffle"/"toggle" in CONTROLS/ROLES/results.json —
+# that contract is what build_player.py's `roles[k]==='toggle'` lookup depends on. Only the
+# PROMPT/blueprint language changes; "shuffle" is deliberately NOT added to the BUTTONS python
+# list itself, because build_player.py's `ICON_BTNS = shuffleAsButton ? BTN.concat([tg]) : BTN`
+# assumes shuffle is not already in BUTTONS/BTN, or it would render the shuffle button twice.
+SHUFFLE_ICON_BUTTON_ENABLED = True
+
 # ---- EXPERIMENT (UNCOMMITTED, 2026-07-12) — TOGGLE_SHAPE_MATCH_ENABLED ----
 # Variant C of the switch-slot housing-shape comparison (tools/mask-align-exp/gen12/
 # switch-slot-compare.html): the baked housing/track is ALWAYS a generic pill while the loose
@@ -169,18 +187,32 @@ _SHUFFLE_CAVITY_TRACK_SHAPEMATCH = (
     "pill/rounded-rectangle), with two end positions (NO lever, NO slider, NO switch, NO bolt "
     "installed — nothing riding in it). "
 )
-SHUFFLE_CAVITY_CLAUSE = (
+SHUFFLE_CAVITY_CLAUSE = ("" if SHUFFLE_ICON_BUTTON_ENABLED else
     _SHUFFLE_CAVITY_TRACK_SHAPEMATCH if (TOGGLE_TRACK_ENABLED and TOGGLE_SHAPE_MATCH_ENABLED)
     else _SHUFFLE_CAVITY_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_CAVITY_TWOSTATE)
+# cavity count for the "If ANY of the N cavities..." closing sentence — two (knob+seek) once
+# shuffle is a baked button with no empty-then-installed cavity of its own, three otherwise.
+CAVITY_COUNT_CLAUSE = ("two cavities (knob socket, seek slot)" if SHUFFLE_ICON_BUTTON_ENABLED
+                       else "three cavities (knob socket, seek slot, shuffle slot)")
 
-# ---- strip part count/list (varies: 3 parts in track mode, 4 in the legacy two-state mode) ----
-SHUFFLE_STRIP_N = 3 if TOGGLE_TRACK_ENABLED else 4
-SHUFFLE_STRIP_N_WORD = "THREE" if TOGGLE_TRACK_ENABLED else "FOUR"
-SHUFFLE_STRIP_PARTS_COMMA = ("volume knob cap, seek slider thumb, shuffle lever" if TOGGLE_TRACK_ENABLED
-    else "volume knob cap, seek slider thumb, shuffle switch first state, shuffle switch second state")
-SHUFFLE_STRIP_PARTS_ARROW = ("volume knob cap, seek slider thumb, shuffle lever" if TOGGLE_TRACK_ENABLED
-    else "volume knob cap, seek slider thumb, shuffle switch in its first state, shuffle switch in "
-         "its second state")
+# ---- strip part count/list (2 parts once shuffle is a button, 3 in track mode, 4 legacy) ----
+if SHUFFLE_ICON_BUTTON_ENABLED:
+    SHUFFLE_STRIP_N = 2
+    SHUFFLE_STRIP_N_WORD = "TWO"
+    SHUFFLE_STRIP_PARTS_COMMA = "volume knob cap, seek slider thumb"
+    SHUFFLE_STRIP_PARTS_ARROW = "volume knob cap, seek slider thumb"
+elif TOGGLE_TRACK_ENABLED:
+    SHUFFLE_STRIP_N = 3
+    SHUFFLE_STRIP_N_WORD = "THREE"
+    SHUFFLE_STRIP_PARTS_COMMA = "volume knob cap, seek slider thumb, shuffle lever"
+    SHUFFLE_STRIP_PARTS_ARROW = "volume knob cap, seek slider thumb, shuffle lever"
+else:
+    SHUFFLE_STRIP_N = 4
+    SHUFFLE_STRIP_N_WORD = "FOUR"
+    SHUFFLE_STRIP_PARTS_COMMA = ("volume knob cap, seek slider thumb, shuffle switch first state, "
+                                 "shuffle switch second state")
+    SHUFFLE_STRIP_PARTS_ARROW = ("volume knob cap, seek slider thumb, shuffle switch in its first state, "
+                                 "shuffle switch in its second state")
 
 # ---- SHUFFLE MECHANISM bullet — replaces SHUFFLE STATES, drops all mirror/state-pair language ----
 _SHUFFLE_MECHANISM_TRACK = (
@@ -227,7 +259,7 @@ _SHUFFLE_MECHANISM_TRACK_SHAPEMATCH = (
     "channel or recess in the strip (same isolation as the seek thumb). Put ABSOLUTELY NO text, "
     "letters, numerals, glyphs, words or labels of ANY kind on the lever or on ANY strip part.\n"
 )
-SHUFFLE_MECHANISM_BULLET = (
+SHUFFLE_MECHANISM_BULLET = ("" if SHUFFLE_ICON_BUTTON_ENABLED else
     _SHUFFLE_MECHANISM_TRACK_SHAPEMATCH if (TOGGLE_TRACK_ENABLED and TOGGLE_SHAPE_MATCH_ENABLED)
     else _SHUFFLE_MECHANISM_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_MECHANISM_TWOSTATE)
 
@@ -237,6 +269,21 @@ _SHUFFLE_EXACTFIT_TRACK = ("the shuffle lever is sized to SLIDE WITHIN the track
     "the track's long axis, matching its short axis, like the seek thumb inside the seek groove")
 _SHUFFLE_EXACTFIT_TWOSTATE = "each shuffle state exactly fills the switch slot"
 SHUFFLE_EXACTFIT_TAIL = _SHUFFLE_EXACTFIT_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_EXACTFIT_TWOSTATE
+# EXACT FIT bullet's trailing clause — omitted entirely once shuffle is a baked button: it is no
+# longer a strip part that must fit/slide into a slot at all. Its icon-hole congruence is covered
+# by the separate MASK GLYPH HOLES bullet, same as the other 5 buttons.
+SHUFFLE_EXACTFIT_SUFFIX = "" if SHUFFLE_ICON_BUTTON_ENABLED else f"; {SHUFFLE_EXACTFIT_TAIL}"
+# CAMERA bullet's "seek thumb and shuffle lever/switch are likewise flat shapes" clause — drops
+# the shuffle mention once it's a button (already covered by the button-icon bullets, not a
+# top-down strip part that needs a flatness reminder).
+SHUFFLE_CAMERA_CLAUSE = ("The seek thumb is likewise a flat shape seen from directly overhead."
+    if SHUFFLE_ICON_BUTTON_ENABLED else
+    "The seek thumb and the shuffle " + ("lever" if TOGGLE_TRACK_ENABLED else "switch") +
+    " are likewise flat shapes seen from directly overhead.")
+# MASK-column blob-shape parenthetical — shuffle's device blob is a plain circle (like the other
+# buttons) once it's a button, not a "tall portrait rounded-rectangle" toggle slot.
+SHUFFLE_BLOB_SHAPE_TAIL = ("" if SHUFFLE_ICON_BUTTON_ENABLED
+                           else "; the shuffle blob is a tall portrait rounded-rectangle")
 
 COL_W, H, DEV_H = 1200, 1920, 1440
 DEVF = DEV_H / H
@@ -256,7 +303,8 @@ ICON = {  # named in the prompt so the model embosses the right glyph — never 
     "vol": "a VOLUME knob (top face, knurled rim, pointer notch)",
     "seek": "the SEEK progress slider thumb (wide low grip)",
     "shuffle": ("an empty two-position TRACK/HOUSING for a sliding lever (no lever installed — "
-                "the lever is a separate loose part)" if TOGGLE_TRACK_ENABLED
+                "the lever is a separate loose part)"
+                if (TOGGLE_TRACK_ENABLED and not SHUFFLE_ICON_BUTTON_ENABLED)
                 else "a SHUFFLE icon (two crossing arrows)"),
     "visualizer": "a VISUALIZER / spectrum-analyzer display window",
     "album_art": "an ALBUM ART / cover display window",
@@ -269,7 +317,20 @@ ICON = {  # named in the prompt so the model embosses the right glyph — never 
 # rotating part that DOES carry a visible pointer notch in the paint) — baked in build_canvas's
 # strip-cell loop, not here. See genskin's MASK GLYPH HOLES prompt clause for the mask-column
 # contract this feeds.⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧
-ICON_GLYPH_NAMES = set(BUTTONS)
+# shuffle joins this set under SHUFFLE_ICON_BUTTON_ENABLED (Round 4) — its device blueprint circle
+# gets the same treatment as the 5 BUTTONS: a baked crossed-arrows glyph cut-out, never a bare
+# switch/track slot. Added here, NOT to BUTTONS itself — see SHUFFLE_ICON_BUTTON_ENABLED's
+# why-comment for why "shuffle" must stay out of the BUTTONS python list.
+ICON_GLYPH_NAMES = set(BUTTONS) | ({"shuffle"} if SHUFFLE_ICON_BUTTON_ENABLED else set())
+# Text used by the "N transport BUTTONS" / "MASK GLYPH HOLES" prompt bullets so they describe 6
+# buttons (incl. shuffle's crossed-arrows glyph) instead of 5 once shuffle joins the roster as a
+# button, without touching the BUTTONS list itself.
+BUTTON_ROSTER_WORD = "6" if SHUFFLE_ICON_BUTTON_ENABLED else "5"
+BUTTON_ROSTER_NAMES_ID = "playpause, prev, next, repeat, queue" + (", shuffle" if SHUFFLE_ICON_BUTTON_ENABLED else "")
+BUTTON_GLYPH_IDS = BUTTONS + (["shuffle"] if SHUFFLE_ICON_BUTTON_ENABLED else [])
+BUTTON_GLYPH_SHAPES_TEXT = ("play-triangle/pause-bars, skip-chevrons, repeat-loop, queue-bars or "
+                            "crossed-arrows shuffle" if SHUFFLE_ICON_BUTTON_ENABLED else
+                            "play-triangle/pause-bars, skip-chevrons, repeat-loop or queue-bars")
 # congruence contract — sizes shared between device slot and strip anchor (px on COL_W x DEV_H)
 BTN_R, PLAY_R, KNOB_R = 74, 104, 84
 GROOVE_W, GROOVE_H, THUMB_W, THUMB_H, THUMB_R = 640, 76, 150, 96, 44
@@ -298,7 +359,10 @@ def _vpod():
         "prev": (0.28, 0.60, "btn", BTN_R), "playpause": (0.50, 0.60, "btn", PLAY_R),
         "next": (0.72, 0.60, "btn", BTN_R),
         "repeat": (0.24, 0.75, "btn", BTN_R), "vol": (0.42, 0.76, "knob"),
-        "shuffle": (0.60, 0.76, "tog"), "queue": (0.78, 0.75, "btn", BTN_R),
+        # shuffle is a plain "btn" circle (BTN_R, same as the other 5 buttons) once
+        # SHUFFLE_ICON_BUTTON_ENABLED — no more "tog" track/switch shape.
+        "shuffle": (0.60, 0.76, "btn", BTN_R) if SHUFFLE_ICON_BUTTON_ENABLED else (0.60, 0.76, "tog"),
+        "queue": (0.78, 0.75, "btn", BTN_R),
     }
 def _hcapsule():
     # checked against the same artdrift fix (2026-07-11): this pairing already sits ~12.6% of
@@ -311,7 +375,8 @@ def _hcapsule():
         "prev": (0.66, 0.28, "btn", BTN_R), "playpause": (0.78, 0.40, "btn", PLAY_R),
         "next": (0.90, 0.28, "btn", BTN_R),
         "repeat": (0.66, 0.55, "btn", BTN_R), "vol": (0.90, 0.58, "knob"),
-        "shuffle": (0.78, 0.68, "tog"), "queue": (0.66, 0.78, "btn", BTN_R),
+        "shuffle": (0.78, 0.68, "btn", BTN_R) if SHUFFLE_ICON_BUTTON_ENABLED else (0.78, 0.68, "tog"),
+        "queue": (0.66, 0.78, "btn", BTN_R),
     }
 LAYOUTS = {"vpod": _vpod, "hcapsule": _hcapsule}
 
@@ -396,6 +461,16 @@ def draw_icon_glyph(d, name, x, y, r):
     elif name == "vol":
         w = max(4, int(r * 0.12)); ln = r * 0.34
         d.rectangle([x - w / 2, y - r + 2, x + w / 2, y - r + 2 + ln], fill=BLK)
+    elif name == "shuffle":
+        # crossed-arrows glyph (Round-4 shuffle-as-button consistency fix): two diagonal strokes
+        # crossing in an X, each terminating in a small arrowhead at its top end — the same bold,
+        # crude, position/shape hint pattern as the other 5 buttons above.
+        w = max(4, int(s * 0.26))
+        d.line([x - s, y + s, x + s, y - s], fill=BLK, width=w)
+        d.line([x - s, y - s, x + s, y + s], fill=BLK, width=w)
+        ah = s * 0.4
+        d.polygon([(x + s, y - s), (x + s - ah, y - s), (x + s, y - s + ah)], fill=BLK)
+        d.polygon([(x - s, y - s), (x - s + ah, y - s), (x - s, y - s + ah)], fill=BLK)
 
 
 def draw_control_shape(d, kind, sz, x, y, col, style, name=None):
@@ -450,10 +525,18 @@ def build_canvas(BG, layout, KEYS, guide_style):
             draw_control_shape(d, kind, sz, x, y, KEYS[name], guide_style, name)
         template[name] = [fx, fy * DEVF]
     sy = DEV_H + (H - DEV_H) // 2
+    # SHUFFLE_ICON_BUTTON_ENABLED: shuffle retired from the strip entirely — it's a baked
+    # device-position icon button now (like playpause/repeat), not a loose part assembled later.
+    # 2-cell strip: knob cap + seek thumb only. Checked FIRST so it overrides TOGGLE_TRACK_ENABLED
+    # for shuffle specifically; that flag's own 3-cell/4-cell branches stay intact below for
+    # rollback (flip SHUFFLE_ICON_BUTTON_ENABLED False to restore either one).
+    if SHUFFLE_ICON_BUTTON_ENABLED:
+        cells = [(KNOB, "circle"), (SLIDER, "thumb")]
+        cx_of = lambda i: COL_W * (0.32 + 0.36 * i)   # 2 cells: .32, .68
     # TOGGLE_TRACK_ENABLED: ONE lever cell (was two: OFF/ON state pair) — 3-cell strip instead
     # of 4. Own spacing formula (evenly spread 3 cells); the legacy 4-cell spacing is untouched
     # so a flag=False regen keeps producing byte-identical geometry (rollback safety).
-    if TOGGLE_TRACK_ENABLED:
+    elif TOGGLE_TRACK_ENABLED:
         cells = [(KNOB, "circle"), (SLIDER, "thumb"), (TOGGLE, "lever")]
         cx_of = lambda i: COL_W * (0.18 + 0.32 * i)   # 3 cells: .18, .50, .82
     else:
@@ -704,7 +787,16 @@ def _build_json_spec_obj(KEYS, layout):
         "seek_thumb": {"shape": "rounded_rect", "w_frac_of_col_w": round(THUMB_W / COL_W, 4),
                        "h_frac_of_dev_h": round(THUMB_H / DEV_H, 4)},
     }
-    if TOGGLE_TRACK_ENABLED:
+    if SHUFFLE_ICON_BUTTON_ENABLED:
+        # shuffle is not a strip part at all — it's one of the device's button controls (see
+        # the "controls" array above), its icon baked directly the same as playpause/prev/
+        # next/repeat/queue. No shuffle_* entry in strip_sizes/strip_order.
+        strip_order = ["vol_cap", "seek_thumb"]
+        congruence_rule = ("each strip part's size EXACTLY equals its matching device slot's size "
+                            "above (vol_cap radius == vol's radius_frac_of_col_w; seek_thumb fits "
+                            "the seek groove). shuffle is NOT a strip part — it is one of the "
+                            "device's button controls in the array above.")
+    elif TOGGLE_TRACK_ENABLED:
         strip_sizes["shuffle_lever"] = {"shape": "rounded_rect", "w_frac_of_col_w": round(LEVER_W / COL_W, 4),
                                          "h_frac_of_dev_h": round(LEVER_H / DEV_H, 4)}
         strip_order = ["vol_cap", "seek_thumb", "shuffle_lever"]
@@ -788,14 +880,14 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         f"colours from the spec. ABSOLUTELY {NO_LIST} anywhere in the LEFT column; the guide "
         "colours from the spec exist ONLY in the RIGHT mask.⟦cite:sha:794da20e⟧\n"
         + residue_bullet
-        + "  • The 5 transport/function BUTTONS (playpause, prev, next, repeat, queue) are "
+        + f"  • The {BUTTON_ROSTER_WORD} transport/function BUTTONS ({BUTTON_ROSTER_NAMES_ID}) are "
         "raised, glossy, tactile control facets set into the body, EACH clearly bearing its "
         "icon EMBOSSED/engraved in relief per the spec's final_icon_or_content field for that "
         "control. Shape + icon + relief only; no text labels; no coloured rim.⟦cite:sha:794da20e⟧\n"
         "  • BUTTON COLOURS COME FROM THE THEME, NEVER FROM THE GUIDES: a button's guide_color "
         "in the spec marks its POSITION ONLY — the finished button's material/fill must NOT "
         "inherit, echo or be tinted toward its guide colour in ANY way (no red play because its "
-        "guide was red, no magenta next, etc). ALL five buttons are made of the device's OWN "
+        f"guide was red, no magenta next, etc). ALL {BUTTON_ROSTER_WORD} buttons are made of the device's OWN "
         "theme materials/palette, coloured consistently with each other and the body. If any "
         "button's colour visibly matches its spec guide_color, the output is WRONG.⟦cite:sha:a8bbaad0⟧\n"
         "  • THE SINGLE MOST IMPORTANT RULE — EVERY MOVING-PART CAVITY IS EMPTY. The volume "
@@ -806,7 +898,7 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         + SHUFFLE_CAVITY_CLAUSE +
         "The device is photographed BEFORE ASSEMBLY: those parts exist ONLY in the bottom sprite "
         "strip and have NOT been installed yet. Do NOT colour the empty wells — neutral DARK "
-        "recesses only. If ANY of the three cavities (knob socket, seek slot, shuffle slot) "
+        f"recesses only. If ANY of the {CAVITY_COUNT_CLAUSE} "
         "contains ANY part or any fill colour, the output is WRONG and must be redone."
         "⟦cite:sha:794da20e;docs/experiments/2026-07-10-bproof-constraint-load.md;docs/DECISIONS.md⟧\n"
         + tick_skin_bullet
@@ -826,8 +918,8 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         + tick_sprite_bullet
         + SEEK_STRIP_BULLET
         + "  • EXACT FIT — per the spec's congruence_rule: each strip part is the EXACT size & "
-        f"shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove; "
-        f"{SHUFFLE_EXACTFIT_TAIL}). Do NOT resize/re-proportion a part."
+        f"shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove"
+        f"{SHUFFLE_EXACTFIT_SUFFIX}). Do NOT resize/re-proportion a part."
         "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json;docs/experiments/2026-07-12-toggle-track.md⟧\n"
         + SHUFFLE_MECHANISM_BULLET
         + "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in "
@@ -836,8 +928,7 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "FLAT on a table seen from straight above, with ZERO thickness, height or depth "
         "visible. The volume knob cap is a FLAT ROUND DISC / COIN — you see ONLY its circular "
         "TOP FACE (a knurled outer rim and a small pointer notch" + _POINTER_UP_CLAUSE + "); you must NOT see any "
-        "cylindrical SIDE WALL, edge, height or 3D body of the knob. The seek thumb and the "
-        f"shuffle {'lever' if TOGGLE_TRACK_ENABLED else 'switch'} are likewise flat shapes seen from directly overhead. ABSOLUTELY NO "
+        "cylindrical SIDE WALL, edge, height or 3D body of the knob. " + SHUFFLE_CAMERA_CLAUSE + " ABSOLUTELY NO "
         "product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO perspective, NO visible "
         "sides — a part showing its side wall or any thickness is WRONG. Each part must look "
         "EXACTLY as it appears seated flat in its socket on the top-down device, so it drops "
@@ -845,15 +936,15 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "RIGHT column — a precise REGION MASK on pure BLACK, pixel-aligned to the LEFT. For "
         "EACH control paint ONE SOLID FILLED blob in its own guide_color_rgb (from the spec), "
         "at the EXACT same position, size and silhouette as that control on the left (the "
-        "seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; "
-        "the shuffle blob is a tall portrait rounded-rectangle) — one blob per control id in "
+        f"seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line"
+        f"{SHUFFLE_BLOB_SHAPE_TAIL}) — one blob per control id in "
         "the spec's controls array, coloured by that control's guide_color_rgb.\n"
-        "  • MASK GLYPH HOLES (MANDATORY ON EVERY GENERATION, NEVER OPTIONAL) — the 5 BUTTON "
-        "device blobs (playpause, prev, next, repeat, queue) are the ONE exception to 'solid "
+        f"  • MASK GLYPH HOLES (MANDATORY ON EVERY GENERATION, NEVER OPTIONAL) — the {BUTTON_ROSTER_WORD} BUTTON "
+        f"device blobs ({BUTTON_ROSTER_NAMES_ID}) are the ONE exception to 'solid "
         "disc': punch ONE fully-ENCLOSED BLACK hole through the middle of each button's "
         "guide-colour disc, in the EXACT silhouette of that button's icon glyph from "
-        "final_icon_or_content — the same play-triangle/pause-bars, skip-chevrons, repeat-loop "
-        "or queue-bars shape you embossed on the left column's matching button — so the guide "
+        f"final_icon_or_content — the same {BUTTON_GLYPH_SHAPES_TEXT} "
+        "shape you embossed on the left column's matching button — so the guide "
         "colour reads as a solid ring/field AROUND the icon-shaped hole, never a flat unbroken "
         "disc. A button device blob with no enclosed black hole is WRONG and must be redone."
         "⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧\n"
@@ -864,8 +955,10 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "surrounding body. Trace each window's glass outline precisely; a display blob that "
         "extends past its painted window, covers body/bezel around it, or sits off the window "
         "is WRONG⟦cite:sha:86f69c75⟧; and each STRIP PART as a solid COMPACT blob of its matching control's "
-        "guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour, "
-        f"{'the shuffle_lever uses' if TOGGLE_TRACK_ENABLED else 'BOTH shuffle states use'} shuffle's colour)"
+        "guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour"
+        + ("" if SHUFFLE_ICON_BUTTON_ENABLED else
+           f", {'the shuffle_lever uses' if TOGGLE_TRACK_ENABLED else 'BOTH shuffle states use'} shuffle's colour")
+        + ")"
         "⟦cite:docs/experiments/2026-07-12-toggle-track.md⟧ exactly matching its part's silhouette & position "
         "in the strip, in the spec's strip_order_left_to_right. The vol_cap strip blob ADDITIONALLY carries "
         "one small fully-ENCLOSED BLACK notch punched through its guide colour at its top-centre (12 "
@@ -875,7 +968,7 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "CRITICAL: each blob is TIGHT to "
         "its shape — NEVER let a colour bleed or stretch across the strip band or flood a "
         f"rectangle; the {SHUFFLE_STRIP_N_WORD.lower()} strip blobs are {len(spec_obj['strip_order_left_to_right'])} separate compact shapes with black gaps between "
-        "them. EVERY blob is ONE solid filled silhouette with NO outline stroke, EXCEPT the 5 button "
+        f"them. EVERY blob is ONE solid filled silhouette with NO outline stroke, EXCEPT the {BUTTON_ROSTER_WORD} button "
         "device blobs (icon hole) and the vol_cap strip blob (tick notch) described above — those are the "
         "ONLY intentional holes; every other blob (sliders, toggle/lever, display windows, other strip "
         "parts) stays a plain holeless fill. Everything "
@@ -925,7 +1018,10 @@ def main():
     image_paths = [bp] + ([guided_path] if guided_path else [])
 
     # -------- results.json (colours + roles + optional template) --------
-    defsz = {KNOB: 2 * KNOB_R / COL_W, SLIDER: GROOVE_H / COL_W, TOGGLE: TOG_W / COL_W,
+    # TOGGLE's default size is button-diameter (2*BTN_R) once SHUFFLE_ICON_BUTTON_ENABLED — it's
+    # a plain icon button now, not a TOG_W-wide track/switch housing.
+    defsz = {KNOB: 2 * KNOB_R / COL_W, SLIDER: GROOVE_H / COL_W,
+             TOGGLE: (2 * BTN_R / COL_W if SHUFFLE_ICON_BUTTON_ENABLED else TOG_W / COL_W),
              **{b: (2 * PLAY_R if b == "playpause" else 2 * BTN_R) / COL_W for b in BUTTONS}}
     res = {"id": sid, "mode": mode, "seed": seed, "model": MODEL, "backdrop": list(BG),
            "palette": {k: list(v) for k, v in palette.items()},
@@ -951,7 +1047,13 @@ def main():
            # regions[toggle] gets track/detents/vertical from extract12); False = legacy
            # two-state sprite-swap (2 strip cells, off/on). Downstream (extract12/biref12/
            # build_player) reads this instead of re-deriving mode from cell count.
-           "toggle_track_enabled": TOGGLE_TRACK_ENABLED}
+           "toggle_track_enabled": TOGGLE_TRACK_ENABLED,
+           # Round-4 fix: True = shuffle is a plain ICON BUTTON, not a track/switch — takes
+           # precedence over toggle_track_enabled above for shuffle specifically. build_player.py
+           # already infers this at render time (STATEFUL_LIT_ICON + regs.shuffle.device), but a
+           # downstream extractor (extract12.py) that still assumes track/two-state geometry for
+           # "shuffle" should key off this flag once it's updated for the new architecture.
+           "shuffle_icon_button_enabled": SHUFFLE_ICON_BUTTON_ENABLED}
     if mode == "templated":
         aa = layout["album_art"]; res["album_art_rect"] = [aa[0] - aa[3] / COL_W / 2, (aa[1] - aa[4] / DEV_H / 2) * DEVF, aa[3] / COL_W, aa[4] / DEV_H * DEVF]
         vz = layout["visualizer"]; res["visualizer_rect"] = [vz[0] - vz[3] / COL_W / 2, (vz[1] - vz[4] / DEV_H / 2) * DEVF, vz[3] / COL_W, vz[4] / DEV_H * DEVF]
@@ -1109,13 +1211,13 @@ def main():
         f"{NO_LIST} anywhere in the LEFT column; the guide colours exist ONLY in the RIGHT mask."
         "⟦cite:sha:794da20e⟧\n"
         + residue_bullet
-        + "  • The 5 transport/function BUTTONS (play/pause, previous, next, repeat, queue) are raised, glossy, "
+        + f"  • The {BUTTON_ROSTER_WORD} transport/function BUTTONS ({BUTTON_ROSTER_NAMES_ID}) are raised, glossy, "
         "tactile control facets set into the body, EACH clearly bearing its icon EMBOSSED/engraved in relief: "
-        + "; ".join(f"{ICON[c]}" for c in BUTTONS) + ". Shape + icon + relief only; no text labels; no coloured rim."
+        + "; ".join(f"{ICON[c]}" for c in BUTTON_GLYPH_IDS) + ". Shape + icon + relief only; no text labels; no coloured rim."
         "⟦cite:sha:794da20e⟧\n"
         "  • BUTTON COLOURS COME FROM THE THEME, NEVER FROM THE GUIDES: the guide colour of a button marks its "
         "POSITION ONLY — the finished button's material/fill must NOT inherit, echo or be tinted toward its guide "
-        "colour in ANY way (no red play because its guide was red, no magenta next, etc). ALL five buttons are made "
+        f"colour in ANY way (no red play because its guide was red, no magenta next, etc). ALL {BUTTON_ROSTER_WORD} buttons are made "
         "of the device's OWN theme materials/palette, coloured consistently with each other and the body. If any "
         "button's colour visibly matches its guide colour, the output is WRONG.⟦cite:sha:a8bbaad0⟧\n"
         "  • THE SINGLE MOST IMPORTANT RULE — EVERY MOVING-PART CAVITY IS EMPTY. The volume knob socket is a bare "
@@ -1125,8 +1227,8 @@ def main():
         + SHUFFLE_CAVITY_CLAUSE +
         "The device is photographed BEFORE "
         "ASSEMBLY: those parts exist ONLY in the bottom sprite strip and have NOT been installed yet. Do NOT colour "
-        "the empty wells — neutral DARK recesses only. If ANY of the three cavities (knob socket, seek slot, "
-        "shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone."
+        f"the empty wells — neutral DARK recesses only. If ANY of the {CAVITY_COUNT_CLAUSE} "
+        "contains ANY part or any fill colour, the output is WRONG and must be redone."
         "⟦cite:sha:794da20e;docs/experiments/2026-07-10-bproof-constraint-load.md;docs/DECISIONS.md⟧\n"
         + tick_skin_bullet
         + SEEK_SLOT_BULLET
@@ -1143,7 +1245,7 @@ def main():
         + tick_sprite_bullet
         + SEEK_STRIP_BULLET
         + "  • EXACT FIT — each strip part is the EXACT size & shape of its slot (knob cap = socket diameter; thumb "
-        f"fits the groove; {SHUFFLE_EXACTFIT_TAIL}). Do NOT resize/re-proportion a part."
+        f"fits the groove{SHUFFLE_EXACTFIT_SUFFIX}). Do NOT resize/re-proportion a part."
         "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json;docs/experiments/2026-07-12-toggle-track.md⟧\n"
         + SHUFFLE_MECHANISM_BULLET
         + "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in a PERFECTLY FLAT, "
@@ -1151,19 +1253,18 @@ def main():
         "as the device. Each part is drawn as if lying FLAT on a table seen from straight above, with ZERO "
         "thickness, height or depth visible. The volume knob cap is a FLAT ROUND DISC / COIN — you see ONLY its "
         "circular TOP FACE (a knurled outer rim and a small pointer notch" + _POINTER_UP_CLAUSE + "); you must NOT see any cylindrical SIDE "
-        f"WALL, edge, height or 3D body of the knob. The seek thumb and the shuffle {'lever' if TOGGLE_TRACK_ENABLED else 'switch'} are likewise flat shapes "
-        "seen from directly overhead. ABSOLUTELY NO product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO "
+        "WALL, edge, height or 3D body of the knob. " + SHUFFLE_CAMERA_CLAUSE + " ABSOLUTELY NO product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO "
         "perspective, NO visible sides — a part showing its side wall or any thickness is WRONG. Each part must "
         "look EXACTLY as it appears seated flat in its socket on the top-down device, so it drops straight in."
         "⟦cite:sha:794da20e⟧\n"
         + right_col_hdr + " For EACH control paint ONE "
         "SOLID FILLED blob in ITS OWN guide colour" + mask_guide_ref + ", at the EXACT same position, size and silhouette as that control "
-        "on " + left_ref + " (the seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; "
-        "the shuffle blob is a tall portrait rounded-rectangle): " + mask_lines
-        + ". MASK GLYPH HOLES (MANDATORY ON EVERY GENERATION, NEVER OPTIONAL) — the 5 BUTTON device blobs "
-        "(playpause, prev, next, repeat, queue) are the ONE exception to 'solid disc': punch ONE fully-ENCLOSED "
+        "on " + left_ref + f" (the seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line"
+        f"{SHUFFLE_BLOB_SHAPE_TAIL}): " + mask_lines
+        + f". MASK GLYPH HOLES (MANDATORY ON EVERY GENERATION, NEVER OPTIONAL) — the {BUTTON_ROSTER_WORD} BUTTON device blobs "
+        f"({BUTTON_ROSTER_NAMES_ID}) are the ONE exception to 'solid disc': punch ONE fully-ENCLOSED "
         "BLACK hole through the middle of each button's guide-colour disc, in the EXACT silhouette of that "
-        "button's icon glyph — the same " + "; ".join(ICON[c] for c in BUTTONS) + " shapes you embossed on "
+        "button's icon glyph — the same " + "; ".join(ICON[c] for c in BUTTON_GLYPH_IDS) + " shapes you embossed on "
         + left_ref + "'s matching buttons — so the guide colour reads as a solid ring/field AROUND the "
         "icon-shaped hole, never a flat unbroken disc. A button device blob with no enclosed black hole is "
         "WRONG and must be redone.⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧"
@@ -1175,7 +1276,9 @@ def main():
         "⟦cite:sha:86f69c75⟧"
         + "; and each STRIP PART as a solid COMPACT blob of its colour (volume cap=" + kn(KNOB).lower()
         + ", seek thumb=" + kn(SLIDER).lower()
-        + (", shuffle lever=" if TOGGLE_TRACK_ENABLED else ", BOTH shuffle states=") + kn(TOGGLE).lower() + ") exactly matching "
+        + ("" if SHUFFLE_ICON_BUTTON_ENABLED else
+           (", shuffle lever=" if TOGGLE_TRACK_ENABLED else ", BOTH shuffle states=") + kn(TOGGLE).lower())
+        + ") exactly matching "
         f"its part's silhouette & position in {strip_side} strip. The vol_cap (volume cap) strip blob ADDITIONALLY carries "
         "one small fully-ENCLOSED BLACK notch punched through its guide colour at its top-centre (12 o'clock) edge, "
         "matching the pointer-notch tick embossed on the knob cap in " + strip_side + " strip — this notch is "
@@ -1183,8 +1286,8 @@ def main():
         "⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧ "
         f"CRITICAL: each blob is TIGHT to its shape — NEVER let a "
         f"colour bleed or stretch across the strip band or flood a rectangle; the {SHUFFLE_STRIP_N_WORD.lower()} strip blobs are {SHUFFLE_STRIP_N} separate "
-        "compact shapes with black gaps between them. EVERY blob is ONE solid filled silhouette with NO outline "
-        "stroke, EXCEPT the 5 button device blobs (icon hole) and the vol_cap strip blob (tick notch) described "
+        f"compact shapes with black gaps between them. EVERY blob is ONE solid filled silhouette with NO outline "
+        f"stroke, EXCEPT the {BUTTON_ROSTER_WORD} button device blobs (icon hole) and the vol_cap strip blob (tick notch) described "
         "above — those are the ONLY intentional holes; every other blob (sliders, toggle/lever, display windows, "
         "other strip parts) stays a plain holeless fill. Everything else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
 
