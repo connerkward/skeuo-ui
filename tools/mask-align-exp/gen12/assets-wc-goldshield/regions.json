@@ -357,5 +357,26 @@
     "region_degenerate": [],
     "reasons": [],
     "PASS": true
+  },
+  "drift": {
+    "per_control": {
+      "album_art": 321.5,
+      "visualizer": 439.9,
+      "seek": 377.0,
+      "prev": 579.8,
+      "playpause": 471.0,
+      "next": 837.2,
+      "repeat": 506.0,
+      "vol": 525.9,
+      "shuffle": 321.1,
+      "queue": 236.7
+    },
+    "excluded_fallback": [],
+    "mean_px": 461.6,
+    "worst": [
+      "next",
+      837.2
+    ],
+    "threshold_px": 650.0
   }
 }

@@ -351,7 +351,30 @@
     "leak": 0.0,
     "guide_ring": [],
     "region_degenerate": [],
-    "reasons": [],
-    "PASS": true
+    "reasons": [
+      "drift:album_art"
+    ],
+    "PASS": false
+  },
+  "drift": {
+    "per_control": {
+      "album_art": 2063.5,
+      "visualizer": 827.4,
+      "seek": 1096.5,
+      "prev": 703.8,
+      "playpause": 995.0,
+      "next": 982.0,
+      "repeat": 675.1,
+      "vol": 270.8,
+      "shuffle": 805.6,
+      "queue": 1085.4
+    },
+    "excluded_fallback": [],
+    "mean_px": 950.5,
+    "worst": [
+      "album_art",
+      2063.5
+    ],
+    "threshold_px": 650.0
   }
 }

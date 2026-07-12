@@ -1,6 +1,71 @@
 # gen12 TODO
 
 ---
+## Template-drift GATE: drift measured + surfaced per roll instead of cause-hunted — DONE 2026-07-11
+
+Actionable conclusion of the drift-suspect bisect chain (root `TODO.md` "drift-suspect bisect
+chain — CLOSED", commit `448d8f87`): three bisects (clause `218224f7`, extraction `892bf045`,
+serving `448d8f87`) all exonerated their suspect and converged on "spend on a drift-gated
+re-roll loop... which pays regardless of cause" instead of continuing to cause-hunt. This adds
+the gate half of that (surfacing only — auto-reroll stays OFF by default, generation-spend-rule).
+
+- **`extract12.py`, templated mode only:** per-control drift (px, on the skin's own paint.png
+  grid) = distance between the blueprint-declared `template` centre and the detected
+  `regions.<k>.device` centre. Ported VERBATIM from `twoimg/roster_audit.py`'s `drift_table()`
+  (the exact metric all three bisects used) as a local `_drift_table()` — not reimplemented,
+  not reforked; cross-checked bit-for-bit against `roster_audit.drift_table` on all 6 templated
+  skins (all 6 means match to 0.1px). Controls that fell back to the raw template position
+  (`fromTemplate`) are excluded from mean/worst — the same correction `driftbisect2/README.md`
+  had to apply after finding fallback controls trivially read ~0px drift and deflated the mean.
+  Writes a top-level `regions.json["drift"] = {per_control, excluded_fallback, mean_px, worst:
+  [name,px], threshold_px}`, and a `gate.reasons` entry `drift:<worst-control>` (which also
+  gates `PASS`, same as every other reason in this gate) when `mean_px` exceeds the threshold.
+- **THRESHOLD = 650px**, calibrated against the live roster + the bisects' own 150px noise
+  floor: today's healthy templated skins read 415–542px mean drift (fa-pod 502.9, ps1-crunchy
+  415.4, wc-goldshield 461.6, and — pre-regression — wmp-quicksilver at its roster-audit-time
+  542.2); the bisect chain's own worst regressors read 858–950px (fallout-pipboy 950.5,
+  steam-porthole 858.3). 650px sits ~110px above the healthy ceiling and ~210px below the
+  weakest regressor, outside the 150px floor on both sides, so a single session's per-gen
+  variance (330–420px, per `servingbisect/README.md`) shouldn't flip a healthy skin to FAIL or
+  a regressor to PASS on its own. Full rationale in `extract12.py`'s `DRIFT_THRESH_PX` comment.
+- **`build_dashboard.py`:** one surface addition — each templated card's mono run-id line now
+  shows `drift <mean>px (worst <control> <px>px)`, styled red (`.driftfail`) when over threshold.
+
+**Validated $0 across all 6 templated-mode skins** (re-extracted from existing paint/mask/biref,
+no new generations): fa-pod 502.9px PASS, ps1-crunchy 415.4px PASS, wc-goldshield 461.6px PASS
+(all 3 match the roster audit exactly) — confirms the threshold correctly separates the
+calibration set's healthy range. **fallout-pipboy 950.5px FAIL and steam-porthole 858.3px FAIL**
+also match the roster audit exactly — the gate correctly flags both of the bisect chain's named
+regressors. Gate-reason diff before/after on all 15 skins: the **only** new reasons anywhere in
+the roster are the 3 `drift:album_art` entries above — zero regressions on any other gate
+(emptiness/missing/seek-cov/state-align/biref-parts/leak/guide-ring/region-degenerate all
+byte-identical); the 9 templateless skins are untouched (no `template` to drift against, skipped
+by construction) and their `regions.json` files are byte-for-byte unchanged.
+
+**Surprise: wmp-quicksilver now reads 1112.8px mean drift (worst album_art 1763.4px) and FAILs**
+— substantially worse than its roster-audit-time value (542.2px, healthy). It was re-rolled
+(commit `8c97ef9a`) to fix a guide-ring contamination defect *after* the roster audit snapshot
+was taken; nobody was checking drift on that re-roll because this gate didn't exist yet.
+Inspected directly: its `album_art` template centre is `(0.28, 0.225)` (left column) but the
+detected device sits near `(0.70, 0.62)` (opposite quadrant) — a real, large layout departure,
+not a metric artifact. This is exactly the failure mode the gate exists to catch: **roster-wide
+auto-PASS count under the live `regions.json` gate drops from 13/15 to 10/15** (fallout-pipboy,
+steam-porthole, wmp-quicksilver newly FAIL on drift; n64-prerender-character and ps1-wild were
+already FAIL on unrelated defects). None of these 3 are re-rolled here — auto-reroll is OFF by
+default; they now surface on the dashboard for human triage, per the task.
+
+**Known dashboard staleness, not fixed here (pre-existing, out of scope for "one surface
+addition"):** `build_dashboard.py`'s big auto PASS/FAIL badge and the top `npass` count prefer
+`orch.json`'s CACHED `"passed"`/reasons over the live `regions.json` gate when `orch.json`
+exists (`s["passed"] = orch.get("passed", gate.get("PASS"))`) — this predates the drift gate and
+affects every gate reason, not just drift. Result: the dashboard header still reads "auto 13/15"
+and the 3 drift-failing cards still show a green "auto PASS" badge, even though their run-id
+line now shows a red drift-FAIL and the summary table's "auto-fail reasons" column correctly
+lists `drift:album_art` (that column already falls through to the live gate). `orch.json` only
+refreshes on a real orchestrate12.py roll — regenerating it here would mean burning a re-roll
+just to update a cached label, which contradicts "surface, don't burn rolls." Flagged for
+whoever owns `orch.json`/badge-precedence next, not resolved in this pass.
+
 ## Freeze-on-PASS: paid baselines snapshotted the moment they first gate-PASS — DONE 2026-07-11
 
 Guardrail closing the gap the drift bisect exposed (`892bf045`): every June baseline paint

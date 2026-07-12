@@ -821,6 +821,70 @@ for k in KNOBS + ([TOGGLE] if TOGGLE else []):
     flag = " <- MISMATCH >15%" if abs(1 - rw) > 0.15 or abs(1 - rh) > 0.15 else ""
     print(f"  {k:8} slot/part w={rw:.2f} h={rh:.2f}{flag}")
 
+# ---- TEMPLATE-DRIFT GATE (templated mode only) ----
+# Per-control drift: distance (px, on THIS skin's own paint.png pixel grid) between the
+# blueprint-DECLARED template centre (results.json `template`, baked at generation time) and
+# the DETECTED device centre (regs[k].device bbox centre). Ported VERBATIM from
+# twoimg/roster_audit.py's drift_table() -- the exact metric all three drift-suspect bisects
+# used (218224f7 clause bisect, 892bf045 extraction-commit bisect, 448d8f87 serving bisect),
+# per placement-invariants-rule/verify-outputs-rule "don't fork the metric". That chain closed
+# CAUSE-hunting: drift is real, paint-driven, and neither the extractor, the BOLD-silhouette
+# clause, nor the fal->Vertex serving switch is the driver (per-gen variance at fixed config
+# measured 330-420px in the serving bisect). Its actionable conclusion (448d8f87's TODO entry)
+# was to stop cause-hunting and start SURFACING drift per roll for human triage instead --
+# this gate is that surface.
+#
+# Controls that fell back to the raw template position (regs[k].fromTemplate, already its own
+# "knob-template-fallback" reason above) are EXCLUDED from the mean/worst calc: a fallback
+# trivially reads ~0px drift (it's a template pass-through, not a real detection), which would
+# artificially deflate the mean -- the same correction driftbisect2/README.md had to apply
+# after finding 2 such fallbacks flattering the old extractor's numbers.
+#
+# THRESHOLD = 650px mean drift, calibrated 2026-07-11 against the live roster audit
+# (twoimg/roster_audit.json) plus the bisect chain's own 150px noise floor:
+#   - today's healthy/PASSing templated skins: fa-pod 502.9, ps1-crunchy 415.4,
+#     wc-goldshield 461.6, wmp-quicksilver 542.2px mean drift -- 542px is the healthy ceiling.
+#   - the bisect chain's own worst regressors (the reason this gate exists): fallout-pipboy
+#     950.5px, steam-porthole 858.3px mean drift.
+#   650px sits ~110px above the healthy ceiling and ~210px below the weakest regressor -- on
+#   both sides that's outside the 150px noise floor the bisects established, so a single
+#   session's per-gen variance (330-420px, per servingbisect) shouldn't flip a genuinely
+#   healthy skin to FAIL or a genuine regressor to PASS. This is a TRIAGE threshold, not a
+#   hard quality bar: auto-reroll is OFF by default (generation-spend-rule) -- a drift FAIL
+#   here only shows up on the dashboard for a human to decide whether to spend a re-roll; it
+#   never burns spend on its own.
+DRIFT_THRESH_PX = 650.0
+drift_info = None
+if TEMPLATED and template:
+    def _drift_table(tmpl, regs_, W, H):
+        """Verbatim port of twoimg/roster_audit.py:drift_table() -- do not fork this metric."""
+        out = {}
+        for k, t in tmpl.items():
+            dev = (regs_.get(k) or {}).get("device")
+            if not dev:
+                continue
+            cx, cy = dev[0] + dev[2] / 2, dev[1] + dev[3] / 2
+            dxp, dyp = (cx - t[0]) * W, (cy - t[1]) * H
+            out[k] = float((dxp ** 2 + dyp ** 2) ** 0.5)
+        return out
+    _PW, _PH = p.size
+    _dt = _drift_table(template, regs, _PW, _PH)
+    _fallback_ctrls = sorted(k for k in _dt if (regs.get(k) or {}).get("fromTemplate"))
+    _scored = {k: v for k, v in _dt.items() if k not in _fallback_ctrls}
+    if _scored:
+        _mean = float(np.mean(list(_scored.values())))
+        _worst_k, _worst_v = max(_scored.items(), key=lambda kv: kv[1])
+        drift_info = {
+            "per_control": {k: round(v, 1) for k, v in _dt.items()},
+            "excluded_fallback": _fallback_ctrls,
+            "mean_px": round(_mean, 1),
+            "worst": [_worst_k, round(_worst_v, 1)],
+            "threshold_px": DRIFT_THRESH_PX,
+        }
+        print(f"[drift gate] mean={_mean:.1f}px worst={_worst_k}({_worst_v:.1f}px) "
+              f"threshold={DRIFT_THRESH_PX:.0f}px "
+              f"{'FAIL - regenerate' if _mean > DRIFT_THRESH_PX else 'ok'}")
+
 # ==== GATE SUMMARY (structured PASS/FAIL for the auto-regen loop) ====
 missing = [k for k in NAMES if not (regs.get(k) and regs[k].get("device"))]
 # seek coverage: travel span vs groove bbox x-extent
@@ -886,6 +950,8 @@ if biref_ok is False: reasons.append("biref-parts")
 leak_val = RES.get("leak")
 if leak_val is not None and leak_val > 0.003: reasons.append(f"leak={leak_val}")
 if ring_flagged: reasons.append("guide-ring:" + ",".join(ring_flagged))
+drift_fail = bool(drift_info and drift_info["mean_px"] > DRIFT_THRESH_PX)
+if drift_fail: reasons.append(f"drift:{drift_info['worst'][0]}")
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "guide_ring": ring_flagged,
@@ -894,10 +960,12 @@ gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "cont
                 and (not region_degenerate)
                 and (seek_cov is None or seek_cov >= 0.7)
                 and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
-                and (not TOGGLE or sa is None or sa_ok) and (not ring_flagged)}
+                and (not TOGGLE or sa is None or sa_ok) and (not ring_flagged) and (not drift_fail)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate
+if drift_info is not None: R2["drift"] = drift_info
 json.dump(R2, open(os.path.join(OUT, "regions.json"), "w"), indent=2)
+_drift_str = f"drift={drift_info['mean_px']}px" if drift_info else "drift=n/a"
 print(f"[GATE] {'PASS' if gate['PASS'] else 'FAIL'} "
       f"controls={gate['controls']}/{gate['controls_total']} seek_cov={seek_cov} "
-      f"empty={'ok' if not empty_fail else 'FAIL'} align={'ok' if sa_ok else 'x'} "
+      f"empty={'ok' if not empty_fail else 'FAIL'} align={'ok' if sa_ok else 'x'} {_drift_str} "
       f"reasons={reasons or 'none'}")

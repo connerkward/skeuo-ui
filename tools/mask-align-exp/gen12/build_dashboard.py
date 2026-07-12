@@ -60,6 +60,7 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
                   "rolls": orch.get("rolls", "?"), "seed": orch.get("final_seed", res.get("seed", "?")),
                   "gate": gate, "leak": res.get("leak"), "pbr": pbr,
                   "painted": painted_str, "mid_regen": mid_regen, "dr": dr,
+                  "drift": reg.get("drift"),
                   "reasons": (orch.get("gate") or {}).get("reasons") or gate.get("reasons") or []})
 npass = sum(1 for s in skins if s["passed"]); n = len(skins)
 # cost annotation (dev-facing-model-cost-annotation-rule): sum rolls × per-roll model spend
@@ -103,8 +104,18 @@ def card(s):
     midflag = (' <span class=midregen title="paint.png mtime is newer than orch.json — this card '
                'may be showing a mid-regeneration or a manual roll not yet aggregated into orch.json">'
                '&#9888; paint newer than orch — mid-regen/unaggregated</span>') if s.get("mid_regen") else ''
+    # template-drift gate (extract12.py, templated mode only): mean/worst px so the review
+    # round sees drift at a glance without opening regions.json — see extract12.py's
+    # DRIFT_THRESH_PX comment for how the 650px threshold was calibrated.
+    drift = s.get("drift")
+    if drift:
+        dflag = ' class=driftfail' if drift["mean_px"] > drift["threshold_px"] else ''
+        drift_str = (f' · <span{dflag}>drift {drift["mean_px"]}px (worst {drift["worst"][0]} '
+                     f'{drift["worst"][1]}px)</span>')
+    else:
+        drift_str = ''
     runid = (f'<div class=runid>gen12 · seed {s["seed"]} · roll {s["rolls"]}/{ROLLS_MAX} · '
-             f'painted {s["painted"]}{midflag}</div>')
+             f'painted {s["painted"]}{midflag}{drift_str}</div>')
     return f'''<section class=card id="c-{sid}" data-id="{sid}">
   <div class=chead><h3>{s["title"]} <span class=mode>{s["mode"]}</span>{pbr_link}</h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
@@ -287,6 +298,7 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .chead h3{{margin:0;font-size:17px}}.mode{{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px}}
 .pbrlink{{font:11px ui-monospace,monospace;color:#ffcf7a;text-decoration:none;border:1px solid #ffcf7a44;border-radius:5px;padding:1px 7px}}.pbrlink:hover{{border-color:#ffcf7a;background:#ffcf7a1a}}
 .runid{{font:11px ui-monospace,monospace;color:#7a8090;margin:-4px 0 12px}}
+.runid .driftfail{{color:#400;background:#f88;border-radius:4px;padding:0 5px;font-weight:700}}
 .midregen{{color:#0a0604;background:#ffb454;border-radius:4px;padding:1px 6px;font-weight:700;margin-left:6px}}
 .hverdict{{display:flex;align-items:center;gap:8px}}.hlabel{{font:11px ui-monospace,monospace;color:#8a90a0}}
 .htoggle{{border:1px solid #ffffff26;background:#161a22;color:#9aa;border-radius:8px;padding:7px 16px;font:700 12px ui-monospace,monospace;cursor:pointer;min-width:120px}}

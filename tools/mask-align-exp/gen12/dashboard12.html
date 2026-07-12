@@ -16,6 +16,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
 .chead h3{margin:0;font-size:17px}.mode{font:11px ui-monospace,monospace;color:#8a90a0;border:1px solid #ffffff20;border-radius:5px;padding:1px 6px;margin-left:6px}
 .pbrlink{font:11px ui-monospace,monospace;color:#ffcf7a;text-decoration:none;border:1px solid #ffcf7a44;border-radius:5px;padding:1px 7px}.pbrlink:hover{border-color:#ffcf7a;background:#ffcf7a1a}
 .runid{font:11px ui-monospace,monospace;color:#7a8090;margin:-4px 0 12px}
+.runid .driftfail{color:#400;background:#f88;border-radius:4px;padding:0 5px;font-weight:700}
 .midregen{color:#0a0604;background:#ffb454;border-radius:4px;padding:1px 6px;font-weight:700;margin-left:6px}
 .hverdict{display:flex;align-items:center;gap:8px}.hlabel{font:11px ui-monospace,monospace;color:#8a90a0}
 .htoggle{border:1px solid #ffffff26;background:#161a22;color:#9aa;border-radius:8px;padding:7px 16px;font:700 12px ui-monospace,monospace;cursor:pointer;min-width:120px}
@@ -63,13 +64,13 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <button class=btn onclick="localStorage.clear();location.reload()">reset</button>
 </div>
 <h2>Overview</h2>
-<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody><tr class="rp"><td><a href="#c-claymation">claymation</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="claymation">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="diablo-gothic">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fa-pod">fa-pod</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fa-pod">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fa-sky">fa-sky</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fa-sky">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fallout-pipboy">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-vault">fallout-vault</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fallout-vault">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="myst-arcanum">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="n64-cutscene">—</td><td>3</td><td>—</td></tr><tr class="rf"><td><a href="#c-n64-prerender-character">n64-prerender-character</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="n64-prerender-character">—</td><td>3</td><td>region-misplaced:visualizer, emptiness, missing:repeat, state-align, guide-ring:sprite:vol</td></tr><tr class="rp"><td><a href="#c-ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="ps1-crunchy">—</td><td>1</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="ps1-wild">—</td><td>3</td><td>region-misplaced:visualizer, region-degenerate:visualizer, emptiness, state-align, leak=0.012298, guide-ring:playpause,prev,sprite:shuffle_on</td></tr><tr class="rp"><td><a href="#c-steam-porthole">steam-porthole</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="steam-porthole">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wc-goldshield">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wmp-quicksilver">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-vario">wmp-vario</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="wmp-vario">—</td><td>3</td><td>—</td></tr></tbody></table>
+<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody><tr class="rp"><td><a href="#c-claymation">claymation</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="claymation">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-diablo-gothic">diablo-gothic</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="diablo-gothic">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fa-pod">fa-pod</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fa-pod">—</td><td>1</td><td>—</td></tr><tr class="rp"><td><a href="#c-fa-sky">fa-sky</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fa-sky">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-fallout-pipboy">fallout-pipboy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="fallout-pipboy">—</td><td>1</td><td>drift:album_art</td></tr><tr class="rp"><td><a href="#c-fallout-vault">fallout-vault</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="fallout-vault">—</td><td>4</td><td>—</td></tr><tr class="rp"><td><a href="#c-myst-arcanum">myst-arcanum</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="myst-arcanum">—</td><td>2</td><td>—</td></tr><tr class="rp"><td><a href="#c-n64-cutscene">n64-cutscene</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="n64-cutscene">—</td><td>3</td><td>—</td></tr><tr class="rf"><td><a href="#c-n64-prerender-character">n64-prerender-character</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="n64-prerender-character">—</td><td>3</td><td>region-misplaced:visualizer, emptiness, missing:repeat, state-align, guide-ring:sprite:vol</td></tr><tr class="rp"><td><a href="#c-ps1-crunchy">ps1-crunchy</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="ps1-crunchy">—</td><td>1</td><td>—</td></tr><tr class="rf"><td><a href="#c-ps1-wild">ps1-wild</a></td><td>templateless</td><td>✗</td><td class="hcell" data-id="ps1-wild">—</td><td>3</td><td>region-misplaced:visualizer, region-degenerate:visualizer, emptiness, state-align, leak=0.012298, guide-ring:playpause,prev,sprite:shuffle_on</td></tr><tr class="rp"><td><a href="#c-steam-porthole">steam-porthole</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="steam-porthole">—</td><td>4</td><td>drift:album_art</td></tr><tr class="rp"><td><a href="#c-wc-goldshield">wc-goldshield</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wc-goldshield">—</td><td>3</td><td>—</td></tr><tr class="rp"><td><a href="#c-wmp-quicksilver">wmp-quicksilver</a></td><td>templated</td><td>✓</td><td class="hcell" data-id="wmp-quicksilver">—</td><td>1</td><td>drift:album_art</td></tr><tr class="rp"><td><a href="#c-wmp-vario">wmp-vario</a></td><td>templateless</td><td>✓</td><td class="hcell" data-id="wmp-vario">—</td><td>3</td><td>—</td></tr></tbody></table>
 <h2>Per-skin review</h2>
 <section class=card id="c-claymation" data-id="claymation">
   <div class=chead><h3>Claymation (templateless) <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="claymation">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 662 · roll 3/1 · painted 2026-07-11 16:31</div>
+  <div class=runid>gen12 · seed 662 · roll 3/1 · painted 2026-07-11 16:45</div>
   <div class=live><iframe src="assets-claymation/player.html" loading=lazy title="claymation player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="claymation" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -80,7 +81,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Diablo Gothic <span class=mode>templateless</span> · <a class=pbrlink href="assets-diablo-gothic/player-pbr.html" target=_blank>&#10024; dynamic lighting</a></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="diablo-gothic">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 736 · roll 1/1 · painted 2026-07-11 16:18</div>
+  <div class=runid>gen12 · seed 736 · roll 1/1 · painted 2026-07-11 16:45</div>
   <div class=live><iframe src="assets-diablo-gothic/player.html" loading=lazy title="diablo-gothic player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="diablo-gothic" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -91,7 +92,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Frutiger Aero Pod <span class=mode>templated</span> · <a class=pbrlink href="assets-fa-pod/player-pbr.html" target=_blank>&#10024; dynamic lighting</a></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="fa-pod">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 673 · roll 1/1 · painted 2026-07-09 13:39</div>
+  <div class=runid>gen12 · seed 673 · roll 1/1 · painted 2026-07-09 13:39 · <span>drift 502.9px (worst repeat 777.3px)</span></div>
   <div class=live><iframe src="assets-fa-pod/player.html" loading=lazy title="fa-pod player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="fa-pod" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -102,7 +103,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Frutiger Aero Sky (templateless) <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="fa-sky">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 840 · roll 3/1 · painted 2026-07-11 16:40</div>
+  <div class=runid>gen12 · seed 840 · roll 3/1 · painted 2026-07-11 16:45</div>
   <div class=live><iframe src="assets-fa-sky/player.html" loading=lazy title="fa-sky player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="fa-sky" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -113,11 +114,11 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Fallout Pipboy <span class=mode>templated</span> · <a class=pbrlink href="assets-fallout-pipboy/player-pbr.html" target=_blank>&#10024; dynamic lighting</a></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="fallout-pipboy">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 571 · roll 1/1 · painted 2026-07-09 13:56</div>
+  <div class=runid>gen12 · seed 571 · roll 1/1 · painted 2026-07-09 13:56 · <span class=driftfail>drift 950.5px (worst album_art 2063.5px)</span></div>
   <div class=live><iframe src="assets-fallout-pipboy/player.html" loading=lazy title="fallout-pipboy player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="fallout-pipboy" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 571</span><br><span class=rz>all checks green</span></div>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.038 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 571</span><br><span class=rz>reasons: drift:album_art</span></div>
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-fallout-pipboy/blueprint.png" target=_blank><figure><img src="assets-fallout-pipboy/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-fallout-pipboy/paint.png" target=_blank><figure><img src="assets-fallout-pipboy/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-fallout-pipboy/mask.png" target=_blank><figure><img src="assets-fallout-pipboy/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-fallout-pipboy/overlay.png" target=_blank><figure><img src="assets-fallout-pipboy/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-fallout-vault" data-id="fallout-vault">
@@ -157,7 +158,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>90s Pre-Rendered Character CG <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="n64-prerender-character">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 849 · roll 3/1 · painted 2026-07-11 16:10</div>
+  <div class=runid>gen12 · seed 849 · roll 3/1 · painted 2026-07-11 16:45</div>
   <div class=live><iframe src="assets-n64-prerender-character/player.html" loading=lazy title="n64-prerender-character player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="n64-prerender-character" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -168,7 +169,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Ps1 Crunchy <span class=mode>templated</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="ps1-crunchy">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 623 · roll 1/1 · painted 2026-07-10 11:03</div>
+  <div class=runid>gen12 · seed 623 · roll 1/1 · painted 2026-07-10 11:03 · <span>drift 415.4px (worst vol 1379.7px)</span></div>
   <div class=live><iframe src="assets-ps1-crunchy/player.html" loading=lazy title="ps1-crunchy player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="ps1-crunchy" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -179,7 +180,7 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Ps1 Wild <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="ps1-wild">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 982 · roll 3/1 · painted 2026-07-11 16:11</div>
+  <div class=runid>gen12 · seed 982 · roll 3/1 · painted 2026-07-11 16:45</div>
   <div class=live><iframe src="assets-ps1-wild/player.html" loading=lazy title="ps1-wild player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="ps1-wild" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -190,18 +191,18 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Steam Porthole <span class=mode>templated</span> · <a class=pbrlink href="assets-steam-porthole/player-pbr.html" target=_blank>&#10024; dynamic lighting</a></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="steam-porthole">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 623 · roll 4/1 · painted 2026-07-09 13:41</div>
+  <div class=runid>gen12 · seed 623 · roll 4/1 · painted 2026-07-09 13:41 · <span class=driftfail>drift 858.3px (worst album_art 2043.3px)</span></div>
   <div class=live><iframe src="assets-steam-porthole/player.html" loading=lazy title="steam-porthole player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="steam-porthole" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 4 roll(s) · seed 623</span><br><span class=rz>all checks green</span></div>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 4 roll(s) · seed 623</span><br><span class=rz>reasons: drift:album_art</span></div>
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-steam-porthole/blueprint.png" target=_blank><figure><img src="assets-steam-porthole/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-steam-porthole/paint.png" target=_blank><figure><img src="assets-steam-porthole/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-steam-porthole/mask.png" target=_blank><figure><img src="assets-steam-porthole/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-steam-porthole/overlay.png" target=_blank><figure><img src="assets-steam-porthole/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-wc-goldshield" data-id="wc-goldshield">
   <div class=chead><h3>Wc Goldshield <span class=mode>templated</span> · <a class=pbrlink href="assets-wc-goldshield/player-pbr.html" target=_blank>&#10024; dynamic lighting</a></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="wc-goldshield">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 736 · roll 3/1 · painted 2026-07-09 13:52</div>
+  <div class=runid>gen12 · seed 736 · roll 3/1 · painted 2026-07-09 13:52 · <span>drift 461.6px (worst next 837.2px)</span></div>
   <div class=live><iframe src="assets-wc-goldshield/player.html" loading=lazy title="wc-goldshield player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="wc-goldshield" placeholder="what's wrong with this skin? (autosaves)"></textarea>
@@ -212,18 +213,18 @@ table{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}th,
   <div class=chead><h3>Wmp Quicksilver <span class=mode>templated</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="wmp-quicksilver">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 688 · roll 1/1 · painted 2026-07-11 16:21</div>
+  <div class=runid>gen12 · seed 688 · roll 1/1 · painted 2026-07-11 16:45 · <span class=driftfail>drift 1112.8px (worst album_art 1763.4px)</span></div>
   <div class=live><iframe src="assets-wmp-quicksilver/player.html" loading=lazy title="wmp-quicksilver player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="wmp-quicksilver" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 688</span><br><span class=rz>all checks green</span><br><span class=auto>director (vertex:gemini-3.1-pro-preview, ~$0.02-0.05): <span class="pass">PASS 8.5/10</span> <span class=rz>The overall brushed silver look with blue glowing accents is highly successful and captures the Windows Media Player QuickSilver vibe.; Bevels and inset shadows give good dimensionality.; The shuffle toggle using a pause</span></span></div>
+      <div class=auto><span class="pass">auto PASS</span> · <span class=det>controls 10/10 · seek-cov 1.039 · empty ok · align ok · leak 0.0 · 1 roll(s) · seed 688</span><br><span class=rz>reasons: drift:album_art</span><br><span class=auto>director (vertex:gemini-3.1-pro-preview, ~$0.02-0.05): <span class="pass">PASS 8.5/10</span> <span class=rz>The overall brushed silver look with blue glowing accents is highly successful and captures the Windows Media Player QuickSilver vibe.; Bevels and inset shadows give good dimensionality.; The shuffle toggle using a pause</span></span></div>
       <details class=proc><summary>process images</summary><div class=strip><a href="assets-wmp-quicksilver/blueprint.png" target=_blank><figure><img src="assets-wmp-quicksilver/blueprint.png" loading=lazy><figcaption>blueprint</figcaption></figure></a><a href="assets-wmp-quicksilver/paint.png" target=_blank><figure><img src="assets-wmp-quicksilver/paint.png" loading=lazy><figcaption>paint</figcaption></figure></a><a href="assets-wmp-quicksilver/mask.png" target=_blank><figure><img src="assets-wmp-quicksilver/mask.png" loading=lazy><figcaption>mask</figcaption></figure></a><a href="assets-wmp-quicksilver/overlay.png" target=_blank><figure><img src="assets-wmp-quicksilver/overlay.png" loading=lazy><figcaption>overlay</figcaption></figure></a></div></details>
     </div></div>
 </section><section class=card id="c-wmp-vario" data-id="wmp-vario">
   <div class=chead><h3>Wmp Vario <span class=mode>templateless</span></h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="wmp-vario">— unset —</button></div></div>
-  <div class=runid>gen12 · seed 636 · roll 3/1 · painted 2026-07-11 16:04</div>
+  <div class=runid>gen12 · seed 636 · roll 3/1 · painted 2026-07-11 16:45</div>
   <div class=live><iframe src="assets-wmp-vario/player.html" loading=lazy title="wmp-vario player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="wmp-vario" placeholder="what's wrong with this skin? (autosaves)"></textarea>
