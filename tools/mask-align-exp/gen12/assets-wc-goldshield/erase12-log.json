@@ -1,0 +1,48 @@
+[
+  {
+    "control": "seek",
+    "method": "classical",
+    "before_sha": "f1f627071939",
+    "after_sha": "6e74fcd0dc97",
+    "defect_found_after": true,
+    "bbox_px": [
+      560,
+      1626,
+      688,
+      1744
+    ],
+    "crop_box_px": [
+      493,
+      1563,
+      755,
+      1807
+    ],
+    "seed": 736,
+    "ts": "20260711T232928",
+    "status": "erased-still-failing",
+    "verify_dir": "erase-verify"
+  },
+  {
+    "control": "seek",
+    "method": "model",
+    "before_sha": "f1f627071939",
+    "after_sha": "244b90373fbd",
+    "defect_found_after": true,
+    "bbox_px": [
+      560,
+      1626,
+      688,
+      1744
+    ],
+    "crop_box_px": [
+      484,
+      1545,
+      764,
+      1825
+    ],
+    "seed": 736,
+    "ts": "20260711T234200",
+    "status": "erased-still-failing",
+    "verify_dir": "erase-verify"
+  }
+]

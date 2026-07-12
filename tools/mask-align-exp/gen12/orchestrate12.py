@@ -84,3 +84,12 @@ result = {"id": sid, "title": spec.get("title", sid), "mode": spec["mode"],
 json.dump(result, open(os.path.join(ASSETS, "orch.json"), "w"), indent=2)
 print(f"[orch:{sid}] DONE passed={result['passed']} rolls={result['rolls']} "
       f"seed={result['final_seed']} in {result['elapsed_s']}s")
+# INDEX AUTO-APPEND (skins-index.json + skins-gallery.html): every run keeps the canonical
+# roster index current so "sweep to find skins with X defect" is never a manual task again —
+# see build_index.py's docstring. The index is cheap ($0, local, sub-second) to fully rebuild,
+# so this just reruns it rather than patching one row. Wrapped so an index bug never fails a
+# real (paid) generation run.
+try:
+    run(["python3", "build_index.py"])
+except Exception as e:
+    print(f"[orch:{sid}] WARN build_index.py failed (non-fatal): {e}")

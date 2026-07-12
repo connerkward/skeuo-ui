@@ -1,0 +1,25 @@
+[
+  {
+    "control": "seek",
+    "method": "classical",
+    "before_sha": "2e10a535f9b4",
+    "after_sha": "748321509488",
+    "defect_found_after": false,
+    "bbox_px": [
+      422,
+      2229,
+      509,
+      2393
+    ],
+    "crop_box_px": [
+      373,
+      2146,
+      558,
+      2476
+    ],
+    "seed": 571,
+    "ts": "20260712T013248",
+    "status": "erased",
+    "verify_dir": "erase-verify"
+  }
+]

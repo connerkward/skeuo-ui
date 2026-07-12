@@ -1,0 +1,230 @@
+{
+ "id": "steam-porthole-vertex-623",
+ "mode": "templated",
+ "seed": 623,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "brass": [
+   178,
+   138,
+   58
+  ],
+  "copper": [
+   158,
+   92,
+   46
+  ],
+  "bronze_dark": [
+   70,
+   52,
+   30
+  ],
+  "teal_glass": [
+   28,
+   104,
+   110
+  ],
+  "iron": [
+   58,
+   54,
+   50
+  ],
+  "cream": [
+   228,
+   214,
+   178
+  ]
+ },
+ "keys": {
+  "playpause": [
+   255,
+   0,
+   255
+  ],
+  "prev": [
+   0,
+   255,
+   255
+  ],
+  "next": [
+   128,
+   0,
+   255
+  ],
+  "repeat": [
+   0,
+   255,
+   0
+  ],
+  "queue": [
+   0,
+   0,
+   255
+  ],
+  "vol": [
+   255,
+   0,
+   128
+  ],
+  "seek": [
+   0,
+   255,
+   128
+  ],
+  "shuffle": [
+   128,
+   128,
+   255
+  ],
+  "visualizer": [
+   255,
+   255,
+   0
+  ],
+  "album_art": [
+   0,
+   128,
+   255
+  ]
+ },
+ "keyNames": {
+  "playpause": "MAGENTA",
+  "prev": "CYAN",
+  "next": "VIOLET-PURPLE",
+  "repeat": "PURE GREEN",
+  "queue": "PURE BLUE",
+  "vol": "ROSE PINK",
+  "seek": "SPRING GREEN",
+  "shuffle": "PERIWINKLE",
+  "visualizer": "YELLOW",
+  "album_art": "AZURE BLUE"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "warm furnace glow behind the porthole glass and gauge lamps",
+  "emissive_color": [
+   255,
+   150,
+   60
+  ],
+  "pulse": "ember",
+  "intensity": 0.8,
+  "viz_emissive": true,
+  "beat_couple": 0.06
+ },
+ "ticks": {
+  "skin": "baked",
+  "sprite": "baked"
+ },
+ "template": {
+  "album_art": [
+   0.5,
+   0.11249999999999999
+  ],
+  "visualizer": [
+   0.5,
+   0.25125000000000003
+  ],
+  "seek": [
+   0.5,
+   0.3525
+  ],
+  "prev": [
+   0.28,
+   0.44999999999999996
+  ],
+  "playpause": [
+   0.5,
+   0.44999999999999996
+  ],
+  "next": [
+   0.72,
+   0.44999999999999996
+  ],
+  "repeat": [
+   0.24,
+   0.5625
+  ],
+  "vol": [
+   0.42,
+   0.5700000000000001
+  ],
+  "shuffle": [
+   0.6,
+   0.5700000000000001
+  ],
+  "queue": [
+   0.78,
+   0.5625
+  ]
+ },
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 623,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "album_art_rect": [
+  0.26666666666666666,
+  0.03437499999999999,
+  0.4666666666666667,
+  0.15625
+ ],
+ "visualizer_rect": [
+  0.23333333333333334,
+  0.21062500000000003,
+  0.5333333333333333,
+  0.08125
+ ],
+ "prompt_json_spec": false,
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 0.0,
+ "serving_path": "vertex",
+ "theme": "steam-porthole",
+ "gen_seconds": 52.8
+}

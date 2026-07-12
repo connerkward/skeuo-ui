@@ -1,0 +1,2059 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-12T10:44:06",
+  "review_source": "review.json",
+  "bad_examples_source": "bad-examples-manifest.json",
+  "counts": {
+    "total": 18,
+    "pass": 5,
+    "fail": 7,
+    "ungraded": 6,
+    "bad_example": 0,
+    "baked_slider": 9
+  },
+  "cost_estimate_usd": [
+    5.06,
+    6.17
+  ],
+  "models": {
+    "generation": "fal-ai/gemini-3-pro-image-preview/edit",
+    "matte": "birefnet-v2 (local MPS)",
+    "director": "vertex:gemini-3.1-pro-preview"
+  },
+  "themes": [
+    "claymation",
+    "diablo-gothic",
+    "fa-pod",
+    "fa-sky",
+    "fallout-pipboy",
+    "fallout-vault",
+    "myst-arcanum",
+    "n64-cutscene",
+    "ps1-crunchy",
+    "steam-porthole",
+    "wc-goldshield",
+    "wmp-quicksilver",
+    "wmp-vario"
+  ],
+  "modes": [
+    "templated",
+    "templateless"
+  ],
+  "skins": [
+    {
+      "id": "claymation",
+      "theme": "claymation",
+      "mode": "templateless",
+      "seed": 662,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-claymation/paint.png",
+        "mask": "assets-claymation/mask.png",
+        "regions": "assets-claymation/regions.json",
+        "player": "assets-claymation/player.html",
+        "joint4k": "assets-claymation/joint-4k.png",
+        "blueprint": "assets-claymation/blueprint.png",
+        "overlay": "assets-claymation/overlay.png",
+        "biref_device": "assets-claymation_biref/device.png",
+        "orch": "assets-claymation/orch.json",
+        "results": "assets-claymation/results.json",
+        "director_review": "assets-claymation/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-claymation/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-claymation/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-claymation/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-claymation/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-claymation/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-claymation/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-claymation/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-claymation/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-claymation/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-claymation/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T01:58:08",
+      "paint_sha": "960d79749d80",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": true,
+        "live_pass": false,
+        "reasons": [
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 662,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.038,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.038,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:seek",
+        "human-note-mentions-baked"
+      ],
+      "human_verdict": "fail",
+      "human_note": "baked slider knob. switch looks weird. buttons are completely fucked and misaligned. ",
+      "status": "fail",
+      "bad_example_drive_link": null,
+      "rolls": 3,
+      "cost_estimate_usd": [
+        0.485,
+        0.585
+      ]
+    },
+    {
+      "id": "claymation-toggletrack1",
+      "theme": "claymation",
+      "mode": "templateless",
+      "seed": 662,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": null,
+      "paths": {
+        "paint": "assets-claymation-toggletrack1/paint.png",
+        "mask": "assets-claymation-toggletrack1/mask.png",
+        "regions": "assets-claymation-toggletrack1/regions.json",
+        "player": "assets-claymation-toggletrack1/player.html",
+        "biref_device": "assets-claymation-toggletrack1_biref/device.png",
+        "orch": "assets-claymation-toggletrack1/orch.json",
+        "results": "assets-claymation-toggletrack1/results.json"
+      },
+      "crops": [
+        {
+          "control": "device",
+          "path": "assets-claymation-toggletrack1_biref/device.png"
+        },
+        {
+          "control": "extra-1",
+          "path": "assets-claymation-toggletrack1_biref/extra-1.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-claymation-toggletrack1_biref/seek.png"
+        },
+        {
+          "control": "shuffle_lever",
+          "path": "assets-claymation-toggletrack1_biref/shuffle_lever.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-claymation-toggletrack1_biref/vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T02:01:18",
+      "paint_sha": "db507609a519",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "guide-ring:next",
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 662,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [
+            "guide-ring:next",
+            "sprite-fit:shuffle"
+          ],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [
+            "next"
+          ],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "silhouette_mismatch": [],
+          "orientation_ok": true,
+          "reasons": [
+            "guide-ring:next",
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": null,
+        "director_score_0_10": null
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.155,
+        0.178
+      ]
+    },
+    {
+      "id": "claymation-toggletrack2",
+      "theme": "claymation",
+      "mode": "templateless",
+      "seed": 1901,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": null,
+      "paths": {
+        "paint": "assets-claymation-toggletrack2/paint.png",
+        "mask": "assets-claymation-toggletrack2/mask.png",
+        "regions": "assets-claymation-toggletrack2/regions.json",
+        "player": "assets-claymation-toggletrack2/player.html",
+        "biref_device": "assets-claymation-toggletrack2_biref/device.png",
+        "orch": "assets-claymation-toggletrack2/orch.json",
+        "results": "assets-claymation-toggletrack2/results.json"
+      },
+      "crops": [
+        {
+          "control": "device",
+          "path": "assets-claymation-toggletrack2_biref/device.png"
+        },
+        {
+          "control": "extra-1",
+          "path": "assets-claymation-toggletrack2_biref/extra-1.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-claymation-toggletrack2_biref/seek.png"
+        },
+        {
+          "control": "shuffle_lever",
+          "path": "assets-claymation-toggletrack2_biref/shuffle_lever.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-claymation-toggletrack2_biref/vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T02:01:18",
+      "paint_sha": "c46e584e3d1a",
+      "gate_results": {
+        "auto_pass": true,
+        "orch_passed": false,
+        "live_pass": true,
+        "reasons": [
+          "emptiness"
+        ],
+        "orch_gate": {
+          "seed": 1901,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [
+            "emptiness"
+          ],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [],
+          "orientation_ok": true,
+          "reasons": [],
+          "PASS": true
+        },
+        "director_verdict": null,
+        "director_score_0_10": null
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:shuffle"
+      ],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.155,
+        0.178
+      ]
+    },
+    {
+      "id": "diablo-gothic",
+      "theme": "diablo-gothic",
+      "mode": "templateless",
+      "seed": 736,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-diablo-gothic/paint.png",
+        "mask": "assets-diablo-gothic/mask.png",
+        "regions": "assets-diablo-gothic/regions.json",
+        "player": "assets-diablo-gothic/player.html",
+        "player_pbr": "assets-diablo-gothic/player-pbr.html",
+        "joint4k": "assets-diablo-gothic/joint-4k.png",
+        "blueprint": "assets-diablo-gothic/blueprint.png",
+        "overlay": "assets-diablo-gothic/overlay.png",
+        "biref_device": "assets-diablo-gothic_biref/device.png",
+        "orch": "assets-diablo-gothic/orch.json",
+        "results": "assets-diablo-gothic/results.json",
+        "director_review": "assets-diablo-gothic/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-diablo-gothic/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-diablo-gothic/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-diablo-gothic/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-diablo-gothic/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-diablo-gothic/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-diablo-gothic/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-diablo-gothic/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-diablo-gothic/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-diablo-gothic/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-diablo-gothic/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-11T23:36:32",
+      "paint_sha": "3648e1761299",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": true,
+        "live_pass": false,
+        "reasons": [
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 736,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 6
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:seek"
+      ],
+      "human_verdict": "fail",
+      "human_note": "switch is weird. repeat button depression alginemnt off to right. css slider goes too far on top. ",
+      "status": "fail",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
+      ]
+    },
+    {
+      "id": "fa-pod",
+      "theme": "fa-pod",
+      "mode": "templated",
+      "seed": 673,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-fa-pod/paint.png",
+        "mask": "assets-fa-pod/mask.png",
+        "regions": "assets-fa-pod/regions.json",
+        "player": "assets-fa-pod/player.html",
+        "player_pbr": "assets-fa-pod/player-pbr.html",
+        "joint4k": "assets-fa-pod/joint-4k.png",
+        "blueprint": "assets-fa-pod/blueprint.png",
+        "overlay": "assets-fa-pod/overlay.png",
+        "biref_device": "assets-fa-pod_biref/device.png",
+        "orch": "assets-fa-pod/orch.json",
+        "results": "assets-fa-pod/results.json",
+        "director_review": "assets-fa-pod/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-fa-pod/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-fa-pod/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-fa-pod/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-fa-pod/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-fa-pod/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-fa-pod/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-fa-pod/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-fa-pod/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-fa-pod/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fa-pod/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-09T13:39:49",
+      "paint_sha": "3bc22bca2c5f",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": true,
+        "live_pass": false,
+        "reasons": [
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 673,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.038,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": "fail",
+      "human_note": "switch is way too huge now. silhouettes still not aligning correctly. ",
+      "status": "fail",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
+      ]
+    },
+    {
+      "id": "fa-pod-toggletrack1",
+      "theme": "fa-pod",
+      "mode": "templated",
+      "seed": 673,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": null,
+      "paths": {
+        "paint": "assets-fa-pod-toggletrack1/paint.png",
+        "mask": "assets-fa-pod-toggletrack1/mask.png",
+        "regions": "assets-fa-pod-toggletrack1/regions.json",
+        "player": "assets-fa-pod-toggletrack1/player.html",
+        "biref_device": "assets-fa-pod-toggletrack1_biref/device.png",
+        "orch": "assets-fa-pod-toggletrack1/orch.json",
+        "results": "assets-fa-pod-toggletrack1/results.json"
+      },
+      "crops": [
+        {
+          "control": "device",
+          "path": "assets-fa-pod-toggletrack1_biref/device.png"
+        },
+        {
+          "control": "extra-1",
+          "path": "assets-fa-pod-toggletrack1_biref/extra-1.png"
+        },
+        {
+          "control": "extra-2",
+          "path": "assets-fa-pod-toggletrack1_biref/extra-2.png"
+        },
+        {
+          "control": "extra-3",
+          "path": "assets-fa-pod-toggletrack1_biref/extra-3.png"
+        },
+        {
+          "control": "shuffle_lever",
+          "path": "assets-fa-pod-toggletrack1_biref/shuffle_lever.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fa-pod-toggletrack1_biref/vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T02:01:18",
+      "paint_sha": "3a5492674e4e",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "biref-parts",
+          "guide-ring:playpause,prev,next,repeat,queue"
+        ],
+        "orch_gate": {
+          "seed": 673,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [
+            "emptiness",
+            "biref-parts",
+            "guide-ring:playpause,prev,next,repeat,queue"
+          ],
+          "leak": 0.001871
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": false,
+          "leak": 0.001871,
+          "guide_ring": [
+            "playpause",
+            "prev",
+            "next",
+            "repeat",
+            "queue"
+          ],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [],
+          "orientation_ok": true,
+          "reasons": [
+            "biref-parts",
+            "guide-ring:playpause,prev,next,repeat,queue"
+          ],
+          "PASS": false
+        },
+        "director_verdict": null,
+        "director_score_0_10": null
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:shuffle"
+      ],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.155,
+        0.178
+      ]
+    },
+    {
+      "id": "fa-pod-toggletrack2",
+      "theme": "fa-pod",
+      "mode": "templated",
+      "seed": 1451,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": null,
+      "paths": {
+        "paint": "assets-fa-pod-toggletrack2/paint.png",
+        "mask": "assets-fa-pod-toggletrack2/mask.png",
+        "regions": "assets-fa-pod-toggletrack2/regions.json",
+        "player": "assets-fa-pod-toggletrack2/player.html",
+        "biref_device": "assets-fa-pod-toggletrack2_biref/device.png",
+        "orch": "assets-fa-pod-toggletrack2/orch.json",
+        "results": "assets-fa-pod-toggletrack2/results.json"
+      },
+      "crops": [
+        {
+          "control": "device",
+          "path": "assets-fa-pod-toggletrack2_biref/device.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-fa-pod-toggletrack2_biref/seek.png"
+        },
+        {
+          "control": "shuffle_lever",
+          "path": "assets-fa-pod-toggletrack2_biref/shuffle_lever.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fa-pod-toggletrack2_biref/vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T02:01:18",
+      "paint_sha": "0c391036c0bb",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "guide-ring:repeat"
+        ],
+        "orch_gate": {
+          "seed": 1451,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.037,
+          "reasons": [
+            "biref-parts",
+            "guide-ring:repeat"
+          ],
+          "leak": 0.001701
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.037,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.001701,
+          "guide_ring": [
+            "repeat"
+          ],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [],
+          "orientation_ok": true,
+          "reasons": [
+            "guide-ring:repeat"
+          ],
+          "PASS": false
+        },
+        "director_verdict": null,
+        "director_score_0_10": null
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.155,
+        0.178
+      ]
+    },
+    {
+      "id": "fa-pod-toggletrack3",
+      "theme": "fa-pod",
+      "mode": "templated",
+      "seed": 2287,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": null,
+      "paths": {
+        "paint": "assets-fa-pod-toggletrack3/paint.png",
+        "mask": "assets-fa-pod-toggletrack3/mask.png",
+        "regions": "assets-fa-pod-toggletrack3/regions.json",
+        "player": "assets-fa-pod-toggletrack3/player.html",
+        "biref_device": "assets-fa-pod-toggletrack3_biref/device.png",
+        "orch": "assets-fa-pod-toggletrack3/orch.json",
+        "results": "assets-fa-pod-toggletrack3/results.json"
+      },
+      "crops": [
+        {
+          "control": "device",
+          "path": "assets-fa-pod-toggletrack3_biref/device.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-fa-pod-toggletrack3_biref/seek.png"
+        },
+        {
+          "control": "shuffle_lever",
+          "path": "assets-fa-pod-toggletrack3_biref/shuffle_lever.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fa-pod-toggletrack3_biref/vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T02:01:18",
+      "paint_sha": "76eac7642ef3",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "emptiness",
+          "silhouette-mismatch:prev",
+          "silhouette-mismatch:queue"
+        ],
+        "orch_gate": {
+          "seed": 2287,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.038,
+          "reasons": [
+            "emptiness",
+            "silhouette-mismatch:prev",
+            "silhouette-mismatch:queue"
+          ],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": false,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.038,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [
+            "prev",
+            "queue"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "emptiness",
+            "silhouette-mismatch:prev",
+            "silhouette-mismatch:queue"
+          ],
+          "PASS": false
+        },
+        "director_verdict": null,
+        "director_score_0_10": null
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.155,
+        0.178
+      ]
+    },
+    {
+      "id": "fa-sky",
+      "theme": "fa-sky",
+      "mode": "templateless",
+      "seed": 853,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-fa-sky/paint.png",
+        "mask": "assets-fa-sky/mask.png",
+        "regions": "assets-fa-sky/regions.json",
+        "player": "assets-fa-sky/player.html",
+        "joint4k": "assets-fa-sky/joint-4k.png",
+        "blueprint": "assets-fa-sky/blueprint.png",
+        "overlay": "assets-fa-sky/overlay.png",
+        "biref_device": "assets-fa-sky_biref/device.png",
+        "orch": "assets-fa-sky/orch.json",
+        "results": "assets-fa-sky/results.json",
+        "director_review": "assets-fa-sky/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-fa-sky/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-fa-sky/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-fa-sky/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-fa-sky/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-fa-sky/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-fa-sky/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-fa-sky/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-fa-sky/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-fa-sky/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fa-sky/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T02:20:15",
+      "paint_sha": "cc9d73917c1f",
+      "gate_results": {
+        "auto_pass": true,
+        "orch_passed": true,
+        "live_pass": true,
+        "reasons": [],
+        "orch_gate": {
+          "seed": 853,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.038,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.038,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [],
+          "orientation_ok": true,
+          "reasons": [],
+          "PASS": true
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": "fail",
+      "human_note": "phantom button play pause still issue. reroll. ",
+      "status": "fail",
+      "bad_example_drive_link": null,
+      "rolls": 2,
+      "cost_estimate_usd": [
+        0.33,
+        0.406
+      ]
+    },
+    {
+      "id": "fallout-pipboy",
+      "theme": "fallout-pipboy",
+      "mode": "templated",
+      "seed": 951,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-fallout-pipboy/paint.png",
+        "mask": "assets-fallout-pipboy/mask.png",
+        "regions": "assets-fallout-pipboy/regions.json",
+        "player": "assets-fallout-pipboy/player.html",
+        "player_pbr": "assets-fallout-pipboy/player-pbr.html",
+        "joint4k": "assets-fallout-pipboy/joint-4k.png",
+        "blueprint": "assets-fallout-pipboy/blueprint.png",
+        "overlay": "assets-fallout-pipboy/overlay.png",
+        "biref_device": "assets-fallout-pipboy_biref/device.png",
+        "orch": "assets-fallout-pipboy/orch.json",
+        "results": "assets-fallout-pipboy/results.json",
+        "director_review": "assets-fallout-pipboy/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-fallout-pipboy/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-fallout-pipboy/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-fallout-pipboy/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-fallout-pipboy/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-fallout-pipboy/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-fallout-pipboy/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-fallout-pipboy/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-fallout-pipboy/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-fallout-pipboy/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fallout-pipboy/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T01:17:39",
+      "paint_sha": "ac74ff920d88",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "drift:album_art",
+          "baked-thumb:seek"
+        ],
+        "orch_gate": {
+          "seed": 951,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.038,
+          "reasons": [
+            "drift:album_art"
+          ],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.038,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [
+            "seek"
+          ],
+          "sprite_fit": [],
+          "orientation_ok": true,
+          "reasons": [
+            "drift:album_art",
+            "baked-thumb:seek"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "gate.baked_thumb=['seek']",
+        "erase12-log:seek"
+      ],
+      "human_verdict": "pass",
+      "human_note": "almost perfect. switch is just a little to big. ",
+      "status": "pass",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
+      ]
+    },
+    {
+      "id": "fallout-vault",
+      "theme": "fallout-vault",
+      "mode": "templateless",
+      "seed": 649,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-fallout-vault/paint.png",
+        "mask": "assets-fallout-vault/mask.png",
+        "regions": "assets-fallout-vault/regions.json",
+        "player": "assets-fallout-vault/player.html",
+        "player_pbr": "assets-fallout-vault/player-pbr.html",
+        "joint4k": "assets-fallout-vault/joint-4k.png",
+        "blueprint": "assets-fallout-vault/blueprint.png",
+        "overlay": "assets-fallout-vault/overlay.png",
+        "biref_device": "assets-fallout-vault_biref/device.png",
+        "orch": "assets-fallout-vault/orch.json",
+        "results": "assets-fallout-vault/results.json",
+        "director_review": "assets-fallout-vault/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-fallout-vault/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-fallout-vault/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-fallout-vault/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-fallout-vault/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-fallout-vault/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-fallout-vault/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-fallout-vault/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-fallout-vault/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-fallout-vault/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fallout-vault/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-11T23:51:21",
+      "paint_sha": "de3ada0df452",
+      "gate_results": {
+        "auto_pass": true,
+        "orch_passed": true,
+        "live_pass": true,
+        "reasons": [],
+        "orch_gate": {
+          "seed": 649,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.04,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "orientation_ok": true,
+          "reasons": [],
+          "PASS": true
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:seek"
+      ],
+      "human_verdict": "fail",
+      "human_note": "button issue mentioend before still not fixed.",
+      "status": "fail",
+      "bad_example_drive_link": null,
+      "rolls": 4,
+      "cost_estimate_usd": [
+        0.64,
+        0.763
+      ]
+    },
+    {
+      "id": "myst-arcanum",
+      "theme": "myst-arcanum",
+      "mode": "templateless",
+      "seed": 649,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-myst-arcanum/paint.png",
+        "mask": "assets-myst-arcanum/mask.png",
+        "regions": "assets-myst-arcanum/regions.json",
+        "player": "assets-myst-arcanum/player.html",
+        "joint4k": "assets-myst-arcanum/joint-4k.png",
+        "blueprint": "assets-myst-arcanum/blueprint.png",
+        "overlay": "assets-myst-arcanum/overlay.png",
+        "biref_device": "assets-myst-arcanum_biref/device.png",
+        "orch": "assets-myst-arcanum/orch.json",
+        "results": "assets-myst-arcanum/results.json",
+        "director_review": "assets-myst-arcanum/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-myst-arcanum/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-myst-arcanum/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-myst-arcanum/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-myst-arcanum/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-myst-arcanum/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-myst-arcanum/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-myst-arcanum/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-myst-arcanum/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-myst-arcanum/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-myst-arcanum/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-10T11:08:01",
+      "paint_sha": "0c54123937ad",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": true,
+        "live_pass": false,
+        "reasons": [
+          "missing:vol",
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 649,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.04,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 9,
+          "controls_total": 10,
+          "missing": [
+            "vol"
+          ],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "missing:vol",
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 2,
+      "cost_estimate_usd": [
+        0.33,
+        0.406
+      ]
+    },
+    {
+      "id": "n64-cutscene",
+      "theme": "n64-cutscene",
+      "mode": "templateless",
+      "seed": 610,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-n64-cutscene/paint.png",
+        "mask": "assets-n64-cutscene/mask.png",
+        "regions": "assets-n64-cutscene/regions.json",
+        "player": "assets-n64-cutscene/player.html",
+        "player_pbr": "assets-n64-cutscene/player-pbr.html",
+        "joint4k": "assets-n64-cutscene/joint-4k.png",
+        "blueprint": "assets-n64-cutscene/blueprint.png",
+        "overlay": "assets-n64-cutscene/overlay.png",
+        "biref_device": "assets-n64-cutscene_biref/device.png",
+        "orch": "assets-n64-cutscene/orch.json",
+        "results": "assets-n64-cutscene/results.json",
+        "director_review": "assets-n64-cutscene/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-n64-cutscene/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-n64-cutscene/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-n64-cutscene/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-n64-cutscene/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-n64-cutscene/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-n64-cutscene/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-n64-cutscene/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-n64-cutscene/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-n64-cutscene/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-n64-cutscene/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-11T23:40:52",
+      "paint_sha": "3a0279d244eb",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": true,
+        "live_pass": false,
+        "reasons": [
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 610,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.038,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:seek"
+      ],
+      "human_verdict": "fail",
+      "human_note": "ugly. vss slider too wide on left side. siwtch weird looking. ",
+      "status": "fail",
+      "bad_example_drive_link": null,
+      "rolls": 3,
+      "cost_estimate_usd": [
+        0.485,
+        0.585
+      ]
+    },
+    {
+      "id": "ps1-crunchy",
+      "theme": "ps1-crunchy",
+      "mode": "templated",
+      "seed": 623,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-ps1-crunchy/paint.png",
+        "mask": "assets-ps1-crunchy/mask.png",
+        "regions": "assets-ps1-crunchy/regions.json",
+        "player": "assets-ps1-crunchy/player.html",
+        "joint4k": "assets-ps1-crunchy/joint-4k.png",
+        "blueprint": "assets-ps1-crunchy/blueprint.png",
+        "overlay": "assets-ps1-crunchy/overlay.png",
+        "biref_device": "assets-ps1-crunchy_biref/device.png",
+        "orch": "assets-ps1-crunchy/orch.json",
+        "results": "assets-ps1-crunchy/results.json",
+        "director_review": "assets-ps1-crunchy/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-ps1-crunchy/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-ps1-crunchy/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-ps1-crunchy/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-ps1-crunchy/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-ps1-crunchy/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-ps1-crunchy/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-ps1-crunchy/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-ps1-crunchy/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-ps1-crunchy/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-ps1-crunchy/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-10T11:03:02",
+      "paint_sha": "7e59ca84714d",
+      "gate_results": {
+        "auto_pass": true,
+        "orch_passed": true,
+        "live_pass": true,
+        "reasons": [],
+        "orch_gate": {
+          "seed": 623,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.04,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "orientation_ok": true,
+          "reasons": [],
+          "PASS": true
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": "fail",
+      "human_note": "mismapped buttons. two repeat buttons, queue button not operational. switch sprites completely differnt sizes. ",
+      "status": "fail",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
+      ]
+    },
+    {
+      "id": "steam-porthole",
+      "theme": "steam-porthole",
+      "mode": "templated",
+      "seed": 952,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-steam-porthole/paint.png",
+        "mask": "assets-steam-porthole/mask.png",
+        "regions": "assets-steam-porthole/regions.json",
+        "player": "assets-steam-porthole/player.html",
+        "player_pbr": "assets-steam-porthole/player-pbr.html",
+        "joint4k": "assets-steam-porthole/joint-4k.png",
+        "blueprint": "assets-steam-porthole/blueprint.png",
+        "overlay": "assets-steam-porthole/overlay.png",
+        "biref_device": "assets-steam-porthole_biref/device.png",
+        "orch": "assets-steam-porthole/orch.json",
+        "results": "assets-steam-porthole/results.json",
+        "director_review": "assets-steam-porthole/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-steam-porthole/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-steam-porthole/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-steam-porthole/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-steam-porthole/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-steam-porthole/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-steam-porthole/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-steam-porthole/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-steam-porthole/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-steam-porthole/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-steam-porthole/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T02:05:41",
+      "paint_sha": "60d73a396ee5",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "sprite-fit:shuffle",
+          "silhouette-mismatch:playpause",
+          "silhouette-mismatch:repeat",
+          "silhouette-mismatch:queue"
+        ],
+        "orch_gate": {
+          "seed": 952,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.04,
+          "reasons": [
+            "emptiness"
+          ],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.04,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "silhouette_mismatch": [
+            "playpause",
+            "repeat",
+            "queue"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "sprite-fit:shuffle",
+            "silhouette-mismatch:playpause",
+            "silhouette-mismatch:repeat",
+            "silhouette-mismatch:queue"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:vol",
+        "human-note-mentions-baked"
+      ],
+      "human_verdict": "pass",
+      "human_note": "swapped knob and play button. still need to paint out baked slider knob. ",
+      "status": "pass",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
+      ]
+    },
+    {
+      "id": "wc-goldshield",
+      "theme": "wc-goldshield",
+      "mode": "templated",
+      "seed": 736,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-wc-goldshield/paint.png",
+        "mask": "assets-wc-goldshield/mask.png",
+        "regions": "assets-wc-goldshield/regions.json",
+        "player": "assets-wc-goldshield/player.html",
+        "player_pbr": "assets-wc-goldshield/player-pbr.html",
+        "joint4k": "assets-wc-goldshield/joint-4k.png",
+        "blueprint": "assets-wc-goldshield/blueprint.png",
+        "overlay": "assets-wc-goldshield/overlay.png",
+        "biref_device": "assets-wc-goldshield_biref/device.png",
+        "orch": "assets-wc-goldshield/orch.json",
+        "results": "assets-wc-goldshield/results.json",
+        "director_review": "assets-wc-goldshield/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-wc-goldshield/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-wc-goldshield/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-wc-goldshield/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-wc-goldshield/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-wc-goldshield/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-wc-goldshield/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-wc-goldshield/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-wc-goldshield/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-wc-goldshield/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-wc-goldshield/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-11T23:42:01",
+      "paint_sha": "244b90373fbd",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": true,
+        "live_pass": false,
+        "reasons": [
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 736,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [],
+          "leak": 0.0004
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0004,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:seek"
+      ],
+      "human_verdict": "pass",
+      "human_note": "some issue with slot / swtich coherence, but hides nearly perfectly. ",
+      "status": "pass",
+      "bad_example_drive_link": null,
+      "rolls": 3,
+      "cost_estimate_usd": [
+        0.485,
+        0.585
+      ]
+    },
+    {
+      "id": "wmp-quicksilver",
+      "theme": "wmp-quicksilver",
+      "mode": "templated",
+      "seed": 953,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-wmp-quicksilver/paint.png",
+        "mask": "assets-wmp-quicksilver/mask.png",
+        "regions": "assets-wmp-quicksilver/regions.json",
+        "player": "assets-wmp-quicksilver/player.html",
+        "joint4k": "assets-wmp-quicksilver/joint-4k.png",
+        "blueprint": "assets-wmp-quicksilver/blueprint.png",
+        "overlay": "assets-wmp-quicksilver/overlay.png",
+        "biref_device": "assets-wmp-quicksilver_biref/device.png",
+        "orch": "assets-wmp-quicksilver/orch.json",
+        "results": "assets-wmp-quicksilver/results.json",
+        "director_review": "assets-wmp-quicksilver/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-wmp-quicksilver/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-wmp-quicksilver/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-wmp-quicksilver/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-wmp-quicksilver/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-wmp-quicksilver/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-wmp-quicksilver/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-wmp-quicksilver/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-wmp-quicksilver/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-wmp-quicksilver/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-wmp-quicksilver/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-11T23:25:08",
+      "paint_sha": "9a7b3b24f9a6",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 953,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.039,
+          "reasons": [
+            "emptiness",
+            "drift:playpause"
+          ],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.04,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 3
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": "pass",
+      "human_note": "fine",
+      "status": "pass",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
+      ]
+    },
+    {
+      "id": "wmp-vario",
+      "theme": "wmp-vario",
+      "mode": "templateless",
+      "seed": 636,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-wmp-vario/paint.png",
+        "mask": "assets-wmp-vario/mask.png",
+        "regions": "assets-wmp-vario/regions.json",
+        "player": "assets-wmp-vario/player.html",
+        "joint4k": "assets-wmp-vario/joint-4k.png",
+        "blueprint": "assets-wmp-vario/blueprint.png",
+        "overlay": "assets-wmp-vario/overlay.png",
+        "biref_device": "assets-wmp-vario_biref/device.png",
+        "orch": "assets-wmp-vario/orch.json",
+        "results": "assets-wmp-vario/results.json",
+        "director_review": "assets-wmp-vario/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-wmp-vario/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-wmp-vario/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-wmp-vario/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-wmp-vario/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-wmp-vario/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-wmp-vario/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-wmp-vario/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-wmp-vario/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-wmp-vario/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-wmp-vario/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-11T16:45:20",
+      "paint_sha": "9ecff4a4fd00",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": true,
+        "live_pass": false,
+        "reasons": [
+          "emptiness",
+          "sprite-fit:shuffle"
+        ],
+        "orch_gate": {
+          "seed": 636,
+          "PASS": true,
+          "controls": 10,
+          "seek_cov": 1.04,
+          "reasons": [],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": false,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.038,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [
+            "shuffle"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "emptiness",
+            "sprite-fit:shuffle"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": "pass",
+      "human_note": "switch / slot coherenece but nearly perfect.",
+      "status": "pass",
+      "bad_example_drive_link": null,
+      "rolls": 3,
+      "cost_estimate_usd": [
+        0.485,
+        0.585
+      ]
+    }
+  ]
+}
