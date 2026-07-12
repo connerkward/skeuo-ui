@@ -1,0 +1,47 @@
+[
+  {
+    "skin": "diablo-gothic",
+    "model": "gpt-image-2",
+    "cost": 0.0548,
+    "billable_units_header": "0.0548",
+    "seconds": 54.3,
+    "endpoint": "openai/gpt-image-2/edit",
+    "quality": "medium"
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "gpt-image-2",
+    "cost": 0.0548,
+    "billable_units_header": "0.0548",
+    "seconds": 57.6,
+    "endpoint": "openai/gpt-image-2/edit",
+    "quality": "medium"
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "gpt-image-2",
+    "cost": 0.0548,
+    "billable_units_header": "0.0548",
+    "seconds": 51.6,
+    "endpoint": "openai/gpt-image-2/edit",
+    "quality": "medium"
+  },
+  {
+    "skin": "claymation",
+    "model": "gpt-image-2",
+    "cost": 0.0548,
+    "billable_units_header": "0.0548",
+    "seconds": 49.0,
+    "endpoint": "openai/gpt-image-2/edit",
+    "quality": "medium"
+  },
+  {
+    "skin": "steam-porthole",
+    "model": "gpt-image-2",
+    "cost": 0.0548,
+    "billable_units_header": "0.0548",
+    "seconds": 48.4,
+    "endpoint": "openai/gpt-image-2/edit",
+    "quality": "medium"
+  }
+]

@@ -1,0 +1,284 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>inpaint bake-off arm 5 — Gemini 2.5 Flash vs GPT Image 2, PLAIN prompt, 5 skins</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  background:#0a0a0d; color:#e4e4e8; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  margin:0; padding:20px; line-height:1.5; max-width:1500px; margin:0 auto;
+}
+h1 { font-size:1.4rem; margin:0 0 6px; }
+h2 { font-size:1.1rem; margin:32px 0 12px; border-bottom:1px solid #2a2a32; padding-bottom:6px; }
+.sub { color:#9a9aa8; font-size:.9rem; margin-bottom:4px; }
+.cost-banner {
+  background:#14141a; border:1px solid #2a2a32; border-radius:8px; padding:12px 16px;
+  margin:16px 0 28px; font-size:.86rem; color:#c8c8d4;
+}
+.cost-banner b { color:#e4e4e8; }
+.cost-table { width:100%; border-collapse:collapse; margin:10px 0 14px; font-size:.82rem; }
+.cost-table th, .cost-table td { text-align:left; padding:6px 10px; border-bottom:1px solid #22222a; vertical-align:top; }
+.cost-table th { color:#9a9aa8; font-weight:600; }
+.skin-block { margin-bottom:40px; }
+.skin-title { font-size:1.08rem; font-weight:700; margin-bottom:2px; }
+.skin-material { color:#9a9aa8; font-size:.82rem; margin-bottom:4px; font-style:italic; }
+.skin-control { color:#7a7a86; font-size:.76rem; margin-bottom:14px; }
+.row { display:flex; flex-wrap:wrap; gap:16px; }
+.cell {
+  flex:1 1 300px; max-width:460px; background:#131318; border:1px solid #24242c; border-radius:10px;
+  padding:12px; display:flex; flex-direction:column; gap:8px;
+}
+.cell.before { border-color:#4a2a2a; background:#181212; }
+.cell img { width:100%; border-radius:6px; display:block; background:#000; }
+.cell-label { font-weight:700; font-size:.92rem; }
+.cell-endpoint { font-size:.73rem; color:#8a8a96; word-break:break-word; }
+.cell-cost { font-size:.78rem; color:#c8b060; }
+.imgs { display:flex; flex-direction:column; gap:8px; }
+.img-cap { font-size:.68rem; color:#7a7a86; text-align:center; margin-top:-4px; }
+a.imglink { text-decoration:none; }
+.badge {
+  display:inline-block; padding:3px 10px; border-radius:4px; font-size:.74rem; font-weight:800;
+  color:#fff; width:fit-content; letter-spacing:.02em;
+}
+.note { font-size:.79rem; color:#c4c4cc; }
+.verdict-section {
+  background:#101014; border:2px solid #3a3a44; border-radius:12px; padding:22px; margin-top:40px;
+}
+.verdict-section h2 { border:none; margin-top:0; }
+.verdict-table { width:100%; border-collapse:collapse; margin:12px 0 18px; font-size:.86rem; }
+.verdict-table th, .verdict-table td { text-align:left; padding:8px 10px; border-bottom:1px solid #24242c; vertical-align:top; }
+.verdict-table th { color:#9a9aa8; }
+.verdict-table td.g { color:#8fd6a0; } .verdict-table td.gp { color:#d8c07a; } .verdict-table td.b { color:#e29a9a; }
+.rec { background:#14241a; border:1px solid #2d5f3f; border-radius:8px; padding:16px; margin-top:14px; font-size:.9rem; }
+.legend { font-size:.78rem; color:#9a9aa8; margin:6px 0 0; }
+</style>
+<body>
+  <h1>Inpaint bake-off — ARM 5: Gemini 2.5 Flash vs GPT Image 2, PLAIN erase prompt, 5 skins</h1>
+  <div class="sub">The two cost-efficient frontrunners from arm 3, run head-to-head across a BROADER material range (5 skins vs arm-3's 3) to see whether the ranking generalizes.</div>
+  <div class="sub"><b>Prompt = the plain shipping erase12.py instruction</b> ("remove the part sitting in the groove/socket, continue the material, no new object/icon") — <b>no glow/rune/inlay/emissive clause</b>. A preserve-glow variant was tried first and discarded: it over-constrained the model into <i>inventing</i> new glow ornamentation (a hallucinated skull medallion on diablo). Same crop + mask + prompt to both models (controlled comparison).</div>
+
+  <div class="cost-banner">
+    <b>Models used + real measured per-call cost:</b>
+    <table class="cost-table">
+      <tr><th>Model</th><th>Endpoint</th><th>Cost (measured this arm)</th></tr>
+      <tr><td>Gemini 2.5 Flash Image (“Nano Banana”)</td><td>Vertex AI direct · gemini-2.5-flash-image (imageSize 2K)</td><td>$0.039/call (Vertex 2K tier, direct — not fal-wrapped, per generation-spend-rule §3)</td></tr>
+      <tr><td>GPT Image 2 (OpenAI, via fal)</td><td>fal openai/gpt-image-2/edit · quality=medium</td><td>$0.0548/call REAL BILLED (x-fal-billable-units=0.0548 × $1/unit, measured live all 5 calls; quality=high measured $0.22/call and was rejected as 4× the price)</td></tr>
+    </table>
+    <b>Arm-5 generation spend (this run):</b> 5 Gemini × $0.039 + 5 GPT × $0.0548 = <b>$0.4690</b>
+    &nbsp;|&nbsp; <b>Discarded glow-clause run</b> (real prior spend, archived under discarded-glowclause/, NOT in this verdict): ~$0.743
+    &nbsp;|&nbsp; matte/composite/scoring steps: $0 (local code).
+    <div class="legend">Legend — <b style="color:#8fd6a0">PASS</b>: defect erased, material continued cleanly, no lost feature, no hallucination. <b style="color:#d8c07a">SOFT fail</b>: erased but a material feature lost / minor texture mismatch; no invented geometry. <b style="color:#e29a9a">HARD fail</b>: defect NOT removed, OR new geometry hallucinated, OR catastrophic (black box).</div>
+  </div>
+
+  
+    <div class="skin-block">
+      <div class="skin-title">diablo-gothic</div>
+      <div class="skin-material">material: dark carved obsidian/gothic metal channel with glowing rune inlay</div>
+      <div class="skin-control">control / defect: seek (slider)</div>
+      <div class="row"><div class="cell before">
+      <div class="cell-label">BEFORE — baked defect (input)</div>
+      <div class="cell-endpoint">the pre-erase paint, defect present — what both models were asked to repair</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/diablo-gothic__BEFORE-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/diablo-gothic__BEFORE-seam-thumb.jpg" loading="lazy" alt="diablo-gothic BEFORE, seam-zoom"></a>
+        <div class="img-cap">seam-zoom (click → full-res)</div>
+        <a class="imglink" href="web/composite/diablo-gothic__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/diablo-gothic__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic BEFORE, full skin"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">Vertex AI direct · gemini-2.5-flash-image (imageSize 2K)</div>
+      <div class="cell-cost">$0.039/call (Vertex 2K tier, direct — not fal-wrapped, per generation-spend-rule §3)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/diablo-gothic__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/diablo-gothic__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini25-flash, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/diablo-gothic__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/diablo-gothic__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x gemini25-flash, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#2d8f3f">PASS — clean</div>
+      <div class="note">Baked horned-skull medallion fully removed; groove continues as dark carved obsidian AND the glowing rune-inlay cracks are naturally preserved/continued down both groove walls -- WITHOUT any glow instruction in the prompt. This is the arm-3 concern (gemini erasing the rune-glow) NOT reproducing under the plain prompt: the model handles the emissive material correctly on its own.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">fal openai/gpt-image-2/edit · quality=medium</div>
+      <div class="cell-cost">$0.0548/call REAL BILLED (x-fal-billable-units=0.0548 × $1/unit, measured live all 5 calls; quality=high measured $0.22/call and was rejected as 4× the price)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/diablo-gothic__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/diablo-gothic__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="diablo-gothic x gpt-image-2, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/diablo-gothic__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/diablo-gothic__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="diablo-gothic x gpt-image-2, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#b8860b">SOFT fail</div>
+      <div class="note">Medallion removed, no hallucinated object -- but the rune-glow is largely lost in the mid-groove (only faint at the bottom edges) and the groove reads slightly muddy/flat vs the crisp carved material elsewhere. Clean erase, lost a material feature.</div>
+    </div></div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">fallout-pipboy</div>
+      <div class="skin-material">material: worn olive-drab painted metal recessed slot, retro-futuristic terminal casing</div>
+      <div class="skin-control">control / defect: seek (slider)</div>
+      <div class="row"><div class="cell before">
+      <div class="cell-label">BEFORE — baked defect (input)</div>
+      <div class="cell-endpoint">the pre-erase paint, defect present — what both models were asked to repair</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/fallout-pipboy__BEFORE-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/fallout-pipboy__BEFORE-seam-thumb.jpg" loading="lazy" alt="fallout-pipboy BEFORE, seam-zoom"></a>
+        <div class="img-cap">seam-zoom (click → full-res)</div>
+        <a class="imglink" href="web/composite/fallout-pipboy__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/fallout-pipboy__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="fallout-pipboy BEFORE, full skin"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">Vertex AI direct · gemini-2.5-flash-image (imageSize 2K)</div>
+      <div class="cell-cost">$0.039/call (Vertex 2K tier, direct — not fal-wrapped, per generation-spend-rule §3)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/fallout-pipboy__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/fallout-pipboy__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="fallout-pipboy x gemini25-flash, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/fallout-pipboy__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/fallout-pipboy__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="fallout-pipboy x gemini25-flash, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#2d8f3f">PASS — clean</div>
+      <div class="note">Slider thumb fully removed; the oblong recessed slot is left empty and coherent, olive-drab painted-metal + rust wear continues cleanly around it.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">fal openai/gpt-image-2/edit · quality=medium</div>
+      <div class="cell-cost">$0.0548/call REAL BILLED (x-fal-billable-units=0.0548 × $1/unit, measured live all 5 calls; quality=high measured $0.22/call and was rejected as 4× the price)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/fallout-pipboy__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/fallout-pipboy__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="fallout-pipboy x gpt-image-2, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/fallout-pipboy__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/fallout-pipboy__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="fallout-pipboy x gpt-image-2, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#2d8f3f">PASS — clean</div>
+      <div class="note">Slider thumb fully removed; empty slot, material and lighting match the surrounding worn casing. On par with gemini here.</div>
+    </div></div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">n64-cutscene</div>
+      <div class="skin-material">material: chunky 90s-console beige/grey plastic recessed slider channel</div>
+      <div class="skin-control">control / defect: seek (slider)</div>
+      <div class="row"><div class="cell before">
+      <div class="cell-label">BEFORE — baked defect (input)</div>
+      <div class="cell-endpoint">the pre-erase paint, defect present — what both models were asked to repair</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/n64-cutscene__BEFORE-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/n64-cutscene__BEFORE-seam-thumb.jpg" loading="lazy" alt="n64-cutscene BEFORE, seam-zoom"></a>
+        <div class="img-cap">seam-zoom (click → full-res)</div>
+        <a class="imglink" href="web/composite/n64-cutscene__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/n64-cutscene__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="n64-cutscene BEFORE, full skin"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">Vertex AI direct · gemini-2.5-flash-image (imageSize 2K)</div>
+      <div class="cell-cost">$0.039/call (Vertex 2K tier, direct — not fal-wrapped, per generation-spend-rule §3)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/n64-cutscene__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/n64-cutscene__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="n64-cutscene x gemini25-flash, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/n64-cutscene__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/n64-cutscene__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="n64-cutscene x gemini25-flash, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#2d8f3f">PASS — clean</div>
+      <div class="note">Beige slider knob fully removed; the horizontal recessed channel is left empty and dark, beige/grey plastic bezel continues cleanly.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">fal openai/gpt-image-2/edit · quality=medium</div>
+      <div class="cell-cost">$0.0548/call REAL BILLED (x-fal-billable-units=0.0548 × $1/unit, measured live all 5 calls; quality=high measured $0.22/call and was rejected as 4× the price)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/n64-cutscene__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/n64-cutscene__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="n64-cutscene x gpt-image-2, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/n64-cutscene__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/n64-cutscene__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="n64-cutscene x gpt-image-2, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#2d8f3f">PASS — clean</div>
+      <div class="note">Beige slider knob fully removed; empty channel, plastic material consistent. On par with gemini.</div>
+    </div></div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">claymation</div>
+      <div class="skin-material">material: soft claymation/plasticine sculpted channel, warm ochre clay with visible fingerprint texture</div>
+      <div class="skin-control">control / defect: seek</div>
+      <div class="row"><div class="cell before">
+      <div class="cell-label">BEFORE — baked defect (input)</div>
+      <div class="cell-endpoint">the pre-erase paint, defect present — what both models were asked to repair</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/claymation__BEFORE-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/claymation__BEFORE-seam-thumb.jpg" loading="lazy" alt="claymation BEFORE, seam-zoom"></a>
+        <div class="img-cap">seam-zoom (click → full-res)</div>
+        <a class="imglink" href="web/composite/claymation__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/claymation__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="claymation BEFORE, full skin"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">Vertex AI direct · gemini-2.5-flash-image (imageSize 2K)</div>
+      <div class="cell-cost">$0.039/call (Vertex 2K tier, direct — not fal-wrapped, per generation-spend-rule §3)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/claymation__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/claymation__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="claymation x gemini25-flash, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/claymation__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/claymation__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="claymation x gemini25-flash, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#2d8f3f">PASS — clean</div>
+      <div class="note">Clay slider thumb fully removed; the horizontal slot is left as an empty dark clay recess, sculpted ochre clay body with fingerprint texture continues naturally around it.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">fal openai/gpt-image-2/edit · quality=medium</div>
+      <div class="cell-cost">$0.0548/call REAL BILLED (x-fal-billable-units=0.0548 × $1/unit, measured live all 5 calls; quality=high measured $0.22/call and was rejected as 4× the price)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/claymation__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/claymation__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="claymation x gpt-image-2, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/claymation__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/claymation__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="claymation x gpt-image-2, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#2d8f3f">PASS — clean</div>
+      <div class="note">Clay slider thumb fully removed; empty slot, clay material and hand-sculpted texture continue convincingly. On par with gemini.</div>
+    </div></div>
+    </div>
+    <div class="skin-block">
+      <div class="skin-title">steam-porthole</div>
+      <div class="skin-material">material: polished brass steampunk porthole housing, riveted trim, round recessed dial socket</div>
+      <div class="skin-control">control / defect: vol (round knob, wrong-icon defect -- see module docstring: no genuine seek defect exists for this skin)</div>
+      <div class="row"><div class="cell before">
+      <div class="cell-label">BEFORE — baked defect (input)</div>
+      <div class="cell-endpoint">the pre-erase paint, defect present — what both models were asked to repair</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/steam-porthole__BEFORE-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/steam-porthole__BEFORE-seam-thumb.jpg" loading="lazy" alt="steam-porthole BEFORE, seam-zoom"></a>
+        <div class="img-cap">seam-zoom (click → full-res)</div>
+        <a class="imglink" href="web/composite/steam-porthole__BEFORE-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/steam-porthole__BEFORE-fullskin-thumb.jpg" loading="lazy" alt="steam-porthole BEFORE, full skin"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+    </div><div class="cell">
+      <div class="cell-label">Gemini 2.5 Flash Image (“Nano Banana”)</div>
+      <div class="cell-endpoint">Vertex AI direct · gemini-2.5-flash-image (imageSize 2K)</div>
+      <div class="cell-cost">$0.039/call (Vertex 2K tier, direct — not fal-wrapped, per generation-spend-rule §3)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/steam-porthole__gemini25-flash-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/steam-porthole__gemini25-flash-seam-thumb.jpg" loading="lazy" alt="steam-porthole x gemini25-flash, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/steam-porthole__gemini25-flash-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/steam-porthole__gemini25-flash-fullskin-thumb.jpg" loading="lazy" alt="steam-porthole x gemini25-flash, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#a83232">HARD fail</div>
+      <div class="note">AMBIGUOUS TARGET (see note): the masked region is a round brass control that reads as a legitimate play/pause button (rewind|play/pause|ff row), not a slider thumb. Gemini regenerated the play/pause button in place -- did NOT erase it. No damage/hallucination, but the defect part was not removed. Fails the erase, safely.</div>
+    </div><div class="cell">
+      <div class="cell-label">GPT Image 2 (OpenAI, via fal)</div>
+      <div class="cell-endpoint">fal openai/gpt-image-2/edit · quality=medium</div>
+      <div class="cell-cost">$0.0548/call REAL BILLED (x-fal-billable-units=0.0548 × $1/unit, measured live all 5 calls; quality=high measured $0.22/call and was rejected as 4× the price)</div>
+      <div class="imgs">
+        <a class="imglink" href="web/composite/steam-porthole__gpt-image-2-seam-full.jpg" target="_blank" rel="noopener"><img src="web/composite/steam-porthole__gpt-image-2-seam-thumb.jpg" loading="lazy" alt="steam-porthole x gpt-image-2, seam-zoom composite"></a>
+        <div class="img-cap">seam-zoom, composited back onto full skin (click → full-res)</div>
+        <a class="imglink" href="web/composite/steam-porthole__gpt-image-2-fullskin-full.jpg" target="_blank" rel="noopener"><img src="web/composite/steam-porthole__gpt-image-2-fullskin-thumb.jpg" loading="lazy" alt="steam-porthole x gpt-image-2, full skin composite"></a>
+        <div class="img-cap">full skin, repair box outlined red (click → full-res)</div>
+      </div>
+      <div class="badge" style="background:#a83232">HARD fail</div>
+      <div class="note">CATASTROPHIC: returned a solid BLACK SQUARE filling the entire masked region (gpt-image-2's mask-fill-collapse failure mode -- the real raw model output, not a compositing artifact). Worst-possible result; a serious production risk for gpt-image-2 on any mask it can't reconcile.</div>
+    </div></div>
+    </div>
+
+  <div class="verdict-section">
+    <h2>CONCLUSION / VERDICT</h2>
+    <table class="verdict-table">
+      <tr><th>Model</th><th>Score across 5 skins</th><th>Cost</th></tr>
+      <tr><td>Gemini 2.5 Flash Image (“Nano Banana”)</td><td class='g'>4 PASS · 0 SOFT · 1 HARD</td><td>$0.0390/call</td></tr><tr><td>GPT Image 2 (OpenAI, via fal)</td><td class='gp'>3 PASS · 1 SOFT · 1 HARD</td><td>$0.0548/call</td></tr>
+    </table>
+    <p><b>On the 4 genuine slider-groove skins</b> (diablo-gothic, fallout-pipboy, n64-cutscene, claymation) — the cases this pipeline actually erases — <b>Gemini 2.5 Flash went 4/4 clean PASS</b> and <b>GPT Image 2 went 3/4 PASS + 1 SOFT</b> (GPT lost the diablo rune-glow and muddied the groove; Gemini preserved it). Both models cleanly emptied the fallout-pipboy slot, the n64 channel, and the claymation clay slot with material-consistent fill and no hallucination.</p>
+    <p><b>The plain prompt fixed arm-3's worry, not caused it.</b> Arm 3 flagged Gemini erasing the diablo rune-glow. Under the PLAIN prompt (no glow instruction) Gemini <i>naturally preserved and continued</i> the rune-inlay cracks while removing the baked skull medallion — a clean PASS. The glow clause was the problem (it made the model invent glow ornamentation), not the fix. Dropping it was correct.</p>
+    <p><b>steam-porthole was an ambiguous target and broke both models.</b> Its masked region is a round brass control that reads as a legitimate play/pause button (rewind|play/pause|ff row), not a slider thumb — so it is a weak erase target. Gemini regenerated the button in place (didn't erase, but did no damage); <b>GPT Image 2 returned a solid BLACK SQUARE</b> filling the mask (its mask-fill-collapse failure mode — the real raw output). That black-box behavior is a serious production risk for gpt-image-2 on any mask it can't reconcile, and it never happened with Gemini.</p>
+    <div class="rec">
+      <b>Routing recommendation:</b> <b>Gemini 2.5 Flash Image (Vertex direct, $0.039/call) is the winner</b> — 4/4 clean on real slider-groove erases including the ornate rune-glow case, at ~40% lower per-call cost than GPT Image 2 medium ($0.0548) and ~6× cheaper than the Vertex gemini-3-pro incumbent ($0.241/repair, 4K tier). It never produced a catastrophic (black-box) result. <b>GPT Image 2 is a viable but riskier #2</b> (also cheap, mostly clean, but one lost-detail SOFT and one catastrophic black-box in five). Do NOT use the preserve-glow prompt clause — the plain instruction lets Gemini handle emissive material correctly on its own. The one open gap is round-socket / wrong-icon defects (steam-porthole), which neither model handles from a generic slider-erase prompt — those need either a different mask/prompt or the incumbent Vertex path.
+    </div>
+  </div>
+</body>

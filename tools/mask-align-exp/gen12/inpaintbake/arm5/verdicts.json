@@ -1,0 +1,22 @@
+{
+  "diablo-gothic": {
+    "gemini25-flash": {"v": "PASS", "note": "Baked horned-skull medallion fully removed; groove continues as dark carved obsidian AND the glowing rune-inlay cracks are naturally preserved/continued down both groove walls -- WITHOUT any glow instruction in the prompt. This is the arm-3 concern (gemini erasing the rune-glow) NOT reproducing under the plain prompt: the model handles the emissive material correctly on its own."},
+    "gpt-image-2": {"v": "SOFT", "note": "Medallion removed, no hallucinated object -- but the rune-glow is largely lost in the mid-groove (only faint at the bottom edges) and the groove reads slightly muddy/flat vs the crisp carved material elsewhere. Clean erase, lost a material feature."}
+  },
+  "fallout-pipboy": {
+    "gemini25-flash": {"v": "PASS", "note": "Slider thumb fully removed; the oblong recessed slot is left empty and coherent, olive-drab painted-metal + rust wear continues cleanly around it."},
+    "gpt-image-2": {"v": "PASS", "note": "Slider thumb fully removed; empty slot, material and lighting match the surrounding worn casing. On par with gemini here."}
+  },
+  "n64-cutscene": {
+    "gemini25-flash": {"v": "PASS", "note": "Beige slider knob fully removed; the horizontal recessed channel is left empty and dark, beige/grey plastic bezel continues cleanly."},
+    "gpt-image-2": {"v": "PASS", "note": "Beige slider knob fully removed; empty channel, plastic material consistent. On par with gemini."}
+  },
+  "claymation": {
+    "gemini25-flash": {"v": "PASS", "note": "Clay slider thumb fully removed; the horizontal slot is left as an empty dark clay recess, sculpted ochre clay body with fingerprint texture continues naturally around it."},
+    "gpt-image-2": {"v": "PASS", "note": "Clay slider thumb fully removed; empty slot, clay material and hand-sculpted texture continue convincingly. On par with gemini."}
+  },
+  "steam-porthole": {
+    "gemini25-flash": {"v": "HARD", "note": "AMBIGUOUS TARGET (see note): the masked region is a round brass control that reads as a legitimate play/pause button (rewind|play/pause|ff row), not a slider thumb. Gemini regenerated the play/pause button in place -- did NOT erase it. No damage/hallucination, but the defect part was not removed. Fails the erase, safely."},
+    "gpt-image-2": {"v": "HARD", "note": "CATASTROPHIC: returned a solid BLACK SQUARE filling the entire masked region (gpt-image-2's mask-fill-collapse failure mode -- the real raw model output, not a compositing artifact). Worst-possible result; a serious production risk for gpt-image-2 on any mask it can't reconcile."}
+  }
+}

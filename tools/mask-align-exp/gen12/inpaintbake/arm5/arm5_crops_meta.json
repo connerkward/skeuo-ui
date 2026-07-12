@@ -1,0 +1,154 @@
+{
+  "diablo-gothic": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-diablo-gothic/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/diablo-gothic-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/diablo-gothic-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      1369,
+      2160,
+      1591,
+      2287
+    ],
+    "crop_box": [
+      968,
+      1711,
+      1992,
+      2735
+    ],
+    "bbox_in_crop": [
+      401,
+      449,
+      623,
+      576
+    ],
+    "seed": 736,
+    "material": "dark carved obsidian/gothic metal channel with glowing rune inlay",
+    "reused_from": "../crops_meta.json (no rebuild)"
+  },
+  "fallout-pipboy": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-fallout-pipboy/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/fallout-pipboy-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/fallout-pipboy-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      844,
+      2208,
+      952,
+      2302
+    ],
+    "crop_box": [
+      386,
+      1743,
+      1410,
+      2767
+    ],
+    "bbox_in_crop": [
+      458,
+      465,
+      566,
+      559
+    ],
+    "seed": 951,
+    "material": "worn olive-drab painted metal recessed slot, retro-futuristic terminal casing",
+    "reused_from": "../crops_meta.json (no rebuild)"
+  },
+  "n64-cutscene": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-n64-cutscene/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/n64-cutscene-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/n64-cutscene-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      464,
+      2247,
+      604,
+      2439
+    ],
+    "crop_box": [
+      22,
+      1831,
+      1046,
+      2855
+    ],
+    "bbox_in_crop": [
+      442,
+      416,
+      582,
+      608
+    ],
+    "seed": 610,
+    "material": "chunky 90s-console beige/grey plastic recessed slider channel",
+    "reused_from": "../crops_meta.json (no rebuild)"
+  },
+  "claymation": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/arm5/crops/claymation-before-full-source.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/arm5/crops/claymation-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/arm5/crops/claymation-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      1705,
+      1653,
+      1859,
+      1823
+    ],
+    "crop_box": [
+      1270,
+      1226,
+      2294,
+      2250
+    ],
+    "bbox_in_crop": [
+      435,
+      427,
+      589,
+      597
+    ],
+    "seed": 662,
+    "material": "soft claymation/plasticine sculpted channel, warm ochre clay with visible fingerprint texture",
+    "control": "seek",
+    "provenance": "git 8c97ef9ae4a18a703dc8e282c75398eb851f2d76, sha256[:12]=1449b99f1b39"
+  },
+  "steam-porthole": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/arm5/crops/steam-porthole-before-full-source.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/arm5/crops/steam-porthole-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/arm5/crops/steam-porthole-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      991,
+      2046,
+      1302,
+      2358
+    ],
+    "crop_box": [
+      634,
+      1690,
+      1658,
+      2714
+    ],
+    "bbox_in_crop": [
+      357,
+      356,
+      668,
+      668
+    ],
+    "seed": 952,
+    "material": "polished brass steampunk porthole housing, riveted trim, round recessed dial socket",
+    "control": "vol (round knob, wrong-icon defect -- see module docstring: no genuine seek defect exists for this skin)",
+    "provenance": "git e8f249db9fc27ce7a480c27a7c9f88e2dd1938c5, sha256[:12]=163f3beb1247; bbox re-derived via before/after pixel diff, cross-checked against regions.json vol.device"
+  }
+}
