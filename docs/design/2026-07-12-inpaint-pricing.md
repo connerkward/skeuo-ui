@@ -1,5 +1,16 @@
 # Inpaint-repair pricing — Vertex vs fal vs local LaMa (2026-07-12)
 
+> **Post-bakeoff correction, fixed same day:** the bake-off
+> (`docs/experiments/2026-07-12-inpaint-bakeoff.md`) found that §1's $0.136/repair estimate
+> below was never actually being paid — `genskin.py:edit_vertex()` hardcoded
+> `imageConfig.imageSize: "4K"` on every call, so every real `erase12.py` crop repair landed
+> in the 4K tier ($0.241/repair) regardless of the crop's small (~280-400px) actual size.
+> Fixed in `genskin.py:edit_vertex()` (now takes an `image_size` param, default `"4K"` so
+> full-canvas callers are unaffected) + `erase12.py:erase_model()` (now picks `"2K"` for any
+> crop ≤2048px, `"4K"` only above that). Live-confirmed same day: a real repair call's
+> `usageMetadata.candidatesTokenCount` came back **1120** (the 1K/2K tier), not 2000 (4K) —
+> so §1's original $0.136/repair figure is now what's actually billed, not $0.241.
+
 ## Question
 
 The crop-repair step (erase baked defects — a stray handle, socket residue, a kept guide

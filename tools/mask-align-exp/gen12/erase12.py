@@ -40,8 +40,10 @@ Two erase methods, tried in cost order (generation-spend-rule: cheapest first):
   1. CLASSICAL (OpenCV Telea inpaint) — $0. Detect the bright blob inside the cavity interior,
      dilate it a few px past its silhouette, inpaint via cv2.INPAINT_TELEA on a padded crop.
      Works well for a flat/low-frequency recessed channel (most of this roster's grooves).
-  2. MODEL EDIT (Vertex nano-banana-pro edit on a SQUARE crop) — ~$0.05-0.1/erase, fallback
-     when the classical result still reads bright (>0.10 interior) or leaves a visible seam.
+  2. MODEL EDIT (Vertex nano-banana-pro edit on a SQUARE crop) — ~$0.134/erase at this
+     roster's crop sizes (2K output tier, not 4K — see erase_model()'s docstring for the
+     2026-07-12 pricing-tier fix), fallback when the classical result still reads bright
+     (>0.10 interior) or leaves a visible seam.
      Square crop => the edit is requested at the SAME aspect it's sent at (ai-image-coords-rule:
      an edit model reshapes output to the REQUESTED aspect, never the input's — a square crop
      avoids ANY aspect mismatch by construction, no separate aspect-matching logic needed).
@@ -181,11 +183,25 @@ def _square_crop_box(W, H, bbox, pad_frac=0.7, min_side=280):
 def erase_model(assets_dir, paint_img, bbox, seed):
     """Vertex nano-banana-pro edit on a SQUARE crop (see module docstring — sidesteps
     ai-image-coords-rule's aspect-mismatch trap by construction). Reuses genskin.py's proven
-    edit_vertex() rather than re-implementing the Vertex call. ~$0.05-0.1/erase (small crop,
-    but edit_vertex always requests 4K output; downscaled back to crop-pixel size on return)."""
+    edit_vertex() rather than re-implementing the Vertex call.
+
+    Requests the CHEAPEST Vertex output tier that still covers the crop's own resolution,
+    instead of genskin.py's edit_vertex() default of always requesting 4K (2000 output tokens
+    = $0.24/image) regardless of how small the input crop is. Vertex's 1K and 2K imageSize
+    tiers are BOTH a flat 1120 tokens = $0.134/image (1024px-2048px, confirmed live
+    2026-07-12 — see docs/design/2026-07-12-inpaint-pricing.md), so "2K" is free headroom
+    over "1K" at the same price; only a crop whose own side exceeds 2048px (this roster's
+    crops run ~280-400px in practice — see erase12-log.json — but _square_crop_box() is
+    capped only by min(W,H), so a large device image COULD produce one) needs the 4K tier to
+    avoid asking the model for an output smaller than the crop it must reproduce. Real cost:
+    ~$0.134-0.136/erase at this roster's actual crop sizes (was $0.241, the 4K-tier price,
+    before this fix — see docs/experiments/2026-07-12-inpaint-bakeoff.md's pricing
+    correction)."""
     from genskin import edit_vertex  # local import: avoid genskin's module-level cost unless used
     W, H = paint_img.size
     cx0, cy0, cx1, cy1 = _square_crop_box(W, H, bbox)
+    crop_side = cx1 - cx0
+    vertex_tier = "2K" if crop_side <= 2048 else "4K"
     crop = paint_img.crop((cx0, cy0, cx1, cy1)).convert("RGB")
     tmp = os.path.join(assets_dir, "_erase12_crop_in.png")
     crop.save(tmp)
@@ -206,7 +222,7 @@ def erase_model(assets_dir, paint_img, bbox, seed):
         "same camera angle, same framing/crop, same backdrop, no new objects, no text, no "
         "colour shift."
     )
-    png_bytes = edit_vertex(tmp, prompt, seed, aspect="1:1")
+    png_bytes = edit_vertex(tmp, prompt, seed, aspect="1:1", image_size=vertex_tier)
     out = Image.open(io.BytesIO(png_bytes)).convert("RGB").resize(crop.size, Image.LANCZOS)
     try:
         os.remove(tmp)

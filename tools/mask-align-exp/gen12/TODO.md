@@ -1,6 +1,49 @@
 # gen12 TODO
 
 ---
+## erase12's Vertex crop repairs were silently billed at the 4K tier — FIXED, 2026-07-12 (~$0.27 validation spend)
+
+**Bug (found by the inpaint bake-off, `docs/experiments/2026-07-12-inpaint-bakeoff.md`):**
+`genskin.py:edit_vertex()` hardcoded `generationConfig.imageConfig.imageSize: "4K"` on
+**every** call, with no parameter to override it. Correct for `PAINT_VERTEX`'s full-canvas
+paint calls (they genuinely want 4K). Wrong for `erase12.py:erase_model()`'s ~280-400px
+square crop repairs — Vertex/Gemini output-image pricing is tiered by the REQUESTED size,
+not the input's, and 1K + 2K are both a flat 1120 tokens = $0.134/image while 4K is 2000
+tokens = $0.24/image (confirmed live both in `docs/design/2026-07-12-inpaint-pricing.md` and
+independently via `usageMetadata` below). So every erase12 model-edit repair was paying the
+4K rate — **$0.241/repair**, not the ~$0.13-0.14 the crop size actually warrants.
+
+**Fix:**
+- `genskin.py:edit_vertex()` gained an `image_size="4K"` param (default preserves existing
+  behaviour for every full-canvas caller — no other call site passes it).
+- `erase12.py:erase_model()` now computes `crop_side = cx1 - cx0` from its own
+  `_square_crop_box()` and requests `"2K"` when `crop_side <= 2048` (true for this roster's
+  actual crops), falling back to `"4K"` only if a future crop's side exceeds 2048px (the
+  composite path already resized whatever came back to `crop.size`, so this was always
+  correctness-safe — only the cost was wrong).
+
+**Validated live** against `assets-fallout-vault`'s real, still-unrepaired `seek` defect
+(paint_sha `de3ada0df452`, matches `erase12-log.json` — untouched by other concurrent
+sessions): ran the real `erase_model()` end-to-end (not a reimplementation) on the crop
+`detect_bbox()` itself found (`(1856,1688,2136,1968)`, side=280px → picked `"2K"` as
+expected). Output composited back into the full 2304x3712 canvas correctly. Before/after
+4x crop inspection: the residual bright/raised patch is now a clean, seamless continuation
+of the recessed groove — no hallucinated content, material/rust texture matches. A separate
+identical-body probe call confirmed billing directly: `usageMetadata.candidatesTokenCount =
+1120` (the 2K tier, not 4K's 2000) and the raw pre-resize Vertex output was exactly
+2048x2048px, matching the "2K" tier's documented ceiling. Two real Vertex calls made for
+this validation (the repair itself + the metadata probe) ≈ $0.27 total — no assets-dir files
+written (ran against a copy in `/tmp/erase-validate/`; the one shared-checkout side effect
+was `erase12.py`'s own `--dry-run` overwriting its own `seek-dryrun-*.png` scratch crop in
+`assets-fallout-vault/erase-verify/`, the same idempotent artifact other sessions already
+produce there — `paint.png`/`joint-4k.png`/`regions.json` untouched).
+
+Also corrected the stale `~$0.05-0.1/erase` cost comment in `erase12.py`'s module docstring
+and `erase_model()`'s own docstring, and added a post-bakeoff correction note to
+`docs/design/2026-07-12-inpaint-pricing.md` (§1's original $0.136/repair estimate was never
+actually being paid pre-fix; it is now).
+
+---
 ## Round-2 triage: fallout-vault "button issue... still not fixed" — DIAGNOSED (not fixed), 2026-07-12 ($0)
 
 **Discrepancy:** round1 (`review-2026-07-11-round1.json`): *"prev button, shuffle button, failed

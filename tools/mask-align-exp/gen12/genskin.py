@@ -416,11 +416,22 @@ def edit(FAL, urls, prompt, seed):
     return requests.get(r["images"][0]["url"]).content
 
 
-def edit_vertex(bp_path, prompt, seed, aspect="5:4"):
+def edit_vertex(bp_path, prompt, seed, aspect="5:4", image_size="4K"):
     """Same nano-banana-pro edit as edit(), direct via Vertex AI (no fal). Same proven pattern
     as abshape/genskin_ab.py:edit_vertex() — that copy already ran 4 real generations today on
     this project/auth; this is the mainline-genskin port of it (gcloud user-auth access token,
-    no ADC file needed). Returns raw output PNG bytes, same contract as edit()."""
+    no ADC file needed). Returns raw output PNG bytes, same contract as edit().
+
+    image_size: Vertex/Gemini imageConfig.imageSize tier — "1K"/"2K" (both flat 1120 output
+    tokens = $0.134/image, 1024px-2048px) or "4K" (2000 tokens = $0.24/image, up to 4096px).
+    Defaults to "4K" so every full-canvas paint caller (BLUEPRINT/BLUEPRINT_JSON_SPEC etc, all
+    at 4K-ish canvas sizes) is unaffected by this param's addition. A small-crop caller (e.g.
+    erase12.py's ~300-2000px square repair crops) should pass "2K" — same price as "1K" but no
+    resolution ceiling below 2048px, and a fraction of 4K's cost for output that gets resized
+    back down anyway. Confirmed live 2026-07-12 (docs/design/2026-07-12-inpaint-pricing.md +
+    docs/experiments/2026-07-12-inpaint-bakeoff.md): erase12 was silently paying the 4K tier
+    ($0.241/repair, not the assumed $0.13-0.14) because this hardcoded "4K" ignored the actual
+    crop size — the bug this parameter fixes."""
     tok = subprocess.check_output(["gcloud", "auth", "print-access-token"]).decode().strip()
     b64 = base64.b64encode(open(bp_path, "rb").read()).decode()
     body = {
@@ -432,7 +443,7 @@ def edit_vertex(bp_path, prompt, seed, aspect="5:4"):
             "responseModalities": ["IMAGE"],
             "seed": seed,
             "candidateCount": 1,
-            "imageConfig": {"aspectRatio": aspect, "imageSize": "4K"},
+            "imageConfig": {"aspectRatio": aspect, "imageSize": image_size},
         },
     }
     # 429 retry — same backoff edit_vertex_multi() carries (proven there); without it a
