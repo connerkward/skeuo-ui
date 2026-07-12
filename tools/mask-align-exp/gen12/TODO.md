@@ -1,6 +1,86 @@
 # gen12 TODO
 
 ---
+## erase12's default erase model → two-model chain (Gemini 2.5 Flash primary, GPT Image 2 fallback) — DONE 2026-07-12 (~$0.19 validation)
+
+User-chosen per `inpaintbake/arm5`'s bake-off (5 genuine slider-groove skins, plain erase
+prompt, no glow clause): **`ERASE_MODEL_CHAIN = ["gemini-2.5-flash", "gpt-image-2"]`**
+replaces the old single Vertex `gemini-3-pro-image-preview` default. gemini-2.5-flash was 4/4
+clean in arm5 (incl. the ornate rune-glow diablo-gothic case — the plain prompt preserves glow
+naturally) at $0.039/call Vertex-direct, ~6x cheaper than the old default's $0.241/call (4K
+tier). gpt-image-2 was 3/4 + 1 soft at $0.0548/call (fal, quality=medium) — different model
+family, the point of a fallback. `genskin.py:edit_vertex()` gained a `model=` override (default
+unchanged, every existing caller byte-identical) so `erase_model_gemini25()` can target the
+Flash model through the same proven Vertex plumbing; new `genskin.py:edit_fal_gpt_image2()`
+(masked edit via fal, ported call shape from `inpaintbake/arm5/run_arm5.py`, reuses this
+module's own `upload()`/`load_fal()` — no new dependency). `erase12.py`: `erase_model()` split
+into `erase_model_gemini25()` / `erase_model_gpt_image2()` / `erase_model_vertex_pro()` (the OLD
+default, kept fully intact, selectable via `--method model-pro` as a deep fallback) sharing one
+`_feathered_composite()` helper and the SAME `ERASE_PROMPT` constant (identical instruction to
+every model — the seam contract parallel-by-default-rule asks for). `run_model_chain()` tries
+each model in order, re-detecting after each, stopping at the first clean result.
+
+**Real live validation (not a reimplementation — the actual shipping `erase12.py`), fallout-pipboy
+`seek`, restored to its pre-erase baked-cap state from commit `e8f249db` in an isolated `/tmp`
+copy (zero shared-checkout writes — another session was concurrently re-extracting live skins):**
+classical failed (still shows defect) → chain escalated to gemini-2.5-flash ($0.039) → its
+result STILL tripped `detect_bbox()`'s re-check (a marginal/borderline flag) → chain escalated to
+gpt-image-2 ($0.0548) → **also still flagged, genuinely this time** (see finding below) → chain
+exhausted → floor_darken finishing pass ($0) on the rescue attempt → final result clean. Total
+real spend for this one erase: **$0.0938** (both models fired; the chain doesn't get to skip a
+later model's cost just because an earlier flagged result turns out fine on inspection — see the
+design note below). SOTA cross-check (Gemini 2.5 Pro via fal `openrouter/router/vision`,
+$0.0144): cap-removal PASS ("no discernible textural remnants or bright patches"); groove-shape
+criterion technically FAIL but for a much narrower reason than shape collapse — "correctly
+reproduces the basic slot/rail structure" but "fails to match the metallic shading and subtle
+highlights," i.e. a minor material-continuity softness at the fill, not a geometry defect.
+Direct full-res crop inspection (4x upscale) confirms: the final shipped result's narrow
+double-rail slot cross-section is intact and near-matches the OLD gemini-3-pro production
+result's own erase of this exact defect (fallout-pipboy's real `erase12-log.json`, `after_sha
+ac74ff920d88`, compared crop-for-crop).
+
+**A real design bug caught and fixed during this validation, not a paper exercise:** isolating
+each model's raw output (bypassing the chain) showed gemini-2.5-flash's OWN result was already
+visually correct — a clean continuation of the narrow-rail slot, near pixel-identical to the old
+gemini-3-pro result — despite tripping the marginal re-detect flag. gpt-image-2's own result,
+by contrast, filled the ENTIRE masked region with a flat undifferentiated dark rectangle,
+**losing the narrow double-rail cross-section entirely** — exactly the "widened opening"
+shape-mismatch failure `ERASE_PROMPT` explicitly warns against (same failure class n64-cutscene
+needed a prompt fix for during erase12's original build). This wasn't visible in arm5's own
+bake-off because arm5's 5 test skins all used simpler flat single-channel grooves; fallout-
+pipboy's is a narrower double-rail geometry the bake-off never exercised. **The bug:**
+`run_model_chain()`'s original design applied the floor_darken rescue to whichever model ran
+LAST when the whole chain failed re-detection — so on this exact case it would have shipped
+gpt-image-2's shape-broken result instead of gemini's correct one, silently, because gpt just
+happened to run second. **The fix:** on full-chain failure, rescue the FIRST (primary) attempt,
+not the last — justified by arm5's own bake-off, where gemini-2.5-flash was >= gpt-image-2 in
+every one of 5 real comparisons (never worse). `seam_delta` could NOT have caught this itself
+(gpt's flat fill actually scored a LOWER/smoother seam-delta than gemini's correct-but-flagged
+result — the metric measures border colour continuity, not internal shape), so this needed the
+direct crop inspection per verify-outputs-rule, not a metric.
+
+Fallback reachability: proven live in the SAME real run above (gpt-image-2 genuinely fired as
+the chain's 2nd attempt after gemini's borderline flag — not code-verified-only, not forced).
+Idempotency sha-skip guard (top of `main()`, unchanged) still gates every real run regardless of
+which model chain fires.
+
+**Not done here (flagged, not fixed — the detect_bbox() targeting bug this task was told to
+surface):** `detect_bbox()` mis-targets the wrong slot on AMBIGUOUS skins. Confirmed by arm5:
+on steam-porthole, the crop `detect_bbox()` selected was actually a legitimate play/pause
+button (rewind|play/pause|ff row), not the seek slider thumb — gemini-2.5-flash correctly
+declined to erase it (regenerated the button in place, no damage) while gpt-image-2
+catastrophically returned a solid black square over it. **Both models "failed" steam-porthole
+on garbage input — a bad crop dooms any model, regardless of which model chain erase12 defaults
+to.** This gates erase quality more than model choice does and should be the next priority: fix
+`detect_bbox()`'s groove-edge/rim anchoring so it can distinguish a slider groove's own geometry
+from an unrelated round button sitting near the seek `device` bbox (verify the masked region
+plausibly contains an elongated slot before erasing it, not just "an anomaly exists inside the
+seek device window").
+
+Files touched: `erase12.py`, `genskin.py` (scope-limited, per this task's brief — `extract12.py`/
+`build_player.py` are out of scope and were being actively worked by other concurrent sessions).
+
+---
 ## TODO — bake off Gemini 2.5 Flash Image vs GPT Image 2 for the SWITCH-SLOT housing inpaint (option B), on a couple skins
 
 The switch-slot rework (make the toggle housing match the switch silhouette instead of a

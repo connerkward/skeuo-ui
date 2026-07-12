@@ -40,10 +40,15 @@ Two erase methods, tried in cost order (generation-spend-rule: cheapest first):
   1. CLASSICAL (OpenCV Telea inpaint) — $0. Detect the bright blob inside the cavity interior,
      dilate it a few px past its silhouette, inpaint via cv2.INPAINT_TELEA on a padded crop.
      Works well for a flat/low-frequency recessed channel (most of this roster's grooves).
-  2. MODEL EDIT (Vertex nano-banana-pro edit on a SQUARE crop) — ~$0.134/erase at this
-     roster's crop sizes (2K output tier, not 4K — see erase_model()'s docstring for the
-     2026-07-12 pricing-tier fix), fallback when the classical result still reads bright
-     (>0.10 interior) or leaves a visible seam.
+  2. MODEL EDIT on a SQUARE crop — fallback when the classical result still reads bright
+     (>0.10 interior) or leaves a visible seam. As of 2026-07-12, ERASE_MODEL_CHAIN (below)
+     replaces the old single Vertex gemini-3-pro-image-preview default with a two-model chain
+     chosen live off inpaintbake/arm5's bake-off: gemini-2.5-flash PRIMARY (Vertex-direct,
+     $0.039/erase, 4/4 clean incl. rune-glow preservation with no glow clause) -> gpt-image-2
+     FALLBACK (fal, different model family, $0.0548/erase, 3/4 clean + 1 soft) —
+     erase_model_gemini25()/erase_model_gpt_image2()/run_model_chain(). The OLD default
+     (gemini-3-pro-image-preview, ~$0.134-0.241/erase) stays selectable as a deep fallback via
+     erase_model_vertex_pro() / --method model-pro.
      Square crop => the edit is requested at the SAME aspect it's sent at (ai-image-coords-rule:
      an edit model reshapes output to the REQUESTED aspect, never the input's — a square crop
      avoids ANY aspect mismatch by construction, no separate aspect-matching logic needed).
@@ -84,6 +89,67 @@ EDGE_ANCHOR_FRAC = 0.25   # a touched-edge anomaly within this fraction of the b
 COMPACT_CAP_FRAC = 0.55   # an anomaly wider than this fraction of the groove is too diffuse to
                           # be a compact baked PART (texture/lighting drift, not an object) —
                           # treated as "nothing compact found", not auto-erased
+
+# ERASE_MODEL_CHAIN: default two-model fallback chain for the model-edit escalation step,
+# REPLACING the old single Vertex gemini-3-pro-image-preview default (2026-07-12, user-chosen
+# per docs/experiments/2026-07-12-inpaint-bakeoff.md's arm5 — 5 genuine slider-groove skins,
+# SAME plain erase prompt below, no glow/rune/inlay clause):
+#   1. gemini-2.5-flash — Vertex-direct (generation-spend-rule SS3: Google models go direct,
+#      not fal-wrapped), $0.039/call at the 2K tier. 4/4 CLEAN in arm5, including the ornate
+#      rune-glow diablo-gothic case — the plain prompt preserves the glow naturally with no
+#      glow clause needed (a PRESERVE-GLOW variant was tried and discarded: it over-constrained
+#      the model into INVENTING new glow ornamentation, see inpaintbake/arm5/discarded-
+#      glowclause/). ~6x cheaper than the old gemini-3-pro default (was silently billed at the
+#      4K tier, $0.241/call — see the TODO.md entry directly above this session's).
+#   2. gpt-image-2 — fal (OpenAI-hosted only via fal, no direct API key held here — a legitimate
+#      fal-hosted exception per generation-spend-rule SS3), quality=medium, $0.0548/call
+#      (confirmed live, inpaintbake/arm5/cost_log.json; "high" measured ~$0.22/call, 4x, rejected).
+#      3/4 + 1 SOFT (diablo-gothic: clean erase but the rune-glow partially lost mid-groove) in
+#      arm5. Different model family from Gemini — the point of a fallback.
+# Both models HARD-failed steam-porthole in arm5 (gemini regenerated the play/pause button in
+# place; gpt-image-2 returned a solid black square) — NOT a model-quality gap, a DETECTION bug:
+# detect_bbox() anchored the mask on an ambiguous play/pause button, not the slider thumb. See
+# the TODO.md entry filed alongside this change. A bad crop dooms any model.
+# gemini-3-pro-image-preview (the OLD default) stays fully intact and selectable as a deep
+# fallback via erase_model_vertex_pro() / --method model-pro — not deleted, just no longer the
+# default chain a bare `--method model`/`auto` run tries first.
+ERASE_MODEL_CHAIN = ["gemini-2.5-flash", "gpt-image-2"]
+VERTEX_GEMINI25_MODEL = "gemini-2.5-flash-image"
+GEMINI25_PRICE = 0.039       # Vertex 2K tier, confirmed inpaintbake/arm4 + arm5
+GPT_IMAGE2_QUALITY = "medium"
+GPT_IMAGE2_PRICE = 0.0548    # fal, quality=medium, confirmed inpaintbake/arm5/cost_log.json (5/5 calls)
+# rough per-erase cost table for the final report line — base model name (floor_darken finishing
+# passes are $0, so "<model>+floor_darken" reuses the base model's price)
+COST_ESTIMATE = {
+    "classical": 0.0,
+    "gemini-2.5-flash": GEMINI25_PRICE,
+    "gpt-image-2": GPT_IMAGE2_PRICE,
+    "gemini-3-pro": 0.134,  # 2K tier (this roster's crops); 0.241 if a future crop exceeds 2048px
+}
+
+# EXACT plain erase prompt — no glow/rune/inlay clause (confirmed: arm5 used a stripped-down
+# version of this same instruction and found no glow clause necessary; kept here as the fuller,
+# already-hardened wording since erase12.py owns real production skins, not a bake-off crop).
+# Shared by every model-edit path below (erase_model_gemini25/erase_model_gpt_image2/
+# erase_model_vertex_pro) so all three send the IDENTICAL instruction — the seam contract
+# parallel-by-default-rule asks for when comparing model outputs on the same input.
+ERASE_PROMPT = (
+    "This is a tight crop of a slider/control's EMPTY recessed groove or socket from a "
+    "skeuomorphic device photo. A part (thumb/handle/grip/cap) is sitting in it and must "
+    "be REMOVED. Erase that part completely and continue the groove/socket's own material, "
+    "shading and recess depth SEAMLESSLY underneath where it was, exactly matching the "
+    "surrounding channel/floor. CRITICAL — the recess's WIDTH/SHAPE after removal must "
+    "match the channel's OWN cross-section as seen continuing elsewhere in this crop (a "
+    "narrow, constant-width groove/slot), NOT the wider silhouette of the part being "
+    "removed — do not leave a bulge, pocket or widened opening shaped like the removed "
+    "part. The recess floor must be UNIFORMLY DARK/MATTE across its full width where the "
+    "part was — do not leave any residual bright patch, glossy highlight, sheen or raised- "
+    "looking area from the removed part; the whole floor should read as flat and equally "
+    "dark as the rest of the empty channel. Change ABSOLUTELY NOTHING else in the frame: "
+    "same materials, same lighting, "
+    "same camera angle, same framing/crop, same backdrop, no new objects, no text, no "
+    "colour shift."
+)
 
 
 def sha12(path):
@@ -180,62 +246,20 @@ def _square_crop_box(W, H, bbox, pad_frac=0.7, min_side=280):
     return cx0, cy0, cx0 + side_i, cy0 + side_i
 
 
-def erase_model(assets_dir, paint_img, bbox, seed):
-    """Vertex nano-banana-pro edit on a SQUARE crop (see module docstring — sidesteps
-    ai-image-coords-rule's aspect-mismatch trap by construction). Reuses genskin.py's proven
-    edit_vertex() rather than re-implementing the Vertex call.
-
-    Requests the CHEAPEST Vertex output tier that still covers the crop's own resolution,
-    instead of genskin.py's edit_vertex() default of always requesting 4K (2000 output tokens
-    = $0.24/image) regardless of how small the input crop is. Vertex's 1K and 2K imageSize
-    tiers are BOTH a flat 1120 tokens = $0.134/image (1024px-2048px, confirmed live
-    2026-07-12 — see docs/design/2026-07-12-inpaint-pricing.md), so "2K" is free headroom
-    over "1K" at the same price; only a crop whose own side exceeds 2048px (this roster's
-    crops run ~280-400px in practice — see erase12-log.json — but _square_crop_box() is
-    capped only by min(W,H), so a large device image COULD produce one) needs the 4K tier to
-    avoid asking the model for an output smaller than the crop it must reproduce. Real cost:
-    ~$0.134-0.136/erase at this roster's actual crop sizes (was $0.241, the 4K-tier price,
-    before this fix — see docs/experiments/2026-07-12-inpaint-bakeoff.md's pricing
-    correction)."""
-    from genskin import edit_vertex  # local import: avoid genskin's module-level cost unless used
-    W, H = paint_img.size
-    cx0, cy0, cx1, cy1 = _square_crop_box(W, H, bbox)
-    crop_side = cx1 - cx0
-    vertex_tier = "2K" if crop_side <= 2048 else "4K"
-    crop = paint_img.crop((cx0, cy0, cx1, cy1)).convert("RGB")
-    tmp = os.path.join(assets_dir, "_erase12_crop_in.png")
-    crop.save(tmp)
-    prompt = (
-        "This is a tight crop of a slider/control's EMPTY recessed groove or socket from a "
-        "skeuomorphic device photo. A part (thumb/handle/grip/cap) is sitting in it and must "
-        "be REMOVED. Erase that part completely and continue the groove/socket's own material, "
-        "shading and recess depth SEAMLESSLY underneath where it was, exactly matching the "
-        "surrounding channel/floor. CRITICAL — the recess's WIDTH/SHAPE after removal must "
-        "match the channel's OWN cross-section as seen continuing elsewhere in this crop (a "
-        "narrow, constant-width groove/slot), NOT the wider silhouette of the part being "
-        "removed — do not leave a bulge, pocket or widened opening shaped like the removed "
-        "part. The recess floor must be UNIFORMLY DARK/MATTE across its full width where the "
-        "part was — do not leave any residual bright patch, glossy highlight, sheen or raised- "
-        "looking area from the removed part; the whole floor should read as flat and equally "
-        "dark as the rest of the empty channel. Change ABSOLUTELY NOTHING else in the frame: "
-        "same materials, same lighting, "
-        "same camera angle, same framing/crop, same backdrop, no new objects, no text, no "
-        "colour shift."
-    )
-    png_bytes = edit_vertex(tmp, prompt, seed, aspect="1:1", image_size=vertex_tier)
-    out = Image.open(io.BytesIO(png_bytes)).convert("RGB").resize(crop.size, Image.LANCZOS)
-    try:
-        os.remove(tmp)
-    except OSError:
-        pass
-    # Feathered composite, not a hard paste: a whole-square edit reliably matches the model's
-    # own material/lighting at the CENTRE (where the object was) but the model doesn't promise
-    # pixel-identical reproduction at the crop's own border — a hard paste there leaves a faint
-    # rectangle visible (confirmed live on diablo-gothic/fallout-vault's first pass). Blend the
-    # edited square back in with a soft alpha ramp (full-strength in the interior, fading to 0
-    # over the outer ~12% margin) so the composite boundary lands on a smooth gradient instead
-    # of a hard edge — same feathering idea as erase_baked.py's gaussian-blurred mask blend.
-    out_arr = np.asarray(out).astype(float)
+def _feathered_composite(paint_img, out_img, crop_box):
+    """Blend a model-edited SQUARE crop back into paint_img with a soft alpha ramp over the
+    outer ~12% margin (full-strength in the interior), not a hard paste. A whole-square edit
+    reliably matches the model's own material/lighting at the CENTRE (where the object was) but
+    the model doesn't promise pixel-identical reproduction at the crop's own border — a hard
+    paste there leaves a faint rectangle visible (confirmed live on diablo-gothic/fallout-vault's
+    first pass). Same feathering idea as erase_baked.py's gaussian-blurred mask blend. Shared by
+    EVERY model-edit path (erase_model_gemini25/erase_model_gpt_image2/erase_model_vertex_pro)
+    so the seam behaviour is identical regardless of which model produced the crop."""
+    cx0, cy0, cx1, cy1 = crop_box
+    crop_size = (cx1 - cx0, cy1 - cy0)
+    if out_img.size != crop_size:
+        out_img = out_img.resize(crop_size, Image.LANCZOS)
+    out_arr = np.asarray(out_img).astype(float)
     side = out_arr.shape[0]
     margin = max(4, int(side * 0.12))
     ramp = np.ones(side)
@@ -247,7 +271,159 @@ def erase_model(assets_dir, paint_img, bbox, seed):
     blended = region * (1 - alpha) + out_arr * alpha
     new_arr = base_arr.copy()
     new_arr[cy0:cy1, cx0:cx1] = blended
-    return Image.fromarray(new_arr.astype(np.uint8)), (cx0, cy0, cx1, cy1)
+    return Image.fromarray(new_arr.astype(np.uint8))
+
+
+def erase_model_gemini25(assets_dir, paint_img, bbox, seed):
+    """PRIMARY of ERASE_MODEL_CHAIN. Same square-crop + Vertex plumbing as
+    erase_model_vertex_pro() (sidesteps ai-image-coords-rule's aspect-mismatch trap by
+    construction — no separate aspect-matching logic needed) but targets gemini-2.5-flash-image
+    via genskin.py:edit_vertex()'s model= param instead of the default gemini-3-pro-image-preview
+    — $0.039/call vs gemini-3-pro's $0.134-0.241/call, and 4/4 clean on the real inpaintbake/arm5
+    bake-off including the rune-glow diablo-gothic case on this SAME plain ERASE_PROMPT (no glow
+    clause needed — see ERASE_MODEL_CHAIN's comment)."""
+    from genskin import edit_vertex  # local import: avoid genskin's module-level cost unless used
+    W, H = paint_img.size
+    cx0, cy0, cx1, cy1 = _square_crop_box(W, H, bbox)
+    crop_side = cx1 - cx0
+    vertex_tier = "2K" if crop_side <= 2048 else "4K"
+    crop = paint_img.crop((cx0, cy0, cx1, cy1)).convert("RGB")
+    tmp = os.path.join(assets_dir, "_erase12_crop_in.png")
+    crop.save(tmp)
+    try:
+        png_bytes = edit_vertex(tmp, ERASE_PROMPT, seed, aspect="1:1", image_size=vertex_tier,
+                                 model=VERTEX_GEMINI25_MODEL)
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    out = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    return _feathered_composite(paint_img, out, (cx0, cy0, cx1, cy1)), (cx0, cy0, cx1, cy1)
+
+
+def _square_crop_and_mask(paint_img, bbox, dilate_px=7, dilate_iter=2):
+    """Same SQUARE crop erase_model_gemini25 uses (identical seam contract, so both models in
+    the chain see the identical input) PLUS a white-in-black-out erase mask for GPT Image 2's
+    MASKED edit (unlike Gemini's whole-crop free edit, GPT edits only the masked pixels). Mask =
+    the detect_bbox() defect bbox, dilated a few px past its own silhouette — same dilation idea
+    erase_classical()'s inpaint mask already uses."""
+    import cv2
+    W, H = paint_img.size
+    cx0, cy0, cx1, cy1 = _square_crop_box(W, H, bbox)
+    crop = paint_img.crop((cx0, cy0, cx1, cy1)).convert("RGB")
+    x0, y0, x1, y1 = bbox
+    mx0, my0 = max(0, x0 - cx0), max(0, y0 - cy0)
+    mx1, my1 = min(cx1 - cx0, x1 - cx0), min(cy1 - cy0, y1 - cy0)
+    mask = np.zeros((cy1 - cy0, cx1 - cx0), np.uint8)
+    mask[my0:my1, mx0:mx1] = 255
+    mask = cv2.dilate(mask, np.ones((dilate_px, dilate_px), np.uint8), iterations=dilate_iter)
+    return crop, Image.fromarray(mask), (cx0, cy0, cx1, cy1)
+
+
+def erase_model_gpt_image2(assets_dir, paint_img, bbox):
+    """FALLBACK of ERASE_MODEL_CHAIN — a different model FAMILY from Gemini (OpenAI GPT Image 2,
+    fal-hosted). 3/4 clean + 1 soft (partial glow loss) on inpaintbake/arm5's real bake-off, on
+    the SAME plain ERASE_PROMPT. Reuses genskin.py's edit_fal_gpt_image2().
+
+    OBSERVED LIVE FAILURE MODE (this task's own verification, 2026-07-12, fallout-pipboy's
+    'seek' groove — a NARROW double-rail slot cross-section, not the flat single-channel
+    grooves arm5's 5 test skins used): GPT Image 2 filled the whole masked region with a flat
+    undifferentiated dark rectangle, losing the narrow-slot/rail geometry entirely — exactly the
+    'widened opening' shape-mismatch failure ERASE_PROMPT explicitly warns against. Gemini 2.5
+    Flash, run alone on the SAME input/bbox, preserved the narrow-rail cross-section correctly
+    (near pixel-identical to the old gemini-3-pro production result). This is WHY
+    run_model_chain()'s failure-rescue prefers the FIRST (primary/gemini) attempt, not the last
+    — see that function's docstring."""
+    from genskin import edit_fal_gpt_image2  # local import, same pattern as edit_vertex above
+    crop, mask, crop_box = _square_crop_and_mask(paint_img, bbox)
+    cx0, cy0, cx1, cy1 = crop_box
+    tmp_img = os.path.join(assets_dir, "_erase12_gpt_in.png")
+    tmp_mask = os.path.join(assets_dir, "_erase12_gpt_mask.png")
+    crop.save(tmp_img)
+    mask.save(tmp_mask)
+    try:
+        png_bytes, cost = edit_fal_gpt_image2(tmp_img, tmp_mask, ERASE_PROMPT,
+                                               quality=GPT_IMAGE2_QUALITY)
+    finally:
+        for p in (tmp_img, tmp_mask):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+    out = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    return _feathered_composite(paint_img, out, crop_box), crop_box
+
+
+def erase_model_vertex_pro(assets_dir, paint_img, bbox, seed):
+    """DEEP FALLBACK — the OLD default (Vertex gemini-3-pro-image-preview), kept fully intact
+    and selectable via --method model-pro. Not in ERASE_MODEL_CHAIN by default: ~3.4-6x the cost
+    of the primary (gemini-2.5-flash) for no measured quality edge on this task (arm5 bake-off).
+    Requests the CHEAPEST Vertex tier that still covers the crop's own resolution — see the
+    2026-07-12 pricing-tier fix this function's docstring used to carry (now on edit_vertex()'s
+    image_size param docs in genskin.py)."""
+    from genskin import edit_vertex
+    W, H = paint_img.size
+    cx0, cy0, cx1, cy1 = _square_crop_box(W, H, bbox)
+    crop_side = cx1 - cx0
+    vertex_tier = "2K" if crop_side <= 2048 else "4K"
+    crop = paint_img.crop((cx0, cy0, cx1, cy1)).convert("RGB")
+    tmp = os.path.join(assets_dir, "_erase12_crop_in.png")
+    crop.save(tmp)
+    try:
+        png_bytes = edit_vertex(tmp, ERASE_PROMPT, seed, aspect="1:1", image_size=vertex_tier)
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    out = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    return _feathered_composite(paint_img, out, (cx0, cy0, cx1, cy1)), (cx0, cy0, cx1, cy1)
+
+
+MODEL_FNS = {
+    "gemini-2.5-flash": lambda assets_dir, paint_img, bbox, seed: erase_model_gemini25(assets_dir, paint_img, bbox, seed),
+    "gpt-image-2": lambda assets_dir, paint_img, bbox, seed: erase_model_gpt_image2(assets_dir, paint_img, bbox),
+}
+
+
+def run_model_chain(assets_dir, paint_img, bbox, seed, r, vertical, chain=None):
+    """Try each model in ERASE_MODEL_CHAIN (default) in order, re-detecting after each; stop and
+    return the first result that reads clean. Returns (new_img, crop_box, winner, tried) where
+    `winner` is the succeeding model's name (or None if every model in the chain still shows a
+    defect — callers must NOT silently ship that as a pass, per verify-outputs-rule and the
+    task's own 'if both fail, surface it').
+
+    On FULL failure (nothing in the chain reads clean), new_img/crop_box hold the FIRST
+    (primary/cheapest) attempt, NOT the last. This was verified live (fallout-pipboy's 'seek'
+    groove, a narrow double-rail slot): gemini-2.5-flash's own result was visually correct
+    (matched the old gemini-3-pro production result almost exactly) but tripped a marginal/
+    borderline re-detect flag, so the chain escalated to gpt-image-2 — which produced a
+    genuinely WORSE result (collapsed the narrow-rail cross-section into a flat block, see
+    erase_model_gpt_image2()'s docstring). seam_delta can't discriminate this case (gpt's flat
+    fill actually reads a LOWER/smoother seam-delta than gemini's correct-but-marginally-flagged
+    result — the metric measures border colour continuity, not internal shape). Absent a
+    reliable $0 shape signal, prefer the PRIMARY model's attempt on full failure: arm5's real
+    bake-off found gemini-2.5-flash >= gpt-image-2 in every one of 5 skins tested (never worse),
+    so 'first attempt' is the best available fallback ordering, not an arbitrary tiebreak."""
+    chain = chain or ERASE_MODEL_CHAIN
+    tried = []
+    first_img, first_crop_box = None, None
+    last_img, last_crop_box = None, None
+    for name in chain:
+        new_img, crop_box = MODEL_FNS[name](assets_dir, paint_img, bbox, seed)
+        if first_img is None:
+            first_img, first_crop_box = new_img, crop_box
+        last_img, last_crop_box = new_img, crop_box
+        new_arr = np.asarray(new_img)
+        still_defect = detect_bbox(new_arr, r["device"], vertical=vertical) is not None
+        seam = seam_delta(new_arr, bbox)
+        print(f"[erase12] {name}: re-detect {'still finds a defect' if still_defect else 'clean'}, "
+              f"seam-delta {seam:.1f} (~${COST_ESTIMATE.get(name, 0):.4f})")
+        tried.append((name, still_defect))
+        if not still_defect:
+            return new_img, crop_box, name, tried
+    return first_img, first_crop_box, None, tried
 
 
 def floor_darken(paint_img, dev_bbox, vertical=None, strength=0.85, max_iter=3):
@@ -347,7 +523,10 @@ def main():
     ap.add_argument("--control", default=None)
     ap.add_argument("--gate-reason", action="append", default=[])
     ap.add_argument("--bbox", default=None, help="x0,y0,x1,y1 FRACTIONAL (0-1) override of auto-detect")
-    ap.add_argument("--method", choices=["classical", "model", "auto"], default="auto")
+    ap.add_argument("--method", choices=["classical", "model", "auto", "model-pro"], default="auto",
+                     help="model = ERASE_MODEL_CHAIN (gemini-2.5-flash -> gpt-image-2 fallback, "
+                          "the 2026-07-12 default); model-pro = force the deep-fallback Vertex "
+                          "gemini-3-pro-image-preview path directly, skipping the chain")
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--force", action="store_true", help="erase even if the auto-detect window already reads empty")
     ap.add_argument("--dry-run", action="store_true", help="detect + write verify crops only, no paint/joint writes")
@@ -416,24 +595,49 @@ def main():
             print("[erase12] classical result insufficient -> escalating to model-edit fallback")
             new_img = None
 
-    if new_img is None and args.method in ("model", "auto"):
-        new_img, crop_box = erase_model(assets_dir, paint_img, bbox, seed)
-        method_used = "model"
+    if new_img is None and args.method == "model-pro":
+        # explicit deep-fallback request — skip the chain, go straight to the old default
+        new_img, crop_box = erase_model_vertex_pro(assets_dir, paint_img, bbox, seed)
+        method_used = "gemini-3-pro"
         new_arr = np.asarray(new_img)
         still_defect = detect_bbox(new_arr, r["device"], vertical=vertical) is not None
         if still_defect:
-            # $0 finishing pass — see floor_darken() docstring: two rounds of Vertex prompt
-            # tightening left a residual glossy highlight on fallout-vault; direct pixel
-            # correction toward the groove's own floor tone closed it where wording didn't.
-            print("[erase12] model edit still shows a residual patch -> applying floor_darken finishing pass")
+            print("[erase12] gemini-3-pro edit still shows a residual patch -> applying floor_darken finishing pass")
             new_img = floor_darken(new_img, r["device"], vertical=vertical)
-            method_used = "model+floor_darken"
+            method_used = "gemini-3-pro+floor_darken"
             new_arr = np.asarray(new_img)
             still_defect = detect_bbox(new_arr, r["device"], vertical=vertical) is not None
         seam = seam_delta(new_arr, bbox)
-        ok = not still_defect
-        print(f"[erase12] model edit: re-detect {'still finds a defect' if still_defect else 'clean'}, "
-              f"seam-delta {seam:.1f} -> {'OK' if ok else 'STILL FAILING — needs a human look'}")
+        print(f"[erase12] gemini-3-pro edit: re-detect {'still finds a defect' if still_defect else 'clean'}, "
+              f"seam-delta {seam:.1f}")
+
+    if new_img is None and args.method in ("model", "auto"):
+        # ERASE_MODEL_CHAIN: gemini-2.5-flash primary -> gpt-image-2 fallback (see the module-
+        # level ERASE_MODEL_CHAIN comment for why). run_model_chain() re-detects after each
+        # model and stops at the first clean result.
+        new_img, crop_box, winner, tried = run_model_chain(assets_dir, paint_img, bbox, seed, r, vertical)
+        if winner:
+            method_used = winner
+        else:
+            # every model in the chain still shows the defect — $0 finishing pass on the FIRST
+            # (primary) attempt before surfacing failure, NOT the last (see run_model_chain()'s
+            # docstring for why: the primary's own result is the empirically best available one
+            # even when flagged, and the finishing pass never touches shape, only brightness —
+            # same rescue the old single-model path applied; see floor_darken() docstring — two
+            # rounds of prompt tightening alone didn't clear a residual glossy highlight, direct
+            # pixel correction did).
+            first_name = tried[0][0] if tried else "unknown"
+            print(f"[erase12] model chain exhausted ({', '.join(n for n, _ in tried)}) -> "
+                  f"applying floor_darken finishing pass on the primary attempt ({first_name})")
+            new_img = floor_darken(new_img, r["device"], vertical=vertical)
+            method_used = f"{first_name}+floor_darken"
+        new_arr = np.asarray(new_img)
+        still_defect = detect_bbox(new_arr, r["device"], vertical=vertical) is not None
+        seam = seam_delta(new_arr, bbox)
+        print(f"[erase12] model chain result ({method_used}): re-detect "
+              f"{'still finds a defect' if still_defect else 'clean'}, seam-delta {seam:.1f} -> "
+              f"{'OK' if not still_defect else 'STILL FAILING — needs a human look'} "
+              f"(~${COST_ESTIMATE.get(method_used.split('+')[0], 0):.4f})")
 
     if new_img is None:
         raise SystemExit(f"erase12: {control} — classical failed and --method classical was forced (no model fallback attempted)")

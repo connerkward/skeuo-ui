@@ -142,6 +142,18 @@ SEEK_STRIP_BULLET = (
 # generated regions.json / assets keep rendering unchanged.
 TOGGLE_TRACK_ENABLED = True
 
+# ---- EXPERIMENT (UNCOMMITTED, 2026-07-12) — TOGGLE_SHAPE_MATCH_ENABLED ----
+# Variant C of the switch-slot housing-shape comparison (tools/mask-align-exp/gen12/
+# switch-slot-compare.html): the baked housing/track is ALWAYS a generic pill while the loose
+# lever can have a fun silhouette — they never share a shape. When True, layers shape-match
+# language on TOP of the TOGGLE_TRACK_ENABLED contract below: the housing gets a distinctive
+# non-pill silhouette (keyhole / diamond-notch / hex-slot / rune-channel, theme-appropriate) and
+# the lever is sculpted to ECHO that same silhouette family so the two visually interlock, like a
+# key seated in its lock, instead of a plain pill lever riding in a plain pill track.
+# DEFAULT FALSE — this is a one-off exploratory flip for a single regen, NOT the pipeline
+# default. Do not commit this flag as True; flip back to False before any commit.
+TOGGLE_SHAPE_MATCH_ENABLED = False
+
 # ---- shuffle device-cavity clause (spliced into "EVERY MOVING-PART CAVITY IS EMPTY") ----
 _SHUFFLE_CAVITY_TWOSTATE = ("The shuffle switch slot is an EMPTY DARK rounded well (NO switch, "
                              "NO lever, NO toggle installed). ")
@@ -150,7 +162,16 @@ _SHUFFLE_CAVITY_TRACK = (
     "like a shorter version of the seek groove, with two end positions (NO lever, NO slider, NO "
     "switch, NO bolt installed — nothing riding in it). "
 )
-SHUFFLE_CAVITY_CLAUSE = _SHUFFLE_CAVITY_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_CAVITY_TWOSTATE
+_SHUFFLE_CAVITY_TRACK_SHAPEMATCH = (
+    "The shuffle track is an EMPTY DARK recessed CHANNEL/HOUSING cut into the body, its OUTER "
+    "SILHOUETTE a bold, distinctive, non-generic shape that suits the theme (a keyhole, a "
+    "diamond-cut notch, a hex slot, a rune-carved channel, a gear-toothed groove — NOT a plain "
+    "pill/rounded-rectangle), with two end positions (NO lever, NO slider, NO switch, NO bolt "
+    "installed — nothing riding in it). "
+)
+SHUFFLE_CAVITY_CLAUSE = (
+    _SHUFFLE_CAVITY_TRACK_SHAPEMATCH if (TOGGLE_TRACK_ENABLED and TOGGLE_SHAPE_MATCH_ENABLED)
+    else _SHUFFLE_CAVITY_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_CAVITY_TWOSTATE)
 
 # ---- strip part count/list (varies: 3 parts in track mode, 4 in the legacy two-state mode) ----
 SHUFFLE_STRIP_N = 3 if TOGGLE_TRACK_ENABLED else 4
@@ -185,7 +206,30 @@ _SHUFFLE_MECHANISM_TWOSTATE = (
     "the state must read from the mechanism's position alone, with zero markings."
     "⟦cite:sha:e8546e22;sha:ac28cd74;sha:3eeccc55⟧\n"
 )
-SHUFFLE_MECHANISM_BULLET = _SHUFFLE_MECHANISM_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_MECHANISM_TWOSTATE
+# ---- EXPERIMENT (UNCOMMITTED) — shape-matched variant of the mechanism bullet: same track
+# contract as _SHUFFLE_MECHANISM_TRACK, plus an explicit instruction that the housing and the
+# lever share ONE distinctive silhouette family instead of a generic pill housing around any
+# lever shape. See TOGGLE_SHAPE_MATCH_ENABLED above.
+_SHUFFLE_MECHANISM_TRACK_SHAPEMATCH = (
+    "  • SHUFFLE MECHANISM — design a CHARACTERFUL two-position TRACK that fits the theme: any "
+    "physical mechanism whose moving part travels a SHORT TRACK between two end positions — a "
+    "lever slot, a sliding bolt channel, a valve track, a rotating latch groove, a bead that "
+    "rides a rail — as long as it has ONE moving part riding a track (NOT a rocker/pill switch "
+    "with two interchangeable faces, and NOT a mirror-pair of states). CRITICAL — THE HOUSING "
+    "AND THE LEVER SHARE ONE DISTINCTIVE SILHOUETTE: give the track's outer cut a bold, "
+    "non-generic profile (a keyhole, a diamond notch, a hex slot, a rune-carved channel — "
+    "whatever suits the theme, NOT a plain pill/rounded-rectangle) and shape the LEVER to ECHO "
+    "that exact same silhouette family, scaled down to slide within it, so the lever reads as "
+    "though it were cut from the same template as its housing and seats into it like a key into "
+    "a lock — never a plain pill lever in a plain pill housing. The track itself is painted "
+    "EMPTY on the device (per the cavity rule above); its moving part — the lever — appears "
+    "ONLY as the single loose strip part, shown by itself, NOT sitting in/on any track, groove, "
+    "channel or recess in the strip (same isolation as the seek thumb). Put ABSOLUTELY NO text, "
+    "letters, numerals, glyphs, words or labels of ANY kind on the lever or on ANY strip part.\n"
+)
+SHUFFLE_MECHANISM_BULLET = (
+    _SHUFFLE_MECHANISM_TRACK_SHAPEMATCH if (TOGGLE_TRACK_ENABLED and TOGGLE_SHAPE_MATCH_ENABLED)
+    else _SHUFFLE_MECHANISM_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_MECHANISM_TWOSTATE)
 
 # ---- EXACT FIT tail — the shuffle clause differs (a lever SLIDES within its track, it does not
 # fill it, unlike the legacy state-swap sprite which filled the whole slot) ----
@@ -416,7 +460,7 @@ def edit(FAL, urls, prompt, seed):
     return requests.get(r["images"][0]["url"]).content
 
 
-def edit_vertex(bp_path, prompt, seed, aspect="5:4", image_size="4K"):
+def edit_vertex(bp_path, prompt, seed, aspect="5:4", image_size="4K", model=None):
     """Same nano-banana-pro edit as edit(), direct via Vertex AI (no fal). Same proven pattern
     as abshape/genskin_ab.py:edit_vertex() — that copy already ran 4 real generations today on
     this project/auth; this is the mainline-genskin port of it (gcloud user-auth access token,
@@ -431,7 +475,15 @@ def edit_vertex(bp_path, prompt, seed, aspect="5:4", image_size="4K"):
     back down anyway. Confirmed live 2026-07-12 (docs/design/2026-07-12-inpaint-pricing.md +
     docs/experiments/2026-07-12-inpaint-bakeoff.md): erase12 was silently paying the 4K tier
     ($0.241/repair, not the assumed $0.13-0.14) because this hardcoded "4K" ignored the actual
-    crop size — the bug this parameter fixes."""
+    crop size — the bug this parameter fixes.
+
+    model: Vertex model id override (default VERTEX_MODEL, gemini-3-pro-image-preview). Added
+    for erase12.py's two-model erase chain — passing model="gemini-2.5-flash-image" targets the
+    much cheaper Flash model ($0.039/call at the 2K tier vs gemini-3-pro's $0.134-0.241) that
+    the inpaintbake/arm5 bake-off found 4/4 clean on real slider-groove erases (see
+    erase12.py's ERASE_MODEL_CHAIN for the full citation). Every EXISTING caller passes no
+    model and gets byte-identical behaviour (same VERTEX_MODEL, same URL) — this param only
+    activates when a caller opts in."""
     tok = subprocess.check_output(["gcloud", "auth", "print-access-token"]).decode().strip()
     b64 = base64.b64encode(open(bp_path, "rb").read()).decode()
     body = {
@@ -446,12 +498,15 @@ def edit_vertex(bp_path, prompt, seed, aspect="5:4", image_size="4K"):
             "imageConfig": {"aspectRatio": aspect, "imageSize": image_size},
         },
     }
+    url = (VERTEX_URL if not model else
+           f"https://aiplatform.googleapis.com/v1/projects/{VERTEX_PROJECT}/locations/global/"
+           f"publishers/google/models/{model}:generateContent")
     # 429 retry — same backoff edit_vertex_multi() carries (proven there); without it a
     # quota blip burns a whole orchestrate12 roll per 429 (4 skins x 3 rolls burned to
     # RESOURCE_EXHAUSTED with zero real generations, 2026-07-11 re-roll batch).
     for attempt in range(5):
-        r = requests.post(VERTEX_URL, headers={"Authorization": f"Bearer {tok}",
-                                                "Content-Type": "application/json"},
+        r = requests.post(url, headers={"Authorization": f"Bearer {tok}",
+                                         "Content-Type": "application/json"},
                            json=body, timeout=420)
         if r.status_code == 429 and attempt < 4:
             wait = 15 * (attempt + 1)
@@ -466,6 +521,49 @@ def edit_vertex(bp_path, prompt, seed, aspect="5:4", image_size="4K"):
         if d.get("data"):
             return base64.b64decode(d["data"])
     raise RuntimeError("vertex: no image part in response")
+
+
+# GPT_IMAGE2_ENDPOINT: OpenAI GPT Image 2, fal-hosted only (no direct OpenAI API key held here —
+# a legitimate fal-hosted exception per generation-spend-rule SS3, since Google-model calls go
+# Vertex-direct above but this model has no Vertex/direct path from this project). The
+# different-model-family fallback in erase12.py's ERASE_MODEL_CHAIN.
+GPT_IMAGE2_ENDPOINT = "openai/gpt-image-2/edit"
+
+
+def edit_fal_gpt_image2(image_path, mask_path, prompt, quality="medium"):
+    """GPT Image 2 MASKED edit via fal (image_urls + mask_url — a targeted inpaint, unlike
+    edit_vertex()'s whole-crop free edit). Ported call shape from
+    inpaintbake/arm5/run_arm5.py:run_gpt_image2() (proven, 5/5 real calls made there) — reuses
+    THIS module's own upload()/load_fal() instead of the fal_client package arm5 used, so no
+    new dependency is introduced.
+
+    quality: "medium" is erase12.py's default — $0.0548/call, confirmed live across 5 real calls
+    in inpaintbake/arm5/cost_log.json. "high" measured ~$0.22/call (4x, rejected — see
+    inpaintbake/arm5/run_arm5.py's own docstring). image_size="square" is this endpoint's OWN
+    enum ('square'/'square_hd'/'portrait_4_3'/…), NOT gpt-image-1.5's "1024x1024" string —
+    verified via a live 422 in arm5; this endpoint's schema differs from its sibling model
+    despite both being OpenAI GPT-Image editors.
+
+    Returns (png_bytes, cost_usd_or_None) — cost read from the x-fal-billable-units response
+    header (real measured spend, not a hardcoded estimate)."""
+    FAL = load_fal()
+    img_url = upload(FAL, image_path)
+    mask_url = upload(FAL, mask_path)
+    payload = {
+        "image_urls": [img_url], "mask_url": mask_url, "prompt": prompt,
+        "quality": quality, "image_size": "square", "output_format": "png",
+    }
+    r = requests.post(f"https://fal.run/{GPT_IMAGE2_ENDPOINT}",
+                       headers={"Authorization": f"Key {FAL}", "Content-Type": "application/json"},
+                       json=payload, timeout=180)
+    r.raise_for_status()
+    billable = r.headers.get("x-fal-billable-units")
+    cost = float(billable) if billable else None
+    data = r.json()
+    img = data["images"][0]
+    img_url_out = img["url"] if isinstance(img, dict) else img
+    png_bytes = requests.get(img_url_out, timeout=60).content
+    return png_bytes, cost
 
 
 def edit_vertex_multi(image_paths, prompt, seed, aspect="5:4"):
