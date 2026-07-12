@@ -1,0 +1,187 @@
+{
+  "playpause": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.781,
+    "offset_px": 18.9,
+    "area_ratio": 0.7821,
+    "coverage": 0.5448,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5448,
+      "iou": 0.781,
+      "offset_px": 18.9,
+      "offset_frac_diag": 0.0325,
+      "area_ratio": 0.7821,
+      "silhouette_bbox": [
+        0.37023,
+        0.10938,
+        0.24609,
+        0.09106
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.4806,
+      "iou": 0.6934,
+      "offset_px": 22.6,
+      "area_ratio": 0.6931,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 58.0,
+      "offset_frac_diag": 0.1001,
+      "score": 7.77,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "prev": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7513,
+    "offset_px": 12.8,
+    "area_ratio": 0.778,
+    "coverage": 0.542,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.542,
+      "iou": 0.7513,
+      "offset_px": 12.8,
+      "offset_frac_diag": 0.0235,
+      "area_ratio": 0.778,
+      "silhouette_bbox": [
+        0.27734,
+        0.15194,
+        0.15017,
+        0.14009
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.4072,
+      "iou": 0.6934,
+      "offset_px": 10.5,
+      "area_ratio": 0.5873,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 12.8,
+      "offset_frac_diag": 0.0235,
+      "score": 7.42,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "next": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.764,
+    "offset_px": 28.2,
+    "area_ratio": 0.7754,
+    "coverage": 0.5396,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5396,
+      "iou": 0.764,
+      "offset_px": 28.2,
+      "offset_frac_diag": 0.0517,
+      "area_ratio": 0.7754,
+      "silhouette_bbox": [
+        0.55946,
+        0.15194,
+        0.14974,
+        0.13982
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.4499,
+      "iou": 0.6928,
+      "offset_px": 27.5,
+      "area_ratio": 0.6494,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 5.4,
+      "offset_frac_diag": 0.0099,
+      "score": 7.82,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "repeat": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7899,
+    "offset_px": 39.8,
+    "area_ratio": 0.7635,
+    "coverage": 0.5297,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5297,
+      "iou": 0.7899,
+      "offset_px": 39.8,
+      "offset_frac_diag": 0.0805,
+      "area_ratio": 0.7635,
+      "silhouette_bbox": [
+        0.30903,
+        0.2764,
+        0.17231,
+        0.10453
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.3563,
+      "iou": 0.7511,
+      "offset_px": 22.5,
+      "area_ratio": 0.5123,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 14.9,
+      "offset_frac_diag": 0.0301,
+      "score": 7.98,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "queue": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7518,
+    "offset_px": 7.4,
+    "area_ratio": 0.7436,
+    "coverage": 0.5162,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5162,
+      "iou": 0.7518,
+      "offset_px": 7.4,
+      "offset_frac_diag": 0.015,
+      "area_ratio": 0.7436,
+      "silhouette_bbox": [
+        0.50608,
+        0.2764,
+        0.17188,
+        0.10453
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.3126,
+      "iou": 0.7459,
+      "offset_px": 8.5,
+      "area_ratio": 0.4492,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 27.2,
+      "offset_frac_diag": 0.055,
+      "score": 7.68,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  }
+}

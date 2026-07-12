@@ -1,6 +1,75 @@
 # gen12 TODO
 
 ---
+## silcheck.py: deterministic silhouette-match check for baked icon buttons — DONE 2026-07-12 ($0)
+
+Built per the verification-recalibration lane's finding (VLMs scored 0% recall on
+silhouette-mismatch defects) that the fix has to be geometric, not another model call.
+`silcheck.py` (new, read-only re: `extract12.py`/`build_player.py`/`observe12.py`/`genskin.py`
+— none touched) checks whether a baked icon button's own painted silhouette actually sits
+inside and fills the `device` bbox that `build_player.py`'s press-overlay positioning uses.
+Two methods computed, one gates:
+
+- **Gating — "maskKey"**: verbatim port of `build_player.py`'s own ink-silhouette extraction
+  (crop mask.png around `maskDevice` ±10%, colour-key threshold <7000 sq-dist against
+  `keys[<button>]`, tight-bbox/centroid vs `device`). Zero false positives across the 15-skin
+  roster bar one genuine finding (below). MISS mode: anchored to `maskDevice`, which is
+  upstream of the same detection `device` is snap-corrected from — a verify-outputs-rule
+  circularity trap when the true offset exceeds `snap_to_paint`'s capped correction.
+- **Advisory, non-gating — "paintVividnessAdvisory"**: 2-D extension of `extract12.py`'s own
+  `snap_to_paint` icon-vividness heuristic, run independent of mask.png. Prototyped as a 2nd
+  gating signal (it does catch myst-arcanum's degenerate icon content, area_ratio 0.06-0.21 vs
+  every healthy button's ≥0.44) but DROPPED from gating: it measures near-zero "vividness" on
+  every button of monochrome/engraved-icon skins (diablo-gothic, fallout-pipboy, ps1-crunchy)
+  regardless of health — would have failed 3 entire unnamed skins outright. Kept as a recorded,
+  non-gating diagnostic (restraint-rule: a signal that can't discriminate on a whole art-style
+  class is worse than not having it).
+- **Advisory, non-gating — "circleFitAdvisory"**: port of `extract12.py`'s knob `circle_fit`
+  gradient-ring search, scoped to buttons. Measures the one real defect maskKey misses
+  (fa-sky/playpause, confirmed by direct visual inspection) but produces comparable-magnitude
+  noise on healthy buttons with a concentric two-tone bezel (verified false-positive:
+  fa-pod/queue at the same offset magnitude as fa-sky's real defect) — reported for human
+  triage, not gated.
+
+**Calibration vs `review-2026-07-11-round1.json`** (the 4 named skins — fa-sky, myst-arcanum,
+steam-porthole, wmp-quicksilver — must FAIL; the other 11 must not FAIL on button-silhouette):
+
+| skin | expected | got | notes |
+|---|---|---|---|
+| steam-porthole | FAIL | **FAIL** | playpause iou<0.30; next/repeat/queue NO-SILHOUETTE |
+| wmp-quicksilver | FAIL | **FAIL** | prev/next/repeat NO-SILHOUETTE |
+| myst-arcanum | FAIL | PASS (miss) | playpause's mask blob is healthy-shaped (iou 0.80, area_ratio 0.97) — the painted CONTENT inside it is a decorative gear/clockwork cluster, no play/pause glyph at all. A content defect (wrong icon painted), invisible to any geometry-only check by construction; routed to genskin.py's prompt layer per fix-generalizable-rule, not this check's job. |
+| fa-sky | FAIL | PASS (miss) | playpause's device bbox is visibly off-centre from the real chrome/glass button (confirmed by crop overlay) — `snap_to_paint`'s 20%-capped x-shift undershoots the true offset. circleFitAdvisory measures it (offset_frac_diag=0.102) but the same diagnostic false-positives at equal magnitude on confirmed-healthy buttons elsewhere (bezel-ring ambiguity) — not separable by threshold at the effort spent. |
+| 11 unnamed | PASS | 10× PASS, 1× FAIL | fa-pod/prev FAILs maskKey NO-SILHOUETTE — traced the raw pixels: mask.png's guide colour there measures ~106px euclidean from its flat key, just over build_player.py's own <7000 (≈83.7px) threshold, even though the visible paint.png icon is a clean, correctly-placed rewind glyph. Since this is a verbatim port of the SHIPPING threshold, the real player very likely also silently falls back to a generic rounded-rect ink shape for this one button — probably a genuine, unlabeled defect rather than checker noise. Left un-tuned deliberately (the point is testing what ships). |
+
+**12/15 skins classified exactly as expected.** Full root-cause trail, thresholds, and the
+prototyping/rejection reasoning for the two dropped/advisory signals: `CALIBRATION NOTES` at
+the bottom of `silcheck.py` (~60 lines) and the method docstrings at the top.
+
+**Integration recommendation: extract12.py's GATE SUMMARY block, not observe12.py's VLM
+merge.** `extract12.py` already has the exact shape needed (`region_misplaced`/
+`region_degenerate` computed as lists, appended to `reasons`, folded into the `PASS` bool —
+lines ~1296-1352) and already has mask.png/paint.png/regions.json open at that point; no new
+I/O, no VLM call, runs at build time before any review round. `observe12.py` already asks a
+VLM about a `silhouette-mismatch` tag per control (its `PER_CONTROL_TAGS`) — the recalibration
+doc is exactly why that ask scores 0% recall; this check should REPLACE that tag's VLM
+judgment, not average with it, but that call belongs to whoever owns observe12.py's taxonomy.
+3-line snippet for the extract12.py lane (not applied — extract12.py is out of this task's
+scope):
+```python
+sil = __import__("silcheck").run(OUT) or {}                      # after region_degenerate block
+sil_flagged = [b for b, m in sil.items() if m.get("verdict") == "FAIL"]
+for k in sil_flagged: reasons.append(f"silhouette-mismatch:{k}")   # + `and (not sil_flagged)` in PASS
+```
+
+**Usage:** `python3 silcheck.py <assets-dir>` (writes `<assets-dir>/observe/silcheck.json`,
+one entry per button) · `python3 silcheck.py --all` (whole roster) · `python3 silcheck.py
+--calibrate` (`--all` + the scorecard above, re-runs live against current `regions.json` —
+this is a **shared checkout**, the extract-fix lane was actively landing hitbox corrections
+mid-session, confirmed via `git diff`: myst-arcanum's `repeat` gained a device bbox partway
+through this investigation that it didn't have at the start).
+
+---
 ## Prompt provenance: every workflow prompt clause carries an inline citation, stripped before the API — DONE 2026-07-12 ($0)
 
 USER DIRECTIVE: prompts across the workflow get a stored, ANNOTATED form — why each clause

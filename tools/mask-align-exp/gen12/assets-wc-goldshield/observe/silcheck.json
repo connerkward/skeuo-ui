@@ -1,0 +1,184 @@
+{
+  "playpause": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7994,
+    "offset_px": 14.3,
+    "area_ratio": 0.9783,
+    "coverage": 0.6761,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.6761,
+      "iou": 0.7994,
+      "offset_px": 14.3,
+      "offset_frac_diag": 0.0427,
+      "area_ratio": 0.9783,
+      "silhouette_bbox": [
+        0.30295,
+        0.50296,
+        0.11415,
+        0.07112
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.6104
+    },
+    "circleFitAdvisory": {
+      "offset_px": 17.0,
+      "offset_frac_diag": 0.0509,
+      "score": 19.46,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "prev": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7834,
+    "offset_px": 13.9,
+    "area_ratio": 0.9755,
+    "coverage": 0.6797,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.6797,
+      "iou": 0.7834,
+      "offset_px": 13.9,
+      "offset_frac_diag": 0.048,
+      "area_ratio": 0.9755,
+      "silhouette_bbox": [
+        0.20877,
+        0.57408,
+        0.09852,
+        0.06169
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.4565,
+      "iou": 0.6939,
+      "offset_px": 14.9,
+      "area_ratio": 0.6578,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 6.0,
+      "offset_frac_diag": 0.0207,
+      "score": 37.48,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "next": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7829,
+    "offset_px": 14.3,
+    "area_ratio": 0.9786,
+    "coverage": 0.684,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.684,
+      "iou": 0.7829,
+      "offset_px": 14.3,
+      "offset_frac_diag": 0.0496,
+      "area_ratio": 0.9786,
+      "silhouette_bbox": [
+        0.41319,
+        0.57408,
+        0.09809,
+        0.06169
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.529,
+      "iou": 0.6933,
+      "offset_px": 12.4,
+      "area_ratio": 0.763,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 0.0,
+      "offset_frac_diag": 0.0,
+      "score": 25.89,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "repeat": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.783,
+    "offset_px": 14.1,
+    "area_ratio": 0.9805,
+    "coverage": 0.6826,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.6826,
+      "iou": 0.783,
+      "offset_px": 14.1,
+      "offset_frac_diag": 0.0488,
+      "area_ratio": 0.9805,
+      "silhouette_bbox": [
+        0.32639,
+        0.6417,
+        0.09896,
+        0.06169
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.4683,
+      "iou": 0.6933,
+      "offset_px": 27.9,
+      "area_ratio": 0.6755,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 4.2,
+      "offset_frac_diag": 0.0147,
+      "score": 31.28,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "queue": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7897,
+    "offset_px": 14.5,
+    "area_ratio": 0.9731,
+    "coverage": 0.6758,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.6758,
+      "iou": 0.7897,
+      "offset_px": 14.5,
+      "offset_frac_diag": 0.0514,
+      "area_ratio": 0.9731,
+      "silhouette_bbox": [
+        0.69965,
+        0.59159,
+        0.09635,
+        0.05981
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.4067,
+      "iou": 0.6945,
+      "offset_px": 14.2,
+      "area_ratio": 0.5856,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 3.0,
+      "offset_frac_diag": 0.0106,
+      "score": 26.26,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  }
+}

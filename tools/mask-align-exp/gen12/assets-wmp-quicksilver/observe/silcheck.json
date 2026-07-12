@@ -1,0 +1,166 @@
+{
+  "playpause": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.8142,
+    "offset_px": 3.1,
+    "area_ratio": 0.9429,
+    "coverage": 0.6535,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.6535,
+      "iou": 0.8142,
+      "offset_px": 3.1,
+      "offset_frac_diag": 0.0067,
+      "area_ratio": 0.9429,
+      "silhouette_bbox": [
+        0.62196,
+        0.33217,
+        0.15755,
+        0.09806
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.2198,
+      "iou": 0.6966,
+      "offset_px": 7.0,
+      "area_ratio": 0.3156,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 21.5,
+      "offset_frac_diag": 0.0463,
+      "score": 17.84,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "prev": {
+    "verdict": "FAIL",
+    "reasons": [],
+    "iou": 0.0,
+    "offset_px": null,
+    "area_ratio": 0.0,
+    "coverage": 0.0,
+    "maskKey": {
+      "verdict": "NO-SILHOUETTE",
+      "reason": "no-blob-near-key-colour",
+      "coverage": 0.0,
+      "iou": 0.0,
+      "offset_px": null,
+      "area_ratio": 0.0
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.2118,
+      "iou": 0.6977,
+      "offset_px": 4.5,
+      "area_ratio": 0.3064,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 9.5,
+      "offset_frac_diag": 0.0368,
+      "score": 23.99,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "next": {
+    "verdict": "FAIL",
+    "reasons": [],
+    "iou": 0.0,
+    "offset_px": null,
+    "area_ratio": 0.0,
+    "coverage": 0.0,
+    "maskKey": {
+      "verdict": "NO-SILHOUETTE",
+      "reason": "no-blob-near-key-colour",
+      "coverage": 0.0,
+      "iou": 0.0,
+      "offset_px": null,
+      "area_ratio": 0.0
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "FAIL",
+      "coverage": 0.1932,
+      "iou": 0.6945,
+      "offset_px": 0.5,
+      "area_ratio": 0.2783,
+      "reason": "area_ratio<0.3"
+    },
+    "circleFitAdvisory": {
+      "offset_px": 6.7,
+      "offset_frac_diag": 0.026,
+      "score": 22.58,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "repeat": {
+    "verdict": "FAIL",
+    "reasons": [],
+    "iou": 0.0,
+    "offset_px": null,
+    "area_ratio": 0.0,
+    "coverage": 0.0,
+    "maskKey": {
+      "verdict": "NO-SILHOUETTE",
+      "reason": "no-blob-near-key-colour",
+      "coverage": 0.0,
+      "iou": 0.0,
+      "offset_px": null,
+      "area_ratio": 0.0
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "FAIL",
+      "coverage": 0.2069,
+      "iou": 0.6938,
+      "offset_px": 5.1,
+      "area_ratio": 0.2982,
+      "reason": "area_ratio<0.3"
+    },
+    "circleFitAdvisory": {
+      "offset_px": 4.2,
+      "offset_frac_diag": 0.0165,
+      "score": 21.07,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "queue": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.8167,
+    "offset_px": 7.7,
+    "area_ratio": 0.9557,
+    "coverage": 0.6673,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.6673,
+      "iou": 0.8167,
+      "offset_px": 7.7,
+      "offset_frac_diag": 0.0298,
+      "area_ratio": 0.9557,
+      "silhouette_bbox": [
+        0.75174,
+        0.42888,
+        0.08767,
+        0.05469
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "FAIL",
+      "coverage": 0.2038,
+      "iou": 0.6983,
+      "offset_px": 4.3,
+      "area_ratio": 0.2932,
+      "reason": "area_ratio<0.3"
+    },
+    "circleFitAdvisory": {
+      "offset_px": 16.2,
+      "offset_frac_diag": 0.0624,
+      "score": 22.22,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  }
+}

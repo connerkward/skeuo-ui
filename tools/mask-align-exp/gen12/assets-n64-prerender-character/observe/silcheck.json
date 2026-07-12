@@ -1,0 +1,142 @@
+{
+  "playpause": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7931,
+    "offset_px": 9.6,
+    "area_ratio": 0.4662,
+    "coverage": 0.3238,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.3238,
+      "iou": 0.7931,
+      "offset_px": 9.6,
+      "offset_frac_diag": 0.0243,
+      "area_ratio": 0.4662,
+      "silhouette_bbox": [
+        0.19141,
+        0.29122,
+        0.12717,
+        0.09052
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.9904
+    },
+    "circleFitAdvisory": {
+      "offset_px": 15.3,
+      "offset_frac_diag": 0.0386,
+      "score": 10.18,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "prev": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7937,
+    "offset_px": 14.0,
+    "area_ratio": 1.0412,
+    "coverage": 0.7244,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.7244,
+      "iou": 0.7937,
+      "offset_px": 14.0,
+      "offset_frac_diag": 0.038,
+      "area_ratio": 1.0412,
+      "silhouette_bbox": [
+        0.33681,
+        0.32543,
+        0.13281,
+        0.0757
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.8971
+    },
+    "circleFitAdvisory": {
+      "offset_px": 25.6,
+      "offset_frac_diag": 0.0692,
+      "score": 10.42,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "next": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.5739,
+    "offset_px": 24.8,
+    "area_ratio": 0.1789,
+    "coverage": 0.1192,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.1192,
+      "iou": 0.5739,
+      "offset_px": 24.8,
+      "offset_frac_diag": 0.1307,
+      "area_ratio": 0.1789,
+      "silhouette_bbox": [
+        0.53255,
+        0.32328,
+        0.0842,
+        0.00377
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.9113
+    },
+    "circleFitAdvisory": {
+      "offset_px": 6.7,
+      "offset_frac_diag": 0.0354,
+      "score": 2.68,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "repeat": {
+    "verdict": "MISSING",
+    "reason": "no-device-bbox"
+  },
+  "queue": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.8502,
+    "offset_px": 14.1,
+    "area_ratio": 1.0496,
+    "coverage": 0.7329,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.7329,
+      "iou": 0.8502,
+      "offset_px": 14.1,
+      "offset_frac_diag": 0.0378,
+      "area_ratio": 1.0496,
+      "silhouette_bbox": [
+        0.39583,
+        0.41837,
+        0.14844,
+        0.059
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.9065
+    },
+    "circleFitAdvisory": {
+      "offset_px": 38.3,
+      "offset_frac_diag": 0.1024,
+      "score": 8.86,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  }
+}
