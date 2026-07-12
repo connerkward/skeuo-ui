@@ -1389,14 +1389,21 @@ semi-transparent near-black track). Several other early FAILs were a screenshot-
 artifact (thumb parked at 0% progress hides the fill sliver under itself) — re-shot at 50%
 progress, confirmed PASS on wmp-vario.
 
-## observe12.py --vlm will break: fal vision endpoint now requires `reasoning: true`
+## observe12.py --vlm "will break" on missing `reasoning: true` — ALREADY FIXED, stale note, 2026-07-12 (~$0.01 verification spend)
 
-Verified live 2026-07-10 (twoimg experiment): every `openrouter/router/vision` call with
-`google/gemini-2.5-pro` and no `"reasoning": true` in the body now returns
-`{"detail": "Reasoning is mandatory for this endpoint and cannot be disabled."}` instead of a
-verdict. `observe12.py` doesn't set it (line ~80) — its next `--vlm` run will write UNPARSED
-verdicts. One-line fix when the current batch is done (not touched now — live re-roll running):
-add `"reasoning": True` to the body dict. `twoimg/sota_eye.py` has the fixed call shape.
+This note was stale: `observe12.py`'s body dict already carried `"reasoning": True` as of
+commit `92b95e17` (2026-07-10 12:05:53), which landed **before** this TODO entry itself was
+written (`2f3a929c`, 2026-07-10 12:32:34) — the note was written against an outdated mental
+model, not the actual file. Swept every fal `openrouter/router/vision` call site in gen12
+(`observe12.py`, `round3_baked_vlm.py`, `semissive/sota_eval.py`,
+`jsonspec/sota_eye_jsonspec.py`, `twoimg/sota_eye.py`, `knobticks/score_knobticks.py`,
+`inpaintbake/vlm_judge.py`) — all seven already send `"reasoning": True` as a top-level body
+field, confirmed against fal's live schema (`get_model_schema("openrouter/router/vision")`:
+`reasoning` is a top-level `boolean`, default `false`, required=false). Ran a real
+`python3 observe12.py assets-claymation --vlm` against the live-served gen12 player
+(`http://localhost:50995`): got a fully parsed verdict (`FAIL`, `seek: DEFECT[css-misalignment]
+- ...`), not an error / `UNPARSED` — confirms the endpoint accepts the request as-is. No code
+change needed; this entry is now closed.
 
 ## twoimg experiment (2026-07-10): two-image conditioning FALSIFIED — keep single canvas
 
