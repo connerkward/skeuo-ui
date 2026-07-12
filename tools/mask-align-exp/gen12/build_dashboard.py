@@ -4,7 +4,7 @@ player hoisted to the top, a human PASS/FAIL gate toggle, and a "what's wrong" n
 persisted in localStorage with an export so verdicts can be read back. Below that: the auto-gate
 verdict, the process strip (blueprint→paint→mask→overlay), and explainer diagrams.
 Usage: python3 build_dashboard.py"""
-import os, json, glob, re, datetime
+import os, json, glob, re, datetime, hashlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # run-id annotation (max rolls): read the real default out of orchestrate12.py rather than
@@ -55,6 +55,12 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
     reg_mtime = os.path.getmtime(reg_path) if os.path.exists(reg_path) else None
     painted_str = (datetime.datetime.fromtimestamp(paint_mtime).strftime("%Y-%m-%d %H:%M")
                    if paint_mtime else "?")
+    # generation-identity binding (publish-gate contract, REVIEW-ROUND.md): a human verdict is
+    # only valid for the EXACT generation it was judged against. Stamp the current paint's sha256
+    # (truncated to 12 hex — collision-safe at this roster's scale) onto the toggle so fbJSON()
+    # can bind it into every saved verdict; a re-roll after a PASS changes this hash, so a stale
+    # verdict is detectable by comparing review.json's stored hash to this live one.
+    paint_sha = hashlib.sha256(open(paint_path, "rb").read()).hexdigest()[:12] if os.path.exists(paint_path) else None
     # >2s margin so ordinary same-second write ordering from the pipeline itself doesn't false-flag
     mid_regen = paint_mtime is not None and orch_mtime is not None and paint_mtime > orch_mtime + 2
     # LIVE gate vs CACHED gate (drift-gate TODO, commit 14d1d51c): orch.json's "passed"/"gate" are
@@ -82,6 +88,7 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
                   "orch_stale": orch_stale, "orch_pass": orch_pass, "live_pass": live_pass,
                   "orch_reasons": orch_reasons,
                   "rolls": orch.get("rolls", "?"), "seed": orch.get("final_seed", res.get("seed", "?")),
+                  "paint_sha": paint_sha,
                   "gate": gate, "leak": res.get("leak"), "pbr": pbr,
                   "painted": painted_str, "mid_regen": mid_regen, "dr": dr,
                   "drift": reg.get("drift"),
@@ -151,7 +158,7 @@ def card(s):
     return f'''<section class=card id="c-{sid}" data-id="{sid}">
   <div class=chead><h3>{s["title"]} <span class=mode>{s["mode"]}</span>{pbr_link}</h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
-      <button class="htoggle" data-id="{sid}">— unset —</button></div></div>
+      <button class="htoggle" data-id="{sid}" data-seed="{s['seed']}" data-paint-sha="{s.get('paint_sha') or ''}">— unset —</button></div></div>
   {runid}
   <div class=live><iframe src="assets-{sid}/player.html" loading=lazy title="{sid} player"></iframe>
     <div class=side>
@@ -402,7 +409,8 @@ document.querySelectorAll('.htoggle').forEach(btn=>{{ const id=btn.dataset.id; a
 document.querySelectorAll('.hnotes').forEach(ta=>{{ const id=ta.dataset.id; ta.value=(store[id]||{{}}).notes||'';
   ta.oninput=()=>{{ const o=load(); o[id]={{...(o[id]||{{}}),notes:ta.value}}; save(o); }}; }});
 summary();
-function fbJSON(){{ const o=load(); const out={{}}; document.querySelectorAll('.htoggle').forEach(b=>{{const id=b.dataset.id;const e=o[id]||{{}};out[id]={{gate:e.gate||'unset',notes:e.notes||''}};}}); return JSON.stringify(out,null,2); }}
+function fbJSON(){{ const o=load(); const out={{}}; document.querySelectorAll('.htoggle').forEach(b=>{{const id=b.dataset.id;const e=o[id]||{{}};
+  out[id]={{gate:e.gate||'unset',notes:e.notes||'',seed:b.dataset.seed,paint_sha:b.dataset.paintSha||null}};}}); return JSON.stringify(out,null,2); }}
 function exportFb(){{ const blob=new Blob([fbJSON()],{{type:'application/json'}}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='gen12-review.json'; a.click(); }}
 function copyFb(){{ navigator.clipboard.writeText(fbJSON()).then(()=>alert('verdicts copied to clipboard')); }}
 </script></body></html>'''

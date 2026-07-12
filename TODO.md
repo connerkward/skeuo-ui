@@ -5,6 +5,13 @@
 release: skin-registry manifest, generation-parity architecture decision, mobile/web/desktop
 parity). Read that doc before picking up any v1-scoped item below.
 
+**Roster publish gate — contract written 2026-07-11:** the human review round
+(`tools/mask-align-exp/gen12/REVIEW-ROUND.md`) is formalized as the roster's publish gate — see
+its ["Publish gate contract"](tools/mask-align-exp/gen12/REVIEW-ROUND.md#publish-gate-contract)
+section for the PUBLISHABLE definition, verdict-to-generation binding (`review.json` now records
+`seed`+`paint_sha` per verdict), the `roster-vN.json` shape the future manifest reads, and the
+re-roll/re-review lifecycle. Milestone 2 item 1 (manifest generator) still needs building against it.
+
 ---
 ## PARKED for skeuo v2 (2026-07-11) — emissive / PBR, NOT v1 work
 

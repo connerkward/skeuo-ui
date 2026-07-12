@@ -245,7 +245,7 @@ User's V1 ask: "surfaces pull skins+regions+sprites, no app releases for roster 
 
 | # | Item | Size | Blocking dependency | Who |
 |---|---|---|---|---|
-| 1 | Design + build the versioned skin-registry manifest (R2), so all 3 surfaces pull skins+regions+sprites without app releases | L | Milestone 1 gate | agent |
+| 1 | Design + build the versioned skin-registry manifest (R2), so all 3 surfaces pull skins+regions+sprites without app releases — consumes the publish-gate contract, see [`REVIEW-ROUND.md`](../tools/mask-align-exp/gen12/REVIEW-ROUND.md#publish-gate-contract) | L | Milestone 1 gate | agent |
 | 2 | Decide generation-parity architecture: port gen12's verified pipeline into `pipeline.ts`, or keep them separate and just sync outputs (see options below) | M (decision) + L (impl) | Milestone 1 gate; **user decides which option** | user decides, agent implements |
 | 3 | Publish the Milestone-1-verified gen12 roster into the skin registry as the "confirmed human-eye-verified" skins | M | items 1-2 | agent |
 | 4 | Fix widget tray skin-list staleness (compute from `skinList`, not hardcoded) | S | none — can do anytime, low-risk | agent |
@@ -253,7 +253,7 @@ User's V1 ask: "surfaces pull skins+regions+sprites, no app releases for roster 
 | 6 | Resolve `FLOAT_ENABLED=false` PiP — ship, drop, or redesign around the browser-chrome mismatch | S (decision) | user decision | user decides |
 | 7 | Confirm Template Studio's intended v1 status (dev-only forever, or promote to a real editing surface for web) — note it's currently dev-only even on web, not just absent on widget | S (decision) | user decision | user decides |
 | 8 | iOS: wire real device signing/provisioning (currently Simulator-verified only per `docs/ios.md`) if TestFlight/App-Store distribution is the v1 target | M | none | agent |
-| 9 | Formalize the gen12 review-gate as the actual roster publish gate (a skin isn't in the registry until it has a saved PASS in `review.json`) | M | items 1, 3 | agent |
+| 9 | ~~Formalize the gen12 review-gate as the actual roster publish gate~~ — **contract written**, see [`REVIEW-ROUND.md`](../tools/mask-align-exp/gen12/REVIEW-ROUND.md#publish-gate-contract) (definition, verdict-to-generation binding, publish-set artifact shape, lifecycle); item 1's manifest generator still needs to be built against it | M | items 1, 3 | agent |
 | 10 | Widget: last functional work was ~2026-06-17/18 — do a pass to confirm nothing else silently drifted while attention was on iOS/webapp (beyond the known tray-list bug) | M | Milestone 1 gate (so there's a stable pipeline to re-verify against) | agent |
 
 **Generation-parity architecture — the a/b/c from the 2026-06-27 scope discussion, reproduced:**
