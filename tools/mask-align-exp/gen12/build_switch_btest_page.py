@@ -1,0 +1,238 @@
+#!/usr/bin/env python3
+"""build_switch_btest_page — the biomech-giger switch-trough B-fix before/after page.
+
+Shows the shuffle bone-lever switch BEFORE (wrong bean-shaped housing w/ leftover decorative
+bolt icon) vs AFTER (housing regenerated to match the lever's own swept silhouette via the
+"B: inpaint-housing" treatment — see switchslot-compare/build_btest_housing.py). Two live,
+fully-interactive iframes embed the REAL shipped player.html for each state (not a
+reimplementation — verify-outputs-rule §7), plus static close-up crops of both detent
+positions, and the SOTA-eye VLM verdict (sota-eye-review-rule — this build runs on Sonnet, so
+the visual judgment is delegated to google/gemini-2.5-pro via fal openrouter/router/vision).
+
+Usage: python3 build_switch_btest_page.py [--extra-skin assets-dir title]
+"""
+import json
+import os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+VLM_VERDICT = {
+    "model": "google/gemini-2.5-pro (via fal openrouter/router/vision)",
+    "cost": 0.016,
+    "text": (
+        "(a) BEFORE housing-shape correctness: The curved 'bean'/'smile' shape of the housing is "
+        "incorrect for the straight bone lever and its linear sliding path, causing the lever to "
+        "overhang the top edge of the housing.\n\n"
+        "(b) AFTER housing-shape correctness at OFF: Correct. The new oval-shaped trough perfectly "
+        "contains the silhouette of the bone lever when it is in the OFF (left) position.\n\n"
+        "(c) AFTER housing-shape correctness at ON: Correct. The trough is appropriately sized to "
+        "also fully contain the lever when it is in the ON (right) position, correctly representing "
+        "the full swept path of the control.\n\n"
+        "(d) material/lighting match of the new AFTER trough to the surrounding body: Good match. "
+        "The shading, highlights, and texture of the new recessed trough integrate seamlessly with "
+        "the surrounding 'wet-bone-metal' material of the player's body.\n\n"
+        "(e) whether any leftover decorative icon or old-housing artifact is visible in the AFTER "
+        "trough: None visible. The new trough is clean and free of the decorative gear icon that "
+        "was present in the BEFORE version."
+    ),
+    "verdict": "PASS",
+}
+
+FIX_MODEL = "fal-ai/gemini-25-flash-image/edit"
+FIX_COST = 0.0398
+FAL_UPLOAD_COST = 0.0  # fal storage upload has no per-call charge
+TOTAL_SPEND = FIX_COST + VLM_VERDICT["cost"]
+
+HTML_HEAD = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>switch-b-test — biomech-giger switch trough, B: inpaint-housing fix</title>
+<style>
+  :root{{
+    --bg:#15161a; --panel:#1d1f26; --panel2:#24262f; --line:#33353f;
+    --text:#e8e9ee; --muted:#9a9dab; --accent:#5ae678; --bad:#e6644a; --accent2:#e6aa32;
+  }}
+  *{{box-sizing:border-box;}}
+  body{{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    padding:28px 20px 60px;}}
+  .wrap{{max-width:1360px;margin:0 auto;}}
+  h1{{font-size:22px;margin:0 0 6px;}}
+  h2{{font-size:17px;margin:34px 0 10px;}}
+  .sub{{color:var(--muted);font-size:14px;margin:0 0 4px;max-width:90ch;}}
+  .costband{{display:flex;flex-wrap:wrap;gap:8px 22px;margin:16px 0 10px;padding:12px 16px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;font-size:13px;
+    color:var(--muted);align-items:center;}}
+  .costband b{{color:var(--text);}}
+  .costband .total{{margin-left:auto;color:var(--accent);font-weight:700;font-size:14px;}}
+  .compare{{display:flex;flex-wrap:wrap;gap:22px;margin-top:18px;}}
+  .card{{flex:1 1 420px;min-width:320px;max-width:620px;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;}}
+  .card h3{{font-size:15px;margin:0;padding:14px 16px 8px;display:flex;align-items:center;gap:8px;}}
+  .tag{{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;padding:2px 9px;
+    border-radius:20px;}}
+  .tag.before{{background:#3a2a2a;color:var(--bad);border:1px solid #5a3a3a;}}
+  .tag.after{{background:#20362a;color:var(--accent);border:1px solid #2c4a34;}}
+  .card .desc{{padding:0 16px 12px;color:var(--muted);font-size:12.5px;}}
+  iframe{{display:block;width:100%;height:640px;border:0;background:#0c0d10;}}
+  .hint{{padding:10px 16px 14px;color:var(--muted);font-size:12px;}}
+  .crops{{display:flex;flex-wrap:wrap;gap:22px;margin-top:14px;}}
+  .crop-card{{flex:1 1 420px;min-width:320px;max-width:620px;}}
+  .crop-card h4{{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:600;}}
+  .crop-pair{{display:flex;gap:10px;}}
+  .crop-pair figure{{margin:0;flex:1;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;}}
+  .crop-pair img{{display:block;width:100%;height:auto;}}
+  .crop-pair figcaption{{font-size:11px;color:var(--muted);padding:6px 10px;}}
+  .verdict{{margin-top:26px;padding:18px 20px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:12px;}}
+  .verdict h3{{margin:0 0 4px;color:var(--accent);font-size:16px;}}
+  .verdict .meta{{color:var(--muted);font-size:12px;margin-bottom:12px;}}
+  .verdict pre{{white-space:pre-wrap;font:13px/1.6 -apple-system,sans-serif;color:var(--text);
+    margin:0;background:transparent;}}
+  .verdict .badge{{display:inline-block;font-weight:800;font-size:13px;padding:3px 12px;
+    border-radius:20px;background:#20362a;color:var(--accent);border:1px solid #2c4a34;
+    margin-top:12px;}}
+  footer{{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);
+    font-size:12.5px;}}
+  footer code{{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px;}}
+  .conclusion{{margin-top:26px;padding:18px 20px;background:#1a2a20;border:1px solid #2c4a34;
+    border-radius:12px;}}
+  .conclusion h3{{margin:0 0 8px;color:var(--accent);font-size:17px;}}
+  .conclusion p{{margin:6px 0;font-size:14px;}}
+  @media (max-width:720px){{ iframe{{height:520px;}} }}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>biomech-giger — switch trough fix (treatment B: inpaint-housing)</h1>
+  <p class="sub">The generated biomech-giger skin ("came out GREAT") shipped with one real
+    defect: the shuffle switch's recessed trough was the wrong shape for its own bone-lever —
+    a leftover curved bean/"smile" compartment with a decorative bolt icon baked in, sized for
+    something else entirely. Fix: cut the lever's own alpha silhouette, sweep it across its
+    two detent positions (Minkowski-sum), dilate for a housing lip + rim, erase the old wrong
+    housing, and inpaint a new recessed trough constrained exactly to that swept shape via
+    fal-ai/gemini-25-flash-image/edit — then composite the result back masked to the swept
+    silhouette so the final housing geometry is guaranteed correct regardless of what the model
+    painted outside it. Both panels below are the REAL shipped player — click the switch to
+    flip it.</p>
+
+  <div class="costband">
+    <span><b>fix model:</b> {FIX_MODEL} — 1 call</span>
+    <span><b>fix cost:</b> ${FIX_COST:.4f}</span>
+    <span><b>review model:</b> {VLM_VERDICT["model"]}</span>
+    <span><b>review cost:</b> ${VLM_VERDICT["cost"]:.4f}</span>
+    <span class="total">total spend ≈ ${TOTAL_SPEND:.4f}</span>
+  </div>
+
+  <div class="compare">
+    <div class="card">
+      <h3><span class="tag before">BEFORE</span> wrong trough (bean-shaped, leftover bolt icon)</h3>
+      <div class="desc">Original generation. The trough shape doesn't match the bone lever's
+        own silhouette or its left/right slide path.</div>
+      <iframe src="assets-biomech-giger-btest-before/player.html" loading="lazy"></iframe>
+      <div class="hint">live — the real shipped player.html, pointed at the pre-fix paint.
+        Click the bone switch to flip it.</div>
+    </div>
+    <div class="card">
+      <h3><span class="tag after">AFTER</span> matched trough (swept-silhouette inpaint)</h3>
+      <div class="desc">Same skin, same lever sprite, housing regenerated to the lever's swept
+        silhouette. Composite-guaranteed geometry match at both detents.</div>
+      <iframe src="assets-biomech-giger/player.html" loading="lazy"></iframe>
+      <div class="hint">live — the real shipped player.html for assets-biomech-giger (the
+        actual asset dir the skin ships from). Click the bone switch to flip it.</div>
+    </div>
+  </div>
+
+  <h2>Close-up crops — both detent positions</h2>
+  <div class="crops">
+    <div class="crop-card">
+      <h4>BEFORE — OFF ↔ ON</h4>
+      <div class="crop-pair">
+        <figure><img src="switch-btest-crops/before-off-crop.png" alt="before off crop">
+          <figcaption>OFF: lever overhangs housing edge, bolt icon partly visible</figcaption></figure>
+        <figure><img src="switch-btest-crops/before-on-crop.png" alt="before on crop">
+          <figcaption>ON: bolt icon and curved housing tail exposed beside the lever</figcaption></figure>
+      </div>
+    </div>
+    <div class="crop-card">
+      <h4>AFTER — OFF ↔ ON</h4>
+      <div class="crop-pair">
+        <figure><img src="switch-btest-crops/after-off-crop.png" alt="after off crop">
+          <figcaption>OFF: lever fully seated inside the new oval trough</figcaption></figure>
+        <figure><img src="switch-btest-crops/after-on-crop.png" alt="after on crop">
+          <figcaption>ON: lever fully seated, no leftover housing artifact</figcaption></figure>
+      </div>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <h3>SOTA-eye review — {VLM_VERDICT["model"]}</h3>
+    <div class="meta">Per sota-eye-review-rule: this fix was executed on Sonnet, so the visual
+      pass/fail judgment is delegated to a SOTA vision model via API rather than the executing
+      agent's own eyes. Sent: both full-frame screenshots (OFF/ON) and both close-up crops, for
+      BEFORE and AFTER, with the crop-miss escape hatch and designed-asymmetry context.</div>
+    <pre>{VLM_VERDICT["text"]}</pre>
+    <div class="badge">VERDICT: {VLM_VERDICT["verdict"]}</div>
+  </div>
+
+{{EXTRA_SKIN_SECTION}}
+
+  <div class="conclusion">
+    <h3>CONCLUSION</h3>
+    <p><b>Fix confirmed working.</b> The biomech-giger shuffle switch's trough now matches the
+      bone lever's swept silhouette at both detent positions — no overhang, no leftover
+      decorative bolt icon, material/lighting consistent with the surrounding wet-bone-metal
+      body. Both the deterministic geometry (composite masked to the swept silhouette, so the
+      shape match is guaranteed by construction) and the independent SOTA-vision review agree:
+      PASS.</p>
+    <p><b>Deferred, not in scope here:</b> the baked seek-slider thumb defect (gate reason
+      <code>baked-thumb:seek</code> in orch.json) and the volume-knob dead-rotation defect
+      noted in director-review.json — both go through the erase12 chain separately.</p>
+    <p><b>Spend:</b> ${TOTAL_SPEND:.4f} total (1 inpaint roll + 1 VLM review call). Well under
+      the $0.3 cap for this task.</p>
+  </div>
+
+  <footer>
+    Built by <code>build_switch_btest_page.py</code> · fix by
+    <code>switchslot-compare/build_btest_housing.py assets-biomech-giger</code> ·
+    <code>tools/mask-align-exp/gen12/</code>
+  </footer>
+</div>
+</body>
+</html>
+"""
+
+
+def extra_skin_section(entries):
+    if not entries:
+        return ""
+    parts = ['<h2>Additional skin — same B-fix applied</h2>', '<div class="compare">']
+    for sid, title, before_dir, after_dir in entries:
+        parts.append(f"""
+    <div class="card">
+      <h3><span class="tag before">BEFORE</span> {title} — wrong trough</h3>
+      <iframe src="{before_dir}/player.html" loading="lazy"></iframe>
+      <div class="hint">live — real player, pre-fix paint.</div>
+    </div>
+    <div class="card">
+      <h3><span class="tag after">AFTER</span> {title} — matched trough</h3>
+      <iframe src="{after_dir}/player.html" loading="lazy"></iframe>
+      <div class="hint">live — real player, fixed paint.</div>
+    </div>""")
+    parts.append("</div>")
+    return "\n".join(parts)
+
+
+def main():
+    extra_html = extra_skin_section(EXTRA_SKINS if "EXTRA_SKINS" in globals() else [])
+    html = HTML_HEAD.replace("{EXTRA_SKIN_SECTION}", extra_html)
+    out_path = os.path.join(HERE, "switch-b-test.html")
+    open(out_path, "w").write(html)
+    print(f"[switch-b-test] wrote {out_path}")
+
+
+if __name__ == "__main__":
+    main()

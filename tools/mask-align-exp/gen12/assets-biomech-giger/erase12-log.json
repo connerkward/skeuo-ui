@@ -1,0 +1,25 @@
+[
+  {
+    "control": "seek",
+    "method": "gemini-2.5-flash+floor_darken",
+    "before_sha": "c5a1e55cf499",
+    "after_sha": "85a347758341",
+    "defect_found_after": false,
+    "bbox_px": [
+      671,
+      2314,
+      772,
+      2454
+    ],
+    "crop_box_px": [
+      581,
+      2244,
+      861,
+      2524
+    ],
+    "seed": 857,
+    "ts": "20260712T133056",
+    "status": "erased",
+    "verify_dir": "erase-verify"
+  }
+]

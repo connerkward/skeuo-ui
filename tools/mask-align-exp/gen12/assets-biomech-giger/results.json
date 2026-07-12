@@ -1,0 +1,181 @@
+{
+ "id": "biomech-giger",
+ "mode": "templateless",
+ "seed": 857,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  235,
+  235,
+  238
+ ],
+ "palette": {
+  "gunmetal": [
+   58,
+   60,
+   66
+  ],
+  "oily_black": [
+   18,
+   18,
+   20
+  ],
+  "bone_grey": [
+   172,
+   164,
+   148
+  ],
+  "wet_chrome": [
+   128,
+   136,
+   148
+  ],
+  "ochre_ichor": [
+   122,
+   96,
+   48
+  ],
+  "sick_green": [
+   96,
+   112,
+   72
+  ]
+ },
+ "keys": {
+  "playpause": [
+   255,
+   0,
+   255
+  ],
+  "prev": [
+   0,
+   0,
+   255
+  ],
+  "next": [
+   0,
+   255,
+   255
+  ],
+  "repeat": [
+   255,
+   255,
+   0
+  ],
+  "queue": [
+   0,
+   255,
+   0
+  ],
+  "vol": [
+   255,
+   0,
+   128
+  ],
+  "seek": [
+   0,
+   255,
+   128
+  ],
+  "shuffle": [
+   128,
+   0,
+   255
+  ],
+  "visualizer": [
+   255,
+   0,
+   0
+  ],
+  "album_art": [
+   0,
+   128,
+   255
+  ]
+ },
+ "keyNames": {
+  "playpause": "MAGENTA",
+  "prev": "PURE BLUE",
+  "next": "CYAN",
+  "repeat": "YELLOW",
+  "queue": "PURE GREEN",
+  "vol": "ROSE PINK",
+  "seek": "SPRING GREEN",
+  "shuffle": "VIOLET-PURPLE",
+  "visualizer": "PURE RED",
+  "album_art": "AZURE BLUE"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "lighting": {
+  "emissive_hint": "faint bioluminescent ichor glowing in the ducting and between the ribs",
+  "emissive_color": [
+   150,
+   190,
+   90
+  ],
+  "pulse": "breathe",
+  "intensity": 0.85,
+  "viz_emissive": true,
+  "beat_couple": 0.05
+ },
+ "ticks": {
+  "skin": "baked",
+  "sprite": "baked"
+ },
+ "css": {
+  "track": "#1c1c1e",
+  "fill": "#7a8494",
+  "accent": "#96b048",
+  "glow": "#a8c85a"
+ },
+ "template": {},
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 857,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "toggle_track_enabled": true,
+ "prompt_json_spec": false,
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 0.0
+}

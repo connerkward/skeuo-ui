@@ -1,0 +1,32 @@
+{
+  "id": "biomech-giger",
+  "title": "Biomech Giger",
+  "mode": "templateless",
+  "passed": false,
+  "rolls": 1,
+  "final_seed": 857,
+  "gate": {
+    "seed": 857,
+    "PASS": false,
+    "controls": 10,
+    "seek_cov": 1.0,
+    "reasons": [
+      "baked-thumb:seek"
+    ],
+    "leak": 0.0
+  },
+  "history": [
+    {
+      "seed": 857,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.0,
+      "reasons": [
+        "baked-thumb:seek"
+      ],
+      "leak": 0.0
+    }
+  ],
+  "elapsed_s": 201.1,
+  "player": "assets-biomech-giger/player.html"
+}

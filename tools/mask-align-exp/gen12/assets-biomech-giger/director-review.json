@@ -1,0 +1,96 @@
+{
+  "skin": "biomech-giger",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 23.9,
+  "ts": "2026-07-12T13:29:11",
+  "verdict": "FAIL",
+  "score_0_10": 8,
+  "orientation_ok": true,
+  "device_defects": [],
+  "per_control": {
+    "playpause": {
+      "status": "good",
+      "note": "Cleanly rendered, fits the biomech theme well.",
+      "defects": []
+    },
+    "prev": {
+      "status": "good",
+      "note": "Good seating and styling.",
+      "defects": []
+    },
+    "next": {
+      "status": "good",
+      "note": "Consistent with prev.",
+      "defects": []
+    },
+    "repeat": {
+      "status": "good",
+      "note": "Iconography is sharp and readable.",
+      "defects": []
+    },
+    "queue": {
+      "status": "good",
+      "note": "Well integrated into the carapace.",
+      "defects": []
+    },
+    "vol": {
+      "status": "needs_work",
+      "note": "The interaction script dragged the knob, but the dimple indicator is in the exact same 1:30 position in both the before and after frames. The dial did not rotate.",
+      "defects": [
+        "dead-control"
+      ]
+    },
+    "seek": {
+      "status": "needs_work",
+      "note": "The native CSS grey slider thumb and blue-grey fill are clearly visible beneath/behind the custom purple sinew sprite, breaking the illusion.",
+      "defects": [
+        "css-misalignment"
+      ]
+    },
+    "shuffle": {
+      "status": "good",
+      "note": "Fantastic characterful bone switch, works beautifully.",
+      "defects": []
+    },
+    "visualizer": {
+      "status": "good",
+      "note": "Screen area is clean.",
+      "defects": []
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Screen frame is well rendered.",
+      "defects": []
+    }
+  },
+  "notes": [
+    "Aesthetically, this is a phenomenal execution of the Giger prompt. The materials feel wet, oppressive, and appropriately bone-like.",
+    "The shuffle bone switch is a standout piece of design.",
+    "Unfortunately, the dead volume knob and the visible CSS elements on the seek slider force a hard fail."
+  ],
+  "improve": [
+    "Ensure the volume knob sprite is properly separated and capable of rotating to reflect its value.",
+    "Hide or properly size the native CSS thumb and track on the seek slider so the custom sinew sprite completely replaces them without ghosting."
+  ]
+}
