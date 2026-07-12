@@ -1467,3 +1467,7 @@ generation) and self-resolves once that agent's batch lands.
 `build_player.py`, or `genskin.py` — this pass only adds an observational check, per
 `fix-generalizable-rule`'s boundary (a probe finding a hitbox bug is not the same as fixing
 one; that's the extract/player-owning agents' lane).
+
+## User decisions (2026-07-12)
+- **Seed-mine/rescue: DROPPED** — user: "forget seed min thing." No mining round; roster quality comes from the fix chain + re-rolls.
+- **Repeat button: STAYS, director-decided** — like ticks/optional stages, the director spec decides per theme whether repeat appears. (Roster schema: repeat becomes a director-optional control — implement with the next director-responsibilities pass, cross-ref the director-gates-stages TODO.)
