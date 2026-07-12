@@ -106,3 +106,10 @@ extraction/matte/recovery all local ($0). Within the ~$2 budget.
 - No mainline pipeline behaviour change: the shipped counter-rotation path
   (`extract12.py` → `regions[vol].knob_zero_deg` → `build_player.py`) is unchanged and remains
   the load-bearing mechanism.
+
+## Human verdict addendum (2026-07-12)
+
+User, reviewing the results page: **"myst-arcanum · seed 202 knob is fine"** — confirms the
+adjudicated call (visually straight-up; detector abstained at z=4.2 < 5 rather than guessing).
+The 3/8 best-adjudication compliance figure stands as the correct read; the detector's
+abstention behavior on low-contrast embossed pointers is working as designed (abstain > guess).
