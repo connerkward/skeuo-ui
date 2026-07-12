@@ -205,9 +205,9 @@
     "seek": {
       "device": [
         0.5943771701388889,
-        0.2874461206896552,
+        0.2863685344827586,
         0.09640190972222219,
-        0.3286637931034483
+        0.3297413793103448
       ],
       "strip": [
         [
@@ -224,10 +224,15 @@
         0.3103448275862069
       ],
       "travel": [
-        0.28098,
+        0.2799,
         0.62258
       ],
-      "vertical": true
+      "vertical": true,
+      "bakedThumb": {
+        "runFrac": 0.516,
+        "peak": 2.56,
+        "flag": false
+      }
     },
     "shuffle": {
       "device": [
@@ -304,6 +309,7 @@
     }
   },
   "template": {},
+  "art_viz_swapped": false,
   "gate": {
     "empty_ok": true,
     "controls": 10,
@@ -315,7 +321,14 @@
     "leak": 0.0,
     "guide_ring": [],
     "region_degenerate": [],
-    "reasons": [],
-    "PASS": true
+    "baked_thumb": [],
+    "sprite_fit": [
+      "shuffle"
+    ],
+    "orientation_ok": true,
+    "reasons": [
+      "sprite-fit:shuffle"
+    ],
+    "PASS": false
   }
 }

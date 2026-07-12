@@ -204,9 +204,9 @@
     },
     "seek": {
       "device": [
-        0.390625,
+        0.34375,
         0.4720905172413793,
-        0.47265625,
+        0.5199652777777778,
         0.02564655172413793
       ],
       "strip": [
@@ -224,9 +224,14 @@
         0.03017241379310345
       ],
       "travel": [
-        0.38151,
-        0.8724
-      ]
+        0.33377,
+        0.8737
+      ],
+      "bakedThumb": {
+        "runFrac": 0.069,
+        "peak": 0.5,
+        "flag": false
+      }
     },
     "shuffle": {
       "device": [
@@ -297,24 +302,32 @@
         0.1570581896551724
       ],
       "regionRefit": {
-        "info": "cc 332946px thr 45 loose 62 (body 82 floor 25)",
+        "info": "cc 332946px thr 45 loose 61 (body 81 floor 25)",
         "iouVsMask": 0.782
       }
     }
   },
   "template": {},
+  "art_viz_swapped": false,
   "gate": {
     "empty_ok": true,
     "controls": 10,
     "controls_total": 10,
     "missing": [],
-    "seek_cov": 1.039,
+    "seek_cov": 1.038,
     "state_align_ok": true,
     "biref_ok": true,
     "leak": 0.0,
     "guide_ring": [],
     "region_degenerate": [],
-    "reasons": [],
-    "PASS": true
+    "baked_thumb": [],
+    "sprite_fit": [
+      "shuffle"
+    ],
+    "orientation_ok": true,
+    "reasons": [
+      "sprite-fit:shuffle"
+    ],
+    "PASS": false
   }
 }

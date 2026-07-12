@@ -1,6 +1,136 @@
 # gen12 TODO
 
 ---
+## KNOB_POINTER_UP experiment: paint-at-convention does NOT beat detect-and-counter-rotate — DONE 2026-07-12 (~$2)
+
+Tested the user's inverted-architecture insight (verbatim: "maybe instead of all this bullshit
+[detect-and-counter-rotate] you can just specify in prompt that the tick on knob face should
+point upwards 0 degrees?"): a light, text-safe clause ("its pointer notch aiming straight up" —
+no angle numbers/position words, per the knobticks MIN/MAX/CENTER text-bake lesson) added to
+both genskin.py prompt paths behind `KNOB_POINTER_UP` (default OFF), then 2 themes
+(steam-porthole templated + myst-arcanum templateless multi-mark) x 4 seeds with the clause ON,
+compliance measured by the EXISTING knob_angle.py detector (its right role: verifier).
+
+**Result: compliance LOW — 2/8 detector-measured within ±10° of up (0.10°, 0.51°), 3/8 adding
+one visually-up cap the detector abstained on (embossed, z=4.2 < 5 bar). Flip threshold was
+6/8.** And the pre-fix baseline was NOT random: 85.6/144/95/355/4/359 is BIMODAL — 3/6 already
+within ±10° (errs 5°, 4°, 1°) vs a right-side ~85-145° cluster. Clause-ON (25-38%) ≤ clause-OFF
+(50%): one light sentence does not override the model's right-side-pointer prior (4/8 gens here
+at ~60-110°, one straight down). **Verdict: detect-and-counter-rotate stays PRIMARY;
+KNOB_POINTER_UP stays default OFF** (kept flag-gated for a cheap future re-test with stronger
+conditioning, e.g. the pointer drawn INTO the blueprint guide instead of described). No
+build_player.py change specced — fallback demotion is moot at this compliance.
+
+Measurement collateral (fixed $0, experiment-local): biref12's mask-cell island matching missed
+the vol cap on 4/8 gens (parts-tray card / strip drift) — `knobup/recover_caps.py` recovers it
+deterministically (circular strip-island off the existing matte, 0.80 fill floor + 1.02 overfill
+ceiling after two visually-caught wrong-part picks, cell-crop + local-BiRefNet fallback);
+recovery changes sprite ISOLATION only, never the measurement. Unattributed: 3/4 steam gens
+FAILed emptiness (baked knob in socket) — no same-seed control arm, flagged not attributed.
+
+Full record: `docs/experiments/2026-07-11-knob-pointer-up.md` + `knobup/index.html` (served) +
+`knobup/results.json`.
+
+---
+## DETECT+ERASE for baked slider thumbs — new erase12.py, 4/6 review-flagged skins fixed live — DONE 2026-07-12
+
+Answer to review-2026-07-11-round1.json's #1 recurring complaint (baked slider thumbs, 6/15
+skins) after "harden the seek-empty-slot prompt clause" had already failed across many prior
+rounds (see the many `SEEK IS JUST AN EMPTY SLOT` iterations already in `genskin.py`). Per
+`fix-generalizable-rule` + the bproof lesson (constraint BULK costs quality, not just
+precision): stopped fighting the model with more prompt words and instead shipped a
+deterministic **detect+erase** post-process. Prior art: `tools/mask-align-exp/erase_baked.py`
+(run9-era gate-driven repair, same floor-tone-fill idea) — this is the gen12 port plus a
+model-edit escalation path and real per-erase verification.
+
+**New `erase12.py <assets-dir> [--control seek] [--bbox f,f,f,f] [--method classical|model|auto]`.**
+Detection is its OWN groove-shaped algorithm (1-D column-median/std profile along the groove's
+long axis, edge-anchored, compact-run capped) — **not** a reuse of the existing emptiness gate's
+18%-interior-shrink+bright>150 test, which is centre-biased and (confirmed live, all 6 named
+skins) BLIND to a thumb resting near a travel EXTREME — every real bake in the review sits at
+one END of the groove. This is a HEURISTIC candidate locator only; every result was visually
+inspected before trusting it (verify-outputs-rule), and it correctly false-positived on
+claymation (see below) — the tool prints a candidate + saves before/after crops rather than
+silently trusting itself.
+
+**Erase method — classical FIRST, empirically insufficient, model fallback used for all 4:**
+tried OpenCV inpaint (TELEA and NS, several radii) $0 first per the task brief — it consistently
+produced a visible "X"-shaped smear/blur artifact on every tested skin (the mask rectangle's
+borders are too content-diverse — carved decorative horns vs. flat channel floor — for
+PDE-based inpainting to bridge). Escalated to a targeted Vertex nano-banana-pro edit
+(`edit_vertex`, reused from `genskin.py`) on a SQUARE crop around the defect (square sidesteps
+`ai-image-coords-rule`'s aspect-mismatch trap by construction — no separate aspect-matching
+logic needed) with a feathered composite back (hard-paste left a faint rectangle seam,
+confirmed live on the first diablo-gothic/fallout-vault pass; a soft alpha ramp over the outer
+~12% margin fixed it). One skin (fallout-vault) needed a further **$0 floor-darken finishing
+pass** — the model kept regenerating a glossy highlight roughly where the removed knob's
+highlight was, even after 2 rounds of prompt tightening (run_frac/peak barely moved,
+0.080/1.29 → 0.081/1.31); a direct pixel correction pulling any still-flagged run back toward
+the groove's own floor tone (same idea as `erase_baked.py`'s fill, iterated against this
+module's own detector) closed it in one pass.
+
+**Live validation, 5 of 6 review-named skins reachable this session** (fallout-pipboy was
+excluded — another concurrent session was actively re-rolling `assets-fallout-pipboy/paint.png`
+mid-session, confirmed by a paint.png sha mismatch against the review's recorded sha; not
+touched, per `git-worktree-rule`):
+
+| skin | verdict | evidence |
+|---|---|---|
+| diablo-gothic | ERASED, clean | model edit, ember/dragon-cap fully gone, seamless; extract12's own `baked-thumb` gate (landed mid-session) reads `run_frac=0.516 peak=2.56 ok` (its own lava-vein glow correctly reads as a broad gradient, not a discrete bake) |
+| fallout-vault | ERASED, clean | model edit + floor_darken finishing pass; gate `run_frac=0.069 peak=0.50 ok` (down from 1.31 pre-finishing-pass) |
+| n64-cutscene | ERASED, clean | model edit (2nd prompt iteration fixed a first-pass shape bug — see below); gate `run_frac=0.000 peak=1.38 ok` |
+| wc-goldshield | ERASED, clean | model edit, ornate cap fully gone, clean pointed end-cap consistent with the theme; gate `run_frac=0.000 peak=0.75 ok` |
+| **claymation** | **NOT erased — false positive** | direct high-zoom crop inspection (both before AND after my fix) shows a genuinely EMPTY groove, just organic clay creases/highlight gradient. Notably, extract12.py's OWN newly-landed `baked-thumb` gate ALSO flags it (`run_frac=0.147 peak=1.27 flag=true`) — a shared false-positive between both detectors on the same mid-groove highlight gradient. Flagging for whoever owns that gate: worth a look, not fixed here (out of scope — I own erase12.py/genskin.py, not extract12.py). |
+| fallout-pipboy | not touched | another session is actively regenerating this skin's paint.png concurrently (sha changed mid-session); re-run `erase12.py assets-fallout-pipboy` once that settles |
+
+**A real mid-fix bug worth recording:** n64-cutscene's first model-edit pass removed the bronze
+cap but reshaped the recess to match the CAP's own rounded-square silhouette (a bulge) instead
+of the channel's actual constant width — visible on close inspection, not caught by the
+detector (which only checks brightness, not shape). Fixed by adding an explicit
+"match the channel's own cross-section, not the removed part's silhouette" line to the erase
+prompt; the second pass was clean. Lesson for anyone extending `erase_model()`: brightness-only
+verification is not shape verification — LOOK at the crop, don't just trust the re-detect call.
+
+**`extract12.py`'s `baked-thumb:seek` gate landed mid-session** (another concurrent lane) —
+exactly the gate reason this task was told to coordinate through. Confirmed as the authoritative
+check: re-ran `extract12.py` on all 4 erased skins post-fix and all 4 now read `baked-thumb`
+`ok` (the only remaining `regions.json` gate FAIL reason on each is the pre-existing, unrelated
+`sprite-fit:shuffle` — out of scope here). `erase12.py` does NOT import or depend on that gate
+(by design, standalone tool per the task brief) but the two independently converge on the same
+4 skins as fixed.
+
+**genskin.py — `SEEK_CLAUSE_LITE` flag added, default OFF:** per the task, reduced the
+two-bullet, multi-sentence seek-empty-slot hardening (one at the device level, one repeated at
+the strip level, both duplicated a second time in the currently-unused `_build_json_spec_prompt`
+path) to a single plain clause each, gated behind `SEEK_CLAUSE_LITE` (module-level flag near
+`PROMPT_JSON_SPEC`). Verified default-OFF is byte-identical to the pre-change prompt
+(`--blueprint-only` dry run, `prompt_len` unchanged at 11454 chars, both heavy-clause strings
+present verbatim). NOT flipped on here — erase12.py needs a real batch's worth of validation
+(beyond this one-off repair pass on 4 known-bad skins) before the trade (freed prompt budget vs.
+a higher up-front bake rate that erase12.py must now always catch) is worth taking live.
+
+**orchestrate12.py hook — NOT applied by me** (another lane owns that file this session; patch
+snippet only). Insert right after the existing `gate = json.load(...)` line in the roll loop
+(after the pass-2 `extract12.py` call, before `history.append(...)`):
+```python
+    if any(rr.startswith("baked-thumb:") for rr in gate.get("reasons", [])):
+        run(["python3", "erase12.py", ASSETS])           # idempotent; no-ops if already clean
+        run(["python3", "extract12.py", ASSETS])          # refresh the gate post-erase
+        gate = json.load(open(os.path.join(ASSETS, "regions.json"))).get("gate", {})
+```
+`erase12.py` auto-detects the slider-role control from `regions.json` when called bare (no
+`--control` needed — this roster has exactly one slider, `seek`); `--method` defaults to `auto`
+(classical first, model-edit fallback, both proven live above). Idempotent by re-detection: a
+second call on an already-clean groove is a fast no-op (see `erase12.py`'s module docstring).
+
+**Housekeeping:** `assets-<skin>/erase-verify/` (before/after crops, 4x upscaled) and
+`erase12-log.json` (per-erase provenance: method, before/after sha, bbox) are written per-run
+but left **untracked** — consistent with this repo's existing convention for debug/verify
+output (`observe/`, `director-review.json` are similarly untracked elsewhere in the roster).
+Only `paint.png` + `regions.json` (both already git-tracked) were committed for the 4 fixed
+skins.
+
+---
 ## Verification recalibration: review round used as an eval set — DONE 2026-07-11 (~$1.4)
 
 The review round (`review-2026-07-11-round1.json`, 0/15 PASS) exposed that `observe12.py` +

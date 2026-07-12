@@ -79,6 +79,61 @@ BLUEPRINT_TWOIMG = False
 # (see generation-spend-rule) — a re-roll batch may be running against genskin.py right now.
 PROMPT_JSON_SPEC = False
 
+# KNOB_POINTER_UP: paint the volume-cap's pointer notch AT the zero-degree convention instead of
+# painting it at whatever angle the model feels like and counter-rotating post-hoc (the whole
+# knob_angle.py detect+correct machinery). User insight, 2026-07-11 (verbatim): "maybe instead of
+# all this bullshit [detect-and-counter-rotate] you can just specify in prompt that the tick on
+# knob face should point upwards 0 degrees?" — invert the architecture, paint AT the convention
+# instead of detecting and correcting after. See knobup/ (compliance experiment against the
+# pre-fix random-angle distribution) + docs/experiments/2026-07-11-knob-pointer-up.md for the
+# verdict. Deliberately no position-label word or angle number in the clause below (bproof
+# lesson, see the tick-provisioning comment further down: named positions/numbers bake in as
+# literal engraved TEXT) — "straight up" is a direction, not a label. Default OFF pending verdict.
+KNOB_POINTER_UP = False
+_POINTER_UP_CLAUSE = ", its pointer notch aiming straight up" if KNOB_POINTER_UP else ""
+
+# SEEK_CLAUSE_LITE: the "seek is an empty slot" prompt clause has been hardened across many
+# rounds — two full-paragraph bullets (one at the device level, one repeated at the strip
+# level) — yet review-2026-07-11-round1.json still shows BAKED SLIDER THUMBS on 6+ skins
+# (diablo-gothic, fallout-pipboy, fallout-vault, n64-cutscene, wc-goldshield confirmed by
+# direct paint.png crop inspection; claymation's review note turned out to be a false read —
+# its groove is genuinely empty, see TODO.md). Per the bproof lesson (constraint BULK costs
+# quality, not just precision — more words compete for the model's finite per-call attention
+# budget and don't reliably win the fight), stop trying to out-word the model. erase12.py is
+# now the safety net: a deterministic groove-anomaly detector + $0 classical inpaint (falling
+# back to a ~$0.05-0.1 targeted model edit) that catches a baked thumb post-hoc regardless of
+# what the prompt said. That safety net is what makes this trade affordable: PROMPT BUDGET
+# FREED for clauses erase12.py canNOT backstop (icon identity, silhouette, no-text, camera
+# angle) at the cost of a HIGHER up-front baked-thumb rate on the raw paint call itself — a
+# defect this pipeline now fixes post-hoc instead of preventing pre-hoc. Default OFF until
+# erase12.py is validated across a real re-roll batch (not just the one-off repair pass — see
+# TODO.md for the validation record on the 5 confirmed skins above).
+SEEK_CLAUSE_LITE = False
+
+_SEEK_SLOT_BULLET_HEAVY = (
+    "  • SEEK IS JUST AN EMPTY SLOT — treat the seek as a plain EMPTY recessed horizontal "
+    "SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, "
+    "grip, knob, handle, bar, fill, track-fill or progress indicator into it — it is a bare "
+    "dark empty channel; the thumb is a SEPARATE loose part in the strip. A seek slot with "
+    "anything riding in it is WRONG.\n"
+)
+_SEEK_SLOT_BULLET_LITE = (
+    "  • The seek slot is an empty recessed channel — no thumb, grip or fill baked into it.\n"
+)
+_SEEK_STRIP_BULLET_HEAVY = (
+    "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a "
+    "finger slides, shown by itself on the backdrop, like a spare part in a parts tray. It "
+    "is ABSOLUTELY NOT a slot, groove, channel, track, rail or recess, and must NOT be "
+    "drawn sitting in/on any slot or dark channel — no groove under it, no track through "
+    "it, no recessed surround. If the strip's seek cell shows any slot/track instead of a "
+    "lone thumb piece, the output is WRONG.\n"
+)
+_SEEK_STRIP_BULLET_LITE = (
+    "  • The seek strip cell shows the loose thumb/grip alone, not sitting in a slot or groove.\n"
+)
+SEEK_SLOT_BULLET = _SEEK_SLOT_BULLET_LITE if SEEK_CLAUSE_LITE else _SEEK_SLOT_BULLET_HEAVY
+SEEK_STRIP_BULLET = _SEEK_STRIP_BULLET_LITE if SEEK_CLAUSE_LITE else _SEEK_STRIP_BULLET_HEAVY
+
 COL_W, H, DEV_H = 1200, 1920, 1440
 DEVF = DEV_H / H
 
@@ -491,12 +546,8 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "recesses only. If ANY of the three cavities (knob socket, seek slot, shuffle slot) "
         "contains ANY part or any fill colour, the output is WRONG and must be redone.\n"
         + tick_skin_bullet
-        + "  • SEEK IS JUST AN EMPTY SLOT — treat the seek as a plain EMPTY recessed horizontal "
-        "SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, "
-        "grip, knob, handle, bar, fill, track-fill or progress indicator into it — it is a bare "
-        "dark empty channel; the thumb is a SEPARATE loose part in the strip (see spec's "
-        "strip_order_left_to_right). A seek slot with anything riding in it is WRONG.\n"
-        "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed "
+        + SEEK_SLOT_BULLET
+        + "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed "
         "glass SCREENS — flat unlit dark glass panels only, with NOTHING inside them: NO baked "
         "spectrum/equalizer bars, NO album cover or artwork, NO waveform, NO icons, NO text, NO "
         "content whatsoever. They are powered-down screens; the app draws their live content "
@@ -507,13 +558,8 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "shuffle switch first state, shuffle switch second state) — in the device's own "
         f"materials, patches removed, on the flat {'pale' if dark else 'charcoal'} backdrop.\n"
         + tick_sprite_bullet
-        + "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a "
-        "finger slides, shown by itself on the backdrop, like a spare part in a parts tray. It "
-        "is ABSOLUTELY NOT a slot, groove, channel, track, rail or recess, and must NOT be "
-        "drawn sitting in/on any slot or dark channel — no groove under it, no track through "
-        "it, no recessed surround. If the strip's seek cell shows any slot/track instead of a "
-        "lone thumb piece, the output is WRONG.\n"
-        "  • EXACT FIT — per the spec's congruence_rule: each strip part is the EXACT size & "
+        + SEEK_STRIP_BULLET
+        + "  • EXACT FIT — per the spec's congruence_rule: each strip part is the EXACT size & "
         "shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove; "
         "each shuffle_state exactly fills the switch slot). Do NOT resize/re-proportion a part.\n"
         "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT "
@@ -530,7 +576,7 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "overhead at exactly 90°, the same view as the device. Each part is drawn as if lying "
         "FLAT on a table seen from straight above, with ZERO thickness, height or depth "
         "visible. The volume knob cap is a FLAT ROUND DISC / COIN — you see ONLY its circular "
-        "TOP FACE (a knurled outer rim and a small pointer notch); you must NOT see any "
+        "TOP FACE (a knurled outer rim and a small pointer notch" + _POINTER_UP_CLAUSE + "); you must NOT see any "
         "cylindrical SIDE WALL, edge, height or 3D body of the knob. The seek thumb and the "
         "shuffle switch are likewise flat shapes seen from directly overhead. ABSOLUTELY NO "
         "product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO perspective, NO visible "
@@ -781,11 +827,8 @@ def main():
         "the empty wells — neutral DARK recesses only. If ANY of the three cavities (knob socket, seek slot, "
         "shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone.\n"
         + tick_skin_bullet
-        + "  • SEEK IS JUST AN EMPTY SLOT — treat the seek as a plain EMPTY recessed horizontal SLOT/CHANNEL only, "
-        "NOT a functioning slider. Absolutely do NOT bake a slider thumb, grip, knob, handle, bar, fill, track-fill "
-        "or progress indicator into it — it is a bare dark empty channel; the thumb is a SEPARATE loose part in the "
-        "strip. A seek slot with anything riding in it is WRONG.\n"
-        "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS — flat "
+        + SEEK_SLOT_BULLET
+        + "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS — flat "
         "unlit dark glass panels only, with NOTHING inside them: NO baked spectrum/equalizer bars, NO album cover "
         "or artwork, NO waveform, NO icons, NO text, NO content whatsoever. They are powered-down screens; the app draws "
         "their live content later. If either window contains any baked graphics, it is WRONG. The album-art window "
@@ -794,12 +837,8 @@ def main():
         "slider thumb, shuffle switch in its first state, shuffle switch in its second state — in the device's own materials, outlines removed, on "
         f"the flat {'pale' if dark else 'charcoal'} backdrop.\n"
         + tick_sprite_bullet
-        + "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a finger slides, shown "
-        "by itself on the backdrop, like a spare part in a parts tray. It is ABSOLUTELY NOT a slot, groove, "
-        "channel, track, rail or recess, and must NOT be drawn sitting in/on any slot or dark channel — no groove "
-        "under it, no track through it, no recessed surround. If the strip's seek cell shows any slot/track "
-        "instead of a lone thumb piece, the output is WRONG.\n"
-        "  • EXACT FIT — each strip part is the EXACT size & shape of its slot (knob cap = socket diameter; thumb "
+        + SEEK_STRIP_BULLET
+        + "  • EXACT FIT — each strip part is the EXACT size & shape of its slot (knob cap = socket diameter; thumb "
         "fits the groove; each shuffle state exactly fills the switch slot). Do NOT resize/re-proportion a part.\n"
         "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT have to be a plain "
         "pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, gem that shifts, valve, eye that opens — "
@@ -812,7 +851,7 @@ def main():
         "STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view — the camera is directly overhead at exactly 90°, the same view "
         "as the device. Each part is drawn as if lying FLAT on a table seen from straight above, with ZERO "
         "thickness, height or depth visible. The volume knob cap is a FLAT ROUND DISC / COIN — you see ONLY its "
-        "circular TOP FACE (a knurled outer rim and a small pointer notch); you must NOT see any cylindrical SIDE "
+        "circular TOP FACE (a knurled outer rim and a small pointer notch" + _POINTER_UP_CLAUSE + "); you must NOT see any cylindrical SIDE "
         "WALL, edge, height or 3D body of the knob. The seek thumb and the shuffle switch are likewise flat shapes "
         "seen from directly overhead. ABSOLUTELY NO product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO "
         "perspective, NO visible sides — a part showing its side wall or any thickness is WRONG. Each part must "

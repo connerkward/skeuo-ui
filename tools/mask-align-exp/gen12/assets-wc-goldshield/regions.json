@@ -204,9 +204,9 @@
     },
     "seek": {
       "device": [
-        0.24305555555555555,
+        0.2421875,
         0.4381236530172414,
-        0.5112847222222222,
+        0.5065104166666666,
         0.0318884698275862
       ],
       "strip": [
@@ -224,9 +224,14 @@
         0.023976293103448277
       ],
       "travel": [
-        0.23307,
-        0.76432
-      ]
+        0.2322,
+        0.75868
+      ],
+      "bakedThumb": {
+        "runFrac": 0.0,
+        "peak": 0.75,
+        "flag": false
+      }
     },
     "shuffle": {
       "device": [
@@ -344,6 +349,7 @@
       0.5625
     ]
   },
+  "art_viz_swapped": false,
   "gate": {
     "empty_ok": true,
     "controls": 10,
@@ -355,14 +361,21 @@
     "leak": 0.0004,
     "guide_ring": [],
     "region_degenerate": [],
-    "reasons": [],
-    "PASS": true
+    "baked_thumb": [],
+    "sprite_fit": [
+      "shuffle"
+    ],
+    "orientation_ok": true,
+    "reasons": [
+      "sprite-fit:shuffle"
+    ],
+    "PASS": false
   },
   "drift": {
     "per_control": {
       "album_art": 321.5,
       "visualizer": 439.9,
-      "seek": 377.0,
+      "seek": 377.2,
       "prev": 579.8,
       "playpause": 471.0,
       "next": 837.2,
