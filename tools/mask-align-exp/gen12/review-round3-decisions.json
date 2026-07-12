@@ -1,0 +1,43 @@
+{
+  "claymation": {
+    "disposition": "reject",
+    "candidate": null,
+    "note": "button alingment complete fail. css outside slot again on left side. "
+  },
+  "diablo-gothic": {
+    "disposition": "accept",
+    "candidate": null,
+    "note": "\u276f\u00a0diablo-gothic is near perfect. just the css goes outisde the bounds of slider slot (this is consistent needs to be fixed. switch needs rework, doesnt fit slot. maybe candinate for inpaint. "
+  },
+  "fa-pod": {
+    "disposition": "reject",
+    "candidate": null,
+    "note": "almost perfect. button silhouettes off for all buttons except play pause.  swtich is way too huge and out of propotion. vlm should have caught this. "
+  },
+  "fallout-vault": {
+    "disposition": "reject",
+    "candidate": "bria",
+    "note": "swithc is also way oit of propotion. buttons depressions / not detected / not aligne.d  css slider compeltely outside slot on  both sides.either erase candidnate is fine here."
+  },
+  "myst-arcanum": {
+    "disposition": null,
+    "candidate": null,
+    "note": ""
+  },
+  "n64-cutscene": {
+    "disposition": "reject",
+    "candidate": null,
+    "note": "fine but CSS FOR SLIDER OUTSIDE SLOT!!!! switch doesnt match swtich slot."
+  },
+  "ps1-crunchy": {
+    "disposition": "reject",
+    "candidate": null,
+    "note": "queue button not detected / working as button but baekd. two of same button baked. CSS OUTISDE SLOT FOR SLIDER!!! switch - same problem. not matched /placed/sized with slot at all. "
+  },
+  "steam-porthole": {
+    "disposition": "reject",
+    "candidate": "vertex",
+    "note": "vertex is better but bria is acceptable. you didnt fix any of the issues i mentioned last time.!!!!"
+  },
+  "_ts": "2026-07-12T18:38:26.748Z"
+}

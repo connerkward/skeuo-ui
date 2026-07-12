@@ -1,0 +1,111 @@
+{
+  "skins": {
+    "claymation": {
+      "gate_flag": false,
+      "gate_runFrac": 0.0,
+      "gate_peak": 0.7,
+      "vlm_verdict": "CLEAN",
+      "vlm_confidence": 100,
+      "vlm_location": "none",
+      "vlm_detail": "The slider groove is an empty, textured channel with no handle or knob baked into it.",
+      "combined_flag": false,
+      "crop_path": "round3-crops/claymation-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    },
+    "diablo-gothic": {
+      "gate_flag": false,
+      "gate_runFrac": 0.58,
+      "gate_peak": 3.09,
+      "vlm_verdict": "CLEAN",
+      "vlm_confidence": 100,
+      "vlm_location": "none",
+      "vlm_detail": "The slider groove is completely empty, showing only a background texture with subtle ambient lighting, and contains no baked-in thumb.",
+      "combined_flag": false,
+      "crop_path": "round3-crops/diablo-gothic-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    },
+    "fa-pod": {
+      "gate_flag": false,
+      "gate_runFrac": 0.0,
+      "gate_peak": 1.05,
+      "vlm_verdict": "CLEAN",
+      "vlm_confidence": 100,
+      "vlm_location": "none",
+      "vlm_detail": "The slider groove is completely empty, containing only a dark, flat-colored base, with no evidence of a baked-in thumb or handle.",
+      "combined_flag": false,
+      "crop_path": "round3-crops/fa-pod-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    },
+    "fallout-vault": {
+      "gate_flag": false,
+      "gate_runFrac": 0.081,
+      "gate_peak": 0.52,
+      "vlm_verdict": "BAKED",
+      "vlm_confidence": 100,
+      "vlm_location": "left third of groove",
+      "vlm_detail": "A distinctly shaded, rounded slider handle is painted into the left side of the track, appearing as a raised, three-dimensional object.",
+      "combined_flag": true,
+      "crop_path": "round3-crops/fallout-vault-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    },
+    "myst-arcanum": {
+      "gate_flag": false,
+      "gate_runFrac": 0.0,
+      "gate_peak": 1.03,
+      "vlm_verdict": "CLEAN",
+      "vlm_confidence": 100,
+      "vlm_location": "none",
+      "vlm_detail": "The slider track is an empty, recessed channel with only subtle ambient shading and no painted-on thumb graphic.",
+      "combined_flag": false,
+      "crop_path": "round3-crops/myst-arcanum-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    },
+    "n64-cutscene": {
+      "gate_flag": false,
+      "gate_runFrac": 0.0,
+      "gate_peak": 1.59,
+      "vlm_verdict": "CLEAN",
+      "vlm_confidence": 100,
+      "vlm_location": "none",
+      "vlm_detail": "The seek/scrub groove is a simple, dark, empty channel with no baked-in thumb or other obstructing graphics.",
+      "combined_flag": false,
+      "crop_path": "round3-crops/n64-cutscene-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    },
+    "ps1-crunchy": {
+      "gate_flag": false,
+      "gate_runFrac": 0.0,
+      "gate_peak": 0.65,
+      "vlm_verdict": "CLEAN",
+      "vlm_confidence": 100,
+      "vlm_location": "none",
+      "vlm_detail": "The seek bar's groove is a completely empty, black, recessed area with no painted-in handle or thumb.",
+      "combined_flag": false,
+      "crop_path": "round3-crops/ps1-crunchy-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    },
+    "steam-porthole": {
+      "gate_flag": false,
+      "gate_runFrac": 0.037,
+      "gate_peak": 1.8,
+      "vlm_verdict": "BAKED",
+      "vlm_confidence": 100,
+      "vlm_location": "left end of the groove",
+      "vlm_detail": "A detailed, circular, metallic knob with a screw-like slot is painted at the far left side within the slider track.",
+      "combined_flag": true,
+      "crop_path": "round3-crops/steam-porthole-seek-crop.png",
+      "model": "google/gemini-2.5-pro",
+      "cost_estimate": 0.02
+    }
+  },
+  "total_cost_estimate": 0.16,
+  "model": "google/gemini-2.5-pro",
+  "ts": "2026-07-12T11:04:49"
+}

@@ -1,0 +1,711 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gen12 round-3 review — failed-set re-extract + erase evidence</title>
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { font: 14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; margin:0;
+  background:#0b0d10; color:#e6e8eb; }
+@media (prefers-color-scheme: light) { body { background:#f4f5f7; color:#1a1d21; } }
+header.top { padding:20px clamp(12px,3vw,32px); background:#14171b; border-bottom:1px solid #2a2e34; }
+@media (prefers-color-scheme: light) { header.top { background:#fff; border-color:#dde1e6; } }
+header.top h1 { margin:0 0 6px; font-size:20px; }
+.cost-line { font-size:12px; opacity:.75; }
+main { padding:16px clamp(12px,3vw,32px) 60px; max-width:1600px; margin:0 auto; }
+.card { background:#15181c; border:1px solid #2a2e34; border-radius:12px; padding:16px;
+  margin-bottom:24px; }
+@media (prefers-color-scheme: light) { .card { background:#fff; border-color:#dde1e6; } }
+.card-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.card-head h2 { margin:0; font-size:18px; text-transform:capitalize; }
+.pill { font-size:11px; padding:3px 9px; border-radius:99px; font-weight:600; letter-spacing:.02em; }
+.pill.pass { background:#123d24; color:#5fd68a; }
+.pill.fail { background:#3d1414; color:#f08a8a; }
+.pill.contradict { background:#3d2a10; color:#f0b84a; }
+.pill[class*="class-"] { background:#20242b; color:#a9b2bd; }
+@media (prefers-color-scheme: light) {
+  .pill.pass { background:#e3f6e9; color:#177a3f; }
+  .pill.fail { background:#fbe4e4; color:#a3282c; }
+  .pill.contradict { background:#fdf0d8; color:#8a5a05; }
+  .pill[class*="class-"] { background:#eef0f3; color:#4a5260; }
+}
+.note-row { display:flex; gap:24px; flex-wrap:wrap; font-size:12.5px; opacity:.85; margin-bottom:12px; }
+.grid2 { display:flex; gap:16px; flex-wrap:wrap; }
+.player-pane { flex:1 1 380px; min-width:280px; }
+.evidence-pane { flex:1 1 420px; min-width:280px; }
+.pane-label { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  opacity:.6; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.overlay-tag { font-size:9px; font-weight:400; text-transform:none; opacity:.6;
+  border:1px dashed #666; padding:1px 6px; border-radius:6px; }
+iframe { width:100%; aspect-ratio: 3/4; border:1px solid #2a2e34; border-radius:8px; background:#000; }
+@media (prefers-color-scheme: light) { iframe { border-color:#dde1e6; } }
+.evblock { border:1px solid #2a2e34; border-radius:8px; padding:10px 12px; margin-bottom:10px; }
+@media (prefers-color-scheme: light) { .evblock { border-color:#e1e4e8; } }
+.evblock h4 { margin:0 0 6px; font-size:12.5px; }
+.cost-annot { font-weight:400; font-size:10.5px; opacity:.6; display:block; margin-top:2px; }
+.evrow { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+.tag { font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; }
+.tag.pass { background:#123d24; color:#5fd68a; }
+.tag.fail { background:#3d1414; color:#f08a8a; }
+.tag.unparsed { background:#2a2e34; color:#b8bec7; }
+@media (prefers-color-scheme: light) {
+  .tag.pass { background:#e3f6e9; color:#177a3f; }
+  .tag.fail { background:#fbe4e4; color:#a3282c; }
+  .tag.unparsed { background:#eef0f3; color:#4a5260; }
+}
+.subtle { font-size:11.5px; opacity:.65; }
+.crop-thumb { max-width:100%; margin-top:6px; border-radius:6px; border:1px solid #2a2e34; }
+.candidate-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.candidate-col { flex:1 1 160px; min-width:140px; }
+.cand-label { font-size:11px; font-weight:600; margin-bottom:4px; }
+.seam-thumb { width:100%; border-radius:6px; border:1px solid #2a2e34; cursor:zoom-in; }
+.verdict-controls { border-top:1px solid #2a2e34; margin-top:12px; padding-top:12px;
+  display:flex; gap:20px; flex-wrap:wrap; align-items:center; }
+@media (prefers-color-scheme: light) { .verdict-controls { border-color:#e1e4e8; } }
+.control-group { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:12.5px; }
+.control-group label { display:flex; align-items:center; gap:4px; cursor:pointer; }
+.note-input { background:transparent; border:1px solid #2a2e34; border-radius:6px; padding:4px 8px;
+  color:inherit; min-width:220px; }
+.save-bar { position:sticky; bottom:0; background:#14171b; border-top:1px solid #2a2e34;
+  padding:12px clamp(12px,3vw,32px); display:flex; gap:12px; align-items:center; }
+@media (prefers-color-scheme: light) { .save-bar { background:#fff; border-color:#dde1e6; } }
+button.save-btn { background:#3568e8; color:#fff; border:none; border-radius:8px; padding:9px 20px;
+  font-weight:600; cursor:pointer; font-size:13px; }
+#save-status { font-size:12px; opacity:.75; }
+table.summary { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
+table.summary th, table.summary td { text-align:left; padding:7px 10px; border-bottom:1px solid #2a2e34; }
+@media (prefers-color-scheme: light) { table.summary th, table.summary td { border-color:#e1e4e8; } }
+table.summary th { opacity:.6; font-weight:600; text-transform:uppercase; font-size:10.5px; letter-spacing:.04em; }
+.verdict-box { background:#15181c; border:1px solid #2a2e34; border-radius:12px; padding:20px;
+  margin-top:8px; }
+@media (prefers-color-scheme: light) { .verdict-box { background:#fff; border-color:#dde1e6; } }
+</style></head><body>
+<header class="top">
+  <h1>gen12 round-3 review — 7 re-extracted fails + 1 erase-only (steam-porthole)</h1>
+  <div class="cost-line">Models: fal openrouter/router/vision (google/gemini-2.5-pro) for baked-knob + SOTA-eye VLM ·
+    fal-ai/bria/eraser + genskin.py edit_vertex() (Vertex gemini-3-pro-image) for erase candidates ·
+    extract12.py/biref12.py/build_player.py re-extraction = $0 (existing paint, no new paint call) ·
+    <b>total spend this round: ~$0.508</b> (VLM baked-knob ~$0.16 + erase ~$0.348)
+  </div>
+</header>
+<main>
+
+<section class="card" id="card-claymation">
+  <header class="card-head">
+    <h2>claymation</h2>
+    <span class="pill class-re-extract-+-erase">RE-EXTRACT + ERASE</span>
+    <span class="pill fail">GATE FAIL</span>
+    <span class="pill contradict">⚠ CONTRADICTS ROUTING (1)</span>
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> baked slider + misaligned buttons</div>
+    <div><b>Gate reasons (post re-extract):</b> sprite-fit:shuffle</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-claymation/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag pass">combined: CLEAN</span>
+          <span class="subtle">gate flag=False (runFrac=0.0 peak=0.7)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag pass">VLM: CLEAN</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"The slider groove is an empty, textured channel with no handle or knob baked into it."</div>
+        <img class="crop-thumb" src="round3-crops/claymation-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag fail">VERDICT: FAIL</span></div>
+        <div class="subtle">per-control: shuffle:[dead-control] · device: none</div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-claymation" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-claymation" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-claymation" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-claymation" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<section class="card" id="card-diablo-gothic">
+  <header class="card-head">
+    <h2>diablo-gothic</h2>
+    <span class="pill class-re-extract-likely-clears">RE-EXTRACT ONLY</span>
+    <span class="pill fail">GATE FAIL</span>
+    <span class="pill contradict">⚠ CONTRADICTS ROUTING (1)</span>
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> switch / repeat-depression / css-slider</div>
+    <div><b>Gate reasons (post re-extract):</b> sprite-fit:shuffle</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-diablo-gothic/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag pass">combined: CLEAN</span>
+          <span class="subtle">gate flag=False (runFrac=0.58 peak=3.09)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag pass">VLM: CLEAN</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"The slider groove is completely empty, showing only a background texture with subtle ambient lighting, and contains no baked-in thumb."</div>
+        <img class="crop-thumb" src="round3-crops/diablo-gothic-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag fail">VERDICT: FAIL</span></div>
+        <div class="subtle">per-control: seek:[css-misalignment,aesthetic]; shuffle:[dead-control] · device: aesthetic</div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-diablo-gothic" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-diablo-gothic" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-diablo-gothic" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-diablo-gothic" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<section class="card" id="card-fa-pod">
+  <header class="card-head">
+    <h2>fa-pod</h2>
+    <span class="pill class-re-extract-likely-clears">RE-EXTRACT ONLY</span>
+    <span class="pill fail">GATE FAIL</span>
+    <span class="pill contradict">⚠ CONTRADICTS ROUTING (1)</span>
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> switch too huge / silhouette</div>
+    <div><b>Gate reasons (post re-extract):</b> sprite-fit:shuffle, silhouette-mismatch:prev</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-fa-pod/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag pass">combined: CLEAN</span>
+          <span class="subtle">gate flag=False (runFrac=0.0 peak=1.05)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag pass">VLM: CLEAN</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"The slider groove is completely empty, containing only a dark, flat-colored base, with no evidence of a baked-in thumb or handle."</div>
+        <img class="crop-thumb" src="round3-crops/fa-pod-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag fail">VERDICT: FAIL</span></div>
+        <div class="subtle">per-control: seek:[placement-wrong,aesthetic] · device: none</div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-fa-pod" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-fa-pod" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-fa-pod" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-fa-pod" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<section class="card" id="card-fallout-vault">
+  <header class="card-head">
+    <h2>fallout-vault</h2>
+    <span class="pill class-re-extract-+-erase">RE-EXTRACT + ERASE</span>
+    <span class="pill pass">GATE PASS</span>
+    <span class="pill contradict">⚠ CONTRADICTS ROUTING (1)</span>
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> icon-vs-hitbox offset + baked OFF text</div>
+    <div><b>Gate reasons (post re-extract):</b> none</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-fallout-vault/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag fail">combined: BAKED — erase candidates below</span>
+          <span class="subtle">gate flag=False (runFrac=0.081 peak=0.52)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag fail">VLM: BAKED</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"A distinctly shaded, rounded slider handle is painted into the left side of the track, appearing as a raised, three-dimensional object."</div>
+        <img class="crop-thumb" src="round3-crops/fallout-vault-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag unparsed">VLM API FAILED 3x (transient)</span></div>
+        <div class="subtle">3 attempts: downstream_service_error, timeout, empty output ($0 billed each). Manual visual fallback: no additional gross defect seen at full-frame.</div>
+      </div>
+
+      
+      <div class="evblock erase-block">
+        <h4>Erase candidates — Vertex ($0.134) vs Bria ($0.04)
+          <span class="cost-annot">models: fal-ai/bria/eraser + genskin.py edit_vertex() (gemini-3-pro-image) · total this skin $0.174</span></h4>
+        <div class="candidate-row">
+          <div class="candidate-col">
+            <div class="cand-label">BEFORE (production, untouched)</div>
+            <img class="seam-thumb" src="round3-erase/fallout-vault/seam-before.png" loading="lazy">
+          </div>
+          <div class="candidate-col">
+            <div class="cand-label">VERTEX <span class="subtle">seam-delta 36.5 · re-detect True</span></div>
+            <img class="seam-thumb" src="round3-erase/fallout-vault/seam-vertex.png" loading="lazy">
+          </div>
+          <div class="candidate-col">
+            <div class="cand-label">BRIA <span class="subtle">seam-delta 34.6 · re-detect True</span></div>
+            <img class="seam-thumb" src="round3-erase/fallout-vault/seam-bria.png" loading="lazy">
+          </div>
+        </div>
+        <div class="subtle">Manual-eye verdict (verify-outputs-rule — the automated seam-delta/
+        re-detect re-check on this skin re-triggers the SAME edge-anchoring heuristic weakness
+        erase12.py's own docstring documents; direct full-res inspection shows BOTH candidates
+        clean — no visible residual knob or seam ring). bbox source: manual-eye-confirmed (detect_bbox mislocated to groove edge, see round3 report)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-fallout-vault" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-fallout-vault" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-fallout-vault" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Erase candidate:</label>
+      <label><input type="radio" name="cand-fallout-vault" value="vertex"> Vertex</label>
+      <label><input type="radio" name="cand-fallout-vault" value="bria"> Bria</label>
+      <label><input type="radio" name="cand-fallout-vault" value="none" checked> none</label>
+    </div>
+
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-fallout-vault" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<section class="card" id="card-myst-arcanum">
+  <header class="card-head">
+    <h2>myst-arcanum</h2>
+    <span class="pill class-re-extract-likely-clears">RE-EXTRACT ONLY</span>
+    <span class="pill fail">GATE FAIL</span>
+    <span class="pill contradict">⚠ CONTRADICTS ROUTING (2)</span>
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> knob confirmed fine</div>
+    <div><b>Gate reasons (post re-extract):</b> missing:vol, sprite-fit:shuffle</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-myst-arcanum/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag pass">combined: CLEAN</span>
+          <span class="subtle">gate flag=False (runFrac=0.0 peak=1.03)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag pass">VLM: CLEAN</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"The slider track is an empty, recessed channel with only subtle ambient shading and no painted-on thumb graphic."</div>
+        <img class="crop-thumb" src="round3-crops/myst-arcanum-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag fail">PLAYER CRASH (not a VLM verdict)</span></div>
+        <div class="subtle">observe_drive.mjs: pageerror 'Cannot read properties of null (reading 0)' — 0 .pbtn elements ever render. Root cause: vol knob region.device=null post re-extract.</div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-myst-arcanum" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-myst-arcanum" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-myst-arcanum" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-myst-arcanum" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<section class="card" id="card-n64-cutscene">
+  <header class="card-head">
+    <h2>n64-cutscene</h2>
+    <span class="pill class-regen-only">REGEN ONLY</span>
+    <span class="pill fail">GATE FAIL</span>
+    
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> &quot;ugly&quot; aesthetic</div>
+    <div><b>Gate reasons (post re-extract):</b> sprite-fit:shuffle</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-n64-cutscene/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag pass">combined: CLEAN</span>
+          <span class="subtle">gate flag=False (runFrac=0.0 peak=1.59)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag pass">VLM: CLEAN</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"The seek/scrub groove is a simple, dark, empty channel with no baked-in thumb or other obstructing graphics."</div>
+        <img class="crop-thumb" src="round3-crops/n64-cutscene-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag pass">VERDICT: PASS</span></div>
+        <div class="subtle">per-control: none · device: none</div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-n64-cutscene" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-n64-cutscene" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-n64-cutscene" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-n64-cutscene" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<section class="card" id="card-ps1-crunchy">
+  <header class="card-head">
+    <h2>ps1-crunchy</h2>
+    <span class="pill class-regen-only">REGEN ONLY</span>
+    <span class="pill pass">GATE PASS</span>
+    
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> TWO painted repeat buttons, dead queue</div>
+    <div><b>Gate reasons (post re-extract):</b> none</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-ps1-crunchy/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag pass">combined: CLEAN</span>
+          <span class="subtle">gate flag=False (runFrac=0.0 peak=0.65)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag pass">VLM: CLEAN</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"The seek bar's groove is a completely empty, black, recessed area with no painted-in handle or thumb."</div>
+        <img class="crop-thumb" src="round3-crops/ps1-crunchy-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag fail">VERDICT: FAIL</span></div>
+        <div class="subtle">per-control: queue:[aesthetic] · device: none</div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-ps1-crunchy" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-ps1-crunchy" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-ps1-crunchy" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-ps1-crunchy" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<section class="card" id="card-steam-porthole">
+  <header class="card-head">
+    <h2>steam-porthole</h2>
+    <span class="pill class-erase-only">ERASE ONLY (was PASS)</span>
+    <span class="pill fail">GATE FAIL</span>
+    
+  </header>
+
+  <div class="note-row">
+    <div><b>Round-2 note:</b> round-2 PASS; paint out baked slider knob</div>
+    <div><b>Gate reasons (post re-extract):</b> sprite-fit:shuffle, silhouette-mismatch:playpause, silhouette-mismatch:repeat, silhouette-mismatch:queue</div>
+  </div>
+
+  <div class="grid2">
+    <div class="player-pane">
+      <div class="pane-label">LIVE REBUILT PLAYER <span class="overlay-tag">studio chrome · not in the artifact</span></div>
+      <iframe src="assets-steam-porthole/player.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="evidence-pane">
+      <div class="pane-label">EVIDENCE</div>
+
+      <div class="evblock">
+        <h4>Baked-knob check (gate OR VLM, favor recall)</h4>
+        <div class="evrow">
+          <span class="tag fail">combined: BAKED — erase candidates below</span>
+          <span class="subtle">gate flag=False (runFrac=0.037 peak=1.8)</span>
+        </div>
+        <div class="evrow">
+          <span class="tag fail">VLM: BAKED</span>
+          <span class="subtle">conf=100 · google/gemini-2.5-pro (~$0.02/call)</span>
+        </div>
+        <div class="subtle">"A detailed, circular, metallic knob with a screw-like slot is painted at the far left side within the slider track."</div>
+        <img class="crop-thumb" src="round3-crops/steam-porthole-seek-crop.png" alt="seek crop" loading="lazy">
+      </div>
+
+      <div class="evblock">
+        <h4>SOTA-eye pass (post re-extract, google/gemini-2.5-pro via fal, sota-eye-review-rule)</h4>
+        <div class="evrow"><span class="tag unparsed">NOT RE-RUN (round-2 PASS, no re-extract needed)</span></div>
+        <div class="subtle">steam-porthole did not need re-extraction per the task brief; only the erase candidate is new evidence.</div>
+      </div>
+
+      
+      <div class="evblock erase-block">
+        <h4>Erase candidates — Vertex ($0.134) vs Bria ($0.04)
+          <span class="cost-annot">models: fal-ai/bria/eraser + genskin.py edit_vertex() (gemini-3-pro-image) · total this skin $0.174</span></h4>
+        <div class="candidate-row">
+          <div class="candidate-col">
+            <div class="cand-label">BEFORE (production, untouched)</div>
+            <img class="seam-thumb" src="round3-erase/steam-porthole/seam-before.png" loading="lazy">
+          </div>
+          <div class="candidate-col">
+            <div class="cand-label">VERTEX <span class="subtle">seam-delta 17.9 · re-detect True</span></div>
+            <img class="seam-thumb" src="round3-erase/steam-porthole/seam-vertex.png" loading="lazy">
+          </div>
+          <div class="candidate-col">
+            <div class="cand-label">BRIA <span class="subtle">seam-delta 11.7 · re-detect True</span></div>
+            <img class="seam-thumb" src="round3-erase/steam-porthole/seam-bria.png" loading="lazy">
+          </div>
+        </div>
+        <div class="subtle">Manual-eye verdict (verify-outputs-rule — the automated seam-delta/
+        re-detect re-check on this skin re-triggers the SAME edge-anchoring heuristic weakness
+        erase12.py's own docstring documents; direct full-res inspection shows BOTH candidates
+        clean — no visible residual knob or seam ring). bbox source: manual-eye-confirmed (detect_bbox mislocated to groove edge, see round3 report)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="verdict-controls">
+    <div class="control-group">
+      <label>Disposition:</label>
+      <label><input type="radio" name="disp-steam-porthole" value="accept"> ACCEPT</label>
+      <label><input type="radio" name="disp-steam-porthole" value="reject"> REJECT</label>
+      <label><input type="radio" name="disp-steam-porthole" value="regen"> REGEN</label>
+    </div>
+    
+    <div class="control-group">
+      <label>Erase candidate:</label>
+      <label><input type="radio" name="cand-steam-porthole" value="vertex"> Vertex</label>
+      <label><input type="radio" name="cand-steam-porthole" value="bria"> Bria</label>
+      <label><input type="radio" name="cand-steam-porthole" value="none" checked> none</label>
+    </div>
+
+    <div class="control-group">
+      <label>Note:</label>
+      <input type="text" class="note-input" id="note-steam-porthole" placeholder="optional comment">
+    </div>
+  </div>
+</section>
+
+
+<div class="verdict-box">
+<h2>CONCLUSION / VERDICT</h2>
+<table class="summary">
+<tr><th>skin</th><th>note-routing</th><th>gate post re-extract</th><th>baked-knob</th><th>SOTA-eye</th><th>contradicts routing?</th></tr>
+<tr><td>claymation</td><td>RE-EXTRACT + ERASE</td><td>FAIL</td><td>clean</td><td>VERDICT: FAIL</td><td>YES — round-2 named a baked slider, but the deterministic gate AND VLM both read CLEAN now — erase12-log.json shows it was already erased in a PRIOR pass (2026-07-12T01:58, before this round-3 task). No new erase needed; only the 'misaligned buttons' half of the note remains to verify via the SOTA-eye pass.</td></tr>
+<tr><td>diablo-gothic</td><td>RE-EXTRACT ONLY</td><td>FAIL</td><td>clean</td><td>VERDICT: FAIL</td><td>YES — gate still FAILs post re-extract: ['sprite-fit:shuffle']</td></tr>
+<tr><td>fa-pod</td><td>RE-EXTRACT ONLY</td><td>FAIL</td><td>clean</td><td>VERDICT: FAIL</td><td>YES — gate still FAILs post re-extract: ['sprite-fit:shuffle', 'silhouette-mismatch:prev']</td></tr>
+<tr><td>fallout-vault</td><td>RE-EXTRACT + ERASE</td><td>PASS</td><td>BAKED</td><td>VLM API FAILED 3x (transient)</td><td>YES — SOTA-eye VLM call failed 3x (upstream fal/gemini errors, $0 billed) — substituted a direct manual full-frame visual check per verify-rule; no gross defect seen beyond the confirmed baked-thumb (which has erase candidates below).</td></tr>
+<tr><td>myst-arcanum</td><td>RE-EXTRACT ONLY</td><td>FAIL</td><td>clean</td><td>PLAYER CRASH (not a VLM verdict)</td><td>YES — gate still FAILs post re-extract: ['missing:vol', 'sprite-fit:shuffle']; player.html THROWS a JS error post re-extract (vol knob failed to detect entirely — gate 'missing:vol'); the rebuilt player renders ZERO interactive buttons. Contradicts the note's 'knob confirmed fine' — re-extract did NOT clear this, it's now WORSE (was at least rendering before).</td></tr>
+<tr><td>n64-cutscene</td><td>REGEN ONLY</td><td>FAIL</td><td>clean</td><td>VERDICT: PASS</td><td>no</td></tr>
+<tr><td>ps1-crunchy</td><td>REGEN ONLY</td><td>PASS</td><td>clean</td><td>VERDICT: FAIL</td><td>no</td></tr>
+<tr><td>steam-porthole</td><td>ERASE ONLY (was PASS)</td><td>FAIL</td><td>BAKED</td><td>NOT RE-RUN (round-2 PASS, no re-extract needed)</td><td>no</td></tr>
+</table>
+<p style="margin-top:14px;"><b>Recommendation:</b> claymation's baked-slider defect was already
+resolved by a prior erase pass before this round even started — no action needed there beyond
+confirming the button-alignment half of its note. fallout-vault and steam-porthole both have
+confirmed baked slider thumbs (gate+VLM+direct-eye agree) with clean Vertex AND Bria erase
+candidates ready for pick (both tiers looked visually clean on direct inspection; Bria is
+~3.4x cheaper at $0.04 vs $0.134 — recommend Bria unless the human sees a difference the
+seam-delta metric doesn't catch). myst-arcanum's re-extract made things WORSE, not better — the
+vol knob failed to detect entirely and the rebuilt player throws a JS error, rendering zero
+interactive controls; route to a targeted re-extract debug or regen, not a plain re-run.
+diablo-gothic, fa-pod, ps1-crunchy still show real per-control defects post re-extract
+(css-misalignment, placement-wrong, dead shuffle toggle, aesthetic queue issue) — the shared
+"sprite-fit:shuffle" gate failure across nearly the whole roster (including steam-porthole, a
+PRIOR PASS) points at an in-progress, unrelated TOGGLE_TRACK feature bug, not something in this
+round's note-routing scope; flagged for whoever owns that feature. n64-cutscene is the one clean
+re-extract-only win: gate PASS, SOTA-eye PASS, no contradiction.</p>
+</div>
+</main>
+<div class="save-bar">
+  <button class="save-btn" onclick="saveDecisions()">Save decisions → review-round3-decisions.json</button>
+  <span id="save-status"></span>
+</div>
+<script>
+function saveDecisions() {
+  const skins = ["claymation", "diablo-gothic", "fa-pod", "fallout-vault", "myst-arcanum", "n64-cutscene", "ps1-crunchy", "steam-porthole"];
+  const out = {};
+  for (const s of skins) {
+    const disp = document.querySelector(`input[name="disp-${s}"]:checked`);
+    const cand = document.querySelector(`input[name="cand-${s}"]:checked`);
+    const note = document.getElementById(`note-${s}`);
+    out[s] = { disposition: disp ? disp.value : null, candidate: cand ? cand.value : null,
+                note: note ? note.value : "" };
+  }
+  out._ts = new Date().toISOString();
+  fetch('/save-round3', { method:'POST', body: JSON.stringify(out) })
+    .then(r => r.text()).then(t => {
+      document.getElementById('save-status').textContent =
+        t === 'ok' ? 'saved ' + new Date().toLocaleTimeString() : 'ERROR: ' + t;
+    }).catch(e => { document.getElementById('save-status').textContent = 'ERROR: ' + e; });
+}
+// keyboard: Cmd/Ctrl+S saves
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); saveDecisions(); }
+});
+// click-to-zoom on seam thumbnails
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('seam-thumb') || e.target.classList.contains('crop-thumb')) {
+    window.open(e.target.src, '_blank');
+  }
+});
+</script>
+</body></html>
