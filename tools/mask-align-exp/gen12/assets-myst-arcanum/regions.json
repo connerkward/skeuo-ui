@@ -29,6 +29,7 @@
     "album_art": "region"
   },
   "templated": false,
+  "toggle_track": false,
   "keys": {
     "playpause": [
       0,
@@ -202,8 +203,8 @@
         0.06276939655172414
       ],
       "travel": [
-        0.0829,
-        0.63325
+        0.09332,
+        0.62283
       ],
       "bakedThumb": {
         "runFrac": 0.0,
@@ -284,7 +285,7 @@
     "missing": [
       "vol"
     ],
-    "seek_cov": 1.039,
+    "seek_cov": 1.0,
     "state_align_ok": true,
     "biref_ok": true,
     "leak": 0.0,
@@ -294,6 +295,7 @@
     "sprite_fit": [
       "shuffle"
     ],
+    "silhouette_mismatch": [],
     "orientation_ok": true,
     "reasons": [
       "missing:vol",

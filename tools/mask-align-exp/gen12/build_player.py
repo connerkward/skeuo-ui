@@ -284,8 +284,15 @@ const V='{V}';
   let playing=false;
 
   // ---- knob (volume) ----
+  // DEFENSIVE RENDER: a control missing its device rect (extract12 found no distinguishable
+  // guide-color blob — myst-arcanum's 'vol' 2026-07-12: genuine paint-side omission, not a
+  // detection bug) must never crash the WHOLE player. Guard the null case explicitly (regs[kn]
+  // can be a truthy {{device:null,...}} object) AND wrap the block in try/catch so ANY other
+  // unexpected error here still degrades to "this control doesn't render" instead of aborting
+  // every control queued after it in this same async function.
   const kn = Object.keys(roles).find(k=>roles[k]==='knob');
-  if(kn && regs[kn] && CUT['vol']){{
+  try{{
+  if(kn && regs[kn] && regs[kn].device && CUT['vol']){{
     const r=regs[kn]; let cx,cy,w,h;
     if(r.seat){{cx=r.seat[0];cy=r.seat[1];w=r.seat[2]*2;h=w*PW/PH;}}
     else{{const c=ctr(r.device);cx=c[0];cy=c[1];w=r.device[2]*1.1;h=r.device[3]*1.1;}}
@@ -367,12 +374,16 @@ const V='{V}';
     addEventListener('pointerup',()=>drag=false);
     phone.appendChild(el);
   }}
+  }}catch(e){{ console.warn('[player] knob render failed — skipping this control:', e); }}
   // ---- seek thumb (coverage travel; SLOT-SIZED, horizontal or vertical) ----
   // Size the thumb to its GROOVE, not the raw cut scale: cross-axis seated at groove×1.15
   // (hard cap ×1.35 so it never obscures the track), upscale capped at ×1.5 natural, and the
   // along-axis dimension ≤45% of the travel span. Aspect always preserved (one scale factor).
+  // DEFENSIVE RENDER: same null-device guard + try/catch isolation as the knob above — a missing
+  // seek region must not take the rest of the controls down with it.
   const sl = Object.keys(roles).find(k=>roles[k]==='slider');
-  if(sl && regs[sl] && CUT['seek']){{
+  try{{
+  if(sl && regs[sl] && regs[sl].device && CUT['seek']){{
     const r=regs[sl],t=CUT['seek'],track=r.device,vert=!!r.vertical;
     const el=document.createElement('div');el.className='pthumb';
     el.style.backgroundImage='url('+t.url+')';
@@ -414,6 +425,7 @@ const V='{V}';
     window.__seek=(d)=>{{val=Math.max(0,Math.min(1,val+d));rend();}};
     phone.appendChild(el);
   }}
+  }}catch(e){{ console.warn('[player] seek render failed — skipping this control:', e); }}
   // ---- shuffle: TWO-DETENT TRACK LEVER (TOGGLE_TRACK_ENABLED architecture, 2026-07-12) — a
   // two-position slider architecturally identical to the seek thumb above (track =
   // regs[tg].device, detents = the two end positions, same coverage-span/vertical-detection
@@ -435,6 +447,10 @@ const V='{V}';
   // it); does NOT require a baked glyph — a glyph-less mask just degrades to a normal button.
   const STATEFUL_LIT_ICON = {str(STATEFUL_LIT_ICON).lower()};
   const shuffleAsButton = STATEFUL_LIT_ICON && !!(tg && tgR && tgR.device);
+  // DEFENSIVE RENDER: wrap both shuffle architectures (track-lever + legacy sprite-swap) in one
+  // try/catch — a missing/null tgR.device (or any other unexpected failure below) must degrade
+  // to "no toggle rendered" instead of aborting every control queued after it.
+  try{{
   if(!shuffleAsButton && isTrackArch && tgR.device){{
     const r=regs[tg], track=r.device, vert=!!r.vertical, lv=CUT['shuffle_lever'];
     // CSS-LEVER FALLBACK — the biref cut is missing OR degenerate (aspect wildly off any sane
@@ -484,7 +500,7 @@ const V='{V}';
   // ---- shuffle: legacy TWO-STATE sprite-swap toggle (rollback path / pre-2026-07-12 assets,
   // silhouette state-registered) — unchanged, kept fully intact so already-generated regions.json
   // / assets keep rendering. ----
-  else if(!shuffleAsButton && !isTrackArch && tgR && CUT['shuffle_off']){{
+  else if(!shuffleAsButton && !isTrackArch && tgR && tgR.device && CUT['shuffle_off']){{
     const r=tgR,off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
     const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
     const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
@@ -504,6 +520,7 @@ const V='{V}';
     el.addEventListener('click',()=>{{ison=!ison;place(ison?on:off,ison);}});
     phone.appendChild(el);
   }}
+  }}catch(e){{ console.warn('[player] shuffle/toggle render failed — skipping this control:', e); }}
   // ---- baked icon buttons: pressed state = the button's OWN pixels redrawn darkened +
   // shifted down (physical travel), clipped to its EXACT silhouette from the colour mask
   // (cutMaskShape-style). No bbox ellipse, no gradient wash.
@@ -605,7 +622,15 @@ const V='{V}';
     hg.filter='blur('+Math.max(2,Math.round(Math.min(cwv,chv)*0.045))+'px)';hg.drawImage(lit,0,0);hg.filter='none';
     og.globalCompositeOperation='lighter';og.globalAlpha=0.75;og.drawImage(halo,0,0);og.globalAlpha=1;og.drawImage(lit,0,0);return out;
   }}
-  for(const b of ICON_BTNS){{ const r=regs[b]; if(!r||!r.device) continue;
+  // DEFENSIVE RENDER: the `!r.device` continue below already skips a control-less button
+  // (myst-arcanum's own "prev"/omitted-control style gaps); wrapping the WHOLE per-button body
+  // in try/catch on top of that means an unexpected error anywhere in ONE button's render
+  // (icon-crop math, glyph registration, canvas ops) can never abort the `for` loop and take
+  // every button queued AFTER it down too — JS aborts the entire loop on an uncaught throw, not
+  // just the current iteration, so this is load-bearing, not decorative.
+  for(const b of ICON_BTNS){{
+    try{{
+    const r=regs[b]; if(!r||!r.device) continue;
     const db=r.device, mb=r.maskDevice||db;
     const el=document.createElement('div');el.className='pbtn';el.title=b;
     el.style.left=px(db)+'%';el.style.top=py(db)+'%';el.style.width=pw(db)+'%';el.style.height=ph(db)+'%';
@@ -723,8 +748,13 @@ const V='{V}';
       else if(b==='shuffle'){{el.classList.toggle('on');hint.textContent='shuffle: '+(el.classList.contains('on')?'on':'off');}}
       else hint.textContent=b+' ▸'; }});
     phone.appendChild(el);
+    }}catch(e){{ console.warn('[player] button render failed — skipping this control:', b, e); }}
   }}
   // ---- visualizer canvas ----
+  // DEFENSIVE RENDER: wrap in try/catch too — the region checks below already guard the
+  // known-null-device case, but an unexpected canvas/draw error here must not stop album art
+  // or the queue/keyboard wiring that follows.
+  try{{
   const vzc=document.getElementById('viz'); const vz=regs['visualizer'];
   if(vz&&vz.device){{ const b=vz.device;
     vzc.style.left=px(b)+'%';vzc.style.top=py(b)+'%';vzc.style.width=pw(b)+'%';vzc.style.height=ph(b)+'%';
@@ -750,13 +780,16 @@ const V='{V}';
         g.fillRect(i*bw+bw*0.15, vzc.height-hh, bw*0.7, hh); }}
       requestAnimationFrame(draw); }})();
   }}
+  }}catch(e){{ console.warn('[player] visualizer render failed — skipping this control:', e); }}
   // ---- album art inset (show the painted art window region, dimmed placeholder) ----
+  try{{
   const aa=regs['album_art'];
   if(aa&&aa.device){{ const b=aa.device,el=document.getElementById('art');
     el.style.left=px(b)+'%';el.style.top=py(b)+'%';el.style.width=pw(b)+'%';el.style.height=ph(b)+'%';
     const ac=document.createElement('canvas');ac.width=Math.round(b[2]*PW);ac.height=Math.round(b[3]*PH);
     ac.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,ac.width,ac.height);
     el.style.backgroundImage='url('+ac.toDataURL()+')'; }}
+  }}catch(e){{ console.warn('[player] album_art render failed — skipping this control:', e); }}
   // ---- queue overlay ----
   const q=document.getElementById('queue'); document.getElementById('qx').onclick=()=>q.classList.remove('open');
   const trk=['Aphex Twin — Xtal','Boards of Canada — Roygbiv','Bonobo — Kong','Four Tet — Angel Echoes','Jon Hopkins — Open Eye Signal','Tycho — Awake'];
