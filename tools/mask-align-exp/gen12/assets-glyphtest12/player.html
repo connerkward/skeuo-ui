@@ -1,80 +1,303 @@
-#!/usr/bin/env python3
-"""build_player — emit a standalone interactive player HTML for a gen12 skin from its
-regions.json + assets. Reuses the proven wild11 player mechanics (seat-based knob with pinned
-specular, coverage-travel seek thumb, silhouette-registered toggle) and adds the gen12 roster:
-5 baked icon buttons (playpause/prev/next/repeat/queue) with ink press, a single volume knob, a
-shuffle toggle, a canvas VISUALIZER (animates while playing), an album-art inset, and a queue
-overlay panel. Responsive + standard keyboard shortcuts. Usage: python3 build_player.py <assets-dir>
-"""
-import os, sys, json
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>skeuo.fm — glyphtest12: glyphtest12</title>
+<style>
+  :root{--mono:ui-monospace,Menlo,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0e0f13;color:#cdd2dc;font:14px/1.5 system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 12px 60px}
+  h1{font:600 15px var(--mono);letter-spacing:.02em;margin:0;color:#eef}
+  .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
+  #stage{width:min(96vw,460px)}
+  #phone{position:relative;width:100%;aspect-ratio:var(--ar);
+    background:url('paint.png?v=1783895616') no-repeat;background-size:100% auto;border-radius:12px}
+  .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
+  .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
+    opacity:0;transition:opacity .06s}
+  .pbtn:active .ink{opacity:1}
+  .pbtn .lit{position:absolute;background-size:100% 100%;pointer-events:none;
+    opacity:0;transition:opacity .15s}
+  .pbtn.on .lit{opacity:1}
+  .pbtn.haslit.on .ink{display:none}
+  .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
+  .pknob .cap{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}
+  .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen}
+  .pknob-ticks{position:absolute;pointer-events:none;overflow:visible}
+  .pthumb{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
+    background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}
+  .pseek-track{position:absolute;pointer-events:none;border-radius:999px}
+  .pseek-fill{position:absolute;pointer-events:none;border-radius:999px}
+  .ptog{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;
+    background-position:center;filter:drop-shadow(0 2px 4px #0008)}
+  .viz{position:absolute;pointer-events:none}
+  .art{position:absolute;background-size:cover;background-position:center;pointer-events:none}
+  #queue{position:absolute;inset:6% 6% 8%;background:#0b0d12ee;border:1px solid #ffffff22;border-radius:10px;
+    padding:14px;display:none;flex-direction:column;gap:2px;overflow:auto;backdrop-filter:blur(3px)}
+  #queue.open{display:flex}
+  #queue .qh{font:600 12px var(--mono);color:#eef;margin-bottom:6px;display:flex;justify-content:space-between}
+  #queue .qr{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;font:12px var(--mono)}
+  #queue .qr:nth-child(odd){background:#ffffff0c} #queue .qr.now{background:#3aa0ff33;color:#cfe6ff}
+  #queue .x{cursor:pointer;color:#9aa}
+  .hint{font:11px var(--mono);color:#6b7180;max-width:460px;text-align:center}
+  .badge{font:10px var(--mono);color:#7f8798;border:1px solid #ffffff18;border-radius:5px;padding:2px 6px}
+</style></head><body>
+<h1>glyphtest12 — glyphtest12</h1>
+<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob
+<a id=pbrlink href="player-pbr.html" style="color:#8fb4ff;display:none">· ✨ dynamic lighting</a></div>
+<script>/* feature-flagged PBR player (WIRE-pbr.md): offer the toggle only when the sibling
+player-pbr.html was actually built — default stays this plain player */
+fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementById('pbrlink').style.display='inline'}).catch(()=>{});</script>
+<div id=stage><div id=phone>
+  <canvas class=viz id=viz></canvas>
+  <div class=art id=art></div>
+  <div id=queue><div class=qh><span>Queue</span><span class=x id=qx>close ✕</span></div></div>
+</div></div>
+<div class=hint id=hint>loading…</div>
+<script>
+const V='1783895616';
+(async function(){
+  const R = await fetch('regions.json?v='+V).then(r=>r.json());
+  const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
+  const phone=document.getElementById('phone'), hint=document.getElementById('hint');
+  const paint=new Image(); paint.src='paint.png?v='+V; await paint.decode();
+  const PW=paint.naturalWidth, PH=paint.naturalHeight, DEVH=Math.round(PH*DF);
+  phone.style.setProperty('--ar', PW+'/'+DEVH);
+  // background shows only the device (top DF) slice
+  const bc=document.createElement('canvas'); bc.width=PW; bc.height=DEVH;
+  bc.getContext('2d').drawImage(paint,0,0,PW,DEVH,0,0,PW,DEVH);
+  phone.style.background="url('"+bc.toDataURL()+"') no-repeat"; phone.style.backgroundSize='100% 100%';
+  // load moving-part cuts (tight-cropped, with content centroid)
+  const CUT={};
+  function tight(im){ const c=document.createElement('canvas'); c.width=im.naturalWidth;c.height=im.naturalHeight;
+    const cx=c.getContext('2d'); cx.drawImage(im,0,0); const d=cx.getImageData(0,0,c.width,c.height).data;
+    let x0=c.width,y0=c.height,x1=0,y1=0,any=false;
+    for(let p=0;p<d.length;p+=4){ if(d[p+3]>12){const i=p/4,x=i%c.width,y=(i/c.width)|0;
+      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;any=true;} }
+    if(!any) return {url:im.src,w:c.width,h:c.height};
+    const tw=x1-x0+1,th=y1-y0+1,t=document.createElement('canvas');t.width=tw;t.height=th;
+    t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th); return {url:t.toDataURL(),w:tw,h:th}; }
+  const BREF='../assets-glyphtest12_biref/';
+  // fetch BOTH possible shuffle cut sets — a data-driven superset, not gated on a build-time
+  // flag: which set actually exists on disk (track-mode 'shuffle_lever' vs legacy 'shuffle_off'/
+  // 'shuffle_on') tells the render block below which architecture this asset dir was cut with.
+  // Missing files just fail their try/catch below and leave that CUT key absent — no crash.
+  const parts=['vol','seek','shuffle_lever','shuffle_off','shuffle_on'];
+  for(const k of parts){ try{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}catch(e){} }
+  const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
+  let playing=false;
+  // director-picked lit-glyph accent: css.glow (WIRE-pbr.md) wins, else css.accent, else a
+  // neutral engraved tone — never a hardcoded colour (icon-state-proto.html used a fixed demo
+  // blue only for its own standalone preview; the shipped player must follow the theme). Moved
+  // ABOVE the knob section (was originally declared just before the button loop) so
+  // KNOB_TICK_FROM_PAINT's lit-tick tint below can share the SAME accent. MC/MW/MH (the mask
+  // canvas) stays loaded here too — still used by the button loop's glyph extraction further
+  // down, unrelated to the knob tick (which is now paint-sourced, not mask-sourced).
+  const _hexToRgb=h=>{ h=(h||'').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    const n=parseInt(h||'e8ecf5',16); return [(n>>16)&255,(n>>8)&255,n&255]; };
+  const LIT_ACCENT_RGB = _hexToRgb((null)||(null)||'#e8ecf5');
+  let MC=null,MW=0,MH=0;
+  try{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
+    MW=mi.naturalWidth; MH=mi.naturalHeight;
+    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
+    MC.getContext('2d').drawImage(mi,0,0); }catch(e){}
 
-OUT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
-SID = os.path.basename(OUT).replace("assets-", "")
-RES = json.load(open(os.path.join(OUT, "results.json")))
-TITLE = RES.get("title", SID)
-V = str(int(os.path.getmtime(os.path.join(OUT, "paint.png"))))  # dynamic buster → no stale-asset caching
-
-# Director-specified CSS chrome colors (WIRE-pbr.md "css" schema, sibling of "lighting"):
-# {"track","fill","accent","glow"} hexes chosen by the director from the theme's own palette.
-# results.json doesn't carry a "css" passthrough (genskin.py is out of scope here), so fall back
-# to reading the theme spec directly — same pattern pbr_pass.py already uses for "lighting".
-SPEC_PATH = os.path.join(os.path.dirname(OUT), "theme_specs", f"{SID}.json")
-CSS_SPEC = RES.get("css") or {}
-if not CSS_SPEC and os.path.exists(SPEC_PATH):
-    try:
-        CSS_SPEC = json.load(open(SPEC_PATH)).get("css", {}) or {}
-    except Exception:
-        CSS_SPEC = {}
-
-# Director-decided knob tick provisioning (WIRE-pbr.md "ticks" schema, sibling of css/lighting):
-# {"skin":"baked"|"css"|"none","sprite":"baked"|"css"|"none"}. "skin" = the tick-arc/index marks
-# on the socket bezel; "sprite" = the pointer/indicator treatment on the rotating cap itself. Same
-# results.json-then-spec-file fallback pattern as CSS_SPEC above. A spec lacking the block behaves
-# as {"skin":"css","sprite":"css"} — the prior, pre-director-schema shipped behavior.
-TICKS_SPEC = RES.get("ticks") or {}
-if not TICKS_SPEC and os.path.exists(SPEC_PATH):
-    try:
-        TICKS_SPEC = json.load(open(SPEC_PATH)).get("ticks", {}) or {}
-    except Exception:
-        TICKS_SPEC = {}
-TICKS_SKIN = TICKS_SPEC.get("skin", "css")
-TICKS_SPRITE = TICKS_SPEC.get("sprite", "css")
-
-
-def _hex_to_rgba(hexcolor, alpha):
-    h = hexcolor.lstrip("#")
-    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-    return f"rgba({r},{g},{b},{alpha})"
-
-
-# JS literals: a director hex (preferred) or the JS keyword `null` (paint-sampling fallback below)
-SPEC_TRACK_JS = json.dumps(_hex_to_rgba(CSS_SPEC["track"], 0.55)) if CSS_SPEC.get("track") else "null"
-SPEC_FILL_JS = json.dumps(_hex_to_rgba(CSS_SPEC["fill"], 0.60)) if CSS_SPEC.get("fill") else "null"
-SPEC_ACCENT_JS = json.dumps(CSS_SPEC["accent"]) if CSS_SPEC.get("accent") else "null"
-# glow/pulse tint (WIRE-pbr.md css.glow) — first consumer: the shuffle-lever active-end glow
-# below (TOGGLE_TRACK_ENABLED architecture, 2026-07-12). Falls back to css.accent, then to no
-# glow at all, same fallback chain as SPEC_ACCENT_JS's own paint-sampling note.
-SPEC_GLOW_JS = json.dumps(CSS_SPEC["glow"]) if CSS_SPEC.get("glow") else "null"
-
-
-# feature flag: CSS-rendered progress track+fill INSIDE the seek groove, UNDER the sprite thumb,
-# colored by the director's spec `css` block when present, else sampled from the paint itself
-# (theme-aware, no hardcoded palette). Off = sprite-only seek (prior behavior). Gates both the
-# DOM element emission (CSS+JS below) and the live position wiring.
-SEEK_TRACK_CSS_ENABLED = True
-
-SEEK_TRACK_CSS = (
-    ".pseek-track{position:absolute;pointer-events:none;border-radius:999px}\n"
-    "  .pseek-fill{position:absolute;pointer-events:none;border-radius:999px}"
-) if SEEK_TRACK_CSS_ENABLED else ""
-
-# Built once per skin: samples the groove's own paint pixels for a recessed-track tone + a
-# brighter progress-fill tone (same avg-pixel pattern already used for the knob spec tint and
-# the visualizer accent), sizes the band to a subtle fraction of the groove's cross-axis, and
-# spans the full travel extent (never wider than the groove — matches the thumb's own travel
-# domain). Appended to `phone` BEFORE the thumb `el`, so it paints underneath it (DOM order =
-# stacking order here; no z-index is used anywhere in this template).
-TRACK_SETUP_JS = ("""
+  // ---- knob (volume) ----
+  // DEFENSIVE RENDER: a control missing its device rect (extract12 found no distinguishable
+  // guide-color blob — myst-arcanum's 'vol' 2026-07-12: genuine paint-side omission, not a
+  // detection bug) must never crash the WHOLE player. Guard the null case explicitly (regs[kn]
+  // can be a truthy {device:null,...} object) AND wrap the block in try/catch so ANY other
+  // unexpected error here still degrades to "this control doesn't render" instead of aborting
+  // every control queued after it in this same async function.
+  const kn = Object.keys(roles).find(k=>roles[k]==='knob');
+  try{
+  if(kn && regs[kn] && regs[kn].device && CUT['vol']){
+    const r=regs[kn]; let cx,cy,w,h;
+    if(r.seat){cx=r.seat[0];cy=r.seat[1];w=r.seat[2]*2;h=w*PW/PH;}
+    else{const c=ctr(r.device);cx=c[0];cy=c[1];w=r.device[2]*1.1;h=r.device[3]*1.1;}
+    const el=document.createElement('div');el.className='pknob';
+    el.style.left=(cx-w/2)*100+'%';el.style.top=((cy-h/2)/DF)*100+'%';el.style.width=w*100+'%';el.style.height=(h/DF)*100+'%';
+    el.innerHTML='<div class=cap style="background-image:url('+CUT['vol'].url+')"></div><div class=spec></div>';
+    // tint the pinned specular from the CAP'S OWN pixels (avg opaque colour, lightened) so the
+    // highlight matches the material (brass stays warm, chrome cool) instead of a white wash
+    try{ const sc=document.createElement('canvas');sc.width=sc.height=12;const sg=sc.getContext('2d');
+      const ci=new Image();ci.src=CUT['vol'].url;await ci.decode();sg.drawImage(ci,0,0,12,12);
+      const dd=sg.getImageData(0,0,12,12).data;let rr=0,gg=0,bb=0,nn=0;
+      for(let i=0;i<dd.length;i+=4){if(dd[i+3]>60){rr+=dd[i];gg+=dd[i+1];bb+=dd[i+2];nn++;}}
+      if(nn){const L=v=>Math.min(255,Math.round(v/nn*0.75+255*0.25));
+        el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.32), rgba(255,255,255,0) 60%)';}
+    }catch(e){ el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%,#ffffff4d,#fff0 60%)'; }
+    // start at 0.5 → the -135..+135° rotation has SYMMETRIC headroom both directions
+    // (review: "goes far left but not right at all" — a 0.7 start left only 81° of CW travel)
+    // ZERO-DEG CONVENTION: value 0 -> -135deg (~7 o'clock), value 1 -> +135deg (~5 o'clock),
+    // value 0.5 -> 0deg (12 o'clock/up). The cap sprite is cut with its painted pointer/notch
+    // baked at whatever angle the model drew (regions.json knob_zero_deg, CW-from-up, or null
+    // when extract12 found no reliable indicator) — counter-rotate by that baked angle so the
+    // ABOVE convention holds regardless of the raw cut's orientation (bug: without this, value
+    // 0.5/init showed the indicator at its baked angle instead of straight up).
+    const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
+    const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
+    // ---- KNOB_TICK_FROM_PAINT: a real, lit crop of the painted pointer/notch, placed at its
+    // DETERMINISTIC measured position — replaces SPRITE_TICK_CSS's synthetic needle, which is
+    // always drawn at an ASSUMED position (val's own -135..+135 sweep, ignorant of where the
+    // model actually painted anything).
+    // Source of the measurement: NOT mask.png. A parallel check across diverse themes (steam-
+    // porthole, fallout-pipboy) found the mask's "vol" tick cutout bakes as an OPEN NOTCH cut
+    // into the disc's rim on 2/3 skins, not the fully-ENCLOSED hole the button glyphs get — so
+    // the flood-fill enclosed-hole technique (computeGlyphMasks, proven for buttons) silently
+    // finds zero candidates on most skins (confirmed directly on assets-glyphtest12: the mask
+    // crop shows the notch touching the disc's outer edge, connected to background, not a
+    // closed pocket). The PAINTED tick, by contrast, is a clean physical dimple 3/3 — and
+    // extract12.py already measures it deterministically via knob_angle.py's radial-anomaly
+    // detector (gradient + independent texture-disruption signal, run-centroid not peak-edge —
+    // see that module's docstring), storing BOTH the angle (`knob_zero_deg`, already used for
+    // the cap's OWN counter-rotation above) and the detector's own measured circle geometry
+    // (`knob_zero_geo` = [cx,cy,R]) in the EXACT SAME pixel frame as CUT['vol'] — the
+    // tight()-cropped sprite this player already renders (knob_angle.py's docstring: "matching
+    // EXACTLY the origin build_player.py's tight()+background-size:cover renders around"). So
+    // no separate registration step is needed here: crop a small square of CUT['vol']'s OWN
+    // pixels centred on the geo-predicted tick point, tint it with the director's accent so it
+    // reads as a lit indicator, and position/size it as a PERCENTAGE of `.cap`'s own box —
+    // scale-invariant, so it tracks whatever absolute size the cap renders at (the "mask cap
+    // smaller than painted cap" size-drift concern), no separate scale factor to get wrong.
+    // GRACEFUL FALLBACK: missing knob_zero_deg/knob_zero_geo (extract12 found no reliable
+    // indicator — myst-arcanum-style omission) or CUT['vol'], or any exception, leaves
+    // usedMaskTick=false and the SPRITE_TICK_CSS needle below renders exactly as before. Never
+    // crashes, never drops the tick.
+    let usedMaskTick=false;
+    if(true && r.knob_zero_deg!=null && r.knob_zero_geo && CUT['vol']){
+      try{
+        const [gcx,gcy,gR]=r.knob_zero_geo;
+        if(gR>2){
+          const zdRad=zeroDeg*Math.PI/180;
+          // point on the RIM where the detector measured the notch — same CW-from-up
+          // convention as the cap's own rotate() and the SVG needle below
+          const tx=gcx+gR*0.80*Math.sin(zdRad), ty=gcy-gR*0.80*Math.cos(zdRad);
+          // TIGHT crop around the notch's own baked footprint (genskin.py draw_icon_glyph
+          // 'vol': width~r*0.12, length~r*0.34) — a wider crop dilutes the mark against
+          // surrounding cap texture and reads as an amorphous smudge (SOTA-eye review,
+          // 2026-07-12: a gR*0.22 crop with a flat soft wash was called "blurry, artifact-like"
+          // after rotation). Still generous enough that a few-degree angle/radius error lands inside.
+          const tickR=Math.max(5,gR*0.15);
+          const capImg=new Image(); capImg.src=CUT['vol'].url; await capImg.decode();
+          const tcv=document.createElement('canvas'); tcv.width=tcv.height=Math.round(tickR*2);
+          const tgx=tcv.getContext('2d');
+          tgx.filter='contrast(1.35) brightness(1.08)';   // lift the dimple's own dark/light edge before tinting
+          tgx.drawImage(capImg, tx-tickR, ty-tickR, tickR*2, tickR*2, 0,0,tcv.width,tcv.height);
+          tgx.filter='none';
+          // TWO-LAYER lit look, same accent+white-core idea as litGlyph() above (buttons): a
+          // wider accent halo for colour/pop, plus a small bright white-hot core at the exact
+          // centre so the mark reads as a crisp point, not a diffuse wash.
+          const halo=tgx.createRadialGradient(tcv.width/2,tcv.height/2,0,tcv.width/2,tcv.height/2,tcv.width/2);
+          halo.addColorStop(0,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0.85)');
+          halo.addColorStop(0.55,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0.35)');
+          halo.addColorStop(1,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0)');
+          tgx.globalCompositeOperation='screen'; tgx.fillStyle=halo; tgx.fillRect(0,0,tcv.width,tcv.height);
+          const core=tgx.createRadialGradient(tcv.width/2,tcv.height/2,0,tcv.width/2,tcv.height/2,tcv.width*0.22);
+          core.addColorStop(0,'rgba(255,255,255,0.95)'); core.addColorStop(1,'rgba(255,255,255,0)');
+          tgx.fillStyle=core; tgx.fillRect(0,0,tcv.width,tcv.height);
+          tgx.globalCompositeOperation='source-over';
+          // position/size as % of `.cap`'s own box: CUT['vol'].w/h IS the frame knob_zero_geo
+          // is measured in, and IS the frame `.cap`'s background-image covers, so a plain
+          // fraction of the sprite's own natural size maps directly onto the rendered box
+          const dW=tcv.width/CUT['vol'].w*100, dH=tcv.height/CUT['vol'].h*100;
+          const dL=tx/CUT['vol'].w*100-dW/2, dT2=ty/CUT['vol'].h*100-dH/2;
+          const tickEl=document.createElement('div');
+          tickEl.style.cssText='position:absolute;pointer-events:none;background-repeat:no-repeat;background-size:100% 100%;border-radius:50%';
+          tickEl.style.left=dL+'%'; tickEl.style.top=dT2+'%'; tickEl.style.width=dW+'%'; tickEl.style.height=dH+'%';
+          tickEl.style.backgroundImage='url('+tcv.toDataURL()+')';
+          cap.appendChild(tickEl);   // child of .cap -> inherits its rotate() transform, tracks val for free
+          usedMaskTick=true;
+        }
+      }catch(e){ console.warn('[player] knob tick placement failed — falling back to CSS overlay:', e); }
+    }
+    // ---- knob tick overlay (director-decided PER AXIS, WIRE-pbr.md "ticks" schema) ----
+    // SAME socket centre/radius (cx,cy,w) just derived above for the cap, sharing the SAME
+    // -135..+135 sweep convention as the cap rotation (ZERO-DEG CONVENTION comment above).
+    // SKIN_TICKS_CSS = static tick-arc ring on the bezel; SPRITE_TICK_CSS = live needle on the
+    // cap. Either, both, or neither may be true per skin — "baked"/"none" render no CSS overlay
+    // on that axis (baked relies on genskin.py's ticks_skin_bullet/ticks_sprite_bullet instead).
+    let tickRend=null;
+    if(true || true){
+      const zeroMode=r.zero||'start';           // 'start' (volume) now; 'center' (balance) is one param away
+      const TICK_MULT=1.34, N_MINOR=8;           // box radius = cap radius * TICK_MULT
+      const wB=w*TICK_MULT, hB=wB*PW/PH;
+      const svgNS='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('class','pknob-ticks');
+      svg.setAttribute('viewBox','-1 -1 2 2'); svg.setAttribute('preserveAspectRatio','none');
+      svg.style.left=(cx-wB/2)*100+'%'; svg.style.top=((cy-hB/2)/DF)*100+'%';
+      svg.style.width=wB*100+'%'; svg.style.height=(hB/DF)*100+'%';
+      const capLocal=1/TICK_MULT;                 // cap edge, in this SVG's own unit-circle radius
+      const rIn=capLocal*1.04, rOutMinor=0.90, rOutMajor=0.99;   // ticks start JUST OUTSIDE the cap
+      const tickCol=(null)||'#e8ecf5';   // director css.accent wins; else a neutral engraved tone
+      const mk=(x1,y1,x2,y2,w)=>{ const ln=document.createElementNS(svgNS,'line');
+        ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+        ln.setAttribute('stroke',tickCol); ln.setAttribute('stroke-width',w); ln.setAttribute('stroke-linecap','round');
+        return ln; };
+      if(true){
+        const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
+        const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
+        hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
+        const midIdx=Math.round((N_MINOR+2)/2);
+        for(let i=0;i<=N_MINOR+2;i++){
+          const t=i/(N_MINOR+2);                       // 0..1 across the sweep
+          const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
+          const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
+          const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
+          const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
+          shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+          hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+        }
+        svg.appendChild(shadow); svg.appendChild(hi);
+      }
+      if(true && !usedMaskTick){
+        // subtle current-position indicator — a short needle tracking `val`, independent of the
+        // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at
+        // all). Skipped when KNOB_TICK_FROM_PAINT already placed a pixel-accurate lit tick above
+        // — the two are redundant and would otherwise double up on the same cap.
+        const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
+        tickRend=(v)=>{ const deg=-135+v*270, rad=deg*Math.PI/180;
+          needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
+          needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); };
+        tickRend(val);
+      }
+      phone.appendChild(svg);
+    }
+    const rend=()=>{cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)'; if(tickRend)tickRend(val);};rend();
+    el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));rend();}});
+    addEventListener('pointerup',()=>drag=false);
+    phone.appendChild(el);
+  }
+  }catch(e){ console.warn('[player] knob render failed — skipping this control:', e); }
+  // ---- seek thumb (coverage travel; SLOT-SIZED, horizontal or vertical) ----
+  // Size the thumb to its GROOVE, not the raw cut scale: cross-axis seated at groove×1.15
+  // (hard cap ×1.35 so it never obscures the track), upscale capped at ×1.5 natural, and the
+  // along-axis dimension ≤45% of the travel span. Aspect always preserved (one scale factor).
+  // DEFENSIVE RENDER: same null-device guard + try/catch isolation as the knob above — a missing
+  // seek region must not take the rest of the controls down with it.
+  const sl = Object.keys(roles).find(k=>roles[k]==='slider');
+  try{
+  if(sl && regs[sl] && regs[sl].device && CUT['seek']){
+    const r=regs[sl],t=CUT['seek'],track=r.device,vert=!!r.vertical;
+    const el=document.createElement('div');el.className='pthumb';
+    el.style.backgroundImage='url('+t.url+')';
+    let tw=t.w/PW, th=t.h/PH;
+    // HARD CLAMP travel to the walked groove's OWN device rect (2026-07-12 fix for the recurring
+    // "CSS slider outside slot" complaint): extract12's `travel` is allowed to be a hair wider
+    // than `device` by design (the coverage-span walk), and older regions.json on disk may still
+    // carry the pre-fix +/-2%-of-span padding that measurably overshot the visual groove in the
+    // real rendered player. Intersecting with `device` here is the single choke point BOTH the
+    // thumb (below) and the seek-track/fill CSS overlay (TRACK_SETUP_JS, spliced in a few lines
+    // down and reading this same `tv`) draw from, so neither can ever render past the extractor's
+    // own best estimate of the painted slot -- regardless of what any given travel value says.
+    const trackLo=vert?track[1]:track[0], trackHi=vert?(track[1]+track[3]):(track[0]+track[2]);
+    const tvRaw=r.travel||[trackLo,trackHi];
+    const tv=[Math.max(tvRaw[0],trackLo), Math.min(tvRaw[1],trackHi)];
+    const span=Math.max(1e-6,tv[1]-tv[0]);
+    const s=vert?Math.min(1.5, track[2]*1.15/tw, track[2]*1.35/tw, span*0.45/th)
+                :Math.min(1.5, track[3]*1.15/th, track[3]*1.35/th, span*0.45/tw);
+    tw*=s; th*=s;
+    
       const _gs=document.createElement('canvas'); _gs.width=6; _gs.height=6;
       _gs.getContext('2d').drawImage(paint, track[0]*PW, track[1]*PH, track[2]*PW, track[3]*PH, 0,0,6,6);
       const _gd=_gs.getContext('2d').getImageData(0,0,6,6).data; let _gr=0,_gg=0,_gb=0,_gn=0;
@@ -83,8 +306,8 @@ TRACK_SETUP_JS = ("""
       const _gAvg=[_gr/_gn,_gg/_gn,_gb/_gn];
       // director spec css.track/css.fill (WIRE-pbr.md) win when the theme spec supplies them;
       // paint-sampling is the fallback for a spec without a css block.
-      const trackCol=%%SPEC_TRACK%%||('rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)');
-      const fillCol=%%SPEC_FILL%%||('rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)');
+      const trackCol=null||('rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)');
+      const fillCol=null||('rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)');
       // adaptive cross-axis band height: sample a luminance PROFILE across the groove's cross
       // axis (in the middle half of the travel span, away from the thumb's home position at the
       // travel start) and grow the darkest CONTIGUOUS run outward from the centre sample. A
@@ -126,420 +349,29 @@ TRACK_SETUP_JS = ("""
         fillEl.style.left=trackEl.style.left; fillEl.style.width='0%';
       }
       phone.appendChild(trackEl); phone.appendChild(fillEl);
-""" if SEEK_TRACK_CSS_ENABLED else "").replace("%%SPEC_TRACK%%", SPEC_TRACK_JS).replace("%%SPEC_FILL%%", SPEC_FILL_JS)
 
-# live fill update, spliced into the vertical/horizontal `rend` closures (same val/x0/x1/y0/y1
-# already in scope there) — fires on every drag move AND on window.__seek (arrow-key nudges).
-TRACK_FILL_VERT = (
-    "fillEl.style.height=Math.max(0,Math.min(span,(y0+(y1-y0)*val+th/2)-tv[0]))/DF*100+'%';"
-) if SEEK_TRACK_CSS_ENABLED else ""
-TRACK_FILL_HORIZ = (
-    "fillEl.style.width=Math.max(0,Math.min(span,(x0+(x1-x0)*val+tw/2)-tv[0]))*100+'%';"
-) if SEEK_TRACK_CSS_ENABLED else ""
-
-# master kill-switch: flip False to disable ALL CSS/SVG knob tick+needle overlays regardless of
-# the per-spec TICKS_SKIN/TICKS_SPRITE choice below. When True, the director's per-spec "ticks"
-# block (WIRE-pbr.md) decides PER AXIS whether that axis renders a deterministic CSS/SVG overlay
-# (computed from regions.json's KNOWN socket geometry — seat centroid/radius), a baked-into-the-
-# paint treatment (genskin.py's ticks_skin_bullet/ticks_sprite_bullet — no CSS overlay on that
-# axis here), or nothing. Baked-tick provisioning with a heavier clause was tried and rejected
-# first — docs/experiments/2026-07-11-knob-tick-provisioning.md found 0/8 adjudicated PASSES
-# (text contamination "MIN/MAX/CENTER" baked as literal labels, layout drift, no reliable
-# start/end marks) and recommended this CSS-overlay fallback; the director schema now lets each
-# skin pick a lighter baked retry per axis instead of a single global choice (see WIRE-pbr.md).
-KNOB_TICKS_ENABLED = True
-SKIN_TICKS_CSS = KNOB_TICKS_ENABLED and TICKS_SKIN == "css"      # static tick-arc ring on the bezel
-SPRITE_TICK_CSS = KNOB_TICKS_ENABLED and TICKS_SPRITE == "css"   # live needle on the cap
-
-# feature flag: render the knob's 0deg pointer tick as a real, lit crop of the PAINTED
-# dimple/notch, placed at its deterministically MEASURED position — replacing SPRITE_TICK_CSS's
-# synthetic needle, which is always drawn at an ASSUMED position (val's own sweep, ignorant of
-# where the model actually painted anything).
-# NOT sourced from mask.png. First attempt tried the SAME flood-fill enclosed-hole technique
-# already proven for the 5 button icons (computeGlyphMasks/registerGlyph — genskin.py bakes a
-# black cut-out into the knob-cap's guide-colour disc, commit a9bbba20). A parallel check across
-# diverse themes (steam-porthole, fallout-pipboy) found that cutout bakes as an OPEN NOTCH
-# through the disc's RIM on 2/3 skins, not a fully-ENCLOSED hole like the button glyphs — the
-# flood-fill technique (which classifies anything border-reachable as background) silently finds
-# zero candidates on most skins; confirmed directly on assets-glyphtest12 by inspecting the raw
-# mask crop. The PAINTED tick, by contrast, is a clean physical dimple on 3/3 checked skins, and
-# extract12.py already measures it deterministically via knob_angle.py's radial-anomaly detector
-# (gradient + independent texture-disruption signal) — storing both the angle (`knob_zero_deg`)
-# and the detector's own measured circle geometry (`knob_zero_geo`=[cx,cy,R]) in the EXACT SAME
-# pixel frame as CUT['vol'], the tight()-cropped sprite this player already renders. So this flag
-# crops+tints a small square of CUT['vol']'s own pixels at the geo-predicted point instead of
-# re-deriving anything from the mask. Gracefully falls back to the OLD behaviour (the
-# SPRITE_TICK_CSS needle) on any skin where extract12 found no reliable indicator (knob_zero_deg
-# / knob_zero_geo null) — never crashes, never drops the
-# tick.⟦cite:tools/mask-align-exp/gen12/knob_angle.py;sha:a9bbba20⟧
-KNOB_TICK_FROM_PAINT = True
-
-# feature flag: size the shuffle/TOGGLE sprite box to the CUT's OWN aspect ratio, scaled to
-# COVER the slot rect (both axes), instead of forcing the box to the SLOT's own aspect ratio and
-# relying on CSS `background-size:contain` to fit the (possibly very differently-aspected) cut
-# inside it. `contain` fits the SMALLER of the two per-axis scale factors, so whenever the cut's
-# aspect diverges from the slot's, the sprite renders visibly smaller than the slot on whichever
-# axis doesn't bind — exactly the "switch isn't scaled to slot, too small" review class. Measured
-# cut-aspect/slot-aspect ratios across the roster: fa-pod 0.13, fallout-vault 0.20, claymation
-# 0.37, n64-cutscene 0.49 (all badly undersized under the old contain-fit) vs wc-goldshield 1.09,
-# wmp-vario 1.08 (near 1, already fine — this flag is a no-op for those). COVER (max of the two
-# per-axis scale factors, mirroring the seek-thumb's already-correct own-aspect sizing a few
-# blocks up) guarantees the sprite fully covers its slot on both axes; same ×1.5-natural upscale
-# cap as before to avoid blurring a low-res cut. Verified across the roster (fa-pod/fallout-vault/
-# claymation/n64-cutscene gain visible coverage, wc-goldshield/wmp-vario unchanged) before
-# defaulting on — see docs/experiments/2026-07-11-toggle-cover-fit.md.
-SPRITE_COVER_FIT_ENABLED = True
-
-# feature flag: lit-icon-glyph STATEFUL buttons (playpause/repeat/shuffle) — port of the
-# user-approved prototype tools/mask-align-exp/gen12/icon-state-proto.html (2026-07-12). The
-# glyph is extracted from mask.png's OWN baked enclosed-hole shape (flood-fill from the crop
-# border: border-reachable non-body = background, ENCLOSED non-body = the glyph — free, exact,
-# no VLM), registered onto the painted button by sliding the mask-glyph shape over a "differs-
-# from-body" response map and taking the max-overlap offset (deterministic, computed from the
-# real pixels every render — a fixed device/maskDevice offset was tried and explicitly rejected
-# by the user), then lit with the director's accent (css.glow else css.accent, never a
-# hardcoded colour) and clipped to the button's own silhouette (no rim/ring/halo — banned by
-# central no-rim-lighting-rule). Default ON — this retires the tacky rim-light
-# SHUFFLE_LIT_BUTTON branch (an old worktree experiment, superseded, never merged to mainline)
-# and the switch/slot-fit problem for shuffle by rendering it as a plain icon BUTTON instead of
-# a track-lever/sprite-swap toggle. Gracefully degrades to a normal (unlit) button on any skin
-# whose mask doesn't carry a baked glyph (wc-goldshield, fa-sky) — no crash, no garbage.
-STATEFUL_LIT_ICON = True
-
-TOGGLE_SIZE_JS = ("""
-    const offWfrac=off.w/PW, offHfrac=off.h/PH;
-    let _s=Math.max((r.device[2]*1.06)/offWfrac, (r.device[3]*1.06)/offHfrac);
-    if(_s>1.5) _s=1.5;
-    let bw=offWfrac*_s, bh=offHfrac*_s;
-    const offS=_s;   // paint px per OFF-cut px, as displayed
-""" if SPRITE_COVER_FIT_ENABLED else """
-    let bw=r.device[2]*1.06, bh=r.device[3]*1.06;
-    const natS=Math.min(bw*PW/off.w, bh*PH/off.h);
-    if(natS>1.5){ bw*=1.5/natS; bh*=1.5/natS; }
-    const offS=Math.min(bw*PW/off.w, bh*PH/off.h);   // paint px per OFF-cut px, as displayed
-""")
-
-HTML = f"""<!doctype html><html><head><meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<title>skeuo.fm — {SID}: {TITLE}</title>
-<style>
-  :root{{--mono:ui-monospace,Menlo,monospace}}
-  *{{box-sizing:border-box}}
-  body{{margin:0;background:#0e0f13;color:#cdd2dc;font:14px/1.5 system-ui,sans-serif;
-    display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 12px 60px}}
-  h1{{font:600 15px var(--mono);letter-spacing:.02em;margin:0;color:#eef}}
-  .sub{{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}}
-  #stage{{width:min(96vw,460px)}}
-  #phone{{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v={V}') no-repeat;background-size:100% auto;border-radius:12px}}
-  .pbtn{{position:absolute;cursor:pointer;touch-action:manipulation}}
-  .pbtn .ink{{position:absolute;background-size:100% 100%;pointer-events:none;
-    opacity:0;transition:opacity .06s}}
-  .pbtn:active .ink{{opacity:1}}
-  .pbtn .lit{{position:absolute;background-size:100% 100%;pointer-events:none;
-    opacity:0;transition:opacity .15s}}
-  .pbtn.on .lit{{opacity:1}}
-  .pbtn.haslit.on .ink{{display:none}}
-  .pknob{{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}}
-  .pknob .cap{{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}}
-  .pknob .spec{{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen}}
-  .pknob-ticks{{position:absolute;pointer-events:none;overflow:visible}}
-  .pthumb{{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
-    background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}}
-  {SEEK_TRACK_CSS}
-  .ptog{{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;
-    background-position:center;filter:drop-shadow(0 2px 4px #0008)}}
-  .viz{{position:absolute;pointer-events:none}}
-  .art{{position:absolute;background-size:cover;background-position:center;pointer-events:none}}
-  #queue{{position:absolute;inset:6% 6% 8%;background:#0b0d12ee;border:1px solid #ffffff22;border-radius:10px;
-    padding:14px;display:none;flex-direction:column;gap:2px;overflow:auto;backdrop-filter:blur(3px)}}
-  #queue.open{{display:flex}}
-  #queue .qh{{font:600 12px var(--mono);color:#eef;margin-bottom:6px;display:flex;justify-content:space-between}}
-  #queue .qr{{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;font:12px var(--mono)}}
-  #queue .qr:nth-child(odd){{background:#ffffff0c}} #queue .qr.now{{background:#3aa0ff33;color:#cfe6ff}}
-  #queue .x{{cursor:pointer;color:#9aa}}
-  .hint{{font:11px var(--mono);color:#6b7180;max-width:460px;text-align:center}}
-  .badge{{font:10px var(--mono);color:#7f8798;border:1px solid #ffffff18;border-radius:5px;padding:2px 6px}}
-</style></head><body>
-<h1>{SID} — {TITLE}</h1>
-<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob
-<a id=pbrlink href="player-pbr.html" style="color:#8fb4ff;display:none">· ✨ dynamic lighting</a></div>
-<script>/* feature-flagged PBR player (WIRE-pbr.md): offer the toggle only when the sibling
-player-pbr.html was actually built — default stays this plain player */
-fetch('player-pbr.html',{{method:'HEAD'}}).then(r=>{{if(r.ok)document.getElementById('pbrlink').style.display='inline'}}).catch(()=>{{}});</script>
-<div id=stage><div id=phone>
-  <canvas class=viz id=viz></canvas>
-  <div class=art id=art></div>
-  <div id=queue><div class=qh><span>Queue</span><span class=x id=qx>close ✕</span></div></div>
-</div></div>
-<div class=hint id=hint>loading…</div>
-<script>
-const V='{V}';
-(async function(){{
-  const R = await fetch('regions.json?v='+V).then(r=>r.json());
-  const regs=R.regions, DF=R.devFrac, roles=R.roles||{{}};
-  const phone=document.getElementById('phone'), hint=document.getElementById('hint');
-  const paint=new Image(); paint.src='paint.png?v='+V; await paint.decode();
-  const PW=paint.naturalWidth, PH=paint.naturalHeight, DEVH=Math.round(PH*DF);
-  phone.style.setProperty('--ar', PW+'/'+DEVH);
-  // background shows only the device (top DF) slice
-  const bc=document.createElement('canvas'); bc.width=PW; bc.height=DEVH;
-  bc.getContext('2d').drawImage(paint,0,0,PW,DEVH,0,0,PW,DEVH);
-  phone.style.background="url('"+bc.toDataURL()+"') no-repeat"; phone.style.backgroundSize='100% 100%';
-  // load moving-part cuts (tight-cropped, with content centroid)
-  const CUT={{}};
-  function tight(im){{ const c=document.createElement('canvas'); c.width=im.naturalWidth;c.height=im.naturalHeight;
-    const cx=c.getContext('2d'); cx.drawImage(im,0,0); const d=cx.getImageData(0,0,c.width,c.height).data;
-    let x0=c.width,y0=c.height,x1=0,y1=0,any=false;
-    for(let p=0;p<d.length;p+=4){{ if(d[p+3]>12){{const i=p/4,x=i%c.width,y=(i/c.width)|0;
-      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;any=true;}} }}
-    if(!any) return {{url:im.src,w:c.width,h:c.height}};
-    const tw=x1-x0+1,th=y1-y0+1,t=document.createElement('canvas');t.width=tw;t.height=th;
-    t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th); return {{url:t.toDataURL(),w:tw,h:th}}; }}
-  const BREF='../{os.path.basename(OUT)}_biref/';
-  // fetch BOTH possible shuffle cut sets — a data-driven superset, not gated on a build-time
-  // flag: which set actually exists on disk (track-mode 'shuffle_lever' vs legacy 'shuffle_off'/
-  // 'shuffle_on') tells the render block below which architecture this asset dir was cut with.
-  // Missing files just fail their try/catch below and leave that CUT key absent — no crash.
-  const parts=['vol','seek','shuffle_lever','shuffle_off','shuffle_on'];
-  for(const k of parts){{ try{{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}}catch(e){{}} }}
-  const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
-  let playing=false;
-  // director-picked lit-glyph accent: css.glow (WIRE-pbr.md) wins, else css.accent, else a
-  // neutral engraved tone — never a hardcoded colour (icon-state-proto.html used a fixed demo
-  // blue only for its own standalone preview; the shipped player must follow the theme). Moved
-  // ABOVE the knob section (was originally declared just before the button loop) so
-  // KNOB_TICK_FROM_PAINT's lit-tick tint below can share the SAME accent. MC/MW/MH (the mask
-  // canvas) stays loaded here too — still used by the button loop's glyph extraction further
-  // down, unrelated to the knob tick (which is now paint-sourced, not mask-sourced).
-  const _hexToRgb=h=>{{ h=(h||'').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
-    const n=parseInt(h||'e8ecf5',16); return [(n>>16)&255,(n>>8)&255,n&255]; }};
-  const LIT_ACCENT_RGB = _hexToRgb(({SPEC_GLOW_JS})||({SPEC_ACCENT_JS})||'#e8ecf5');
-  let MC=null,MW=0,MH=0;
-  try{{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
-    MW=mi.naturalWidth; MH=mi.naturalHeight;
-    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
-    MC.getContext('2d').drawImage(mi,0,0); }}catch(e){{}}
-
-  // ---- knob (volume) ----
-  // DEFENSIVE RENDER: a control missing its device rect (extract12 found no distinguishable
-  // guide-color blob — myst-arcanum's 'vol' 2026-07-12: genuine paint-side omission, not a
-  // detection bug) must never crash the WHOLE player. Guard the null case explicitly (regs[kn]
-  // can be a truthy {{device:null,...}} object) AND wrap the block in try/catch so ANY other
-  // unexpected error here still degrades to "this control doesn't render" instead of aborting
-  // every control queued after it in this same async function.
-  const kn = Object.keys(roles).find(k=>roles[k]==='knob');
-  try{{
-  if(kn && regs[kn] && regs[kn].device && CUT['vol']){{
-    const r=regs[kn]; let cx,cy,w,h;
-    if(r.seat){{cx=r.seat[0];cy=r.seat[1];w=r.seat[2]*2;h=w*PW/PH;}}
-    else{{const c=ctr(r.device);cx=c[0];cy=c[1];w=r.device[2]*1.1;h=r.device[3]*1.1;}}
-    const el=document.createElement('div');el.className='pknob';
-    el.style.left=(cx-w/2)*100+'%';el.style.top=((cy-h/2)/DF)*100+'%';el.style.width=w*100+'%';el.style.height=(h/DF)*100+'%';
-    el.innerHTML='<div class=cap style="background-image:url('+CUT['vol'].url+')"></div><div class=spec></div>';
-    // tint the pinned specular from the CAP'S OWN pixels (avg opaque colour, lightened) so the
-    // highlight matches the material (brass stays warm, chrome cool) instead of a white wash
-    try{{ const sc=document.createElement('canvas');sc.width=sc.height=12;const sg=sc.getContext('2d');
-      const ci=new Image();ci.src=CUT['vol'].url;await ci.decode();sg.drawImage(ci,0,0,12,12);
-      const dd=sg.getImageData(0,0,12,12).data;let rr=0,gg=0,bb=0,nn=0;
-      for(let i=0;i<dd.length;i+=4){{if(dd[i+3]>60){{rr+=dd[i];gg+=dd[i+1];bb+=dd[i+2];nn++;}}}}
-      if(nn){{const L=v=>Math.min(255,Math.round(v/nn*0.75+255*0.25));
-        el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.32), rgba(255,255,255,0) 60%)';}}
-    }}catch(e){{ el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%,#ffffff4d,#fff0 60%)'; }}
-    // start at 0.5 → the -135..+135° rotation has SYMMETRIC headroom both directions
-    // (review: "goes far left but not right at all" — a 0.7 start left only 81° of CW travel)
-    // ZERO-DEG CONVENTION: value 0 -> -135deg (~7 o'clock), value 1 -> +135deg (~5 o'clock),
-    // value 0.5 -> 0deg (12 o'clock/up). The cap sprite is cut with its painted pointer/notch
-    // baked at whatever angle the model drew (regions.json knob_zero_deg, CW-from-up, or null
-    // when extract12 found no reliable indicator) — counter-rotate by that baked angle so the
-    // ABOVE convention holds regardless of the raw cut's orientation (bug: without this, value
-    // 0.5/init showed the indicator at its baked angle instead of straight up).
-    const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
-    const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
-    // ---- KNOB_TICK_FROM_PAINT: a real, lit crop of the painted pointer/notch, placed at its
-    // DETERMINISTIC measured position — replaces SPRITE_TICK_CSS's synthetic needle, which is
-    // always drawn at an ASSUMED position (val's own -135..+135 sweep, ignorant of where the
-    // model actually painted anything).
-    // Source of the measurement: NOT mask.png. A parallel check across diverse themes (steam-
-    // porthole, fallout-pipboy) found the mask's "vol" tick cutout bakes as an OPEN NOTCH cut
-    // into the disc's rim on 2/3 skins, not the fully-ENCLOSED hole the button glyphs get — so
-    // the flood-fill enclosed-hole technique (computeGlyphMasks, proven for buttons) silently
-    // finds zero candidates on most skins (confirmed directly on assets-glyphtest12: the mask
-    // crop shows the notch touching the disc's outer edge, connected to background, not a
-    // closed pocket). The PAINTED tick, by contrast, is a clean physical dimple 3/3 — and
-    // extract12.py already measures it deterministically via knob_angle.py's radial-anomaly
-    // detector (gradient + independent texture-disruption signal, run-centroid not peak-edge —
-    // see that module's docstring), storing BOTH the angle (`knob_zero_deg`, already used for
-    // the cap's OWN counter-rotation above) and the detector's own measured circle geometry
-    // (`knob_zero_geo` = [cx,cy,R]) in the EXACT SAME pixel frame as CUT['vol'] — the
-    // tight()-cropped sprite this player already renders (knob_angle.py's docstring: "matching
-    // EXACTLY the origin build_player.py's tight()+background-size:cover renders around"). So
-    // no separate registration step is needed here: crop a small square of CUT['vol']'s OWN
-    // pixels centred on the geo-predicted tick point, tint it with the director's accent so it
-    // reads as a lit indicator, and position/size it as a PERCENTAGE of `.cap`'s own box —
-    // scale-invariant, so it tracks whatever absolute size the cap renders at (the "mask cap
-    // smaller than painted cap" size-drift concern), no separate scale factor to get wrong.
-    // GRACEFUL FALLBACK: missing knob_zero_deg/knob_zero_geo (extract12 found no reliable
-    // indicator — myst-arcanum-style omission) or CUT['vol'], or any exception, leaves
-    // usedMaskTick=false and the SPRITE_TICK_CSS needle below renders exactly as before. Never
-    // crashes, never drops the tick.
-    let usedMaskTick=false;
-    if({str(KNOB_TICK_FROM_PAINT).lower()} && r.knob_zero_deg!=null && r.knob_zero_geo && CUT['vol']){{
-      try{{
-        const [gcx,gcy,gR]=r.knob_zero_geo;
-        if(gR>2){{
-          const zdRad=zeroDeg*Math.PI/180;
-          // point on the RIM where the detector measured the notch — same CW-from-up
-          // convention as the cap's own rotate() and the SVG needle below
-          const tx=gcx+gR*0.80*Math.sin(zdRad), ty=gcy-gR*0.80*Math.cos(zdRad);
-          // TIGHT crop around the notch's own baked footprint (genskin.py draw_icon_glyph
-          // 'vol': width~r*0.12, length~r*0.34) — a wider crop dilutes the mark against
-          // surrounding cap texture and reads as an amorphous smudge (SOTA-eye review,
-          // 2026-07-12: a gR*0.22 crop with a flat soft wash was called "blurry, artifact-like"
-          // after rotation). Still generous enough that a few-degree angle/radius error lands inside.
-          const tickR=Math.max(5,gR*0.15);
-          const capImg=new Image(); capImg.src=CUT['vol'].url; await capImg.decode();
-          const tcv=document.createElement('canvas'); tcv.width=tcv.height=Math.round(tickR*2);
-          const tgx=tcv.getContext('2d');
-          tgx.filter='contrast(1.35) brightness(1.08)';   // lift the dimple's own dark/light edge before tinting
-          tgx.drawImage(capImg, tx-tickR, ty-tickR, tickR*2, tickR*2, 0,0,tcv.width,tcv.height);
-          tgx.filter='none';
-          // TWO-LAYER lit look, same accent+white-core idea as litGlyph() above (buttons): a
-          // wider accent halo for colour/pop, plus a small bright white-hot core at the exact
-          // centre so the mark reads as a crisp point, not a diffuse wash.
-          const halo=tgx.createRadialGradient(tcv.width/2,tcv.height/2,0,tcv.width/2,tcv.height/2,tcv.width/2);
-          halo.addColorStop(0,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0.85)');
-          halo.addColorStop(0.55,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0.35)');
-          halo.addColorStop(1,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0)');
-          tgx.globalCompositeOperation='screen'; tgx.fillStyle=halo; tgx.fillRect(0,0,tcv.width,tcv.height);
-          const core=tgx.createRadialGradient(tcv.width/2,tcv.height/2,0,tcv.width/2,tcv.height/2,tcv.width*0.22);
-          core.addColorStop(0,'rgba(255,255,255,0.95)'); core.addColorStop(1,'rgba(255,255,255,0)');
-          tgx.fillStyle=core; tgx.fillRect(0,0,tcv.width,tcv.height);
-          tgx.globalCompositeOperation='source-over';
-          // position/size as % of `.cap`'s own box: CUT['vol'].w/h IS the frame knob_zero_geo
-          // is measured in, and IS the frame `.cap`'s background-image covers, so a plain
-          // fraction of the sprite's own natural size maps directly onto the rendered box
-          const dW=tcv.width/CUT['vol'].w*100, dH=tcv.height/CUT['vol'].h*100;
-          const dL=tx/CUT['vol'].w*100-dW/2, dT2=ty/CUT['vol'].h*100-dH/2;
-          const tickEl=document.createElement('div');
-          tickEl.style.cssText='position:absolute;pointer-events:none;background-repeat:no-repeat;background-size:100% 100%;border-radius:50%';
-          tickEl.style.left=dL+'%'; tickEl.style.top=dT2+'%'; tickEl.style.width=dW+'%'; tickEl.style.height=dH+'%';
-          tickEl.style.backgroundImage='url('+tcv.toDataURL()+')';
-          cap.appendChild(tickEl);   // child of .cap -> inherits its rotate() transform, tracks val for free
-          usedMaskTick=true;
-        }}
-      }}catch(e){{ console.warn('[player] knob tick placement failed — falling back to CSS overlay:', e); }}
-    }}
-    // ---- knob tick overlay (director-decided PER AXIS, WIRE-pbr.md "ticks" schema) ----
-    // SAME socket centre/radius (cx,cy,w) just derived above for the cap, sharing the SAME
-    // -135..+135 sweep convention as the cap rotation (ZERO-DEG CONVENTION comment above).
-    // SKIN_TICKS_CSS = static tick-arc ring on the bezel; SPRITE_TICK_CSS = live needle on the
-    // cap. Either, both, or neither may be true per skin — "baked"/"none" render no CSS overlay
-    // on that axis (baked relies on genskin.py's ticks_skin_bullet/ticks_sprite_bullet instead).
-    let tickRend=null;
-    if({str(SKIN_TICKS_CSS).lower()} || {str(SPRITE_TICK_CSS).lower()}){{
-      const zeroMode=r.zero||'start';           // 'start' (volume) now; 'center' (balance) is one param away
-      const TICK_MULT=1.34, N_MINOR=8;           // box radius = cap radius * TICK_MULT
-      const wB=w*TICK_MULT, hB=wB*PW/PH;
-      const svgNS='http://www.w3.org/2000/svg';
-      const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('class','pknob-ticks');
-      svg.setAttribute('viewBox','-1 -1 2 2'); svg.setAttribute('preserveAspectRatio','none');
-      svg.style.left=(cx-wB/2)*100+'%'; svg.style.top=((cy-hB/2)/DF)*100+'%';
-      svg.style.width=wB*100+'%'; svg.style.height=(hB/DF)*100+'%';
-      const capLocal=1/TICK_MULT;                 // cap edge, in this SVG's own unit-circle radius
-      const rIn=capLocal*1.04, rOutMinor=0.90, rOutMajor=0.99;   // ticks start JUST OUTSIDE the cap
-      const tickCol=({SPEC_ACCENT_JS})||'#e8ecf5';   // director css.accent wins; else a neutral engraved tone
-      const mk=(x1,y1,x2,y2,w)=>{{ const ln=document.createElementNS(svgNS,'line');
-        ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
-        ln.setAttribute('stroke',tickCol); ln.setAttribute('stroke-width',w); ln.setAttribute('stroke-linecap','round');
-        return ln; }};
-      if({str(SKIN_TICKS_CSS).lower()}){{
-        const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
-        const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
-        hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
-        const midIdx=Math.round((N_MINOR+2)/2);
-        for(let i=0;i<=N_MINOR+2;i++){{
-          const t=i/(N_MINOR+2);                       // 0..1 across the sweep
-          const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
-          const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
-          const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
-          const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
-          shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
-          hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
-        }}
-        svg.appendChild(shadow); svg.appendChild(hi);
-      }}
-      if({str(SPRITE_TICK_CSS).lower()} && !usedMaskTick){{
-        // subtle current-position indicator — a short needle tracking `val`, independent of the
-        // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at
-        // all). Skipped when KNOB_TICK_FROM_PAINT already placed a pixel-accurate lit tick above
-        // — the two are redundant and would otherwise double up on the same cap.
-        const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
-        tickRend=(v)=>{{ const deg=-135+v*270, rad=deg*Math.PI/180;
-          needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
-          needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); }};
-        tickRend(val);
-      }}
-      phone.appendChild(svg);
-    }}
-    const rend=()=>{{cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)'; if(tickRend)tickRend(val);}};rend();
-    el.addEventListener('pointerdown',e=>{{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();}});
-    el.addEventListener('pointermove',e=>{{if(drag){{val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));rend();}}}});
-    addEventListener('pointerup',()=>drag=false);
-    phone.appendChild(el);
-  }}
-  }}catch(e){{ console.warn('[player] knob render failed — skipping this control:', e); }}
-  // ---- seek thumb (coverage travel; SLOT-SIZED, horizontal or vertical) ----
-  // Size the thumb to its GROOVE, not the raw cut scale: cross-axis seated at groove×1.15
-  // (hard cap ×1.35 so it never obscures the track), upscale capped at ×1.5 natural, and the
-  // along-axis dimension ≤45% of the travel span. Aspect always preserved (one scale factor).
-  // DEFENSIVE RENDER: same null-device guard + try/catch isolation as the knob above — a missing
-  // seek region must not take the rest of the controls down with it.
-  const sl = Object.keys(roles).find(k=>roles[k]==='slider');
-  try{{
-  if(sl && regs[sl] && regs[sl].device && CUT['seek']){{
-    const r=regs[sl],t=CUT['seek'],track=r.device,vert=!!r.vertical;
-    const el=document.createElement('div');el.className='pthumb';
-    el.style.backgroundImage='url('+t.url+')';
-    let tw=t.w/PW, th=t.h/PH;
-    // HARD CLAMP travel to the walked groove's OWN device rect (2026-07-12 fix for the recurring
-    // "CSS slider outside slot" complaint): extract12's `travel` is allowed to be a hair wider
-    // than `device` by design (the coverage-span walk), and older regions.json on disk may still
-    // carry the pre-fix +/-2%-of-span padding that measurably overshot the visual groove in the
-    // real rendered player. Intersecting with `device` here is the single choke point BOTH the
-    // thumb (below) and the seek-track/fill CSS overlay (TRACK_SETUP_JS, spliced in a few lines
-    // down and reading this same `tv`) draw from, so neither can ever render past the extractor's
-    // own best estimate of the painted slot -- regardless of what any given travel value says.
-    const trackLo=vert?track[1]:track[0], trackHi=vert?(track[1]+track[3]):(track[0]+track[2]);
-    const tvRaw=r.travel||[trackLo,trackHi];
-    const tv=[Math.max(tvRaw[0],trackLo), Math.min(tvRaw[1],trackHi)];
-    const span=Math.max(1e-6,tv[1]-tv[0]);
-    const s=vert?Math.min(1.5, track[2]*1.15/tw, track[2]*1.35/tw, span*0.45/th)
-                :Math.min(1.5, track[3]*1.15/th, track[3]*1.35/th, span*0.45/tw);
-    tw*=s; th*=s;
-    {TRACK_SETUP_JS}
     el.style.width=tw*100+'%';el.style.height=(th/DF)*100+'%';
     let val=0,sp=0,sv=0,drag=false,rend;
-    if(vert){{
+    if(vert){
       el.style.cursor='ns-resize';
       const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%';
       const y0=tv[0],y1=tv[1]-th;
-      rend=()=>{{el.style.top=((y0+(y1-y0)*val)/DF)*100+'%';{TRACK_FILL_VERT}}};
-      el.addEventListener('pointermove',e=>{{if(drag){{val=Math.max(0,Math.min(1,sv+(e.clientY-sp)/(phone.clientHeight*((y1-y0)/DF))));rend();}}}});
-      el.addEventListener('pointerdown',e=>{{drag=true;sp=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();}});
-    }}else{{
+      rend=()=>{el.style.top=((y0+(y1-y0)*val)/DF)*100+'%';fillEl.style.height=Math.max(0,Math.min(span,(y0+(y1-y0)*val+th/2)-tv[0]))/DF*100+'%';};
+      el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientY-sp)/(phone.clientHeight*((y1-y0)/DF))));rend();}});
+      el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    }else{
       const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
       const x0=tv[0],x1=tv[1]-tw;
-      rend=()=>{{el.style.left=(x0+(x1-x0)*val)*100+'%';{TRACK_FILL_HORIZ}}};
-      el.addEventListener('pointermove',e=>{{if(drag){{val=Math.max(0,Math.min(1,sv+(e.clientX-sp)/(phone.clientWidth*(x1-x0))));rend();}}}});
-      el.addEventListener('pointerdown',e=>{{drag=true;sp=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();}});
-    }}
+      rend=()=>{el.style.left=(x0+(x1-x0)*val)*100+'%';fillEl.style.width=Math.max(0,Math.min(span,(x0+(x1-x0)*val+tw/2)-tv[0]))*100+'%';};
+      el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientX-sp)/(phone.clientWidth*(x1-x0))));rend();}});
+      el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    }
     rend();
     addEventListener('pointerup',()=>drag=false);
-    window.__seek=(d)=>{{val=Math.max(0,Math.min(1,val+d));rend();}};
+    window.__seek=(d)=>{val=Math.max(0,Math.min(1,val+d));rend();};
     phone.appendChild(el);
-  }}
-  }}catch(e){{ console.warn('[player] seek render failed — skipping this control:', e); }}
+  }
+  }catch(e){ console.warn('[player] seek render failed — skipping this control:', e); }
   // ---- shuffle: TWO-DETENT TRACK LEVER (TOGGLE_TRACK_ENABLED architecture, 2026-07-12) — a
   // two-position slider architecturally identical to the seek thumb above (track =
   // regs[tg].device, detents = the two end positions, same coverage-span/vertical-detection
@@ -559,13 +391,13 @@ const V='{V}';
   // lit-glyph icon BUTTON in the BTN loop below — NOT the track-lever or legacy sprite-swap
   // toggle rendered by the two blocks below. Requires only regs.shuffle.device (every skin has
   // it); does NOT require a baked glyph — a glyph-less mask just degrades to a normal button.
-  const STATEFUL_LIT_ICON = {str(STATEFUL_LIT_ICON).lower()};
+  const STATEFUL_LIT_ICON = true;
   const shuffleAsButton = STATEFUL_LIT_ICON && !!(tg && tgR && tgR.device);
   // DEFENSIVE RENDER: wrap both shuffle architectures (track-lever + legacy sprite-swap) in one
   // try/catch — a missing/null tgR.device (or any other unexpected failure below) must degrade
   // to "no toggle rendered" instead of aborting every control queued after it.
-  try{{
-  if(!shuffleAsButton && isTrackArch && tgR.device){{
+  try{
+  if(!shuffleAsButton && isTrackArch && tgR.device){
     const r=regs[tg], track=r.device, vert=!!r.vertical, lv=CUT['shuffle_lever'];
     // CSS-LEVER FALLBACK — the biref cut is missing OR degenerate (aspect wildly off any sane
     // lever shape: a mis-cut sliver / strip-drift patch) -> render a themed CSS lever (director
@@ -576,45 +408,45 @@ const V='{V}';
     const el=document.createElement('div'); el.className='ptog'; el.tabIndex=0;
     el.setAttribute('role','switch');
     let tw,th;
-    if(cutOk){{
+    if(cutOk){
       el.style.backgroundImage='url('+lv.url+')';
       const cw=lv.w/PW, ch=lv.h/PH;
       const s=Math.min(1.5, vert?(track[2]*1.15/cw):(track[3]*1.15/ch));
       tw=cw*s; th=ch*s;
-    }}else{{
-      const fillCol={SPEC_FILL_JS}||'#d7dae2';
+    }else{
+      const fillCol=null||'#d7dae2';
       el.style.background='linear-gradient(180deg,#fff2,transparent 45%),'+fillCol;
       el.style.borderRadius='999px'; el.style.boxShadow='inset 0 1px 2px #ffffff55, 0 1px 3px #0007';
       tw = vert? track[2]*0.74 : track[2]*0.36;
       th = vert? track[3]*0.36 : track[3]*0.74;
-    }}
+    }
     el.style.width=tw*100+'%'; el.style.height=(th/DF)*100+'%';
     el.style.transition='left .2s cubic-bezier(.32,1.3,.6,1), top .2s cubic-bezier(.32,1.3,.6,1), filter .2s';
     // detents: CENTRE positions along the travel axis at each end (extract12's `detents` field,
     // same convention as seek's `travel`); default derived from the track bounds when absent
     // (an old regions.json without the field, or the degenerate-collapse fallback).
     const dt=r.detents||(vert?[track[1]+th/2,track[1]+track[3]-th/2]:[track[0]+tw/2,track[0]+track[2]-tw/2]);
-    const glowCol={SPEC_GLOW_JS}||{SPEC_ACCENT_JS};
+    const glowCol=null||null;
     let ison=false;
-    const place=()=>{{
+    const place=()=>{
       const p=ison?dt[1]:dt[0];
-      if(vert){{ const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%'; el.style.top=((p-th/2)/DF)*100+'%'; }}
-      else{{ const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%'; el.style.left=(p-tw/2)*100+'%'; }}
+      if(vert){ const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%'; el.style.top=((p-th/2)/DF)*100+'%'; }
+      else{ const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%'; el.style.left=(p-tw/2)*100+'%'; }
       el.style.filter = glowCol
         ? (ison ? 'drop-shadow(0 0 5px '+glowCol+'cc) drop-shadow(0 2px 4px #0008)' : 'drop-shadow(0 2px 4px #0008)')
         : 'drop-shadow(0 2px 4px #0008)';
       el.setAttribute('aria-checked', ison?'true':'false');
-    }};
+    };
     place();
-    const toggleLever=()=>{{ison=!ison;place();}};
+    const toggleLever=()=>{ison=!ison;place();};
     el.addEventListener('click',toggleLever);
-    el.addEventListener('keydown',e=>{{if(e.key===' '||e.key==='Enter'){{e.preventDefault();e.stopPropagation();toggleLever();}}}});
+    el.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();toggleLever();}});
     phone.appendChild(el);
-  }}
+  }
   // ---- shuffle: legacy TWO-STATE sprite-swap toggle (rollback path / pre-2026-07-12 assets,
   // silhouette state-registered) — unchanged, kept fully intact so already-generated regions.json
   // / assets keep rendering. ----
-  else if(!shuffleAsButton && !isTrackArch && tgR && tgR.device && CUT['shuffle_off']){{
+  else if(!shuffleAsButton && !isTrackArch && tgR && tgR.device && CUT['shuffle_off']){
     const r=tgR,off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
     const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
     const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
@@ -624,27 +456,33 @@ const V='{V}';
     // when the cut's aspect diverges from the slot's). Upscale capped at ×1.5 natural either way.
     // ON is registered onto OFF by the extractor's silhouette-IoU transform, its px offset scaled
     // by the OFF cut's displayed scale (offS).
-    {TOGGLE_SIZE_JS}
-    const place=(c,isOn)=>{{ let dx=0, dy=0;
-      if(isOn && sa){{ dx=sa.dx*offS/PW; dy=sa.dy*offS/PH; }}   // ON shifted by the IoU offset, at display scale
+    
+    const offWfrac=off.w/PW, offHfrac=off.h/PH;
+    let _s=Math.max((r.device[2]*1.06)/offWfrac, (r.device[3]*1.06)/offHfrac);
+    if(_s>1.5) _s=1.5;
+    let bw=offWfrac*_s, bh=offHfrac*_s;
+    const offS=_s;   // paint px per OFF-cut px, as displayed
+
+    const place=(c,isOn)=>{ let dx=0, dy=0;
+      if(isOn && sa){ dx=sa.dx*offS/PW; dy=sa.dy*offS/PH; }   // ON shifted by the IoU offset, at display scale
       el.style.backgroundImage='url('+c.url+')';
       el.style.left=(tc[0]-bw/2+dx)*100+'%'; el.style.top=((tc[1]-bh/2+dy)/DF)*100+'%';
-      el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%'; el.style.transform='rotate('+ang+'deg)'; }};
+      el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%'; el.style.transform='rotate('+ang+'deg)'; };
     place(off,false); let ison=false;
-    el.addEventListener('click',()=>{{ison=!ison;place(ison?on:off,ison);}});
+    el.addEventListener('click',()=>{ison=!ison;place(ison?on:off,ison);});
     phone.appendChild(el);
-  }}
-  }}catch(e){{ console.warn('[player] shuffle/toggle render failed — skipping this control:', e); }}
+  }
+  }catch(e){ console.warn('[player] shuffle/toggle render failed — skipping this control:', e); }
   // ---- baked icon buttons: pressed state = the button's OWN pixels redrawn darkened +
   // shifted down (physical travel), clipped to its EXACT silhouette from the colour mask
   // (cutMaskShape-style). No bbox ellipse, no gradient wash.
-  const BTN=R.buttons||[], KEY=R.keys||{{}};
+  const BTN=R.buttons||[], KEY=R.keys||{};
   // when STATEFUL_LIT_ICON has retired shuffle's track-lever/toggle (shuffleAsButton, set
   // above), append it to the same icon-button roster this loop renders — shuffle then shares
   // the exact same mask/silhouette/press-ink machinery as playpause/repeat/prev/next/queue.
   const ICON_BTNS = shuffleAsButton ? BTN.concat([tg]) : BTN;
   // which of the icon buttons LATCH a persistent lit-glyph state (vs momentary press-only).
-  const STATEFUL_ROLE = {{playpause:1, repeat:1, shuffle:1}};
+  const STATEFUL_ROLE = {playpause:1, repeat:1, shuffle:1};
   // _hexToRgb / LIT_ACCENT_RGB / MC(+MW/MH, the mask canvas) are now declared EARLIER in this
   // function (right after the CUT-parts load, before the knob section) so KNOB_TICK_FROM_PAINT's
   // lit-tick tint can reuse LIT_ACCENT_RGB too — see that block's own comment for why.
@@ -654,18 +492,18 @@ const V='{V}';
   // flood-fill from the MASK crop: sil = whole button silhouette (holes filled), gl = the
   // ENCLOSED non-body pixels (the baked glyph). Border-reachable non-body = background, so a
   // glyph hole surrounded by guide colour survives the fill and lands in `gl`, not `sil`'s gap.
-  function computeGlyphMasks(cropM,key,cwv,chv){{
+  function computeGlyphMasks(cropM,key,cwv,chv){
     const c=document.createElement('canvas'); c.width=cwv; c.height=chv;
     const g=c.getContext('2d');
     g.drawImage(MC, cropM[0]*MW, cropM[1]*MH, cropM[2]*MW, cropM[3]*MH, 0,0,cwv,chv);
     const d=g.getImageData(0,0,cwv,chv).data, N=cwv*chv, body=new Uint8Array(N);
-    for(let p=0,i=0;p<N;p++,i+=4){{const x=d[i]-key[0],y=d[i+1]-key[1],z=d[i+2]-key[2];body[p]=(x*x+y*y+z*z<7000)?1:0;}}
+    for(let p=0,i=0;p<N;p++,i+=4){const x=d[i]-key[0],y=d[i+1]-key[1],z=d[i+2]-key[2];body[p]=(x*x+y*y+z*z<7000)?1:0;}
     const vis=new Uint8Array(N),st=[];
-    for(let x=0;x<cwv;x++){{const a=x,bb=(chv-1)*cwv+x;if(!body[a]&&!vis[a]){{vis[a]=1;st.push(a);}}if(!body[bb]&&!vis[bb]){{vis[bb]=1;st.push(bb);}}}}
-    for(let y=0;y<chv;y++){{const a=y*cwv,bb=y*cwv+cwv-1;if(!body[a]&&!vis[a]){{vis[a]=1;st.push(a);}}if(!body[bb]&&!vis[bb]){{vis[bb]=1;st.push(bb);}}}}
-    while(st.length){{const p=st.pop(),x=p%cwv,y=(p/cwv)|0;
+    for(let x=0;x<cwv;x++){const a=x,bb=(chv-1)*cwv+x;if(!body[a]&&!vis[a]){vis[a]=1;st.push(a);}if(!body[bb]&&!vis[bb]){vis[bb]=1;st.push(bb);}}
+    for(let y=0;y<chv;y++){const a=y*cwv,bb=y*cwv+cwv-1;if(!body[a]&&!vis[a]){vis[a]=1;st.push(a);}if(!body[bb]&&!vis[bb]){vis[bb]=1;st.push(bb);}}
+    while(st.length){const p=st.pop(),x=p%cwv,y=(p/cwv)|0;
       const nb=[p-1,p+1,p-cwv,p+cwv],ok=[x>0,x<cwv-1,y>0,y<chv-1];
-      for(let k=0;k<4;k++){{if(ok[k]){{const np=nb[k];if(!vis[np]&&!body[np]){{vis[np]=1;st.push(np);}}}}}}}}
+      for(let k=0;k<4;k++){if(ok[k]){const np=nb[k];if(!vis[np]&&!body[np]){vis[np]=1;st.push(np);}}}}
     // connected-component filter on the ENCLOSED (!vis && !body) pixel set, gated on BOTH size
     // AND darkness. The pipeline's own contract (genskin.py) bakes the glyph as an "enclosed
     // BLACK hole" — so a real glyph component is large AND near-black; empirically, real glyph
@@ -676,46 +514,46 @@ const V='{V}';
     // Components failing either gate are folded into `body` (kept solid in `sil2`, excluded from
     // `gl`) rather than into `vis` (background), so they don't punch a spurious hole either.
     const compVis=new Uint8Array(N), minCompPx=Math.max(12,Math.round(N*0.0015)), GLYPH_LUM_MAX=70;
-    for(let p=0;p<N;p++){{
+    for(let p=0;p<N;p++){
       if(vis[p]||body[p]||compVis[p])continue;
       const stack2=[p],members=[p];compVis[p]=1;
-      while(stack2.length){{const q=stack2.pop(),x=q%cwv,y=(q/cwv)|0;
+      while(stack2.length){const q=stack2.pop(),x=q%cwv,y=(q/cwv)|0;
         const nb2=[q-1,q+1,q-cwv,q+cwv],ok2=[x>0,x<cwv-1,y>0,y<chv-1];
-        for(let k=0;k<4;k++){{if(ok2[k]){{const nq=nb2[k];if(!compVis[nq]&&!vis[nq]&&!body[nq]){{compVis[nq]=1;stack2.push(nq);members.push(nq);}}}}}}}}
-      let sumLum=0; for(const m of members){{ const i=m*4; sumLum+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; }}
+        for(let k=0;k<4;k++){if(ok2[k]){const nq=nb2[k];if(!compVis[nq]&&!vis[nq]&&!body[nq]){compVis[nq]=1;stack2.push(nq);members.push(nq);}}}}
+      let sumLum=0; for(const m of members){ const i=m*4; sumLum+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; }
       const avgLum=sumLum/members.length;
-      if(members.length<minCompPx || avgLum>GLYPH_LUM_MAX){{ for(const m of members) body[m]=1; }}
-    }}
+      if(members.length<minCompPx || avgLum>GLYPH_LUM_MAX){ for(const m of members) body[m]=1; }
+    }
     const sil2=document.createElement('canvas');sil2.width=cwv;sil2.height=chv;
     const sg=sil2.getContext('2d'),sd=sg.createImageData(cwv,chv),sa=sd.data;
     const gl=document.createElement('canvas');gl.width=cwv;gl.height=chv;
     const gg=gl.getContext('2d'),gd=gg.createImageData(cwv,chv),ga=gd.data;let cov=0,gcnt=0;
-    for(let p=0,i=0;p<N;p++,i+=4){{ if(!vis[p]){{sa[i]=sa[i+1]=sa[i+2]=sa[i+3]=255;cov++; if(!body[p]){{ga[i]=ga[i+1]=ga[i+2]=ga[i+3]=255;gcnt++;}}}} }}
+    for(let p=0,i=0;p<N;p++,i+=4){ if(!vis[p]){sa[i]=sa[i+1]=sa[i+2]=sa[i+3]=255;cov++; if(!body[p]){ga[i]=ga[i+1]=ga[i+2]=ga[i+3]=255;gcnt++;}} }
     sg.putImageData(sd,0,0);gg.putImageData(gd,0,0);
-    return {{sil2,gl,cov,gcnt}};
-  }}
+    return {sil2,gl,cov,gcnt};
+  }
   // deterministic registration (NO stored offset — explicitly rejected): slide the mask-glyph
   // shape over the painted button's "differs-from-body" response map; the (dx,dy) with the
   // max overlap is where the icon is actually painted.
-  function registerGlyph(base,gl,silv,cwv,chv){{
+  function registerGlyph(base,gl,silv,cwv,chv){
     const pd=base.getContext('2d').getImageData(0,0,cwv,chv).data;
     const sd=silv.getContext('2d').getImageData(0,0,cwv,chv).data;
-    let br=0,bgv=0,bb=0,n=0;for(let i=0;i<pd.length;i+=4){{if(sd[i+3]>10){{br+=pd[i];bgv+=pd[i+1];bb+=pd[i+2];n++;}}}}
-    if(n){{br/=n;bgv/=n;bb/=n;}}
+    let br=0,bgv=0,bb=0,n=0;for(let i=0;i<pd.length;i+=4){if(sd[i+3]>10){br+=pd[i];bgv+=pd[i+1];bb+=pd[i+2];n++;}}
+    if(n){br/=n;bgv/=n;bb/=n;}
     const RR=new Float32Array(cwv*chv);
-    for(let p=0,i=0;p<cwv*chv;p++,i+=4){{if(sd[i+3]>10){{const dr=pd[i]-br,dgc=pd[i+1]-bgv,dbc=pd[i+2]-bb;RR[p]=Math.sqrt(dr*dr+dgc*dgc+dbc*dbc);}}}}
+    for(let p=0,i=0;p<cwv*chv;p++,i+=4){if(sd[i+3]>10){const dr=pd[i]-br,dgc=pd[i+1]-bgv,dbc=pd[i+2]-bb;RR[p]=Math.sqrt(dr*dr+dgc*dgc+dbc*dbc);}}
     const gd=gl.getContext('2d').getImageData(0,0,cwv,chv).data,G=[];
-    for(let p=0,i=0;p<cwv*chv;p++,i+=4){{if(gd[i+3]>10)G.push(p);}}
+    for(let p=0,i=0;p<cwv*chv;p++,i+=4){if(gd[i+3]>10)G.push(p);}
     const W=Math.max(6,Math.round(Math.min(cwv,chv)*0.14));let best=-1,bx=0,by=0;
-    for(let ddy=-W;ddy<=W;ddy++)for(let ddx=-W;ddx<=W;ddx++){{let s=0;
-      for(let j=0;j<G.length;j++){{const p=G[j],x=(p%cwv)+ddx,y=((p/cwv)|0)+ddy;if(x<0||y<0||x>=cwv||y>=chv)continue;s+=RR[y*cwv+x];}}
-      if(s>best){{best=s;bx=ddx;by=ddy;}}}}
-    return {{dx:bx,dy:by}};
-  }}
+    for(let ddy=-W;ddy<=W;ddy++)for(let ddx=-W;ddx<=W;ddx++){let s=0;
+      for(let j=0;j<G.length;j++){const p=G[j],x=(p%cwv)+ddx,y=((p/cwv)|0)+ddy;if(x<0||y<0||x>=cwv||y>=chv)continue;s+=RR[y*cwv+x];}
+      if(s>best){best=s;bx=ddx;by=ddy;}}
+    return {dx:bx,dy:by};
+  }
   // light the glyph: accent fill clipped to the glyph shape + a white-hot core (4-dir erode of
   // the glyph, source-in white) + optional bloom (blurred lighter-composite halo). NO rim/ring
   // (central no-rim-lighting-rule) — the light stays inside the glyph's own silhouette.
-  function litGlyph(gl,cwv,chv,ac,bloom){{
+  function litGlyph(gl,cwv,chv,ac,bloom){
     const lit=document.createElement('canvas');lit.width=cwv;lit.height=chv;const lg=lit.getContext('2d');
     lg.fillStyle='rgb('+ac[0]+','+ac[1]+','+ac[2]+')';lg.fillRect(0,0,cwv,chv);
     lg.globalCompositeOperation='destination-in';lg.drawImage(gl,0,0);lg.globalCompositeOperation='source-over';
@@ -727,22 +565,22 @@ const V='{V}';
     const halo=document.createElement('canvas');halo.width=cwv;halo.height=chv;const hg=halo.getContext('2d');
     hg.filter='blur('+Math.max(2,Math.round(Math.min(cwv,chv)*0.045))+'px)';hg.drawImage(lit,0,0);hg.filter='none';
     og.globalCompositeOperation='lighter';og.globalAlpha=0.75;og.drawImage(halo,0,0);og.globalAlpha=1;og.drawImage(lit,0,0);return out;
-  }}
+  }
   // DEFENSIVE RENDER: the `!r.device` continue below already skips a control-less button
   // (myst-arcanum's own "prev"/omitted-control style gaps); wrapping the WHOLE per-button body
   // in try/catch on top of that means an unexpected error anywhere in ONE button's render
   // (icon-crop math, glyph registration, canvas ops) can never abort the `for` loop and take
   // every button queued AFTER it down too — JS aborts the entire loop on an uncaught throw, not
   // just the current iteration, so this is load-bearing, not decorative.
-  for(const b of ICON_BTNS){{
-    try{{
+  for(const b of ICON_BTNS){
+    try{
     const r=regs[b]; if(!r||!r.device) continue;
     const db=r.device, mb=r.maskDevice||db;
     const el=document.createElement('div');el.className='pbtn';el.title=b;
     el.style.left=px(db)+'%';el.style.top=py(db)+'%';el.style.width=pw(db)+'%';el.style.height=ph(db)+'%';
     const ink=document.createElement('div'); ink.className='ink'; el.appendChild(ink);
     const lit=document.createElement('div'); lit.className='lit'; el.appendChild(lit);
-    try{{
+    try{
       // crop the mask around the button blob (small pad), then the same rect in PAINT space
       // is the mask rect shifted by the mask→paint drift (device vs maskDevice centres)
       const PAD=0.10;
@@ -753,15 +591,15 @@ const V='{V}';
       // exact silhouette: threshold the mask crop near this button's guide colour
       const sc=document.createElement('canvas'); sc.width=cw; sc.height=ch;
       const sg=sc.getContext('2d'); let cov=0;
-      if(MC){{ sg.drawImage(MC, crop[0]*MW, crop[1]*MH, crop[2]*MW, crop[3]*MH, 0,0,cw,ch);
+      if(MC){ sg.drawImage(MC, crop[0]*MW, crop[1]*MH, crop[2]*MW, crop[3]*MH, 0,0,cw,ch);
         const idat=sg.getImageData(0,0,cw,ch), dd=idat.data, k=KEY[b]||[255,255,255];
-        for(let i=0;i<dd.length;i+=4){{ const d0=dd[i]-k[0],d1=dd[i+1]-k[1],d2=dd[i+2]-k[2];
-          if(d0*d0+d1*d1+d2*d2<7000){{ dd[i]=dd[i+1]=dd[i+2]=dd[i+3]=255; cov++; }} else dd[i+3]=0; }}
-        sg.putImageData(idat,0,0); }}
-      if(cov < cw*ch*0.02){{ // mask blob missing → rounded-rect of the bbox (still no ellipse)
+        for(let i=0;i<dd.length;i+=4){ const d0=dd[i]-k[0],d1=dd[i+1]-k[1],d2=dd[i+2]-k[2];
+          if(d0*d0+d1*d1+d2*d2<7000){ dd[i]=dd[i+1]=dd[i+2]=dd[i+3]=255; cov++; } else dd[i+3]=0; }
+        sg.putImageData(idat,0,0); }
+      if(cov < cw*ch*0.02){ // mask blob missing → rounded-rect of the bbox (still no ellipse)
         sg.clearRect(0,0,cw,ch); sg.fillStyle='#fff';
         const ix=cw*PAD/(1+2*PAD), iy=ch*PAD/(1+2*PAD);
-        sg.beginPath(); sg.roundRect(ix,iy,cw-2*ix,ch-2*iy,Math.min(cw,ch)*0.18); sg.fill(); }}
+        sg.beginPath(); sg.roundRect(ix,iy,cw-2*ix,ch-2*iy,Math.min(cw,ch)*0.18); sg.fill(); }
       // material-aware press strength from the button's own luminance
       const s8=document.createElement('canvas');s8.width=s8.height=8;
       s8.getContext('2d').drawImage(paint,db[0]*PW,db[1]*PH,db[2]*PW,db[3]*PH,0,0,8,8);
@@ -779,12 +617,12 @@ const V='{V}';
       pg.fillStyle='rgba(0,0,0,'+dA.toFixed(3)+')'; pg.fillRect(0,0,cw,ch);
       // light flips on press: top edge darkens, bottom edge lightens — rims FOLLOW the shape
       const rimW=Math.max(2,Math.round(ch*0.07));
-      const rim=(offY,col,alpha)=>{{ const rc=document.createElement('canvas');rc.width=cw;rc.height=ch;
+      const rim=(offY,col,alpha)=>{ const rc=document.createElement('canvas');rc.width=cw;rc.height=ch;
         const rg=rc.getContext('2d'); rg.drawImage(sc,0,0);
         rg.globalCompositeOperation='destination-out'; rg.drawImage(sc,0,offY);
         rg.globalCompositeOperation='source-in'; rg.fillStyle=col; rg.fillRect(0,0,cw,ch);
         pg.save(); pg.globalAlpha=alpha; pg.filter='blur('+(rimW*0.35).toFixed(1)+'px)';
-        pg.drawImage(rc,0,0); pg.restore(); }};
+        pg.drawImage(rc,0,0); pg.restore(); };
       rim(rimW,'#000',0.40);          // top inner shadow
       rim(-Math.round(rimW*0.7),'#fff',0.10+0.18*dk); // bottom catch-light — the visible cue on dark stone
       // clip everything to the exact silhouette — crisp edge, the shape does the shaping
@@ -800,14 +638,14 @@ const V='{V}';
       // baked glyph from the SAME mask crop already loaded above (MC/crop/key), register it
       // deterministically onto the painted button, and precompute the two lit states (flat-idle
       // + pressed/latched) so click/pointer handling below is a pure background-image swap. ----
-      if({str(STATEFUL_LIT_ICON).lower()} && STATEFUL_ROLE[b] && MC){{
-        const {{sil2,gl,cov:gcov,gcnt}}=computeGlyphMasks(crop,KEY[b]||[255,255,255],cw,ch);
+      if(true && STATEFUL_ROLE[b] && MC){
+        const {sil2,gl,cov:gcov,gcnt}=computeGlyphMasks(crop,KEY[b]||[255,255,255],cw,ch);
         const hasGlyph = gcnt > gcov*0.008;
-        if(hasGlyph){{
+        if(hasGlyph){
           // OFF-state body (no press, no darken) — the registration base AND the flat-lit body
           const offBody=document.createElement('canvas'); offBody.width=cw; offBody.height=ch;
           offBody.getContext('2d').drawImage(paint, eb[0]*PW, eb[1]*PH, eb[2]*PW, eb[3]*PH, 0,0,cw,ch);
-          const {{dx:gdx,dy:gdy}}=registerGlyph(offBody,gl,sil2,cw,ch);
+          const {dx:gdx,dy:gdy}=registerGlyph(offBody,gl,sil2,cw,ch);
           // pressed body clipped to the FULL (hole-filled) silhouette — build_player's own
           // press-ink treatment (contrast + darken + shape-following rims), ported so the
           // glyph's registered position stays valid against a silhouette with no hole gap.
@@ -817,17 +655,17 @@ const V='{V}';
           pg2.drawImage(paint, eb[0]*PW, eb[1]*PH, eb[2]*PW, eb[3]*PH, 0, shift, cw, ch);
           pg2.filter='none';
           pg2.fillStyle='rgba(0,0,0,'+dA.toFixed(3)+')'; pg2.fillRect(0,0,cw,ch);
-          const rim2=(offY,col,alpha)=>{{ const rc2=document.createElement('canvas');rc2.width=cw;rc2.height=ch;
+          const rim2=(offY,col,alpha)=>{ const rc2=document.createElement('canvas');rc2.width=cw;rc2.height=ch;
             const rg2=rc2.getContext('2d'); rg2.drawImage(sil2,0,0);
             rg2.globalCompositeOperation='destination-out'; rg2.drawImage(sil2,0,offY);
             rg2.globalCompositeOperation='source-in'; rg2.fillStyle=col; rg2.fillRect(0,0,cw,ch);
             pg2.save(); pg2.globalAlpha=alpha; pg2.filter='blur('+(rimW*0.35).toFixed(1)+'px)';
-            pg2.drawImage(rc2,0,0); pg2.restore(); }};
+            pg2.drawImage(rc2,0,0); pg2.restore(); };
           rim2(rimW,'#000',0.40);
           rim2(-Math.round(rimW*0.7),'#fff',0.10+0.18*dk);
           pg2.globalCompositeOperation='destination-in'; pg2.drawImage(sil2,0,0);
           // compose: body + registered lit glyph (bloom on), clipped to the full silhouette
-          const composeLit=(bodyC,dyExtra)=>{{
+          const composeLit=(bodyC,dyExtra)=>{
             let litC=litGlyph(gl,cw,ch,LIT_ACCENT_RGB,true);
             const t=document.createElement('canvas'); t.width=cw; t.height=ch;
             t.getContext('2d').drawImage(litC,gdx,gdy+dyExtra); litC=t;
@@ -835,78 +673,76 @@ const V='{V}';
             const outC=document.createElement('canvas'); outC.width=cw; outC.height=ch;
             const og2=outC.getContext('2d'); og2.drawImage(bodyC,0,0); og2.drawImage(litC,0,0);
             return outC;
-          }};
+          };
           const flatURL='url('+composeLit(offBody,0).toDataURL()+')';
           const pressedURL='url('+composeLit(pc2,shift).toDataURL()+')';
           lit.style.backgroundImage=flatURL;
           el.classList.add('haslit');
-          el.addEventListener('pointerdown',()=>{{ lit.style.backgroundImage=pressedURL; }});
-          const _revertLit=()=>{{ lit.style.backgroundImage=flatURL; }};
+          el.addEventListener('pointerdown',()=>{ lit.style.backgroundImage=pressedURL; });
+          const _revertLit=()=>{ lit.style.backgroundImage=flatURL; };
           el.addEventListener('pointerup',_revertLit); el.addEventListener('pointerleave',_revertLit);
-        }}
+        }
         // no baked glyph (wc-goldshield, fa-sky, …) → graceful: `.lit` stays empty/transparent,
         // `.haslit` is never added, so the button behaves exactly like a normal press-ink button.
-      }}
-    }}catch(e){{}}
-    el.addEventListener('click',()=>{{ if(b==='playpause'){{playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';el.classList.toggle('on',playing);}}
-      else if(b==='queue'){{document.getElementById('queue').classList.toggle('open');}}
-      else if(b==='repeat'){{el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];el.classList.toggle('on', el.dataset.m!=='0');}}
-      else if(b==='shuffle'){{el.classList.toggle('on');hint.textContent='shuffle: '+(el.classList.contains('on')?'on':'off');}}
-      else hint.textContent=b+' ▸'; }});
+      }
+    }catch(e){}
+    el.addEventListener('click',()=>{ if(b==='playpause'){playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';el.classList.toggle('on',playing);}
+      else if(b==='queue'){document.getElementById('queue').classList.toggle('open');}
+      else if(b==='repeat'){el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];el.classList.toggle('on', el.dataset.m!=='0');}
+      else if(b==='shuffle'){el.classList.toggle('on');hint.textContent='shuffle: '+(el.classList.contains('on')?'on':'off');}
+      else hint.textContent=b+' ▸'; });
     phone.appendChild(el);
-    }}catch(e){{ console.warn('[player] button render failed — skipping this control:', b, e); }}
-  }}
+    }catch(e){ console.warn('[player] button render failed — skipping this control:', b, e); }
+  }
   // ---- visualizer canvas ----
   // DEFENSIVE RENDER: wrap in try/catch too — the region checks below already guard the
   // known-null-device case, but an unexpected canvas/draw error here must not stop album art
   // or the queue/keyboard wiring that follows.
-  try{{
+  try{
   const vzc=document.getElementById('viz'); const vz=regs['visualizer'];
-  if(vz&&vz.device){{ const b=vz.device;
+  if(vz&&vz.device){ const b=vz.device;
     vzc.style.left=px(b)+'%';vzc.style.top=py(b)+'%';vzc.style.width=pw(b)+'%';vzc.style.height=ph(b)+'%';
     vzc.width=Math.round(b[2]*PW); vzc.height=Math.round(b[3]*PH);
     // sample an accent colour from the paint inside the region
     const sc=document.createElement('canvas');sc.width=8;sc.height=1;
     sc.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,8,1);
     const sd=sc.getContext('2d').getImageData(0,0,8,1).data; let ar=0,ag=0,ab=0;
-    for(let i=0;i<8;i++){{ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];}}
+    for(let i=0;i<8;i++){ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];}
     // director spec css.accent (WIRE-pbr.md) wins when the theme spec supplies it; paint-sampled
     // accent is the fallback for a spec without a css block.
-    const acc={SPEC_ACCENT_JS}||('rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')');
-    const g=vzc.getContext('2d'),NB=28;const bars=Array.from({{length:NB}},()=>Math.random());
+    const acc=null||('rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')');
+    const g=vzc.getContext('2d'),NB=28;const bars=Array.from({length:NB},()=>Math.random());
     // idle bars settle toward a WOBBLING low band (0.05..0.11), not a single fixed constant —
     // a constant target decays to a perfectly static row within ~1s of load, which reads as a
     // dead/broken feature (review: "visualizer not working" — the reviewer never pressed play,
     // and the flat idle state was visually indistinguishable from a non-functional overlay).
     // The gentle per-frame wobble keeps it visibly alive before any interaction, at an amplitude
     // far below the full playing-state motion so it doesn't compete with it.
-    (function draw(){{ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
-      for(let i=0;i<NB;i++){{ bars[i]+= playing?(Math.random()-.5)*.4:((0.05+Math.random()*0.06)-bars[i])*.15; bars[i]=Math.max(.04,Math.min(1,bars[i]));
+    (function draw(){ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
+      for(let i=0;i<NB;i++){ bars[i]+= playing?(Math.random()-.5)*.4:((0.05+Math.random()*0.06)-bars[i])*.15; bars[i]=Math.max(.04,Math.min(1,bars[i]));
         const hh=bars[i]*vzc.height*0.92; g.fillStyle=acc; g.globalAlpha=.85;
-        g.fillRect(i*bw+bw*0.15, vzc.height-hh, bw*0.7, hh); }}
-      requestAnimationFrame(draw); }})();
-  }}
-  }}catch(e){{ console.warn('[player] visualizer render failed — skipping this control:', e); }}
+        g.fillRect(i*bw+bw*0.15, vzc.height-hh, bw*0.7, hh); }
+      requestAnimationFrame(draw); })();
+  }
+  }catch(e){ console.warn('[player] visualizer render failed — skipping this control:', e); }
   // ---- album art inset (show the painted art window region, dimmed placeholder) ----
-  try{{
+  try{
   const aa=regs['album_art'];
-  if(aa&&aa.device){{ const b=aa.device,el=document.getElementById('art');
+  if(aa&&aa.device){ const b=aa.device,el=document.getElementById('art');
     el.style.left=px(b)+'%';el.style.top=py(b)+'%';el.style.width=pw(b)+'%';el.style.height=ph(b)+'%';
     const ac=document.createElement('canvas');ac.width=Math.round(b[2]*PW);ac.height=Math.round(b[3]*PH);
     ac.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,ac.width,ac.height);
-    el.style.backgroundImage='url('+ac.toDataURL()+')'; }}
-  }}catch(e){{ console.warn('[player] album_art render failed — skipping this control:', e); }}
+    el.style.backgroundImage='url('+ac.toDataURL()+')'; }
+  }catch(e){ console.warn('[player] album_art render failed — skipping this control:', e); }
   // ---- queue overlay ----
   const q=document.getElementById('queue'); document.getElementById('qx').onclick=()=>q.classList.remove('open');
   const trk=['Aphex Twin — Xtal','Boards of Canada — Roygbiv','Bonobo — Kong','Four Tet — Angel Echoes','Jon Hopkins — Open Eye Signal','Tycho — Awake'];
-  trk.forEach((t,i)=>{{const d=document.createElement('div');d.className='qr'+(i===0?' now':'');d.innerHTML='<span>'+t+'</span><span>'+(3+i)+':0'+i+'</span>';q.appendChild(d);}});
+  trk.forEach((t,i)=>{const d=document.createElement('div');d.className='qr'+(i===0?' now':'');d.innerHTML='<span>'+t+'</span><span>'+(3+i)+':0'+i+'</span>';q.appendChild(d);});
   // keyboard
-  addEventListener('keydown',e=>{{ if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
-    if(e.code==='Space'){{e.preventDefault();playing=!playing;hint.textContent=playing?'▶ playing':'⏸ paused';}}
+  addEventListener('keydown',e=>{ if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
+    if(e.code==='Space'){e.preventDefault();playing=!playing;hint.textContent=playing?'▶ playing':'⏸ paused';}
     else if(e.code==='ArrowRight'&&window.__seek)window.__seek(.05);
-    else if(e.code==='ArrowLeft'&&window.__seek)window.__seek(-.05); }});
+    else if(e.code==='ArrowLeft'&&window.__seek)window.__seek(-.05); });
   hint.textContent='live — drag the volume knob & seek thumb, click the buttons, hit space';
-}})();
-</script></body></html>"""
-open(os.path.join(OUT, "player.html"), "w").write(HTML)
-print(f"[player] {os.path.join(OUT, 'player.html')}")
+})();
+</script></body></html>
