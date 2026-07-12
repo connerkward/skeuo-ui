@@ -41,6 +41,14 @@ KNOBS = [k for k in SP if ROLES.get(k) == "knob"] or [k for k in SP if k == "vol
 SLIDER = next((k for k in SP if ROLES.get(k) == "slider"), "seek" if "seek" in SP else None)
 TOGGLE = next((k for k in SP if ROLES.get(k) == "toggle"), "tog" if "tog" in SP else None)
 TEMPLATED = bool(RES.get("template"))
+# TOGGLE_TRACK (2026-07-12, genskin.py TOGGLE_TRACK_ENABLED): the shuffle is a TWO-DETENT
+# TRACK SLIDER — ONE loose lever strip cell + a painted empty track on the device — instead
+# of the legacy two-state sprite-swap (two mirror-paired strip cells + stateAlign). Read from
+# results.json (genskin writes it per gen); default False so every pre-existing asset dir
+# keeps its legacy extraction contract byte-identically. Downstream effects here: single
+# toggle strip cell, track/detents emission (reusing the seek walk), no state-align pass,
+# lever-vs-track sprite-fit bounds, `<toggle>_lever` in the biref part lists.
+TOGGLE_TRACK = bool(RES.get("toggle_track_enabled", False))
 
 m = np.asarray(Image.open(os.path.join(OUT, "mask.png")).convert("RGB")).astype(int)
 MH, MW, _ = m.shape; flat = m.reshape(-1, 3)
@@ -177,15 +185,22 @@ for i, name in enumerate(NAMES):
     if name in SC:                                   # region: device only, no strip cell
         regs[name] = {"device": dev, "strip": []}; continue
     stripmask = (assign == i) & (YY >= DEVF * MH)
-    if name == TOGGLE:                               # two strip cells (OFF left, ON right)
+    if name == TOGGLE:                               # strip cells: 1 lever (track mode) / 2 states (legacy)
         stripmask = ndimage.binary_fill_holes(stripmask)
         lbl, nc = ndimage.label(stripmask); cells = []
         for c in range(1, nc + 1):
             ys2, xs2 = np.where(lbl == c)
             if len(xs2) < 120: continue
             cells.append((xs2.min(), bb(ys2, xs2)))
-        cells.sort(key=lambda t: t[0]); strip = [c[1] for c in cells[:2]]
-        while len(strip) < 2: strip.append(None)
+        _ncell = 1 if TOGGLE_TRACK else 2
+        # track mode: ONE lever cell — take the LARGEST component (not leftmost) so a stray
+        # speck of the toggle's key colour elsewhere in the band can't displace the real lever
+        if TOGGLE_TRACK:
+            cells.sort(key=lambda t: -(t[1][2] * t[1][3]))
+        else:
+            cells.sort(key=lambda t: t[0])
+        strip = [c[1] for c in cells[:_ncell]]
+        while len(strip) < _ncell: strip.append(None)
     else:
         strip = [largest_cc_bbox(stripmask)] if stripmask.sum() > 120 else []
     regs[name] = {"device": dev, "strip": strip}
@@ -233,10 +248,10 @@ def part_bbox(x0, x1):
 
 
 parts = [part_bbox(a, b) for (a, b) in runs if part_bbox(a, b)]
-# strip order: knobs, slider thumb, toggle OFF, toggle ON
+# strip order: knobs, slider thumb, then toggle lever (track mode) / toggle OFF+ON (legacy)
 order = list(KNOBS)
 if SLIDER: order.append(SLIDER)
-if TOGGLE: order += [TOGGLE + "_off", TOGGLE + "_on"]
+if TOGGLE: order += [TOGGLE + "_lever"] if TOGGLE_TRACK else [TOGGLE + "_off", TOGGLE + "_on"]
 MAXW = 0.16
 def missing(name, idx=0):
     r = regs.get(name); s = r and r.get("strip")
@@ -248,10 +263,15 @@ def missing(name, idx=0):
 # their overlapping paint parts; only unclaimed parts fill the MISSING cells, left-to-right.
 def _xov(a, c):
     return max(0.0, min(a[0] + a[2], c[0] + c[2]) - max(a[0], c[0]))
+TOG_CELLS = 1 if TOGGLE_TRACK else 2          # toggle strip-cell count under the active contract
+def _tog_idx(name):
+    # track mode: the single lever cell is idx 0; legacy: OFF=0, ON=1
+    if TOGGLE_TRACK: return 0
+    return 0 if name.endswith("_off") else 1
 claimed = []
 for name in order:
     if TOGGLE and name.startswith(TOGGLE):
-        idx = 0 if name.endswith("_off") else 1
+        idx = _tog_idx(name)
         s = (regs.get(TOGGLE) or {}).get("strip") or []
         if len(s) > idx and s[idx] and not missing(TOGGLE, idx): claimed.append(s[idx])
     else:
@@ -262,9 +282,9 @@ free.sort(key=lambda p: p[0]); fi = 0
 for name in order:
     if fi >= len(free): break
     if TOGGLE and name.startswith(TOGGLE):
-        regs[TOGGLE] = regs.get(TOGGLE) or {"device": None, "strip": [None, None]}
-        idx = 0 if name.endswith("_off") else 1
-        while len(regs[TOGGLE]["strip"]) < 2: regs[TOGGLE]["strip"].append(None)
+        regs[TOGGLE] = regs.get(TOGGLE) or {"device": None, "strip": [None] * TOG_CELLS}
+        idx = _tog_idx(name)
+        while len(regs[TOGGLE]["strip"]) < TOG_CELLS: regs[TOGGLE]["strip"].append(None)
         if missing(TOGGLE, idx):
             regs[TOGGLE]["strip"][idx] = free[fi]; fi += 1
             print(f"[strip-fallback] {TOGGLE}[{idx}] <- paint part at x={free[fi-1][0]:.3f}")
@@ -828,6 +848,88 @@ if SLIDER:
                   f"{'FAIL - baked thumb in groove' if baked else 'ok'}")
             if baked: baked_thumb_flagged.append(SLIDER)
 
+# ---- SHUFFLE TRACK + DETENTS (TOGGLE_TRACK contract, 2026-07-12) ----
+# The shuffle is a two-detent slider: a painted empty track/housing whose single loose lever
+# rides between two end positions. Detect the TRACK the same way the seek groove above is
+# detected — the model's own mask cell is the base span, then a level-aware walk completes
+# the visual end caps (same _body/backdrop-distance/recess-continuity/rim-budget logic,
+# compacted for a SHORT track; constants proportionally looser because a track is a fraction
+# of the seek groove's length and its detents get inset anyway). Emits regions[toggle]:
+#   track    [x,y,w,h]  the walked visual track extent (device is also expanded to it,
+#                        mirroring the seek convention "expand device to the painted groove")
+#   detents  [p0,p1]    lever CENTRE positions along the travel axis (normalized, full-image
+#                        coords), inset 18% of the track extent per side
+#   vertical bool       portrait track => vertical slide
+# Collapse guard + per-side clamp-saturation fallback mirror the seek walk's (a walk that
+# saturates its own clamp found no stop signal → trust the model's declared cell edge).
+if TOGGLE_TRACK and TOGGLE:
+    r = regs.get(TOGGLE)
+    if r and r.get("device"):
+        b = r["device"]; mb = r.get("maskDevice") or b
+        TVERT = (b[3] * GH) > (b[2] * GW) * 1.3
+        if TVERT:
+            _tprgb = np.ascontiguousarray(paintrgb.transpose(1, 0, 2)); _tW, _tH = GH, GW
+            _tb = [b[1], b[0], b[3], b[2]]; _tmb = [mb[1], mb[0], mb[3], mb[2]]
+        else:
+            _tprgb = paintrgb; _tW, _tH = GW, GH; _tb = b; _tmb = mb
+        tcy = (_tb[1] + _tb[3] / 2) * _tH; thh = max(4, int(_tb[3] * _tH * 0.30))
+        tby0 = int(tcy - thh); tby1 = int(tcy + thh)
+        tux0 = min(_tb[0], _tmb[0]); tux1 = max(_tb[0] + _tb[2], _tmb[0] + _tmb[2])
+        tpad = int((tux1 - tux0) * _tW * 0.30)
+        tbx0 = max(0, int(tux0 * _tW) - tpad); tbx1 = min(_tW, int(tux1 * _tW) + tpad)
+        tmed = np.median(_tprgb[tby0:tby1, tbx0:tbx1].max(2), 0)
+        tmed = np.convolve(tmed, np.ones(5) / 5, mode="same")
+        tcd = np.median(np.abs(_tprgb[tby0:tby1, tbx0:tbx1] - BGC).max(2), 0)
+        tgx0, tgx1 = int(_tb[0] * _tW), int((_tb[0] + _tb[2]) * _tW)
+        tmx0 = max(0, int(_tmb[0] * _tW) - tbx0); tmx1 = min(len(tmed), int((_tmb[0] + _tmb[2]) * _tW) - tbx0)
+        if tmx1 <= tmx0: tmx0, tmx1 = max(0, tgx0 - tbx0), min(len(tmed), tgx1 - tbx0)
+        tcw = max(1, tmx1 - tmx0)
+        tDfloor = float(np.percentile(tmed[tmx0:tmx1], 10))
+        tfw = max(20, int(tcw * 0.25))
+        def _tbody(sl):
+            fl = tmed[sl]; cd = tcd[sl]
+            fl = fl[(cd > 30) & (fl > tDfloor + 15)]           # backdrop-distance, direction-agnostic
+            return float(np.percentile(fl, 70)) if len(fl) >= 6 else None
+        _tglob = _tbody(np.s_[:]) or float(np.percentile(tmed, 85))
+        tbodyL = _tbody(np.s_[max(0, tmx0 - 4 - tfw):max(0, tmx0 - 4)]) or _tglob
+        tbodyR = _tbody(np.s_[tmx1 + 4:tmx1 + 4 + tfw]) or _tglob
+        trimcap = max(4, int(tcw * 0.05)); tstopcap = max(3, int(tcw * 0.04))
+        def _twalk(edge, step, body):
+            below = body - max(18.0, 0.35 * max(0.0, body - tDfloor)); rimhi = body + 20.0
+            x = edge + step; last = edge; nrun = 0; rrun = 0
+            while 0 <= x < len(tmed):
+                if tcd[x] < 30: break                          # backdrop colour → stop hard
+                if tmed[x] < below:
+                    if rrun > 0 or nrun > 2: break             # recess continuity (see seek walk)
+                    last = x; nrun = 0
+                elif tmed[x] > rimhi:
+                    last = x; rrun += 1; nrun = 0
+                    if rrun > trimcap: break                   # bright end-cap budget spent
+                else:
+                    nrun += 1
+                    if nrun > tstopcap: break                  # sustained body = past the track
+                x += step
+            return last
+        tlo = tbx0 + _twalk(tmx0, -1, tbodyL); thi = tbx0 + _twalk(tmx1 - 1, +1, tbodyR)
+        if thi - tlo < 0.5 * tcw: tlo, thi = tbx0 + tmx0, tbx0 + tmx1   # collapse → mask cell
+        tloClamp = tbx0 + tmx0 - int(0.15 * tcw); thiClamp = tbx0 + tmx1 + int(0.15 * tcw)
+        if tlo <= tloClamp: tlo = tbx0 + tmx0                  # clamp-saturated side → cell edge
+        if thi >= thiClamp: thi = tbx0 + tmx1
+        tlo = max(tlo, tloClamp); thi = min(thi, thiClamp)
+        text = (thi - tlo) / _tW
+        tinset = 0.18 * text
+        r["detents"] = [round(tlo / _tW + tinset, 5), round(thi / _tW - tinset, 5)]
+        if TVERT:
+            r["track"] = [b[0], tlo / _tW, b[2], round(text, 5)]
+            r["vertical"] = True
+        else:
+            r["track"] = [tlo / _tW, b[1], round(text, 5), b[3]]
+            r.pop("vertical", None)
+        r["device"] = r["track"]                               # seek convention: device = walked span
+        print(f"[track] {TOGGLE} {'VERTICAL ' if TVERT else ''}track {tlo}..{thi}px "
+              f"(mask cell {tbx0 + tmx0}..{tbx0 + tmx1}, body L{tbodyL:.0f}/R{tbodyR:.0f} "
+              f"floor {tDfloor:.0f}) -> detents {r['detents']}")
+
 # ---- SLOT ANGLE (rotational placement): a slot following an organic body is tilted, so the part
 # must be rotated to match. Major-axis angle from PCA on the slot's mask blob. Knobs are radial.
 def _pca_angle(mask2d):
@@ -911,10 +1013,12 @@ for k in ([TOGGLE] if TOGGLE else []):
         regs[k].pop("angle", None)
 
 # ---- SILHOUETTE STATE-REGISTRATION for the toggle (align ON cut onto OFF cut) ----
+# Legacy two-state contract only: the TOGGLE_TRACK contract has ONE lever cut (no ON/OFF
+# state pair to register), and the _off/_on cuts don't exist in its biref dir anyway.
 def _alpha(path):
     if not os.path.exists(path): return None
     return np.asarray(Image.open(path).convert("RGBA"))[:, :, 3] > 30
-if TOGGLE:
+if TOGGLE and not TOGGLE_TRACK:
     off = _alpha(os.path.join(BIREF, TOGGLE + "_off.png"))
     on = _alpha(os.path.join(BIREF, TOGGLE + "_on.png"))
     if off is not None and on is not None:
@@ -945,7 +1049,7 @@ if TOGGLE:
             print(f"[state-align] {TOGGLE} ON->OFF scale=({scale:.3f},{scale_h:.3f}) d=({dx},{dy}) IoU={iou:.3f}")
 
 json.dump({"devFrac": DEVF, "buttons": list(HB), "sprites": list(SP), "extras": list(SC),
-           "roles": ROLES, "templated": TEMPLATED,
+           "roles": ROLES, "templated": TEMPLATED, "toggle_track": TOGGLE_TRACK,
            "keys": {k: list(v) for k, v in KEYS.items()}, "keyNames": RES.get("keyNames", {}),
            "regions": regs, "template": template, "art_viz_swapped": art_viz_swapped},
           open(os.path.join(OUT, "regions.json"), "w"), indent=2)
@@ -1087,7 +1191,9 @@ SPRITE_CONTAM_THRESH = 40.0  # % of a part's visible pixels matching its own key
                               # against the roster: genuine leaks measured 59-100%, clean/
                               # ambiguous parts measured 0-19% (2026-07-11 sweep)
 SPRITE_PARTS = {"vol": "vol", "seek": "seek"}
-if TOGGLE: SPRITE_PARTS[TOGGLE + "_off"] = TOGGLE; SPRITE_PARTS[TOGGLE + "_on"] = TOGGLE
+if TOGGLE:
+    if TOGGLE_TRACK: SPRITE_PARTS[TOGGLE + "_lever"] = TOGGLE
+    else: SPRITE_PARTS[TOGGLE + "_off"] = TOGGLE; SPRITE_PARTS[TOGGLE + "_on"] = TOGGLE
 sprite_flagged = []
 if os.path.exists(BIREF):
     print("sprite guide-hue contamination (biref-cut PART pixels vs their own guide key):")
@@ -1187,7 +1293,27 @@ def _alpha_bbox(path):
 
 if os.path.exists(BIREF):
     print("sprite-fit gate (biref-cut sprite vs detected slot, area/size ratio):")
-    if TOGGLE:
+    if TOGGLE and TOGGLE_TRACK:
+        # TOGGLE_TRACK contract: the LEVER is SUPPOSED to be smaller than its track (it slides
+        # within, like the seek thumb in its groove) — the legacy fill-the-slot area-ratio test
+        # is wrong-shaped here. Use the slider-thumb-style CROSS-dim bounds instead: lever
+        # cross-dim (perpendicular to the slide axis) vs track cross-dim. Same wide-bound
+        # philosophy as SLIDER_CROSS_LO/HI (catch gross degenerates, not taste).
+        r = regs.get(TOGGLE)
+        dev = (r or {}).get("device")
+        if dev:
+            sbb = _alpha_bbox(os.path.join(BIREF, TOGGLE + "_lever.png"))
+            if sbb:
+                tvert = bool(r.get("vertical"))
+                trackCross = dev[2] * PW3 if tvert else dev[3] * PH3
+                leverCross = sbb[0] if tvert else sbb[1]
+                ratio = leverCross / max(1.0, trackCross)
+                flag = not (SLIDER_CROSS_LO <= ratio <= SLIDER_CROSS_HI)
+                r["spriteFit"] = {"leverCrossRatio": round(ratio, 3), "flag": flag}
+                print(f"  {TOGGLE:8} track-cross {trackCross:.0f}px vs lever-cross {leverCross}px "
+                      f"ratio={ratio:.2f}  {'FAIL - lever size mismatch' if flag else 'ok'}")
+                if flag: sprite_fit_flagged.append(TOGGLE)
+    elif TOGGLE:
         r = regs.get(TOGGLE)
         dev = r.get("device") if r else None
         if dev:
@@ -1297,12 +1423,15 @@ if SLIDER and regs.get(SLIDER) and regs[SLIDER].get("travel") and regs[SLIDER].g
 # 0.58-0.79 IoU on legitimate designs) — dropped to a low floor that only catches states with
 # near-zero overlap even at best alignment (effectively disjoint / broken), per user directive
 # 2026-07-09 (5 of 8 fresh-regen FAILs burned rolls on the old >=0.9 floor).
-sa = (regs.get(TOGGLE) or {}).get("stateAlign") if TOGGLE else None
-sa_ok = bool(sa and 0.7 <= sa.get("scaleX", 0) <= 1.4 and 0.7 <= sa.get("scaleY", 0) <= 1.4 and sa.get("iou", 0) >= 0.05)
-# biref parts present
-biref_parts = [p for p in ["vol", "seek", TOGGLE + "_off", TOGGLE + "_on"] if TOGGLE
+# TOGGLE_TRACK contract has no state pair — stateAlign never exists and the gate is vacuous
+sa = (regs.get(TOGGLE) or {}).get("stateAlign") if (TOGGLE and not TOGGLE_TRACK) else None
+sa_ok = bool(sa and 0.7 <= sa.get("scaleX", 0) <= 1.4 and 0.7 <= sa.get("scaleY", 0) <= 1.4 and sa.get("iou", 0) >= 0.05) \
+        if not TOGGLE_TRACK else True
+# biref parts present (toggle contributes ONE lever under the track contract, two states legacy)
+_tog_parts = ([TOGGLE + "_lever"] if TOGGLE_TRACK else [TOGGLE + "_off", TOGGLE + "_on"]) if TOGGLE else []
+biref_parts = [p for p in ["vol", "seek"] + _tog_parts if TOGGLE
                and os.path.exists(os.path.join(BIREF, p + ".png"))]
-need_parts = (KNOBS + ([SLIDER] if SLIDER else []) + ([TOGGLE + "_off", TOGGLE + "_on"] if TOGGLE else []))
+need_parts = (KNOBS + ([SLIDER] if SLIDER else []) + _tog_parts)
 biref_ok = all(os.path.exists(os.path.join(BIREF, p + ".png")) for p in need_parts) if os.path.exists(BIREF) else None
 # region misplacement: refit landed far from the mask blob -> the model painted the display
 # blob off its window; the render was rescued by the refit but the generation is visually broken
@@ -1333,6 +1462,25 @@ for k in SC:
         if area < 0.25 * (trect[2] * trect[3]): region_degenerate.append(k)
     elif area / max(1e-6, DEVF) < 0.010:
         region_degenerate.append(k)
+# ---- SILHOUETTE-MATCH gate (silcheck.py, d28a83ea) ----
+# Deterministic geometry replacement for the VLM's 0%-recall silhouette-mismatch judgment
+# (verification-recalibration lane): does each baked icon button's own painted silhouette sit
+# inside and fill the device bbox build_player.py's press overlay uses? Verbatim port of the
+# player's ink-silhouette extraction, calibrated on the 15-skin roster (catches steam-porthole
+# + wmp-quicksilver named cases; one genuine unlabeled fa-pod/prev finding; zero other false
+# positives). NOTE: silcheck must run AFTER regions.json is written below — but the gate needs
+# it BEFORE. It reads regs from the file, so run it against the current regs dict via a
+# temp-consistent path: regions.json on disk at this point is the pass-1/2 file WITHOUT the
+# gate block, but all region geometry is already final (this summary only appends `gate`), so
+# the check is valid.
+try:
+    import silcheck
+    _sil = silcheck.run(OUT) or {}
+except Exception as _e:
+    _sil = {}
+    print(f"[silcheck] skipped ({_e})")
+sil_flagged = [b for b, mm in _sil.items() if mm.get("verdict") == "FAIL"]
+if sil_flagged: print(f"[silcheck gate] FAIL - silhouette mismatch: {','.join(sil_flagged)}")
 reasons = []
 knob_tmpl = [k for k in KNOBS if (regs.get(k) or {}).get("fromTemplate")]
 if knob_tmpl: reasons.append("knob-template-fallback:" + ",".join(knob_tmpl))
@@ -1351,18 +1499,21 @@ if drift_fail: reasons.append(f"drift:{drift_info['worst'][0]}")
 if baked_thumb_flagged: reasons.append("baked-thumb:" + ",".join(baked_thumb_flagged))
 if sprite_fit_flagged: reasons.append("sprite-fit:" + ",".join(sprite_fit_flagged))
 if orientation_flagged: reasons.append("orientation:device")
+for k in sil_flagged: reasons.append(f"silhouette-mismatch:{k}")
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "guide_ring": ring_flagged,
         "region_degenerate": region_degenerate,
         "baked_thumb": baked_thumb_flagged, "sprite_fit": sprite_fit_flagged,
+        "silhouette_mismatch": sil_flagged,
         "orientation_ok": not orientation_flagged, "reasons": reasons,
         "PASS": (not empty_fail) and (not missing) and (not knob_tmpl) and (not region_misplaced)
                 and (not region_degenerate)
                 and (seek_cov is None or seek_cov >= 0.7)
                 and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
                 and (not TOGGLE or sa is None or sa_ok) and (not ring_flagged) and (not drift_fail)
-                and (not baked_thumb_flagged) and (not sprite_fit_flagged) and (not orientation_flagged)}
+                and (not baked_thumb_flagged) and (not sprite_fit_flagged) and (not orientation_flagged)
+                and (not sil_flagged)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate
 if drift_info is not None: R2["drift"] = drift_info
 json.dump(R2, open(os.path.join(OUT, "regions.json"), "w"), indent=2)

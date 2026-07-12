@@ -1,0 +1,465 @@
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>skeuo.fm — fa-pod-toggletrack3: fa-pod-toggletrack3</title>
+<style>
+  :root{--mono:ui-monospace,Menlo,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0e0f13;color:#cdd2dc;font:14px/1.5 system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 12px 60px}
+  h1{font:600 15px var(--mono);letter-spacing:.02em;margin:0;color:#eef}
+  .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
+  #stage{width:min(96vw,460px)}
+  #phone{position:relative;width:100%;aspect-ratio:var(--ar);
+    background:url('paint.png?v=1783845332') no-repeat;background-size:100% auto;border-radius:12px}
+  .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
+  .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
+    opacity:0;transition:opacity .06s}
+  .pbtn:active .ink{opacity:1}
+  .pknob{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}
+  .pknob .cap{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}
+  .pknob .spec{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen}
+  .pknob-ticks{position:absolute;pointer-events:none;overflow:visible}
+  .pthumb{position:absolute;cursor:ew-resize;touch-action:none;background-size:contain;
+    background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 1px 2px #0007)}
+  .pseek-track{position:absolute;pointer-events:none;border-radius:999px}
+  .pseek-fill{position:absolute;pointer-events:none;border-radius:999px}
+  .ptog{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;
+    background-position:center;filter:drop-shadow(0 2px 4px #0008)}
+  .viz{position:absolute;pointer-events:none}
+  .art{position:absolute;background-size:cover;background-position:center;pointer-events:none}
+  #queue{position:absolute;inset:6% 6% 8%;background:#0b0d12ee;border:1px solid #ffffff22;border-radius:10px;
+    padding:14px;display:none;flex-direction:column;gap:2px;overflow:auto;backdrop-filter:blur(3px)}
+  #queue.open{display:flex}
+  #queue .qh{font:600 12px var(--mono);color:#eef;margin-bottom:6px;display:flex;justify-content:space-between}
+  #queue .qr{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;font:12px var(--mono)}
+  #queue .qr:nth-child(odd){background:#ffffff0c} #queue .qr.now{background:#3aa0ff33;color:#cfe6ff}
+  #queue .x{cursor:pointer;color:#9aa}
+  .hint{font:11px var(--mono);color:#6b7180;max-width:460px;text-align:center}
+  .badge{font:10px var(--mono);color:#7f8798;border:1px solid #ffffff18;border-radius:5px;padding:2px 6px}
+</style></head><body>
+<h1>fa-pod-toggletrack3 — fa-pod-toggletrack3</h1>
+<div class=sub>gen12 · Spotify-roster · space=play/pause · ←/→ seek · drag knob
+<a id=pbrlink href="player-pbr.html" style="color:#8fb4ff;display:none">· ✨ dynamic lighting</a></div>
+<script>/* feature-flagged PBR player (WIRE-pbr.md): offer the toggle only when the sibling
+player-pbr.html was actually built — default stays this plain player */
+fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementById('pbrlink').style.display='inline'}).catch(()=>{});</script>
+<div id=stage><div id=phone>
+  <canvas class=viz id=viz></canvas>
+  <div class=art id=art></div>
+  <div id=queue><div class=qh><span>Queue</span><span class=x id=qx>close ✕</span></div></div>
+</div></div>
+<div class=hint id=hint>loading…</div>
+<script>
+const V='1783845332';
+(async function(){
+  const R = await fetch('regions.json?v='+V).then(r=>r.json());
+  const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
+  const phone=document.getElementById('phone'), hint=document.getElementById('hint');
+  const paint=new Image(); paint.src='paint.png?v='+V; await paint.decode();
+  const PW=paint.naturalWidth, PH=paint.naturalHeight, DEVH=Math.round(PH*DF);
+  phone.style.setProperty('--ar', PW+'/'+DEVH);
+  // background shows only the device (top DF) slice
+  const bc=document.createElement('canvas'); bc.width=PW; bc.height=DEVH;
+  bc.getContext('2d').drawImage(paint,0,0,PW,DEVH,0,0,PW,DEVH);
+  phone.style.background="url('"+bc.toDataURL()+"') no-repeat"; phone.style.backgroundSize='100% 100%';
+  // load moving-part cuts (tight-cropped, with content centroid)
+  const CUT={};
+  function tight(im){ const c=document.createElement('canvas'); c.width=im.naturalWidth;c.height=im.naturalHeight;
+    const cx=c.getContext('2d'); cx.drawImage(im,0,0); const d=cx.getImageData(0,0,c.width,c.height).data;
+    let x0=c.width,y0=c.height,x1=0,y1=0,any=false;
+    for(let p=0;p<d.length;p+=4){ if(d[p+3]>12){const i=p/4,x=i%c.width,y=(i/c.width)|0;
+      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;any=true;} }
+    if(!any) return {url:im.src,w:c.width,h:c.height};
+    const tw=x1-x0+1,th=y1-y0+1,t=document.createElement('canvas');t.width=tw;t.height=th;
+    t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th); return {url:t.toDataURL(),w:tw,h:th}; }
+  const BREF='../assets-fa-pod-toggletrack3_biref/';
+  // fetch BOTH possible shuffle cut sets — a data-driven superset, not gated on a build-time
+  // flag: which set actually exists on disk (track-mode 'shuffle_lever' vs legacy 'shuffle_off'/
+  // 'shuffle_on') tells the render block below which architecture this asset dir was cut with.
+  // Missing files just fail their try/catch below and leave that CUT key absent — no crash.
+  const parts=['vol','seek','shuffle_lever','shuffle_off','shuffle_on'];
+  for(const k of parts){ try{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}catch(e){} }
+  const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
+  let playing=false;
+
+  // ---- knob (volume) ----
+  const kn = Object.keys(roles).find(k=>roles[k]==='knob');
+  if(kn && regs[kn] && CUT['vol']){
+    const r=regs[kn]; let cx,cy,w,h;
+    if(r.seat){cx=r.seat[0];cy=r.seat[1];w=r.seat[2]*2;h=w*PW/PH;}
+    else{const c=ctr(r.device);cx=c[0];cy=c[1];w=r.device[2]*1.1;h=r.device[3]*1.1;}
+    const el=document.createElement('div');el.className='pknob';
+    el.style.left=(cx-w/2)*100+'%';el.style.top=((cy-h/2)/DF)*100+'%';el.style.width=w*100+'%';el.style.height=(h/DF)*100+'%';
+    el.innerHTML='<div class=cap style="background-image:url('+CUT['vol'].url+')"></div><div class=spec></div>';
+    // tint the pinned specular from the CAP'S OWN pixels (avg opaque colour, lightened) so the
+    // highlight matches the material (brass stays warm, chrome cool) instead of a white wash
+    try{ const sc=document.createElement('canvas');sc.width=sc.height=12;const sg=sc.getContext('2d');
+      const ci=new Image();ci.src=CUT['vol'].url;await ci.decode();sg.drawImage(ci,0,0,12,12);
+      const dd=sg.getImageData(0,0,12,12).data;let rr=0,gg=0,bb=0,nn=0;
+      for(let i=0;i<dd.length;i+=4){if(dd[i+3]>60){rr+=dd[i];gg+=dd[i+1];bb+=dd[i+2];nn++;}}
+      if(nn){const L=v=>Math.min(255,Math.round(v/nn*0.75+255*0.25));
+        el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%, rgba('+L(rr)+','+L(gg)+','+L(bb)+',0.32), rgba(255,255,255,0) 60%)';}
+    }catch(e){ el.querySelector('.spec').style.background='radial-gradient(32% 26% at 38% 30%,#ffffff4d,#fff0 60%)'; }
+    // start at 0.5 → the -135..+135° rotation has SYMMETRIC headroom both directions
+    // (review: "goes far left but not right at all" — a 0.7 start left only 81° of CW travel)
+    // ZERO-DEG CONVENTION: value 0 -> -135deg (~7 o'clock), value 1 -> +135deg (~5 o'clock),
+    // value 0.5 -> 0deg (12 o'clock/up). The cap sprite is cut with its painted pointer/notch
+    // baked at whatever angle the model drew (regions.json knob_zero_deg, CW-from-up, or null
+    // when extract12 found no reliable indicator) — counter-rotate by that baked angle so the
+    // ABOVE convention holds regardless of the raw cut's orientation (bug: without this, value
+    // 0.5/init showed the indicator at its baked angle instead of straight up).
+    const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
+    const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
+    // ---- knob tick overlay (director-decided PER AXIS, WIRE-pbr.md "ticks" schema) ----
+    // SAME socket centre/radius (cx,cy,w) just derived above for the cap, sharing the SAME
+    // -135..+135 sweep convention as the cap rotation (ZERO-DEG CONVENTION comment above).
+    // SKIN_TICKS_CSS = static tick-arc ring on the bezel; SPRITE_TICK_CSS = live needle on the
+    // cap. Either, both, or neither may be true per skin — "baked"/"none" render no CSS overlay
+    // on that axis (baked relies on genskin.py's ticks_skin_bullet/ticks_sprite_bullet instead).
+    let tickRend=null;
+    if(true || false){
+      const zeroMode=r.zero||'start';           // 'start' (volume) now; 'center' (balance) is one param away
+      const TICK_MULT=1.34, N_MINOR=8;           // box radius = cap radius * TICK_MULT
+      const wB=w*TICK_MULT, hB=wB*PW/PH;
+      const svgNS='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(svgNS,'svg'); svg.setAttribute('class','pknob-ticks');
+      svg.setAttribute('viewBox','-1 -1 2 2'); svg.setAttribute('preserveAspectRatio','none');
+      svg.style.left=(cx-wB/2)*100+'%'; svg.style.top=((cy-hB/2)/DF)*100+'%';
+      svg.style.width=wB*100+'%'; svg.style.height=(hB/DF)*100+'%';
+      const capLocal=1/TICK_MULT;                 // cap edge, in this SVG's own unit-circle radius
+      const rIn=capLocal*1.04, rOutMinor=0.90, rOutMajor=0.99;   // ticks start JUST OUTSIDE the cap
+      const tickCol=("#6ec83c")||'#e8ecf5';   // director css.accent wins; else a neutral engraved tone
+      const mk=(x1,y1,x2,y2,w)=>{ const ln=document.createElementNS(svgNS,'line');
+        ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+        ln.setAttribute('stroke',tickCol); ln.setAttribute('stroke-width',w); ln.setAttribute('stroke-linecap','round');
+        return ln; };
+      if(true){
+        const shadow=document.createElementNS(svgNS,'g'); shadow.style.mixBlendMode='multiply'; shadow.style.opacity='0.55';
+        const hi=document.createElementNS(svgNS,'g'); hi.style.mixBlendMode='screen'; hi.style.opacity='0.16';
+        hi.setAttribute('transform','translate(0.02,0.03)');   // 1-tick offset highlight pass → reads engraved, not stickered
+        const midIdx=Math.round((N_MINOR+2)/2);
+        for(let i=0;i<=N_MINOR+2;i++){
+          const t=i/(N_MINOR+2);                       // 0..1 across the sweep
+          const isMajor=(i===0||i===N_MINOR+2||i===midIdx);
+          const isDetent=(zeroMode==='center'&&i===midIdx);   // balance-type centre detent — one param away
+          const deg=-135+t*270, rad=deg*Math.PI/180, sx=Math.sin(rad), sy2=-Math.cos(rad);
+          const ro=isMajor?rOutMajor:rOutMinor, sw=isDetent?0.07:(isMajor?0.052:0.028);
+          shadow.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+          hi.appendChild(mk(sx*rIn,sy2*rIn,sx*ro,sy2*ro,sw));
+        }
+        svg.appendChild(shadow); svg.appendChild(hi);
+      }
+      if(false){
+        // subtle current-position indicator — a short needle tracking `val`, independent of the
+        // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at all)
+        const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
+        tickRend=(v)=>{ const deg=-135+v*270, rad=deg*Math.PI/180;
+          needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
+          needle.setAttribute('y2',(-Math.cos(rad)*capLocal*0.86).toFixed(4)); };
+        tickRend(val);
+      }
+      phone.appendChild(svg);
+    }
+    const rend=()=>{cap.style.transform='rotate('+(-135+val*270-zeroDeg)+'deg)'; if(tickRend)tickRend(val);};rend();
+    el.addEventListener('pointerdown',e=>{drag=true;sy=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(sy-e.clientY)/160));rend();}});
+    addEventListener('pointerup',()=>drag=false);
+    phone.appendChild(el);
+  }
+  // ---- seek thumb (coverage travel; SLOT-SIZED, horizontal or vertical) ----
+  // Size the thumb to its GROOVE, not the raw cut scale: cross-axis seated at groove×1.15
+  // (hard cap ×1.35 so it never obscures the track), upscale capped at ×1.5 natural, and the
+  // along-axis dimension ≤45% of the travel span. Aspect always preserved (one scale factor).
+  const sl = Object.keys(roles).find(k=>roles[k]==='slider');
+  if(sl && regs[sl] && CUT['seek']){
+    const r=regs[sl],t=CUT['seek'],track=r.device,vert=!!r.vertical;
+    const el=document.createElement('div');el.className='pthumb';
+    el.style.backgroundImage='url('+t.url+')';
+    let tw=t.w/PW, th=t.h/PH;
+    const tv=r.travel||(vert?[track[1],track[1]+track[3]]:[track[0],track[0]+track[2]]);
+    const span=Math.max(1e-6,tv[1]-tv[0]);
+    const s=vert?Math.min(1.5, track[2]*1.15/tw, track[2]*1.35/tw, span*0.45/th)
+                :Math.min(1.5, track[3]*1.15/th, track[3]*1.35/th, span*0.45/tw);
+    tw*=s; th*=s;
+    
+      const _gs=document.createElement('canvas'); _gs.width=6; _gs.height=6;
+      _gs.getContext('2d').drawImage(paint, track[0]*PW, track[1]*PH, track[2]*PW, track[3]*PH, 0,0,6,6);
+      const _gd=_gs.getContext('2d').getImageData(0,0,6,6).data; let _gr=0,_gg=0,_gb=0,_gn=0;
+      for(let i=0;i<_gd.length;i+=4){ if(_gd[i+3]>40){_gr+=_gd[i];_gg+=_gd[i+1];_gb+=_gd[i+2];_gn++;} }
+      if(!_gn)_gn=1;
+      const _gAvg=[_gr/_gn,_gg/_gn,_gb/_gn];
+      // director spec css.track/css.fill (WIRE-pbr.md) win when the theme spec supplies them;
+      // paint-sampling is the fallback for a spec without a css block.
+      const trackCol="rgba(16,21,38,0.55)"||('rgba('+_gAvg.map(v=>Math.round(v*0.40)).join(',')+',0.55)');
+      const fillCol="rgba(70,205,230,0.6)"||('rgba('+_gAvg.map(v=>Math.min(255,Math.round(v*0.9+65))).join(',')+',0.60)');
+      // adaptive cross-axis band height: sample a luminance PROFILE across the groove's cross
+      // axis (in the middle half of the travel span, away from the thumb's home position at the
+      // travel start) and grow the darkest CONTIGUOUS run outward from the centre sample. A
+      // RELATIVE threshold (this groove's own min..max range), not an absolute luminance
+      // constant — a near-black recessed groove and a mid-tone one both resolve correctly.
+      // Guards against a degenerate (flat / noisy) profile with a safe fallback fraction.
+      const _N=40, _M=6, _t0=tv[0]+span*0.25, _t1=tv[0]+span*0.75;
+      const _pc=document.createElement('canvas'); let _prof=new Array(_N).fill(0);
+      if(vert){
+        _pc.width=_N; _pc.height=_M;
+        _pc.getContext('2d').drawImage(paint, track[0]*PW, _t0*PH, track[2]*PW, (_t1-_t0)*PH, 0,0,_N,_M);
+        const _pd=_pc.getContext('2d').getImageData(0,0,_N,_M).data;
+        for(let x=0;x<_N;x++){ let s=0; for(let y=0;y<_M;y++){ const i=(y*_N+x)*4; s+=0.299*_pd[i]+0.587*_pd[i+1]+0.114*_pd[i+2]; } _prof[x]=s/_M; }
+      }else{
+        _pc.width=_M; _pc.height=_N;
+        _pc.getContext('2d').drawImage(paint, _t0*PW, track[1]*PH, (_t1-_t0)*PW, track[3]*PH, 0,0,_M,_N);
+        const _pd=_pc.getContext('2d').getImageData(0,0,_M,_N).data;
+        for(let y=0;y<_N;y++){ let s=0; for(let x=0;x<_M;x++){ const i=(y*_M+x)*4; s+=0.299*_pd[i]+0.587*_pd[i+1]+0.114*_pd[i+2]; } _prof[y]=s/_M; }
+      }
+      const _plo=Math.min(..._prof), _phi=Math.max(..._prof), _pthr=_plo+(_phi-_plo)*0.4;
+      let _c0=Math.floor(_N/2), _c1=_c0;
+      while(_c0>0 && _prof[_c0-1]<=_pthr) _c0--;
+      while(_c1<_N-1 && _prof[_c1+1]<=_pthr) _c1++;
+      let bandFrac=(_c1-_c0+1)/_N;
+      if(!(bandFrac>0.12 && bandFrac<0.75)) bandFrac=0.34;
+      const trackEl=document.createElement('div'); trackEl.className='pseek-track'; trackEl.style.background=trackCol;
+      const fillEl=document.createElement('div'); fillEl.className='pseek-fill'; fillEl.style.background=fillCol;
+      if(vert){
+        const _bw=track[2]*bandFrac, _cx=track[0]+track[2]/2;
+        trackEl.style.left=(_cx-_bw/2)*100+'%'; trackEl.style.width=_bw*100+'%';
+        trackEl.style.top=(tv[0]/DF)*100+'%'; trackEl.style.height=((tv[1]-tv[0])/DF)*100+'%';
+        fillEl.style.left=trackEl.style.left; fillEl.style.width=trackEl.style.width;
+        fillEl.style.top=trackEl.style.top; fillEl.style.height='0%';
+      }else{
+        const _bh=track[3]*bandFrac, _cy=track[1]+track[3]/2;
+        trackEl.style.top=((_cy-_bh/2)/DF)*100+'%'; trackEl.style.height=(_bh/DF)*100+'%';
+        trackEl.style.left=tv[0]*100+'%'; trackEl.style.width=(tv[1]-tv[0])*100+'%';
+        fillEl.style.top=trackEl.style.top; fillEl.style.height=trackEl.style.height;
+        fillEl.style.left=trackEl.style.left; fillEl.style.width='0%';
+      }
+      phone.appendChild(trackEl); phone.appendChild(fillEl);
+
+    el.style.width=tw*100+'%';el.style.height=(th/DF)*100+'%';
+    let val=0,sp=0,sv=0,drag=false,rend;
+    if(vert){
+      el.style.cursor='ns-resize';
+      const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%';
+      const y0=tv[0],y1=tv[1]-th;
+      rend=()=>{el.style.top=((y0+(y1-y0)*val)/DF)*100+'%';fillEl.style.height=Math.max(0,Math.min(span,(y0+(y1-y0)*val+th/2)-tv[0]))/DF*100+'%';};
+      el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientY-sp)/(phone.clientHeight*((y1-y0)/DF))));rend();}});
+      el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientY;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    }else{
+      const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%';
+      const x0=tv[0],x1=tv[1]-tw;
+      rend=()=>{el.style.left=(x0+(x1-x0)*val)*100+'%';fillEl.style.width=Math.max(0,Math.min(span,(x0+(x1-x0)*val+tw/2)-tv[0]))*100+'%';};
+      el.addEventListener('pointermove',e=>{if(drag){val=Math.max(0,Math.min(1,sv+(e.clientX-sp)/(phone.clientWidth*(x1-x0))));rend();}});
+      el.addEventListener('pointerdown',e=>{drag=true;sp=e.clientX;sv=val;el.setPointerCapture(e.pointerId);e.preventDefault();});
+    }
+    rend();
+    addEventListener('pointerup',()=>drag=false);
+    window.__seek=(d)=>{val=Math.max(0,Math.min(1,val+d));rend();};
+    phone.appendChild(el);
+  }
+  // ---- shuffle: TWO-DETENT TRACK LEVER (TOGGLE_TRACK_ENABLED architecture, 2026-07-12) — a
+  // two-position slider architecturally identical to the seek thumb above (track =
+  // regs[tg].device, detents = the two end positions, same coverage-span/vertical-detection
+  // extract12 already does for seek). Click/Enter/Space slides the lever to the OTHER detent
+  // with a CSS ease (150-250ms, "snap" cubic-bezier overshoot); state = which detent. Director
+  // css.glow (else css.accent) tints the lever with a subtle active-end glow when ON, engraved-
+  // register like the knob ticks — no separate glow element, just a drop-shadow on the lever
+  // itself so it always tracks the lever's own current position with zero extra layout math.
+  // ARCHITECTURE IS DATA-DRIVEN, not a build-time flag: regions.json's toggle entry carries
+  // `track`/`detents` under the new contract, `stateAlign` under the legacy two-state contract
+  // — branching on that SHAPE (not a Python constant) is what keeps every already-generated
+  // regions.json rendering correctly regardless of which genskin.py flag state produced it.
+  const tg = Object.keys(roles).find(k=>roles[k]==='toggle');
+  const tgR = tg && regs[tg];
+  const isTrackArch = !!(tgR && (tgR.track || tgR.detents));
+  if(isTrackArch && tgR.device){
+    const r=regs[tg], track=r.device, vert=!!r.vertical, lv=CUT['shuffle_lever'];
+    // CSS-LEVER FALLBACK — the biref cut is missing OR degenerate (aspect wildly off any sane
+    // lever shape: a mis-cut sliver / strip-drift patch) -> render a themed CSS lever (director
+    // css.fill, else a neutral metal tone) instead of silently dropping the control. This is the
+    // deterministic floor: the control ALWAYS renders something, cut or no cut.
+    const cutAsp = lv ? lv.w/lv.h : 0;
+    const cutOk = !!lv && cutAsp > 0.15 && cutAsp < 6.5;
+    const el=document.createElement('div'); el.className='ptog'; el.tabIndex=0;
+    el.setAttribute('role','switch');
+    let tw,th;
+    if(cutOk){
+      el.style.backgroundImage='url('+lv.url+')';
+      const cw=lv.w/PW, ch=lv.h/PH;
+      const s=Math.min(1.5, vert?(track[2]*1.15/cw):(track[3]*1.15/ch));
+      tw=cw*s; th=ch*s;
+    }else{
+      const fillCol="rgba(70,205,230,0.6)"||'#d7dae2';
+      el.style.background='linear-gradient(180deg,#fff2,transparent 45%),'+fillCol;
+      el.style.borderRadius='999px'; el.style.boxShadow='inset 0 1px 2px #ffffff55, 0 1px 3px #0007';
+      tw = vert? track[2]*0.74 : track[2]*0.36;
+      th = vert? track[3]*0.36 : track[3]*0.74;
+    }
+    el.style.width=tw*100+'%'; el.style.height=(th/DF)*100+'%';
+    el.style.transition='left .2s cubic-bezier(.32,1.3,.6,1), top .2s cubic-bezier(.32,1.3,.6,1), filter .2s';
+    // detents: CENTRE positions along the travel axis at each end (extract12's `detents` field,
+    // same convention as seek's `travel`); default derived from the track bounds when absent
+    // (an old regions.json without the field, or the degenerate-collapse fallback).
+    const dt=r.detents||(vert?[track[1]+th/2,track[1]+track[3]-th/2]:[track[0]+tw/2,track[0]+track[2]-tw/2]);
+    const glowCol="#228aff"||"#6ec83c";
+    let ison=false;
+    const place=()=>{
+      const p=ison?dt[1]:dt[0];
+      if(vert){ const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%'; el.style.top=((p-th/2)/DF)*100+'%'; }
+      else{ const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%'; el.style.left=(p-tw/2)*100+'%'; }
+      el.style.filter = glowCol
+        ? (ison ? 'drop-shadow(0 0 5px '+glowCol+'cc) drop-shadow(0 2px 4px #0008)' : 'drop-shadow(0 2px 4px #0008)')
+        : 'drop-shadow(0 2px 4px #0008)';
+      el.setAttribute('aria-checked', ison?'true':'false');
+    };
+    place();
+    const toggleLever=()=>{ison=!ison;place();};
+    el.addEventListener('click',toggleLever);
+    el.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();toggleLever();}});
+    phone.appendChild(el);
+  }
+  // ---- shuffle: legacy TWO-STATE sprite-swap toggle (rollback path / pre-2026-07-12 assets,
+  // silhouette state-registered) — unchanged, kept fully intact so already-generated regions.json
+  // / assets keep rendering. ----
+  else if(!isTrackArch && tgR && CUT['shuffle_off']){
+    const r=tgR,off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
+    const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
+    const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
+    // SLOT-SIZED: box sizing per SPRITE_COVER_FIT_ENABLED (build_player.py) — either the OFF
+    // cut's OWN aspect scaled to COVER the slot ×1.06 (both axes always fully covered), or the
+    // prior behavior (box forced to the slot's aspect, CSS CONTAIN-fit, which undersizes badly
+    // when the cut's aspect diverges from the slot's). Upscale capped at ×1.5 natural either way.
+    // ON is registered onto OFF by the extractor's silhouette-IoU transform, its px offset scaled
+    // by the OFF cut's displayed scale (offS).
+    
+    const offWfrac=off.w/PW, offHfrac=off.h/PH;
+    let _s=Math.max((r.device[2]*1.06)/offWfrac, (r.device[3]*1.06)/offHfrac);
+    if(_s>1.5) _s=1.5;
+    let bw=offWfrac*_s, bh=offHfrac*_s;
+    const offS=_s;   // paint px per OFF-cut px, as displayed
+
+    const place=(c,isOn)=>{ let dx=0, dy=0;
+      if(isOn && sa){ dx=sa.dx*offS/PW; dy=sa.dy*offS/PH; }   // ON shifted by the IoU offset, at display scale
+      el.style.backgroundImage='url('+c.url+')';
+      el.style.left=(tc[0]-bw/2+dx)*100+'%'; el.style.top=((tc[1]-bh/2+dy)/DF)*100+'%';
+      el.style.width=bw*100+'%'; el.style.height=(bh/DF)*100+'%'; el.style.transform='rotate('+ang+'deg)'; };
+    place(off,false); let ison=false;
+    el.addEventListener('click',()=>{ison=!ison;place(ison?on:off,ison);});
+    phone.appendChild(el);
+  }
+  // ---- baked icon buttons: pressed state = the button's OWN pixels redrawn darkened +
+  // shifted down (physical travel), clipped to its EXACT silhouette from the colour mask
+  // (cutMaskShape-style). No bbox ellipse, no gradient wash.
+  const BTN=R.buttons||[], KEY=R.keys||{};
+  let MC=null,MW=0,MH=0;
+  try{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
+    MW=mi.naturalWidth; MH=mi.naturalHeight;
+    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
+    MC.getContext('2d').drawImage(mi,0,0); }catch(e){}
+  for(const b of BTN){ const r=regs[b]; if(!r||!r.device) continue;
+    const db=r.device, mb=r.maskDevice||db;
+    const el=document.createElement('div');el.className='pbtn';el.title=b;
+    el.style.left=px(db)+'%';el.style.top=py(db)+'%';el.style.width=pw(db)+'%';el.style.height=ph(db)+'%';
+    const ink=document.createElement('div'); ink.className='ink'; el.appendChild(ink);
+    try{
+      // crop the mask around the button blob (small pad), then the same rect in PAINT space
+      // is the mask rect shifted by the mask→paint drift (device vs maskDevice centres)
+      const PAD=0.10;
+      const crop=[mb[0]-mb[2]*PAD, mb[1]-mb[3]*PAD, mb[2]*(1+2*PAD), mb[3]*(1+2*PAD)];
+      const dx=(db[0]+db[2]/2)-(mb[0]+mb[2]/2), dy=(db[1]+db[3]/2)-(mb[1]+mb[3]/2);
+      const eb=[crop[0]+dx, crop[1]+dy, crop[2], crop[3]];
+      const cw=Math.max(4,Math.round(crop[2]*PW)), ch=Math.max(4,Math.round(crop[3]*PH));
+      // exact silhouette: threshold the mask crop near this button's guide colour
+      const sc=document.createElement('canvas'); sc.width=cw; sc.height=ch;
+      const sg=sc.getContext('2d'); let cov=0;
+      if(MC){ sg.drawImage(MC, crop[0]*MW, crop[1]*MH, crop[2]*MW, crop[3]*MH, 0,0,cw,ch);
+        const idat=sg.getImageData(0,0,cw,ch), dd=idat.data, k=KEY[b]||[255,255,255];
+        for(let i=0;i<dd.length;i+=4){ const d0=dd[i]-k[0],d1=dd[i+1]-k[1],d2=dd[i+2]-k[2];
+          if(d0*d0+d1*d1+d2*d2<7000){ dd[i]=dd[i+1]=dd[i+2]=dd[i+3]=255; cov++; } else dd[i+3]=0; }
+        sg.putImageData(idat,0,0); }
+      if(cov < cw*ch*0.02){ // mask blob missing → rounded-rect of the bbox (still no ellipse)
+        sg.clearRect(0,0,cw,ch); sg.fillStyle='#fff';
+        const ix=cw*PAD/(1+2*PAD), iy=ch*PAD/(1+2*PAD);
+        sg.beginPath(); sg.roundRect(ix,iy,cw-2*ix,ch-2*iy,Math.min(cw,ch)*0.18); sg.fill(); }
+      // material-aware press strength from the button's own luminance
+      const s8=document.createElement('canvas');s8.width=s8.height=8;
+      s8.getContext('2d').drawImage(paint,db[0]*PW,db[1]*PH,db[2]*PW,db[3]*PH,0,0,8,8);
+      const dl=s8.getContext('2d').getImageData(0,0,8,8).data;let lum=0;
+      for(let i=0;i<dl.length;i+=4)lum+=0.299*dl[i]+0.587*dl[i+1]+0.114*dl[i+2]; lum/=64;
+      const dk=1-lum/255;                      // 0 light … 1 dark
+      const dA=0.12+0.16*dk;                   // 0.12 light glass → ~0.28 dark stone
+      // pressed image: paint crop shifted DOWN slightly (travel) + modest darken + contrast lift
+      const pc=document.createElement('canvas'); pc.width=cw; pc.height=ch;
+      const pg=pc.getContext('2d');
+      const shift=Math.max(1,Math.round(ch*0.03));
+      pg.filter='contrast(1.06)';
+      pg.drawImage(paint, eb[0]*PW, eb[1]*PH, eb[2]*PW, eb[3]*PH, 0, shift, cw, ch);
+      pg.filter='none';
+      pg.fillStyle='rgba(0,0,0,'+dA.toFixed(3)+')'; pg.fillRect(0,0,cw,ch);
+      // light flips on press: top edge darkens, bottom edge lightens — rims FOLLOW the shape
+      const rimW=Math.max(2,Math.round(ch*0.07));
+      const rim=(offY,col,alpha)=>{ const rc=document.createElement('canvas');rc.width=cw;rc.height=ch;
+        const rg=rc.getContext('2d'); rg.drawImage(sc,0,0);
+        rg.globalCompositeOperation='destination-out'; rg.drawImage(sc,0,offY);
+        rg.globalCompositeOperation='source-in'; rg.fillStyle=col; rg.fillRect(0,0,cw,ch);
+        pg.save(); pg.globalAlpha=alpha; pg.filter='blur('+(rimW*0.35).toFixed(1)+'px)';
+        pg.drawImage(rc,0,0); pg.restore(); };
+      rim(rimW,'#000',0.40);          // top inner shadow
+      rim(-Math.round(rimW*0.7),'#fff',0.10+0.18*dk); // bottom catch-light — the visible cue on dark stone
+      // clip everything to the exact silhouette — crisp edge, the shape does the shaping
+      pg.globalCompositeOperation='destination-in'; pg.drawImage(sc,0,0);
+      ink.style.left=((eb[0]-db[0])/db[2]*100)+'%';
+      ink.style.top=((eb[1]-db[1])/db[3]*100)+'%';
+      ink.style.width=(eb[2]/db[2]*100)+'%';
+      ink.style.height=(eb[3]/db[3]*100)+'%';
+      ink.style.backgroundImage='url('+pc.toDataURL()+')';
+    }catch(e){}
+    el.addEventListener('click',()=>{ if(b==='playpause'){playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';}
+      else if(b==='queue'){document.getElementById('queue').classList.toggle('open');}
+      else if(b==='repeat'){el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];}
+      else hint.textContent=b+' ▸'; });
+    phone.appendChild(el);
+  }
+  // ---- visualizer canvas ----
+  const vzc=document.getElementById('viz'); const vz=regs['visualizer'];
+  if(vz&&vz.device){ const b=vz.device;
+    vzc.style.left=px(b)+'%';vzc.style.top=py(b)+'%';vzc.style.width=pw(b)+'%';vzc.style.height=ph(b)+'%';
+    vzc.width=Math.round(b[2]*PW); vzc.height=Math.round(b[3]*PH);
+    // sample an accent colour from the paint inside the region
+    const sc=document.createElement('canvas');sc.width=8;sc.height=1;
+    sc.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,8,1);
+    const sd=sc.getContext('2d').getImageData(0,0,8,1).data; let ar=0,ag=0,ab=0;
+    for(let i=0;i<8;i++){ar+=sd[i*4];ag+=sd[i*4+1];ab+=sd[i*4+2];}
+    // director spec css.accent (WIRE-pbr.md) wins when the theme spec supplies it; paint-sampled
+    // accent is the fallback for a spec without a css block.
+    const acc="#6ec83c"||('rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')');
+    const g=vzc.getContext('2d'),NB=28;const bars=Array.from({length:NB},()=>Math.random());
+    // idle bars settle toward a WOBBLING low band (0.05..0.11), not a single fixed constant —
+    // a constant target decays to a perfectly static row within ~1s of load, which reads as a
+    // dead/broken feature (review: "visualizer not working" — the reviewer never pressed play,
+    // and the flat idle state was visually indistinguishable from a non-functional overlay).
+    // The gentle per-frame wobble keeps it visibly alive before any interaction, at an amplitude
+    // far below the full playing-state motion so it doesn't compete with it.
+    (function draw(){ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
+      for(let i=0;i<NB;i++){ bars[i]+= playing?(Math.random()-.5)*.4:((0.05+Math.random()*0.06)-bars[i])*.15; bars[i]=Math.max(.04,Math.min(1,bars[i]));
+        const hh=bars[i]*vzc.height*0.92; g.fillStyle=acc; g.globalAlpha=.85;
+        g.fillRect(i*bw+bw*0.15, vzc.height-hh, bw*0.7, hh); }
+      requestAnimationFrame(draw); })();
+  }
+  // ---- album art inset (show the painted art window region, dimmed placeholder) ----
+  const aa=regs['album_art'];
+  if(aa&&aa.device){ const b=aa.device,el=document.getElementById('art');
+    el.style.left=px(b)+'%';el.style.top=py(b)+'%';el.style.width=pw(b)+'%';el.style.height=ph(b)+'%';
+    const ac=document.createElement('canvas');ac.width=Math.round(b[2]*PW);ac.height=Math.round(b[3]*PH);
+    ac.getContext('2d').drawImage(paint,b[0]*PW,b[1]*PH,b[2]*PW,b[3]*PH,0,0,ac.width,ac.height);
+    el.style.backgroundImage='url('+ac.toDataURL()+')'; }
+  // ---- queue overlay ----
+  const q=document.getElementById('queue'); document.getElementById('qx').onclick=()=>q.classList.remove('open');
+  const trk=['Aphex Twin — Xtal','Boards of Canada — Roygbiv','Bonobo — Kong','Four Tet — Angel Echoes','Jon Hopkins — Open Eye Signal','Tycho — Awake'];
+  trk.forEach((t,i)=>{const d=document.createElement('div');d.className='qr'+(i===0?' now':'');d.innerHTML='<span>'+t+'</span><span>'+(3+i)+':0'+i+'</span>';q.appendChild(d);});
+  // keyboard
+  addEventListener('keydown',e=>{ if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
+    if(e.code==='Space'){e.preventDefault();playing=!playing;hint.textContent=playing?'▶ playing':'⏸ paused';}
+    else if(e.code==='ArrowRight'&&window.__seek)window.__seek(.05);
+    else if(e.code==='ArrowLeft'&&window.__seek)window.__seek(-.05); });
+  hint.textContent='live — drag the volume knob & seek thumb, click the buttons, hit space';
+})();
+</script></body></html>

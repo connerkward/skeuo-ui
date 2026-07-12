@@ -1,0 +1,181 @@
+{
+  "playpause": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.8723,
+    "offset_px": 0.2,
+    "area_ratio": 0.8245,
+    "coverage": 0.573,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.573,
+      "iou": 0.8723,
+      "offset_px": 0.2,
+      "offset_frac_diag": 0.0006,
+      "area_ratio": 0.8245,
+      "silhouette_bbox": [
+        0.18663,
+        0.51697,
+        0.11155,
+        0.0695
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.9296
+    },
+    "circleFitAdvisory": {
+      "offset_px": 33.5,
+      "offset_frac_diag": 0.0986,
+      "score": 9.59,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "prev": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.8798,
+    "offset_px": 0.7,
+    "area_ratio": 0.8389,
+    "coverage": 0.5863,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5863,
+      "iou": 0.8798,
+      "offset_px": 0.7,
+      "offset_frac_diag": 0.002,
+      "area_ratio": 0.8389,
+      "silhouette_bbox": [
+        0.32118,
+        0.51832,
+        0.10851,
+        0.06735
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.8486
+    },
+    "circleFitAdvisory": {
+      "offset_px": 14.6,
+      "offset_frac_diag": 0.0439,
+      "score": 9.91,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "next": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7113,
+    "offset_px": 32.4,
+    "area_ratio": 0.8378,
+    "coverage": 0.583,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.583,
+      "iou": 0.7113,
+      "offset_px": 32.4,
+      "offset_frac_diag": 0.0978,
+      "area_ratio": 0.8378,
+      "silhouette_bbox": [
+        0.45399,
+        0.51832,
+        0.10851,
+        0.06762
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.2973,
+      "iou": 0.6935,
+      "offset_px": 69.5,
+      "area_ratio": 0.4287,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 37.7,
+      "offset_frac_diag": 0.114,
+      "score": 7.44,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "repeat": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.7021,
+    "offset_px": 35.5,
+    "area_ratio": 0.8291,
+    "coverage": 0.577,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.577,
+      "iou": 0.7021,
+      "offset_px": 35.5,
+      "offset_frac_diag": 0.1083,
+      "area_ratio": 0.8291,
+      "silhouette_bbox": [
+        0.58681,
+        0.51859,
+        0.1072,
+        0.06681
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.3038,
+      "iou": 0.6935,
+      "offset_px": 60.7,
+      "area_ratio": 0.438,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 38.0,
+      "offset_frac_diag": 0.1161,
+      "score": 8.15,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  },
+  "queue": {
+    "verdict": "PASS",
+    "reasons": [],
+    "iou": 0.6541,
+    "offset_px": 45.9,
+    "area_ratio": 0.8442,
+    "coverage": 0.5871,
+    "maskKey": {
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5871,
+      "iou": 0.6541,
+      "offset_px": 45.9,
+      "offset_frac_diag": 0.1405,
+      "area_ratio": 0.8442,
+      "silhouette_bbox": [
+        0.71701,
+        0.51886,
+        0.1072,
+        0.06654
+      ]
+    },
+    "paintVividnessAdvisory": {
+      "verdict": "PASS",
+      "coverage": 0.3565,
+      "iou": 0.693,
+      "offset_px": 72.6,
+      "area_ratio": 0.5144,
+      "reason": null
+    },
+    "circleFitAdvisory": {
+      "offset_px": 43.8,
+      "offset_frac_diag": 0.1342,
+      "score": 8.17,
+      "note": "advisory only, not gating -- see docstring"
+    }
+  }
+}

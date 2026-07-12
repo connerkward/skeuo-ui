@@ -1,0 +1,25 @@
+[
+  {
+    "control": "shuffle",
+    "method": "model+floor_darken",
+    "before_sha": "d0cdd6fa912e",
+    "after_sha": "3a5492674e4e",
+    "defect_found_after": false,
+    "bbox_px": [
+      1252,
+      2486,
+      1462,
+      2740
+    ],
+    "crop_box_px": [
+      1141,
+      2397,
+      1572,
+      2828
+    ],
+    "seed": 673,
+    "ts": "20260712T014603",
+    "status": "erased",
+    "verify_dir": "erase-verify"
+  }
+]

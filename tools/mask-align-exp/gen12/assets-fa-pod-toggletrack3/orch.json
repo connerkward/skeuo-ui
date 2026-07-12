@@ -1,0 +1,36 @@
+{
+  "id": "fa-pod-toggletrack3",
+  "title": "Frutiger Aero Pod",
+  "mode": "templated",
+  "passed": false,
+  "rolls": 1,
+  "final_seed": 2287,
+  "gate": {
+    "seed": 2287,
+    "PASS": false,
+    "controls": 10,
+    "seek_cov": 1.038,
+    "reasons": [
+      "emptiness",
+      "silhouette-mismatch:prev",
+      "silhouette-mismatch:queue"
+    ],
+    "leak": 0.0
+  },
+  "history": [
+    {
+      "seed": 2287,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.038,
+      "reasons": [
+        "emptiness",
+        "silhouette-mismatch:prev",
+        "silhouette-mismatch:queue"
+      ],
+      "leak": 0.0
+    }
+  ],
+  "elapsed_s": 646.9,
+  "player": "assets-fa-pod-toggletrack3/player.html"
+}

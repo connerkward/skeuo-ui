@@ -79,9 +79,12 @@ BLUEPRINT_TWOIMG = False
 # experiment actually tested — see the `conditioning == "solid"` guard below); the 'outline' and
 # 'twoimg' conditioning arms and templateless mode are untouched by this flag regardless of its
 # value, so BLUEPRINT_TRIAL_ENABLED's outline draws keep using the prose encoding either way.
-# Default OFF: byte-identical current prose prompt. Flip only BETWEEN batches, never mid-batch
-# (see generation-spend-rule) — a re-roll batch may be running against genskin.py right now.
-PROMPT_JSON_SPEC = False
+# FLIPPED ON 2026-07-12 (user call): the 4/4 paired guide-hue-bleed reduction (5.04% -> 1.56%)
+# and the 3/4-vs-2/4 gate-PASS lift are enough signal to promote the treatment to mainline
+# production, even though layout drift was unaffected. Flip only BETWEEN batches, never
+# mid-batch (see generation-spend-rule) — a re-roll batch may be running against genskin.py
+# right now.
+PROMPT_JSON_SPEC = True
 
 # KNOB_POINTER_UP: paint the volume-cap's pointer notch AT the zero-degree convention instead of
 # painting it at whatever angle the model feels like and counter-rotating post-hoc (the whole
@@ -98,49 +101,98 @@ _POINTER_UP_CLAUSE = (", its pointer notch aiming straight up"
                       "⟦cite:docs/experiments/2026-07-11-knob-pointer-up.md;sha:11b34684⟧"
                       if KNOB_POINTER_UP else "")
 
-# SEEK_CLAUSE_LITE: the "seek is an empty slot" prompt clause has been hardened across many
-# rounds — two full-paragraph bullets (one at the device level, one repeated at the strip
-# level) — yet review-2026-07-11-round1.json still shows BAKED SLIDER THUMBS on 6+ skins
-# (diablo-gothic, fallout-pipboy, fallout-vault, n64-cutscene, wc-goldshield confirmed by
-# direct paint.png crop inspection; claymation's review note turned out to be a false read —
-# its groove is genuinely empty, see TODO.md). Per the bproof lesson (constraint BULK costs
-# quality, not just precision — more words compete for the model's finite per-call attention
-# budget and don't reliably win the fight), stop trying to out-word the model. erase12.py is
-# now the safety net: a deterministic groove-anomaly detector + $0 classical inpaint (falling
-# back to a ~$0.05-0.1 targeted model edit) that catches a baked thumb post-hoc regardless of
-# what the prompt said. That safety net is what makes this trade affordable: PROMPT BUDGET
-# FREED for clauses erase12.py canNOT backstop (icon identity, silhouette, no-text, camera
-# angle) at the cost of a HIGHER up-front baked-thumb rate on the raw paint call itself — a
-# defect this pipeline now fixes post-hoc instead of preventing pre-hoc. Default OFF until
-# erase12.py is validated across a real re-roll batch (not just the one-off repair pass — see
-# TODO.md for the validation record on the 5 confirmed skins above).
-SEEK_CLAUSE_LITE = False
-
-_SEEK_SLOT_BULLET_HEAVY = (
-    "  • SEEK IS JUST AN EMPTY SLOT — treat the seek as a plain EMPTY recessed horizontal "
-    "SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, "
-    "grip, knob, handle, bar, fill, track-fill or progress indicator into it — it is a bare "
-    "dark empty channel; the thumb is a SEPARATE loose part in the strip. A seek slot with "
-    "anything riding in it is WRONG.⟦cite:sha:ac28cd74;tools/mask-align-exp/gen12/review-2026-07-11-round1.json⟧\n"
-)
-_SEEK_SLOT_BULLET_LITE = (
+# SEEK_SLOT_BULLET / SEEK_STRIP_BULLET: the LITE "seek is an empty slot" wording, PROMOTED TO
+# MAINLINE 2026-07-12 (user directive, verbatim: "why even make it a flag. just roll into
+# mainline") — the flag (SEEK_CLAUSE_LITE) and its HEAVY two-paragraph alternative are DELETED.
+# History: the heavy bullets were hardened across many rounds, yet review-2026-07-11-round1.json
+# still showed BAKED SLIDER THUMBS on 6+ skins (diablo-gothic, fallout-pipboy, fallout-vault,
+# n64-cutscene, wc-goldshield confirmed by direct paint.png crop inspection; claymation's review
+# note turned out to be a false read — its groove is genuinely empty, see TODO.md). Per the
+# bproof lesson (constraint BULK costs quality, not just precision — more words compete for the
+# model's finite per-call attention budget and don't reliably win the fight), stop trying to
+# out-word the model: erase12.py is the proven safety net (a deterministic groove-anomaly
+# detector + $0 classical inpaint, falling back to a ~$0.05-0.1 targeted model edit, that
+# caught 4/6 review-flagged baked thumbs live — commit 5c378e5b) that catches a baked thumb
+# post-hoc regardless of what the prompt said. That net is what makes the LITE wording safe as
+# the ONLY path: PROMPT BUDGET stays freed for clauses erase12.py canNOT backstop (icon
+# identity, silhouette, no-text, camera angle).
+# ⟦cite:sha:5c378e5b;tools/mask-align-exp/gen12/erase12.py;tools/mask-align-exp/gen12/review-2026-07-11-round1.json;tools/mask-align-exp/gen12/TODO.md⟧
+SEEK_SLOT_BULLET = (
     "  • The seek slot is an empty recessed channel — no thumb, grip or fill baked into it."
     "⟦cite:sha:5c378e5b;tools/mask-align-exp/gen12/erase12.py;docs/experiments/2026-07-10-bproof-constraint-load.md⟧\n"
 )
-_SEEK_STRIP_BULLET_HEAVY = (
-    "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a "
-    "finger slides, shown by itself on the backdrop, like a spare part in a parts tray. It "
-    "is ABSOLUTELY NOT a slot, groove, channel, track, rail or recess, and must NOT be "
-    "drawn sitting in/on any slot or dark channel — no groove under it, no track through "
-    "it, no recessed surround. If the strip's seek cell shows any slot/track instead of a "
-    "lone thumb piece, the output is WRONG.⟦cite:sha:e8546e22⟧\n"
-)
-_SEEK_STRIP_BULLET_LITE = (
+SEEK_STRIP_BULLET = (
     "  • The seek strip cell shows the loose thumb/grip alone, not sitting in a slot or groove."
     "⟦cite:sha:5c378e5b;tools/mask-align-exp/gen12/erase12.py⟧\n"
 )
-SEEK_SLOT_BULLET = _SEEK_SLOT_BULLET_LITE if SEEK_CLAUSE_LITE else _SEEK_SLOT_BULLET_HEAVY
-SEEK_STRIP_BULLET = _SEEK_STRIP_BULLET_LITE if SEEK_CLAUSE_LITE else _SEEK_STRIP_BULLET_HEAVY
+
+# TOGGLE_TRACK_ENABLED: replace the shuffle TWO-STATE SPRITE-SWAP switch with a TWO-DETENT
+# SLIDER, architecturally identical to the seek groove — a painted EMPTY TRACK/HOUSING on the
+# device (recessed channel with two end positions, NO lever baked in) whose moving part is ONE
+# loose lever sprite in the strip (was two: shuffle_off + shuffle_on). Kills all mirror/
+# same-silhouette-two-states language: there is exactly one lever part now, not a pair to keep
+# in sync — and that pair was exactly the failure mode: review-2026-07-11-round1.json's #1
+# spread complaint was switch/slot mismatch (fa-pod "switch isnt scaled to slot, too small",
+# steam-porthole "slot and switch dont match", n64-cutscene "siwtch doesnt match slot",
+# wc-goldshield "fun switch but doesnt match slot", wmp-vario "siwtch doesnt match slot",
+# claymation "switch doesnt fit slot" — 8+/14 skins named it). User-approved architecture
+# change, 2026-07-12 (his hypothesis, refined). Validated in
+# docs/experiments/2026-07-12-toggle-track.md. Default ON (the new architecture); flip False
+# only to roll back to the old two-state path, which stays fully intact below so already-
+# generated regions.json / assets keep rendering unchanged.
+TOGGLE_TRACK_ENABLED = True
+
+# ---- shuffle device-cavity clause (spliced into "EVERY MOVING-PART CAVITY IS EMPTY") ----
+_SHUFFLE_CAVITY_TWOSTATE = ("The shuffle switch slot is an EMPTY DARK rounded well (NO switch, "
+                             "NO lever, NO toggle installed). ")
+_SHUFFLE_CAVITY_TRACK = (
+    "The shuffle track is an EMPTY DARK recessed CHANNEL/HOUSING cut into the body, physically "
+    "like a shorter version of the seek groove, with two end positions (NO lever, NO slider, NO "
+    "switch, NO bolt installed — nothing riding in it). "
+)
+SHUFFLE_CAVITY_CLAUSE = _SHUFFLE_CAVITY_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_CAVITY_TWOSTATE
+
+# ---- strip part count/list (varies: 3 parts in track mode, 4 in the legacy two-state mode) ----
+SHUFFLE_STRIP_N = 3 if TOGGLE_TRACK_ENABLED else 4
+SHUFFLE_STRIP_N_WORD = "THREE" if TOGGLE_TRACK_ENABLED else "FOUR"
+SHUFFLE_STRIP_PARTS_COMMA = ("volume knob cap, seek slider thumb, shuffle lever" if TOGGLE_TRACK_ENABLED
+    else "volume knob cap, seek slider thumb, shuffle switch first state, shuffle switch second state")
+SHUFFLE_STRIP_PARTS_ARROW = ("volume knob cap, seek slider thumb, shuffle lever" if TOGGLE_TRACK_ENABLED
+    else "volume knob cap, seek slider thumb, shuffle switch in its first state, shuffle switch in "
+         "its second state")
+
+# ---- SHUFFLE MECHANISM bullet — replaces SHUFFLE STATES, drops all mirror/state-pair language ----
+_SHUFFLE_MECHANISM_TRACK = (
+    "  • SHUFFLE MECHANISM — design a CHARACTERFUL two-position TRACK that fits the theme: any "
+    "physical mechanism whose moving part travels a SHORT TRACK between two end positions — a "
+    "lever slot, a sliding bolt channel, a valve track, a rotating latch groove, a bead that "
+    "rides a rail — as long as it has ONE moving part riding a track (NOT a rocker/pill switch "
+    "with two interchangeable faces, and NOT a mirror-pair of states). The track itself is "
+    "painted EMPTY on the device (per the cavity rule above); its moving part — the lever — "
+    "appears ONLY as the single loose strip part, shown by itself, NOT sitting in/on any track, "
+    "groove, channel or recess in the strip (same isolation as the seek thumb). Put ABSOLUTELY "
+    "NO text, letters, numerals, glyphs, words or labels of ANY kind on the lever or on ANY "
+    "strip part.⟦cite:docs/experiments/2026-07-12-toggle-track.md⟧\n"
+)
+_SHUFFLE_MECHANISM_TWOSTATE = (
+    "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT have to "
+    "be a plain pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, gem that "
+    "shifts, valve, eye that opens — any physical two-state mechanism, as long as BOTH states "
+    "share the SAME OUTER HOUSING SILHOUETTE at the same size and are CLEARLY MIRROR-OPPOSITE: "
+    "the moving element sits at ONE end/side in the first state and at the OPPOSITE end/side in "
+    "the second state (never the same position in both). Put ABSOLUTELY NO text, letters, "
+    "numerals, glyphs, words or labels of ANY kind on either switch part or on ANY strip part — "
+    "the state must read from the mechanism's position alone, with zero markings."
+    "⟦cite:sha:e8546e22;sha:ac28cd74;sha:3eeccc55⟧\n"
+)
+SHUFFLE_MECHANISM_BULLET = _SHUFFLE_MECHANISM_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_MECHANISM_TWOSTATE
+
+# ---- EXACT FIT tail — the shuffle clause differs (a lever SLIDES within its track, it does not
+# fill it, unlike the legacy state-swap sprite which filled the whole slot) ----
+_SHUFFLE_EXACTFIT_TRACK = ("the shuffle lever is sized to SLIDE WITHIN the track — narrower than "
+    "the track's long axis, matching its short axis, like the seek thumb inside the seek groove")
+_SHUFFLE_EXACTFIT_TWOSTATE = "each shuffle state exactly fills the switch slot"
+SHUFFLE_EXACTFIT_TAIL = _SHUFFLE_EXACTFIT_TRACK if TOGGLE_TRACK_ENABLED else _SHUFFLE_EXACTFIT_TWOSTATE
 
 COL_W, H, DEV_H = 1200, 1920, 1440
 DEVF = DEV_H / H
@@ -159,7 +211,9 @@ ICON = {  # named in the prompt so the model embosses the right glyph — never 
     "queue": "a QUEUE / playlist icon (stacked horizontal lines)",
     "vol": "a VOLUME knob (top face, knurled rim, pointer notch)",
     "seek": "the SEEK progress slider thumb (wide low grip)",
-    "shuffle": "a SHUFFLE icon (two crossing arrows)",
+    "shuffle": ("an empty two-position TRACK/HOUSING for a sliding lever (no lever installed — "
+                "the lever is a separate loose part)" if TOGGLE_TRACK_ENABLED
+                else "a SHUFFLE icon (two crossing arrows)"),
     "visualizer": "a VISUALIZER / spectrum-analyzer display window",
     "album_art": "an ALBUM ART / cover display window",
 }
@@ -167,6 +221,12 @@ ICON = {  # named in the prompt so the model embosses the right glyph — never 
 BTN_R, PLAY_R, KNOB_R = 74, 104, 84
 GROOVE_W, GROOVE_H, THUMB_W, THUMB_H, THUMB_R = 640, 76, 150, 96, 44
 TOG_W, TOG_H, TOG_R = 120, 178, 40
+# TOGGLE_TRACK_ENABLED lever size — the loose MOVING PART that travels within the (unchanged)
+# TOG_W x TOG_H track footprint above; smaller than the full track so it visibly slides WITHIN
+# it rather than filling it (that "exact fit to slot" congruence was the OLD state-swap
+# contract — see SHUFFLE_EXACTFIT_TAIL above). ~half the track's long axis, most of its short
+# axis minus a margin so it visibly seats inside the track wall.
+LEVER_W, LEVER_H, LEVER_R = TOG_W - 24, int(TOG_H * 0.42), 32
 ART_W, ART_H, VIZ_W, VIZ_H = 560, 300, 640, 156
 
 # ---------------------------------------------------------------- layout archetypes (templated)
@@ -293,9 +353,17 @@ def build_canvas(BG, layout, KEYS, guide_style):
             draw_control_shape(d, kind, sz, x, y, KEYS[name], guide_style)
         template[name] = [fx, fy * DEVF]
     sy = DEV_H + (H - DEV_H) // 2
-    cells = [(KNOB, "circle"), (SLIDER, "thumb"), (TOGGLE, "tog"), (TOGGLE, "tog")]
+    # TOGGLE_TRACK_ENABLED: ONE lever cell (was two: OFF/ON state pair) — 3-cell strip instead
+    # of 4. Own spacing formula (evenly spread 3 cells); the legacy 4-cell spacing is untouched
+    # so a flag=False regen keeps producing byte-identical geometry (rollback safety).
+    if TOGGLE_TRACK_ENABLED:
+        cells = [(KNOB, "circle"), (SLIDER, "thumb"), (TOGGLE, "lever")]
+        cx_of = lambda i: COL_W * (0.18 + 0.32 * i)   # 3 cells: .18, .50, .82
+    else:
+        cells = [(KNOB, "circle"), (SLIDER, "thumb"), (TOGGLE, "tog"), (TOGGLE, "tog")]
+        cx_of = lambda i: COL_W * (0.13 + 0.20 * i)   # unchanged 4-cell spacing
     for i, (k, shp) in enumerate(cells):
-        cx = COL_W * (0.13 + 0.20 * i)
+        cx = cx_of(i)
         if not guide_style: continue
         col = KEYS[k]
         if shp == "circle":
@@ -305,7 +373,11 @@ def build_canvas(BG, layout, KEYS, guide_style):
             box = [cx - THUMB_W / 2, sy - THUMB_H / 2, cx + THUMB_W / 2, sy + THUMB_H / 2]
             if guide_style == "solid": d.rounded_rectangle(box, radius=THUMB_R, fill=col)
             else: d.rounded_rectangle(box, radius=THUMB_R, outline=col, width=12)
-        else:
+        elif shp == "lever":
+            box = [cx - LEVER_W / 2, sy - LEVER_H / 2, cx + LEVER_W / 2, sy + LEVER_H / 2]
+            if guide_style == "solid": d.rounded_rectangle(box, radius=LEVER_R, fill=col)
+            else: d.rounded_rectangle(box, radius=LEVER_R, outline=col, width=12)
+        else:   # "tog" — legacy two-state cell (drawn twice, once per state)
             box = [cx - TOG_W / 2, sy - TOG_H / 2, cx + TOG_W / 2, sy + TOG_H / 2]
             if guide_style == "solid": d.rounded_rectangle(box, radius=TOG_R, fill=col)
             else: d.rounded_rectangle(box, radius=TOG_R, outline=col, width=12)
@@ -465,9 +537,22 @@ def _build_json_spec_obj(KEYS, layout):
         "vol_cap": {"shape": "circle", "radius_frac_of_col_w": round(KNOB_R / COL_W, 4)},
         "seek_thumb": {"shape": "rounded_rect", "w_frac_of_col_w": round(THUMB_W / COL_W, 4),
                        "h_frac_of_dev_h": round(THUMB_H / DEV_H, 4)},
-        "shuffle_state": {"shape": "rounded_rect", "w_frac_of_col_w": round(TOG_W / COL_W, 4),
-                           "h_frac_of_dev_h": round(TOG_H / DEV_H, 4)},
     }
+    if TOGGLE_TRACK_ENABLED:
+        strip_sizes["shuffle_lever"] = {"shape": "rounded_rect", "w_frac_of_col_w": round(LEVER_W / COL_W, 4),
+                                         "h_frac_of_dev_h": round(LEVER_H / DEV_H, 4)}
+        strip_order = ["vol_cap", "seek_thumb", "shuffle_lever"]
+        congruence_rule = ("each strip part's size EXACTLY equals its matching device slot's size "
+                            "above (vol_cap radius == vol's radius_frac_of_col_w; seek_thumb fits "
+                            "the seek groove; the shuffle_lever SLIDES WITHIN the shuffle track, "
+                            "narrower than its long axis, matching its short axis)")
+    else:
+        strip_sizes["shuffle_state"] = {"shape": "rounded_rect", "w_frac_of_col_w": round(TOG_W / COL_W, 4),
+                                         "h_frac_of_dev_h": round(TOG_H / DEV_H, 4)}
+        strip_order = ["vol_cap", "seek_thumb", "shuffle_state_1", "shuffle_state_2"]
+        congruence_rule = ("each strip part's size EXACTLY equals its matching device slot's size "
+                            "above (vol_cap radius == vol's radius_frac_of_col_w; seek_thumb fits "
+                            "the seek groove; each shuffle_state exactly fills the shuffle slot)")
     return {
         "_note": ("machine-readable control spec. position_frac is a fraction of the device "
                   "column's own width (fx) and the device area's own height (fy), guide_color_rgb "
@@ -475,11 +560,9 @@ def _build_json_spec_obj(KEYS, layout):
                   "finished device, sizes are congruence-locked between the device slot and its "
                   "matching loose strip part."),
         "controls": controls,
-        "strip_order_left_to_right": ["vol_cap", "seek_thumb", "shuffle_state_1", "shuffle_state_2"],
+        "strip_order_left_to_right": strip_order,
         "strip_part_sizes": strip_sizes,
-        "congruence_rule": ("each strip part's size EXACTLY equals its matching device slot's size "
-                             "above (vol_cap radius == vol's radius_frac_of_col_w; seek_thumb fits "
-                             "the seek groove; each shuffle_state exactly fills the shuffle slot)"),
+        "congruence_rule": congruence_rule,
     }
 
 
@@ -496,7 +579,8 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
     left_layout = (
         "The LEFT column is a BLUEPRINT: a neutral grey placeholder body with COLOURED SOLID "
         "FILLED patches marking each control's exact position/size/shape PER THE SPEC ABOVE, "
-        "plus a bottom SPRITE-STRIP band with 4 loose parts in the order given by the spec's "
+        f"plus a bottom SPRITE-STRIP band with {len(spec_obj['strip_order_left_to_right'])} loose "
+        "parts in the order given by the spec's "
         "strip_order_left_to_right. KEEP EVERY CONTROL AT THE EXACT POSITION, SIZE AND SHAPE "
         "given by the spec — do NOT move, resize, swap, rearrange, add or drop any control "
         "(their layout, as specified, is locked). BUT the grey body is ONLY a rough placeholder "
@@ -552,9 +636,9 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "knob socket is a bare round HOLE showing only its dark recessed floor (NO knob, NO "
         "cap, NO dome, NO dial, NO pointer — nothing installed). The seek slider groove is an "
         "EMPTY DARK RECESSED CHANNEL cut into the body (NO thumb, NO grip, NO handle, NO fill "
-        "— it is NOT a coloured or filled bar, it is a hollow dark slot). The shuffle switch "
-        "slot is an EMPTY DARK rounded well (NO switch, NO lever, NO toggle installed). The "
-        "device is photographed BEFORE ASSEMBLY: those parts exist ONLY in the bottom sprite "
+        "— it is NOT a coloured or filled bar, it is a hollow dark slot). "
+        + SHUFFLE_CAVITY_CLAUSE +
+        "The device is photographed BEFORE ASSEMBLY: those parts exist ONLY in the bottom sprite "
         "strip and have NOT been installed yet. Do NOT colour the empty wells — neutral DARK "
         "recesses only. If ANY of the three cavities (knob socket, seek slot, shuffle slot) "
         "contains ANY part or any fill colour, the output is WRONG and must be redone."
@@ -569,34 +653,25 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "The album-art window "
         "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped."
         "⟦cite:sha:e8f249db;tools/mask-align-exp/gen12/artdrift_data.json⟧\n"
-        "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, in the order "
-        "given by the spec's strip_order_left_to_right (volume knob cap, seek slider thumb, "
-        "shuffle switch first state, shuffle switch second state) — in the device's own "
+        f"  • SPRITE STRIP — EXACTLY {SHUFFLE_STRIP_N_WORD} finished parts in ONE horizontal row, in the order "
+        f"given by the spec's strip_order_left_to_right ({SHUFFLE_STRIP_PARTS_COMMA}) — in the device's own "
         f"materials, patches removed, on the flat {'pale' if dark else 'charcoal'} backdrop."
-        "⟦cite:sha:794da20e;sha:3eeccc55⟧\n"
+        "⟦cite:docs/experiments/2026-07-12-toggle-track.md⟧\n"
         + tick_sprite_bullet
         + SEEK_STRIP_BULLET
         + "  • EXACT FIT — per the spec's congruence_rule: each strip part is the EXACT size & "
-        "shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove; "
-        "each shuffle_state exactly fills the switch slot). Do NOT resize/re-proportion a part."
-        "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json⟧\n"
-        "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT "
-        "have to be a plain pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, "
-        "gem that shifts, valve, eye that opens — any physical two-state mechanism, as long as "
-        "BOTH states share the SAME OUTER HOUSING SILHOUETTE at the same size (per the spec's "
-        "shuffle_state size) and are CLEARLY MIRROR-OPPOSITE: the moving element sits at ONE "
-        "end/side in the first state and at the OPPOSITE end/side in the second state (never "
-        "the same position in both). Put ABSOLUTELY NO text, letters, numerals, glyphs, words "
-        "or labels of ANY kind on either switch part or on ANY strip part — the state must read "
-        "from the mechanism's position alone, with zero markings.⟦cite:sha:e8546e22;sha:ac28cd74;sha:3eeccc55⟧\n"
-        "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in "
+        f"shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove; "
+        f"{SHUFFLE_EXACTFIT_TAIL}). Do NOT resize/re-proportion a part."
+        "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json;docs/experiments/2026-07-12-toggle-track.md⟧\n"
+        + SHUFFLE_MECHANISM_BULLET
+        + "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in "
         "a PERFECTLY FLAT, STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view — the camera is directly "
         "overhead at exactly 90°, the same view as the device. Each part is drawn as if lying "
         "FLAT on a table seen from straight above, with ZERO thickness, height or depth "
         "visible. The volume knob cap is a FLAT ROUND DISC / COIN — you see ONLY its circular "
         "TOP FACE (a knurled outer rim and a small pointer notch" + _POINTER_UP_CLAUSE + "); you must NOT see any "
         "cylindrical SIDE WALL, edge, height or 3D body of the knob. The seek thumb and the "
-        "shuffle switch are likewise flat shapes seen from directly overhead. ABSOLUTELY NO "
+        f"shuffle {'lever' if TOGGLE_TRACK_ENABLED else 'switch'} are likewise flat shapes seen from directly overhead. ABSOLUTELY NO "
         "product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO perspective, NO visible "
         "sides — a part showing its side wall or any thickness is WRONG. Each part must look "
         "EXACTLY as it appears seated flat in its socket on the top-down device, so it drops "
@@ -614,11 +689,12 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "surrounding body. Trace each window's glass outline precisely; a display blob that "
         "extends past its painted window, covers body/bezel around it, or sits off the window "
         "is WRONG⟦cite:sha:86f69c75⟧; and each STRIP PART as a solid COMPACT blob of its matching control's "
-        "guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour, BOTH "
-        "shuffle states use shuffle's colour) exactly matching its part's silhouette & position "
+        "guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour, "
+        f"{'the shuffle_lever uses' if TOGGLE_TRACK_ENABLED else 'BOTH shuffle states use'} shuffle's colour)"
+        "⟦cite:docs/experiments/2026-07-12-toggle-track.md⟧ exactly matching its part's silhouette & position "
         "in the strip, in the spec's strip_order_left_to_right. CRITICAL: each blob is TIGHT to "
         "its shape — NEVER let a colour bleed or stretch across the strip band or flood a "
-        "rectangle; the 4 strip blobs are 4 separate compact shapes with black gaps between "
+        f"rectangle; the {SHUFFLE_STRIP_N_WORD.lower()} strip blobs are {len(spec_obj['strip_order_left_to_right'])} separate compact shapes with black gaps between "
         "them. Every blob is ONE solid filled silhouette, no outlines, no holes. Everything "
         "else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
     return prompt
@@ -676,13 +752,23 @@ def main():
            "roles": ROLES, "defsz": defsz, "devFrac": DEVF,
            "lighting": spec.get("lighting", {}),  # director-authored emissive/lighting (pbr_pass)
            "ticks": ticks_spec,  # director-authored knob tick provisioning (build_player.py)
+           # director CSS chrome colors (WIRE-pbr.md "css") — passthrough so build_player.py's
+           # RES.get("css") resolves even when the assets dir's SID has no theme_specs/<SID>.json
+           # (suffixed experiment/re-roll ids); the spec-file fallback there still covers
+           # pre-existing assets generated before this passthrough existed.
+           "css": spec.get("css", {}),
            "template": template if mode == "templated" else {},
            # -------- blueprint-conditioning trial record (additive; see TODO.md) --------
            "blueprint_trial_enabled": BLUEPRINT_TRIAL_ENABLED,
            "blueprint_arm": trial_arm,               # what the weighted draw picked: solid|outline
            "blueprint_arm_draw_seed": seed,          # == the generation seed; re-running it reproduces trial_arm
            "blueprint_twoimg": use_twoimg,           # whether twoimg mode overrode the trial arm this gen
-           "blueprint_conditioning": conditioning}   # the arm ACTUALLY used to build the blueprint: solid|outline|twoimg
+           "blueprint_conditioning": conditioning,   # the arm ACTUALLY used to build the blueprint: solid|outline|twoimg
+           # shuffle architecture (2026-07-12): True = two-detent TRACK slider (1 strip cell,
+           # regions[toggle] gets track/detents/vertical from extract12); False = legacy
+           # two-state sprite-swap (2 strip cells, off/on). Downstream (extract12/biref12/
+           # build_player) reads this instead of re-deriving mode from cell count.
+           "toggle_track_enabled": TOGGLE_TRACK_ENABLED}
     if mode == "templated":
         aa = layout["album_art"]; res["album_art_rect"] = [aa[0] - aa[3] / COL_W / 2, (aa[1] - aa[4] / DEV_H / 2) * DEVF, aa[3] / COL_W, aa[4] / DEV_H * DEVF]
         vz = layout["visualizer"]; res["visualizer_rect"] = [vz[0] - vz[3] / COL_W / 2, (vz[1] - vz[4] / DEV_H / 2) * DEVF, vz[3] / COL_W, vz[4] / DEV_H * DEVF]
@@ -763,7 +849,7 @@ def main():
             residue_word = "patch" if conditioning == "solid" else "outline"
             left_layout = ("The LEFT column is a BLUEPRINT: a neutral grey placeholder body with COLOURED "
                 f"{guide_word} marking each control's EXACT position, size and shape, plus a bottom SPRITE-STRIP "
-                "band with 4 loose parts (volume knob cap, seek slider thumb, shuffle switch first state, shuffle switch second state). "
+                f"band with {SHUFFLE_STRIP_N} loose parts ({SHUFFLE_STRIP_PARTS_COMMA}). "
                 "Each guide's colour maps to a control: " + roster_desc + ". KEEP EVERY CONTROL AT THE EXACT POSITION, "
                 "SIZE AND SHAPE OF ITS GUIDE — do NOT move, resize, swap, rearrange, add or drop any control (their "
                 "layout is locked). BUT the grey body is ONLY a rough placeholder showing WHERE the controls sit — you "
@@ -792,9 +878,9 @@ def main():
             "DISTINCTIVE, ASYMMETRIC silhouette with real character — an ornate, sculpted, memorable form (curves, "
             "wings, pods, fins, greebles, ornament) that suits the theme, NOT a plain pod, slab or rectangle. "
             "Arrange the controls in one attractive layout of your choosing. In the bottom strip band below the divider, paint "
-            "EXACTLY FOUR loose parts in ONE row left-to-right: volume knob cap, seek slider thumb, shuffle switch "
-            "in its first state, shuffle switch in its second state — and NOTHING else in the strip."
-            "⟦cite:sha:794da20e;sha:3eeccc55⟧")
+            f"EXACTLY {SHUFFLE_STRIP_N_WORD} loose parts in ONE row left-to-right: {SHUFFLE_STRIP_PARTS_ARROW} "
+            "— and NOTHING else in the strip."
+            "⟦cite:sha:794da20e;sha:3eeccc55;docs/experiments/2026-07-12-toggle-track.md⟧")
 
     # -------- knob tick-mark provisioning (director-decided, per-spec) --------
     # docs/experiments/2026-07-11-knob-tick-provisioning.md found baked ticks UNRELIABLE
@@ -852,8 +938,9 @@ def main():
         "  • THE SINGLE MOST IMPORTANT RULE — EVERY MOVING-PART CAVITY IS EMPTY. The volume knob socket is a bare "
         "round HOLE showing only its dark recessed floor (NO knob, NO cap, NO dome, NO dial, NO pointer — nothing "
         "installed). The seek slider groove is an EMPTY DARK RECESSED CHANNEL cut into the body (NO thumb, NO grip, "
-        "NO handle, NO fill — it is NOT a coloured or filled bar, it is a hollow dark slot). The shuffle switch slot "
-        "is an EMPTY DARK rounded well (NO switch, NO lever, NO toggle installed). The device is photographed BEFORE "
+        "NO handle, NO fill — it is NOT a coloured or filled bar, it is a hollow dark slot). "
+        + SHUFFLE_CAVITY_CLAUSE +
+        "The device is photographed BEFORE "
         "ASSEMBLY: those parts exist ONLY in the bottom sprite strip and have NOT been installed yet. Do NOT colour "
         "the empty wells — neutral DARK recesses only. If ANY of the three cavities (knob socket, seek slot, "
         "shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone."
@@ -867,28 +954,21 @@ def main():
         "The album-art window "
         "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped."
         "⟦cite:sha:e8f249db;tools/mask-align-exp/gen12/artdrift_data.json⟧\n"
-        "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, left→right: volume knob cap, seek "
-        "slider thumb, shuffle switch in its first state, shuffle switch in its second state — in the device's own materials, outlines removed, on "
-        f"the flat {'pale' if dark else 'charcoal'} backdrop.⟦cite:sha:794da20e;sha:3eeccc55⟧\n"
+        f"  • SPRITE STRIP — EXACTLY {SHUFFLE_STRIP_N_WORD} finished parts in ONE horizontal row, left→right: {SHUFFLE_STRIP_PARTS_ARROW} "
+        "— in the device's own materials, outlines removed, on "
+        f"the flat {'pale' if dark else 'charcoal'} backdrop.⟦cite:docs/experiments/2026-07-12-toggle-track.md⟧\n"
         + tick_sprite_bullet
         + SEEK_STRIP_BULLET
         + "  • EXACT FIT — each strip part is the EXACT size & shape of its slot (knob cap = socket diameter; thumb "
-        "fits the groove; each shuffle state exactly fills the switch slot). Do NOT resize/re-proportion a part."
-        "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json⟧\n"
-        "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT have to be a plain "
-        "pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, gem that shifts, valve, eye that opens — "
-        "any physical two-state mechanism, as long as BOTH states share the SAME OUTER HOUSING SILHOUETTE at the "
-        "same size and are CLEARLY MIRROR-OPPOSITE: the moving element sits at ONE end/side in the first state and "
-        "at the OPPOSITE end/side in the second state (never the same position in both). Put ABSOLUTELY NO text, "
-        "letters, numerals, glyphs, words or labels of ANY kind on either switch part or on ANY strip part — the "
-        "state must read from the mechanism's position alone, with zero markings."
-        "⟦cite:sha:e8546e22;sha:ac28cd74;sha:3eeccc55⟧\n"
-        "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in a PERFECTLY FLAT, "
+        f"fits the groove; {SHUFFLE_EXACTFIT_TAIL}). Do NOT resize/re-proportion a part."
+        "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json;docs/experiments/2026-07-12-toggle-track.md⟧\n"
+        + SHUFFLE_MECHANISM_BULLET
+        + "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in a PERFECTLY FLAT, "
         "STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view — the camera is directly overhead at exactly 90°, the same view "
         "as the device. Each part is drawn as if lying FLAT on a table seen from straight above, with ZERO "
         "thickness, height or depth visible. The volume knob cap is a FLAT ROUND DISC / COIN — you see ONLY its "
         "circular TOP FACE (a knurled outer rim and a small pointer notch" + _POINTER_UP_CLAUSE + "); you must NOT see any cylindrical SIDE "
-        "WALL, edge, height or 3D body of the knob. The seek thumb and the shuffle switch are likewise flat shapes "
+        f"WALL, edge, height or 3D body of the knob. The seek thumb and the shuffle {'lever' if TOGGLE_TRACK_ENABLED else 'switch'} are likewise flat shapes "
         "seen from directly overhead. ABSOLUTELY NO product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO "
         "perspective, NO visible sides — a part showing its side wall or any thickness is WRONG. Each part must "
         "look EXACTLY as it appears seated flat in its socket on the top-down device, so it drops straight in."
@@ -904,9 +984,10 @@ def main():
         "blob that extends past its painted window, covers body/bezel around it, or sits off the window is WRONG"
         "⟦cite:sha:86f69c75⟧"
         + "; and each STRIP PART as a solid COMPACT blob of its colour (volume cap=" + kn(KNOB).lower()
-        + ", seek thumb=" + kn(SLIDER).lower() + ", BOTH shuffle states=" + kn(TOGGLE).lower() + ") exactly matching "
+        + ", seek thumb=" + kn(SLIDER).lower()
+        + (", shuffle lever=" if TOGGLE_TRACK_ENABLED else ", BOTH shuffle states=") + kn(TOGGLE).lower() + ") exactly matching "
         f"its part's silhouette & position in {strip_side} strip. CRITICAL: each blob is TIGHT to its shape — NEVER let a "
-        "colour bleed or stretch across the strip band or flood a rectangle; the 4 strip blobs are 4 separate "
+        f"colour bleed or stretch across the strip band or flood a rectangle; the {SHUFFLE_STRIP_N_WORD.lower()} strip blobs are {SHUFFLE_STRIP_N} separate "
         "compact shapes with black gaps between them. Every blob is ONE solid filled silhouette, no outlines, no "
         "holes. Everything else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
 

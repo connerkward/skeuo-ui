@@ -147,9 +147,17 @@ for k in KNOBS + ([SLIDER] if SLIDER else []):
     s = (R.get(k) or {}).get("strip") or []
     if s and s[0]: parts[k] = s[0]
 if TOGGLE:
+    # TOGGLE_TRACK_ENABLED (2026-07-12): a single lever cell (regions.json's toggle strip has
+    # ONE entry, not two) -> cut it as "<toggle>_lever". Legacy two-state regions still carry
+    # TWO strip cells -> unchanged off/on split. Keyed off cell COUNT (the regions.json shape
+    # itself), not RES["toggle_track_enabled"], so this reads any regions.json correctly
+    # regardless of which genskin.py flag state produced it.
     ts = (R.get(TOGGLE) or {}).get("strip") or []
-    for i, cell in enumerate(ts[:2]):
-        if cell: parts[TOGGLE + ("_off", "_on")[i]] = cell
+    if len(ts) >= 2:
+        for i, cell in enumerate(ts[:2]):
+            if cell: parts[TOGGLE + ("_off", "_on")[i]] = cell
+    elif len(ts) == 1 and ts[0]:
+        parts[TOGGLE + "_lever"] = ts[0]
 
 # island bounding boxes (normalised), skipping the device + tiny specks
 iboxes = {}
@@ -166,6 +174,7 @@ def _inter(a, b):   # intersection area of two (x0,y0,x1,y1) boxes
 
 
 used = set()
+unmatched = []
 for name, cell in parts.items():
     cellbox = (cell[0], cell[1], cell[0] + cell[2], cell[1] + cell[3])
     cell_area = max(1e-9, cell[2] * cell[3])
@@ -178,7 +187,43 @@ for name, cell in parts.items():
         save_island(best_idx, name); used.add(best_idx)
         print(f"{name:10} <- island (overlap {best_ov / cell_area * 100:.0f}% of its mask cell)")
     else:
+        unmatched.append((name, cell))
         print(f"{name:10} UNMATCHED (no island overlaps its mask cell)")
+
+# ---- CELL-CROP LOCAL-MATTE RECOVERY for unmatched parts (ported from knobup/recover_caps.py's
+# proven fallback, generalized to ANY strip part, 2026-07-12). The GLOBAL BiRefNet matte
+# routinely drops a small isolated strip part entirely (fa-pod-toggletrack1: the shuffle lever
+# region measured ZERO alpha — the salient-object model didn't consider the small satellite
+# pill an object at full-frame scale). A local matte on just the padded mask-cell crop reframes
+# the part as THE salient object and recovers it at $0 (same local checkpoint, MPS). Fires only
+# for a non-degenerate mask cell (a sliver cell means the MASK itself is broken — nothing
+# trustworthy to crop) and only in BIREF_LOCAL mode (the fal path would cost a paid call per
+# recovery; those gens still surface via the biref-parts gate).
+def _recover_from_cell(name, cell):
+    if not BIREF_LOCAL: return False
+    if cell[2] < 0.01 or cell[3] < 0.01: return False           # degenerate mask cell — skip
+    padx, pady = cell[2] * 0.35, cell[3] * 0.35
+    x0 = max(0, int((cell[0] - padx) * PW)); x1 = min(PW, int((cell[0] + cell[2] + padx) * PW))
+    y0 = max(0, int((cell[1] - pady) * PH)); y1 = min(PH, int((cell[1] + cell[3] + pady) * PH))
+    if x1 - x0 < 8 or y1 - y0 < 8: return False
+    crop = paint.crop((x0, y0, x1, y1))
+    buf = io.BytesIO(); crop.save(buf, "PNG")
+    rgba = Image.open(io.BytesIO(_local_matte(buf.getvalue()))).convert("RGBA")
+    a = np.asarray(rgba)[:, :, 3] > 90
+    l2, n2 = ndimage.label(a)
+    if n2 == 0: return False
+    s2 = ndimage.sum(np.ones_like(l2), l2, range(1, n2 + 1))
+    big = 1 + int(np.argmax(s2))
+    if s2[big - 1] < 1000: return False                          # speck — not a real part
+    ys2, xs2 = np.where(l2 == big)
+    cut = rgba.crop((int(xs2.min()), int(ys2.min()), int(xs2.max()) + 1, int(ys2.max()) + 1))
+    cut.save(os.path.join(OUT, f"{name}.png"))
+    print(f"{name:10} <- RECOVERED via cell-crop local matte ({int(s2[big-1])}px island)")
+    return True
+
+for name, cell in unmatched:
+    if not _recover_from_cell(name, cell):
+        print(f"{name:10} recovery skipped/failed (degenerate cell or no island)")
 extra = 0
 for idx in iboxes:
     if idx not in used:

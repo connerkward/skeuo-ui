@@ -191,11 +191,9 @@ STATIC_SECTIONS = [
     ("director_review.py — director persona SYSTEM_PROMPT", "director_review.py", "SYSTEM_PROMPT"),
     ("director_review.py — director USER_PROMPT (string-constant text; runtime interpolations omitted)",
      "director_review.py", "USER_PROMPT"),
-    # flag-gated genskin clause VARIANTS that don't appear in the default assemblies above
-    ("genskin.py — SEEK_CLAUSE_LITE=True device bullet (flag-gated variant, default OFF)",
-     "genskin.py", "_SEEK_SLOT_BULLET_LITE"),
-    ("genskin.py — SEEK_CLAUSE_LITE=True strip bullet (flag-gated variant, default OFF)",
-     "genskin.py", "_SEEK_STRIP_BULLET_LITE"),
+    # NOTE: SEEK_CLAUSE_LITE (and its HEAVY alternative) was deleted 2026-07-12 — the LITE
+    # wording is now the unconditional SEEK_SLOT_BULLET/SEEK_STRIP_BULLET, so it already
+    # appears in every genskin.py default assembly above; no flag-gated-variant entry needed.
 ]
 
 

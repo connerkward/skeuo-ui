@@ -83,8 +83,11 @@ this block still works (see fallback below).
                          // the palette, distinct from `fill` so the bars read against the track.
   "glow":  "#ff5a28"     // glow/pulse tint — matches `lighting.emissive_color` when the spec
                          // defines one (ember, phosphor, LED…), else a lightened palette entry.
-                         // Reserved for future glow/pulse effects in the plain player and for
-                         // pbr_pass's dynamic-lighting pass to consume as a director-fixed hue.
+                         // First consumer (2026-07-12): the shuffle-lever active-end glow
+                         // (build_player.py's TOGGLE_TRACK_ENABLED render — a subtle
+                         // drop-shadow on the lever when it's at the ON detent, falling back
+                         // to `accent` then to no glow). Also reserved for pbr_pass's
+                         // dynamic-lighting pass to consume as a director-fixed hue.
 }
 ```
 

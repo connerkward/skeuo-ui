@@ -1,6 +1,53 @@
 # gen12 TODO
 
 ---
+## Shuffle: two-state sprite-swap → TWO-DETENT TRACK SLIDER (TOGGLE_TRACK_ENABLED) — DONE 2026-07-12 (~$1.2 validation)
+
+User-approved architecture change (his hypothesis, refined): the shuffle toggle's mirror-pair
+two-state contract — the single most-named defect class in review-2026-07-11-round1.json
+(switch/slot mismatch on 8+/14 skins) — is replaced by a two-detent SLIDER architecturally
+identical to the already-robust seek groove. The model paints an EMPTY track/housing (any
+physical two-position mechanism whose moving part travels a short track — lever slot, sliding
+bolt channel, valve track); ONE loose lever in the strip (3 cells now, was 4); all
+mirror/same-silhouette-state prompt language deleted in this mode.
+
+- `genskin.py` — `TOGGLE_TRACK_ENABLED = True` (new default). Cavity clause, strip
+  count/list, EXACT-FIT tail (lever SLIDES WITHIN the track, does not fill it), SHUFFLE
+  MECHANISM bullet (replaces SHUFFLE STATES), mask-blob text, 3-cell blueprint strip
+  (LEVER_W/H guide), json-spec strip contract — all flag-switched; the full legacy two-state
+  path is intact behind `False` for rollback, verified byte-equivalent clauses via
+  --blueprint-only in both flag states.
+- `extract12.py` — reads `results.json:toggle_track_enabled` (default False → every
+  pre-existing asset keeps its legacy contract). Track mode: ONE lever strip cell (largest
+  CC), track detection reusing the seek walk's level-aware machinery (compact port: backdrop-
+  distance body reference, recess continuity, rim budget, collapse guard + clamp-saturation
+  fallback) emitting `regions[toggle].track/detents/vertical`; no state-align pass; sprite-fit
+  gate becomes lever-cross-vs-track-cross (slider-thumb-style bounds — the lever is SUPPOSED
+  to be smaller than its track); `<toggle>_lever` in the biref part lists. Legacy regression:
+  wc-goldshield re-extract → zero region diffs, identical gate.
+- `biref12.py` — ONE lever cut (`shuffle_lever.png`) keyed off the regions strip-cell COUNT
+  (reads either contract correctly regardless of flag state).
+- `build_player.py` — DATA-DRIVEN branch (regions toggle entry carries `track`/`detents` →
+  track render; `stateAlign` → legacy sprite-swap render, fully intact): lever sprite rides
+  the track, click/Enter/Space slides to the other detent (~200ms snap cubic-bezier), ON
+  detent gets a subtle `css.glow` (→`css.accent`) drop-shadow glow, `role=switch` +
+  `aria-checked` + tabIndex. CSS-LEVER FALLBACK: missing/degenerate cut (aspect <0.15 or
+  >6.5) → themed CSS lever from `css.fill` — deterministic floor, control always renders.
+  Verified live in the served player (Playwright): track mode slides between detents with
+  aria state, fallback renders and animates, legacy wc-goldshield still swaps states.
+
+Validation: docs/experiments/2026-07-12-toggle-track.md (5 gens: 3× fa-pod templated seeds
+673/1451/2287, 2× claymation templateless seeds 662/1901 — both review-round switch-complaint
+themes). Also folded into extract12's GATE SUMMARY: the silcheck silhouette-mismatch gate
+(coordinator directive, d28a83ea) — `silhouette-mismatch:<btn>` reasons + PASS term; verified
+firing on steam-porthole (playpause/repeat/queue) and clean on wc-goldshield.
+
+Also promoted to mainline this pass (user directives): `PROMPT_JSON_SPEC = True` (fenced-JSON
+control spec becomes the production templated-solid encoding) and the SEEK LITE clause is now
+unconditional (`SEEK_CLAUSE_LITE` flag + HEAVY variant deleted — erase12.py is the proven
+safety net; prompt budget stays freed for clauses it can't backstop).
+
+---
 ## silcheck.py: deterministic silhouette-match check for baked icon buttons — DONE 2026-07-12 ($0)
 
 Built per the verification-recalibration lane's finding (VLMs scored 0% recall on
