@@ -1,19 +1,19 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-12T10:44:06",
-  "review_source": "review.json",
+  "generated_at": "2026-07-12T13:38:06",
+  "review_source": "review-round3-decisions.json",
   "bad_examples_source": "bad-examples-manifest.json",
   "counts": {
-    "total": 18,
-    "pass": 5,
-    "fail": 7,
-    "ungraded": 6,
+    "total": 22,
+    "pass": 0,
+    "fail": 0,
+    "ungraded": 22,
     "bad_example": 0,
-    "baked_slider": 9
+    "baked_slider": 11
   },
   "cost_estimate_usd": [
-    5.06,
-    6.17
+    5.72,
+    6.99
   ],
   "models": {
     "generation": "fal-ai/gemini-3-pro-image-preview/edit",
@@ -21,17 +21,21 @@
     "director": "vertex:gemini-3.1-pro-preview"
   },
   "themes": [
+    "biomech-giger",
     "claymation",
     "diablo-gothic",
     "fa-pod",
     "fa-sky",
     "fallout-pipboy",
+    "fallout-pipboy-shapematch",
+    "fallout-pipboy-tt-baseline",
     "fallout-vault",
     "myst-arcanum",
     "n64-cutscene",
     "ps1-crunchy",
     "steam-porthole",
     "wc-goldshield",
+    "wc-goldshield-btest",
     "wmp-quicksilver",
     "wmp-vario"
   ],
@@ -40,6 +44,122 @@
     "templateless"
   ],
   "skins": [
+    {
+      "id": "biomech-giger",
+      "theme": "biomech-giger",
+      "mode": "templateless",
+      "seed": 857,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-biomech-giger/paint.png",
+        "mask": "assets-biomech-giger/mask.png",
+        "regions": "assets-biomech-giger/regions.json",
+        "player": "assets-biomech-giger/player.html",
+        "joint4k": "assets-biomech-giger/joint-4k.png",
+        "blueprint": "assets-biomech-giger/blueprint.png",
+        "overlay": "assets-biomech-giger/overlay.png",
+        "biref_device": "assets-biomech-giger_biref/device.png",
+        "orch": "assets-biomech-giger/orch.json",
+        "results": "assets-biomech-giger/results.json",
+        "director_review": "assets-biomech-giger/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-biomech-giger/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-biomech-giger/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-biomech-giger/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-biomech-giger/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-biomech-giger/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-biomech-giger/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-biomech-giger/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-biomech-giger/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-biomech-giger/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-biomech-giger/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T13:30:57",
+      "paint_sha": "85a347758341",
+      "gate_results": {
+        "auto_pass": true,
+        "orch_passed": false,
+        "live_pass": true,
+        "reasons": [
+          "baked-thumb:seek"
+        ],
+        "orch_gate": {
+          "seed": 857,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.0,
+          "reasons": [
+            "baked-thumb:seek"
+          ],
+          "leak": 0.0
+        },
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.0,
+          "state_align_ok": true,
+          "biref_ok": true,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [],
+          "orientation_ok": true,
+          "reasons": [],
+          "PASS": true
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 8
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "erase12-log:seek"
+      ],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
+      ]
+    },
     {
       "id": "claymation",
       "theme": "claymation",
@@ -124,7 +244,7 @@
           "controls": 10,
           "controls_total": 10,
           "missing": [],
-          "seek_cov": 1.038,
+          "seek_cov": 1.0,
           "state_align_ok": true,
           "biref_ok": true,
           "leak": 0.0,
@@ -134,6 +254,7 @@
           "sprite_fit": [
             "shuffle"
           ],
+          "silhouette_mismatch": [],
           "orientation_ok": true,
           "reasons": [
             "sprite-fit:shuffle"
@@ -145,12 +266,11 @@
       },
       "baked_slider": true,
       "baked_slider_evidence": [
-        "erase12-log:seek",
-        "human-note-mentions-baked"
+        "erase12-log:seek"
       ],
-      "human_verdict": "fail",
-      "human_note": "baked slider knob. switch looks weird. buttons are completely fucked and misaligned. ",
-      "status": "fail",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 3,
       "cost_estimate_usd": [
@@ -434,7 +554,7 @@
           "controls": 10,
           "controls_total": 10,
           "missing": [],
-          "seek_cov": 1.039,
+          "seek_cov": 1.0,
           "state_align_ok": true,
           "biref_ok": true,
           "leak": 0.0,
@@ -444,6 +564,7 @@
           "sprite_fit": [
             "shuffle"
           ],
+          "silhouette_mismatch": [],
           "orientation_ok": true,
           "reasons": [
             "sprite-fit:shuffle"
@@ -457,9 +578,9 @@
       "baked_slider_evidence": [
         "erase12-log:seek"
       ],
-      "human_verdict": "fail",
-      "human_note": "switch is weird. repeat button depression alginemnt off to right. css slider goes too far on top. ",
-      "status": "fail",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 1,
       "cost_estimate_usd": [
@@ -537,7 +658,8 @@
         "orch_passed": true,
         "live_pass": false,
         "reasons": [
-          "sprite-fit:shuffle"
+          "sprite-fit:shuffle",
+          "silhouette-mismatch:prev"
         ],
         "orch_gate": {
           "seed": 673,
@@ -562,9 +684,13 @@
           "sprite_fit": [
             "shuffle"
           ],
+          "silhouette_mismatch": [
+            "prev"
+          ],
           "orientation_ok": true,
           "reasons": [
-            "sprite-fit:shuffle"
+            "sprite-fit:shuffle",
+            "silhouette-mismatch:prev"
           ],
           "PASS": false
         },
@@ -573,9 +699,9 @@
       },
       "baked_slider": false,
       "baked_slider_evidence": [],
-      "human_verdict": "fail",
-      "human_note": "switch is way too huge now. silhouettes still not aligning correctly. ",
-      "status": "fail",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 1,
       "cost_estimate_usd": [
@@ -979,9 +1105,9 @@
       },
       "baked_slider": false,
       "baked_slider_evidence": [],
-      "human_verdict": "fail",
-      "human_note": "phantom button play pause still issue. reroll. ",
-      "status": "fail",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 2,
       "cost_estimate_usd": [
@@ -1102,14 +1228,190 @@
         "gate.baked_thumb=['seek']",
         "erase12-log:seek"
       ],
-      "human_verdict": "pass",
-      "human_note": "almost perfect. switch is just a little to big. ",
-      "status": "pass",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 1,
       "cost_estimate_usd": [
         0.175,
         0.228
+      ]
+    },
+    {
+      "id": "fallout-pipboy-shapematch",
+      "theme": "fallout-pipboy-shapematch",
+      "mode": "templated",
+      "seed": 951,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": null,
+      "paths": {
+        "paint": "assets-fallout-pipboy-shapematch/paint.png",
+        "mask": "assets-fallout-pipboy-shapematch/mask.png",
+        "regions": "assets-fallout-pipboy-shapematch/regions.json",
+        "joint4k": "assets-fallout-pipboy-shapematch/joint-4k.png",
+        "blueprint": "assets-fallout-pipboy-shapematch/blueprint.png",
+        "overlay": "assets-fallout-pipboy-shapematch/overlay.png",
+        "biref_device": "assets-fallout-pipboy-shapematch_biref/device.png",
+        "results": "assets-fallout-pipboy-shapematch/results.json"
+      },
+      "crops": [
+        {
+          "control": "device",
+          "path": "assets-fallout-pipboy-shapematch_biref/device.png"
+        },
+        {
+          "control": "extra-1",
+          "path": "assets-fallout-pipboy-shapematch_biref/extra-1.png"
+        },
+        {
+          "control": "extra-2",
+          "path": "assets-fallout-pipboy-shapematch_biref/extra-2.png"
+        },
+        {
+          "control": "shuffle_lever",
+          "path": "assets-fallout-pipboy-shapematch_biref/shuffle_lever.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-fallout-pipboy-shapematch_biref/vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T11:33:37",
+      "paint_sha": "75a8fff6bcc0",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": null,
+        "live_pass": false,
+        "reasons": [
+          "emptiness",
+          "biref-parts",
+          "silhouette-mismatch:repeat"
+        ],
+        "orch_gate": null,
+        "live_gate": {
+          "empty_ok": false,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.039,
+          "state_align_ok": true,
+          "biref_ok": false,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [
+            "repeat"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "emptiness",
+            "biref-parts",
+            "silhouette-mismatch:repeat"
+          ],
+          "PASS": false
+        },
+        "director_verdict": null,
+        "director_score_0_10": null
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.155,
+        0.178
+      ]
+    },
+    {
+      "id": "fallout-pipboy-tt-baseline",
+      "theme": "fallout-pipboy-tt-baseline",
+      "mode": "templated",
+      "seed": 951,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": null,
+      "paths": {
+        "paint": "assets-fallout-pipboy-tt-baseline/paint.png",
+        "mask": "assets-fallout-pipboy-tt-baseline/mask.png",
+        "regions": "assets-fallout-pipboy-tt-baseline/regions.json",
+        "joint4k": "assets-fallout-pipboy-tt-baseline/joint-4k.png",
+        "blueprint": "assets-fallout-pipboy-tt-baseline/blueprint.png",
+        "overlay": "assets-fallout-pipboy-tt-baseline/overlay.png",
+        "biref_device": "assets-fallout-pipboy-tt-baseline_biref/device.png",
+        "results": "assets-fallout-pipboy-tt-baseline/results.json"
+      },
+      "crops": [
+        {
+          "control": "device",
+          "path": "assets-fallout-pipboy-tt-baseline_biref/device.png"
+        },
+        {
+          "control": "extra-1",
+          "path": "assets-fallout-pipboy-tt-baseline_biref/extra-1.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-fallout-pipboy-tt-baseline_biref/seek.png"
+        },
+        {
+          "control": "shuffle_lever",
+          "path": "assets-fallout-pipboy-tt-baseline_biref/shuffle_lever.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T11:40:58",
+      "paint_sha": "9a1ca818a7a4",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": null,
+        "live_pass": false,
+        "reasons": [
+          "biref-parts",
+          "baked-thumb:seek"
+        ],
+        "orch_gate": null,
+        "live_gate": {
+          "empty_ok": true,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.04,
+          "state_align_ok": true,
+          "biref_ok": false,
+          "leak": 0.0,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [
+            "seek"
+          ],
+          "sprite_fit": [],
+          "silhouette_mismatch": [],
+          "orientation_ok": true,
+          "reasons": [
+            "biref-parts",
+            "baked-thumb:seek"
+          ],
+          "PASS": false
+        },
+        "director_verdict": null,
+        "director_score_0_10": null
+      },
+      "baked_slider": true,
+      "baked_slider_evidence": [
+        "gate.baked_thumb=['seek']"
+      ],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.155,
+        0.178
       ]
     },
     {
@@ -1195,7 +1497,7 @@
           "controls": 10,
           "controls_total": 10,
           "missing": [],
-          "seek_cov": 1.04,
+          "seek_cov": 1.0,
           "state_align_ok": true,
           "biref_ok": true,
           "leak": 0.0,
@@ -1203,6 +1505,7 @@
           "region_degenerate": [],
           "baked_thumb": [],
           "sprite_fit": [],
+          "silhouette_mismatch": [],
           "orientation_ok": true,
           "reasons": [],
           "PASS": true
@@ -1214,9 +1517,9 @@
       "baked_slider_evidence": [
         "erase12-log:seek"
       ],
-      "human_verdict": "fail",
-      "human_note": "button issue mentioend before still not fixed.",
-      "status": "fail",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 4,
       "cost_estimate_usd": [
@@ -1321,6 +1624,7 @@
           "sprite_fit": [
             "shuffle"
           ],
+          "silhouette_mismatch": [],
           "orientation_ok": true,
           "reasons": [
             "missing:vol",
@@ -1428,7 +1732,7 @@
           "controls": 10,
           "controls_total": 10,
           "missing": [],
-          "seek_cov": 1.039,
+          "seek_cov": 1.0,
           "state_align_ok": true,
           "biref_ok": true,
           "leak": 0.0,
@@ -1438,6 +1742,7 @@
           "sprite_fit": [
             "shuffle"
           ],
+          "silhouette_mismatch": [],
           "orientation_ok": true,
           "reasons": [
             "sprite-fit:shuffle"
@@ -1451,9 +1756,9 @@
       "baked_slider_evidence": [
         "erase12-log:seek"
       ],
-      "human_verdict": "fail",
-      "human_note": "ugly. vss slider too wide on left side. siwtch weird looking. ",
-      "status": "fail",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 3,
       "cost_estimate_usd": [
@@ -1543,7 +1848,7 @@
           "controls": 10,
           "controls_total": 10,
           "missing": [],
-          "seek_cov": 1.039,
+          "seek_cov": 1.0,
           "state_align_ok": true,
           "biref_ok": true,
           "leak": 0.0,
@@ -1551,6 +1856,7 @@
           "region_degenerate": [],
           "baked_thumb": [],
           "sprite_fit": [],
+          "silhouette_mismatch": [],
           "orientation_ok": true,
           "reasons": [],
           "PASS": true
@@ -1560,9 +1866,9 @@
       },
       "baked_slider": false,
       "baked_slider_evidence": [],
-      "human_verdict": "fail",
-      "human_note": "mismapped buttons. two repeat buttons, queue button not operational. switch sprites completely differnt sizes. ",
-      "status": "fail",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 1,
       "cost_estimate_usd": [
@@ -1689,12 +1995,11 @@
       },
       "baked_slider": true,
       "baked_slider_evidence": [
-        "erase12-log:vol",
-        "human-note-mentions-baked"
+        "erase12-log:vol"
       ],
-      "human_verdict": "pass",
-      "human_note": "swapped knob and play button. still need to paint out baked slider knob. ",
-      "status": "pass",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 1,
       "cost_estimate_usd": [
@@ -1810,14 +2115,146 @@
       "baked_slider_evidence": [
         "erase12-log:seek"
       ],
-      "human_verdict": "pass",
-      "human_note": "some issue with slot / swtich coherence, but hides nearly perfectly. ",
-      "status": "pass",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 3,
       "cost_estimate_usd": [
         0.485,
         0.585
+      ]
+    },
+    {
+      "id": "wc-goldshield-btest",
+      "theme": "wc-goldshield-btest",
+      "mode": "templated",
+      "seed": 791,
+      "model": "fal-ai/gemini-3-pro-image-preview/edit",
+      "director_model": "vertex:gemini-3.1-pro-preview",
+      "paths": {
+        "paint": "assets-wc-goldshield-btest/paint.png",
+        "mask": "assets-wc-goldshield-btest/mask.png",
+        "regions": "assets-wc-goldshield-btest/regions.json",
+        "player": "assets-wc-goldshield-btest/player.html",
+        "joint4k": "assets-wc-goldshield-btest/joint-4k.png",
+        "blueprint": "assets-wc-goldshield-btest/blueprint.png",
+        "overlay": "assets-wc-goldshield-btest/overlay.png",
+        "biref_device": "assets-wc-goldshield-btest_biref/device.png",
+        "orch": "assets-wc-goldshield-btest/orch.json",
+        "results": "assets-wc-goldshield-btest/results.json",
+        "director_review": "assets-wc-goldshield-btest/director-review.json"
+      },
+      "crops": [
+        {
+          "control": "album_art",
+          "path": "assets-wc-goldshield-btest/director/crop-album_art.png"
+        },
+        {
+          "control": "next",
+          "path": "assets-wc-goldshield-btest/director/crop-next.png"
+        },
+        {
+          "control": "playpause",
+          "path": "assets-wc-goldshield-btest/director/crop-playpause.png"
+        },
+        {
+          "control": "prev",
+          "path": "assets-wc-goldshield-btest/director/crop-prev.png"
+        },
+        {
+          "control": "queue",
+          "path": "assets-wc-goldshield-btest/director/crop-queue.png"
+        },
+        {
+          "control": "repeat",
+          "path": "assets-wc-goldshield-btest/director/crop-repeat.png"
+        },
+        {
+          "control": "seek",
+          "path": "assets-wc-goldshield-btest/director/crop-seek.png"
+        },
+        {
+          "control": "shuffle",
+          "path": "assets-wc-goldshield-btest/director/crop-shuffle.png"
+        },
+        {
+          "control": "visualizer",
+          "path": "assets-wc-goldshield-btest/director/crop-visualizer.png"
+        },
+        {
+          "control": "vol",
+          "path": "assets-wc-goldshield-btest/director/crop-vol.png"
+        }
+      ],
+      "paint_mtime": "2026-07-12T13:35:35",
+      "paint_sha": "1eb861675fd3",
+      "gate_results": {
+        "auto_pass": false,
+        "orch_passed": false,
+        "live_pass": false,
+        "reasons": [
+          "emptiness",
+          "biref-parts",
+          "silhouette-mismatch:playpause",
+          "silhouette-mismatch:prev",
+          "silhouette-mismatch:repeat"
+        ],
+        "orch_gate": {
+          "seed": 791,
+          "PASS": false,
+          "controls": 10,
+          "seek_cov": 1.0,
+          "reasons": [
+            "emptiness",
+            "biref-parts",
+            "silhouette-mismatch:playpause",
+            "silhouette-mismatch:prev",
+            "silhouette-mismatch:repeat"
+          ],
+          "leak": 3e-06
+        },
+        "live_gate": {
+          "empty_ok": false,
+          "controls": 10,
+          "controls_total": 10,
+          "missing": [],
+          "seek_cov": 1.0,
+          "state_align_ok": true,
+          "biref_ok": false,
+          "leak": 3e-06,
+          "guide_ring": [],
+          "region_degenerate": [],
+          "baked_thumb": [],
+          "sprite_fit": [],
+          "silhouette_mismatch": [
+            "playpause",
+            "prev",
+            "repeat"
+          ],
+          "orientation_ok": true,
+          "reasons": [
+            "emptiness",
+            "biref-parts",
+            "silhouette-mismatch:playpause",
+            "silhouette-mismatch:prev",
+            "silhouette-mismatch:repeat"
+          ],
+          "PASS": false
+        },
+        "director_verdict": "FAIL",
+        "director_score_0_10": 4
+      },
+      "baked_slider": false,
+      "baked_slider_evidence": [],
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
+      "bad_example_drive_link": null,
+      "rolls": 1,
+      "cost_estimate_usd": [
+        0.175,
+        0.228
       ]
     },
     {
@@ -1928,9 +2365,9 @@
       },
       "baked_slider": false,
       "baked_slider_evidence": [],
-      "human_verdict": "pass",
-      "human_note": "fine",
-      "status": "pass",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 1,
       "cost_estimate_usd": [
@@ -2045,9 +2482,9 @@
       },
       "baked_slider": false,
       "baked_slider_evidence": [],
-      "human_verdict": "pass",
-      "human_note": "switch / slot coherenece but nearly perfect.",
-      "status": "pass",
+      "human_verdict": null,
+      "human_note": null,
+      "status": "ungraded",
       "bad_example_drive_link": null,
       "rolls": 3,
       "cost_estimate_usd": [

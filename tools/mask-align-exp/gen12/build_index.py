@@ -302,16 +302,45 @@ select,.chip-btn{{background:#161a22;border:1px solid #ffffff22;color:#cdd3dd;bo
 .crops img{{width:48px;height:48px;object-fit:cover;border-radius:5px;border:1px solid #ffffff1c;background:#000;flex:0 0 auto}}
 .crops span{{font:9px ui-monospace,monospace;color:#666;display:block;text-align:center}}
 .links{{display:flex;gap:10px;font:11px ui-monospace,monospace;margin-top:auto;padding-top:4px}}
+.thumbwrap[data-player]{{cursor:pointer}}
+.thumbwrap[data-player]:focus-visible{{outline:2px solid #7ab7ff;outline-offset:-2px}}
+.thumbwrap.no-player{{opacity:.5;cursor:default}}
+.playhint{{position:absolute;bottom:7px;left:7px;font:10px ui-monospace,monospace;
+  background:#0009;color:#dde;padding:2px 7px;border-radius:5px;pointer-events:none}}
+.thumbwrap[data-player]:hover .playhint{{background:#3a7cffcc;color:#fff}}
+.badge.nolink{{position:absolute;bottom:7px;left:7px;background:#333;color:#999;
+  font:10px ui-monospace,monospace;padding:2px 7px;border-radius:5px}}
+a.playerlink{{cursor:pointer}}
+.modal-overlay{{position:fixed;inset:0;background:#000c;backdrop-filter:blur(3px);display:none;
+  align-items:center;justify-content:center;z-index:100;padding:14px}}
+.modal-overlay.open{{display:flex}}
+.modal-box{{background:#0e1116;border:1px solid #ffffff22;border-radius:12px;overflow:hidden;
+  width:min(96vw,760px);height:min(94vh,880px);display:flex;flex-direction:column;box-shadow:0 20px 60px #000a}}
+.modal-bar{{display:flex;justify-content:space-between;align-items:center;padding:8px 8px 8px 14px;
+  border-bottom:1px solid #ffffff14;gap:10px;flex:0 0 auto}}
+.modal-bar b{{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+.modal-actions{{display:flex;gap:14px;align-items:center;font:11px ui-monospace,monospace;flex:0 0 auto}}
+.modal-close{{background:#1b1e26;border:1px solid #ffffff22;color:#cdd3dd;border-radius:6px;
+  width:28px;height:28px;cursor:pointer;font-size:14px;line-height:1}}
+.modal-close:hover{{background:#2a2f3a}}
+.modal-hint{{font:10px ui-monospace,monospace;color:#6b7180;padding:4px 14px;border-bottom:1px solid #ffffff10;flex:0 0 auto}}
+.modal-iframe{{flex:1;width:100%;border:0;background:#050608;display:block}}
+@media (max-width:520px){{
+  .modal-box{{width:100vw;height:100vh;height:100dvh;border-radius:0}}
+}}
 @media (prefers-color-scheme:light){{
   body{{background:#f6f7f9;color:#1a1d22}}
-  .card,.stat,.fgroup,select,.chip-btn,.hnote{{background:#fff;border-color:#00000018}}
+  .card,.stat,.fgroup,select,.chip-btn,.hnote,.modal-box{{background:#fff;border-color:#00000018}}
   .bar{{background:#f6f7f9ee}}
+  .modal-overlay{{background:#000000aa}}
+  .modal-iframe{{background:#fff}}
 }}
 </style></head><body>
 <h1>gen12 — skin index &amp; gallery</h1>
 <div class=sub id=genline></div>
 <div class=sub>models: <b>{GEN_MODEL}</b> (paint+mask) · <b>{MATTE_MODEL_LOCAL}</b> (matte, $0) · <b>{DR_MODEL}</b> (director review) ·
   extraction/player = local $0 · est. total spend across indexed skins ≈ <b>${total_cost_lo:.2f}-${total_cost_hi:.2f}</b></div>
+<div class=sub>click any thumbnail to open its LIVE player inline — drag the seek/knob, flip switches, press buttons — right here in the gallery.</div>
 <div class=bar>
   <span class=stat id=statline></span>
   <div class=fgroup><label>status</label>
@@ -327,6 +356,19 @@ select,.chip-btn{{background:#161a22;border:1px solid #ffffff22;color:#cdd3dd;bo
   <span id=count></span>
 </div>
 <div class=grid id=grid></div>
+<div class=modal-overlay id=modalOverlay>
+  <div class=modal-box role=dialog aria-modal=true aria-labelledby=modalTitle>
+    <div class=modal-bar>
+      <b id=modalTitle>—</b>
+      <div class=modal-actions>
+        <a id=modalOpenNew href="#" target=_blank rel=noopener>open in new tab ↗</a>
+        <button class=modal-close id=modalClose aria-label="Close live player" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+    <div class=modal-hint>interactive — drag the seek/knob, flip the switch, click the buttons</div>
+    <iframe class=modal-iframe id=modalFrame title="live interactive player" loading=lazy></iframe>
+  </div>
+</div>
 <script id=skins-data type=application/json>{{DATA_JSON}}</script>
 <script>
 const IDX = JSON.parse(document.getElementById('skins-data').textContent);
@@ -347,7 +389,8 @@ function esc(s){{ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({{'&':'&a
 
 function card(s){{
   const thumb = s.paths.paint || s.paths.blueprint || '';
-  const link = s.paths.player || '#';
+  const link = s.paths.player || '';
+  const hasPlayer = !!link;
   const note = s.human_note ? esc(s.human_note) : 'no human note yet';
   const bakedBadge = s.baked_slider ? `<span class="badge baked" title="${{esc((s.baked_slider_evidence||[]).join(' · '))}}">baked slider</span>` : '';
   const evid = (s.baked_slider_evidence||[]).length ? `<div class=evid>baked evidence: ${{esc(s.baked_slider_evidence.join(' · '))}}</div>` : '';
@@ -355,12 +398,16 @@ function card(s){{
     `<div><img src="${{esc(c.path)}}" loading=lazy title="${{esc(c.control)}}"><span>${{esc(c.control)}}</span></div>`).join('');
   const dr = s.gate_results.director_verdict ? ` · director ${{esc(s.gate_results.director_verdict)}} ${{esc(s.gate_results.director_score_0_10)}}/10` : '';
   const cost = '$'+s.cost_estimate_usd[0].toFixed(2)+'-'+s.cost_estimate_usd[1].toFixed(2);
+  const playerAttrs = hasPlayer
+    ? `data-player="${{esc(link)}}" data-title="${{esc(s.id)}}" tabindex="0" role="button" aria-label="Open live interactive player for ${{esc(s.id)}}"`
+    : '';
   return `<div class="card st-${{s.status}}" data-status="${{s.status}}" data-theme="${{esc(s.theme)}}" data-mode="${{esc(s.mode)}}" data-baked="${{s.baked_slider}}">
-    <a href="${{esc(link)}}" target=_blank><div class=thumbwrap>
+    <div class="thumbwrap${{hasPlayer?'':' no-player'}}" ${{playerAttrs}}>
       ${{thumb?`<img src="${{esc(thumb)}}" loading=lazy>`:''}}
       <span class="badge ${{s.status}}">${{esc(s.status)}}</span>
       ${{bakedBadge}}
-    </div></a>
+      ${{hasPlayer?'<span class=playhint>&#9654; open live player</span>':'<span class="badge nolink">no player</span>'}}
+    </div>
     <div class=cbody>
       <div class=ctitle><b>${{esc(s.id)}}</b><span class=tag>${{esc(s.mode)}}</span></div>
       <div class=meta>theme ${{esc(s.theme)}} · seed ${{esc(s.seed)}} · model ${{esc(s.model)}} · ${{s.rolls}} roll(s) · ~${{cost}}${{dr}}</div>
@@ -368,13 +415,57 @@ function card(s){{
       ${{evid}}
       ${{crops?`<div class=crops>${{crops}}</div>`:''}}
       <div class=links>
-        <a href="${{esc(link)}}" target=_blank>live player</a>
+        ${{hasPlayer?`<a href="${{esc(link)}}" target=_blank class=playerlink data-player="${{esc(link)}}" data-title="${{esc(s.id)}}">live player ▶</a>`:'<span class=tag>no player</span>'}}
         ${{s.paths.regions?`<a href="${{esc(s.paths.regions)}}" target=_blank>regions.json</a>`:''}}
         ${{s.paths.orch?`<a href="${{esc(s.paths.orch)}}" target=_blank>orch.json</a>`:''}}
       </div>
     </div>
   </div>`;
 }}
+
+// ---- interactive live-player modal ------------------------------------------------
+const modalOverlay = document.getElementById('modalOverlay');
+const modalFrame = document.getElementById('modalFrame');
+const modalTitle = document.getElementById('modalTitle');
+const modalOpenNew = document.getElementById('modalOpenNew');
+function openPlayer(url, title){{
+  if(!url) return;
+  modalTitle.textContent = title || url;
+  modalOpenNew.href = url;
+  modalFrame.src = url;
+  modalOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  modalClose.focus();
+}}
+function closePlayer(){{
+  modalOverlay.classList.remove('open');
+  modalFrame.src = 'about:blank';
+  document.body.style.overflow = '';
+}}
+const modalClose = document.getElementById('modalClose');
+modalClose.onclick = closePlayer;
+modalOverlay.addEventListener('click', e=>{{ if(e.target===modalOverlay) closePlayer(); }});
+document.addEventListener('keydown', e=>{{ if(e.key==='Escape' && modalOverlay.classList.contains('open')) closePlayer(); }});
+// keydown inside the iframe doesn't bubble to this document (separate browsing context) —
+// attach Esc-to-close on the embedded player's own document too, so it works while the
+// user is actively interacting with the live player (same-origin: assets served from this host).
+modalFrame.addEventListener('load', ()=>{{
+  try {{
+    const fd = modalFrame.contentDocument;
+    if (fd) fd.addEventListener('keydown', e=>{{ if(e.key==='Escape') closePlayer(); }});
+  }} catch(err) {{}}
+}});
+document.getElementById('grid').addEventListener('click', e=>{{
+  const el = e.target.closest('[data-player]');
+  if(!el) return;
+  e.preventDefault();
+  openPlayer(el.dataset.player, el.dataset.title);
+}});
+document.getElementById('grid').addEventListener('keydown', e=>{{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const el = e.target.closest && e.target.closest('.thumbwrap[data-player]');
+  if(el){{ e.preventDefault(); openPlayer(el.dataset.player, el.dataset.title); }}
+}});
 
 function render(){{
   const list = IDX.skins.filter(s=>
