@@ -68,6 +68,10 @@ def vlm_for(skin, model):
 def cell_html(skin, model):
     thumb = f"web/{skin}__{model}-thumb.jpg"
     full = f"web/{skin}__{model}-full.jpg"
+    fullskin_thumb = f"web/composite/{skin}__{model}-fullskin-thumb.jpg"
+    fullskin_full = f"web/composite/{skin}__{model}-fullskin-full.jpg"
+    seam_thumb = f"web/composite/{skin}__{model}-seam-thumb.jpg"
+    seam_full = f"web/composite/{skin}__{model}-seam-full.jpg"
     v = verdict_for(skin, model)
     d = det_for(skin, model)
     vlm = vlm_for(skin, model)
@@ -82,10 +86,29 @@ def cell_html(skin, model):
                     f'· seam-Δ {d["seam_delta"]}</div>')
     if not os.path.exists(os.path.join(HERE, thumb)):
         return '<td class="cell empty">—</td>'
+    composite_block = ""
+    has_composite = os.path.exists(os.path.join(HERE, seam_thumb))
+    if has_composite:
+        composite_block = f'''
+      <div class="model-tag">{MODEL_INFO[model]["endpoint"]}</div>
+      <div class="composite-pair">
+        <a href="{seam_full}" target="_blank" rel="noopener" class="seam-link">
+          <img src="{seam_thumb}" loading="lazy" alt="{skin} x {model} seam (composited onto full skin)">
+          <span class="img-cap">seam (composite, crop_box boxed)</span>
+        </a>
+        <a href="{fullskin_full}" target="_blank" rel="noopener" class="fullskin-link">
+          <img src="{fullskin_thumb}" loading="lazy" alt="{skin} x {model} full skin composite">
+          <span class="img-cap">full skin (click for native)</span>
+        </a>
+      </div>'''
     return f'''<td class="cell">
-      <a href="{full}" target="_blank" rel="noopener">
-        <img src="{thumb}" loading="lazy" alt="{skin} x {model}">
-      </a>
+      {composite_block}
+      <details class="isolated-crop">
+        <summary>isolated crop (as originally scored)</summary>
+        <a href="{full}" target="_blank" rel="noopener">
+          <img src="{thumb}" loading="lazy" alt="{skin} x {model} isolated crop">
+        </a>
+      </details>
       <div class="badge" style="background:{color}">{v["v"]}</div>
       <div class="cost">${cost:.4f}</div>
       {det_line}
@@ -97,11 +120,32 @@ def cell_html(skin, model):
 def before_cell(skin):
     thumb = f"web/{skin}__BEFORE-thumb.jpg"
     full = f"web/{skin}__BEFORE-full.jpg"
+    seam_thumb = f"web/composite/{skin}__BEFORE-seam-thumb.jpg"
+    seam_full = f"web/composite/{skin}__BEFORE-seam-full.jpg"
+    fullskin_thumb = f"web/composite/{skin}__BEFORE-fullskin-thumb.jpg"
+    fullskin_full = f"web/composite/{skin}__BEFORE-fullskin-full.jpg"
     material = CROPS_META[skin]["material"]
+    composite_block = ""
+    if os.path.exists(os.path.join(HERE, seam_thumb)):
+        composite_block = f'''
+      <div class="composite-pair">
+        <a href="{seam_full}" target="_blank" rel="noopener" class="seam-link">
+          <img src="{seam_thumb}" loading="lazy" alt="{skin} before seam">
+          <span class="img-cap">defect seam (baked, boxed)</span>
+        </a>
+        <a href="{fullskin_full}" target="_blank" rel="noopener" class="fullskin-link">
+          <img src="{fullskin_thumb}" loading="lazy" alt="{skin} before full skin">
+          <span class="img-cap">full skin (defect, boxed)</span>
+        </a>
+      </div>'''
     return f'''<td class="cell before">
-      <a href="{full}" target="_blank" rel="noopener">
-        <img src="{thumb}" loading="lazy" alt="{skin} before">
-      </a>
+      {composite_block}
+      <details class="isolated-crop">
+        <summary>isolated crop (as originally scored)</summary>
+        <a href="{full}" target="_blank" rel="noopener">
+          <img src="{thumb}" loading="lazy" alt="{skin} before">
+        </a>
+      </details>
       <div class="skin-label">{skin}</div>
       <div class="material">{material}</div>
     </td>'''
@@ -200,9 +244,17 @@ table {{ border-collapse:collapse; width:100%; min-width:900px; }}
 th, td {{ border:1px solid #22222a; padding:8px; text-align:left; vertical-align:top; }}
 th {{ background:#14141a; font-size:.78rem; font-weight:600; position:sticky; top:0; }}
 .unit {{ color:#8a8a98; font-weight:400; }}
-td.cell {{ width:16%; min-width:160px; font-size:.72rem; }}
+td.cell {{ width:16%; min-width:230px; font-size:.72rem; }}
 td.cell img {{ width:100%; height:auto; border-radius:4px; display:block; border:1px solid #26262e; }}
 td.before {{ background:#101014; }}
+.model-tag {{ color:#6a6a78; font-size:.62rem; font-family:ui-monospace,monospace; margin-bottom:5px; }}
+.composite-pair {{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }}
+.composite-pair a {{ flex:1 1 90px; min-width:90px; text-decoration:none; }}
+.img-cap {{ display:block; color:#7a7a88; font-size:.6rem; margin-top:2px; text-align:center; }}
+.seam-link img {{ border-color:#3a3a4a; }}
+details.isolated-crop {{ margin:6px 0; }}
+details.isolated-crop summary {{ cursor:pointer; color:#7a7a88; font-size:.62rem; margin-bottom:4px; }}
+details.isolated-crop img {{ opacity:.9; }}
 .skin-label {{ font-weight:700; margin-top:6px; font-size:.85rem; }}
 .material {{ color:#8a8a98; font-size:.68rem; margin-top:2px; }}
 .badge {{
@@ -263,6 +315,19 @@ defects x 6 finalist models (+1 bonus no-prompt eraser) x deterministic + VLM + 
   bonus arm) did NOT exhibit this failure mode, supporting the hypothesis that PROMPT-DRIVEN
   fill models treat "remove X, continue Y" as a generation instruction rather than a
   conservative local erase.
+</div>
+
+<div class="finding" style="border-color:#1a3a3a; background:#0f1818;">
+  <b>Composite-onto-full-skin view added.</b> An isolated 1024x1024 crop can look flawless while
+  the paste BOUNDARY against the surrounding skin incoheres — wrong tone, a visible ring, a
+  hallucinated object sitting on unrelated material. Every cell below now composites the model's
+  result crop back onto its full source skin (2304x3712) using the <b>exact same feathered-blend
+  math production ships</b> (<code>erase12.py:erase_model()</code> — full strength interior,
+  alpha ramps to 0 over the outer ~12% margin), via <code>build_composites.py</code> — so the seam
+  shown here is the seam production would actually produce. Each cell shows the padded seam
+  close-up (crop_box x1.5) plus a full-skin thumbnail, both with a <span style="color:#e62828">red
+  box</span> marking crop_box for orientation; click either for the native-res image. The original
+  isolated-crop scoring image is still available, collapsed under "isolated crop".
 </div>
 
 <h2>Results grid — defect crop x model</h2>
