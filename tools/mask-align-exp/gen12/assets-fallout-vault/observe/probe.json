@@ -1,0 +1,48 @@
+{
+  "skin": "fallout-vault",
+  "url": "http://localhost:58221/assets-fallout-vault/player.html",
+  "load_ok": true,
+  "load_err": "",
+  "page_errors": [],
+  "controls": {
+    "prev": {
+      "alive": true,
+      "evidence": "hint -> \"prev \u25b8\" as expected"
+    },
+    "next": {
+      "alive": true,
+      "evidence": "hint -> \"next \u25b8\" as expected"
+    },
+    "repeat": {
+      "alive": true,
+      "evidence": "dataset.m: null -> 1; hint: \"next \u25b8\" -> \"repeat: context\""
+    },
+    "queue": {
+      "alive": true,
+      "evidence": "queue overlay open: false -> true"
+    },
+    "playpause": {
+      "alive": true,
+      "evidence": "hint: \"repeat: context\" -> \"\u25b6 playing \u2014 visualizer live\""
+    },
+    "visualizer": {
+      "alive": true,
+      "evidence": "idle 600ms pixel-activity=1457528, playing 600ms pixel-activity=64223837 (need >4000 and >2.5x idle)"
+    },
+    "shuffle": {
+      "alive": true,
+      "evidence": "state changed on click (bg DIFFERS: \"url(\"data:image/png;base64,iVBORw0KGgoAA...(287801ch)\"->\"url(\"data:image/png;base64,iVBORw0KGgoAA...(280777ch)\", left 54.5464%->54.6766%, top 60.704%->60.704%)"
+    },
+    "vol": {
+      "alive": true,
+      "evidence": "cap transform: \"rotate(-355.414deg)\" -> \"rotate(-271.039deg)\""
+    },
+    "seek": {
+      "alive": true,
+      "evidence": "initial=33.29%, max-drag=83.0926% (re-overshoot=83.0926%, clamped=true), min-drag=33.29% (re-overshoot=33.29%, clamped=true)"
+    }
+  },
+  "dead_controls": [],
+  "elapsed_s": 7.1,
+  "ts": "2026-07-12T00:57:04"
+}

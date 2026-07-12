@@ -201,11 +201,41 @@ if VLM:
     # ..." instead of "DEVICE: [aesthetic] - ..."): capture up to " - " or end of line either way.
     dm = re.search(r"^\s*DEVICE\s*:\s*\[?([^\]\n]*?)\]?(?:\s*-.*)?$", str(text), re.I | re.M)
     device_defects = [t.strip() for t in dm.group(1).split(",") if t.strip() in DEVICE_TAGS] if dm else []
+
+    # [[verification-recalibration]] dead-control merge — composable, NOT run from here. Vision
+    # cannot reliably tell a DEAD control from a merely-static one (two screenshots is the wrong
+    # evidence for an interaction-testing question — see docs/experiments/
+    # 2026-07-11-verification-recalibration.md "Residual gaps": ps1-crunchy's "visualizer not
+    # working" was a control that WAS drawing every frame, and fallout-vault's "prev button ...
+    # failed to work" is a hitbox/z-order shape neither screenshot shows). probe12.py is a
+    # separate, deterministic, $0 scripted-interaction pass; if `<assets>/observe/probe.json`
+    # already exists (a prior `python3 probe12.py <assets-dir>` run), fold its dead-control
+    # findings in here as a hard FAIL — a dead control is not something a nice-aesthetic VLM
+    # verdict should be able to average away (belt-and-suspenders, same posture as
+    # director_review.py's own hard verdict-gate rule).
+    probe_path = os.path.join(OBS, "probe.json")
+    probe_dead_controls = []
+    if os.path.exists(probe_path):
+        try:
+            probe = json.load(open(probe_path))
+        except Exception:
+            probe = None
+        if probe:
+            probe_dead_controls = probe.get("dead_controls", [])
+            for k in probe_dead_controls:
+                tags = per_control_defects.setdefault(k, [])
+                if "dead-control" not in tags:
+                    tags.append("dead-control")
+            if probe_dead_controls:
+                verdict = "FAIL"
+
     rec = {"skin": SID, "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
            "verdict": verdict, "raw": text,
            "frames": ["full.png", "after.png"] + [f"crop-{label}.png" for label, _ in crop_files],
            "unmeasured_crop_miss": unmeasured,
            "per_control_defects": per_control_defects, "device_defects": device_defects,
+           "probe_dead_controls": probe_dead_controls,
            "ts": time.strftime("%Y-%m-%dT%H:%M:%S")}
     json.dump(rec, open(os.path.join(OBS, "observe.json"), "w"), indent=2)
-    print(f"[observe] {SID}: VLM verdict {verdict} (google/gemini-2.5-pro via fal)")
+    probe_note = f" [probe12 dead-control override: {', '.join(probe_dead_controls)}]" if probe_dead_controls else ""
+    print(f"[observe] {SID}: VLM verdict {verdict} (google/gemini-2.5-pro via fal){probe_note}")

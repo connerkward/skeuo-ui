@@ -1309,3 +1309,92 @@ readings, computed-not-hand-typed numbers, bottom conclusion):
 
 Small link-backs added: `jsonspec/results.html` header now points to `explain.html`;
 `MEDIA-MANIFEST.md` header now points to `MEDIA-EXPLAIN.html`.
+
+## Scripted JS-state probe (`probe12.py`) — the deterministic follow-up spec, built (2026-07-12)
+
+Built the "Residual gaps" follow-up spec from `docs/experiments/2026-07-11-verification-
+recalibration.md`: vision (observe12.py's VLM pass) cannot reliably tell a DEAD control from a
+merely-static one — two screenshots are the wrong evidence for an interaction-testing
+question. New files: `probe12.py` (Python orchestrator) + `probe_drive.mjs` (the actual
+Playwright driver — own throwaway `chromium.launch()`, no shared profile/context with
+`observe_drive.mjs` or anything else). `$0`, ~7s/skin, fully deterministic.
+
+**Design, per control:**
+- **Buttons** (playpause/prev/next/repeat/queue): a REAL `page.mouse.click()` at the
+  control's own `getBoundingClientRect()` center — deliberately NOT `el.click()` (which
+  `observe_drive.mjs` uses on purpose, for a different reason: dodging overlap flakiness to
+  get a clean screenshot pair). A real hit-tested click is the whole point here — it's what
+  catches a HITBOX/z-order defect (a sibling control silently swallowing the click), which
+  `el.click()` cannot see by construction. `document.elementFromPoint()` at the click point
+  is checked before clicking, so an occlusion produces a specific, named diagnosis ("point
+  resolved to `next`, not `prev`") instead of a bare "nothing happened." Per-key expected
+  state: `hint.textContent` for the generic buttons (`"<key> ▸"`, exact match against the
+  shipped handler in `build_player.py`), `#queue`'s `open` class for `queue`, `dataset.m` +
+  hint text for `repeat`.
+- **Toggle (shuffle):** a generic style diff (`backgroundImage`/`left`/`top`/`transform`),
+  intentionally mode-agnostic rather than branching on a `regions.json` field — checked: no
+  skin's toggle region carries anything beyond `device`/`angle`/`stateAlign` today, so the
+  "two-detent slider" mode the spec asks to "detect" doesn't exist yet to detect. The
+  generic diff is correct for either representation without modification if/when that mode
+  ships; the selector also probes for a `.pthumb[data-role="toggle"]` shape defensively.
+- **Knob (vol):** drag test (same pointer sequence as `observe_drive.mjs`'s knob-drag),
+  asserts the cap's `rotate(...)` transform actually changed.
+- **Slider (seek):** value change AND clamp at BOTH ends — drag past max twice (2nd
+  overshoot landing on the exact same position as the 1st IS the clamp proof), then past min
+  twice, no `regions.json` travel-math replication needed (reads the live element's own
+  rendered position after each drag).
+- **Visualizer:** 600ms canvas pixel-activity sample in idle state (baseline) vs. 600ms
+  after clicking playpause (playing state) — requires BOTH an absolute floor (4000) AND
+  >2.5x the skin's own idle baseline, because idle already wobbles gently by design (the
+  ps1-crunchy fix, commit `e2473221`) so a bare non-zero diff proves nothing.
+
+**Self-test (mechanism verification, not just code review):** before trusting a clean "ALL
+ALIVE" result, wrote a throwaway `/tmp` script (not committed) that force-overlapped
+fallout-vault's live `prev`/`next` buttons via DOM mutation and re-ran the exact
+`elementFromPoint` + click logic inline — confirmed it correctly reports `occluded: true`,
+`occluderTitle: "next"`, and that the resulting click actually fires `next`'s handler
+(`hint -> "next ▸"` instead of the expected `"prev ▸"`), i.e. the technique **can** fail a
+control, not just always report alive.
+
+**`observe12.py` hook (small, composable):** if `<assets>/observe/probe.json` exists, its
+`dead_controls` are folded into `per_control_defects[k] += ["dead-control"]` and force
+`verdict = "FAIL"` — belt-and-suspenders, same posture as `director_review.py`'s own hard
+verdict-gate rule. `probe12.py` is never invoked from `observe12.py` (kept composable, per
+task scope); the merge is a no-op if `probe.json` doesn't exist. `score_verification.py`
+needs no change — it substring-matches the whole `observe.json` blob, and now finds the
+literal `"dead-control"` tag automatically. **Verified live against the real shipping code
+path** (not just read): ran `python3 observe12.py assets-ps1-wild --vlm` for real (one fal
+call) — printed `VLM verdict FAIL ... [probe12 dead-control override: next]`, and
+`observe.json` on disk shows `per_control_defects["next"] == ["dead-control"]`. Bonus: the
+VLM's OWN line for that control was `next: CROP-MISS` — i.e. the vision pass couldn't even
+measure `next` (crop-anchoring miss), while the deterministic probe caught the real hitbox
+defect cleanly. Concrete illustration of why this is a complementary check, not a redundant one.
+
+**Validation (4 skins, evidence read directly, not just verdict counts):**
+
+| skin | result | notable evidence |
+|---|---|---|
+| `fallout-vault` | ALL ALIVE (9/9) | `prev`/`shuffle` — the human's "failed to work" complaint — read alive on the CURRENT `regions.json`. Confirmed via `git diff` this is a real fix already landed mid-session (`prev`'s `device` rect and `shuffle`'s `sprite_fit` gate both changed in the currently-uncommitted extract12.py re-roll) — the "if fixed, vault should pass" branch, not a probe miss. Caveat: `regions.json` (00:34) was newer than `player.html` (23:57) for this skin at validation time — the probe tests the ACTUALLY SERVED artifact, which is correct per verify-outputs-rule §7, but the result may change again once `build_player.py` reruns on the newest regions. |
+| `ps1-crunchy` | ALL ALIVE (9/9) | `visualizer`: idle 600ms activity ≈3.1×10⁵, playing ≈1.6×10⁷ (≈51x margin, comfortably past the 2.5x/4000 gate) — the idle-wobble fix (`e2473221`) reads correctly as "alive" post-recalibration, closing the exact miss the recalibration doc flagged as needing this probe. |
+| `claymation` | ALL ALIVE (9/9) | healthy control (human's only defects — sprite-slot-mismatch, baked-thumb — are non-interaction classes; probe correctly finds nothing to flag). |
+| `wc-goldshield` | ALL ALIVE (9/9) | second healthy control (human's defects — baked-thumb, sprite-slot-mismatch — likewise non-interaction). |
+
+**Bonus real-world finding (not one of the 4 required; `probe.json` NOT committed for these,
+kept unscoped from this commit):** `ps1-wild`'s `next` button came back DEAD — see the
+"verified live" paragraph above for the full trace. Interesting because `ps1-wild`'s only
+coded human defect is a low-confidence catch-all (`placement-wrong`, from the vague note
+"absolute failure" — the recalibration doc's own caveat on this skin) — this is plausibly
+PART of what the human hit and couldn't articulate more precisely. Also surfaced a genuine
+shared-checkout race: `n64-prerender-character`'s `repeat` control correctly reads DEAD
+(`regions.json` has it as a bare `null` — matches the pre-existing `observe12.py` comment
+about this exact skin), and `myst-arcanum` failed to load entirely (`page.waitForFunction`
+timeout, 0 `.pbtn` elements, a JS `pageerror`) while another agent's `extract12.py` re-roll
+was actively rewriting its `regions.json` mid-request — the probe correctly failed CLOSED
+(every control marked dead with an honest "page failed to load" reason) rather than silently
+reporting alive. Not chased further — outside this task's ownership (extract12.py/regions.json
+generation) and self-resolves once that agent's batch lands.
+
+**Not built (explicitly out of scope per spec):** no change to `extract12.py`,
+`build_player.py`, or `genskin.py` — this pass only adds an observational check, per
+`fix-generalizable-rule`'s boundary (a probe finding a hitbox bug is not the same as fixing
+one; that's the extract/player-owning agents' lane).

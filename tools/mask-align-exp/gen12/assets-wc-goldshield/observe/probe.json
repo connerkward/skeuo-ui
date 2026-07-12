@@ -1,0 +1,48 @@
+{
+  "skin": "wc-goldshield",
+  "url": "http://localhost:58221/assets-wc-goldshield/player.html",
+  "load_ok": true,
+  "load_err": "",
+  "page_errors": [],
+  "controls": {
+    "prev": {
+      "alive": true,
+      "evidence": "hint -> \"prev \u25b8\" as expected"
+    },
+    "next": {
+      "alive": true,
+      "evidence": "hint -> \"next \u25b8\" as expected"
+    },
+    "repeat": {
+      "alive": true,
+      "evidence": "dataset.m: null -> 1; hint: \"next \u25b8\" -> \"repeat: context\""
+    },
+    "queue": {
+      "alive": true,
+      "evidence": "queue overlay open: false -> true"
+    },
+    "playpause": {
+      "alive": true,
+      "evidence": "hint: \"repeat: context\" -> \"\u25b6 playing \u2014 visualizer live\""
+    },
+    "visualizer": {
+      "alive": true,
+      "evidence": "idle 600ms pixel-activity=371292, playing 600ms pixel-activity=18603398 (need >4000 and >2.5x idle)"
+    },
+    "shuffle": {
+      "alive": true,
+      "evidence": "state changed on click (bg DIFFERS: \"url(\"data:image/png;base64,iVBORw0KGgoAA...(523817ch)\"->\"url(\"data:image/png;base64,iVBORw0KGgoAA...(545353ch)\", left 54.7571%->54.7571%, top 81.9444%->81.9444%)"
+    },
+    "vol": {
+      "alive": true,
+      "evidence": "cap transform: \"rotate(-350.604deg)\" -> \"rotate(-266.229deg)\""
+    },
+    "seek": {
+      "alive": true,
+      "evidence": "initial=23.22%, max-drag=69.3344% (re-overshoot=69.3344%, clamped=true), min-drag=23.22% (re-overshoot=23.22%, clamped=true)"
+    }
+  },
+  "dead_controls": [],
+  "elapsed_s": 7.2,
+  "ts": "2026-07-12T00:57:25"
+}

@@ -2,7 +2,7 @@
   "skin": "ps1-wild",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: CROP-MISS\nprev: CROP-MISS\nnext: CROP-MISS\nrepeat: CROP-MISS\nqueue: CROP-MISS\nvol: OK\nseek: OK\nshuffle: DEFECT[sprite-slot-mismatch] - The purple 'on' state sprite is much larger than the slot and a completely different style from the 'off' state lever.\nvisualizer: CROP-MISS\nalbum_art: CROP-MISS\nDEVICE: none\nVERDICT: FAIL",
+  "raw": "playpause: CROP-MISS\nprev: CROP-MISS\nnext: CROP-MISS\nrepeat: CROP-MISS\nqueue: CROP-MISS\nvol: OK\nseek: CROP-MISS\nshuffle: DEFECT[aesthetic] - The toggle mechanism is visually broken; when the green switch block moves, a purple block in the destination slot disappears instead of being swapped or covered.\nvisualizer: CROP-MISS\nalbum_art: CROP-MISS\nDEVICE: none\nVERDICT: FAIL",
   "frames": [
     "full.png",
     "after.png",
@@ -27,13 +27,20 @@
     "prev",
     "queue",
     "repeat",
+    "seek",
     "visualizer"
   ],
   "per_control_defects": {
     "shuffle": [
-      "sprite-slot-mismatch"
+      "aesthetic"
+    ],
+    "next": [
+      "dead-control"
     ]
   },
   "device_defects": [],
-  "ts": "2026-07-11T23:43:09"
+  "probe_dead_controls": [
+    "next"
+  ],
+  "ts": "2026-07-12T01:00:56"
 }
