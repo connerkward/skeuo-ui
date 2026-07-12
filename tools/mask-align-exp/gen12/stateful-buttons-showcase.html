@@ -1,0 +1,539 @@
+<meta charset="utf-8">
+<title>Stateful Buttons — Director Capability Lookdev</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0b0c10; --panel:#15171d; --panel2:#1b1e26; --line:#2a2e38;
+    --text:#e8eaef; --dim:#8a90a0; --accent:#5ec6ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.45;
+  }
+  a{color:var(--accent)}
+  header.hero{
+    padding:2.2rem clamp(1rem,4vw,3rem) 1.4rem; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#12141a,#0b0c10);
+  }
+  header.hero h1{margin:0 0 .35rem; font-size:clamp(1.4rem,2.6vw,2rem); letter-spacing:-0.01em}
+  header.hero p.sub{margin:0 0 1rem; color:var(--dim); max-width:70ch}
+  .devbar{
+    display:flex; flex-wrap:wrap; gap:.5rem 1.2rem; font-size:.8rem; color:var(--dim);
+    border:1px solid var(--line); background:var(--panel); border-radius:8px; padding:.7rem 1rem;
+    max-width:100%;
+  }
+  .devbar b{color:var(--text)}
+  .devbar .tag{
+    background:var(--panel2); border:1px solid var(--line); border-radius:5px;
+    padding:.15rem .5rem; color:var(--text); font-variant-numeric:tabular-nums;
+  }
+  .legend{
+    padding:1rem clamp(1rem,4vw,3rem) 0; color:var(--dim); font-size:.85rem; max-width:90ch;
+  }
+  .legend .mo{color:#ff9b6a} .legend .st{color:#7cf2b0}
+
+  /* ---- bad vs good contrast banner ---- */
+  .contrast-wrap{padding:1.3rem clamp(1rem,4vw,3rem) 0}
+  .contrast{
+    border:1px solid #3a2230; border-radius:14px; overflow:hidden; background:var(--panel);
+  }
+  .contrast .cxhead{
+    padding:.9rem 1.1rem .3rem; display:flex; flex-direction:column; gap:.3rem;
+  }
+  .contrast .cxhead h2{margin:0; font-size:1.05rem}
+  .contrast .cxhead p{margin:0; color:var(--dim); font-size:.82rem; max-width:80ch}
+  .cx-grid{display:flex; flex-wrap:wrap; gap:0}
+  .cx-panel{flex:1 1 260px; padding:1rem 1.1rem 1.2rem; position:relative}
+  .cx-panel.bad{background:#1f1013; border-top:3px solid #ff4d5e}
+  .cx-panel.good{background:#101a14; border-top:3px solid #7cf2b0}
+  .cx-panel .cxlabel{
+    display:inline-block; font-size:.68rem; font-weight:700; letter-spacing:.05em;
+    padding:.2rem .55rem; border-radius:20px; margin-bottom:.6rem;
+  }
+  .cx-panel.bad .cxlabel{background:#ff4d5e33; color:#ff8f9b}
+  .cx-panel.good .cxlabel{background:#7cf2b033; color:#9df7c4}
+  .cx-stage{
+    position:relative; width:100%; max-width:260px; aspect-ratio:1/1; margin:0 auto;
+    border-radius:10px; overflow:hidden; background:#000;
+  }
+  .cx-stage img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+  .cx-panel.bad .cx-stage img{ box-shadow:inset 0 0 0 0 transparent; transition:filter .25s ease; }
+  .cx-panel.bad.on .cx-stage{ box-shadow:0 0 0 6px #2255ffcc, 0 0 34px 10px #2255ff; }
+  .cx-panel.bad.on .cx-stage img{ filter:brightness(1.05); }
+  .cx-panel.good .cx-stage::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 55% 45% at 40% 34%, #ffb84d 0%, #d2782800 68%);
+    mix-blend-mode:screen; opacity:0; transition:opacity .3s ease;
+  }
+  .cx-panel.good.on .cx-stage::after{ opacity:.95 }
+  .cx-panel.good.on .cx-stage img{ filter:brightness(1.16) saturate(1.25) contrast(1.05); transition:filter .3s ease }
+  .cx-panel p.explain{font-size:.76rem; color:var(--dim); margin:.6rem 0 0; max-width:32ch; text-align:center; margin-left:auto; margin-right:auto}
+  .cx-toggle{
+    display:block; width:100%; margin-top:1rem; padding:.55rem; border-radius:8px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--text); font:inherit; cursor:pointer;
+  }
+  .cx-toggle:hover{border-color:#4a5060}
+
+  main{padding:1.4rem clamp(1rem,4vw,3rem) 3rem}
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.1rem;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+    display:flex; flex-direction:column; cursor:pointer; user-select:none;
+    transition:border-color .2s ease, box-shadow .2s ease; text-align:left;
+    padding:0; font:inherit; color:inherit;
+  }
+  .card:hover{border-color:#3a4050}
+  .card:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .card .stage{
+    position:relative; aspect-ratio:1/1; background:#000;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .card .stage img.base{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    transition:transform .28s cubic-bezier(.34,1.56,.64,1), filter .28s ease;
+  }
+  .card .stage img.overlay-sprite{
+    position:absolute; width:auto; height:auto; max-width:70%; max-height:70%;
+    left:50%; top:50%; transform:translate(-50%,-50%);
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .badge-pill{
+    position:absolute; z-index:5; top:.5rem; left:.5rem;
+    background:#000c; border:1px solid var(--line); border-radius:20px;
+    font-size:.65rem; padding:.2rem .55rem; color:var(--dim); letter-spacing:.02em;
+  }
+  .state-pill{
+    position:absolute; z-index:5; top:.5rem; right:.5rem;
+    border-radius:20px; font-size:.68rem; font-weight:600; padding:.25rem .6rem;
+    letter-spacing:.03em; transition:background .25s ease, color .25s ease;
+    background:#3a3e48; color:#aeb4c0;
+  }
+  .card.on .state-pill, .card[data-state="1"] .state-pill, .card[data-state="2"] .state-pill{
+    background:var(--fx,#5ec6ff); color:#08121a;
+  }
+  .meta{padding:.85rem .95rem 1rem; display:flex; flex-direction:column; gap:.4rem}
+  .meta h3{margin:0; font-size:1rem}
+  .meta .themes{display:flex; flex-wrap:wrap; gap:.3rem}
+  .meta .themes span{
+    font-size:.68rem; background:var(--panel2); border:1px solid var(--line); border-radius:5px;
+    padding:.1rem .4rem; color:var(--dim);
+  }
+  .meta .spec{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.72rem; color:#9fd6ff;
+    background:#0e2130; border:1px solid #123049; border-radius:6px; padding:.35rem .5rem;
+    overflow-wrap:anywhere;
+  }
+  .meta .accentline{font-size:.7rem; color:var(--dim); display:flex; align-items:center; gap:.4rem}
+  .meta .swatch{width:11px; height:11px; border-radius:3px; border:1px solid #0006; display:inline-block; flex:none}
+  .meta .note{font-size:.76rem; color:var(--dim)}
+  .meta .note .mo{color:#ff9b6a} .meta .note .st{color:#7cf2b0}
+  .hint{font-size:.68rem; color:#5c6272; margin-top:.1rem}
+
+  /* ---- per-treatment FX layers — all colours come from the CARD's --fx custom prop,
+     which is set in JS from each theme's own results.json palette/css.glow/css.accent —
+     never a hardcoded colour baked into the CSS itself. ---- */
+  .fx{position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .3s ease}
+  .card.on .fx{opacity:1}
+
+  /* glow: a SEATED bloom (screen-blend radial gradient sitting ON the button's own glossy
+     highlight) + the base pixels themselves brighten/saturate — never an outer box-shadow
+     halo floating above the crop. This is the fix for the "generic floating ring" failure. */
+  .fx-glow{
+    background:radial-gradient(ellipse 60% 50% at 50% 42%, var(--fx) 0%, transparent 70%);
+    mix-blend-mode:screen;
+  }
+  .card .stage.glow-stage img.base{ transition:filter .3s ease; }
+  .card.on .stage.glow-stage img.base{ filter:brightness(1.16) saturate(1.3) contrast(1.04); }
+
+  .fx-lamp{
+    position:absolute; width:11%; height:11%; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--fx) 55%, #0006 100%);
+    box-shadow:0 0 0 0 var(--fx);
+  }
+  .card.on .fx-lamp{ box-shadow:0 0 14px 5px var(--fx), 0 0 28px 10px var(--fx); }
+
+  .card.on .stage.sink-stage img.base{
+    transform:scale(.93) translateY(3%);
+    filter:brightness(.72) contrast(.94) saturate(.85);
+  }
+  .fx-sink-shadow{ box-shadow:inset 0 0 0 0 transparent; }
+  .card.on .fx-sink-shadow{ box-shadow:inset 0 10px 18px 0 rgba(0,0,0,.65), inset 0 -3px 6px rgba(0,0,0,.4); }
+
+  .fx-backlit{ background:radial-gradient(ellipse at 50% 55%, var(--fx) 0%, transparent 68%); mix-blend-mode:screen; }
+  .card .stage.backlit-stage img.base{ transition:filter .3s ease }
+  .card.on .stage.backlit-stage img.base{ filter:brightness(1.1) saturate(1.15) }
+
+  .card .stage.tint-stage img.base{ transition:filter .32s ease; }
+  .card.on .stage.tint-stage img.base{ filter:saturate(1.9) brightness(1.16) contrast(1.06); }
+  .fx-tint{ background:var(--fx); mix-blend-mode:color; opacity:0; }
+  .card.on .fx-tint{ opacity:.38; }
+
+  .fx-ring svg{ position:absolute; inset:6%; width:88%; height:88%; }
+  .fx-ring circle{
+    fill:none; stroke:var(--fx); stroke-width:3; stroke-linecap:round;
+    filter:drop-shadow(0 0 6px var(--fx));
+    stroke-dasharray:6 5; opacity:0; transition:opacity .3s ease;
+  }
+  .card.on .fx-ring circle{ opacity:1; }
+  .fx-ring .ring-bloom{
+    position:absolute; inset:0; background:radial-gradient(circle at 50% 50%, var(--fx) 0%, transparent 55%);
+    mix-blend-mode:screen; opacity:0; transition:opacity .3s ease;
+  }
+  .card.on .fx-ring .ring-bloom{ opacity:.28 }
+
+  .fx-filament{ background:radial-gradient(circle at 50% 55%, var(--fx) 0%, transparent 58%); mix-blend-mode:screen; }
+  .card.on .fx-filament{ animation:pulseGlow 1.8s ease-in-out infinite; }
+  @keyframes pulseGlow{ 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  .fx-well{ background:radial-gradient(ellipse at 50% 68%, var(--fx) 0%, transparent 62%); mix-blend-mode:screen; }
+  .card.on .fx-well{ animation:pulseGlow 2.4s ease-in-out infinite; }
+
+  /* icon-state swap (real cut sprite crossfade) */
+  .stage.swap-stage img.overlay-sprite.state-off{ opacity:1 }
+  .stage.swap-stage img.overlay-sprite.state-on{ opacity:0 }
+  .card.on .stage.swap-stage img.overlay-sprite.state-off{ opacity:0 }
+  .card.on .stage.swap-stage img.overlay-sprite.state-on{ opacity:1 }
+
+  /* two-detent track slider (real socket + real lever, translated between detents) */
+  .stage.track-stage img.overlay-sprite.lever{
+    transition:top .3s cubic-bezier(.34,1.4,.64,1), left .3s cubic-bezier(.34,1.4,.64,1);
+  }
+
+  /* multi-state cycle badge (repeat off/all/one) */
+  .stage.cycle-stage img.base{ transition:filter .25s ease }
+  .card[data-state="0"] .stage.cycle-stage img.base{ filter:brightness(.6) saturate(.45) }
+  .card[data-state="1"] .stage.cycle-stage img.base,
+  .card[data-state="2"] .stage.cycle-stage img.base{ filter:brightness(1.14) saturate(1.3) }
+  .cycle-badge{
+    position:absolute; right:8%; bottom:8%; width:26%; aspect-ratio:1;
+    border-radius:50%; background:var(--fx); color:#0a1420; display:flex; align-items:center;
+    justify-content:center; font-weight:800; font-size:1.1rem; opacity:0; transform:scale(.4);
+    transition:opacity .22s ease, transform .22s ease; box-shadow:0 0 10px 2px var(--fx);
+  }
+  .card[data-state="2"] .cycle-badge{ opacity:1; transform:scale(1); }
+
+  footer{
+    padding:2rem clamp(1rem,4vw,3rem) 3rem; border-top:1px solid var(--line); color:var(--dim);
+    font-size:.85rem; max-width:90ch;
+  }
+  footer h2{color:var(--text); font-size:1.05rem}
+  footer code{background:var(--panel2); border-radius:4px; padding:.1rem .35rem}
+
+  @media (max-width:480px){
+    .grid{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:390px){
+    .grid{grid-template-columns:1fr}
+    .cx-grid{flex-direction:column}
+  }
+</style>
+
+<header class="hero">
+  <h1>Stateful Buttons — Director Capability Lookdev</h1>
+  <p class="sub">
+    A momentary baked button presses and springs back — it holds no memory of anything.
+    A <b>stateful</b> baked button LATCHES a visible state (shuffle ON/OFF, repeat
+    off/all/one, play↔pause, mute, like) so the user can read the current state at a glance,
+    without pressing anything. This page demonstrates the array of ways the director can make
+    a baked button <em>express</em> that latched state — click any card to toggle it.
+  </p>
+  <div class="devbar">
+    <span><b>Dev-facing lookdev</b> — capability survey, not shipping code.</span>
+    <span class="tag">models: $0 new spend</span>
+    <span>All crops are <b>reused pixels</b> from already-generated gen12 skins (Gemini 3 Pro
+      Image Preview / fal edit paint calls, various seeds) and their local BiRefNet v2 cuts —
+      both already paid for in prior sessions. This page made <b>zero</b> new model calls.</span>
+  </div>
+</header>
+
+<div class="legend">
+  Distinction shown per card: <span class="mo">momentary</span> = the old press-ink-then-
+  spring-back baked button, holds no state. <span class="st">stateful</span> = this treatment,
+  latches a state the eye can read without interacting. Every glow/lamp/ring/badge colour below
+  is sampled from that <b>specific theme's own</b> <code>results.json</code> palette or
+  director <code>css</code> spec (<code>track/fill/accent/glow</code>) — never a fixed hex
+  baked into this page's CSS.
+</div>
+
+<div class="contrast-wrap">
+  <div class="contrast" id="contrastCard">
+    <div class="cxhead">
+      <h2>Why "themed" matters — same button, two treatments</h2>
+      <p>
+        The first illuminated-button pass shipped a flat, hardcoded blue halo on every skin
+        regardless of theme, and pasted a stock crossed-arrows glyph over the baked icon —
+        on Diablo Gothic's molten bronze/lava button that reads as a sticker slapped on top,
+        clashing hard against the warm palette already baked into the art. Click to compare
+        that failure mode directly against a themed, material-integrated glow sampled from
+        this exact skin's own <code>palette.ember</code> (<code>#d27828</code>) — no glyph
+        added, no ring floating above the crop; the button's own baked highlight brightens.
+      </p>
+    </div>
+    <div class="cx-grid">
+      <div class="cx-panel bad" id="cxBad">
+        <span class="cxlabel">GENERIC (bad) — shipped Option A failure mode</span>
+        <div class="cx-stage"><img src="stateful-showcase-assets/crops/diablo-playpause.png" alt=""></div>
+        <p class="explain">Hardcoded <code>#2255ff</code> ring. Ignores the skin's own warm
+          ember/bronze palette entirely — the exact clash the director steer flagged.</p>
+      </div>
+      <div class="cx-panel good" id="cxGood">
+        <span class="cxlabel">THEMED (good) — sampled from palette.ember</span>
+        <div class="cx-stage"><img src="stateful-showcase-assets/crops/diablo-playpause.png" alt=""></div>
+        <p class="explain">Screen-blend bloom seated on the button's own baked highlight,
+          coloured from <code>#d27828</code> (this skin's real <code>palette.ember</code>).
+          No added glyph — the baked triangle/bars icon does all the reading.</p>
+      </div>
+    </div>
+    <button class="cx-toggle" id="cxToggle" type="button">Toggle both ON to compare</button>
+  </div>
+</div>
+
+<main><div class="grid" id="grid"></div></main>
+
+<footer>
+  <h2>How this maps to the director</h2>
+  <p>
+    Every treatment below is either (a) a CSS/SVG overlay layer the director can drive from a
+    theme's existing <code>css</code> spec block (<code>track / fill / accent / glow</code> —
+    the same JSON already emitted per-skin in <code>results.json</code> and already consumed by
+    <code>genskin.py</code>/<code>build_player.py</code> for the shuffle-lever active glow), or
+    (b) a real two-state baked/cut sprite pair the pipeline already produces
+    (<code>shuffle_off.png</code> / <code>shuffle_on.png</code>, or the
+    <code>TOGGLE_TRACK_ENABLED</code> lever-on-a-track architecture). Nothing on this page
+    required a new model call — the point is to react to the RANGE, then port winners into
+    <code>build_player.py</code> proper. Every accent colour is sourced from that skin's own
+    <code>results.json</code> (<code>palette.*</code> or <code>css.glow</code>/<code>css.accent</code>)
+    — see each card's accent swatch + hex.
+  </p>
+  <p>
+    Source images: real <code>paint.png</code> crops (via <code>regions.json</code> device
+    rects) and real <code>*_biref/</code> cut sprites from
+    <code>assets-fallout-pipboy</code>, <code>assets-wmp-quicksilver</code>,
+    <code>assets-steam-porthole</code>, <code>assets-diablo-gothic</code>,
+    <code>assets-biomech-giger</code>, <code>assets-fa-sky</code>, <code>assets-claymation</code>,
+    <code>assets-myst-arcanum</code>, <code>assets-wc-goldshield</code>,
+    <code>assets-claymation-toggletrack1</code>, <code>assets-fa-pod-toggletrack2</code> — no
+    themes were painted or erased for this showcase.
+  </p>
+</footer>
+
+<script>
+const CROP = 'stateful-showcase-assets/crops/';
+
+// ---- accent colours, ALL sourced from each theme's own assets-<theme>/results.json ----
+// (palette.<name> hex or director css.glow/css.accent — read straight out of the real file,
+// never eyeballed/hardcoded). Cited per entry so a reviewer can verify against the source.
+const ACCENT = {
+  faSkyGlow:      { hex:'#228aff', src:'assets-fa-sky/results.json  css.glow' },
+  pipboyPhosphor: { hex:'#5ae678', src:'assets-fallout-pipboy/results.json  palette.phosphor_green [90,230,120]' },
+  pipboyAmber:    { hex:'#e6aa32', src:'assets-fallout-pipboy/results.json  palette.amber [230,170,50]' },
+  diabloEmber:    { hex:'#d27828', src:'assets-diablo-gothic/results.json  palette.ember [210,120,40]' },
+  steamBrass:     { hex:'#c68501', src:'assets-steam-porthole/results.json  palette.brass [178,138,58] (brightened for glow)' },
+  claymationOrange:{ hex:'#e18246', src:'assets-claymation/results.json  palette.clay_orange [225,130,70]' },
+  goldshieldGemBlue:{ hex:'#3c8cdc', src:'assets-wc-goldshield/results.json  palette.gem_blue [60,140,220] — the skin\'s OWN blue gem accent, paired with its gold bezel, not a mismatched generic blue' },
+  biomechGlow:    { hex:'#a8c85a', src:'assets-biomech-giger/results.json  css.glow' },
+  mystTealGlow:   { hex:'#0db795', src:'assets-myst-arcanum/results.json  palette.moss_teal [46,96,86] (brightened for glow)' },
+  claytt1Accent:  { hex:'#46a096', src:'assets-claymation-toggletrack1/results.json  css.accent' },
+};
+
+// each treatment: kind drives which DOM/behavior gets built.
+const CARDS = [
+  {
+    id:'glow', name:'Illuminated Glow / Bloom Halo', kind:'css-overlay-glow', fx:ACCENT.faSkyGlow,
+    themes:['Frutiger Aero (glossy aqua-glass)','WMP silver/chrome','sci-fi HUD glass'],
+    spec:'css.glow (theme CSS_SPEC) — screen-blended bloom seated on the button\'s own baked highlight, base pixels brighten/saturate too. Same field build_player.py already consumes for the shuffle-lever active glow.',
+    note:'<span class="mo">momentary</span> baked button never lights; here the bloom sits IN the glass, not floating above it as a ring.',
+    img: CROP+'fasky-playpause.png'
+  },
+  {
+    id:'lamp', name:'Indicator Lamp / LED Pip', kind:'css-overlay-lamp', fx:ACCENT.pipboyPhosphor,
+    themes:['Fallout Pip-Boy phosphor CRT','WMP silver/blue LED','retro terminal / industrial'],
+    spec:'state_style: "lamp" — a small baked lens/jewel position (director-picked corner) lit by css.accent/palette.phosphor_green when ON, dark/unlit when OFF',
+    note:'A tiny jewel does all the work — the button face itself never changes, only the pip.',
+    img: CROP+'pipboy-repeat.png', lampPos:{left:'78%', top:'12%'}
+  },
+  {
+    id:'sink', name:'Latched / Depressed', kind:'css-overlay-sink', fx:ACCENT.diabloEmber,
+    themes:['mechanical / industrial', 'gothic stone-carved buttons', 'tactile arcade caps'],
+    spec:'latch: true — button visually STAYS sunk into its recess while active (scale+translateY+inset shadow), springs back up on release. Pure transform, no second bake needed.',
+    note:'<span class="mo">momentary</span> springs back instantly. <span class="st">Stateful</span> holds the sunk pose for as long as the state is ON.',
+    img: CROP+'goldshield-queue.png'
+  },
+  {
+    id:'backlit', name:'Backlit Panel', kind:'css-overlay-backlit', fx:ACCENT.steamBrass,
+    themes:['steampunk vacuum-tube gauges','retro amber LCD','gothic ember glass'],
+    spec:'css.glow drives a radial screen-blend bloom behind the whole button face, coloured from palette.brass — reads as "the panel itself lit up", not an added light source.',
+    note:'Suits faces with a recessed glass/lens area already baked in (gauge dials, tube covers).',
+    img: CROP+'steam-repeat.png'
+  },
+  {
+    id:'tint', name:'Colour / Tint Shift', kind:'css-overlay-tint', fx:ACCENT.claymationOrange,
+    themes:['claymation / painterly organic','fantasy patina gold (wc-goldshield)','plastic/rubber caps'],
+    spec:'css.accent drives a color-blend tint + saturate/brightness filter on .on — dim clay body goes hot saturated when latched, tint colour pulled straight from palette.clay_orange, no glow required',
+    note:'Cheapest treatment to ship: one CSS filter + one blend layer, works on any baked material.',
+    img: CROP+'claymation-playpause.png'
+  },
+  {
+    id:'ring', name:'Ring / Halo Outline', kind:'css-overlay-ring', fx:ACCENT.goldshieldGemBlue,
+    themes:['fantasy gilt bezels (wc-goldshield)','gothic rune magic','engraved metal collars'],
+    spec:'css.glow drives an SVG stroke-dasharray ring at the button\'s own baked bezel radius + a soft screen-blend bloom under it, ignites on .on',
+    note:'Blue here is NOT a generic mismatch — it\'s this skin\'s own gem_blue accent, the same blue already baked into its gold bezel gems.',
+    img: CROP+'goldshield-repeat.png'
+  },
+  {
+    id:'filament', name:'Filament / Tube Glow', kind:'css-overlay-filament', fx:ACCENT.biomechGlow,
+    themes:['biomech bio-luminescent organic veins','steampunk vacuum tube (paired with backlit card, above)','gothic embers'],
+    spec:'css.glow, animated (slow pulse) — a soft breathing bloom seated at the button\'s own baked "core", coloured straight from this skin\'s real css.glow (sick-green Giger bioluminescence)',
+    note:'The pulse itself IS the state signal — distinguishes it from the static glow/backlit cards.',
+    img: CROP+'biomech-repeat.png'
+  },
+  {
+    id:'well', name:'Recessed Indicator Well', kind:'css-overlay-well', fx:ACCENT.mystTealGlow,
+    themes:['arcane rune wells (myst-arcanum)','Frutiger Aero liquid-glass readouts'],
+    spec:'css.accent fills the button\'s own baked recess/well with a soft pulsing glow (colour from palette.moss_teal) — no new geometry, just light seated in a cavity that\'s already dark when OFF',
+    note:'Works best on controls the model already baked with a real inset/cavity (this one already reads "ON" in its baked art).',
+    img: CROP+'myst-shuffle.png'
+  },
+  {
+    id:'swap', name:'Icon-State Swap (real baked sprite pair)', kind:'sprite-swap', fx:ACCENT.pipboyAmber,
+    themes:['any theme — genuinely shipped mechanism'],
+    spec:'a REAL cut two-state sprite pair, already produced by the pipeline: shuffle_off.png / shuffle_on.png (padlock CLOSED vs OPEN baked directly into the art) — no CSS trick, the glyph itself changes between bakes',
+    note:'This is the honest generalization of play&#8596;pause or repeat&#8594;repeat-one: a different baked glyph per state, not a colour change.',
+    img:null, offImg: CROP+'pipboy-shuffle_off.png', onImg: CROP+'pipboy-shuffle_on.png'
+  },
+  {
+    id:'cycle', name:'Multi-State Cycle (off / all / one)', kind:'cycle', fx:ACCENT.pipboyAmber,
+    themes:['any theme — badge-driven, universal'],
+    spec:'state_style: "cycle-badge" — repeat cycles off -> all -> one; OFF dims the button, ALL lights it, ONE additionally shows a small etched/lit "1" badge coloured from palette.amber. Click cycles (not a plain toggle).',
+    note:'Shown here via a CSS badge overlay ($0 alternative) — a full production bake would mold/etch the "1" as its own baked sub-element the way the padlock icon above already is.',
+    img: CROP+'pipboy-repeat.png'
+  },
+  {
+    id:'track', name:'Two-Detent Track Slider (shipped architecture)', kind:'track', fx:ACCENT.claytt1Accent,
+    themes:['any theme — this repo\'s current default toggle mechanism'],
+    spec:'TOGGLE_TRACK_ENABLED (genskin.py / build_player.py, landed 2026-07-12) — ONE real cut lever sprite slides between regions.json "detents" positions along a real baked track/channel. Real socket + real lever, both already shipped.',
+    note:'The lever itself is a real BiRefNet cut (assets-claymation-toggletrack1_biref/shuffle_lever.png); only its ON/OFF position is simulated here (exact detent math lives in build_player.py).',
+    img: CROP+'claytt1-shuffle.png', leverImg: CROP+'claytt1-lever.png',
+  },
+];
+
+const grid = document.getElementById('grid');
+
+function themeTags(list){ return list.map(t=>`<span>${t}</span>`).join(''); }
+
+function baseMeta(c){
+  return `
+    <div class="meta">
+      <h3>${c.name}</h3>
+      <div class="themes">${themeTags(c.themes)}</div>
+      <div class="spec">${c.spec}</div>
+      <div class="accentline"><span class="swatch" style="background:${c.fx.hex}"></span>${c.fx.hex} — ${c.fx.src}</div>
+      <div class="note">${c.note}</div>
+      <div class="hint">click / Enter — toggle state</div>
+    </div>`;
+}
+
+function buildCard(c){
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'card';
+  card.style.setProperty('--fx', c.fx.hex);
+  card.dataset.id = c.id;
+  card.dataset.state = '0';
+
+  let stageInner = '';
+  const stageClass = {
+    'css-overlay-glow':'glow-stage','css-overlay-lamp':'','css-overlay-sink':'sink-stage',
+    'css-overlay-backlit':'backlit-stage','css-overlay-tint':'tint-stage','css-overlay-ring':'',
+    'css-overlay-filament':'','css-overlay-well':'','sprite-swap':'swap-stage',
+    'cycle':'cycle-stage','track':'track-stage'
+  }[c.kind] || '';
+
+  if(c.kind === 'sprite-swap'){
+    stageInner = `
+      <span class="badge-pill">real cut sprites</span>
+      <span class="state-pill">OFF</span>
+      <img class="overlay-sprite state-off" src="${c.offImg}" alt="">
+      <img class="overlay-sprite state-on" src="${c.onImg}" alt="">`;
+  } else if(c.kind === 'track'){
+    stageInner = `
+      <img class="base" src="${c.img}" alt="">
+      <span class="badge-pill">real socket + real lever</span>
+      <span class="state-pill">OFF</span>
+      <img class="overlay-sprite lever" src="${c.leverImg}" alt="" style="top:14%;left:50%;transform:translate(-50%,-50%);width:70%;">`;
+  } else if(c.kind === 'cycle'){
+    stageInner = `
+      <img class="base" src="${c.img}" alt="">
+      <span class="badge-pill">badge overlay ($0)</span>
+      <span class="state-pill">OFF</span>
+      <div class="cycle-badge">1</div>`;
+  } else {
+    const fxDivMap = {
+      'css-overlay-glow': '<div class="fx fx-glow"></div>',
+      'css-overlay-lamp': `<div class="fx fx-lamp" style="left:${c.lampPos?c.lampPos.left:'75%'};top:${c.lampPos?c.lampPos.top:'12%'};"></div>`,
+      'css-overlay-sink': '<div class="fx fx-sink-shadow"></div>',
+      'css-overlay-backlit': '<div class="fx fx-backlit"></div>',
+      'css-overlay-tint': '<div class="fx fx-tint"></div>',
+      'css-overlay-ring': `<div class="fx fx-ring"><div class="ring-bloom"></div><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/></svg></div>`,
+      'css-overlay-filament': '<div class="fx fx-filament"></div>',
+      'css-overlay-well': '<div class="fx fx-well"></div>',
+    };
+    stageInner = `
+      <img class="base" src="${c.img}" alt="">
+      <span class="state-pill">OFF</span>
+      ${fxDivMap[c.kind] || ''}`;
+  }
+
+  card.innerHTML = `<div class="stage ${stageClass}">${stageInner}</div>${baseMeta(c)}`;
+
+  card.addEventListener('click', ()=>onCardActivate(card, c));
+  card.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); onCardActivate(card, c); }
+  });
+  return card;
+}
+
+function setPill(card, text){
+  const p = card.querySelector('.state-pill');
+  if(p) p.textContent = text;
+}
+
+function onCardActivate(card, c){
+  if(c.kind === 'cycle'){
+    const cur = parseInt(card.dataset.state||'0', 10);
+    const next = (cur + 1) % 3;
+    card.dataset.state = String(next);
+    setPill(card, ['OFF','ALL','ONE'][next]);
+    return;
+  }
+  if(c.kind === 'track'){
+    const on = card.classList.toggle('on');
+    const lever = card.querySelector('.lever');
+    if(on){
+      lever.style.top = '82%';
+      setPill(card, 'ON');
+    } else {
+      lever.style.top = '14%';
+      setPill(card, 'OFF');
+    }
+    return;
+  }
+  const on = card.classList.toggle('on');
+  setPill(card, on ? 'ON' : 'OFF');
+}
+
+CARDS.forEach(c=>grid.appendChild(buildCard(c)));
+
+// ---- bad-vs-good contrast banner ----
+const cxToggle = document.getElementById('cxToggle');
+const cxBad = document.getElementById('cxBad');
+const cxGood = document.getElementById('cxGood');
+cxToggle.addEventListener('click', ()=>{
+  const on = cxBad.classList.toggle('on');
+  cxGood.classList.toggle('on', on);
+  cxToggle.textContent = on ? 'Toggle both OFF' : 'Toggle both ON to compare';
+});
+</script>

@@ -1,0 +1,22 @@
+{
+ "biomech-repeat.png": "#52514f",
+ "claymation-playpause.png": "#ff6532",
+ "claytt1-lever.png": "#ff3232",
+ "claytt1-shuffle.png": "#ff3f00",
+ "diablo-playpause.png": "#b84924",
+ "fapodtt2-lever.png": "#32ccff",
+ "fapodtt2-shuffle.png": "#2493b8",
+ "fasky-playpause.png": "#32ccff",
+ "fasky-repeat.png": "#00bfff",
+ "goldshield-queue.png": "#e5892d",
+ "goldshield-repeat.png": "#e5892d",
+ "myst-shuffle.png": "#b86e24",
+ "pipboy-queue.png": "#e5c461",
+ "pipboy-repeat.png": "#e5c461",
+ "pipboy-shuffle_off.png": "#b89e4e",
+ "pipboy-shuffle_on.png": "#b89e4e",
+ "steam-repeat.png": "#e5892d",
+ "wmp-playpause.png": "#007fff",
+ "wmp-shuffle_off.png": "#4e69b8",
+ "wmp-shuffle_on.png": "#4e69b8"
+}
