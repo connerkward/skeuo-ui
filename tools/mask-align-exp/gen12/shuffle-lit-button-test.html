@@ -1,0 +1,79 @@
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>gen12 — shuffle switch-slot test: Option A (lit button)</title>
+<style>
+  :root{--mono:ui-monospace,Menlo,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0e0f13;color:#cdd2dc;font:14px/1.5 system-ui,sans-serif;
+    padding:22px 16px 60px;display:flex;flex-direction:column;align-items:center;gap:22px}
+  h1{font:600 17px var(--mono);letter-spacing:.02em;margin:0;color:#eef;text-align:center}
+  .sub{font:12px var(--mono);color:#8a90a0;text-align:center;max-width:680px}
+  .costline{font:11px var(--mono);color:#6b7180}
+  .skin{width:100%;max-width:1000px;border:1px solid #ffffff16;border-radius:12px;padding:16px;
+    background:#14161c}
+  .skin h2{font:600 13px var(--mono);color:#eef;margin:0 0 4px}
+  .skin .meta{font:11px var(--mono);color:#7f8798;margin-bottom:12px}
+  .pair{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+  .cell{flex:1 1 260px;max-width:340px;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .cell .lbl{font:600 11px var(--mono);letter-spacing:.03em;padding:3px 9px;border-radius:6px}
+  .cell.off .lbl{background:#2a2d36;color:#9aa2b4}
+  .cell.on .lbl{background:#1c3a2e;color:#7ee8b8}
+  .frame-wrap{width:100%;aspect-ratio:0.62;border-radius:10px;overflow:hidden;border:1px solid #ffffff14;
+    background:#0a0b0e;position:relative}
+  iframe{width:100%;height:100%;border:0;display:block}
+  .hint2{font:10.5px var(--mono);color:#5b6072;text-align:center;max-width:300px}
+  .legend{font:11px var(--mono);color:#7f8798;text-align:center;max-width:700px}
+</style></head><body>
+<h1>Shuffle switch-slot test — Option A: shuffle as LIT BUTTON</h1>
+<div class=sub>Real Spotify/WMP/iTunes convention: a flat icon button that <b>illuminates</b> when
+shuffle is active, instead of a physical toggle switch/lever. Sidesteps switch-sprite-legibility
+and housing-shape problems entirely — reuses the SAME silhouette-clipped-paint-crop mechanism as
+the transport buttons (playpause/prev/next/repeat/queue), just with a persistent glow state
+instead of momentary press-ink. Gated behind <code>SHUFFLE_LIT_BUTTON</code> in
+<code>build_player.py</code> (default False — every other skin's rendering is untouched).</div>
+<div class=costline>$0 — code-only render change (existing paint.png / mask.png / biref cuts reused, no new generation).</div>
+<div class=legend>Each skin below: LEFT cell = shuffle OFF (resting), RIGHT cell = shuffle ON
+(pre-toggled on load so both states are visible at a glance). Both iframes are the SAME live
+interactive player — click the shuffle icon (bottom strip) in either one to toggle it yourself.</div>
+
+<div class=skin id="skin-wmp-vario">
+  <h2>wmp-vario</h2>
+  <div class=meta>legacy two-state contract (device rect bakes an actual "two crossing arrows" icon in paint — used directly as the button face)</div>
+  <div class=pair>
+    <div class="cell off"><span class=lbl>OFF</span>
+      <div class=frame-wrap><iframe class=pf data-state=off src="assets-wmp-vario/player.html"></iframe></div>
+      <div class=hint2>resting — normal button, no glow</div></div>
+    <div class="cell on"><span class=lbl>ON</span>
+      <div class=frame-wrap><iframe class=pf data-state=on src="assets-wmp-vario/player.html"></iframe></div>
+      <div class=hint2>illuminated — brightened face + accent/glow drop-shadow + inset ring</div></div>
+  </div>
+</div>
+
+<div class=skin id="skin-wc-goldshield">
+  <h2>wc-goldshield</h2>
+  <div class=meta>legacy two-state contract (device rect bakes an actual "two crossing arrows" icon in paint — used directly as the button face)</div>
+  <div class=pair>
+    <div class="cell off"><span class=lbl>OFF</span>
+      <div class=frame-wrap><iframe class=pf data-state=off src="assets-wc-goldshield/player.html"></iframe></div>
+      <div class=hint2>resting — normal button, no glow</div></div>
+    <div class="cell on"><span class=lbl>ON</span>
+      <div class=frame-wrap><iframe class=pf data-state=on src="assets-wc-goldshield/player.html"></iframe></div>
+      <div class=hint2>illuminated — brightened face + accent/glow drop-shadow + inset ring</div></div>
+  </div>
+</div>
+<script>
+// pre-toggle every "ON" iframe's shuffle button once its player has finished building its DOM
+// (the player script is async — poll for the .ptog-lit element rather than firing on iframe
+// 'load', which fires before the player's own fetch/decode chain completes).
+document.querySelectorAll('iframe.pf[data-state="on"]').forEach(f=>{
+  const tryClick=()=>{
+    try{
+      const btn=f.contentDocument && f.contentDocument.querySelector('.ptog-lit');
+      if(btn){ btn.click(); return; }
+    }catch(e){}
+    setTimeout(tryClick,150);
+  };
+  f.addEventListener('load',()=>setTimeout(tryClick,300));
+});
+</script>
+</body></html>

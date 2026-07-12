@@ -167,6 +167,20 @@ SPRITE_TICK_CSS = KNOB_TICKS_ENABLED and TICKS_SPRITE == "css"   # live needle o
 # defaulting on — see docs/experiments/2026-07-11-toggle-cover-fit.md.
 SPRITE_COVER_FIT_ENABLED = True
 
+# feature flag (OPTION A test, 2026-07-12): render SHUFFLE as a LIT ICON BUTTON — Spotify/WMP/
+# iTunes convention, a button that illuminates when the state is ON — instead of the physical
+# two-detent track lever (TOGGLE_TRACK_ENABLED) or legacy two-state sprite-swap toggle rendered
+# below. Sidesteps the switch-sprite-legibility and housing-shape problems entirely: reuses the
+# SAME proven icon-button mechanism the transport buttons already use (silhouette-clipped paint
+# crop from mask/KEY at device/maskDevice, same drift-compensation math), not a new sprite path —
+# so it inherits that mechanism's robustness for free. A standard crossed-arrows glyph is overlaid
+# so the button never renders blank on a TOGGLE_TRACK_ENABLED skin (device rect there is baked as
+# an EMPTY housing, no icon — the lever is a separate loose cut); a legacy two-state skin's device
+# rect already bakes an actual "two crossing arrows" icon (genskin.py CONTROL_ICONS), which the
+# paint crop alone already shows under the overlay. Default False — existing toggle rendering
+# (lever or sprite-swap, whichever `isTrackArch` selects) is untouched/byte-identical when off.
+SHUFFLE_LIT_BUTTON = False
+
 TOGGLE_SIZE_JS = ("""
     const offWfrac=off.w/PW, offHfrac=off.h/PH;
     let _s=Math.max((r.device[2]*1.06)/offWfrac, (r.device[3]*1.06)/offHfrac);
@@ -206,6 +220,10 @@ HTML = f"""<!doctype html><html><head><meta charset=utf-8>
   {SEEK_TRACK_CSS}
   .ptog{{position:absolute;cursor:pointer;background-size:contain;background-repeat:no-repeat;
     background-position:center;filter:drop-shadow(0 2px 4px #0008)}}
+  .ptog-lit{{position:absolute;cursor:pointer;touch-action:manipulation;border-radius:22%;
+    transition:filter .15s,box-shadow .15s}}
+  .ptog-lit-face{{position:absolute;inset:0;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}}
+  .ptog-lit-icon{{position:absolute;inset:16%;pointer-events:none;filter:drop-shadow(0 1px 1px #0007)}}
   .viz{{position:absolute;pointer-events:none}}
   .art{{position:absolute;background-size:cover;background-position:center;pointer-events:none}}
   #queue{{position:absolute;inset:6% 6% 8%;background:#0b0d12ee;border:1px solid #ffffff22;border-radius:10px;
@@ -262,6 +280,15 @@ const V='{V}';
   for(const k of parts){{ try{{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}}catch(e){{}} }}
   const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
   let playing=false;
+  // mask + KEY colours loaded HERE (moved up from the button loop below, 2026-07-12) so the
+  // SHUFFLE_LIT_BUTTON block — which renders BEFORE the button loop, sharing its exact
+  // silhouette-extraction mechanism — has MC/MW/MH/KEY in scope. Used later by both.
+  const BTN=R.buttons||[], KEY=R.keys||{{}};
+  let MC=null,MW=0,MH=0;
+  try{{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
+    MW=mi.naturalWidth; MH=mi.naturalHeight;
+    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
+    MC.getContext('2d').drawImage(mi,0,0); }}catch(e){{}}
 
   // ---- knob (volume) ----
   const kn = Object.keys(roles).find(k=>roles[k]==='knob');
@@ -409,7 +436,79 @@ const V='{V}';
   const tg = Object.keys(roles).find(k=>roles[k]==='toggle');
   const tgR = tg && regs[tg];
   const isTrackArch = !!(tgR && (tgR.track || tgR.detents));
-  if(isTrackArch && tgR.device){{
+  const SHUFFLE_LIT_BTN = {str(SHUFFLE_LIT_BUTTON).lower()};
+  // ---- shuffle: OPTION A — LIT ICON BUTTON (SHUFFLE_LIT_BUTTON, 2026-07-12) — sidesteps the
+  // switch-sprite-legibility/housing problems entirely by reusing the transport buttons' OWN
+  // silhouette-clipped-paint-crop mechanism (same device/maskDevice drift-compensated crop,
+  // KEY-colour threshold) for material/style parity, PLUS a persistent illuminated ON state
+  // (director css.glow, else css.accent) — like a real Spotify/WMP/iTunes shuffle key. Renders
+  // INSTEAD OF the lever/sprite-swap branches below when the flag is on.
+  if(SHUFFLE_LIT_BTN && tgR && tgR.device){{
+    const r=tgR, db=r.device, mb=r.maskDevice||db;
+    const el=document.createElement('div'); el.className='pbtn ptog-lit'; el.tabIndex=0;
+    el.setAttribute('role','switch'); el.title='shuffle';
+    el.style.left=px(db)+'%'; el.style.top=py(db)+'%'; el.style.width=pw(db)+'%'; el.style.height=ph(db)+'%';
+    const face=document.createElement('div'); face.className='ptog-lit-face'; el.appendChild(face);
+    // silhouette-clipped paint crop — IDENTICAL mechanism to the transport-button loop below
+    // (crop the mask around the button blob, threshold near its KEY colour, clip the paint crop
+    // to that silhouette). On a legacy two-state shuffle asset this crop already shows the baked
+    // "two crossing arrows" icon; on a TOGGLE_TRACK_ENABLED asset the device rect is baked EMPTY
+    // (housing only — the lever is a separate loose cut), so the crossed-arrows glyph below is
+    // what actually reads there.
+    try{{
+      const PAD=0.10;
+      const crop=[mb[0]-mb[2]*PAD, mb[1]-mb[3]*PAD, mb[2]*(1+2*PAD), mb[3]*(1+2*PAD)];
+      const dx=(db[0]+db[2]/2)-(mb[0]+mb[2]/2), dy=(db[1]+db[3]/2)-(mb[1]+mb[3]/2);
+      const eb=[crop[0]+dx, crop[1]+dy, crop[2], crop[3]];
+      const cw=Math.max(4,Math.round(crop[2]*PW)), ch=Math.max(4,Math.round(crop[3]*PH));
+      const sc=document.createElement('canvas'); sc.width=cw; sc.height=ch;
+      const sg=sc.getContext('2d'); let cov=0;
+      if(MC){{ sg.drawImage(MC, crop[0]*MW, crop[1]*MH, crop[2]*MW, crop[3]*MH, 0,0,cw,ch);
+        const idat=sg.getImageData(0,0,cw,ch), dd=idat.data, k=KEY[tg]||[255,255,255];
+        for(let i=0;i<dd.length;i+=4){{ const d0=dd[i]-k[0],d1=dd[i+1]-k[1],d2=dd[i+2]-k[2];
+          if(d0*d0+d1*d1+d2*d2<7000){{ dd[i]=dd[i+1]=dd[i+2]=dd[i+3]=255; cov++; }} else dd[i+3]=0; }}
+        sg.putImageData(idat,0,0); }}
+      if(cov < cw*ch*0.02){{ sg.clearRect(0,0,cw,ch); sg.fillStyle='#fff';
+        const ix=cw*PAD/(1+2*PAD), iy=ch*PAD/(1+2*PAD);
+        sg.beginPath(); sg.roundRect(ix,iy,cw-2*ix,ch-2*iy,Math.min(cw,ch)*0.28); sg.fill(); }}
+      const fc=document.createElement('canvas'); fc.width=cw; fc.height=ch;
+      const fg=fc.getContext('2d');
+      fg.drawImage(paint, eb[0]*PW, eb[1]*PH, eb[2]*PW, eb[3]*PH, 0,0,cw,ch);
+      fg.globalCompositeOperation='destination-in'; fg.drawImage(sc,0,0);
+      face.style.left=((eb[0]-db[0])/db[2]*100)+'%';
+      face.style.top=((eb[1]-db[1])/db[3]*100)+'%';
+      face.style.width=(eb[2]/db[2]*100)+'%';
+      face.style.height=(eb[3]/db[3]*100)+'%';
+      face.style.backgroundImage='url('+fc.toDataURL()+')';
+    }}catch(e){{}}
+    // standard crossed-arrows shuffle glyph — always present so the button never reads blank;
+    // mix-blend-mode:difference (via inline colour flip on toggle, see render() below) keeps it
+    // legible over both light and dark button faces without per-theme tuning.
+    const svgNS='http://www.w3.org/2000/svg';
+    const icon=document.createElementNS(svgNS,'svg'); icon.setAttribute('viewBox','0 0 24 24');
+    icon.setAttribute('class','ptog-lit-icon');
+    icon.innerHTML='<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'
+      +'<polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line>'
+      +'<polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line>'
+      +'<line x1="4" y1="4" x2="9" y2="9"></line></g>';
+    el.appendChild(icon);
+    const glowCol={SPEC_GLOW_JS}||{SPEC_ACCENT_JS}||'#8fd9ff';
+    let ison=false;
+    const render=()=>{{
+      el.style.filter = ison
+        ? 'brightness(1.30) saturate(1.2) drop-shadow(0 0 6px '+glowCol+'cc) drop-shadow(0 0 2px '+glowCol+')'
+        : 'brightness(0.94)';
+      el.style.boxShadow = ison ? 'inset 0 0 0 1.5px '+glowCol+'aa, 0 0 8px 1px '+glowCol+'88' : 'none';
+      icon.style.color = ison ? '#fff' : '#ffffffa8';
+      el.setAttribute('aria-checked', ison?'true':'false');
+    }};
+    render();
+    const toggleShuffle=()=>{{ison=!ison;render();hint.textContent='shuffle: '+(ison?'on':'off');}};
+    el.addEventListener('click',toggleShuffle);
+    el.addEventListener('keydown',e=>{{if(e.key===' '||e.key==='Enter'){{e.preventDefault();e.stopPropagation();toggleShuffle();}}}});
+    phone.appendChild(el);
+  }}
+  else if(isTrackArch && tgR.device){{
     const r=regs[tg], track=r.device, vert=!!r.vertical, lv=CUT['shuffle_lever'];
     // CSS-LEVER FALLBACK — the biref cut is missing OR degenerate (aspect wildly off any sane
     // lever shape: a mis-cut sliver / strip-drift patch) -> render a themed CSS lever (director
@@ -480,13 +579,8 @@ const V='{V}';
   }}
   // ---- baked icon buttons: pressed state = the button's OWN pixels redrawn darkened +
   // shifted down (physical travel), clipped to its EXACT silhouette from the colour mask
-  // (cutMaskShape-style). No bbox ellipse, no gradient wash.
-  const BTN=R.buttons||[], KEY=R.keys||{{}};
-  let MC=null,MW=0,MH=0;
-  try{{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
-    MW=mi.naturalWidth; MH=mi.naturalHeight;
-    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
-    MC.getContext('2d').drawImage(mi,0,0); }}catch(e){{}}
+  // (cutMaskShape-style). No bbox ellipse, no gradient wash. (BTN/KEY/MC/MW/MH now loaded
+  // earlier, right after `playing` above — shared with the SHUFFLE_LIT_BUTTON block.)
   for(const b of BTN){{ const r=regs[b]; if(!r||!r.device) continue;
     const db=r.device, mb=r.maskDevice||db;
     const el=document.createElement('div');el.className='pbtn';el.title=b;
