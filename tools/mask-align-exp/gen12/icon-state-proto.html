@@ -1,149 +1,113 @@
 <!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>Lit icon glyph — masked to the icon, not the button</title>
+<title>Lit icon glyph — from the MASK's baked glyph outline</title>
 <style>
-body{background:#0d0d10;color:#dfe2e8;font:14px/1.55 -apple-system,system-ui,sans-serif;margin:0;padding:22px;max-width:1040px;margin:auto}
+body{background:#0d0d10;color:#dfe2e8;font:14px/1.55 -apple-system,system-ui,sans-serif;margin:0;padding:22px;max-width:1060px;margin:auto}
 h1{font-size:18px}h2{font-size:14px;margin:22px 0 6px;color:#aab}
-.note{color:#8b90a0;font-size:12.5px;max-width:74ch}
-.row{display:flex;flex-wrap:wrap;gap:24px;margin:10px 0 4px}
+.note{color:#8b90a0;font-size:12.5px;max-width:76ch}
+.row{display:flex;flex-wrap:wrap;gap:22px;margin:10px 0 4px}
 .cell{text-align:center}
 .cell canvas{display:block;background:#17171c;border-radius:10px;cursor:pointer;box-shadow:0 0 0 1px #24242c}
 .cap{font-size:12px;margin-top:6px;color:#c7ccd6}.sub{font-size:11px;color:#7a8090}
-.on .cap{color:#7fe0a8}
-kbd{background:#20232b;border-radius:4px;padding:1px 5px;font:11px monospace;color:#9fb}
+.on .cap{color:#7fe0a8}kbd{background:#20232b;border-radius:4px;padding:1px 5px;font:11px monospace;color:#9fb}
 .spill{color:#ff7676}.ok{color:#7fe0a8}
 </style>
-<h1>Lit icon — the GLYPH is masked out and lit, not the whole button</h1>
-<p class=note>The glyph is extracted from the button by luminance-keying it out of the body, then lit
-(accent + white-hot core, optional bloom clipped to the button silhouette). OFF = the plain baked
-button. <b>Click to toggle OFF↔ON.</b> The "glyph mask" cell shows exactly which pixels were isolated
-as the icon. No rim, no ring; any glow stays inside the button.</p>
+<h1>Lit icon — glyph taken straight from the MASK's baked outline</h1>
+<p class=note>The pipeline already paints the glyph into <kbd>mask.png</kbd> as an enclosed black hole inside
+each button's guide colour. So the glyph mask is exact and free: flood-fill from the crop border through
+non-button pixels → border-reachable black = background; <b>enclosed black = the glyph</b>. Then light only
+those pixels (accent + white-hot core, bloom clipped to the button). OFF = plain button. <b>Click ON cells to
+toggle.</b></p>
 <div id=app></div>
 <h2>Containment check</h2>
 <p class=note id=spillcheck>running…</p>
-
 <script>
 const V=Date.now();
-// [skin, button, device rect, key color, accent rgb, whiteCore]
 const CASES=[
+ ['assets-wmp-vario','playpause',[0.4002,0.0994,0.1997,0.0779],[255,255,0],[120,215,255]],
+ ['assets-wmp-vario','repeat',[0.3772,0.2212,0.1107,0.0854],[255,0,255],[120,215,255]],
  ['assets-wc-goldshield','playpause',[0.3082,0.5062,0.1033,0.0644],[255,0,255],[120,190,255]],
  ['assets-fa-sky','playpause',[0.2752,0.1441,0.1302,0.0814],[255,0,0],[90,255,200]],
- ['assets-wmp-vario','playpause',[0.4002,0.0994,0.1997,0.0779],[255,255,0],[120,215,255]],
 ];
-const load=src=>new Promise((res,rej)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=src+'?v='+V;});
+const load=s=>new Promise((r,j)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=j;i.src=s+'?v='+V;});
 const cvs=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
 
-function silhouette(mask,crop,key,cw,ch){
-  const sc=cvs(cw,ch),g=sc.getContext('2d');
+// flood-fill from the mask: sil = whole button (holes filled), glyph = enclosed non-body pixels
+function computeMasks(mask,crop,key,cw,ch){
+  const c=cvs(cw,ch),g=c.getContext('2d');
   g.drawImage(mask,crop[0]*mask.naturalWidth,crop[1]*mask.naturalHeight,crop[2]*mask.naturalWidth,crop[3]*mask.naturalHeight,0,0,cw,ch);
-  const d=g.getImageData(0,0,cw,ch),a=d.data;let cov=0;
-  for(let i=0;i<a.length;i+=4){const x=a[i]-key[0],y=a[i+1]-key[1],z=a[i+2]-key[2];
-    if(x*x+y*y+z*z<7000){a[i]=a[i+1]=a[i+2]=a[i+3]=255;cov++;}else a[i+3]=0;}
-  g.putImageData(d,0,0);return {sc,cov};
+  const d=g.getImageData(0,0,cw,ch).data, N=cw*ch, body=new Uint8Array(N);
+  for(let p=0,i=0;p<N;p++,i+=4){const x=d[i]-key[0],y=d[i+1]-key[1],z=d[i+2]-key[2];body[p]=(x*x+y*y+z*z<7000)?1:0;}
+  const vis=new Uint8Array(N),st=[];
+  for(let x=0;x<cw;x++){const a=x,b=(ch-1)*cw+x;if(!body[a]&&!vis[a]){vis[a]=1;st.push(a);}if(!body[b]&&!vis[b]){vis[b]=1;st.push(b);}}
+  for(let y=0;y<ch;y++){const a=y*cw,b=y*cw+cw-1;if(!body[a]&&!vis[a]){vis[a]=1;st.push(a);}if(!body[b]&&!vis[b]){vis[b]=1;st.push(b);}}
+  while(st.length){const p=st.pop(),x=p%cw,y=(p/cw)|0;
+    const nb=[p-1,p+1,p-cw,p+cw],ok=[x>0,x<cw-1,y>0,y<ch-1];
+    for(let k=0;k<4;k++){if(ok[k]){const np=nb[k];if(!vis[np]&&!body[np]){vis[np]=1;st.push(np);}}}}
+  const sil=cvs(cw,ch),sg=sil.getContext('2d'),sd=sg.createImageData(cw,ch),sa=sd.data;
+  const gl=cvs(cw,ch),gg=gl.getContext('2d'),gd=gg.createImageData(cw,ch),ga=gd.data;let cov=0,gcnt=0;
+  for(let p=0,i=0;p<N;p++,i+=4){ if(!vis[p]){sa[i]=sa[i+1]=sa[i+2]=sa[i+3]=255;cov++; if(!body[p]){ga[i]=ga[i+1]=ga[i+2]=ga[i+3]=255;gcnt++;}} }
+  sg.putImageData(sd,0,0);gg.putImageData(gd,0,0);
+  return {sil,gl,cov,gcnt};
 }
-function paintCrop(paint,crop,cw,ch,shiftY){const c=cvs(cw,ch),g=c.getContext('2d');
-  g.drawImage(paint,crop[0]*paint.naturalWidth,crop[1]*paint.naturalHeight,crop[2]*paint.naturalWidth,crop[3]*paint.naturalHeight,0,shiftY||0,cw,ch);return c;}
-function clip(c,sc){const g=c.getContext('2d');g.globalCompositeOperation='destination-in';g.drawImage(sc,0,0);g.globalCompositeOperation='source-over';return c;}
-function OFF(paint,crop,sc,cw,ch){return clip(paintCrop(paint,crop,cw,ch),sc);}
-
-// --- isolate the GLYPH: pixels inside the silhouette whose luminance deviates most from the body ---
-function glyphMask(base,sc,cw,ch){
-  const bd=base.getContext('2d').getImageData(0,0,cw,ch).data;
-  const sd=sc.getContext('2d').getImageData(0,0,cw,ch).data;
-  const L=new Float32Array(cw*ch); const inM=[];
-  for(let p=0,i=0;i<bd.length;i+=4,p++){ if(sd[i+3]>10){ L[p]=0.299*bd[i]+0.587*bd[i+1]+0.114*bd[i+2]; inM.push(L[p]); } else L[p]=-1; }
-  const s=inM.slice().sort((a,b)=>a-b); const med=s[s.length>>1];
-  // erode the silhouette edge so the button's OUTER RING/highlight never counts as glyph
-  const er=Math.max(2,Math.round(Math.min(cw,ch)*0.10));
-  const inside=(x,y)=>{ for(let dy=-er;dy<=er;dy+=er)for(let dx=-er;dx<=er;dx+=er){const nx=x+dx,ny=y+dy; if(nx<0||ny<0||nx>=cw||ny>=ch)return false; if(sd[(ny*cw+nx)*4+3]<10)return false;} return true; };
-  const dark = med>118; // light button → dark glyph, dark button → light glyph
-  const thrD=s[Math.floor(s.length*0.16)], thrL=s[Math.floor(s.length*0.84)];
-  const gl=cvs(cw,ch),gg=gl.getContext('2d'),gd=gg.createImageData(cw,ch),ga=gd.data; let cnt=0;
-  for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){ const p=y*cw+x; if(L[p]<0)continue; if(!inside(x,y))continue;
-    const hit = dark ? (L[p]<thrD) : (L[p]>thrL);
-    if(hit){ const i=p*4; ga[i]=ga[i+1]=ga[i+2]=ga[i+3]=255; cnt++; } }
-  gg.putImageData(gd,0,0);
-  return {gl,cnt,dark};
-}
-function litGlyph(gl,cw,ch,ac,bloom){ // accent-fill the glyph + white-hot core (+optional bloom, still returned; caller clips to sc)
-  const lit=cvs(cw,ch),lg=lit.getContext('2d');
-  lg.fillStyle=`rgb(${ac[0]},${ac[1]},${ac[2]})`; lg.fillRect(0,0,cw,ch);
-  lg.globalCompositeOperation='destination-in'; lg.drawImage(gl,0,0); lg.globalCompositeOperation='source-over';
-  // white-hot core: eroded glyph, brightened
-  const core=cvs(cw,ch),cg=core.getContext('2d'); cg.drawImage(gl,0,0);
-  cg.globalCompositeOperation='destination-in'; const e=Math.max(1,Math.round(Math.min(cw,ch)*0.012));
-  cg.drawImage(gl,e,e);cg.drawImage(gl,-e,-e);cg.globalCompositeOperation='source-in';cg.fillStyle='rgba(255,255,255,0.85)';cg.fillRect(0,0,cw,ch);
-  lg.drawImage(core,0,0);
-  if(!bloom) return lit;
-  const out=cvs(cw,ch),og=out.getContext('2d');
-  const halo=cvs(cw,ch),hg=halo.getContext('2d'); hg.filter='blur('+Math.max(2,Math.round(Math.min(cw,ch)*0.05))+'px)'; hg.drawImage(lit,0,0); hg.filter='none';
-  og.globalCompositeOperation='lighter'; og.globalAlpha=0.7; og.drawImage(halo,0,0); og.globalAlpha=1; og.drawImage(lit,0,0);
-  return out;
-}
-// FAITHFUL port of build_player.py's press-ink: contrast + material-aware darken + light-flip rims
-// that FOLLOW the silhouette (top darkens, bottom catch-lights) — the realism cue my crude version skipped.
-function pressedBody(paint,crop,sc,cw,ch){
-  const shift=Math.max(1,Math.round(ch*0.03));
-  const pc=cvs(cw,ch),pg=pc.getContext('2d');
+function paintCrop(paint,crop,cw,ch,sy){const c=cvs(cw,ch),g=c.getContext('2d');g.drawImage(paint,crop[0]*paint.naturalWidth,crop[1]*paint.naturalHeight,crop[2]*paint.naturalWidth,crop[3]*paint.naturalHeight,0,sy||0,cw,ch);return c;}
+function clip(c,m){const g=c.getContext('2d');g.globalCompositeOperation='destination-in';g.drawImage(m,0,0);g.globalCompositeOperation='source-over';return c;}
+function OFF(paint,crop,sil,cw,ch){return clip(paintCrop(paint,crop,cw,ch),sil);}
+function pressedBody(paint,crop,sil,cw,ch){
+  const shift=Math.max(1,Math.round(ch*0.03)),pc=cvs(cw,ch),pg=pc.getContext('2d');
   const sx=crop[0]*paint.naturalWidth,sy=crop[1]*paint.naturalHeight,sw=crop[2]*paint.naturalWidth,sh=crop[3]*paint.naturalHeight;
-  pg.filter='contrast(1.06)'; pg.drawImage(paint,sx,sy,sw,sh,0,shift,cw,ch); pg.filter='none';
-  const s8=cvs(8,8);s8.getContext('2d').drawImage(paint,sx,sy,sw,sh,0,0,8,8);
-  const dl=s8.getContext('2d').getImageData(0,0,8,8).data;let lum=0;for(let i=0;i<dl.length;i+=4)lum+=0.299*dl[i]+0.587*dl[i+1]+0.114*dl[i+2];lum/=64;
-  const dk=1-lum/255, dA=0.12+0.16*dk;
-  pg.fillStyle='rgba(0,0,0,'+dA.toFixed(3)+')';pg.fillRect(0,0,cw,ch);
+  pg.filter='contrast(1.06)';pg.drawImage(paint,sx,sy,sw,sh,0,shift,cw,ch);pg.filter='none';
+  const s8=cvs(8,8);s8.getContext('2d').drawImage(paint,sx,sy,sw,sh,0,0,8,8);const dl=s8.getContext('2d').getImageData(0,0,8,8).data;let lum=0;for(let i=0;i<dl.length;i+=4)lum+=0.299*dl[i]+0.587*dl[i+1]+0.114*dl[i+2];lum/=64;
+  const dk=1-lum/255,dA=0.12+0.16*dk;pg.fillStyle='rgba(0,0,0,'+dA.toFixed(3)+')';pg.fillRect(0,0,cw,ch);
   const rimW=Math.max(2,Math.round(ch*0.07));
-  const rim=(offY,col,alpha)=>{const rc=cvs(cw,ch),rg=rc.getContext('2d');rg.drawImage(sc,0,0);
-    rg.globalCompositeOperation='destination-out';rg.drawImage(sc,0,offY);
-    rg.globalCompositeOperation='source-in';rg.fillStyle=col;rg.fillRect(0,0,cw,ch);
-    pg.save();pg.globalAlpha=alpha;pg.filter='blur('+(rimW*0.35).toFixed(1)+'px)';pg.drawImage(rc,0,0);pg.restore();};
-  rim(rimW,'#000',0.40);
-  rim(-Math.round(rimW*0.7),'#fff',0.10+0.18*dk);
-  pg.globalCompositeOperation='destination-in';pg.drawImage(sc,0,0);pg.globalCompositeOperation='source-over';
-  return {pc,shift};
+  const rim=(oy,col,al)=>{const rc=cvs(cw,ch),rg=rc.getContext('2d');rg.drawImage(sil,0,0);rg.globalCompositeOperation='destination-out';rg.drawImage(sil,0,oy);rg.globalCompositeOperation='source-in';rg.fillStyle=col;rg.fillRect(0,0,cw,ch);pg.save();pg.globalAlpha=al;pg.filter='blur('+(rimW*0.35).toFixed(1)+'px)';pg.drawImage(rc,0,0);pg.restore();};
+  rim(rimW,'#000',0.40);rim(-Math.round(rimW*0.7),'#fff',0.10+0.18*dk);
+  pg.globalCompositeOperation='destination-in';pg.drawImage(sil,0,0);pg.globalCompositeOperation='source-over';return {pc,shift};
 }
-function GLYPH(paint,crop,sc,cw,ch,ac,mode){
-  const base=OFF(paint,crop,sc,cw,ch);
-  const {gl}=glyphMask(base,sc,cw,ch);
-  let body=base, gshift=0;
-  if(mode==='latch'){ const r=pressedBody(paint,crop,sc,cw,ch); body=r.pc; gshift=r.shift; }
+function litGlyph(gl,cw,ch,ac,bloom){
+  const lit=cvs(cw,ch),lg=lit.getContext('2d');
+  lg.fillStyle=`rgb(${ac[0]},${ac[1]},${ac[2]})`;lg.fillRect(0,0,cw,ch);
+  lg.globalCompositeOperation='destination-in';lg.drawImage(gl,0,0);lg.globalCompositeOperation='source-over';
+  const core=cvs(cw,ch),cg=core.getContext('2d');cg.drawImage(gl,0,0);cg.globalCompositeOperation='destination-in';
+  const e=Math.max(1,Math.round(Math.min(cw,ch)*0.010));cg.drawImage(gl,e,0);cg.drawImage(gl,-e,0);cg.drawImage(gl,0,e);cg.drawImage(gl,0,-e);
+  cg.globalCompositeOperation='source-in';cg.fillStyle='rgba(255,255,255,0.9)';cg.fillRect(0,0,cw,ch);lg.drawImage(core,0,0);
+  if(!bloom)return lit;
+  const out=cvs(cw,ch),og=out.getContext('2d'),halo=cvs(cw,ch),hg=halo.getContext('2d');
+  hg.filter='blur('+Math.max(2,Math.round(Math.min(cw,ch)*0.045))+'px)';hg.drawImage(lit,0,0);hg.filter='none';
+  og.globalCompositeOperation='lighter';og.globalAlpha=0.75;og.drawImage(halo,0,0);og.globalAlpha=1;og.drawImage(lit,0,0);return out;
+}
+function GLYPH(paint,crop,sil,gl,cw,ch,ac,mode){
+  const base=OFF(paint,crop,sil,cw,ch);let body=base,gs=0;
+  if(mode==='latch'){const r=pressedBody(paint,crop,sil,cw,ch);body=r.pc;gs=r.shift;}
   let lit=litGlyph(gl,cw,ch,ac,mode==='bloom'||mode==='latch');
-  if(gshift){ const t=cvs(cw,ch); t.getContext('2d').drawImage(lit,0,gshift); lit=t; } // glyph rides down with the depressed body
-  clip(lit,sc); // any bloom stays inside the button
-  const out=cvs(cw,ch),og=out.getContext('2d'); og.drawImage(body,0,0); og.drawImage(lit,0,0);
-  return out;
+  if(gs){const t=cvs(cw,ch);t.getContext('2d').drawImage(lit,0,gs);lit=t;}
+  clip(lit,sil);
+  const out=cvs(cw,ch),og=out.getContext('2d');og.drawImage(body,0,0);og.drawImage(lit,0,0);return out;
 }
-function GLYPHVIEW(paint,crop,sc,cw,ch){const base=OFF(paint,crop,sc,cw,ch);const {gl}=glyphMask(base,sc,cw,ch);
-  const out=cvs(cw,ch),g=out.getContext('2d');g.fillStyle='#101014';g.fillRect(0,0,cw,ch);
-  const m=cvs(cw,ch),mg=m.getContext('2d');mg.fillStyle='#39d98a';mg.fillRect(0,0,cw,ch);mg.globalCompositeOperation='destination-in';mg.drawImage(gl,0,0);g.drawImage(m,0,0);return out;}
-
+function VIEW(gl,cw,ch){const o=cvs(cw,ch),g=o.getContext('2d');g.fillStyle='#101014';g.fillRect(0,0,cw,ch);const m=cvs(cw,ch),mg=m.getContext('2d');mg.fillStyle='#39d98a';mg.fillRect(0,0,cw,ch);mg.globalCompositeOperation='destination-in';mg.drawImage(gl,0,0);g.drawImage(m,0,0);return o;}
 let reports=[];
 async function run(){
   const app=document.getElementById('app');
   for(const [skin,btn,dev,key,ac] of CASES){
-    const paint=await load(skin+'/paint.png'), mask=await load(skin+'/mask.png');
-    const PAD=0.10, crop=[dev[0]-dev[2]*PAD,dev[1]-dev[3]*PAD,dev[2]*(1+2*PAD),dev[3]*(1+2*PAD)];
-    const cw=Math.round(crop[2]*paint.naturalWidth), ch=Math.round(crop[3]*paint.naturalHeight);
-    const scale=Math.min(2,230/(dev[2]*paint.naturalWidth));
-    const {sc,cov}=silhouette(mask,crop,key,cw,ch);
-    const h2=document.createElement('h2');h2.textContent=skin.replace('assets-','')+' · '+btn+' · accent rgb('+ac.join(',')+')';app.appendChild(h2);
+    const paint=await load(skin+'/paint.png'),mask=await load(skin+'/mask.png');
+    const PAD=0.10,crop=[dev[0]-dev[2]*PAD,dev[1]-dev[3]*PAD,dev[2]*(1+2*PAD),dev[3]*(1+2*PAD)];
+    const cw=Math.round(crop[2]*paint.naturalWidth),ch=Math.round(crop[3]*paint.naturalHeight),scale=Math.min(2,220/(dev[2]*paint.naturalWidth));
+    const {sil,gl,cov,gcnt}=computeMasks(mask,crop,key,cw,ch);
+    const hasGlyph=gcnt> cov*0.008;
+    const h2=document.createElement('h2');h2.textContent=`${skin.replace('assets-','')} · ${btn} · glyph px=${gcnt} ${hasGlyph?'✓ baked in mask':'✗ NO glyph in mask'} · accent rgb(${ac.join(',')})`;app.appendChild(h2);
     const row=document.createElement('div');row.className='row';app.appendChild(row);
-    const looks=[
-      ['OFF',()=>OFF(paint,crop,sc,cw,ch),false],
-      ['glyph mask (isolated)',()=>GLYPHVIEW(paint,crop,sc,cw,ch),false],
-      ['ON · lit glyph',()=>GLYPH(paint,crop,sc,cw,ch,ac,'flat'),true],
-      ['ON · lit + bloom',()=>GLYPH(paint,crop,sc,cw,ch,ac,'bloom'),true],
-      ['ON · lit + latch',()=>GLYPH(paint,crop,sc,cw,ch,ac,'latch'),true],
-    ];
+    const looks=[['OFF',()=>OFF(paint,crop,sil,cw,ch),false],['glyph from mask',()=>VIEW(gl,cw,ch),false],
+      ['ON · lit glyph',()=>GLYPH(paint,crop,sil,gl,cw,ch,ac,'flat'),true],
+      ['ON · lit + bloom',()=>GLYPH(paint,crop,sil,gl,cw,ch,ac,'bloom'),true],
+      ['ON · lit + latch',()=>GLYPH(paint,crop,sil,gl,cw,ch,ac,'latch'),true]];
     for(const [label,mk,isOn] of looks){
       const cell=document.createElement('div');cell.className='cell';
       const cv=cvs(cw,ch);cv.style.width=Math.round(cw*scale)+'px';cv.style.height=Math.round(ch*scale)+'px';
-      const offC=OFF(paint,crop,sc,cw,ch), onC=mk();
-      let on=isOn;const draw=()=>{const g=cv.getContext('2d');g.clearRect(0,0,cw,ch);g.drawImage((isOn?(on?onC:offC):onC),0,0);};draw();
+      const offC=OFF(paint,crop,sil,cw,ch),onC=mk();let on=isOn;
+      const draw=()=>{const g=cv.getContext('2d');g.clearRect(0,0,cw,ch);g.drawImage(isOn?(on?onC:offC):onC,0,0);};draw();
       if(isOn){cv.onclick=()=>{on=!on;draw();cell.classList.toggle('on',on);};cell.classList.add('on');}
-      const cap=document.createElement('div');cap.className='cap';cap.textContent=label;
-      const sub=document.createElement('div');sub.className='sub';sub.textContent=isOn?'click to toggle':'';
+      const cap=document.createElement('div');cap.className='cap';cap.textContent=label;const sub=document.createElement('div');sub.className='sub';sub.textContent=isOn?'click to toggle':'';
       cell.append(cv,cap,sub);row.appendChild(cell);
-      if(isOn){const ga=onC.getContext('2d').getImageData(0,0,cw,ch).data,gs=sc.getContext('2d').getImageData(0,0,cw,ch).data;let sp=0;
-        for(let i=3;i<ga.length;i+=4)if(ga[i]>10&&gs[i]<10)sp++;reports.push(`${skin.replace('assets-','')}/${label}: ${sp} px outside button`);}
+      if(isOn){const a=onC.getContext('2d').getImageData(0,0,cw,ch).data,s=sil.getContext('2d').getImageData(0,0,cw,ch).data;let sp=0;for(let i=3;i<a.length;i+=4)if(a[i]>10&&s[i]<10)sp++;reports.push(`${skin.replace('assets-','')}/${btn}/${label}: ${sp} px outside button`);}
     }
   }
   const ok=reports.every(r=>/: 0 px/.test(r));
