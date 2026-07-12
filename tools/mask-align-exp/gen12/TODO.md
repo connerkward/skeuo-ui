@@ -1,6 +1,44 @@
 # gen12 TODO
 
 ---
+## Artdrift FIX: vpod art/viz gap widened + relative-position clause — DONE 2026-07-11 (~$0.75)
+
+The one fix the artdrift triage prescribed (entry below, commit `c237f743`), applied to the
+shared pipeline per fix-generalizable-rule:
+
+- **`genskin.py` `_vpod`:** album_art/visualizer y-centres 0.15/0.335 → **0.13/0.36** — the
+  near-hairline ~2.7%-of-DEV_H gap between the two near-identical dark-glass rects (the
+  diagnosed cause: no visual cue to keep them stacked; 14/32 gens re-arranged them) widens to
+  ~7.2%, with >2.5% margin above album_art and >2.9% before the seek groove. `_hcapsule`
+  checked and left alone (its pair already sits ~12.6% apart). Both blueprints verified by eye
+  via `--blueprint-only` renders — clean separation, no overlap. Corner-radius differentiation
+  considered and skipped: the rects share template constants (ART_*/VIZ_*) with the mask-blob
+  tracing clause; not worth fighting that contract for a second cue.
+- **Prompt (one clause, both prose + jsonspec encodings), bproof lesson — light:** appended to
+  the existing blank-screens bullet: *"The album-art window sits ABOVE the visualizer window,
+  clearly separated — never side-by-side, never swapped."* genskin previously had ZERO
+  relative-position language for the pair. No flag — corrects a diagnosed defect.
+
+**Validation (3 gens, the 3 drift-fail themes, fresh seeds, full pipeline; note: the
+orchestrate12 wrappers were killed mid-run by the harness after genskin — extract/biref/
+extract/player were resumed manually, orch.json synthesized from the roll's real gate;
+director_review was NOT run on these rolls):**
+
+| skin (seed) | arrangement (analyze_artdrift classifier) | album_art drift | drift gate | overall gate |
+|---|---|---|---|---|
+| fallout-pipboy (951) | **SWAPPED** (viz above art per mask identity; pair also relocated right) | 1807.8px | FAIL mean 925.7px | FAIL `drift:album_art` |
+| steam-porthole (952) | **STACKED-CORRECT** (whole layout shifted down uniformly, both @ 90.8°) | 541.6px | ok mean 540.8px (worst queue 753.7px) | FAIL `emptiness` (unrelated) |
+| wmp-quicksilver (953) | **STACKED-CORRECT** | **194.2px** (was 1763.4px) | FAIL mean 934.4px (worst playpause 1609.0px) | FAIL `emptiness`, `drift:playpause` |
+
+**Honest read (n=3 smoke test, not proof):** 2/3 stacked correctly; wmp-quicksilver's
+album_art collapsed 1763→194px and steam-porthole cleared the 650px album_art gate (858 mean
+pre-fix → 540.8) — but fallout-pipboy re-rolled into a swap again (its two CRT windows are
+visually identical; identity comes from the mask column), so the clause+gap did NOT eliminate
+the failure mode. Consistent with the triage's prior (~60-70% good-roll rate pre-fix): this
+n cannot distinguish "improved rate" from luck. The two new gate-fails are OTHER defect
+classes (emptiness; playpause drift on wmp) — pre-existing, not introduced by this change.
+
+---
 ## Template-drift GATE: drift measured + surfaced per roll instead of cause-hunted — DONE 2026-07-11
 
 Actionable conclusion of the drift-suspect bisect chain (root `TODO.md` "drift-suspect bisect
@@ -1030,3 +1068,25 @@ known improver). Full readout: [`driftbisect2/README.md`](driftbisect2/README.md
    an expensive generation with no way back — this is what made the ORIGINAL bisect plan
    impossible. Freeze-on-first-gate-pass (auto-commit `paint.png`/`mask.png` the moment
    `gate.PASS` flips true, before any further reroll can touch them) closes this for good.
+
+## Visual explainers — jsonspec paint verdict + media-tier proof (2026-07-11)
+
+Two guided-tour pages in the register of `imgjson/explain.html` (real artifacts, plain-language
+readings, computed-not-hand-typed numbers, bottom conclusion):
+
+- [`jsonspec/explain.html`](jsonspec/explain.html) — "did fenced-JSON prompts help the paint?"
+  Real prose-vs-fenced-JSON prompt excerpts (CONTROL roster_desc reconstructed from stored
+  `keyNames` + `genskin.py`'s static `ICON` dict; TREATMENT block pulled verbatim from a stored
+  `results.json.prompt`), per-pair paint thumbnails (4 pairs) with bleed/drift annotated,
+  `PROMPT_JSON_SPEC` flag state (`genskin.py:80`, default `False`), the bonus box-convention
+  probe in brief with a pointer to `imgjson/explain.html#round2`, bottom verdict (neutral on
+  drift, mildly helpful on bleed — matches `verdict.json`).
+- [`MEDIA-EXPLAIN.html`](MEDIA-EXPLAIN.html) — where gen12 media lives + proof it's safe. Three
+  tiers visualized (211 files / 454.6MB git-tracked runtime; 36 files / 358.5MB Drive-offloaded
+  bulk; 1 file / 15.6MB frozen baseline so far) computed from `git ls-files` +
+  `media-manifest.json`, the 36/36 `rclone check` evidence quoted verbatim, every offloaded
+  file's clickable Drive link in a table, an inline-SVG freeze-on-pass flow diagram, and the
+  ~699MB pushed-pack history-reclaim item stated plainly as open + user-gated.
+
+Small link-backs added: `jsonspec/results.html` header now points to `explain.html`;
+`MEDIA-MANIFEST.md` header now points to `MEDIA-EXPLAIN.html`.

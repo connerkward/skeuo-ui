@@ -1,5 +1,8 @@
 # gen12 media manifest — bulk media offloaded to Google Drive
 
+Guided walkthrough (three tiers visualized, rclone-check evidence, clickable Drive links,
+freeze-on-pass flow diagram, open items): [MEDIA-EXPLAIN.html](MEDIA-EXPLAIN.html).
+
 Generated: 2026-07-11T15:52:27  
 Drive root: `gdrive:skeuo-ui/gen12-media/2026-07-11/` (rclone remote `gdrive:`, account conner.k.ward@gmail.com)  
 Files: 36 · Total: 358,544,116 bytes (358.5 MB)

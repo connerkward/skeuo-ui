@@ -1,0 +1,263 @@
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>gen12 media explained — where it lives, and proof it's safe</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100%}
+body{font:15px/1.6 -apple-system,system-ui,sans-serif;margin:0;padding:0 0 4rem;background:#101014;color:#e4e4ea}
+.wrap{max-width:1040px;margin:0 auto;padding:0 clamp(1rem,4vw,3rem)}
+a{color:#7ab7ff}
+.topnav{background:#0a0a0d;border-bottom:1px solid #26262e;padding:.7rem clamp(1rem,4vw,3rem);font-size:.8rem;color:#8a90a0}
+.topnav a{margin-right:1rem}
+h1{font-size:1.7rem;margin:1.6rem 0 .3rem;line-height:1.25}
+h2{font-size:1.05rem;text-transform:uppercase;letter-spacing:.04em;color:#8a90a0;margin:3rem 0 .2rem;display:flex;align-items:center;gap:.5rem}
+h2 .num{background:#1e293b;color:#7ab7ff;border-radius:50%;width:1.6em;height:1.6em;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700}
+h3{font-size:1rem;margin:0 0 .5rem}
+p{margin:.6rem 0}
+.lede{font-size:1.1rem;color:#cfd3dc;background:#151822;border:1px solid #263047;border-radius:10px;padding:1rem 1.2rem;margin-top:.6rem}
+.meta{background:#181820;border:1px solid #2a2a34;border-radius:8px;padding:.6rem 1rem;font-size:.82rem;color:#9a9aa4;margin:1rem 0 0}
+.meta b{color:#c8c8d4}
+code,pre{font:.78rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+pre{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:.8rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.tablewrap{overflow-x:auto;max-width:100%;margin:.8rem 0}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{border:1px solid #2a2a34;padding:.5rem .65rem;text-align:left;vertical-align:top}
+th{background:#1a1a22;color:#c8c8d4}
+tr:hover td{background:#191a20}
+.reading{color:#9a9aa4;font-size:.82rem}
+.good{color:#7ae08a}.bad{color:#ff8a8a}.warn{color:#ffc266}
+.tiergrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:1rem}
+.tier{background:#15161c;border:1px solid #2a2a34;border-radius:12px;padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.4rem}
+.tier .n{font-size:2.1rem;font-weight:700;color:#eaeaea;line-height:1}
+.tier .lbl{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#8a90a0}
+.tier .bytes{font-size:.95rem;color:#c8c8d4;margin-top:.2rem}
+.tier .desc{font-size:.82rem;color:#9a9aa4;margin-top:.4rem}
+.tier.t1{border-top:3px solid #4fc3f7}
+.tier.t2{border-top:3px solid #ffaa33}
+.tier.t3{border-top:3px solid #7ae08a}
+.callout{background:#241a14;border:1px solid #4a3420;border-radius:8px;padding:.8rem 1rem;font-size:.9rem;color:#e8c9a0;margin:.8rem 0}
+.verdict{background:#122015;border:1px solid #2c4a2c;border-radius:10px;padding:1.1rem 1.3rem;margin:1rem 0}
+.verdict b{color:#eaeaea}
+.openitem{background:#241608;border:2px solid #a85a1a;border-radius:12px;padding:1.2rem 1.4rem;margin:1.2rem 0 2rem}
+.openitem h2{margin:0 0 .5rem;color:#ffb066;font-size:1.05rem;border:none;letter-spacing:.02em}
+.openitem .tag{display:inline-block;background:#a85a1a;color:#1a1005;border-radius:5px;padding:.1rem .55rem;font:700 .72rem ui-monospace,monospace;letter-spacing:.03em;margin-right:.5rem;vertical-align:1px}
+.diagram{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:1rem;margin:.8rem 0;overflow-x:auto}
+svg text{fill:#c8c8d4;font-size:11px;font-family:ui-monospace,monospace}
+svg .stepbox{fill:#15161c;stroke:#2a2a34;stroke-width:1.5;rx:8}
+svg .steplbl{fill:#eaeaea;font-size:12px;font-weight:700}
+svg .stepsub{fill:#9a9aa4;font-size:9.5px}
+svg .arrow{stroke:#4fc3f7;stroke-width:2;fill:none;marker-end:url(#arrowhead)}
+.evidence{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:.9rem 1rem;font-size:.85rem;color:#c9d4c9;margin:.7rem 0}
+.evidence code{color:#7ae08a}
+</style></head><body>
+
+<div class=topnav><div class=wrap>
+<a href="dashboard12.html">&larr; gen12 dashboard</a>
+<a href="MEDIA-MANIFEST.md">MEDIA-MANIFEST.md</a>
+<a href="media-manifest.json">media-manifest.json</a>
+</div></div>
+
+<div class=wrap>
+
+<h1>Where the gen12 media lives — and proof it's safe</h1>
+<div class=meta><b>Dev-facing walkthrough</b> of gen12's media policy (revised 2026-07-11).
+Every count, byte total, and Drive link below is pulled directly from
+<code>media-manifest.json</code> and live <code>git ls-files</code> — nothing here is
+hand-typed.</div>
+
+<h2><span class=num>1</span>The three tiers</h2>
+<p class=lede>gen12 generates a lot of media — 4K paint sheets, BiRefNet mattes, PBR maps —
+but not all of it is needed at runtime. Only what <code>player.html</code>,
+<code>player-pbr.html</code>, and <code>dashboard12.html</code> actually load stays
+committed to git; everything else durable-but-non-runtime lives on Drive with a
+sha256-verified mirror; and every skin's first gate-PASS roll gets a permanent frozen
+snapshot so a later re-roll can never make it unrecoverable.</p>
+
+<div class=tiergrid>
+<div class="tier t1">
+<div class=lbl>Tier 1 &middot; git-tracked runtime</div>
+<div class=n>211 <span style="font-size:1rem;font-weight:400;color:#8a90a0">files</span></div>
+<div class=bytes>476,638,781 bytes <span class=reading>(454.6 MB)</span></div>
+<div class=desc><code>assets-*/paint.png</code> + <code>mask.png</code> (30 files, 239.99 MB) —
+the player background + compositing mask · <code>assets-*_biref/{device,seek,vol,
+shuffle_off,shuffle_on,extra-*}.png</code> (111 files, 149.48 MB) — cut sprites both
+players load · <code>assets-*_pbr/{basecolor,normal,roughness,metalness,glass,btn-ids,
+emissive,art-mask,viz-mask,meta.json}</code> (70 files, 87.17 MB) — <code>player-pbr.html</code>'s
+maps. Committed as plain git objects — every commit is a permanent snapshot.</div>
+</div>
+<div class="tier t2">
+<div class=lbl>Tier 2 &middot; Drive-offloaded bulk</div>
+<div class=n>36 <span style="font-size:1rem;font-weight:400;color:#8a90a0">files</span></div>
+<div class=bytes>358,544,116 bytes <span class=reading>(358.5 MB)</span></div>
+<div class=desc>No runtime <code>img</code>/<code>url()</code>/<code>fetch</code> reference
+anywhere in the committed player/dashboard HTML (verified by grep, per
+<code>.gitignore</code>'s policy header): <code>assets-*/joint-4k.png</code> (15 files, the
+paid 4K joint sheet — also recoverable from git history commit <code>39d76200</code>),
+<code>assets-*_biref/global-matte.png</code> except steam-porthole (14 files — $0-recomputable
+locally via BiRefNet), <code>assets-*_pbr/height.png</code> (7 files, unreferenced by any
+player). Git-ignored on disk; Drive is the durable mirror.</div>
+</div>
+<div class="tier t3">
+<div class=lbl>Tier 3 &middot; frozen baselines</div>
+<div class=n>1 <span style="font-size:1rem;font-weight:400;color:#8a90a0">file so far</span></div>
+<div class=bytes>16,403,300 bytes <span class=reading>(15.6 MB)</span></div>
+<div class=desc><code>fallout-vault</code> seed 649, gate-PASS date 2026-07-11 — the first
+skin to gate-PASS since <code>FREEZE_ON_PASS</code> went live. One permanent Drive copy of
+its <code>joint-4k.png</code> per gate-PASS (grows by one per skin as more re-roll and pass);
+<code>paint.png</code>/<code>mask.png</code> are git-tracked, so git itself is their
+freeze — no separate upload needed for those two.</div>
+</div>
+</div>
+<p class=reading>Methodology: tier 1 = <code>git ls-files</code> against the exact runtime
+glob set documented in <code>.gitignore</code>'s policy header, sized via local
+<code>stat</code>. Tier 2 + 3 = every row of <code>media-manifest.json</code>'s
+<code>files</code> array, split on its <code>kind</code> field. Total repo-tracked media
+across ALL of gen12 (including non-runtime experiment dirs like <code>jsonspec/</code>,
+<code>twoimg/</code>, <code>bproof/</code> — not just the 3 tiers above) is separately
+1,073 PNG/JPG files.</p>
+
+<h2><span class=num>2</span>The verification evidence</h2>
+<p>Every Drive-offloaded file was checksummed on both ends — not just uploaded and trusted.
+Quoting <a href="MEDIA-MANIFEST.md">MEDIA-MANIFEST.md</a>'s own integrity line verbatim:</p>
+<div class=evidence><code>Integrity: sha256 computed locally before upload; upload ran
+`rclone copy --checksum`; post-upload `rclone check` (Drive md5) passed for all files;
+sizes match.</code></div>
+<p>The result, quoting <code>media-manifest.json</code>'s <code>note</code> field: <em>"sha256
+computed locally pre-upload; remote integrity verified via <code>rclone check --files-from
+...</code> (Drive md5 comparison) + size match."</em> Post-upload, <code>rclone check</code>
+reported <b class=good>36/36 matching, 0 differences</b> across every offloaded file — every
+byte on Drive is confirmed identical to what left this machine, not merely "upload didn't
+error."</p>
+<div class=callout><b>Render verify (from TODO.md):</b> after the offload + <code>git rm
+--cached</code>, <code>dashboard12.html</code>'s only offload-class request is
+steam-porthole's <code>global-matte.png</code> (200 OK — the one deliberately-kept exception);
+<code>steam-porthole/player.html</code> renders with zero console errors and zero requests to
+any offloaded file. The two pre-existing <code>player-pbr.html</code> 404s (claymation,
+fa-sky) predate this offload — those PBR passes were never generated for those two skins.</div>
+
+<h2><span class=num>3</span>Every offloaded file, with its Drive link</h2>
+<p>All 36 bulk-offload files plus the 1 frozen baseline, straight from
+<code>media-manifest.json</code> — repo path (folder), byte size, sha256 prefix, and a
+clickable Drive link to the actual file.</p>
+<div class=tablewrap><table>
+<tr><th>category</th><th>folder</th><th>bytes</th><th>sha256</th><th>Drive</th></tr>
+<tr><td><b>frozen baseline</b></td><td><code>assets-fallout-vault</code> (seed 649, PASS
+2026-07-11)</td><td style="text-align:right">16,403,300</td><td><code>5673acc7dfda45b5&hellip;</code></td>
+<td><a href="https://drive.google.com/open?id=1fFEwakeXqtsDzxrk5_bf04xSaVrtxSKr" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-claymation_biref</code></td><td style="text-align:right">5,671,864</td><td><code>7f04c6b0c746dba3&hellip;</code></td><td><a href="https://drive.google.com/open?id=1fvf2Y_vuOEqHG3Q-73QsAI2_-EnMAzc4" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-diablo-gothic_biref</code></td><td style="text-align:right">8,091,225</td><td><code>aaed2db2fc54d351&hellip;</code></td><td><a href="https://drive.google.com/open?id=1-5fhi9nlrrO2pXOflpnTDKKx1yzdE_Eh" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-fa-pod_biref</code></td><td style="text-align:right">7,519,383</td><td><code>0923ea900b917d5c&hellip;</code></td><td><a href="https://drive.google.com/open?id=1My9oiJiPhhMkEo1SjzFunGOBlOB_thp9" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-fa-sky_biref</code></td><td style="text-align:right">7,575,231</td><td><code>32e73ffa10afab9d&hellip;</code></td><td><a href="https://drive.google.com/open?id=1cqDRc29dSdPQuiVq6P6w2v26HkZrRCWP" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-fallout-pipboy_biref</code></td><td style="text-align:right">8,779,975</td><td><code>48d8e2c9a6d069d8&hellip;</code></td><td><a href="https://drive.google.com/open?id=1YTSSIPpkQilmwXYbDpFyVQvBXr-yb-a2" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-fallout-vault_biref</code></td><td style="text-align:right">7,609,759</td><td><code>3825ea8e2de86d3a&hellip;</code></td><td><a href="https://drive.google.com/open?id=1m5-xuwv1QyjcnatAHg8LPLyFJgV7u_D_" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-myst-arcanum_biref</code></td><td style="text-align:right">10,095,287</td><td><code>a9d1b03b828ffd84&hellip;</code></td><td><a href="https://drive.google.com/open?id=1hoOWUcGn9lLijHwqq5sbuSXgQrkwbLbQ" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-n64-cutscene_biref</code></td><td style="text-align:right">7,858,713</td><td><code>213776121ddca9ca&hellip;</code></td><td><a href="https://drive.google.com/open?id=1Auup2-ihU0J_awKf14f5GQcIVgNnFV2Q" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-n64-prerender-character_biref</code></td><td style="text-align:right">7,041,696</td><td><code>4434c92eef29a7e1&hellip;</code></td><td><a href="https://drive.google.com/open?id=1Gt9v7-R7b5O4HA4INXCRrkhijzPocy20" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-ps1-crunchy_biref</code></td><td style="text-align:right">10,260,327</td><td><code>e3200df4967102a7&hellip;</code></td><td><a href="https://drive.google.com/open?id=19X5A1HGDbii930wjX1DgLqV1yl8lb9AU" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-ps1-wild_biref</code></td><td style="text-align:right">7,889,747</td><td><code>609012ceea8ab63b&hellip;</code></td><td><a href="https://drive.google.com/open?id=1_KVyYuL7KXduZL4UpFrfab6-pREFU8vg" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-wc-goldshield_biref</code></td><td style="text-align:right">9,246,498</td><td><code>7c76e9128d89ad64&hellip;</code></td><td><a href="https://drive.google.com/open?id=1OdQNlq80N8_NTuF5y31I4Fk2kRZGyiY4" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-wmp-quicksilver_biref</code></td><td style="text-align:right">8,598,162</td><td><code>aa2da792ef321eb4&hellip;</code></td><td><a href="https://drive.google.com/open?id=1-zvjciocfhO0-qgoBcZr6SinBdTsvYGf" target=_blank>open</a></td></tr>
+<tr><td>BiRefNet global-matte</td><td><code>assets-wmp-vario_biref</code></td><td style="text-align:right">7,843,782</td><td><code>6aea5b59db39ea8f&hellip;</code></td><td><a href="https://drive.google.com/open?id=1yXhaFlDG0OAba1R5VftoqAa6rSoOlol2" target=_blank>open</a></td></tr>
+<tr><td>PBR height map</td><td><code>assets-diablo-gothic_pbr</code></td><td style="text-align:right">391,774</td><td><code>cd45d2704ba7666c&hellip;</code></td><td><a href="https://drive.google.com/open?id=1eayBMk3hDvetAaOVLHIA_kt2ndojvjdL" target=_blank>open</a></td></tr>
+<tr><td>PBR height map</td><td><code>assets-fa-pod_pbr</code></td><td style="text-align:right">307,339</td><td><code>7f92f69f1b2b2479&hellip;</code></td><td><a href="https://drive.google.com/open?id=1ybnlJ0dy4W2oy36zPV5RSbGlPoVgqQ9b" target=_blank>open</a></td></tr>
+<tr><td>PBR height map</td><td><code>assets-fallout-pipboy_pbr</code></td><td style="text-align:right">318,091</td><td><code>87f5b6e09f66b303&hellip;</code></td><td><a href="https://drive.google.com/open?id=1uJM5cIaA7P-FolHe65nWagzybaqZXZxz" target=_blank>open</a></td></tr>
+<tr><td>PBR height map</td><td><code>assets-fallout-vault_pbr</code></td><td style="text-align:right">277,720</td><td><code>05a45a7aee68d435&hellip;</code></td><td><a href="https://drive.google.com/open?id=1nID1c7MzF_Nu_yFkQ0r_eDdJgdGIgvcq" target=_blank>open</a></td></tr>
+<tr><td>PBR height map</td><td><code>assets-n64-cutscene_pbr</code></td><td style="text-align:right">377,919</td><td><code>42b97b3585049743&hellip;</code></td><td><a href="https://drive.google.com/open?id=1avYVyWofkMxBh40X1DMGYR-wesC6CJcB" target=_blank>open</a></td></tr>
+<tr><td>PBR height map</td><td><code>assets-steam-porthole_pbr</code></td><td style="text-align:right">363,514</td><td><code>d74edc3994fab207&hellip;</code></td><td><a href="https://drive.google.com/open?id=1if7x1PZts7WPLykm-nf7KK36NtZ2BI8f" target=_blank>open</a></td></tr>
+<tr><td>PBR height map</td><td><code>assets-wc-goldshield_pbr</code></td><td style="text-align:right">449,051</td><td><code>f37fa01dbc857cfa&hellip;</code></td><td><a href="https://drive.google.com/open?id=1U2fJOpgVZPpNsunG0dGr1B1I2aEDB77z" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-claymation</code></td><td style="text-align:right">14,754,000</td><td><code>746a0761b26427ba&hellip;</code></td><td><a href="https://drive.google.com/open?id=1dyYqxNVbDU0N0-1wmObZhg6YndfK0Lpj" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-diablo-gothic</code></td><td style="text-align:right">16,347,597</td><td><code>24b0d6766814d809&hellip;</code></td><td><a href="https://drive.google.com/open?id=1XlR18lffDga8WGTg6Q_1GYnlE0aOORts" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-fa-pod</code></td><td style="text-align:right">15,788,833</td><td><code>7e953a15222d51d6&hellip;</code></td><td><a href="https://drive.google.com/open?id=1HFxiMzrbvae6qOpkRs5N-D2vNg9eBx7F" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-fa-sky</code></td><td style="text-align:right">16,491,825</td><td><code>091b53637ca50500&hellip;</code></td><td><a href="https://drive.google.com/open?id=1XrwIWlwCNiiyytBw49twN2Ti8isFxqHE" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-fallout-pipboy</code></td><td style="text-align:right">15,999,836</td><td><code>20cb71b6e2c1f54e&hellip;</code></td><td><a href="https://drive.google.com/open?id=1lLACgYokZNoFbok4jDciU5HAoL7VhPak" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-fallout-vault</code></td><td style="text-align:right">16,403,300</td><td><code>5673acc7dfda45b5&hellip;</code></td><td><a href="https://drive.google.com/open?id=1z2_uYlWZzj5ix6zx-QKN2h69EPVYp1KR" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-myst-arcanum</code></td><td style="text-align:right">18,051,851</td><td><code>1c8c4f68b98a1b8a&hellip;</code></td><td><a href="https://drive.google.com/open?id=1WwS4IsghC8CYxU0pBABpvg6ndQmOSLGg" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-n64-cutscene</code></td><td style="text-align:right">14,921,612</td><td><code>b0ee708bcab5adb2&hellip;</code></td><td><a href="https://drive.google.com/open?id=1HDyWsNAmgk87uvRJ_jan-gVzXcfiBX0k" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-n64-prerender-character</code></td><td style="text-align:right">14,204,977</td><td><code>4a67584712788df6&hellip;</code></td><td><a href="https://drive.google.com/open?id=14v7eaJjDT9AHmVS2AEPQvlk-OwGZ4df_" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-ps1-crunchy</code></td><td style="text-align:right">17,484,776</td><td><code>5af4c9e7ace668ba&hellip;</code></td><td><a href="https://drive.google.com/open?id=14xWxMhcjLeYAZISqkr6NQUXhEtvNQKSt" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-ps1-wild</code></td><td style="text-align:right">16,663,633</td><td><code>1e2f8c47400a76e4&hellip;</code></td><td><a href="https://drive.google.com/open?id=1MkZ7pyWvSZGGERqhPjsrQtafnXeU_X7o" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-steam-porthole</code></td><td style="text-align:right">16,646,435</td><td><code>f393b618982227f6&hellip;</code></td><td><a href="https://drive.google.com/open?id=1y5hg8RrvfDxRexJ6yoYu1dDxxlWb1iHq" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-wc-goldshield</code></td><td style="text-align:right">16,793,368</td><td><code>7956fa2f402a97a3&hellip;</code></td><td><a href="https://drive.google.com/open?id=1LBEhzLtwUjRws21aMIaaDM4vK87BVw6l" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-wmp-quicksilver</code></td><td style="text-align:right">16,339,872</td><td><code>1a896155d1c63c6b&hellip;</code></td><td><a href="https://drive.google.com/open?id=1OKh5cEk9OGF3c01ywnL5uU0Yupu5jJPY" target=_blank>open</a></td></tr>
+<tr><td>joint-4k (paid Vertex roll)</td><td><code>assets-wmp-vario</code></td><td style="text-align:right">15,085,144</td><td><code>82594a2e9e787336&hellip;</code></td><td><a href="https://drive.google.com/open?id=1jOLaxuHUQ-IYTaNVfFwAuZue1RSZfCTW" target=_blank>open</a></td></tr>
+</table></div>
+<p class=reading>Full sha256 values: <a href="media-manifest.json">media-manifest.json</a> (this
+page shows the first 16 hex chars of each).</p>
+
+<h2><span class=num>4</span>The freeze-on-pass flow</h2>
+<p>Every skin that first clears the extract12 gate gets its paid <code>joint-4k.png</code>
+permanently mirrored the moment it matters — before a later re-roll can silently overwrite
+it. From <code>freeze_baseline.py</code>, called automatically by
+<code>orchestrate12.py</code> behind <code>FREEZE_ON_PASS</code>:</p>
+<div class=diagram>
+<svg viewBox="0 0 920 130" width="100%" style="max-width:920px;display:block;margin:0 auto">
+<defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+<path d="M0,0 L6,3 L0,6 Z" fill="#4fc3f7"/></marker></defs>
+<rect class=stepbox x="10" y="30" width="190" height="70" rx="8"></rect>
+<text class=steplbl x="30" y="58">gate PASS</text>
+<text class=stepsub x="30" y="76">orchestrate12.py's</text>
+<text class=stepsub x="30" y="88">extract12 gate, first time</text>
+<line class=arrow x1="200" y1="65" x2="242" y2="65"></line>
+
+<rect class=stepbox x="248" y="30" width="190" height="70" rx="8"></rect>
+<text class=steplbl x="268" y="52">sha256 check</text>
+<text class=stepsub x="268" y="70">local sha256 of joint-4k.png;</text>
+<text class=stepsub x="268" y="82">skip if this exact hash is</text>
+<text class=stepsub x="268" y="94">already in the manifest</text>
+<line class=arrow x1="438" y1="65" x2="480" y2="65"></line>
+
+<rect class=stepbox x="486" y="30" width="190" height="70" rx="8"></rect>
+<text class=steplbl x="506" y="52">rclone copy</text>
+<text class=stepsub x="506" y="70">--checksum to gdrive:.../frozen/</text>
+<text class=stepsub x="506" y="82">&lt;skin&gt;/&lt;seed&gt;-&lt;date&gt;/</text>
+<text class=stepsub x="506" y="94">joint-4k.png</text>
+<line class=arrow x1="676" y1="65" x2="718" y2="65"></line>
+
+<rect class=stepbox x="724" y="30" width="186" height="70" rx="8" style="stroke:#7ae08a"></rect>
+<text class=steplbl x="744" y="52">manifest row</text>
+<text class=stepsub x="744" y="70">MEDIA-MANIFEST.md +</text>
+<text class=stepsub x="744" y="82">media-manifest.json,</text>
+<text class=stepsub x="744" y="94">Drive link recorded</text>
+</svg>
+</div>
+<p class=reading><code>paint.png</code>/<code>mask.png</code> are git-tracked already — git
+itself is their freeze, so this script only ever uploads <code>joint-4k.png</code>. Idempotent
+by sha256 (a repeat gate-PASS on unchanged bytes is a no-op) and never blocks the pipeline: any
+rclone failure (offline, expired auth) logs loudly to stderr and the script still exits 0 —
+freezing is a durability nice-to-have bolted onto the gate-PASS path, never a reason to fail a
+generation run.</p>
+
+<h2><span class=num>5</span>What's still open</h2>
+<div class=openitem>
+<h2><span class=tag>OPEN ITEM</span>~699MB of history still sits in the pushed pack</h2>
+<p>The commit that first added paid rolls for all 15 skins (~699MB, plain git objects — no
+LFS on gen12) is still fully present in <code>origin</code>'s history at commit
+<code>39d76200</code>, even though the later offload + <code>git rm --cached</code> removed
+those files from the current tip. Removing files from the tip does <b>not</b> shrink an
+already-pushed pack — the blobs stay reachable through history until a coordinated
+<code>git filter-repo</code>/BFG rewrite forces them out, and that rewrite requires a
+force-push to a shared <code>main</code>.</p>
+<p><b>This is deliberately NOT done.</b> A history rewrite + force-push on a shared branch
+needs explicit user sign-off before it happens — it changes every collaborator's commit SHAs
+and requires everyone to re-clone or hard-reset. Repo-wide (not gen12-scoped) <code>git
+count-objects -vH</code> at the time this was flagged: 5,364 loose + 19,867 in-pack objects,
+16.68 GiB total, 5.25 GiB across 18 packs.</p>
+</div>
+
+<h2><span class=num>6</span>Conclusion</h2>
+<div class=verdict>
+<p><b>The offload is verified, not assumed.</b> 36/36 files passed a post-upload
+<code>rclone check</code> (Drive md5 vs local, plus size match) — not "the upload command
+didn't error," an actual independent checksum comparison after the bytes landed. Every
+runtime-required byte (211 files, 454.6 MB) stays committed where a fresh clone finds it with
+no extra step; every non-runtime byte (358.5 MB) has a durable, checksummed Drive mirror plus
+its sha256 recorded locally, so a restore is one <code>rclone copyto</code> away; and the one
+skin that has passed its gate so far has a permanent frozen snapshot immune to a future
+re-roll. The only unresolved piece is the pre-offload history still occupying pack space on
+origin — a real but non-urgent cost (disk, not correctness) that stays parked until the user
+explicitly signs off on a shared-branch history rewrite.</p>
+</div>
+
+</div>
+</body></html>

@@ -1,0 +1,299 @@
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>jsonspec explained — did fenced-JSON prompts help the paint?</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100%}
+body{font:15px/1.6 -apple-system,system-ui,sans-serif;margin:0;padding:0 0 4rem;background:#101014;color:#e4e4ea}
+.wrap{max-width:980px;margin:0 auto;padding:0 clamp(1rem,4vw,3rem)}
+a{color:#7ab7ff}
+.topnav{background:#0a0a0d;border-bottom:1px solid #26262e;padding:.7rem clamp(1rem,4vw,3rem);font-size:.8rem;color:#8a90a0}
+.topnav a{margin-right:1rem}
+h1{font-size:1.7rem;margin:1.6rem 0 .3rem;line-height:1.25}
+h2{font-size:1.05rem;text-transform:uppercase;letter-spacing:.04em;color:#8a90a0;margin:3rem 0 .2rem;display:flex;align-items:center;gap:.5rem}
+h2 .num{background:#1e293b;color:#7ab7ff;border-radius:50%;width:1.6em;height:1.6em;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700}
+h3{font-size:1rem;margin:0 0 .5rem}
+p{margin:.6rem 0}
+.lede{font-size:1.1rem;color:#cfd3dc;background:#151822;border:1px solid #263047;border-radius:10px;padding:1rem 1.2rem;margin-top:.6rem}
+.meta{background:#181820;border:1px solid #2a2a34;border-radius:8px;padding:.6rem 1rem;font-size:.82rem;color:#9a9aa4;margin:1rem 0 0}
+.meta b{color:#c8c8d4}
+.pill{display:inline-block;background:#1e293b;color:#7ab7ff;border-radius:5px;padding:.05rem .5rem;font:.75rem ui-monospace,monospace;margin-left:.3rem}
+code,pre{font:.78rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+pre{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:.8rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.card{background:#15161c;border:1px solid #2a2a34;border-radius:12px;padding:1.1rem 1.2rem;margin:1rem 0}
+.armgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem;margin-top:1rem}
+.arm{background:#15161c;border:1px solid #2a2a34;border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+.arm h3{display:flex;align-items:center;gap:.5rem}
+.armtag{background:#26262e;color:#e4e4ea;border-radius:5px;padding:.1rem .5rem;font:.72rem ui-monospace,monospace}
+.arm .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#7a7a86;margin:.3rem 0 -.1rem}
+.arm img{width:100%;height:auto;border-radius:6px;border:1px solid #2a2a34;display:block;background:#000}
+.figcap{font-size:.72rem;color:#8a90a0;margin-top:.25rem}
+.verdictline{font-size:.85rem;border-top:1px dashed #2a2a34;padding-top:.5rem;margin-top:.2rem}
+.good{color:#7ae08a}.bad{color:#ff8a8a}.warn{color:#ffc266}
+.legend{display:flex;flex-wrap:wrap;gap:.9rem;font-size:.75rem;color:#9a9aa4;margin-top:.5rem;align-items:center}
+.sw{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.3rem;vertical-align:-1px}
+.tablewrap{overflow-x:auto;max-width:100%;margin:.8rem 0}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{border:1px solid #2a2a34;padding:.5rem .65rem;text-align:left;vertical-align:top}
+th{background:#1a1a22;color:#c8c8d4}
+tr:hover td{background:#191a20}
+.reading{color:#9a9aa4;font-size:.82rem}
+figure{margin:0}
+figcaption{font-size:.75rem;color:#8a90a0;margin-top:.35rem}
+.callout{background:#241a14;border:1px solid #4a3420;border-radius:8px;padding:.8rem 1rem;font-size:.9rem;color:#e8c9a0;margin:.8rem 0}
+.verdict{background:#122015;border:1px solid #2c4a2c;border-radius:10px;padding:1.1rem 1.3rem;margin:1rem 0}
+.verdict b{color:#eaeaea}
+.costline{background:#1a1712;border:1px solid #3a3020;border-radius:8px;padding:.6rem 1rem;font-size:.8rem;color:#c9b98a;margin-top:.8rem}
+.imglink{display:block}
+.pairgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.7rem;margin-top:.6rem}
+.pairgrid figure{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:.6rem}
+.pairgrid img{width:100%;height:auto;border-radius:6px;display:block}
+.metricline{font-size:.78rem;margin-top:.4rem;color:#c8c8d4}
+.metricline .up{color:#ff8a8a}.metricline .down{color:#7ae08a}.metricline .flat{color:#ffc266}
+.pairhdr{font-size:.82rem;color:#9a9aa4;margin:1.3rem 0 0}
+.flagbox{background:#0b0c10;border:1px solid #262631;border-radius:8px;padding:.9rem 1rem;margin:.7rem 0}
+.flagbox .kv{display:flex;gap:.5rem;font-size:.85rem;margin-bottom:.5rem}
+.flagbox .kv b{color:#c8c8d4;min-width:9rem}
+</style></head><body>
+
+<div class=topnav><div class=wrap>
+<a href="results.html">&larr; back to jsonspec results.html</a>
+<a href="../imgjson/explain.html">imgjson explained (extraction)</a>
+<a href="../dashboard12.html">gen12 dashboard</a>
+</div></div>
+
+<div class=wrap>
+
+<h1>Did fenced-JSON prompts help the paint?</h1>
+<div class=meta><b>Dev-facing walkthrough of a completed eval</b> — narrates
+<a href="results.html">results.html</a>'s raw grid for a reader who wasn't in the room. Every
+paint image, prompt excerpt, and number below is pulled directly from this experiment's
+committed <code>assets-jsonspec-*/</code> outputs and <code>verdict.json</code>/<code>scores.json</code>
+— nothing here is hand-typed or simulated.</div>
+<div class=meta><b>Model:</b> <code>gemini-3-pro-image-preview</code> (Vertex AI, global, 4K,
+5:4, seeded) — the same paint model gen12 uses in production · <b>Design:</b> 2 themes
+(wc-goldshield, fa-pod) &times; 2 seeds (121, 134) &times; 2 arms = 8 paint gens, one shared
+byte-identical blueprint per pair · <b>Total spend:</b> <b>&asymp;$2.2</b> — see §5.</div>
+
+<h2><span class=num>1</span>The question</h2>
+<p class=lede>gen12's production prompt hands the paint model its per-control spec (roster,
+guide-colour map, positions, sizes) as inline PROSE. Does re-encoding that <em>same</em>
+information as ONE fenced <code>```json```</code> block — same blueprint image, same
+semantic content, only the text encoding changes — make the model obey the spec more
+faithfully? <a href="../imgjson/explain.html">imgjson/</a> tested fenced-JSON prompts on the
+<em>extraction</em> side (asking a model to read boxes back out of an image) and found it
+neutral. This experiment tests the <em>generation</em> side — the half imgjson explicitly
+flagged as untested.</p>
+
+<h2><span class=num>2</span>The two arms — same content, different encoding</h2>
+<p>Both arms share one blueprint image (a byte-identical copy) and the identical theme brief.
+The manipulation is purely how the per-control spec is delivered in the prompt text. CONTROL's
+prompt is captured verbatim by importing <code>genskin.py</code> and calling its own
+<code>main()</code> — never hand-retyped — so this is the real production prompt, not a
+paraphrase. TREATMENT keeps every narrative clause (theme, camera, no-text, empty-cavity,
+zero-residue, exact-fit, shuffle-states) as prose, but swaps the per-control roster/position/size
+block for machine-readable JSON.</p>
+
+<div class=armgrid>
+<div class=arm>
+<h3>CONTROL <span class=armtag>verbatim production prose</span></h3>
+<div class=lbl>real excerpt — wc-goldshield seed 121 (computed from stored keyNames + genskin.py's
+static ICON dict, reproducing <code>kn(c) = cname(KEYS[c])</code> exactly)</div>
+<pre>Two side-by-side columns of identical size, output at 5:4. The LEFT column is a
+BLUEPRINT: a neutral grey placeholder body with COLOURED SOLID FILLED patches
+marking each control's EXACT position, size and shape, plus a bottom SPRITE-STRIP
+band with 4 loose parts (volume knob cap, seek slider thumb, shuffle switch first
+state, shuffle switch second state). Each guide's colour maps to a control:
+MAGENTA = a PLAY triangle (right-pointing) merged with pause bars; PURE GREEN =
+a SKIP-BACK double-triangle / rewind chevrons; ROSE PINK = a SKIP-FORWARD
+double-triangle / fast-forward chevrons; SPRING GREEN = a REPEAT loop (two
+arrows chasing in a circle); PURE RED = a QUEUE / playlist icon (stacked
+horizontal lines); PALE AQUA = a VOLUME knob (top face, knurled rim, pointer
+notch); CHARTREUSE = the SEEK progress slider thumb (wide low grip);
+VIOLET-PURPLE = a SHUFFLE icon (two crossing arrows); CYAN = a VISUALIZER /
+spectrum-analyzer display window; ORCHID = an ALBUM ART / cover display window.
+KEEP EVERY CONTROL AT THE EXACT POSITION, SIZE AND SHAPE OF ITS GUIDE — do NOT
+move, resize, swap, rearrange, add or drop any control (their layout is
+locked). BUT the grey body is ONLY a rough placeholder...</pre>
+<div class=figcap>No numeric position/size ever appears as text — those live only in the
+blueprint IMAGE (the coloured patches). The prose names the colour&harr;control mapping and
+the icon; geometry is conveyed visually only.</div>
+</div>
+<div class=arm>
+<h3>TREATMENT <span class=armtag>fenced ```json``` spec block</span></h3>
+<div class=lbl>real excerpt — verbatim from <code>assets-jsonspec-wc-goldshield-treat-121/results.json</code>'s
+stored <code>prompt</code> field (14,747 chars total)</div>
+<pre>```json
+{
+ "_note": "machine-readable control spec. position_frac is a fraction of
+   the device column's own width (fx) and the device area's own height
+   (fy)...",
+ "controls": [
+  {
+   "id": "playpause", "role": "button",
+   "guide_color_name": "MAGENTA", "guide_color_rgb": [255, 0, 255],
+   "final_icon_or_content": "a PLAY triangle (right-pointing) merged
+     with pause bars",
+   "position_frac": {"fx": 0.5, "fy_of_device_area": 0.6},
+   "shape": "circle", "radius_frac_of_col_w": 0.0867
+  },
+  { "id": "prev", "role": "button", "guide_color_name": "PURE GREEN",
+    ... },
+  ... 8 more controls ...
+ ],
+ "strip_order_left_to_right": ["vol_cap","seek_thumb","shuffle_state_1",
+   "shuffle_state_2"],
+ "congruence_rule": "each strip part's size EXACTLY equals its matching
+   device slot's size above..."
+}
+```
+"THE MACHINE-READABLE SPEC for this generation — follow it exactly for
+every control's identity, guide-colour, position and size" (preamble,
+prepended before the block)</pre>
+<div class=figcap>Same 10 controls, same guide colours, same icons — PLUS explicit
+<code>position_frac</code>/size numbers duplicating what the blueprint image already shows
+visually. The narrative clauses after this block (residue, empty-cavity, camera, shuffle
+states, ...) are otherwise the same prose as CONTROL, generically pointing back at "the
+spec above" instead of re-stating numbers.</div>
+</div>
+</div><!-- /armgrid -->
+
+<h2><span class=num>3</span>The four pairs</h2>
+<p>Same theme + seed, CONTROL (prose) vs TREATMENT (fenced JSON) side by side. Bleed = mean
+guide-hue residue leaking into the finished paint (lower is better — the model painted the
+alignment-marker colour into real pixels). Drift = mean template drift in px on a
+~2300&times;3700px canvas (how far each control landed from its locked blueprint slot — lower
+is better, and a lower bound near 0 means the model actually obeyed the locked layout).</p>
+
+<div class=pairhdr><b>wc-goldshield &middot; seed 121</b></div>
+<div class=pairgrid>
+<figure><a class=imglink href="assets-jsonspec-wc-goldshield-control-121/paint.png" target=_blank>
+<img src="explain-viz/wc-goldshield-control-121.jpg" alt="wc-goldshield control seed 121 paint" loading=lazy></a>
+<figcaption>CONTROL — prose · gate <span class=bad>FAIL</span> (emptiness)</figcaption>
+<div class=metricline>bleed <b>1.4488%</b> &middot; drift <b>467.7px</b></div></figure>
+<figure><a class=imglink href="assets-jsonspec-wc-goldshield-treat-121/paint.png" target=_blank>
+<img src="explain-viz/wc-goldshield-treat-121.jpg" alt="wc-goldshield treat seed 121 paint" loading=lazy></a>
+<figcaption>TREATMENT — fenced JSON · gate <span class=good>PASS</span></figcaption>
+<div class=metricline>bleed <b class=good>0.1294%</b> <span class=down>&darr; 91% lower</span> &middot;
+drift <b class=bad>877.3px</b> <span class=up>&uarr; nearly 2&times; worse</span></div></figure>
+</div>
+
+<div class=pairhdr><b>wc-goldshield &middot; seed 134</b></div>
+<div class=pairgrid>
+<figure><a class=imglink href="assets-jsonspec-wc-goldshield-control-134/paint.png" target=_blank>
+<img src="explain-viz/wc-goldshield-control-134.jpg" alt="wc-goldshield control seed 134 paint" loading=lazy></a>
+<figcaption>CONTROL — prose · gate <span class=bad>FAIL</span> (emptiness)</figcaption>
+<div class=metricline>bleed <b>7.5259%</b> &middot; drift <b>565.1px</b></div></figure>
+<figure><a class=imglink href="assets-jsonspec-wc-goldshield-treat-134/paint.png" target=_blank>
+<img src="explain-viz/wc-goldshield-treat-134.jpg" alt="wc-goldshield treat seed 134 paint" loading=lazy></a>
+<figcaption>TREATMENT — fenced JSON · gate <span class=bad>FAIL</span> (region-misplaced:visualizer
++ emptiness)</figcaption>
+<div class=metricline>bleed <b class=good>2.3984%</b> <span class=down>&darr; 68% lower</span> &middot;
+drift <b>576.2px</b> <span class=flat>&asymp; unchanged</span></div></figure>
+</div>
+
+<div class=pairhdr><b>fa-pod &middot; seed 121</b></div>
+<div class=pairgrid>
+<figure><a class=imglink href="assets-jsonspec-fa-pod-control-121/paint.png" target=_blank>
+<img src="explain-viz/fa-pod-control-121.jpg" alt="fa-pod control seed 121 paint" loading=lazy></a>
+<figcaption>CONTROL — prose · gate <span class=good>PASS</span></figcaption>
+<div class=metricline>bleed <b>3.9323%</b> &middot; drift <b>734.4px</b></div></figure>
+<figure><a class=imglink href="assets-jsonspec-fa-pod-treat-121/paint.png" target=_blank>
+<img src="explain-viz/fa-pod-treat-121.jpg" alt="fa-pod treat seed 121 paint" loading=lazy></a>
+<figcaption>TREATMENT — fenced JSON · gate <span class=good>PASS</span></figcaption>
+<div class=metricline>bleed <b class=good>0.0%</b> <span class=down>&darr; zero residue</span> &middot;
+drift <b class=good>466.0px</b> <span class=down>&darr; 37% lower</span></div></figure>
+</div>
+
+<div class=pairhdr><b>fa-pod &middot; seed 134</b></div>
+<div class=pairgrid>
+<figure><a class=imglink href="assets-jsonspec-fa-pod-control-134/paint.png" target=_blank>
+<img src="explain-viz/fa-pod-control-134.jpg" alt="fa-pod control seed 134 paint" loading=lazy></a>
+<figcaption>CONTROL — prose · gate <span class=good>PASS</span></figcaption>
+<div class=metricline>bleed <b>7.2374%</b> &middot; drift <b>992.8px</b></div></figure>
+<figure><a class=imglink href="assets-jsonspec-fa-pod-treat-134/paint.png" target=_blank>
+<img src="explain-viz/fa-pod-treat-134.jpg" alt="fa-pod treat seed 134 paint" loading=lazy></a>
+<figcaption>TREATMENT — fenced JSON · gate <span class=good>PASS</span></figcaption>
+<div class=metricline>bleed <b class=good>3.7202%</b> <span class=down>&darr; 49% lower</span> &middot;
+drift <b class=good>645.5px</b> <span class=down>&darr; 35% lower</span></div></figure>
+</div>
+
+<h2><span class=num>4</span>The scoreboard</h2>
+<div class=tablewrap><table>
+<tr><th></th><th>CONTROL (prose)</th><th>TREATMENT (fenced JSON)</th><th>reading</th></tr>
+<tr><td>bleed lower in treat</td><td colspan=2 style="text-align:center">4 / 4 pairs</td>
+<td class=reading>Directional in every pair (n=4, sign test p=0.0625 one-sided — suggestive,
+not significant).</td></tr>
+<tr><td>mean bleed</td><td class=bad>5.036%</td><td class=good>1.562%</td>
+<td class=reading>Guide-hue residue (the alignment-marker colour leaking into finished pixels)
+dropped substantially.</td></tr>
+<tr><td>drift lower in treat</td><td colspan=2 style="text-align:center">2 / 4 pairs</td>
+<td class=reading>Coin-flip — the encoding did not make the model respect the locked
+template more consistently.</td></tr>
+<tr><td>mean drift</td><td>690.0px</td><td>641.2px</td>
+<td class=reading>~7% lower on average, but driven by 2 of 4 pairs improving a lot while the
+other 2 got flat-to-worse — both arms still treat the locked layout as a suggestion, not a
+constraint.</td></tr>
+<tr><td>extract12 gate PASS</td><td>2 / 4</td><td>3 / 4</td>
+<td class=reading>Both CONTROL fails were emptiness (a cavity got painted over); the one
+TREATMENT fail combined a region-misplacement with emptiness.</td></tr>
+</table></div>
+<p class=reading><b>Caveat from the adjudication log</b> (<code>verdict.json</code>
+<code>adjudication_notes</code>): a VLM ("SOTA-eye") pass FAILed all 8 gens, but its dominant
+reason — "vol/seek/shuffle parts missing from the device, sitting on a strip below" — is a
+false flag on this before-assembly design (empty cavities + a loose-parts strip ARE the spec);
+only its residue/baked-text/rearrangement claims were adjudicated. Confirmed by pixels+eye:
+<code>wc-control-134</code> and <code>fa-pod-control-134</code> painted all 5 buttons in their
+guide hues; <code>fa-pod-treat-134</code>'s buttons also echo guide hues despite the VLM
+calling it "intended design" — the metric and the theme palette overrule that read.</p>
+
+<h2><span class=num>5</span>The flag</h2>
+<div class=flagbox>
+<div class=kv><b>flag</b><code>PROMPT_JSON_SPEC</code></div>
+<div class=kv><b>location</b><code>genskin.py:80</code></div>
+<div class=kv><b>default</b><span class=bad>False</span> — byte-identical current prose prompt</div>
+<div class=kv><b>scope when True</b>only <code>mode == "templated" and conditioning == "solid"</code>
+(<code>genskin.py:738</code>) — the only arm this experiment tested. Outline/twoimg
+conditioning and templateless mode always keep the prose prompt regardless of the flag.</div>
+</div>
+<p>Flipping it swaps <em>only</em> the per-control spec's text encoding — prose roster line vs
+fenced <code>```json```</code> block — for that one conditioning path. Nothing else in the
+prompt, the blueprint image, the model, or the pipeline changes. Per
+<code>generation-spend-rule</code>, flip only between batches, never mid-batch.</p>
+
+<h2><span class=num>6</span>Bonus: the box-convention probe</h2>
+<p>A side quest that grew out of this experiment's data: <a href="bonus_probe.py">bonus_probe.py</a>
+re-asked the SAME image model for the SAME wc-goldshield control boxes that imgjson's arm A got
+wrong — but this time in Google's own documented <code>box_2d=[ymin,xmin,ymax,xmax]</code>
+0&ndash;1000 convention instead of imgjson's ad-hoc 0&ndash;1 <code>{x,y,w,h}</code> ask. The
+boxes came back real (mean IoU 0.79 under the observed reading vs imgjson's 0.003) — overturning
+imgjson's "uncalibratable internal frame" conclusion. A follow-up
+<a href="stability_probe.py">stability_probe.py</a> (3 more calls) found the box element ORDER
+itself unstable call-to-call (1 of 4 calls emitted a transposed order), so the corrected verdict
+is still "not witness-grade for the pipeline," just for a different reason than round 1 thought.
+Full arc, data, and the affine-fit diagram: <a href="../imgjson/explain.html#round2">imgjson/explain.html
+&sect;ROUND 2 CORRECTION</a>.</p>
+
+<h2><span class=num>7</span>Verdict</h2>
+<div class=verdict>
+<p><b>NEUTRAL-TO-MILDLY-HELPFUL, not a fix.</b> The fenced-JSON encoding never hurt anything
+measured, and directionally improved guide-hue bleed in 4/4 paired gens (mean 5.04%
+&rarr; 1.56%; n=4 sign test p=0.0625 one-sided — directional, not significant), with the
+extract12 gate passing 3/4 treat vs 2/4 control. It does <b>not</b> fix the dominant paint
+defect: layout drift is statistically flat between arms (690px control vs 641px treat on a
+~2300px canvas) — both arms still treat the locked template as a suggestion, and guide-hue
+button echo still occurred in a treatment gen (<code>fa-pod-treat-134</code>).</p>
+<p>Encoding the spec as JSON does not make the image model <em>obey</em> it — it mainly seems
+to reduce how often the guide COLOUR WORDS get painted as pigment. <b>Recommendation: do not
+adopt as a fix.</b> If adopted at all it is safe (no observed cost), but the real levers for
+layout adherence and colour-echo remain elsewhere — seed selection, icon-no-echo clauses,
+mask-column decoupling — not prompt encoding. <code>ai-image-coords-rule</code>'s
+untested-not-refuted flag on this question is now resolved: tested, neutral.</p>
+</div>
+<div class=costline><b>Cost:</b> 8 paint gens &times; ~$0.24 (Vertex, 4K) = $1.92 + bonus probe
+~$0.05 (text-out only) + 11 VLM adjudication calls &times; ~$0.02 &asymp; $0.22 &middot; one
+429'd gen retried, not billed &middot; <b>total &asymp; $2.2.</b></div>
+
+</div>
+</body></html>
