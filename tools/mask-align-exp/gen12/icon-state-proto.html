@@ -76,11 +76,32 @@ function litGlyph(gl,cw,ch,ac,bloom){
   hg.filter='blur('+Math.max(2,Math.round(Math.min(cw,ch)*0.045))+'px)';hg.drawImage(lit,0,0);hg.filter='none';
   og.globalCompositeOperation='lighter';og.globalAlpha=0.75;og.drawImage(halo,0,0);og.globalAlpha=1;og.drawImage(lit,0,0);return out;
 }
+// DETERMINISTIC registration: slide the mask-glyph shape over the painted button's
+// "differs-from-body" response map; the (dx,dy) with max overlap is where the icon is
+// actually painted. No stored offset — computed from the real pixels every time.
+let LASTREG={dx:0,dy:0};
+function registerGlyph(base,gl,sil,cw,ch){
+  const pd=base.getContext('2d').getImageData(0,0,cw,ch).data;
+  const sd=sil.getContext('2d').getImageData(0,0,cw,ch).data;
+  let br=0,bg=0,bb=0,n=0;for(let i=0;i<pd.length;i+=4){if(sd[i+3]>10){br+=pd[i];bg+=pd[i+1];bb+=pd[i+2];n++;}}
+  if(n){br/=n;bg/=n;bb/=n;}
+  const R=new Float32Array(cw*ch);
+  for(let p=0,i=0;p<cw*ch;p++,i+=4){if(sd[i+3]>10){const dr=pd[i]-br,dg=pd[i+1]-bg,db=pd[i+2]-bb;R[p]=Math.sqrt(dr*dr+dg*dg+db*db);}}
+  const gd=gl.getContext('2d').getImageData(0,0,cw,ch).data,G=[];
+  for(let p=0,i=0;p<cw*ch;p++,i+=4){if(gd[i+3]>10)G.push(p);}
+  const W=Math.max(6,Math.round(Math.min(cw,ch)*0.14));let best=-1,bx=0,by=0;
+  for(let dy=-W;dy<=W;dy++)for(let dx=-W;dx<=W;dx++){let s=0;
+    for(let j=0;j<G.length;j++){const p=G[j],x=(p%cw)+dx,y=((p/cw)|0)+dy;if(x<0||y<0||x>=cw||y>=ch)continue;s+=R[y*cw+x];}
+    if(s>best){best=s;bx=dx;by=dy;}}
+  LASTREG={dx:bx,dy:by};return {dx:bx,dy:by};
+}
 function GLYPH(paint,crop,sil,gl,cw,ch,ac,mode){
-  const base=OFF(paint,crop,sil,cw,ch);let body=base,gs=0;
+  const base=OFF(paint,crop,sil,cw,ch);
+  const {dx,dy}=registerGlyph(base,gl,sil,cw,ch);   // deterministic glyph alignment
+  let body=base,gs=0;
   if(mode==='latch'){const r=pressedBody(paint,crop,sil,cw,ch);body=r.pc;gs=r.shift;}
   let lit=litGlyph(gl,cw,ch,ac,mode==='bloom'||mode==='latch');
-  if(gs){const t=cvs(cw,ch);t.getContext('2d').drawImage(lit,0,gs);lit=t;}
+  const t=cvs(cw,ch);t.getContext('2d').drawImage(lit,dx,dy+gs);lit=t; // registered shift (+latch travel)
   clip(lit,sil);
   const out=cvs(cw,ch),og=out.getContext('2d');og.drawImage(body,0,0);og.drawImage(lit,0,0);return out;
 }
