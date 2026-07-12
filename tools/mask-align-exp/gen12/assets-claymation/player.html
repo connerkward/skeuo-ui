@@ -10,7 +10,7 @@
   .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v=1783813519') no-repeat;background-size:100% auto;border-radius:12px}
+    background:url('paint.png?v=1783846688') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
   .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}
@@ -50,7 +50,7 @@ fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementByI
 </div></div>
 <div class=hint id=hint>loading…</div>
 <script>
-const V='1783813519';
+const V='1783846688';
 (async function(){
   const R = await fetch('regions.json?v='+V).then(r=>r.json());
   const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
@@ -73,7 +73,11 @@ const V='1783813519';
     const tw=x1-x0+1,th=y1-y0+1,t=document.createElement('canvas');t.width=tw;t.height=th;
     t.getContext('2d').drawImage(c,x0,y0,tw,th,0,0,tw,th); return {url:t.toDataURL(),w:tw,h:th}; }
   const BREF='../assets-claymation_biref/';
-  const parts=['vol','seek','shuffle_off','shuffle_on'];
+  // fetch BOTH possible shuffle cut sets — a data-driven superset, not gated on a build-time
+  // flag: which set actually exists on disk (track-mode 'shuffle_lever' vs legacy 'shuffle_off'/
+  // 'shuffle_on') tells the render block below which architecture this asset dir was cut with.
+  // Missing files just fail their try/catch below and leave that CUT key absent — no crash.
+  const parts=['vol','seek','shuffle_lever','shuffle_off','shuffle_on'];
   for(const k of parts){ try{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}catch(e){} }
   const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
   let playing=false;
@@ -251,10 +255,72 @@ const V='1783813519';
     window.__seek=(d)=>{val=Math.max(0,Math.min(1,val+d));rend();};
     phone.appendChild(el);
   }
-  // ---- shuffle toggle (silhouette state-registered) ----
+  // ---- shuffle: TWO-DETENT TRACK LEVER (TOGGLE_TRACK_ENABLED architecture, 2026-07-12) — a
+  // two-position slider architecturally identical to the seek thumb above (track =
+  // regs[tg].device, detents = the two end positions, same coverage-span/vertical-detection
+  // extract12 already does for seek). Click/Enter/Space slides the lever to the OTHER detent
+  // with a CSS ease (150-250ms, "snap" cubic-bezier overshoot); state = which detent. Director
+  // css.glow (else css.accent) tints the lever with a subtle active-end glow when ON, engraved-
+  // register like the knob ticks — no separate glow element, just a drop-shadow on the lever
+  // itself so it always tracks the lever's own current position with zero extra layout math.
+  // ARCHITECTURE IS DATA-DRIVEN, not a build-time flag: regions.json's toggle entry carries
+  // `track`/`detents` under the new contract, `stateAlign` under the legacy two-state contract
+  // — branching on that SHAPE (not a Python constant) is what keeps every already-generated
+  // regions.json rendering correctly regardless of which genskin.py flag state produced it.
   const tg = Object.keys(roles).find(k=>roles[k]==='toggle');
-  if(tg && regs[tg] && CUT['shuffle_off']){
-    const r=regs[tg],off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
+  const tgR = tg && regs[tg];
+  const isTrackArch = !!(tgR && (tgR.track || tgR.detents));
+  if(isTrackArch && tgR.device){
+    const r=regs[tg], track=r.device, vert=!!r.vertical, lv=CUT['shuffle_lever'];
+    // CSS-LEVER FALLBACK — the biref cut is missing OR degenerate (aspect wildly off any sane
+    // lever shape: a mis-cut sliver / strip-drift patch) -> render a themed CSS lever (director
+    // css.fill, else a neutral metal tone) instead of silently dropping the control. This is the
+    // deterministic floor: the control ALWAYS renders something, cut or no cut.
+    const cutAsp = lv ? lv.w/lv.h : 0;
+    const cutOk = !!lv && cutAsp > 0.15 && cutAsp < 6.5;
+    const el=document.createElement('div'); el.className='ptog'; el.tabIndex=0;
+    el.setAttribute('role','switch');
+    let tw,th;
+    if(cutOk){
+      el.style.backgroundImage='url('+lv.url+')';
+      const cw=lv.w/PW, ch=lv.h/PH;
+      const s=Math.min(1.5, vert?(track[2]*1.15/cw):(track[3]*1.15/ch));
+      tw=cw*s; th=ch*s;
+    }else{
+      const fillCol="rgba(225,130,70,0.6)"||'#d7dae2';
+      el.style.background='linear-gradient(180deg,#fff2,transparent 45%),'+fillCol;
+      el.style.borderRadius='999px'; el.style.boxShadow='inset 0 1px 2px #ffffff55, 0 1px 3px #0007';
+      tw = vert? track[2]*0.74 : track[2]*0.36;
+      th = vert? track[3]*0.36 : track[3]*0.74;
+    }
+    el.style.width=tw*100+'%'; el.style.height=(th/DF)*100+'%';
+    el.style.transition='left .2s cubic-bezier(.32,1.3,.6,1), top .2s cubic-bezier(.32,1.3,.6,1), filter .2s';
+    // detents: CENTRE positions along the travel axis at each end (extract12's `detents` field,
+    // same convention as seek's `travel`); default derived from the track bounds when absent
+    // (an old regions.json without the field, or the degenerate-collapse fallback).
+    const dt=r.detents||(vert?[track[1]+th/2,track[1]+track[3]-th/2]:[track[0]+tw/2,track[0]+track[2]-tw/2]);
+    const glowCol="#ebdcc3"||"#46a096";
+    let ison=false;
+    const place=()=>{
+      const p=ison?dt[1]:dt[0];
+      if(vert){ const cx=track[0]+track[2]/2; el.style.left=(cx-tw/2)*100+'%'; el.style.top=((p-th/2)/DF)*100+'%'; }
+      else{ const cy=track[1]+track[3]/2; el.style.top=((cy-th/2)/DF)*100+'%'; el.style.left=(p-tw/2)*100+'%'; }
+      el.style.filter = glowCol
+        ? (ison ? 'drop-shadow(0 0 5px '+glowCol+'cc) drop-shadow(0 2px 4px #0008)' : 'drop-shadow(0 2px 4px #0008)')
+        : 'drop-shadow(0 2px 4px #0008)';
+      el.setAttribute('aria-checked', ison?'true':'false');
+    };
+    place();
+    const toggleLever=()=>{ison=!ison;place();};
+    el.addEventListener('click',toggleLever);
+    el.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();e.stopPropagation();toggleLever();}});
+    phone.appendChild(el);
+  }
+  // ---- shuffle: legacy TWO-STATE sprite-swap toggle (rollback path / pre-2026-07-12 assets,
+  // silhouette state-registered) — unchanged, kept fully intact so already-generated regions.json
+  // / assets keep rendering. ----
+  else if(!isTrackArch && tgR && CUT['shuffle_off']){
+    const r=tgR,off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
     const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
     const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
     // SLOT-SIZED: box sizing per SPRITE_COVER_FIT_ENABLED (build_player.py) — either the OFF

@@ -1,7 +1,7 @@
 {
  "id": "fa-sky",
  "mode": "templateless",
- "seed": 840,
+ "seed": 853,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -160,16 +160,23 @@
   "skin": "css",
   "sprite": "css"
  },
+ "css": {
+  "track": "#101526",
+  "fill": "#209eb2",
+  "accent": "#6ec83c",
+  "glow": "#228aff"
+ },
  "template": {},
  "blueprint_trial_enabled": true,
  "blueprint_arm": "solid",
- "blueprint_arm_draw_seed": 840,
+ "blueprint_arm_draw_seed": 853,
  "blueprint_twoimg": false,
  "blueprint_conditioning": "solid",
+ "toggle_track_enabled": true,
  "prompt_json_spec": false,
  "dims": [
   4608,
   3712
  ],
- "leak": 2.2e-05
+ "leak": 0.0
 }

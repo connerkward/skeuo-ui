@@ -3,46 +3,36 @@
   "title": "Frutiger Aero Sky (templateless)",
   "mode": "templateless",
   "passed": true,
-  "rolls": 3,
-  "final_seed": 840,
+  "rolls": 2,
+  "final_seed": 853,
   "gate": {
-    "seed": 840,
+    "seed": 853,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.04,
+    "seek_cov": 1.038,
     "reasons": [],
-    "leak": 2.2e-05
+    "leak": 0.0
   },
   "history": [
     {
-      "seed": 814,
+      "seed": 840,
       "PASS": false,
       "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [
-        "emptiness"
-      ],
-      "leak": 0.0
-    },
-    {
-      "seed": 827,
-      "PASS": false,
-      "controls": 9,
       "seek_cov": 1.04,
       "reasons": [
-        "missing:vol"
+        "guide-ring:shuffle"
       ],
       "leak": 0.0
     },
     {
-      "seed": 840,
+      "seed": 853,
       "PASS": true,
       "controls": 10,
-      "seek_cov": 1.04,
+      "seek_cov": 1.038,
       "reasons": [],
-      "leak": 2.2e-05
+      "leak": 0.0
     }
   ],
-  "elapsed_s": 534.4,
+  "elapsed_s": 1255.2,
   "player": "assets-fa-sky/player.html"
 }

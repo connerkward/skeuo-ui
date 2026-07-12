@@ -29,6 +29,7 @@
     "album_art": "region"
   },
   "templated": true,
+  "toggle_track": false,
   "keys": {
     "playpause": [
       255,
@@ -171,10 +172,10 @@
     },
     "vol": {
       "device": [
-        0.4321723090277778,
-        0.5525929418103447,
-        0.1282769097222222,
-        0.07962015086206896
+        0.4256618923611111,
+        0.5501683728448274,
+        0.1360894097222222,
+        0.08446928879310343
       ],
       "strip": [],
       "maskDevice": [
@@ -184,9 +185,9 @@
         0.07489224137931035
       ],
       "seat": [
-        0.4963107638888889,
+        0.4937065972222222,
         0.5924030172413792,
-        0.0641384548611111
+        0.0680447048611111
       ],
       "knob_zero_deg": 90.35911589087466,
       "knob_zero_geo": [
@@ -221,10 +222,10 @@
     },
     "shuffle": {
       "device": [
-        0.583107638888889,
-        0.6493359375,
+        0.5822395833333335,
+        0.6428919719827586,
         0.1211111111111111,
-        0.04696390086206896
+        0.05338631465517239
       ],
       "strip": [
         [
@@ -337,7 +338,7 @@
   },
   "art_viz_swapped": false,
   "gate": {
-    "empty_ok": false,
+    "empty_ok": true,
     "controls": 10,
     "controls_total": 10,
     "missing": [],
@@ -351,10 +352,17 @@
     "sprite_fit": [
       "shuffle"
     ],
+    "silhouette_mismatch": [
+      "playpause",
+      "repeat",
+      "queue"
+    ],
     "orientation_ok": true,
     "reasons": [
-      "emptiness",
-      "sprite-fit:shuffle"
+      "sprite-fit:shuffle",
+      "silhouette-mismatch:playpause",
+      "silhouette-mismatch:repeat",
+      "silhouette-mismatch:queue"
     ],
     "PASS": false
   },
@@ -367,12 +375,12 @@
       "playpause": 1074.6,
       "next": 552.6,
       "repeat": 501.5,
-      "vol": 194.5,
-      "shuffle": 394.7,
+      "vol": 189.1,
+      "shuffle": 382.6,
       "queue": 760.5
     },
     "excluded_fallback": [],
-    "mean_px": 576.1,
+    "mean_px": 574.3,
     "worst": [
       "playpause",
       1074.6

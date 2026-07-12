@@ -1,0 +1,33 @@
+[
+  {
+    "control": "vol",
+    "method": "model+floor_darken",
+    "before_sha": "163f3beb1247",
+    "after_sha": "c8d108756f25",
+    "defect_found_after": true,
+    "bbox_px": [
+      1133,
+      2051,
+      1157,
+      2346
+    ],
+    "crop_box_px": [
+      894,
+      1948,
+      1395,
+      2449
+    ],
+    "seed": 952,
+    "ts": "20260712T020125",
+    "status": "erased-still-failing",
+    "verify_dir": "erase-verify"
+  },
+  {
+    "control": "vol",
+    "method": "manual-circular-feather-composite (post-erase12 finishing pass)",
+    "note": "erase12 model+floor_darken left a visible square blend-halo bleeding onto the brass corners outside the round vol socket (square-crop compositing geometry mismatch for a ROUND control, first round-knob erase in this batch). Fixed by re-compositing: took git HEAD paint.png (163f3beb1247, pre-erase, correct brass everywhere) as background and the erase12 output (c8d108756f25) as foreground, blended with a CIRCULAR feathered mask (radius = device-bbox-radius*1.05, 22px feather) centered on the vol device bbox instead of erase12's square/rect blend -- restores exact original brass outside the socket, keeps the erased empty circle inside it. joint-4k.png left half re-pasted to match.",
+    "before_sha": "163f3beb1247",
+    "after_sha": "60d73a396ee5",
+    "status": "erased-clean-manual-finish"
+  }
+]

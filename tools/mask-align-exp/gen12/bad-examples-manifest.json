@@ -1,0 +1,35 @@
+{
+  "_comment": "Skins archived per round-2 human review (2026-07-12): user directive is to mark junk skins as BAD EXAMPLES and move them to Drive for documentation rather than truly delete. See review-2026-07-12-round2.json for the source verdicts.",
+  "bad_examples": [
+    {
+      "id": "n64-prerender-character",
+      "theme": "90s Pre-Rendered Character CG",
+      "reason": "Round-2 human verdict: gate=fail, notes=\"just delete this.\" (review-2026-07-12-round2.json). The model rendered an unrelated cartoon-dinosaur toy bobblehead instead of a 90s pre-rendered-CG character skin; the theme brief was not followed.",
+      "seed": "849",
+      "paint_sha256": "51bb17a0b36424cc94359da871a1f8efd929a3c40a82610df48744749b262788",
+      "drive_folder_link": "https://drive.google.com/open?id=1KxV4HRZJHDo4rQcBDseEDAzrIZL_TZEH",
+      "files": [
+        {"name": "paint.png", "sha256": "51bb17a0b36424cc94359da871a1f8efd929a3c40a82610df48744749b262788", "size": 10473449},
+        {"name": "regions.json", "sha256": "23467b03858b03b5d7b0c9fb2329b7093851cf04aa5b545bc1f31b14804d8920", "size": 6529},
+        {"name": "director-review.json", "sha256": "f449265504c1510509d3a032a1a4b07a6d4cbff71cb7f7bd51226823dd6e8bf7", "size": 2888},
+        {"name": "player-screenshot.png", "sha256": "acd267d18f6a4eff15d6cc263abd06408699a7118cd659aa223eb1e5dda84812", "size": 250718}
+      ],
+      "marked_at": "2026-07-12"
+    },
+    {
+      "id": "ps1-wild",
+      "theme": "Ps1 Wild",
+      "reason": "Round-2 human verdict: gate=fail, notes=\"just delete this.\" (review-2026-07-12-round2.json). The model rendered a chaotic PS1-era vehicle/spaceship illustration with controls (knob, slider, buttons) nearly invisible against the busy low-contrast art — not a usable skeuomorphic player skin.",
+      "seed": "982",
+      "paint_sha256": "c4d28fa81917a62b02fbfafd2795efae86664204b5b89dc02f1df898f3cc1e70",
+      "drive_folder_link": "https://drive.google.com/open?id=1GhALDv2yxGzZtnVqDnG-hMpgpAY9HiOT",
+      "files": [
+        {"name": "paint.png", "sha256": "c4d28fa81917a62b02fbfafd2795efae86664204b5b89dc02f1df898f3cc1e70", "size": 10114027},
+        {"name": "regions.json", "sha256": "3192cb4f55f9f775dc9a9327393080ff838edc4c17f128a531bc0e593c7d9225", "size": 6927},
+        {"name": "director-review.json", "sha256": "fc3067d9378dd3c423c879bad37ffb79829d40acf4b4fedc49b49041e1f74519", "size": 3491},
+        {"name": "player-screenshot.png", "sha256": "462d5ff60204b229a7ef6d510df37d39ac342976ad7740d51dd1c166e04bce27", "size": 263346}
+      ],
+      "marked_at": "2026-07-12"
+    }
+  ]
+}
