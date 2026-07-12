@@ -1,0 +1,67 @@
+{
+  "skin": "ps1-crunchy",
+  "round": 4,
+  "supersedes": "303a44bd (round-3 fix: icon-only erase, left blank circular button in place, phantom button explicitly out-of-scope)",
+  "defect_restated_by_user": "previous attempt erased only the duplicate ICON off the circular button (left a blank circular button); the REAL queue button is a separate NON-CIRCULAR (oval/pill) button with a genuine list icon that was never detected/mapped; the circular button is an unmapped duplicate/phantom that must be erased ENTIRELY (whole button, not just its icon), restoring bare chassis.",
+  "diagnosis": {
+    "guide_mask_says": "genskin's guide mask marks a CIRCULAR device slot (px bbox 1928,1379-2232,1685, normalized [0.8368,0.3715,0.1319,0.0824]) as role='queue' -- this is the slot the model was TOLD to paint a queue icon into.",
+    "what_the_model_actually_painted": "the model duplicated the repeat/loop-cycle icon onto that guide-marked circular slot (round-3 defect, partially fixed in 303a44bd by erasing just the icon, leaving a blank disc) -- AND separately hallucinated an entirely UNGUIDED oval/pill button lower on the chassis (no guide-colour pixels anywhere near it -- confirmed by a full guide-colour blob scan of mask.png) bearing a genuine 3-bar list/queue icon.",
+    "conclusion": "the guide-marked circular slot is a phantom/duplicate w.r.t. actual content; the real, semantically-correct queue control is the unguided oval button. Content mismatch between guide intent and paint, not an extract12 detection-algorithm bug -- guide-colour blob matching cannot find a blob with zero guide-colour pixels on it by construction."
+  },
+  "fix_queue_detection_and_mapping": {
+    "mechanism_added": "extract12.py: new roleOverrides escape hatch (results.json can carry {\"roleOverrides\": {\"<role>\": {\"device\":[x,y,w,h], \"reason\":...}}}), applied last (after guide-colour match + hue-recovery) so it wins. Generalizable, per-skin-config (like `template`/`toggle_track_enabled` already are), not a per-skin code branch. No-op for every other skin (empty dict). Also patched the silcheck gate to skip a region flagged `overridden` (a Method-A mask-key silhouette check is fundamentally inapplicable to a region with zero guide-colour pixels by design -- that IS the defect this override exists to correct).",
+    "bbox_measurement_method": "the oval button device bbox was NOT hand-typed. Computed from paint.png via HSV-saturation-channel Gaussian blur + Canny edge + contour fit (cv2), scoped to a bounded search window derived from the director-review note (\"extra button... bottom right\") and the layout of already-detected sibling controls -- the algorithm found bbox px(1682,1721,233,329), fill=0.69, elongation=1.41 (matches the button visually inspected). Padded 6% -> device=[0.72396,0.45824,0.11328,0.09941], written to results.json roleOverrides.queue.device and re-verified visually before committing.",
+    "result": "extract12.py re-run: [role-override] queue: device forced to override bbox. Gate: PASS controls=10/10 (previously would have FAILed silcheck for this region without the overridden-skip patch). regions.json queue.device now points at the real oval list-icon button; overridden=true.",
+    "regression_note": "roleOverrides + silcheck-skip are gated on results.json[roleOverrides] being non-empty / regs[name].overridden being True -- both absent for every other skin in the roster, so behaviour is unchanged elsewhere. NOT live-verified against other skins this round to avoid touching other assets-*/ dirs concurrently edited by other agents (git status showed many in-flight dirty asset dirs) -- verified by code inspection instead (empty-dict loop is a no-op; filter checks a key that never exists for pre-existing regions)."
+  },
+  "fix_phantom_button_erase": {
+    "target_bbox_px": [
+      1928,
+      1379,
+      2232,
+      1685
+    ],
+    "method": "square-crop (erase12._square_crop_box, pad_frac=1.0) -> Vertex gemini-2.5-flash-image free-crop edit (genskin.edit_vertex) -> erase12._feathered_composite blend back into paint.png + joint-4k.png left half. Same mechanics as 303a44bd, this time targeting the WHOLE button (raised disc + octagonal mounting collar), not just the icon, with a custom prompt instructing full removal + seamless continuous panel restoration.",
+    "attempts": [
+      {
+        "v": 1,
+        "seed": 91173,
+        "cost_usd": 0.039,
+        "result": "button + collar fully removed, no shape/seam/hole -- clean by direct inspection and by a Sobel gradient-magnitude radial profile (no ring spike at the old bbox radius). Native-res texture std (r=100, centered on old bbox) = 12.97, below EVERY sampled neighboring panel patch (19.9-96.6) -- smoother than surrounding chassis, same defect class as 303a44bd's icon-only erase."
+      },
+      {
+        "v": 2,
+        "seed": 402981,
+        "cost_usd": 0.039,
+        "prompt_change": "added explicit 'match full density of fine surface detail / do not render smoother' clause",
+        "result": "REGRESSION -- reintroduced a visible circular recess/socket outline (the collar came back as a distinct ring instead of fully continuous metal). Discarded, not composited into paint.png."
+      },
+      {
+        "v": 3,
+        "seed": 55810,
+        "cost_usd": 0.039,
+        "prompt_change": "kept v1's exact structural wording (no explicit collar restatement that seemed to prime v2's regression) + a short single texture-density clause",
+        "result": "KEPT. Button + collar fully removed (same clean shape result as v1), texture std improved to 17.5-18.2 (native, r=100-130) -- closer to the nearest real neighbouring panel sample (19.9) and well above v1/v2 (11.5/9.9 on the pre-composite crop). Composited over the pre-erase (HEAD) source, replacing v1 entirely (not stacked)."
+      }
+    ],
+    "total_erase_cost_usd": 0.117
+  },
+  "verification": {
+    "runtime": "drove the REAL rebuilt player.html in Playwright (localhost, headless): clicked the .pbtn[title=queue] element (now the oval list-icon button) -- #queue.classList contains 'open' confirmed true, queue overlay renders a real track list. Old phantom location produces no DOM element at all (no button there any more -- role-overridden queue device rect points elsewhere, and nothing else claims that guide slot).",
+    "vlm_queue_button": {
+      "model": "google/gemini-2.5-pro via fal openrouter/router/vision",
+      "cost_usd": 0.014,
+      "verdict": "PASS -- clear 3-bar list icon, plausible coherent worn-metal button, no seam/hallucination flagged"
+    },
+    "vlm_erase_removal": {
+      "model": "google/gemini-2.5-pro via fal openrouter/router/vision",
+      "cost_usd": 0.02,
+      "verdict_raw": "FAIL both on v1 and v3 -- flagged a 'faint circular outline / brightness discontinuity' and a texture-density shortfall vs neighbouring panel",
+      "adjudication": "per verify-outputs-rule: VLM claims cross-checked against deterministic measurement, not taken at face value. (a) circular-outline claim: Sobel gradient-magnitude radial profile computed natively around the erased area (r 0-220px in 10-30px rings) shows NO ring/edge spike at the old bbox radius (~150px) -- gradient stays flat 40-53 through r=0-145, dips slightly 145-180, then rises sharply only past r=180 which coincides with REAL neighbouring geometry (panel silhouette edge + wires) entering the window, not a synthetic seam. Luminance-mean profile shows the same -- no ring signature. CLAIM REFUTED by measurement. (b) texture-density claim: CORROBORATED by measurement (v3 std 17.5-18.2 vs nearest real neighbour panel sample 19.9) -- real but small residual softness, substantially reduced from v1 (11.5) and from 303a44bd's round-3 icon-only fix (15.6-15.7 vs button-face std 32-38, the same defect class, previously shipped and accepted at render scale).",
+      "disposition": "ACCEPTED with documented caveat, consistent with 303a44bd precedent for the identical defect class (Vertex gemini-2.5-flash-image inpaint reliably removes SHAPE but produces a measurably-if-modestly smoother PATCH than hand-painted rust texture; 3 attempts made, v3 is the best of the three and materially better than the already-shipped round-3 precedent). Did not escalate to gpt-image-2/gemini-3-pro this round -- primary defect (duplicate BUTTON SHAPE) is fully resolved by direct inspection + deterministic ring check; remaining softness is cosmetic-only and below the bar already accepted once on this same skin."
+    },
+    "total_verification_cost_usd": 0.034
+  },
+  "total_cost_usd": 0.151,
+  "not_fixed_or_flagged": "none new. The seek CSS-overflow issue from the same round-3 review remains a separate, unrelated open item (extract12/build_player territory, out of this task's scope per the user's ask)."
+}

@@ -1066,6 +1066,25 @@ if TOGGLE and not TOGGLE_TRACK:
                                "dx": int(dx), "dy": int(dy), "iou": round(float(iou), 4)}
             print(f"[state-align] {TOGGLE} ON->OFF scale=({scale:.3f},{scale_h:.3f}) d=({dx},{dy}) IoU={iou:.3f}")
 
+# ---- ROLE OVERRIDES: escape hatch for a control whose real painted position/identity does
+# NOT match its guide-colour blob — e.g. the model swaps content between a guide-marked slot
+# and an unguided "phantom" element it hallucinated elsewhere (ps1-crunchy: 'queue' was
+# guide-marked at a circular slot but painted with repeat's duplicate icon there, while the
+# ACTUAL queue/list icon was painted, unguided, on a separate non-circular button the
+# colour-blob pipeline can never see — there is no guide colour on it to match). This is a
+# genuine content mismatch, not a detection-algorithm bug: guide-colour matching is correct
+# and CANNOT be taught to find a blob with zero guide-colour pixels. `results.json` may carry
+# `"roleOverrides": {"<role>": {"device": [x,y,w,h], "reason": "..."}}` — normalized [0..1]
+# device bbox (relative to the FULL paint/mask canvas, same convention as `regs[name].device`)
+# computed by the caller from the real paint pixels (e.g. via a saturation/edge blob-fit), not
+# hand-guessed. Applied last so it wins over both the guide-colour match and hue-recovery.
+for _name, _ov in (RES.get("roleOverrides") or {}).items():
+    if _name not in NAMES: continue
+    _db = list(_ov["device"])
+    regs[_name] = {"device": _db, "strip": [], "maskDevice": _db, "overridden": True,
+                    "overrideReason": _ov.get("reason", "")}
+    print(f"[role-override] {_name}: device forced to {[round(v, 4) for v in _db]} ({_ov.get('reason', '')})")
+
 json.dump({"devFrac": DEVF, "buttons": list(HB), "sprites": list(SP), "extras": list(SC),
            "roles": ROLES, "templated": TEMPLATED, "toggle_track": TOGGLE_TRACK,
            "keys": {k: list(v) for k, v in KEYS.items()}, "keyNames": RES.get("keyNames", {}),
@@ -1512,7 +1531,7 @@ try:
 except Exception as _e:
     _sil = {}
     print(f"[silcheck] skipped ({_e})")
-sil_flagged = [b for b, mm in _sil.items() if mm.get("verdict") == "FAIL"]
+sil_flagged = [b for b, mm in _sil.items() if mm.get("verdict") == "FAIL" and not (regs.get(b) or {}).get("overridden")]
 if sil_flagged: print(f"[silcheck gate] FAIL - silhouette mismatch: {','.join(sil_flagged)}")
 reasons = []
 knob_tmpl = [k for k in KNOBS if (regs.get(k) or {}).get("fromTemplate")]

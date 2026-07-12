@@ -1,8 +1,8 @@
 {
   "skin": "ps1-crunchy",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
-  "verdict": "UNPARSED",
-  "raw": "{\"output\": \"\", \"usage\": {\"prompt_tokens\": 4994, \"completion_tokens\": 741, \"total_tokens\": 5735, \"cost\": 0.0, \"prompt_tokens_details\": {\"cached_tokens\": 0, \"cache_write_tokens\": 0}}}",
+  "verdict": "FAIL",
+  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: DEFECT[aesthetic] - The icon is a 'repeat' symbol, identical to the 'repeat' button's icon, not a 'queue' icon.\nvol: OK\nseek: OK\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: DEFECT[duplicate-control] - The 'queue' and 'repeat' buttons have identical icons, making them appear as two 'repeat' buttons.\nVERDICT: FAIL",
   "frames": [
     "full.png",
     "after.png",
@@ -21,7 +21,12 @@
     "crop-album_art.png"
   ],
   "unmeasured_crop_miss": [],
-  "per_control_defects": {},
+  "per_control_defects": {
+    "queue": [
+      "aesthetic"
+    ]
+  },
   "device_defects": [],
-  "ts": "2026-07-11T23:42:33"
+  "probe_dead_controls": [],
+  "ts": "2026-07-12T11:19:16"
 }

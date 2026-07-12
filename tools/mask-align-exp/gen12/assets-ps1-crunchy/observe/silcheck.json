@@ -148,39 +148,32 @@
     }
   },
   "queue": {
-    "verdict": "PASS",
+    "verdict": "FAIL",
     "reasons": [],
-    "iou": 0.8018,
-    "offset_px": 0.4,
-    "area_ratio": 0.9782,
-    "coverage": 0.6806,
+    "iou": 0.0,
+    "offset_px": null,
+    "area_ratio": 0.0,
+    "coverage": 0.0,
     "maskKey": {
-      "verdict": "PASS",
-      "reasons": [],
-      "coverage": 0.6806,
-      "iou": 0.8018,
-      "offset_px": 0.4,
-      "offset_frac_diag": 0.0011,
-      "area_ratio": 0.9782,
-      "silhouette_bbox": [
-        0.83681,
-        0.3715,
-        0.13238,
-        0.0827
-      ]
+      "verdict": "NO-SILHOUETTE",
+      "reason": "no-blob-near-key-colour",
+      "coverage": 0.0,
+      "iou": 0.0,
+      "offset_px": null,
+      "area_ratio": 0.0
     },
     "paintVividnessAdvisory": {
       "verdict": "FAIL",
-      "coverage": 0.0007,
-      "iou": 0.0366,
-      "offset_px": 177.1,
-      "area_ratio": 0.001,
+      "coverage": 0.002,
+      "iou": 0.3068,
+      "offset_px": 127.1,
+      "area_ratio": 0.0028,
       "reason": "area_ratio<0.3"
     },
     "circleFitAdvisory": {
-      "offset_px": 14.6,
-      "offset_frac_diag": 0.0376,
-      "score": 17.59,
+      "offset_px": 38.9,
+      "offset_frac_diag": 0.0862,
+      "score": 14.97,
       "note": "advisory only, not gating -- see docstring"
     }
   }

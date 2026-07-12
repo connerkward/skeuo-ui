@@ -29,6 +29,7 @@
     "album_art": "region"
   },
   "templated": true,
+  "toggle_track": false,
   "keys": {
     "playpause": [
       0,
@@ -156,18 +157,20 @@
     },
     "queue": {
       "device": [
-        0.8433159722222222,
-        0.37580818965517243,
-        0.11848958333333333,
-        0.07408405172413793
+        0.7239583333333334,
+        0.4582435344827586,
+        0.11328125,
+        0.09940732758620689
       ],
       "strip": [],
       "maskDevice": [
-        0.8433159722222222,
-        0.37580818965517243,
-        0.11848958333333333,
-        0.07408405172413793
-      ]
+        0.7239583333333334,
+        0.4582435344827586,
+        0.11328125,
+        0.09940732758620689
+      ],
+      "overridden": true,
+      "overrideReason": "round-3 director review (2026-07-11T23:36:34): the guide-marked queue slot (circular, top-right of repeat) was painted with a duplicate of the repeat loop-icon instead of a queue icon; the model instead hallucinated an UNGUIDED separate non-circular (oval/pill) button lower on the chassis with a genuine list/queue icon. Guide-colour blob matching cannot find that button (zero guide-colour pixels on it) so its device bbox was measured directly from paint.png via a saturation-channel Canny+contour fit (see erase-verify/queue-remap-log.json) and pinned here. The old guide-marked circular slot is inpaint-erased back to bare chassis (round-4)."
     },
     "vol": {
       "device": [
@@ -224,8 +227,8 @@
         0.03852370689655173
       ],
       "travel": [
-        0.11415,
-        0.57205
+        0.12283,
+        0.56337
       ],
       "bakedThumb": {
         "runFrac": 0.0,
@@ -355,7 +358,7 @@
     "controls": 10,
     "controls_total": 10,
     "missing": [],
-    "seek_cov": 1.039,
+    "seek_cov": 1.0,
     "state_align_ok": true,
     "biref_ok": true,
     "leak": 0.0,
@@ -363,6 +366,7 @@
     "region_degenerate": [],
     "baked_thumb": [],
     "sprite_fit": [],
+    "silhouette_mismatch": [],
     "orientation_ok": true,
     "reasons": [],
     "PASS": true
@@ -378,10 +382,10 @@
       "repeat": 3.9,
       "vol": 1385.6,
       "shuffle": 601.3,
-      "queue": 848.9
+      "queue": 398.8
     },
     "excluded_fallback": [],
-    "mean_px": 417.4,
+    "mean_px": 372.4,
     "worst": [
       "vol",
       1385.6
