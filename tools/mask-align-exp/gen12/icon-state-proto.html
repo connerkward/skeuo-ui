@@ -22,11 +22,12 @@ toggle.</b></p>
 <p class=note id=spillcheck>running…</p>
 <script>
 const V=Date.now();
+// [skin, button, DEVICE(paint) rect, key, accent, MASKDEVICE(mask) rect]
 const CASES=[
- ['assets-wmp-vario','playpause',[0.4002,0.0994,0.1997,0.0779],[255,255,0],[120,215,255]],
- ['assets-wmp-vario','repeat',[0.3772,0.2212,0.1107,0.0854],[255,0,255],[120,215,255]],
- ['assets-wc-goldshield','playpause',[0.3082,0.5062,0.1033,0.0644],[255,0,255],[120,190,255]],
- ['assets-fa-sky','playpause',[0.2752,0.1441,0.1302,0.0814],[255,0,0],[90,255,200]],
+ ['assets-wmp-vario','playpause',[0.4002,0.0994,0.1997,0.0779],[255,255,0],[120,215,255],[0.4041,0.0994,0.1997,0.0779]],
+ ['assets-wmp-vario','repeat',[0.3772,0.2212,0.1107,0.0854],[255,0,255],[120,215,255],[0.3741,0.2212,0.1107,0.0854]],
+ ['assets-wc-goldshield','playpause',[0.3082,0.5062,0.1033,0.0644],[255,0,255],[120,190,255],[0.3082,0.5062,0.1033,0.0644]],
+ ['assets-fa-sky','playpause',[0.2752,0.1441,0.1302,0.0814],[255,0,0],[90,255,200],[0.2752,0.1441,0.1302,0.0814]],
 ];
 const load=s=>new Promise((r,j)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=j;i.src=s+'?v='+V;});
 const cvs=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
@@ -87,22 +88,26 @@ function VIEW(gl,cw,ch){const o=cvs(cw,ch),g=o.getContext('2d');g.fillStyle='#10
 let reports=[];
 async function run(){
   const app=document.getElementById('app');
-  for(const [skin,btn,dev,key,ac] of CASES){
+  for(const [skin,btn,dev,key,ac,mdev] of CASES){
     const paint=await load(skin+'/paint.png'),mask=await load(skin+'/mask.png');
-    const PAD=0.10,crop=[dev[0]-dev[2]*PAD,dev[1]-dev[3]*PAD,dev[2]*(1+2*PAD),dev[3]*(1+2*PAD)];
+    const PAD=0.10, mb=mdev||dev;
+    const crop=[mb[0]-mb[2]*PAD,mb[1]-mb[3]*PAD,mb[2]*(1+2*PAD),mb[3]*(1+2*PAD)];      // MASK space
+    const dcx=(dev[0]+dev[2]/2)-(mb[0]+mb[2]/2), dcy=(dev[1]+dev[3]/2)-(mb[1]+mb[3]/2); // paint-vs-mask drift
+    const eb=[crop[0]+dcx,crop[1]+dcy,crop[2],crop[3]];                                 // PAINT space (drift-compensated)
     const cw=Math.round(crop[2]*paint.naturalWidth),ch=Math.round(crop[3]*paint.naturalHeight),scale=Math.min(2,220/(dev[2]*paint.naturalWidth));
     const {sil,gl,cov,gcnt}=computeMasks(mask,crop,key,cw,ch);
     const hasGlyph=gcnt> cov*0.008;
-    const h2=document.createElement('h2');h2.textContent=`${skin.replace('assets-','')} · ${btn} · glyph px=${gcnt} ${hasGlyph?'✓ baked in mask':'✗ NO glyph in mask'} · accent rgb(${ac.join(',')})`;app.appendChild(h2);
+    const driftPx=Math.round(dcx*paint.naturalWidth);
+    const h2=document.createElement('h2');h2.textContent=`${skin.replace('assets-','')} · ${btn} · glyph px=${gcnt} ${hasGlyph?'✓ baked in mask':'✗ NO glyph in mask'} · drift ${driftPx}px · accent rgb(${ac.join(',')})`;app.appendChild(h2);
     const row=document.createElement('div');row.className='row';app.appendChild(row);
-    const looks=[['OFF',()=>OFF(paint,crop,sil,cw,ch),false],['glyph from mask',()=>VIEW(gl,cw,ch),false],
-      ['ON · lit glyph',()=>GLYPH(paint,crop,sil,gl,cw,ch,ac,'flat'),true],
-      ['ON · lit + bloom',()=>GLYPH(paint,crop,sil,gl,cw,ch,ac,'bloom'),true],
-      ['ON · lit + latch',()=>GLYPH(paint,crop,sil,gl,cw,ch,ac,'latch'),true]];
+    const looks=[['OFF',()=>OFF(paint,eb,sil,cw,ch),false],['glyph from mask',()=>VIEW(gl,cw,ch),false],
+      ['ON · lit glyph',()=>GLYPH(paint,eb,sil,gl,cw,ch,ac,'flat'),true],
+      ['ON · lit + bloom',()=>GLYPH(paint,eb,sil,gl,cw,ch,ac,'bloom'),true],
+      ['ON · lit + latch',()=>GLYPH(paint,eb,sil,gl,cw,ch,ac,'latch'),true]];
     for(const [label,mk,isOn] of looks){
       const cell=document.createElement('div');cell.className='cell';
       const cv=cvs(cw,ch);cv.style.width=Math.round(cw*scale)+'px';cv.style.height=Math.round(ch*scale)+'px';
-      const offC=OFF(paint,crop,sil,cw,ch),onC=mk();let on=isOn;
+      const offC=OFF(paint,eb,sil,cw,ch),onC=mk();let on=isOn;
       const draw=()=>{const g=cv.getContext('2d');g.clearRect(0,0,cw,ch);g.drawImage(isOn?(on?onC:offC):onC,0,0);};draw();
       if(isOn){cv.onclick=()=>{on=!on;draw();cell.classList.toggle('on',on);};cell.classList.add('on');}
       const cap=document.createElement('div');cap.className='cap';cap.textContent=label;const sub=document.createElement('div');sub.className='sub';sub.textContent=isOn?'click to toggle':'';
