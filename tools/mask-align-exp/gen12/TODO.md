@@ -1,6 +1,25 @@
 # gen12 TODO
 
 ---
+## DECISION (2026-07-12) — switch HOUSING routing = C (baked) default → B (inpaint) fallback
+
+User directive: the switch stays a physical switch (it "has a lot of flavor"), and the housing
+that matches its silhouette is generated as a **C→B chain**:
+- **C — baked shaped housing (DEFAULT, $0):** at generation, prompt the model to give the housing
+  and the switch the same silhouette family, bake the housing into the device, cut only the moving
+  part as the sprite (`TOGGLE_SHAPE_MATCH_ENABLED`, currently an uncommitted genskin.py diff from the
+  switch-slot experiment). Best quality when it works, free.
+- **B — inpainted housing (FALLBACK, ~$0.04):** when C's baked housing doesn't come out right (fails
+  a housing-vs-switch silhouette match check), fall back to inpainting a shaped recess (mask =
+  dilated switch silhouette, `fal-ai/gemini-25-flash-image/edit`). Landed first-try in the experiment.
+- **A (CSS render socket) is OUT** (not shippable — flat gradient over erase-smudge).
+
+Implement in the coherent toggle/switch pass. PREREQUISITE for C: `extract12.py`'s track-walk
+under-measured the switch-slot experiment's dogbone housing by ~13% and mis-centered it (tuned for
+plain pill channels) — its SHAPE ASSUMPTIONS must be widened to measure a non-pill baked housing
+before C is reliable. Gate the C→B fallback on a deterministic housing-vs-switch silhouette match.
+
+---
 ## erase12's default erase model → two-model chain (Gemini 2.5 Flash primary, GPT Image 2 fallback) — DONE 2026-07-12 (~$0.19 validation)
 
 User-chosen per `inpaintbake/arm5`'s bake-off (5 genuine slider-groove skins, plain erase
