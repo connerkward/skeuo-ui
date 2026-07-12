@@ -49,19 +49,43 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
     # as a mismatch, not silently absorbed into the last-known-good orch.json numbers.
     paint_path = os.path.join(d, "paint.png")
     orch_path = os.path.join(d, "orch.json")
+    reg_path = os.path.join(d, "regions.json")
     paint_mtime = os.path.getmtime(paint_path) if os.path.exists(paint_path) else None
     orch_mtime = os.path.getmtime(orch_path) if os.path.exists(orch_path) else None
+    reg_mtime = os.path.getmtime(reg_path) if os.path.exists(reg_path) else None
     painted_str = (datetime.datetime.fromtimestamp(paint_mtime).strftime("%Y-%m-%d %H:%M")
                    if paint_mtime else "?")
     # >2s margin so ordinary same-second write ordering from the pipeline itself doesn't false-flag
     mid_regen = paint_mtime is not None and orch_mtime is not None and paint_mtime > orch_mtime + 2
+    # LIVE gate vs CACHED gate (drift-gate TODO, commit 14d1d51c): orch.json's "passed"/"gate" are
+    # a snapshot written once at the end of a roll — a later re-extract (e.g. the drift gate added
+    # after orch.json was last written) makes that snapshot stale. regions.json IS the live gate
+    # (extract12.py writes it fresh every extraction), so when it's newer than orch.json we trust
+    # it for the header count + card badge; orch.json is then read only for roll-history metadata
+    # (seed/rolls/painted). Same >2s margin convention as mid_regen above.
+    regions_newer = reg_mtime is not None and orch_mtime is not None and reg_mtime > orch_mtime + 2
+    live_pass = gate.get("PASS") if gate else None
+    orch_pass = orch.get("passed")
+    if live_pass is not None and (regions_newer or orch_pass is None):
+        passed, pass_source = live_pass, "live"
+    else:
+        passed = orch_pass if orch_pass is not None else live_pass
+        pass_source = "orch"
+    # orch is "stale" (its cached verdict disagrees with the live gate) whenever both exist and
+    # differ — surfaced as a visible chip rather than silently picking a winner.
+    orch_stale = live_pass is not None and orch_pass is not None and live_pass != orch_pass
+    live_reasons = gate.get("reasons") or []
+    orch_reasons = (orch.get("gate") or {}).get("reasons") or []
+    reasons = live_reasons if pass_source == "live" else (orch_reasons or live_reasons)
     skins.append({"id": sid, "title": res.get("title", orch.get("title", sid)),
-                  "mode": res.get("mode", "?"), "passed": orch.get("passed", gate.get("PASS")),
+                  "mode": res.get("mode", "?"), "passed": passed, "pass_source": pass_source,
+                  "orch_stale": orch_stale, "orch_pass": orch_pass, "live_pass": live_pass,
+                  "orch_reasons": orch_reasons,
                   "rolls": orch.get("rolls", "?"), "seed": orch.get("final_seed", res.get("seed", "?")),
                   "gate": gate, "leak": res.get("leak"), "pbr": pbr,
                   "painted": painted_str, "mid_regen": mid_regen, "dr": dr,
                   "drift": reg.get("drift"),
-                  "reasons": (orch.get("gate") or {}).get("reasons") or gate.get("reasons") or []})
+                  "reasons": reasons})
 npass = sum(1 for s in skins if s["passed"]); n = len(skins)
 # cost annotation (dev-facing-model-cost-annotation-rule): sum rolls × per-roll model spend
 total_rolls = sum(s["rolls"] for s in skins if isinstance(s["rolls"], int))
@@ -83,6 +107,14 @@ def card(s):
         for f, lbl in [("blueprint.png", "blueprint"), ("paint.png", "paint"), ("mask.png", "mask"),
                        ("overlay.png", "overlay")])
     autob = '<span class="pass">auto PASS</span>' if s["passed"] else '<span class="fail">auto FAIL</span>'
+    # orch.json's cached verdict disagrees with the live regions.json gate — show it, don't hide it.
+    stale_chip = ''
+    if s.get("orch_stale"):
+        ov = "PASS" if s["orch_pass"] else "FAIL"; lv = "PASS" if s["live_pass"] else "FAIL"
+        orch_rz = ", ".join(s.get("orch_reasons") or []) or "none"
+        stale_chip = (f' <span class=stale title="orch.json (cached, roll-history) says {ov} '
+                      f'[{orch_rz}] · regions.json (live gate) says {lv} — card uses the LIVE value">'
+                      f'&#9888; orch stale (cached {ov})</span>')
     reasons = ("reasons: " + ", ".join(s["reasons"])) if s["reasons"] else "all checks green"
     det = (f'controls {g.get("controls","?")}/{g.get("controls_total","?")} · seek-cov {g.get("seek_cov","?")} · '
            f'empty {"ok" if g.get("empty_ok") else "FAIL"} · align {"ok" if g.get("state_align_ok") else "x"} · '
@@ -124,7 +156,7 @@ def card(s):
   <div class=live><iframe src="assets-{sid}/player.html" loading=lazy title="{sid} player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="{sid}" placeholder="what's wrong with this skin? (autosaves)"></textarea>
-      <div class=auto>{autob} · <span class=det>{det}</span><br><span class=rz>{reasons}</span>{dr_line}</div>
+      <div class=auto>{autob}{stale_chip} · <span class=det>{det}</span><br><span class=rz>{reasons}</span>{dr_line}</div>
       <details class=proc><summary>process images</summary><div class=strip>{imgs}</div></details>
     </div></div>
 </section>'''
@@ -300,6 +332,7 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .runid{{font:11px ui-monospace,monospace;color:#7a8090;margin:-4px 0 12px}}
 .runid .driftfail{{color:#400;background:#f88;border-radius:4px;padding:0 5px;font-weight:700}}
 .midregen{{color:#0a0604;background:#ffb454;border-radius:4px;padding:1px 6px;font-weight:700;margin-left:6px}}
+.stale{{color:#0a0604;background:#ffb454;border-radius:4px;padding:1px 6px;font-weight:700;margin-left:6px;cursor:help}}
 .hverdict{{display:flex;align-items:center;gap:8px}}.hlabel{{font:11px ui-monospace,monospace;color:#8a90a0}}
 .htoggle{{border:1px solid #ffffff26;background:#161a22;color:#9aa;border-radius:8px;padding:7px 16px;font:700 12px ui-monospace,monospace;cursor:pointer;min-width:120px}}
 .htoggle.hp{{background:#153;border-color:#3a7;color:#7fe}}.htoggle.hf{{background:#511;border-color:#a44;color:#f99}}
