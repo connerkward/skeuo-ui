@@ -164,6 +164,11 @@ output (`observe/`, `director-review.json` are similarly untracked elsewhere in 
 Only `paint.png` + `regions.json` (both already git-tracked) were committed for the 4 fixed
 skins.
 
+**Visual proof page (added 2026-07-12):** [`erase-proof.html`](erase-proof.html) — real
+before/after crops from the untracked `erase-verify/` dirs above for all 4 fixed skins, the
+classical-inpaint X-smear exhibit, the n64-cutscene shape-bug story, and the disputed
+claymation false positive, in the `imgjson/explain.html` register.
+
 ---
 ## Verification recalibration: review round used as an eval set — DONE 2026-07-11 (~$1.4)
 
