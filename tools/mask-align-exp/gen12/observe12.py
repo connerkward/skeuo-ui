@@ -22,6 +22,10 @@ score_verification.py); the prompt now interrogates each tag explicitly per cont
 device-level check (orientation/duplicates/phantoms aren't tied to a single control key).
 """
 import os, re, sys, json, time, base64
+# ⟦cite:...⟧ provenance markers ride inside the VLM prompt literal below (why each clause
+# exists); strip_cites() removes them before the prompt reaches the API. See prompt_provenance.py
+# + PROMPT-PROVENANCE.md.
+from prompt_provenance import strip_cites
 
 # canonical defect vocabulary — kept in sync with human_defects.json's "_meta.taxonomy" and
 # director_review.py's DEFECT_TAGS (independently duplicated there on purpose: director_review
@@ -109,7 +113,7 @@ if VLM:
         f"This is a rendered skeuomorphic music-player skin ('{SID}'). Controls and roles: {ctrls}. "
         "Image [1] is the FULL rendered frame before interaction; image [2] is the FULL frame "
         "after interaction (toggle/knob/seek exercised) — these two are the primary evidence and "
-        "always show the whole device. "
+        "always show the whole device.⟦cite:sha:5d4ba3b1⟧ "
         + (f"Images [3..] are wide-padded close-up crops of individual controls, in this order: "
            f"{crop_order}. Some controls (toggle/knob/slider) have BOTH a plain crop and a "
            "'-after' crop of the SAME control post-interaction — compare that pair directly: if "
@@ -118,10 +122,12 @@ if VLM:
            "is a SUPPLEMENT for precision, not independent evidence — if a crop does not clearly "
            "contain the named control (wrong content fills the frame, control absent, or "
            "ambiguous), say CROP-MISS for that control and judge it from the full frame instead. "
-           "Do not judge what isn't there. " if crop_files else "")
+           "Do not judge what isn't there.⟦cite:sha:5d4ba3b1⟧ " if crop_files else "")
         + "Check EACH named control against this exact defect checklist, then report ONE line per "
         f"control in the EXACT format '<key>: OK' or '<key>: DEFECT[tag1,tag2] - <short detail>' "
-        f"or '<key>: CROP-MISS' (tags MUST be chosen only from: {tag_list}). Checklist per control: "
+        f"or '<key>: CROP-MISS' (tags MUST be chosen only from: {tag_list})."
+        "⟦cite:docs/experiments/2026-07-11-verification-recalibration.md;tools/mask-align-exp/gen12/review-2026-07-11-round1.json;sha:6d24eec5⟧"
+        " Checklist per control: "
         "(a) baked-thumb — for a slider specifically: is the moving thumb/handle actually a static "
         "part of the painted background art (never moves, or a second handle-shaped mark visibly "
         "duplicates the CSS-drawn one)? (b) sprite-slot-mismatch — does the moving/interactive "
@@ -140,7 +146,8 @@ if VLM:
         "are OK: toggle OFF/ON states may legitimately differ in silhouette (creative switch "
         "mechanisms), sprites are theme-styled so unusual shapes are fine IF seated correctly in a "
         "plausible, correctly-sized socket. Also flag any visible text/words baked into the device "
-        "(it must be wordless) — tag that as aesthetic and describe it. "
+        "(it must be wordless) — tag that as aesthetic and describe it."
+        "⟦cite:docs/experiments/2026-07-11-verification-recalibration.md;sha:3eeccc55⟧ "
         "\n\nAfter the per-control lines, output exactly one DEVICE-level line covering things not "
         f"tied to a single control, format 'DEVICE: [tag1,tag2] - <detail>' or 'DEVICE: none' (tags "
         f"only from: {device_tag_list}): (h) orientation — is the WHOLE device rendered upright and "
@@ -148,11 +155,14 @@ if VLM:
         "bizarre/unusable angle)? (i) duplicate-control — are there two or more copies of what "
         "should be a single control (e.g. two play buttons)? (j) phantom-control — is there a "
         "control-shaped decorative element in the art with NO corresponding named/functional "
-        "control (a fake button that does nothing)? "
+        "control (a fake button that does nothing)?"
+        "⟦cite:docs/experiments/2026-07-11-verification-recalibration.md;tools/mask-align-exp/gen12/review-2026-07-11-round1.json⟧ "
         "\n\nFinally, output exactly one line: VERDICT: PASS or VERDICT: FAIL. The verdict MUST be "
         "FAIL if ANY per-control line has a DEFECT tag, or the DEVICE line has any tag other than "
         "none — do not average defects away against an otherwise-nice render."
+        "⟦cite:docs/experiments/2026-07-11-verification-recalibration.md⟧"
     )
+    prompt = strip_cites(prompt)  # markers never reach the API — see prompt_provenance.py
     def b64(p):
         return "data:image/png;base64," + base64.b64encode(open(p, "rb").read()).decode()
     image_urls = [b64(os.path.join(OBS, "full.png")), b64(os.path.join(OBS, "after.png"))]

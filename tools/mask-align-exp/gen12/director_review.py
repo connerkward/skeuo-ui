@@ -43,6 +43,10 @@ used for crop() below not importing observe12.py's crop()).
 Usage: python3 director_review.py <assets-dir> [--url=http://host:port/assets-x/player.html]
 """
 import os, re, sys, json, time, base64, tempfile, subprocess
+# ⟦cite:...⟧ provenance markers ride inside the SYSTEM_PROMPT/USER_PROMPT literals below (why
+# each clause exists); strip_cites() removes them right after assignment, before any API call.
+# See prompt_provenance.py + PROMPT-PROVENANCE.md.
+from prompt_provenance import strip_cites
 
 DEFECT_TAGS = ["baked-thumb", "sprite-slot-mismatch", "css-misalignment", "silhouette-mismatch",
                "dead-control", "duplicate-control", "phantom-control", "placement-wrong",
@@ -160,7 +164,7 @@ controls_txt = ", ".join(f"{k} ({role})" for k, role, _ in crop_files)
 SYSTEM_PROMPT = (
     "You are the DIRECTOR — the creative lead giving FINAL sign-off on a finished "
     "skeuomorphic music-player skin render. This is a real gate: skins you PASS ship as-is. "
-    "Judge on TWO axes, both gating: "
+    "Judge on TWO axes, both gating:⟦cite:sha:9923c2ce⟧ "
     "\n\nAXIS A — hard defect check (a single hit on ANY control FAILS the whole render, no "
     "matter how good the aesthetics score): for EACH control, inspect its crop(s) for baked-"
     "thumb (a slider's moving thumb/handle is actually static painted art that doesn't move — "
@@ -179,19 +183,23 @@ SYSTEM_PROMPT = (
     "asymmetry is fine (toggle OFF/ON states may legitimately differ; theme-styled controls may "
     "be unconventional shapes) — ONLY flag a tag when it reads as an actual functional/visual "
     "break, not merely stylistically unusual. Any visible baked-in text/words is always a defect "
-    "(device must be wordless) — tag it aesthetic and say what the text is. "
+    "(device must be wordless) — tag it aesthetic and say what the text is."
+    "⟦cite:docs/experiments/2026-07-11-verification-recalibration.md;tools/mask-align-exp/gen12/review-2026-07-11-round1.json;sha:6d24eec5⟧ "
     "\n\nAXIS B — aesthetic/thematic judgment (informs score_0_10 and the notes, does NOT by "
     "itself force a FAIL unless it crosses into an AXIS A tag): (1) cohesion — do the parts read "
     "as one designed object in one material world, not a collage; (2) material fidelity — does "
     "the surface read as the requested theme/material, not generic plastic with a tinted "
     "texture; (3) control legibility — can a user tell what each control does and its current "
     "state at a glance; (4) seating — do sprites look physically mounted (shadow, occlusion, "
-    "scale) rather than pasted on top; (5) what would most improve the shot if regenerated. "
+    "scale) rather than pasted on top; (5) what would most improve the shot if regenerated."
+    "⟦cite:sha:9923c2ce⟧ "
     "\n\nHARD RULE: overall verdict MUST be FAIL if ANY per_control entry has a non-'none' "
     "defects tag, or orientation_ok is false, or device_defects has any non-'none' tag — do "
     "NOT let a high aesthetic score talk you into PASSing a render with a real AXIS A defect. "
     "A skin can be visually striking and still FAIL."
+    "⟦cite:docs/experiments/2026-07-11-verification-recalibration.md⟧"
 )
+SYSTEM_PROMPT = strip_cites(SYSTEM_PROMPT)  # markers never reach the API — see prompt_provenance.py
 USER_PROMPT = (
     f"Skin id: {SID}\n"
     f"Theme brief (theme_prompt): {spec.get('theme_prompt', '(none)')}\n"
@@ -206,11 +214,13 @@ USER_PROMPT = (
     + ", ".join(f"[{i+2}] {k}" for i, (k, _, _) in enumerate(crop_files)) + ". Slider/toggle/knob "
     "crops are cut from the AFTER frame specifically so you can judge post-interaction state; "
     "compare against image [0]'s corresponding region for the idle/before state when checking "
-    "baked-thumb or dead-control.\n\n"
+    "baked-thumb or dead-control.⟦cite:sha:9923c2ce;sha:6d24eec5⟧\n\n"
     "Judge the render against ITS OWN brief above, AND against the hard defect checklist in "
     "the system prompt. Include ONE per_control entry for EVERY control listed above, using "
     "its exact key as the 'control' field, with a 'defects' array (use ['none'] if clean)."
+    "⟦cite:sha:9923c2ce;docs/experiments/2026-07-11-image-model-json-output.md;sha:6d24eec5⟧"
 )
+USER_PROMPT = strip_cites(USER_PROMPT)  # markers never reach the API — see prompt_provenance.py
 
 # OpenAPI-3.0 subset, uppercase Type enum — same pattern verified live against Vertex/Gemini
 # docs 2026-07-11 in semissive/judge.py. per_control is an ARRAY of {control,status,note}

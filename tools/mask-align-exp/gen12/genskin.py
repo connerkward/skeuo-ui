@@ -23,6 +23,10 @@ Usage: python3 genskin.py <spec.json> [--blueprint-only]   → writes gen12/asse
 import os, re, io, sys, json, time, math, random, base64, subprocess
 import requests
 from PIL import Image, ImageDraw
+# ⟦cite:...⟧ provenance markers ride inside the prompt string literals below (why each clause
+# exists — experiment/review/commit refs, rendered in PROMPT-PROVENANCE.md). strip_cites()
+# removes them before the prompt reaches any model API or results.json — see prompt_provenance.py.
+from prompt_provenance import strip_cites
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL = "fal-ai/gemini-3-pro-image-preview/edit"
@@ -90,7 +94,9 @@ PROMPT_JSON_SPEC = False
 # lesson, see the tick-provisioning comment further down: named positions/numbers bake in as
 # literal engraved TEXT) — "straight up" is a direction, not a label. Default OFF pending verdict.
 KNOB_POINTER_UP = False
-_POINTER_UP_CLAUSE = ", its pointer notch aiming straight up" if KNOB_POINTER_UP else ""
+_POINTER_UP_CLAUSE = (", its pointer notch aiming straight up"
+                      "⟦cite:docs/experiments/2026-07-11-knob-pointer-up.md;sha:11b34684⟧"
+                      if KNOB_POINTER_UP else "")
 
 # SEEK_CLAUSE_LITE: the "seek is an empty slot" prompt clause has been hardened across many
 # rounds — two full-paragraph bullets (one at the device level, one repeated at the strip
@@ -115,10 +121,11 @@ _SEEK_SLOT_BULLET_HEAVY = (
     "SLOT/CHANNEL only, NOT a functioning slider. Absolutely do NOT bake a slider thumb, "
     "grip, knob, handle, bar, fill, track-fill or progress indicator into it — it is a bare "
     "dark empty channel; the thumb is a SEPARATE loose part in the strip. A seek slot with "
-    "anything riding in it is WRONG.\n"
+    "anything riding in it is WRONG.⟦cite:sha:ac28cd74;tools/mask-align-exp/gen12/review-2026-07-11-round1.json⟧\n"
 )
 _SEEK_SLOT_BULLET_LITE = (
-    "  • The seek slot is an empty recessed channel — no thumb, grip or fill baked into it.\n"
+    "  • The seek slot is an empty recessed channel — no thumb, grip or fill baked into it."
+    "⟦cite:sha:5c378e5b;tools/mask-align-exp/gen12/erase12.py;docs/experiments/2026-07-10-bproof-constraint-load.md⟧\n"
 )
 _SEEK_STRIP_BULLET_HEAVY = (
     "  • THE SEEK STRIP PART IS THE LOOSE THUMB/GRIP **ONLY** — the small handle piece a "
@@ -126,10 +133,11 @@ _SEEK_STRIP_BULLET_HEAVY = (
     "is ABSOLUTELY NOT a slot, groove, channel, track, rail or recess, and must NOT be "
     "drawn sitting in/on any slot or dark channel — no groove under it, no track through "
     "it, no recessed surround. If the strip's seek cell shows any slot/track instead of a "
-    "lone thumb piece, the output is WRONG.\n"
+    "lone thumb piece, the output is WRONG.⟦cite:sha:e8546e22⟧\n"
 )
 _SEEK_STRIP_BULLET_LITE = (
-    "  • The seek strip cell shows the loose thumb/grip alone, not sitting in a slot or groove.\n"
+    "  • The seek strip cell shows the loose thumb/grip alone, not sitting in a slot or groove."
+    "⟦cite:sha:5c378e5b;tools/mask-align-exp/gen12/erase12.py⟧\n"
 )
 SEEK_SLOT_BULLET = _SEEK_SLOT_BULLET_LITE if SEEK_CLAUSE_LITE else _SEEK_SLOT_BULLET_HEAVY
 SEEK_STRIP_BULLET = _SEEK_STRIP_BULLET_LITE if SEEK_CLAUSE_LITE else _SEEK_STRIP_BULLET_HEAVY
@@ -482,7 +490,9 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
 
     preamble = ("Two side-by-side columns of identical size, output at 5:4. Below is THE "
                 "MACHINE-READABLE SPEC for this generation — follow it exactly for every "
-                "control's identity, guide-colour, position and size:\n\n" + json_block + "\n")
+                "control's identity, guide-colour, position and size:"
+                "⟦cite:docs/experiments/2026-07-11-jsonspec-paint.md;sha:7445fb15;sha:8abf3e8a⟧"
+                "\n\n" + json_block + "\n")
     left_layout = (
         "The LEFT column is a BLUEPRINT: a neutral grey placeholder body with COLOURED SOLID "
         "FILLED patches marking each control's exact position/size/shape PER THE SPEC ABOVE, "
@@ -496,7 +506,8 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "fins, greebles, ornament, asymmetry) — NOT a plain rounded rectangle, NOT a generic "
         "slab or pod. Reshape the outer silhouette DRAMATICALLY to suit the theme; ONLY the "
         "control positions given by the spec stay fixed. The coloured filled patches described "
-        "in the spec are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed.")
+        "in the spec are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed."
+        "⟦cite:sha:794da20e;docs/experiments/2026-07-11-drift-clause-bisect.md;tools/mask-align-exp/gen12/abshape/verdict.json⟧")
     residue_bullet = (
         "  • ZERO RESIDUE (CRITICAL) — the coloured guide patch around EVERY control is a "
         "temporary alignment marking, NOT part of the design. It must VANISH completely. Each "
@@ -505,36 +516,38 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "coloured ring, it is WRONG. Likewise the album-art and visualizer windows have NO "
         "coloured frame (just a dark recessed glass panel flush in the body), and no "
         "socket/groove/slot has any coloured rim. Paint the body/button material seamlessly "
-        "OVER where each guide patch was.\n")
+        "OVER where each guide patch was.⟦cite:tools/mask-align-exp/gen12/abshape/verdict.json;sha:8c97ef9a⟧\n")
 
     prompt = (
         preamble + " ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO CAPTIONS and NO "
         "LABELS anywhere in EITHER column — not under controls, not on the strip, not a title, "
-        "nothing; the device is wordless, identified by icons and shapes only. " + left_layout + "\n"
+        "nothing; the device is wordless, identified by icons and shapes only.⟦cite:sha:794da20e;sha:3eeccc55⟧ "
+        + left_layout + "\n"
         "THEME (design the finished device in THIS style — you own all materials, colours, "
-        "form, lighting): " + STRUCT + "\n"
+        "form, lighting):⟦cite:sha:794da20e⟧ " + STRUCT + "\n"
         "Fill BOTH columns keeping the device+strip layout IDENTICAL so they overlay "
-        "pixel-for-pixel.\n"
+        "pixel-for-pixel.⟦cite:sha:794da20e⟧\n"
         "LEFT column — the FINISHED, richly 3D, tactile, skeuomorphic media player and its "
-        "loose parts, in the theme above. CRITICAL for cutout: the BACKDROP around the device "
+        "loose parts, in the theme above.⟦cite:sha:794da20e⟧ CRITICAL for cutout: the BACKDROP around the device "
         f"and BEHIND every strip part is a FLAT, PERFECTLY UNIFORM "
         f"{'pale grey-white' if dark else 'near-black charcoal'} tone (RGB ~{BG[0]},{BG[1]},{BG[2]}) "
         "— a separate keyed-out backdrop with NO gradient/texture/vignette that strongly "
-        "contrasts the body; the device must never approach the backdrop tone.\n"
+        "contrasts the body; the device must never approach the backdrop tone."
+        "⟦cite:sha:794da20e;docs/DECISIONS.md⟧\n"
         "  • The finished device uses ONLY its own theme materials/colours — NONE of the guide "
         f"colours from the spec. ABSOLUTELY {NO_LIST} anywhere in the LEFT column; the guide "
-        "colours from the spec exist ONLY in the RIGHT mask.\n"
+        "colours from the spec exist ONLY in the RIGHT mask.⟦cite:sha:794da20e⟧\n"
         + residue_bullet
         + "  • The 5 transport/function BUTTONS (playpause, prev, next, repeat, queue) are "
         "raised, glossy, tactile control facets set into the body, EACH clearly bearing its "
         "icon EMBOSSED/engraved in relief per the spec's final_icon_or_content field for that "
-        "control. Shape + icon + relief only; no text labels; no coloured rim.\n"
+        "control. Shape + icon + relief only; no text labels; no coloured rim.⟦cite:sha:794da20e⟧\n"
         "  • BUTTON COLOURS COME FROM THE THEME, NEVER FROM THE GUIDES: a button's guide_color "
         "in the spec marks its POSITION ONLY — the finished button's material/fill must NOT "
         "inherit, echo or be tinted toward its guide colour in ANY way (no red play because its "
         "guide was red, no magenta next, etc). ALL five buttons are made of the device's OWN "
         "theme materials/palette, coloured consistently with each other and the body. If any "
-        "button's colour visibly matches its spec guide_color, the output is WRONG.\n"
+        "button's colour visibly matches its spec guide_color, the output is WRONG.⟦cite:sha:a8bbaad0⟧\n"
         "  • THE SINGLE MOST IMPORTANT RULE — EVERY MOVING-PART CAVITY IS EMPTY. The volume "
         "knob socket is a bare round HOLE showing only its dark recessed floor (NO knob, NO "
         "cap, NO dome, NO dial, NO pointer — nothing installed). The seek slider groove is an "
@@ -544,24 +557,29 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "device is photographed BEFORE ASSEMBLY: those parts exist ONLY in the bottom sprite "
         "strip and have NOT been installed yet. Do NOT colour the empty wells — neutral DARK "
         "recesses only. If ANY of the three cavities (knob socket, seek slot, shuffle slot) "
-        "contains ANY part or any fill colour, the output is WRONG and must be redone.\n"
+        "contains ANY part or any fill colour, the output is WRONG and must be redone."
+        "⟦cite:sha:794da20e;docs/experiments/2026-07-10-bproof-constraint-load.md;docs/DECISIONS.md⟧\n"
         + tick_skin_bullet
         + SEEK_SLOT_BULLET
         + "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed "
         "glass SCREENS — flat unlit dark glass panels only, with NOTHING inside them: NO baked "
         "spectrum/equalizer bars, NO album cover or artwork, NO waveform, NO icons, NO text, NO "
         "content whatsoever. They are powered-down screens; the app draws their live content "
-        "later. If either window contains any baked graphics, it is WRONG. The album-art window "
-        "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped.\n"
+        "later. If either window contains any baked graphics, it is WRONG.⟦cite:sha:794da20e;sha:3eeccc55⟧ "
+        "The album-art window "
+        "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped."
+        "⟦cite:sha:e8f249db;tools/mask-align-exp/gen12/artdrift_data.json⟧\n"
         "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, in the order "
         "given by the spec's strip_order_left_to_right (volume knob cap, seek slider thumb, "
         "shuffle switch first state, shuffle switch second state) — in the device's own "
-        f"materials, patches removed, on the flat {'pale' if dark else 'charcoal'} backdrop.\n"
+        f"materials, patches removed, on the flat {'pale' if dark else 'charcoal'} backdrop."
+        "⟦cite:sha:794da20e;sha:3eeccc55⟧\n"
         + tick_sprite_bullet
         + SEEK_STRIP_BULLET
         + "  • EXACT FIT — per the spec's congruence_rule: each strip part is the EXACT size & "
         "shape of its slot (vol_cap radius = vol's socket radius; seek_thumb fits the groove; "
-        "each shuffle_state exactly fills the switch slot). Do NOT resize/re-proportion a part.\n"
+        "each shuffle_state exactly fills the switch slot). Do NOT resize/re-proportion a part."
+        "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json⟧\n"
         "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT "
         "have to be a plain pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, "
         "gem that shifts, valve, eye that opens — any physical two-state mechanism, as long as "
@@ -570,7 +588,7 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "end/side in the first state and at the OPPOSITE end/side in the second state (never "
         "the same position in both). Put ABSOLUTELY NO text, letters, numerals, glyphs, words "
         "or labels of ANY kind on either switch part or on ANY strip part — the state must read "
-        "from the mechanism's position alone, with zero markings.\n"
+        "from the mechanism's position alone, with zero markings.⟦cite:sha:e8546e22;sha:ac28cd74;sha:3eeccc55⟧\n"
         "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in "
         "a PERFECTLY FLAT, STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view — the camera is directly "
         "overhead at exactly 90°, the same view as the device. Each part is drawn as if lying "
@@ -582,7 +600,7 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO perspective, NO visible "
         "sides — a part showing its side wall or any thickness is WRONG. Each part must look "
         "EXACTLY as it appears seated flat in its socket on the top-down device, so it drops "
-        "straight in.\n"
+        "straight in.⟦cite:sha:794da20e⟧\n"
         "RIGHT column — a precise REGION MASK on pure BLACK, pixel-aligned to the LEFT. For "
         "EACH control paint ONE SOLID FILLED blob in its own guide_color_rgb (from the spec), "
         "at the EXACT same position, size and silhouette as that control on the left (the "
@@ -595,14 +613,14 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "never larger than the bezel opening, never smaller, never shifted or offset onto the "
         "surrounding body. Trace each window's glass outline precisely; a display blob that "
         "extends past its painted window, covers body/bezel around it, or sits off the window "
-        "is WRONG; and each STRIP PART as a solid COMPACT blob of its matching control's "
+        "is WRONG⟦cite:sha:86f69c75⟧; and each STRIP PART as a solid COMPACT blob of its matching control's "
         "guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour, BOTH "
         "shuffle states use shuffle's colour) exactly matching its part's silhouette & position "
         "in the strip, in the spec's strip_order_left_to_right. CRITICAL: each blob is TIGHT to "
         "its shape — NEVER let a colour bleed or stretch across the strip band or flood a "
         "rectangle; the 4 strip blobs are 4 separate compact shapes with black gaps between "
         "them. Every blob is ONE solid filled silhouette, no outlines, no holes. Everything "
-        "else is pure black.")
+        "else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
     return prompt
 
 
@@ -679,10 +697,12 @@ def main():
     mask_lines = "; ".join(
         f"{kn(c)} region filled {rgb(c)}" for c in CONTROLS)
     # defaults (templateless, and the single-canvas solid/outline arms use these column refs)
-    fill_line = "Fill BOTH columns keeping the device+strip layout IDENTICAL so they overlay pixel-for-pixel.\n"
+    fill_line = ("Fill BOTH columns keeping the device+strip layout IDENTICAL so they overlay pixel-for-pixel."
+                 "⟦cite:sha:794da20e⟧\n")
     left_col_hdr = ("LEFT column — the FINISHED, richly 3D, tactile, skeuomorphic media player and its loose "
-                     "parts, in the theme above.")
-    right_col_hdr = "RIGHT column — a precise REGION MASK on pure BLACK, pixel-aligned to the LEFT."
+                     "parts, in the theme above.⟦cite:sha:794da20e⟧")
+    right_col_hdr = ("RIGHT column — a precise REGION MASK on pure BLACK, pixel-aligned to the LEFT."
+                     "⟦cite:sha:794da20e;docs/DECISIONS.md⟧")
     left_ref = "the left"
     strip_side = "the left"
     mask_guide_ref = ""
@@ -692,7 +712,8 @@ def main():
         "device's own material with absolutely NO coloured ring, rim, bezel, halo, outline or edge-tint around it — "
         "if a button has a coloured ring, it is WRONG. Likewise the album-art and visualizer windows have NO "
         "coloured frame (just a dark recessed glass panel flush in the body), and no socket/groove/slot has any "
-        "coloured rim. Paint the body/button material seamlessly OVER where each guide outline was.\n")
+        "coloured rim. Paint the body/button material seamlessly OVER where each guide outline was."
+        "⟦cite:tools/mask-align-exp/gen12/abshape/verdict.json;sha:8c97ef9a⟧\n")
     if mode == "templated":
         if conditioning == "twoimg":
             # ported from twoimg/genskin_twoimg.py:build_prompt('treat', ...) — proven wording,
@@ -700,7 +721,8 @@ def main():
             preamble = ("TWO images are provided. IMAGE 1 is the EDIT TARGET / CANVAS — two side-by-side "
                 "columns of identical size, output at 5:4, matching IMAGE 1's layout exactly. IMAGE 2 is a "
                 "LAYOUT REFERENCE ONLY, shown purely to tell you WHERE each control goes — it is NOT part of "
-                "the canvas you edit and NONE of its colours may ever appear in your output.")
+                "the canvas you edit and NONE of its colours may ever appear in your output."
+                "⟦cite:docs/experiments/2026-07-10-twoimg-conditioning.md⟧")
             left_layout = (
                 "IMAGE 1's LEFT column is a neutral grey placeholder body (a rough blob, no colour markings "
                 "at all) plus a bottom SPRITE-STRIP band that is currently EMPTY/blank. IMAGE 2 shows the SAME "
@@ -717,7 +739,7 @@ def main():
                 "form with a memorable silhouette (organic curves, wings, pods, fins, greebles, ornament, "
                 "asymmetry) — NOT a plain rounded rectangle, NOT a generic slab or pod. Reshape the outer "
                 "silhouette DRAMATICALLY to suit the theme; ONLY the control positions (as shown by IMAGE 2) "
-                "stay fixed.")
+                "stay fixed.⟦cite:docs/experiments/2026-07-10-twoimg-conditioning.md;sha:794da20e⟧")
             fill_line = ("Fill BOTH columns of your OUTPUT (matching IMAGE 1's device+strip layout) keeping "
                           "them pixel-aligned.\n")
             left_col_hdr = ("LEFT column of your output — the FINISHED, richly 3D, tactile, skeuomorphic "
@@ -732,9 +754,10 @@ def main():
                 "solid piece of the device's own material with NO coloured ring around it — if a button has a "
                 "coloured ring, it is WRONG. Likewise the album-art and visualizer windows have NO coloured "
                 "frame (just a dark recessed glass panel flush in the body), and no socket/groove/slot has any "
-                "coloured rim.\n")
+                "coloured rim.⟦cite:tools/mask-align-exp/gen12/abshape/verdict.json;sha:8c97ef9a⟧\n")
         else:
-            preamble = "Two side-by-side columns of identical size, output at 5:4."
+            preamble = ("Two side-by-side columns of identical size, output at 5:4."
+                        "⟦cite:sha:794da20e;docs/DECISIONS.md⟧")
             guide_word = "SOLID FILLED patches" if conditioning == "solid" else "OUTLINE guides"
             marking_word = "filled patches" if conditioning == "solid" else "outlines"
             residue_word = "patch" if conditioning == "solid" else "outline"
@@ -748,7 +771,8 @@ def main():
                 "HOUSING around them: an ornate, characterful, sculpted form with a memorable silhouette (organic curves, "
                 "wings, pods, fins, greebles, ornament, asymmetry) — NOT a plain rounded rectangle, NOT a generic slab or "
                 "pod. Reshape the outer silhouette DRAMATICALLY to suit the theme; ONLY the control positions stay fixed. "
-                f"The coloured {marking_word} are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed.")
+                f"The coloured {marking_word} are ALIGNMENT MARKINGS (like masking tape) and MUST be completely removed."
+                "⟦cite:sha:794da20e;docs/experiments/2026-07-11-drift-clause-bisect.md;tools/mask-align-exp/gen12/abshape/verdict.json⟧")
             residue_bullet = (
                 f"  • ZERO RESIDUE (CRITICAL) — the coloured guide {residue_word} around EVERY control is a temporary "
                 "alignment marking, NOT part of the design. It must VANISH completely. Each finished BUTTON is ONE solid "
@@ -756,9 +780,10 @@ def main():
                 "edge-tint around it — if a button has a coloured ring, it is WRONG. Likewise the album-art and "
                 "visualizer windows have NO coloured frame (just a dark recessed glass panel flush in the body), and no "
                 f"socket/groove/slot has any coloured rim. Paint the body/button material seamlessly OVER where each "
-                f"guide {residue_word} was.\n")
+                f"guide {residue_word} was.⟦cite:tools/mask-align-exp/gen12/abshape/verdict.json;sha:8c97ef9a⟧\n")
     else:
-        preamble = "Two side-by-side columns of identical size, output at 5:4."
+        preamble = ("Two side-by-side columns of identical size, output at 5:4."
+                    "⟦cite:sha:794da20e;docs/DECISIONS.md⟧")
         left_layout = ("The LEFT column has a thin horizontal DIVIDER LINE near the bottom: everything ABOVE it is "
             "the DEVICE AREA, the thin band BELOW it is the SPRITE STRIP. YOU design the device from scratch. Paint "
             "EXACTLY ONE single media player filling the device area (do NOT draw two devices, variants, copies, "
@@ -768,7 +793,8 @@ def main():
             "wings, pods, fins, greebles, ornament) that suits the theme, NOT a plain pod, slab or rectangle. "
             "Arrange the controls in one attractive layout of your choosing. In the bottom strip band below the divider, paint "
             "EXACTLY FOUR loose parts in ONE row left-to-right: volume knob cap, seek slider thumb, shuffle switch "
-            "in its first state, shuffle switch in its second state — and NOTHING else in the strip.")
+            "in its first state, shuffle switch in its second state — and NOTHING else in the strip."
+            "⟦cite:sha:794da20e;sha:3eeccc55⟧")
 
     # -------- knob tick-mark provisioning (director-decided, per-spec) --------
     # docs/experiments/2026-07-11-knob-tick-provisioning.md found baked ticks UNRELIABLE
@@ -780,12 +806,13 @@ def main():
         "tick or index marks framing the opening, cut/engraved/cast into the device's own housing "
         "material and finish — subtle, part of the panel, not a separate applied sticker. This is "
         "on the surrounding panel only; the socket cavity itself stays the bare empty hole described "
-        "above.\n"
+        "above.⟦cite:docs/experiments/2026-07-11-knob-tick-provisioning.md;sha:8679c132⟧\n"
     ) if ticks_spec.get("skin") == "baked" else ""
     tick_sprite_bullet = (
         "  • The volume knob cap (the loose strip part) carries one small pointer or index mark at "
         "its rim, in the device's own material and finish, clearly distinguishable from the rest of "
-        "the cap's surface so its rotation reads at a glance.\n"
+        "the cap's surface so its rotation reads at a glance."
+        "⟦cite:docs/experiments/2026-07-11-knob-tick-provisioning.md;sha:8679c132⟧\n"
     ) if ticks_spec.get("sprite") == "baked" else ""
 
     # PROMPT_JSON_SPEC only covers what jsonspec/ tested: templated mode, 'solid' conditioning
@@ -799,25 +826,29 @@ def main():
         prompt = (
         preamble + " ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO "
         "NUMBERS, NO CAPTIONS and NO LABELS anywhere in EITHER column — not under controls, not on the strip, not "
-        "a title, nothing; the device is wordless, identified by icons and shapes only. " + left_layout + "\n"
-        "THEME (design the finished device in THIS style — you own all materials, colours, form, lighting): "
+        "a title, nothing; the device is wordless, identified by icons and shapes only."
+        "⟦cite:sha:794da20e;sha:3eeccc55⟧ " + left_layout + "\n"
+        "THEME (design the finished device in THIS style — you own all materials, colours, form, lighting):"
+        "⟦cite:sha:794da20e⟧ "
         + STRUCT + "\n"
         + fill_line
         + left_col_hdr + " CRITICAL for cutout: the BACKDROP around the device and BEHIND every strip part is a FLAT, "
         f"PERFECTLY UNIFORM {'pale grey-white' if dark else 'near-black charcoal'} tone (RGB ~{BG[0]},{BG[1]},{BG[2]}) "
         "— a separate keyed-out backdrop with NO gradient/texture/vignette that strongly contrasts the body; the "
-        "device must never approach the backdrop tone.\n"
+        "device must never approach the backdrop tone.⟦cite:sha:794da20e;docs/DECISIONS.md⟧\n"
         "  • The finished device uses ONLY its own theme materials/colours — NONE of the guide colours. ABSOLUTELY "
-        f"{NO_LIST} anywhere in the LEFT column; the guide colours exist ONLY in the RIGHT mask.\n"
+        f"{NO_LIST} anywhere in the LEFT column; the guide colours exist ONLY in the RIGHT mask."
+        "⟦cite:sha:794da20e⟧\n"
         + residue_bullet
         + "  • The 5 transport/function BUTTONS (play/pause, previous, next, repeat, queue) are raised, glossy, "
         "tactile control facets set into the body, EACH clearly bearing its icon EMBOSSED/engraved in relief: "
-        + "; ".join(f"{ICON[c]}" for c in BUTTONS) + ". Shape + icon + relief only; no text labels; no coloured rim.\n"
+        + "; ".join(f"{ICON[c]}" for c in BUTTONS) + ". Shape + icon + relief only; no text labels; no coloured rim."
+        "⟦cite:sha:794da20e⟧\n"
         "  • BUTTON COLOURS COME FROM THE THEME, NEVER FROM THE GUIDES: the guide colour of a button marks its "
         "POSITION ONLY — the finished button's material/fill must NOT inherit, echo or be tinted toward its guide "
         "colour in ANY way (no red play because its guide was red, no magenta next, etc). ALL five buttons are made "
         "of the device's OWN theme materials/palette, coloured consistently with each other and the body. If any "
-        "button's colour visibly matches its guide colour, the output is WRONG.\n"
+        "button's colour visibly matches its guide colour, the output is WRONG.⟦cite:sha:a8bbaad0⟧\n"
         "  • THE SINGLE MOST IMPORTANT RULE — EVERY MOVING-PART CAVITY IS EMPTY. The volume knob socket is a bare "
         "round HOLE showing only its dark recessed floor (NO knob, NO cap, NO dome, NO dial, NO pointer — nothing "
         "installed). The seek slider groove is an EMPTY DARK RECESSED CHANNEL cut into the body (NO thumb, NO grip, "
@@ -825,28 +856,33 @@ def main():
         "is an EMPTY DARK rounded well (NO switch, NO lever, NO toggle installed). The device is photographed BEFORE "
         "ASSEMBLY: those parts exist ONLY in the bottom sprite strip and have NOT been installed yet. Do NOT colour "
         "the empty wells — neutral DARK recesses only. If ANY of the three cavities (knob socket, seek slot, "
-        "shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone.\n"
+        "shuffle slot) contains ANY part or any fill colour, the output is WRONG and must be redone."
+        "⟦cite:sha:794da20e;docs/experiments/2026-07-10-bproof-constraint-load.md;docs/DECISIONS.md⟧\n"
         + tick_skin_bullet
         + SEEK_SLOT_BULLET
         + "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS — flat "
         "unlit dark glass panels only, with NOTHING inside them: NO baked spectrum/equalizer bars, NO album cover "
         "or artwork, NO waveform, NO icons, NO text, NO content whatsoever. They are powered-down screens; the app draws "
-        "their live content later. If either window contains any baked graphics, it is WRONG. The album-art window "
-        "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped.\n"
+        "their live content later. If either window contains any baked graphics, it is WRONG.⟦cite:sha:794da20e;sha:3eeccc55⟧ "
+        "The album-art window "
+        "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped."
+        "⟦cite:sha:e8f249db;tools/mask-align-exp/gen12/artdrift_data.json⟧\n"
         "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, left→right: volume knob cap, seek "
         "slider thumb, shuffle switch in its first state, shuffle switch in its second state — in the device's own materials, outlines removed, on "
-        f"the flat {'pale' if dark else 'charcoal'} backdrop.\n"
+        f"the flat {'pale' if dark else 'charcoal'} backdrop.⟦cite:sha:794da20e;sha:3eeccc55⟧\n"
         + tick_sprite_bullet
         + SEEK_STRIP_BULLET
         + "  • EXACT FIT — each strip part is the EXACT size & shape of its slot (knob cap = socket diameter; thumb "
-        "fits the groove; each shuffle state exactly fills the switch slot). Do NOT resize/re-proportion a part.\n"
+        "fits the groove; each shuffle state exactly fills the switch slot). Do NOT resize/re-proportion a part."
+        "⟦cite:sha:794da20e;tools/mask-align-exp/gen12/review-2026-07-11-round1.json⟧\n"
         "  • SHUFFLE STATES — design a CHARACTERFUL switch that fits the theme: it does NOT have to be a plain "
         "pill/rocker — a lever, flip-toggle, sliding bolt, rotating latch, gem that shifts, valve, eye that opens — "
         "any physical two-state mechanism, as long as BOTH states share the SAME OUTER HOUSING SILHOUETTE at the "
         "same size and are CLEARLY MIRROR-OPPOSITE: the moving element sits at ONE end/side in the first state and "
         "at the OPPOSITE end/side in the second state (never the same position in both). Put ABSOLUTELY NO text, "
         "letters, numerals, glyphs, words or labels of ANY kind on either switch part or on ANY strip part — the "
-        "state must read from the mechanism's position alone, with zero markings.\n"
+        "state must read from the mechanism's position alone, with zero markings."
+        "⟦cite:sha:e8546e22;sha:ac28cd74;sha:3eeccc55⟧\n"
         "  • CAMERA — this is THE MOST COMMON MISTAKE, get it right: render EVERY strip part in a PERFECTLY FLAT, "
         "STRAIGHT-DOWN, TOP-DOWN ORTHOGRAPHIC view — the camera is directly overhead at exactly 90°, the same view "
         "as the device. Each part is drawn as if lying FLAT on a table seen from straight above, with ZERO "
@@ -855,7 +891,8 @@ def main():
         "WALL, edge, height or 3D body of the knob. The seek thumb and the shuffle switch are likewise flat shapes "
         "seen from directly overhead. ABSOLUTELY NO product-shot angle, NO 3/4 view, NO tilt, NO isometric, NO "
         "perspective, NO visible sides — a part showing its side wall or any thickness is WRONG. Each part must "
-        "look EXACTLY as it appears seated flat in its socket on the top-down device, so it drops straight in.\n"
+        "look EXACTLY as it appears seated flat in its socket on the top-down device, so it drops straight in."
+        "⟦cite:sha:794da20e⟧\n"
         + right_col_hdr + " For EACH control paint ONE "
         "SOLID FILLED blob in ITS OWN guide colour" + mask_guide_ref + ", at the EXACT same position, size and silhouette as that control "
         "on " + left_ref + " (the seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; "
@@ -865,15 +902,25 @@ def main():
         "corners, edge-to-edge with the glass — never larger than the bezel opening, never smaller, never "
         "shifted or offset onto the surrounding body. Trace each window's glass outline precisely; a display "
         "blob that extends past its painted window, covers body/bezel around it, or sits off the window is WRONG"
+        "⟦cite:sha:86f69c75⟧"
         + "; and each STRIP PART as a solid COMPACT blob of its colour (volume cap=" + kn(KNOB).lower()
         + ", seek thumb=" + kn(SLIDER).lower() + ", BOTH shuffle states=" + kn(TOGGLE).lower() + ") exactly matching "
         f"its part's silhouette & position in {strip_side} strip. CRITICAL: each blob is TIGHT to its shape — NEVER let a "
         "colour bleed or stretch across the strip band or flood a rectangle; the 4 strip blobs are 4 separate "
         "compact shapes with black gaps between them. Every blob is ONE solid filled silhouette, no outlines, no "
-        "holes. Everything else is pure black.")
+        "holes. Everything else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
+
+    # ---- provenance strip (prompt_provenance.py) ----
+    # The assembled text above carries ⟦cite:...⟧ markers (why each clause exists). NOTHING
+    # cited ever reaches the model or the persisted results.json "prompt" field: strip here,
+    # byte-identical to the pre-annotation prompt (verified across all flag states — see
+    # prompt_provenance.py's docstring + PROMPT-PROVENANCE.md, which renders prompt_annotated).
+    prompt_annotated = prompt
+    prompt = strip_cites(prompt)
 
     if "--blueprint-only" in sys.argv:
-        json.dump({**res, "prompt_len": len(prompt), "prompt": prompt, "image_paths": image_paths},
+        json.dump({**res, "prompt_len": len(prompt), "prompt": prompt,
+                   "prompt_annotated": prompt_annotated, "image_paths": image_paths},
                    open(os.path.join(OUT, "results.json"), "w"), indent=1)
         print(f"[blueprint-only] {sid} mode={mode} conditioning={conditioning} keys ok, "
               f"prompt {len(prompt)} chars, {len(image_paths)} image(s) → {image_paths}")
