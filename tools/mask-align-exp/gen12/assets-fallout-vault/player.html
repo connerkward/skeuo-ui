@@ -10,7 +10,7 @@
   .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v=1783629069') no-repeat;background-size:100% auto;border-radius:12px}
+    background:url('paint.png?v=1783839081') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
   .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}
@@ -50,7 +50,7 @@ fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementByI
 </div></div>
 <div class=hint id=hint>loading…</div>
 <script>
-const V='1783629069';
+const V='1783839081';
 (async function(){
   const R = await fetch('regions.json?v='+V).then(r=>r.json());
   const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
@@ -257,14 +257,19 @@ const V='1783629069';
     const r=regs[tg],off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
     const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
     const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
-    // SLOT-SIZED: BOTH states render in ONE box = slot rect ×1.06 (background contain keeps the
-    // cut's aspect) so the switch always fills its slot — never smaller than the slot, never the
-    // raw cut scale. Upscale capped at ×1.5 natural. ON is registered onto OFF by the extractor's
-    // silhouette-IoU transform, its px offset scaled by the OFF cut's displayed scale.
-    let bw=r.device[2]*1.06, bh=r.device[3]*1.06;
-    const natS=Math.min(bw*PW/off.w, bh*PH/off.h);
-    if(natS>1.5){ bw*=1.5/natS; bh*=1.5/natS; }
-    const offS=Math.min(bw*PW/off.w, bh*PH/off.h);   // paint px per OFF-cut px, as displayed
+    // SLOT-SIZED: box sizing per SPRITE_COVER_FIT_ENABLED (build_player.py) — either the OFF
+    // cut's OWN aspect scaled to COVER the slot ×1.06 (both axes always fully covered), or the
+    // prior behavior (box forced to the slot's aspect, CSS CONTAIN-fit, which undersizes badly
+    // when the cut's aspect diverges from the slot's). Upscale capped at ×1.5 natural either way.
+    // ON is registered onto OFF by the extractor's silhouette-IoU transform, its px offset scaled
+    // by the OFF cut's displayed scale (offS).
+    
+    const offWfrac=off.w/PW, offHfrac=off.h/PH;
+    let _s=Math.max((r.device[2]*1.06)/offWfrac, (r.device[3]*1.06)/offHfrac);
+    if(_s>1.5) _s=1.5;
+    let bw=offWfrac*_s, bh=offHfrac*_s;
+    const offS=_s;   // paint px per OFF-cut px, as displayed
+
     const place=(c,isOn)=>{ let dx=0, dy=0;
       if(isOn && sa){ dx=sa.dx*offS/PW; dy=sa.dy*offS/PH; }   // ON shifted by the IoU offset, at display scale
       el.style.backgroundImage='url('+c.url+')';
@@ -361,8 +366,14 @@ const V='1783629069';
     // accent is the fallback for a spec without a css block.
     const acc="#c8b45a"||('rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')');
     const g=vzc.getContext('2d'),NB=28;const bars=Array.from({length:NB},()=>Math.random());
+    // idle bars settle toward a WOBBLING low band (0.05..0.11), not a single fixed constant —
+    // a constant target decays to a perfectly static row within ~1s of load, which reads as a
+    // dead/broken feature (review: "visualizer not working" — the reviewer never pressed play,
+    // and the flat idle state was visually indistinguishable from a non-functional overlay).
+    // The gentle per-frame wobble keeps it visibly alive before any interaction, at an amplitude
+    // far below the full playing-state motion so it doesn't compete with it.
     (function draw(){ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
-      for(let i=0;i<NB;i++){ bars[i]+= playing?(Math.random()-.5)*.4:(0.06-bars[i])*.2; bars[i]=Math.max(.04,Math.min(1,bars[i]));
+      for(let i=0;i<NB;i++){ bars[i]+= playing?(Math.random()-.5)*.4:((0.05+Math.random()*0.06)-bars[i])*.15; bars[i]=Math.max(.04,Math.min(1,bars[i]));
         const hh=bars[i]*vzc.height*0.92; g.fillStyle=acc; g.globalAlpha=.85;
         g.fillRect(i*bw+bw*0.15, vzc.height-hh, bw*0.7, hh); }
       requestAnimationFrame(draw); })();

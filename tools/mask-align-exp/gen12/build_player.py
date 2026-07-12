@@ -146,6 +146,35 @@ KNOB_TICKS_ENABLED = True
 SKIN_TICKS_CSS = KNOB_TICKS_ENABLED and TICKS_SKIN == "css"      # static tick-arc ring on the bezel
 SPRITE_TICK_CSS = KNOB_TICKS_ENABLED and TICKS_SPRITE == "css"   # live needle on the cap
 
+# feature flag: size the shuffle/TOGGLE sprite box to the CUT's OWN aspect ratio, scaled to
+# COVER the slot rect (both axes), instead of forcing the box to the SLOT's own aspect ratio and
+# relying on CSS `background-size:contain` to fit the (possibly very differently-aspected) cut
+# inside it. `contain` fits the SMALLER of the two per-axis scale factors, so whenever the cut's
+# aspect diverges from the slot's, the sprite renders visibly smaller than the slot on whichever
+# axis doesn't bind — exactly the "switch isn't scaled to slot, too small" review class. Measured
+# cut-aspect/slot-aspect ratios across the roster: fa-pod 0.13, fallout-vault 0.20, claymation
+# 0.37, n64-cutscene 0.49 (all badly undersized under the old contain-fit) vs wc-goldshield 1.09,
+# wmp-vario 1.08 (near 1, already fine — this flag is a no-op for those). COVER (max of the two
+# per-axis scale factors, mirroring the seek-thumb's already-correct own-aspect sizing a few
+# blocks up) guarantees the sprite fully covers its slot on both axes; same ×1.5-natural upscale
+# cap as before to avoid blurring a low-res cut. Verified across the roster (fa-pod/fallout-vault/
+# claymation/n64-cutscene gain visible coverage, wc-goldshield/wmp-vario unchanged) before
+# defaulting on — see docs/experiments/2026-07-11-toggle-cover-fit.md.
+SPRITE_COVER_FIT_ENABLED = True
+
+TOGGLE_SIZE_JS = ("""
+    const offWfrac=off.w/PW, offHfrac=off.h/PH;
+    let _s=Math.max((r.device[2]*1.06)/offWfrac, (r.device[3]*1.06)/offHfrac);
+    if(_s>1.5) _s=1.5;
+    let bw=offWfrac*_s, bh=offHfrac*_s;
+    const offS=_s;   // paint px per OFF-cut px, as displayed
+""" if SPRITE_COVER_FIT_ENABLED else """
+    let bw=r.device[2]*1.06, bh=r.device[3]*1.06;
+    const natS=Math.min(bw*PW/off.w, bh*PH/off.h);
+    if(natS>1.5){ bw*=1.5/natS; bh*=1.5/natS; }
+    const offS=Math.min(bw*PW/off.w, bh*PH/off.h);   // paint px per OFF-cut px, as displayed
+""")
+
 HTML = f"""<!doctype html><html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>skeuo.fm — {SID}: {TITLE}</title>
@@ -352,14 +381,13 @@ const V='{V}';
     const r=regs[tg],off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
     const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
     const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
-    // SLOT-SIZED: BOTH states render in ONE box = slot rect ×1.06 (background contain keeps the
-    // cut's aspect) so the switch always fills its slot — never smaller than the slot, never the
-    // raw cut scale. Upscale capped at ×1.5 natural. ON is registered onto OFF by the extractor's
-    // silhouette-IoU transform, its px offset scaled by the OFF cut's displayed scale.
-    let bw=r.device[2]*1.06, bh=r.device[3]*1.06;
-    const natS=Math.min(bw*PW/off.w, bh*PH/off.h);
-    if(natS>1.5){{ bw*=1.5/natS; bh*=1.5/natS; }}
-    const offS=Math.min(bw*PW/off.w, bh*PH/off.h);   // paint px per OFF-cut px, as displayed
+    // SLOT-SIZED: box sizing per SPRITE_COVER_FIT_ENABLED (build_player.py) — either the OFF
+    // cut's OWN aspect scaled to COVER the slot ×1.06 (both axes always fully covered), or the
+    // prior behavior (box forced to the slot's aspect, CSS CONTAIN-fit, which undersizes badly
+    // when the cut's aspect diverges from the slot's). Upscale capped at ×1.5 natural either way.
+    // ON is registered onto OFF by the extractor's silhouette-IoU transform, its px offset scaled
+    // by the OFF cut's displayed scale (offS).
+    {TOGGLE_SIZE_JS}
     const place=(c,isOn)=>{{ let dx=0, dy=0;
       if(isOn && sa){{ dx=sa.dx*offS/PW; dy=sa.dy*offS/PH; }}   // ON shifted by the IoU offset, at display scale
       el.style.backgroundImage='url('+c.url+')';
@@ -456,8 +484,14 @@ const V='{V}';
     // accent is the fallback for a spec without a css block.
     const acc={SPEC_ACCENT_JS}||('rgb('+[ar,ag,ab].map(v=>Math.min(255,(v/8)*1.7+40|0)).join(',')+')');
     const g=vzc.getContext('2d'),NB=28;const bars=Array.from({{length:NB}},()=>Math.random());
+    // idle bars settle toward a WOBBLING low band (0.05..0.11), not a single fixed constant —
+    // a constant target decays to a perfectly static row within ~1s of load, which reads as a
+    // dead/broken feature (review: "visualizer not working" — the reviewer never pressed play,
+    // and the flat idle state was visually indistinguishable from a non-functional overlay).
+    // The gentle per-frame wobble keeps it visibly alive before any interaction, at an amplitude
+    // far below the full playing-state motion so it doesn't compete with it.
     (function draw(){{ g.clearRect(0,0,vzc.width,vzc.height); const bw=vzc.width/NB;
-      for(let i=0;i<NB;i++){{ bars[i]+= playing?(Math.random()-.5)*.4:(0.06-bars[i])*.2; bars[i]=Math.max(.04,Math.min(1,bars[i]));
+      for(let i=0;i<NB;i++){{ bars[i]+= playing?(Math.random()-.5)*.4:((0.05+Math.random()*0.06)-bars[i])*.15; bars[i]=Math.max(.04,Math.min(1,bars[i]));
         const hh=bars[i]*vzc.height*0.92; g.fillStyle=acc; g.globalAlpha=.85;
         g.fillRect(i*bw+bw*0.15, vzc.height-hh, bw*0.7, hh); }}
       requestAnimationFrame(draw); }})();
