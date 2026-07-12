@@ -1,6 +1,34 @@
 # gen12 TODO
 
 ---
+## Freeze-on-PASS: paid baselines snapshotted the moment they first gate-PASS — DONE 2026-07-11
+
+Guardrail closing the gap the drift bisect exposed (`892bf045`): every June baseline paint
+was re-rolled before ever being preserved — the bytes are unrecoverable, which blocked a $0
+re-extraction experiment and violates the spirit of generation-spend + empirical-testing
+rules. New `freeze_baseline.py <assets-dir>`, called by `orchestrate12.py` inside the gate-PASS
+branch behind `FREEZE_ON_PASS = True`:
+
+- Uploads the one paid artifact that is NOT git-tracked per current media policy —
+  `joint-4k.png` — to `gdrive:skeuo-ui/gen12-media/frozen/<skin>/<seed>-<date>/` via
+  `rclone copy --checksum`, and appends a row (repo path, Drive path + share link, sha256,
+  bytes, seed, gate-pass date) to `media-manifest.json` + a "Frozen baselines" section in
+  `MEDIA-MANIFEST.md`. `paint.png`/`mask.png` are git-tracked (verified `git ls-files`), so
+  git is their freeze — no redundant second copy.
+- **Idempotent by sha256**, scoped to `kind=="frozen-baseline"` rows only — deliberately does
+  NOT dedup against the earlier bulk-offload rows (first run surfaced this: every roster
+  joint-4k already had a bulk row, which would have made freeze-on-pass a permanent no-op).
+- **Never blocks a run:** any rclone failure (offline/missing/expired auth) logs loudly and
+  exits 0, manifests untouched.
+- Seed read from `results.json` (rewritten every roll, always matches the bytes on disk),
+  NOT `orch.json` (only written after the loop — stale mid-loop). Gate-pass date from
+  `regions.json` mtime (the file carrying the PASS verdict).
+
+Verified live on `assets-fallout-vault` (seed 649): run 1 uploaded 16,403,300 bytes
+(~2m50s), `rclone check --checksum` = 1 matching / 0 differences, both manifest rows
+appended; run 2 skipped by sha, zero new rows; rclone-missing failure path (steam-porthole,
+stripped PATH) logged loudly, exit 0, manifests byte-identical.
+
 ## Guide-ring residue + sprite key-echo + degenerate-region GATES; director review mainlined — DONE 2026-07-11
 
 Followed the diablo-gothic director-review catch (neon guide-hue borders around every control

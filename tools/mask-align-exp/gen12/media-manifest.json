@@ -255,6 +255,17 @@
       "gdrive_link": "https://drive.google.com/open?id=1U2fJOpgVZPpNsunG0dGr1B1I2aEDB77z",
       "sha256": "f37fa01dbc857cfa6f16695c94468dd413574e12c6b9b6c33b1ddf766535c1a1",
       "bytes": 449051
+    },
+    {
+      "kind": "frozen-baseline",
+      "skin": "fallout-vault",
+      "seed": 649,
+      "gate_pass_date": "2026-07-11",
+      "repo_path": "tools/mask-align-exp/gen12/assets-fallout-vault/joint-4k.png",
+      "gdrive_path": "skeuo-ui/gen12-media/frozen/fallout-vault/649-2026-07-11/joint-4k.png",
+      "gdrive_link": "https://drive.google.com/open?id=1fFEwakeXqtsDzxrk5_bf04xSaVrtxSKr",
+      "sha256": "5673acc7dfda45b5af4b1cebdf1500fe2a075b36012e53d3827d30b725cab7de",
+      "bytes": 16403300
     }
   ]
 }

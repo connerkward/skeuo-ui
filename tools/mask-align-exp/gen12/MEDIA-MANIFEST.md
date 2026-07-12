@@ -50,3 +50,11 @@ Restore one file: `rclone copyto gdrive:skeuo-ui/gen12-media/2026-07-11/<repo-pa
 | `tools/mask-align-exp/gen12/assets-wc-goldshield_pbr/height.png` | 449,051 | `f37fa01dbc857cfa…` | [link](https://drive.google.com/open?id=1U2fJOpgVZPpNsunG0dGr1B1I2aEDB77z) |
 
 Full sha256 values: `media-manifest.json` (machine-readable sibling of this file).
+
+## Frozen baselines (gate-PASS snapshots, never re-rolled without a preserved copy)
+
+Policy: `freeze_baseline.py` runs after every gate PASS in `orchestrate12.py` (`FREEZE_ON_PASS`). Uploads `joint-4k.png` (the non-git-tracked paid roll) to `gdrive:skeuo-ui/gen12-media/frozen/<skin>/<seed>-<date>/`; `paint.png`/`mask.png` are git-tracked, so git is their freeze — no separate upload for those two.
+
+| skin | seed | gate-pass date | repo path | bytes | sha256 | Drive link |
+|---|---:|---|---|---:|---|---|
+| `fallout-vault` | 649 | 2026-07-11 | `tools/mask-align-exp/gen12/assets-fallout-vault/joint-4k.png` | 16,403,300 | `5673acc7dfda45b5…` | [link](https://drive.google.com/open?id=1fFEwakeXqtsDzxrk5_bf04xSaVrtxSKr) |

@@ -15,6 +15,11 @@ SPEC = os.path.abspath(sys.argv[1])
 # dashboard for human triage instead of burning seeds. Pass an explicit max_tries argv to re-enable
 # per-run (e.g. `orchestrate12.py spec.json 4`); spend discipline: generation-spend-rule.
 MAX = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+# FREEZE_ON_PASS: snapshot the paid roll's non-git-tracked joint-4k.png to Drive the moment
+# it first gate-PASSes — closes the gap the drift bisect exposed (892bf045): every June
+# baseline paint was re-rolled before ever being preserved, so the bytes are gone for good.
+# See freeze_baseline.py's docstring for exactly what is/isn't frozen and why.
+FREEZE_ON_PASS = True
 spec = json.load(open(SPEC))
 sid = spec["id"]; base = spec.get("seed", 71)
 ASSETS = os.path.join(HERE, f"assets-{sid}")
@@ -47,6 +52,11 @@ for i in range(MAX):
                     "seek_cov": gate.get("seek_cov"), "reasons": gate.get("reasons"), "leak": leak})
     print(f"[orch:{sid}] roll {i+1} -> {'PASS' if gate.get('PASS') else 'FAIL'} {gate.get('reasons')}", flush=True)
     if gate.get("PASS"):
+        # FREEZE_ON_PASS: preserve the paid roll the moment it first passes — the June
+        # baseline-paint burn (892bf045 drift bisect) re-rolled every early paint before it
+        # was ever snapshotted, making it unrecoverable and blocking a $0 experiment later.
+        if FREEZE_ON_PASS:
+            run(["python3", "freeze_baseline.py", ASSETS])
         break
 
 run(["python3", "build_player.py", ASSETS])
