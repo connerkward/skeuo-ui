@@ -1,6 +1,28 @@
 # gen12 TODO
 
 ---
+## User-loved generation identified: wc-goldshield jsonspec CONTROL-121 (2026-07-11, human-labeled gold)
+
+Swept every `wc-goldshield` `paint.png` on disk (prod, `abshape` a/b, `twoimg`
+neutral/control/treat, `jsonspec` control/treat, `driftbisect` a/b/c — 21 candidates) against
+the user's description (lion-head crest + gauntlet claw are the giveaways). Exactly one match:
+[`jsonspec/assets-jsonspec-wc-goldshield-control-121/paint.png`](jsonspec/assets-jsonspec-wc-goldshield-control-121/paint.png)
+— sculpted gold lion-head on the upper-left edge, silver gauntlet claw gripping the right
+screen edge, rune borders + blue gems, 5 round buttons w/ 2 clean empty sockets, knob+rune-
+cylinder+2 cross-clasp-toggle sprite strip.
+
+Full provenance + config-delta writeup: [`jsonspec/LOVED-wc-goldshield-control-121.md`](jsonspec/LOVED-wc-goldshield-control-121.md).
+Short version: **jsonspec CONTROL arm** (verbatim production prompt, not a treatment), seed
+**121**, `fal-ai/gemini-3-pro-image-preview/edit`, `blueprint_arm="solid"` (abshape-verdict
+winner). Shipped production is seed **736** — same prompt content. Conclusion: this is
+**seed variance**, not a prompt win to port forward; re-roll more seeds for "more like this"
+rather than editing the prompt. Automated gate currently FAILs it (`emptiness` reason,
+14.45% queue bleed ring) — noted for honesty, doesn't change the human aesthetic verdict.
+
+Copied to `~/Desktop/cc-skeuo/2026-07-11-loved-goldshield-control-121.png` (+ `.txt`
+provenance sidecar) for the user's keeping.
+
+---
 ## Artdrift FIX: vpod art/viz gap widened + relative-position clause — DONE 2026-07-11 (~$0.75)
 
 The one fix the artdrift triage prescribed (entry below, commit `c237f743`), applied to the
