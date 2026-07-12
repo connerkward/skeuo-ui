@@ -51,7 +51,8 @@ from prompt_provenance import strip_cites
 DEFECT_TAGS = ["baked-thumb", "sprite-slot-mismatch", "css-misalignment", "silhouette-mismatch",
                "dead-control", "duplicate-control", "phantom-control", "placement-wrong",
                "aesthetic", "none"]
-DEVICE_DEFECT_TAGS = ["orientation", "duplicate-control", "phantom-control", "none"]
+DEVICE_DEFECT_TAGS = ["orientation", "duplicate-control", "phantom-control", "muddy-palette",
+                       "accent-no-contrast", "none"]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))  # repo root, for node_modules/playwright
@@ -179,7 +180,22 @@ SYSTEM_PROMPT = (
     "phantom-control (a control-shaped decoration with no corresponding function), placement-"
     "wrong (positioned somewhere a sane device layout wouldn't put it). Also check device-level: "
     "orientation (is the WHOLE device upright and usable, not rotated/sideways/upside-down/"
-    "viewed from a bizarre angle — this is a full-frame check, not per-control). Designed "
+    "viewed from a bizarre angle — this is a full-frame check, not per-control); muddy-palette "
+    "(the device's overall color palette reads as indistinct or muddy — too many similar hues "
+    "bleeding/blurring together with no clean value or hue separation between parts, so the "
+    "silhouette of individual controls is hard to read at a glance; OR the colors chosen don't "
+    "actually support/evoke the stated theme, i.e. non-theme-relevant color choices — this is "
+    "also a full-frame check, not per-control; a device with a genuinely distinct, legible, "
+    "theme-coherent palette — even an unusual or bold one — is NOT muddy-palette); accent-no-"
+    "contrast (the declared CSS accent/glow color — see 'CSS accent colors' below, which is "
+    "what lights up an interactive control's ON/active state at runtime — is too close in hue "
+    "AND brightness to the skin's own dominant body/material color, so a lit control would NOT "
+    "read as visibly 'on' against its own skin; concrete failure: an electric-blue skin with a "
+    "blue accent/glow — the lit state is invisible because it blends into the material it sits "
+    "on. A good accent/glow CONTRASTS the dominant palette — complementary hue, or clearly "
+    "higher chroma/brightness — so a lit control pops rather than blending in; check this "
+    "against the palette/CSS values given below, reasoning about what a lit state would look "
+    "like even if no control in these crops happens to be lit). Designed "
     "asymmetry is fine (toggle OFF/ON states may legitimately differ; theme-styled controls may "
     "be unconventional shapes) — ONLY flag a tag when it reads as an actual functional/visual "
     "break, not merely stylistically unusual. Any visible baked-in text/words is always a defect "
@@ -191,7 +207,16 @@ SYSTEM_PROMPT = (
     "the surface read as the requested theme/material, not generic plastic with a tinted "
     "texture; (3) control legibility — can a user tell what each control does and its current "
     "state at a glance; (4) seating — do sprites look physically mounted (shadow, occlusion, "
-    "scale) rather than pasted on top; (5) what would most improve the shot if regenerated."
+    "scale) rather than pasted on top; (5) color quality — is the palette DISTINCT and "
+    "LEGIBLE (real value/hue separation between adjacent parts, not many similar tones "
+    "blurring together into mud) and does it read as belonging to THIS theme specifically "
+    "(not a generic assortment of colors that could belong to any skin) — steer notes toward "
+    "'fewer, more distinct, more theme-relevant colors' when the palette reads muddy or "
+    "generic, even if it doesn't cross into the device-level muddy-palette gate; ALSO judge "
+    "whether the declared accent/glow color would visibly contrast the dominant body color if "
+    "lit (an accent that shares the body's hue reads as invisible when 'on' — steer notes "
+    "toward a higher-contrast accent pick even short of the accent-no-contrast gate); (6) what "
+    "would most improve the shot if regenerated."
     "⟦cite:sha:9923c2ce⟧ "
     "\n\nHARD RULE: overall verdict MUST be FAIL if ANY per_control entry has a non-'none' "
     "defects tag, or orientation_ok is false, or device_defects has any non-'none' tag — do "
@@ -238,7 +263,10 @@ RESPONSE_SCHEMA = {
                             "rendered upright/usable, not rotated/sideways/upside-down"},
         "device_defects": {"type": "ARRAY", "items": {"type": "STRING", "enum": DEVICE_DEFECT_TAGS},
                             "description": "AXIS A defects not tied to one control "
-                            "(duplicate/phantom controls); use ['none'] if clean"},
+                            "(duplicate/phantom controls, bad orientation, an indistinct/muddy/"
+                            "non-theme-relevant overall palette — muddy-palette, or a declared "
+                            "accent/glow color too close to the skin's dominant color to read "
+                            "as a lit ON-state — accent-no-contrast); use ['none'] if clean"},
         "per_control": {
             "type": "ARRAY",
             "description": "one entry per control listed in the prompt",

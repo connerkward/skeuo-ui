@@ -5,38 +5,28 @@
   "material_is_dark": false,
   "seed": 662,
   "palette": {
-    "clay_orange": [
-      225,
-      130,
-      70
-    ],
-    "clay_teal": [
-      70,
-      160,
-      150
+    "clay_terracotta": [
+      196,
+      82,
+      42
     ],
     "clay_cream": [
-      235,
-      220,
-      195
-    ],
-    "clay_plum": [
-      140,
-      90,
-      130
+      240,
+      227,
+      200
     ],
     "clay_moss": [
-      130,
-      150,
-      80
+      92,
+      132,
+      58
     ],
-    "warm_shadow": [
-      90,
-      60,
-      50
+    "clay_well": [
+      58,
+      37,
+      30
     ]
   },
-  "theme_prompt": "CLAYMATION / stop-motion plasticine media player: hand-sculpted modelling clay with visible FINGERPRINTS, thumb-press dents, tool marks and slightly wobbly hand-made edges \u2014 like an Aardman / Wallace-and-Gromit prop. Soft matte plasticine in warm hand-mixed colours with subtle marbling where colours were kneaded together, rounded squashy forms, slightly irregular buttons like pressed clay pellets, a screen like a smoothed clay slab. Soft studio lighting with gentle clay sheen. Charming, tactile, imperfect \u2014 clearly sculpted by hand, NOT plastic, NOT glossy, NOT digital-smooth.",
+  "theme_prompt": "CLAYMATION / stop-motion plasticine media player: hand-sculpted modelling clay with visible FINGERPRINTS, thumb-press dents, tool marks and slightly wobbly hand-made edges \u2014 like an Aardman / Wallace-and-Gromit prop. Soft matte plasticine, NOT plastic, NOT glossy, NOT digital-smooth. Use ONLY 3-4 DISTINCT clay colours total, each with clear separation in both hue AND value so forms read instantly: one saturated TERRACOTTA/BURNT-ORANGE for the main body, one CREAM/BONE for a subset of buttons, one MOSS GREEN for the rest of the buttons, one near-black UMBER for recessed wells and dark glass. EVERY part is sculpted from ONE consistent, undiluted colour of clay \u2014 NO gradient blending, NO marbling, NO two-tone streaking or kneaded-together colour transitions within a single part. Colour changes happen ONLY at a clean physical seam between two separate pieces of clay (e.g. the body is one colour, a button pressed into it is a different colour, with a crisp edge between them \u2014 not a smeared gradient). Keep the palette tight and confident, not a muddy assortment \u2014 fewer, bolder, more legible colours read as more hand-crafted than many blended ones. Rounded squashy forms, slightly irregular buttons like pressed clay pellets, a screen like a smoothed clay slab. Soft studio lighting with gentle clay sheen. Charming, tactile, imperfect \u2014 clearly sculpted by hand.",
   "lighting": {
     "emissive_hint": "none \u2014 matte plasticine; only the visualizer screen emits, softly",
     "emissive_color": "auto",
@@ -46,10 +36,10 @@
     "beat_couple": 0.02
   },
   "css": {
-    "track": "#32211c",
-    "fill": "#e18246",
-    "accent": "#46a096",
-    "glow": "#ebdcc3"
+    "track": "#3a251e",
+    "fill": "#c4522a",
+    "accent": "#5c843a",
+    "glow": "#f0e3c8"
   },
   "ticks": {
     "skin": "none",

@@ -9,82 +9,72 @@
   24
  ],
  "palette": {
-  "clay_orange": [
-   225,
-   130,
-   70
-  ],
-  "clay_teal": [
-   70,
-   160,
-   150
+  "clay_terracotta": [
+   196,
+   82,
+   42
   ],
   "clay_cream": [
-   235,
-   220,
-   195
-  ],
-  "clay_plum": [
-   140,
-   90,
-   130
+   240,
+   227,
+   200
   ],
   "clay_moss": [
-   130,
-   150,
-   80
+   92,
+   132,
+   58
   ],
-  "warm_shadow": [
-   90,
-   60,
-   50
+  "clay_well": [
+   58,
+   37,
+   30
   ]
  },
  "keys": {
   "playpause": [
    0,
-   0,
+   255,
    255
   ],
   "prev": [
-   255,
+   128,
    0,
    255
   ],
   "next": [
    0,
-   255,
-   0
+   0,
+   255
   ],
   "repeat": [
-   0,
    255,
+   0,
    255
   ],
   "queue": [
-   128,
    0,
+   128,
    255
   ],
   "vol": [
    255,
-   0,
+   255,
    0
   ],
   "seek": [
+   0,
    255,
+   128
+  ],
+  "shuffle": [
+   0,
    255,
    0
   ],
-  "shuffle": [
-   255,
-   0,
-   128
-  ],
   "visualizer": [
-   0,
-   0,
-   128
+   128,
+   128,
+   255
   ],
   "album_art": [
    128,
@@ -93,15 +83,15 @@
   ]
  },
  "keyNames": {
-  "playpause": "PURE BLUE",
-  "prev": "MAGENTA",
-  "next": "PURE GREEN",
-  "repeat": "CYAN",
-  "queue": "VIOLET-PURPLE",
-  "vol": "PURE RED",
-  "seek": "YELLOW",
-  "shuffle": "ROSE PINK",
-  "visualizer": "NAVY",
+  "playpause": "CYAN",
+  "prev": "VIOLET-PURPLE",
+  "next": "PURE BLUE",
+  "repeat": "MAGENTA",
+  "queue": "AZURE BLUE",
+  "vol": "YELLOW",
+  "seek": "SPRING GREEN",
+  "shuffle": "PURE GREEN",
+  "visualizer": "PERIWINKLE",
   "album_art": "CHARTREUSE"
  },
  "buttons": [
@@ -155,12 +145,19 @@
   "skin": "none",
   "sprite": "none"
  },
+ "css": {
+  "track": "#3a251e",
+  "fill": "#c4522a",
+  "accent": "#5c843a",
+  "glow": "#f0e3c8"
+ },
  "template": {},
  "blueprint_trial_enabled": true,
  "blueprint_arm": "solid",
  "blueprint_arm_draw_seed": 662,
  "blueprint_twoimg": false,
  "blueprint_conditioning": "solid",
+ "toggle_track_enabled": true,
  "prompt_json_spec": false,
  "dims": [
   4608,
