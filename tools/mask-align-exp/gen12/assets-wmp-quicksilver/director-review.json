@@ -22,59 +22,82 @@
     "crop-visualizer.png",
     "crop-album_art.png"
   ],
-  "elapsed_s": 9.5,
-  "ts": "2026-07-11T16:24:44",
-  "verdict": "PASS",
-  "score_0_10": 8.5,
+  "elapsed_s": 21.4,
+  "ts": "2026-07-11T23:38:17",
+  "verdict": "FAIL",
+  "score_0_10": 3,
+  "orientation_ok": true,
+  "device_defects": [
+    "phantom-control"
+  ],
   "per_control": {
     "playpause": {
       "status": "good",
-      "note": "Clean metallic button with crisp blue icon, fits the theme perfectly."
+      "note": "Looks okay in the full image, standard button.",
+      "defects": []
     },
     "prev": {
-      "status": "good",
-      "note": "Icon is legible, seating is nice with the blue halo."
+      "status": "needs_work",
+      "note": "Rendered as a vertical slider instead of a standard button, which breaks expected behavior for a media prev action.",
+      "defects": [
+        "sprite-slot-mismatch"
+      ]
     },
     "next": {
       "status": "good",
-      "note": "Consistent style with previous button."
+      "note": "Standard button.",
+      "defects": []
     },
     "repeat": {
       "status": "good",
-      "note": "Icon is clear, style matches row."
+      "note": "Standard button.",
+      "defects": []
     },
     "queue": {
       "status": "good",
-      "note": "Clear list icon, blue accent works well."
+      "note": "Standard button.",
+      "defects": []
     },
     "vol": {
-      "status": "good",
-      "note": "Solid radial brush pattern, nice blue indicator. Tick marks could be slightly sharper."
+      "status": "needs_work",
+      "note": "Knob indicator does not appear to have rotated between idle and interaction frames.",
+      "defects": [
+        "dead-control"
+      ]
     },
     "seek": {
-      "status": "good",
-      "note": "Track and fill are distinct, thumb interacts properly and casts a good shadow."
+      "status": "needs_work",
+      "note": "Horizontal track is completely empty; missing thumb and fill.",
+      "defects": [
+        "dead-control",
+        "css-misalignment"
+      ]
     },
     "shuffle": {
-      "status": "needs_work",
-      "note": "Toggle thumb has a pause icon '||' which is confusing for a shuffle toggle."
+      "status": "good",
+      "note": "Toggle switch looks functional.",
+      "defects": []
     },
     "visualizer": {
       "status": "good",
-      "note": "Glossy blue glass region, small comb-like detail at bottom is interesting."
+      "note": "Region looks okay.",
+      "defects": []
     },
     "album_art": {
       "status": "good",
-      "note": "Matches visualizer style perfectly, nice chrome bezel."
+      "note": "Region looks okay.",
+      "defects": []
     }
   },
   "notes": [
-    "The overall brushed silver look with blue glowing accents is highly successful and captures the Windows Media Player QuickSilver vibe.",
-    "Bevels and inset shadows give good dimensionality.",
-    "The shuffle toggle using a pause icon is the main flaw."
+    "The overall aesthetic matches the QuickSilver brief nicely with its brushed metal and glowing blue accents.",
+    "However, several structural and functional defects force a failure.",
+    "There is a large, empty oval hole at the bottom that acts as a phantom control."
   ],
   "improve": [
-    "Fix the icon on the shuffle toggle thumb to be blank, a dot, or a shuffle icon rather than a pause symbol.",
-    "Ensure the tick marks around the volume knob are slightly crisper."
+    "Ensure the seek slider has a visible thumb and track fill.",
+    "Render the 'prev' control as a button, not a slider, to match the 'next' button.",
+    "Remove the empty oval cutout at the bottom of the device.",
+    "Ensure the volume knob rotates during interaction."
   ]
 }

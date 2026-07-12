@@ -22,14 +22,32 @@ gemini-3.1-pro-preview vision call, full frame + after frame + ~6-10 control cro
 
 NOT observe12.py. observe12.py is the [[skin-observation-rule]] SOTA-eye pass: GEOMETRY /
 DEFECT verification — is control X seated within +/-px of its socket, is a sprite
-missing/misplaced/exposed, is there a stray guide ring. director_review.py is a different
-axis entirely: AESTHETIC / THEMATIC judgment against the theme brief — does the material
-read as the theme, is the palette cohesive, does the composition feel directed. Keep the
-two passes and their output files separate; never merge them into one script or one JSON.
+missing/misplaced/exposed, is there a stray guide ring. director_review.py is primarily an
+AESTHETIC / THEMATIC judgment against the theme brief — does the material read as the theme,
+is the palette cohesive, does the composition feel directed. Keep the two passes and their
+output files separate; never merge them into one script or one JSON.
+
+GATING RECALIBRATED 2026-07-11 (docs/experiments/2026-07-11-verification-recalibration.md):
+the human review round (review-2026-07-11-round1.json) failed 0/15 skins this pass had mostly
+PASSed (e.g. diablo-gothic: PASS 8.5/10 with a baked slider thumb and misaligned CSS the
+model itself SAW and described in its own notes, but scored as a cosmetic "minor issue"
+rather than a gating defect). The director is still not the primary geometry checker — that's
+observe12 — but a visible geometry defect the director's own crops make obvious (a baked
+static thumb, a switch that doesn't fill its socket, CSS that doesn't track the painted
+groove) is not something a "final sign-off" pass should wave through as an aesthetic footnote.
+DEFECT_TAGS below adds a hard per-control gate on top of the existing aesthetic judgment; see
+observe12.py's PER_CONTROL_TAGS (independently duplicated here on purpose — this file owns
+its own Vertex JSON schema and is not a module observe12.py imports, same reasoning already
+used for crop() below not importing observe12.py's crop()).
 
 Usage: python3 director_review.py <assets-dir> [--url=http://host:port/assets-x/player.html]
 """
 import os, re, sys, json, time, base64, tempfile, subprocess
+
+DEFECT_TAGS = ["baked-thumb", "sprite-slot-mismatch", "css-misalignment", "silhouette-mismatch",
+               "dead-control", "duplicate-control", "phantom-control", "placement-wrong",
+               "aesthetic", "none"]
+DEVICE_DEFECT_TAGS = ["orientation", "duplicate-control", "phantom-control", "none"]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))  # repo root, for node_modules/playwright
@@ -123,7 +141,10 @@ def crop(img, dev, pad=0.35):
 AFTER_ROLES = {"slider", "toggle", "knob"}
 crop_files = []
 for key, r in regs.get("regions", {}).items():
-    if not r.get("device"):
+    # a region entry can be a bare `null` in regions.json when extract12 failed to detect
+    # that control at all (seen on n64-prerender-character's "repeat") — that's itself a
+    # signal worth surfacing (missing-control), not something to crash the review over.
+    if not r or not r.get("device"):
         continue
     src = after if ROLES.get(key) in AFTER_ROLES else full
     name = f"crop-{key}.png"
@@ -137,19 +158,39 @@ lighting = spec.get("lighting", {})
 controls_txt = ", ".join(f"{k} ({role})" for k, role, _ in crop_files)
 
 SYSTEM_PROMPT = (
-    "You are the DIRECTOR — the creative lead giving final sign-off on a finished "
-    "skeuomorphic music-player skin render. You are judging AESTHETIC and THEMATIC "
-    "fidelity against the skin's own brief, NOT geometric alignment (a separate pass "
-    "already checks pixel seating). Judge: (1) cohesion — do the parts read as one "
-    "designed object in one material world, not a collage; (2) material fidelity — does "
-    "the surface actually read as the requested theme/material, not a generic plastic "
-    "skin with a tinted texture; (3) control legibility — can a user tell what each "
-    "control does and its current state at a glance; (4) seating — do sprites look "
-    "physically mounted in their sockets (shadow, occlusion, scale) rather than pasted "
-    "on top; (5) what would most improve the shot if regenerated. Designed asymmetry is "
-    "fine (toggle OFF/ON states may legitimately differ; theme-styled controls may be "
-    "unconventional shapes) — only flag it if it reads as broken, not merely unusual. "
-    "Flag any visible baked-in text/words (the device must be wordless)."
+    "You are the DIRECTOR — the creative lead giving FINAL sign-off on a finished "
+    "skeuomorphic music-player skin render. This is a real gate: skins you PASS ship as-is. "
+    "Judge on TWO axes, both gating: "
+    "\n\nAXIS A — hard defect check (a single hit on ANY control FAILS the whole render, no "
+    "matter how good the aesthetics score): for EACH control, inspect its crop(s) for baked-"
+    "thumb (a slider's moving thumb/handle is actually static painted art that doesn't move — "
+    "compare the plain crop against the after-interaction crop when both exist), sprite-slot-"
+    "mismatch (the moving sprite — thumb, switch cap, knob cap — is visibly the wrong size or "
+    "shape for the socket cut for it), css-misalignment (a CSS-drawn fill/track/thumb doesn't "
+    "line up with the painted groove, or overflows/clips past it), silhouette-mismatch (a "
+    "button's pressed-depression shape doesn't match that button's own outline — e.g. a round "
+    "depression under a non-round button), dead-control (the after-interaction crop looks "
+    "identical to the idle crop for a control the interaction script exercised, meaning it "
+    "visibly did not respond), duplicate-control (two+ renders of what should be one control), "
+    "phantom-control (a control-shaped decoration with no corresponding function), placement-"
+    "wrong (positioned somewhere a sane device layout wouldn't put it). Also check device-level: "
+    "orientation (is the WHOLE device upright and usable, not rotated/sideways/upside-down/"
+    "viewed from a bizarre angle — this is a full-frame check, not per-control). Designed "
+    "asymmetry is fine (toggle OFF/ON states may legitimately differ; theme-styled controls may "
+    "be unconventional shapes) — ONLY flag a tag when it reads as an actual functional/visual "
+    "break, not merely stylistically unusual. Any visible baked-in text/words is always a defect "
+    "(device must be wordless) — tag it aesthetic and say what the text is. "
+    "\n\nAXIS B — aesthetic/thematic judgment (informs score_0_10 and the notes, does NOT by "
+    "itself force a FAIL unless it crosses into an AXIS A tag): (1) cohesion — do the parts read "
+    "as one designed object in one material world, not a collage; (2) material fidelity — does "
+    "the surface read as the requested theme/material, not generic plastic with a tinted "
+    "texture; (3) control legibility — can a user tell what each control does and its current "
+    "state at a glance; (4) seating — do sprites look physically mounted (shadow, occlusion, "
+    "scale) rather than pasted on top; (5) what would most improve the shot if regenerated. "
+    "\n\nHARD RULE: overall verdict MUST be FAIL if ANY per_control entry has a non-'none' "
+    "defects tag, or orientation_ok is false, or device_defects has any non-'none' tag — do "
+    "NOT let a high aesthetic score talk you into PASSing a render with a real AXIS A defect. "
+    "A skin can be visually striking and still FAIL."
 )
 USER_PROMPT = (
     f"Skin id: {SID}\n"
@@ -162,9 +203,13 @@ USER_PROMPT = (
     "Images attached, in order: [0] full idle-state screenshot of the whole player, "
     "[1] after-interaction screenshot (seek dragged to mid, switch toggled, knob "
     f"dragged), then {len(crop_files)} per-control 3x close-up crops in this order: "
-    + ", ".join(f"[{i+2}] {k}" for i, (k, _, _) in enumerate(crop_files)) + ".\n\n"
-    "Judge the render against ITS OWN brief above. Include ONE per_control entry for "
-    "EVERY control listed above, using its exact key as the 'control' field."
+    + ", ".join(f"[{i+2}] {k}" for i, (k, _, _) in enumerate(crop_files)) + ". Slider/toggle/knob "
+    "crops are cut from the AFTER frame specifically so you can judge post-interaction state; "
+    "compare against image [0]'s corresponding region for the idle/before state when checking "
+    "baked-thumb or dead-control.\n\n"
+    "Judge the render against ITS OWN brief above, AND against the hard defect checklist in "
+    "the system prompt. Include ONE per_control entry for EVERY control listed above, using "
+    "its exact key as the 'control' field, with a 'defects' array (use ['none'] if clean)."
 )
 
 # OpenAPI-3.0 subset, uppercase Type enum — same pattern verified live against Vertex/Gemini
@@ -178,6 +223,12 @@ RESPONSE_SCHEMA = {
     "properties": {
         "verdict": {"type": "STRING", "enum": ["PASS", "FAIL"]},
         "score_0_10": {"type": "NUMBER", "description": "overall directorial score, 0-10"},
+        "orientation_ok": {"type": "BOOLEAN",
+                            "description": "AXIS A device-level check: is the whole device "
+                            "rendered upright/usable, not rotated/sideways/upside-down"},
+        "device_defects": {"type": "ARRAY", "items": {"type": "STRING", "enum": DEVICE_DEFECT_TAGS},
+                            "description": "AXIS A defects not tied to one control "
+                            "(duplicate/phantom controls); use ['none'] if clean"},
         "per_control": {
             "type": "ARRAY",
             "description": "one entry per control listed in the prompt",
@@ -186,16 +237,20 @@ RESPONSE_SCHEMA = {
                 "properties": {
                     "control": {"type": "STRING", "description": "the control's exact key from the prompt"},
                     "status": {"type": "STRING", "enum": ["good", "needs_work"]},
+                    "defects": {"type": "ARRAY", "items": {"type": "STRING", "enum": DEFECT_TAGS},
+                                "description": "AXIS A hard defect tags for this control; "
+                                "['none'] if clean. status='needs_work' with defects=['none'] "
+                                "means AXIS B (aesthetic) only — does not force overall FAIL."},
                     "note": {"type": "STRING", "description": "short note"},
                 },
-                "required": ["control", "status", "note"],
+                "required": ["control", "status", "defects", "note"],
             },
         },
         "notes": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "short observations"},
         "improve": {"type": "ARRAY", "items": {"type": "STRING"},
                     "description": "concrete, actionable regeneration notes"},
     },
-    "required": ["verdict", "score_0_10", "per_control", "notes", "improve"],
+    "required": ["verdict", "score_0_10", "orientation_ok", "device_defects", "per_control", "notes", "improve"],
 }
 
 
@@ -230,7 +285,9 @@ def director_chat():
             # JSON (finishReason MAX_TOKENS, zero content) — see director.ts. This is a
             # short structured-review call, not open reasoning; force "low".
             "thinkingConfig": {"thinkingLevel": "low"},
-            "maxOutputTokens": 3000,
+            # bumped 3000->4000 2026-07-11: recalibration added a per-control "defects" array
+            # (up to ~9 tags) plus device_defects/orientation_ok on top of the existing fields.
+            "maxOutputTokens": 4000,
         },
     }
     r = requests.post(VERTEX_URL, headers={"Authorization": f"Bearer {tok}",
@@ -261,11 +318,23 @@ try:
     verdict = {
         "verdict": parsed["verdict"],
         "score_0_10": parsed["score_0_10"],
-        "per_control": {item["control"]: {"status": item["status"], "note": item["note"]}
+        "orientation_ok": parsed.get("orientation_ok"),
+        "device_defects": [t for t in parsed.get("device_defects", []) if t != "none"],
+        "per_control": {item["control"]: {"status": item["status"], "note": item["note"],
+                                           "defects": [t for t in item.get("defects", []) if t != "none"]}
                          for item in per_control_list},
         "notes": parsed.get("notes", []),
         "improve": parsed.get("improve", []),
     }
+    # belt-and-suspenders: enforce the hard-gate rule server-side too, in case the model's
+    # own verdict field drifts from its own per-control/device defect tags (schema constrains
+    # the SHAPE, not the model's internal consistency between fields).
+    any_control_defect = any(v["defects"] for v in verdict["per_control"].values())
+    if (any_control_defect or verdict["device_defects"] or verdict["orientation_ok"] is False) \
+            and verdict["verdict"] == "PASS":
+        verdict["verdict"] = "FAIL"
+        verdict["notes"] = verdict["notes"] + ["[gate] verdict forced to FAIL by script: model "
+                                                "reported AXIS A defect tags but verdict=PASS"]
     parse_error = None
 except Exception as e:
     verdict = {}

@@ -1,0 +1,98 @@
+{
+  "skin": "n64-cutscene",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 22.0,
+  "ts": "2026-07-11T23:35:43",
+  "verdict": "FAIL",
+  "score_0_10": 4,
+  "orientation_ok": true,
+  "device_defects": [],
+  "per_control": {
+    "playpause": {
+      "status": "good",
+      "note": "Clean, fits the low-poly style well.",
+      "defects": []
+    },
+    "prev": {
+      "status": "good",
+      "note": "Looks good.",
+      "defects": []
+    },
+    "next": {
+      "status": "good",
+      "note": "Looks good.",
+      "defects": []
+    },
+    "repeat": {
+      "status": "good",
+      "note": "Looks good.",
+      "defects": []
+    },
+    "queue": {
+      "status": "good",
+      "note": "Looks good.",
+      "defects": []
+    },
+    "vol": {
+      "status": "good",
+      "note": "Rotates correctly, good lighting and shadow.",
+      "defects": []
+    },
+    "seek": {
+      "status": "needs_work",
+      "note": "A static thumb is baked into the background art on the left and remains there when the active sprite moves to the center.",
+      "defects": [
+        "baked-thumb"
+      ]
+    },
+    "shuffle": {
+      "status": "needs_work",
+      "note": "The switch is identical in both the idle and post-interaction frames.",
+      "defects": [
+        "dead-control"
+      ]
+    },
+    "visualizer": {
+      "status": "needs_work",
+      "note": "The purple CSS element overflows the rounded corners of the screen and bleeds onto the tan frame.",
+      "defects": [
+        "css-misalignment"
+      ]
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Clean frame.",
+      "defects": []
+    }
+  },
+  "notes": [
+    "The low-poly N64 thematic execution is quite good, with faceted surfaces and nostalgic 3D vibes.",
+    "Multiple functional defects ruin the skin: a baked-in seek thumb, a dead toggle switch, and bleeding CSS on the visualizer."
+  ],
+  "improve": [
+    "Remove the sculpted thumb from the base background layer of the seek slider so only the interactive sprite appears.",
+    "Ensure the shuffle toggle has two distinct states (e.g., flipped up/down) and correctly binds to the interaction script.",
+    "Apply the correct border-radius or masking to the visualizer container to prevent the CSS elements from clipping over the physical screen bezel."
+  ]
+}

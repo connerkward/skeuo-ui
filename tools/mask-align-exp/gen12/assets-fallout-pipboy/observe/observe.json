@@ -1,8 +1,8 @@
 {
-  "skin": "claymation",
+  "skin": "fallout-pipboy",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: DEFECT[baked-thumb] - There is a static, thumb-shaped object baked into the background at the right end of the slider track.\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: none\nVERDICT: FAIL",
+  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: DEFECT[baked-thumb] - The physical thumb of the slider is static background art and does not move; a CSS fill bar is drawn to show value instead.\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: [phantom-control] - There are two decorative, non-functional gauges at the top of the device.\nVERDICT: FAIL",
   "frames": [
     "full.png",
     "after.png",
@@ -27,5 +27,5 @@
     ]
   },
   "device_defects": [],
-  "ts": "2026-07-11T23:33:07"
+  "ts": "2026-07-11T23:35:25"
 }

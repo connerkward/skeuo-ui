@@ -22,61 +22,78 @@
     "crop-visualizer.png",
     "crop-album_art.png"
   ],
-  "elapsed_s": 10.7,
-  "ts": "2026-07-11T16:21:10",
-  "verdict": "PASS",
-  "score_0_10": 8.5,
+  "elapsed_s": 22.0,
+  "ts": "2026-07-11T23:33:16",
+  "verdict": "FAIL",
+  "score_0_10": 6,
+  "orientation_ok": true,
+  "device_defects": [],
   "per_control": {
     "playpause": {
       "status": "good",
-      "note": "Rusted metal button seated well in stone surround. Emissive orange/red glow fits theme."
+      "note": "Clean styling, matches theme.",
+      "defects": []
     },
     "prev": {
       "status": "good",
-      "note": "Matches play/pause button style, clear icon."
+      "note": "Icon clear.",
+      "defects": []
     },
     "next": {
       "status": "good",
-      "note": "Matches play/pause button style, clear icon."
+      "note": "Icon clear.",
+      "defects": []
     },
     "repeat": {
       "status": "good",
-      "note": "Tarnished metal, well seated."
+      "note": "Icon clear.",
+      "defects": []
     },
     "queue": {
       "status": "good",
-      "note": "Clear layout icon, reads well as an engraved metallic button."
+      "note": "Icon clear.",
+      "defects": []
     },
     "vol": {
       "status": "good",
-      "note": "Excellent dial with runes, gothic detailing and glowing red pointer."
+      "note": "Rotates correctly, runic details are nice.",
+      "defects": []
     },
     "seek": {
-      "status": "good",
-      "note": "Slider track set into stone with a skull handle. Track fill overlay is solid orange (CSS placeholder) but the base design is strong."
+      "status": "needs_work",
+      "note": "CSS fill/track is a flat rectangle that does not blend into the carved slot and visibly overflows behind the thumb.",
+      "defects": [
+        "css-misalignment"
+      ]
     },
     "shuffle": {
-      "status": "good",
-      "note": "Bone lever in stone recess with ember glow at the base. Looks great."
+      "status": "needs_work",
+      "note": "The bone toggle switch did not move between the idle and interacted frames.",
+      "defects": [
+        "dead-control"
+      ]
     },
     "visualizer": {
-      "status": "needs_work",
-      "note": "Frame is nicely detailed with gothic metal and stone, but the visualizer itself just shows CSS barcode bars at the bottom."
+      "status": "good",
+      "note": "Screen seated well.",
+      "defects": []
     },
     "album_art": {
-      "status": "good",
-      "note": "Beautiful gothic stone and metal frame with snake detailing. Screen reflection looks good."
+      "status": "needs_work",
+      "note": "Visible pseudo-English text 'G F R' baked into the stone underneath the frame.",
+      "defects": [
+        "aesthetic"
+      ]
     }
   },
   "notes": [
-    "Very strong adherence to the Diablo / Baldur's Gate dark gothic brief.",
-    "Materials look like real stone, rusted iron, and bone.",
-    "The glowing runes and ember cracks in the stone give it a fantastic dark fantasy vibe.",
-    "The skull handle on the seek slider and the bone lever for shuffle are wonderful thematic touches.",
-    "Only minor issue is the CSS overlays on the seek slider and visualizer which hide some of the underlying art."
+    "The dark gothic Diablo theme is executed beautifully with great material fidelity for the stone, iron, and demonic accents.",
+    "Unfortunately, a dead toggle switch and an unstyled CSS track on the slider ruin the functional illusion.",
+    "Also has baked-in letters masquerading as runes."
   ],
   "improve": [
-    "Ensure the seek track handles the CSS fill more gracefully so it doesn't just look like a flat orange rectangle.",
-    "Integrate the visualizer graphics better into the screen area rather than just red bars at the bottom."
+    "Ensure the shuffle toggle switch has distinct ON and OFF sprites so it actually changes position when clicked.",
+    "Remove the flat CSS track from the slider, or mask it properly so it stays within the carved groove.",
+    "Scrub the pseudo-English letters ('G F R') below the album art."
   ]
 }

@@ -1,6 +1,34 @@
 # gen12 TODO
 
 ---
+## Verification recalibration: review round used as an eval set — DONE 2026-07-11 (~$1.4)
+
+The review round (`review-2026-07-11-round1.json`, 0/15 PASS) exposed that `observe12.py` +
+`director_review.py` had mostly PASSed skins the human failed — the user: *"what the fuck is
+this orientation? how did this get past the vlm gate?"* (`n64-prerender-character`). Coded the
+human's notes into a fixed 10-class defect taxonomy (`human_defects.json`), scored the
+verification stack's existing outputs against it (`score_verification.py`) — **baseline
+either-recall 25.7% (9/35 human-flagged defects), with sprite-slot-mismatch and
+silhouette-mismatch at literal 0%** — then rewrote both scripts' prompts/schemas to explicitly
+interrogate each class per control (a fixed checklist + forced tag output for observe12; a
+`defects`/`orientation_ok`/`device_defects` schema addition + hard verdict-gate rule for
+director_review, enforced both in-prompt and server-side). Re-ran all 15 fresh:
+**recalibrated either-recall 54.3% (19/35)**, and `n64-prerender-character` — the skin that
+triggered this — now correctly flags `orientation` on both passes. sprite-slot-mismatch (8
+instances, the most-flagged class) and silhouette-mismatch (5) stayed at 0% despite explicit
+interrogation — inspected directly, this is a genuine VLM proportion/shape-judgment weakness
+(consistent with this repo's own `ai-image-coords-rule` #2 finding), not a prompt-wording gap;
+specced (not built) a deterministic geometric follow-up for `extract12.py`'s owner. Also caught
+and fixed a pre-existing `AttributeError` crash in both scripts on a `null` region entry
+(`n64-prerender-character`'s undetected `repeat` control). Full method, per-defect table, and
+the concurrent-regeneration confound check (7/15 skins' `paint.png` no longer matches the
+human-reviewed `paint_sha` — other agents re-rolling live in this shared checkout; a
+paint_sha-matched 8-skin subset shows the same +44pp effect, ruling out the confound as the
+driver): `docs/experiments/2026-07-11-verification-recalibration.md`.
+**Not done here**: fixing the generator itself (why skins have baked thumbs / mis-scaled
+switches) — out of scope, owned by `genskin.py`/`extract12.py`/`build_player.py`.
+
+---
 ## User-loved generation identified: wc-goldshield jsonspec CONTROL-121 (2026-07-11, human-labeled gold)
 
 Swept every `wc-goldshield` `paint.png` on disk (prod, `abshape` a/b, `twoimg`

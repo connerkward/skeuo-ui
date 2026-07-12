@@ -22,59 +22,82 @@
     "crop-visualizer.png",
     "crop-album_art.png"
   ],
-  "elapsed_s": 16.5,
-  "ts": "2026-07-11T16:42:07",
-  "verdict": "PASS",
-  "score_0_10": 9,
+  "elapsed_s": 24.4,
+  "ts": "2026-07-11T23:34:10",
+  "verdict": "FAIL",
+  "score_0_10": 4,
+  "orientation_ok": true,
+  "device_defects": [
+    "phantom-control"
+  ],
   "per_control": {
     "playpause": {
-      "status": "good",
-      "note": "Glossy aqua button with a clear play icon, perfectly seated in the sweeping silver metal."
+      "status": "needs_work",
+      "note": "There is a large Play button as well as a small Play/Pause button in the row of media controls. The prompt only requests one playpause control.",
+      "defects": [
+        "duplicate-control"
+      ]
     },
     "prev": {
       "status": "good",
-      "note": "Consistent glossy styling with clear legible icon."
+      "note": "Button looks good and fits the theme.",
+      "defects": []
     },
     "next": {
       "status": "good",
-      "note": "Matches the aesthetic perfectly, nice lighting."
+      "note": "Button looks good and fits the theme.",
+      "defects": []
     },
     "repeat": {
       "status": "good",
-      "note": "Well-integrated into the aqua shell, legible."
+      "note": "Cleanly rendered.",
+      "defects": []
     },
     "queue": {
       "status": "good",
-      "note": "Clear icon, glossy finish reads well as Frutiger Aero."
+      "note": "Cleanly rendered.",
+      "defects": []
     },
     "vol": {
-      "status": "good",
-      "note": "Beautiful metallic radial gradient with distinct edge ridges and water droplets."
+      "status": "needs_work",
+      "note": "The knob in the active state is identical to the idle state; the metal reflections and the small indicator did not rotate.",
+      "defects": [
+        "dead-control"
+      ]
     },
     "seek": {
-      "status": "good",
-      "note": "Sleek recessed track with a distinct metallic thumb. Fill color is on-theme."
+      "status": "needs_work",
+      "note": "The original silver handle is baked into the left edge of the track. Furthermore, the CSS track fill is a rectangular bar that awkwardly overlaps the rounded 3D groove.",
+      "defects": [
+        "baked-thumb",
+        "css-misalignment"
+      ]
     },
     "shuffle": {
       "status": "good",
-      "note": "Excellent use of the 'grass green' accent color as a faceted gem/glass toggle thumb."
+      "note": "Toggle sprite replaces nicely and fits the slot.",
+      "defects": []
     },
     "visualizer": {
       "status": "good",
-      "note": "Glossy screen surface with a neat little LED-like strip at the bottom."
+      "note": "Screen region is clear.",
+      "defects": []
     },
     "album_art": {
       "status": "good",
-      "note": "Large, clean glossy display area with nice diagonal reflections."
+      "note": "Screen region is clear.",
+      "defects": []
     }
   },
   "notes": [
-    "Nailed the Frutiger Aero brief: the sky/clouds background, water droplets, and sweeping glossy aqua and silver shapes are perfect.",
-    "The glowing green accents add a great pop of color exactly where requested.",
-    "Material fidelity is excellent throughout, reading as thick, polished glass and brushed metal."
+    "The Frutiger Aero aesthetic is beautifully executed with the water droplets, glossy highlights, and sky motifs.",
+    "Multiple layout and functional defects completely break the usability of the design.",
+    "Having duplicate play buttons creates confusion, and the slider track is very poorly masked."
   ],
   "improve": [
-    "The play/pause button currently only features a play triangle; including both a play and pause symbol or making it a toggle state would improve functional legibility.",
-    "A bit more depth/shadowing inside the seek slider track could make it look more physically recessed."
+    "Remove the extra play/pause button in the top right to avoid duplicate media controls.",
+    "Ensure the volume knob is separated as an interactable sprite so it can rotate when adjusted.",
+    "Render the slider groove completely empty (no baked thumb) so the CSS thumb can travel freely.",
+    "Adjust the CSS clipping path on the slider track so the fill stays within the bounds of the 3D groove."
   ]
 }

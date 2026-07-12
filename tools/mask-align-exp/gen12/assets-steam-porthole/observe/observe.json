@@ -1,8 +1,8 @@
 {
-  "skin": "fallout-vault",
+  "skin": "steam-porthole",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: OK\nprev: CROP-MISS\nnext: OK\nrepeat: CROP-MISS\nqueue: OK\nvol: OK\nseek: DEFECT[baked-thumb] - The slider thumb is a static part of the background art and does not move with the fill bar.\nshuffle: DEFECT[aesthetic] - The control has the word \"ON\" baked into the background art, visible when the switch is toggled.\nvisualizer: OK\nalbum_art: CROP-MISS\nDEVICE: none\nVERDICT: FAIL",
+  "raw": "playpause: DEFECT[placement-wrong] - The control is not present on the device skin.\nprev: OK\nnext: CROP-MISS\nrepeat: OK\nqueue: OK\nvol: OK\nseek: OK\nshuffle: DEFECT[dead-control] - The toggle switch does not change state between the before and after crops.\nvisualizer: OK\nalbum_art: OK\nDEVICE: [phantom-control] - A decorative, non-functional gauge is present on the left side of the player.\nVERDICT: FAIL",
   "frames": [
     "full.png",
     "after.png",
@@ -21,18 +21,16 @@
     "crop-album_art.png"
   ],
   "unmeasured_crop_miss": [
-    "album_art",
-    "prev",
-    "repeat"
+    "next"
   ],
   "per_control_defects": {
-    "seek": [
-      "baked-thumb"
+    "playpause": [
+      "placement-wrong"
     ],
     "shuffle": [
-      "aesthetic"
+      "dead-control"
     ]
   },
   "device_defects": [],
-  "ts": "2026-07-11T23:35:56"
+  "ts": "2026-07-11T23:45:46"
 }

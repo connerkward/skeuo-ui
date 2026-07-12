@@ -1,0 +1,100 @@
+{
+  "skin": "wc-goldshield",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 18.4,
+  "ts": "2026-07-11T23:37:50",
+  "verdict": "FAIL",
+  "score_0_10": 4,
+  "orientation_ok": true,
+  "device_defects": [],
+  "per_control": {
+    "playpause": {
+      "status": "good",
+      "note": "Icon is clear and correctly styled.",
+      "defects": []
+    },
+    "prev": {
+      "status": "good",
+      "note": "Cleanly rendered button.",
+      "defects": []
+    },
+    "next": {
+      "status": "good",
+      "note": "Cleanly rendered button.",
+      "defects": []
+    },
+    "repeat": {
+      "status": "good",
+      "note": "Legible icon, good style.",
+      "defects": []
+    },
+    "queue": {
+      "status": "good",
+      "note": "Legible icon.",
+      "defects": []
+    },
+    "vol": {
+      "status": "needs_work",
+      "note": "The knob's position indicator remains identical between the idle and interacted frames; the sprite did not rotate.",
+      "defects": [
+        "dead-control"
+      ]
+    },
+    "seek": {
+      "status": "needs_work",
+      "note": "When the CSS thumb moves to the right, a baked-in illustration of the thumb remains permanently on the left side of the track.",
+      "defects": [
+        "baked-thumb"
+      ]
+    },
+    "shuffle": {
+      "status": "needs_work",
+      "note": "The switch lever did not move after interaction. Also contains baked-in text 'ON' which is an aesthetic defect.",
+      "defects": [
+        "dead-control",
+        "aesthetic"
+      ]
+    },
+    "visualizer": {
+      "status": "good",
+      "note": "Sits reasonably well at the bottom of the inner frame.",
+      "defects": []
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Clean inset frame.",
+      "defects": []
+    }
+  },
+  "notes": [
+    "The skin is visually very strong, capturing the intricate gold and iron theme beautifully.",
+    "Unfortunately, functional defects ruin the interactive experience."
+  ],
+  "improve": [
+    "Ensure the seek track is completely empty of thumb graphics so the moving thumb doesn't leave a ghost behind.",
+    "Make sure the volume knob sprite is configured to rotate upon interaction.",
+    "Ensure the toggle switch sprite physically moves to the alternate position.",
+    "Remove all English text (like 'ON' or 'OFF') from the base artwork."
+  ]
+}

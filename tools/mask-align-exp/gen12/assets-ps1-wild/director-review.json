@@ -22,62 +22,95 @@
     "crop-visualizer.png",
     "crop-album_art.png"
   ],
-  "elapsed_s": 9.8,
-  "ts": "2026-07-11T16:13:18",
+  "elapsed_s": 27.6,
+  "ts": "2026-07-11T23:37:09",
   "verdict": "FAIL",
-  "score_0_10": 4,
+  "score_0_10": 2,
+  "orientation_ok": true,
+  "device_defects": [],
   "per_control": {
     "playpause": {
       "status": "needs_work",
-      "note": "Iconography is baked into the texture (looks like play/pause symbols) but it's not a distinctly modeled button, just a flat graphic."
+      "note": "Control mapped to a structural tail fin instead of a button.",
+      "defects": [
+        "placement-wrong"
+      ]
     },
     "prev": {
       "status": "needs_work",
-      "note": "No distinct control found here, just a structural fin with glowing lines."
+      "note": "Mapped to a random piece of hull texture.",
+      "defects": [
+        "placement-wrong"
+      ]
     },
     "next": {
       "status": "needs_work",
-      "note": "Just blank hull geometry, no control surface."
+      "note": "Mapped to the inside of the engine thruster.",
+      "defects": [
+        "placement-wrong"
+      ]
     },
     "repeat": {
       "status": "needs_work",
-      "note": "Looks like an intake/thruster rather than a button."
+      "note": "Mapped to the magenta hull structure.",
+      "defects": [
+        "placement-wrong"
+      ]
     },
     "queue": {
       "status": "needs_work",
-      "note": "Just hull detailing/recesses, not a distinct control."
+      "note": "Mapped to the side engine/thruster.",
+      "defects": [
+        "placement-wrong"
+      ]
     },
     "vol": {
       "status": "needs_work",
-      "note": "Knob is present but its perspective is entirely broken compared to the underlying surface, floating above the gap."
+      "note": "Knob sprite feels pasted on and lacks a proper socket.",
+      "defects": [
+        "sprite-slot-mismatch"
+      ]
     },
     "seek": {
       "status": "needs_work",
-      "note": "Slider track is present, but the thumb is hovering loosely and doesn't sit in the slot properly."
+      "note": "Thumb sprite carries a massive, ugly semi-transparent bounding box/shadow that overlaps the surrounding texture.",
+      "defects": [
+        "sprite-slot-mismatch"
+      ]
     },
     "shuffle": {
       "status": "needs_work",
-      "note": "Toggle switch appears to be a flat decal pasted onto the surface."
+      "note": "The toggle switch is painted directly into the background texture and does not move when toggled.",
+      "defects": [
+        "baked-thumb",
+        "dead-control"
+      ]
     },
     "visualizer": {
       "status": "needs_work",
-      "note": "Blank/empty area, missing entirely."
+      "note": "Missing entirely / rendered outside the canvas.",
+      "defects": [
+        "placement-wrong"
+      ]
     },
     "album_art": {
       "status": "needs_work",
-      "note": "Blank/empty area, missing entirely."
+      "note": "Missing entirely / rendered outside the canvas.",
+      "defects": [
+        "placement-wrong"
+      ]
     }
   },
   "notes": [
-    "The aesthetic nails the vibrant 90s/PS1 racing game color palette and low-poly spaceship concept.",
-    "However, as an interface, it almost entirely fails. The controls are either missing, baked flat into the texture, or floating in incorrect perspective.",
-    "The central 'cockpit' area seems intended as a display but is not populated with the requested visualizer or album art regions.",
-    "The volume knob and seek slider are completely detached from the geometry of the spaceship wing they are supposed to be mounted on."
+    "The 3D spaceship design is fun and captures the PS1 low-poly aesthetic well.",
+    "However, as a functional skin, it completely fails. Controls are arbitrarily mapped to random ship parts (fins, thrusters) rather than actual interface elements.",
+    "The functional sprites that do exist (knob, slider thumb) look awkwardly pasted on with harsh clipping or bounding boxes.",
+    "The toggle is entirely baked into the hull and non-functional."
   ],
   "improve": [
-    "Ensure all controls are modeled as distinct, physical elements rather than just drawn onto the base texture.",
-    "Fix the perspective and seating of the volume knob and seek slider so they physically mount into the surface of the ship.",
-    "Populate the blank regions (visualizer, album art) in the designated display areas (presumably the cockpit window).",
-    "Replace the structural fins and thrusters with actual readable buttons for the playback controls, or clearly integrate buttons into them."
+    "Ensure UI regions accurately map to flat, designated interface areas on the device, rather than structural ship parts.",
+    "Avoid baking interactive components (like the shuffle toggle) into the background image.",
+    "Remove the harsh rectangular/oval bounding box shadows on the CSS sprites (like the seek thumb).",
+    "Integrate the screens (visualizer, album_art) cleanly onto the windshield or dedicated display panels."
   ]
 }

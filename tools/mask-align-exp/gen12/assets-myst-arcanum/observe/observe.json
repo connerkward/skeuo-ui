@@ -2,10 +2,42 @@
   "skin": "myst-arcanum",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: SEATED-CORRECTLY\nprev: BROKEN (missing sprite)\nnext: SEATED-CORRECTLY\nrepeat: SEATED-CORRECTLY\nqueue: SEATED-CORRECTLY\nvol: BROKEN (missing sprite)\nseek: BROKEN (missing sprite)\nshuffle: BROKEN (baked text label)\nvisualizer: SEATED-CORRECTLY\nalbum_art: SEATED-CORRECTLY\nVERDICT: FAIL",
+  "raw": "playpause: OK\nprev: DEFECT[placement-wrong] - The 'prev' button is missing from the interface.\nnext: OK\nrepeat: DEFECT[placement-wrong] - The 'repeat' button is missing from the interface.\nqueue: OK\nvol: DEFECT[aesthetic] - The volume knob uses a 'repeat' icon, which is confusing for its role.\nseek: DEFECT[aesthetic] - Baked-in text 'ON' is visible on the slider thumb.\nshuffle: DEFECT[aesthetic] - Baked-in text 'ON' is visible in the toggled 'on' state sprite.\nvisualizer: OK\nalbum_art: OK\nDEVICE: [phantom-control] - A large, knob-like gear element at the top-left has no assigned function and appears to be purely decorative.\nVERDICT: FAIL",
   "frames": [
     "full.png",
-    "after.png"
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-vol-after.png",
+    "crop-seek.png",
+    "crop-seek-after.png",
+    "crop-shuffle.png",
+    "crop-shuffle-after.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
   ],
-  "ts": "2026-07-10T11:54:01"
+  "unmeasured_crop_miss": [],
+  "per_control_defects": {
+    "prev": [
+      "placement-wrong"
+    ],
+    "repeat": [
+      "placement-wrong"
+    ],
+    "vol": [
+      "aesthetic"
+    ],
+    "seek": [
+      "aesthetic"
+    ],
+    "shuffle": [
+      "aesthetic"
+    ]
+  },
+  "device_defects": [],
+  "ts": "2026-07-11T23:38:49"
 }

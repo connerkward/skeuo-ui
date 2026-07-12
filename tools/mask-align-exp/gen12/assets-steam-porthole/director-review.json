@@ -1,0 +1,98 @@
+{
+  "skin": "steam-porthole",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 10.6,
+  "ts": "2026-07-11T23:37:25",
+  "verdict": "FAIL",
+  "score_0_10": 4,
+  "orientation_ok": true,
+  "device_defects": [],
+  "per_control": {
+    "playpause": {
+      "status": "needs_work",
+      "note": "Play/pause button is missing from the layout; it was requested in the prompt but not rendered where it should be (the center button looks like a volume knob).",
+      "defects": [
+        "placement-wrong"
+      ]
+    },
+    "prev": {
+      "status": "good",
+      "note": "Clean, clearly legible back button.",
+      "defects": []
+    },
+    "next": {
+      "status": "good",
+      "note": "Clean, clearly legible next button.",
+      "defects": []
+    },
+    "repeat": {
+      "status": "good",
+      "note": "Clean, clearly legible repeat button.",
+      "defects": []
+    },
+    "queue": {
+      "status": "good",
+      "note": "Clean, clearly legible queue button.",
+      "defects": []
+    },
+    "vol": {
+      "status": "needs_work",
+      "note": "Knob shows an arrow indicator but its position in the after-interaction crop is identical to the idle crop, so it failed to rotate.",
+      "defects": [
+        "dead-control"
+      ]
+    },
+    "seek": {
+      "status": "needs_work",
+      "note": "Slider has a painted thumb on the left in the idle frame, which remains painted there in the after frame while the actual sprite moves to the middle.",
+      "defects": [
+        "baked-thumb"
+      ]
+    },
+    "shuffle": {
+      "status": "good",
+      "note": "Toggle switch changes position between idle and after frames.",
+      "defects": []
+    },
+    "visualizer": {
+      "status": "good",
+      "note": "Clean region for visualizer.",
+      "defects": []
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Nice porthole screen for album art.",
+      "defects": []
+    }
+  },
+  "notes": [
+    "The steampunk diving-bell aesthetic is strong, with great brass and copper textures.",
+    "However, there are critical mechanical failures: the seek slider has a baked-in thumb, the volume knob didn't rotate, and the play/pause button is entirely missing (replaced by the volume knob)."
+  ],
+  "improve": [
+    "Ensure the play/pause button is actually generated in the layout.",
+    "Remove the painted thumb from the seek slider track so only the interactive sprite is visible.",
+    "Ensure the volume knob sprite is properly wired to rotate on interaction."
+  ]
+}

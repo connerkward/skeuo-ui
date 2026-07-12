@@ -2,10 +2,38 @@
   "skin": "wmp-quicksilver",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: SEATED-CORRECTLY\nprev: SEATED-CORRECTLY\nnext: SEATED-CORRECTLY\nrepeat: SEATED-CORRECTLY\nqueue: SEATED-CORRECTLY\nvol: SEATED-CORRECTLY\nseek: SEATED-CORRECTLY\nshuffle: BROKEN (baked text label)\nvisualizer: SEATED-CORRECTLY\nalbum_art: SEATED-CORRECTLY\nThe shuffle toggle switch includes baked-in text labels (\"ON\", \"OFF\").\nVERDICT: FAIL",
+  "raw": "playpause: CROP-MISS\nprev: CROP-MISS\nnext: OK\nrepeat: CROP-MISS\nqueue: OK\nvol: DEFECT[dead-control] - The knob's indicator position is identical in the before and after states.\nseek: DEFECT[dead-control, aesthetic] - The slider is just an empty groove with no thumb or fill indicator, making it non-functional and its state impossible to read.\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: none\nVERDICT: FAIL",
   "frames": [
     "full.png",
-    "after.png"
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-vol-after.png",
+    "crop-seek.png",
+    "crop-seek-after.png",
+    "crop-shuffle.png",
+    "crop-shuffle-after.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
   ],
-  "ts": "2026-07-10T12:01:16"
+  "unmeasured_crop_miss": [
+    "playpause",
+    "prev",
+    "repeat"
+  ],
+  "per_control_defects": {
+    "vol": [
+      "dead-control"
+    ],
+    "seek": [
+      "dead-control",
+      "aesthetic"
+    ]
+  },
+  "device_defects": [],
+  "ts": "2026-07-11T23:47:15"
 }

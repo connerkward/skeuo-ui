@@ -1,0 +1,72 @@
+{
+  "_meta": {
+    "source": "review-2026-07-11-round1.json",
+    "taxonomy": ["baked-thumb", "sprite-slot-mismatch", "css-misalignment", "silhouette-mismatch",
+                 "orientation", "dead-control", "duplicate-control", "phantom-control",
+                 "placement-wrong", "aesthetic"],
+    "coding_method": "manual, one pass over the human's free-text notes field per skin; each",
+    "coding_note": "clause in the human note mapped to the nearest taxonomy class. Ambiguous/",
+    "coding_note2": "vague clauses (e.g. 'switch looks a little weird') coded conservatively as aesthetic."
+  },
+  "claymation": {
+    "human_note": "switch doesnt fit slot. slider has baked slider.",
+    "defects": ["sprite-slot-mismatch", "baked-thumb"]
+  },
+  "diablo-gothic": {
+    "human_note": "vertical slider has baked in thumb knob. not aligned perfectly so css looks like crap. switch looks a little weird.",
+    "defects": ["baked-thumb", "css-misalignment", "aesthetic"]
+  },
+  "fa-pod": {
+    "human_note": "switch isnt scaled to slot, too small.",
+    "defects": ["sprite-slot-mismatch"]
+  },
+  "fa-sky": {
+    "human_note": "play button depression silhoutte doesnt match. phantom play button. slider goes too far past slot end far end. knob has unclear tick position.",
+    "defects": ["silhouette-mismatch", "phantom-control", "css-misalignment", "aesthetic"]
+  },
+  "fallout-pipboy": {
+    "human_note": "duplicates of buttons. baked slider thumb. switch slot doenst match sprite.",
+    "defects": ["duplicate-control", "baked-thumb", "sprite-slot-mismatch"]
+  },
+  "fallout-vault": {
+    "human_note": "prev button, shuffle button, failed to work. baked slider knob, slider css / sprite knob not aligned.",
+    "defects": ["dead-control", "baked-thumb", "css-misalignment"]
+  },
+  "myst-arcanum": {
+    "human_note": "all completley wrong. knob placed wrong. switch slrites all mixed up.. button depression silhouettes not aligned.",
+    "defects": ["placement-wrong", "sprite-slot-mismatch", "silhouette-mismatch"]
+  },
+  "n64-cutscene": {
+    "human_note": "siwtch doesnt match slot. baked slider knob. great job making depressions on non circular buttons.",
+    "defects": ["sprite-slot-mismatch", "baked-thumb", "silhouette-mismatch"]
+  },
+  "n64-prerender-character": {
+    "human_note": "what the fuck is this orientation? how did this get past the vlm gate?",
+    "defects": ["orientation"]
+  },
+  "ps1-crunchy": {
+    "human_note": "visualizer not working. slider css too far left. otherwise good.",
+    "defects": ["dead-control", "css-misalignment"]
+  },
+  "ps1-wild": {
+    "human_note": "absulute falire.",
+    "defects": ["placement-wrong"],
+    "note_low_specificity": "human gave no itemized defects here ('absolute failure') -- coded as a single catch-all placement-wrong tag; treat this skin's recall as low-confidence in both directions."
+  },
+  "steam-porthole": {
+    "human_note": "slider css too long, slider knob too large, slot and switch dont match. buttons silhouettes off.",
+    "defects": ["css-misalignment", "sprite-slot-mismatch", "silhouette-mismatch"]
+  },
+  "wc-goldshield": {
+    "human_note": "baked slider knob. fun switch but doesnt match slot.",
+    "defects": ["baked-thumb", "sprite-slot-mismatch"]
+  },
+  "wmp-quicksilver": {
+    "human_note": "button depression silhouettes dont match shape. ugly / boring, but otherwise fine.",
+    "defects": ["silhouette-mismatch", "aesthetic"]
+  },
+  "wmp-vario": {
+    "human_note": "css slider bar too far left. too far right also. siwtch doesnt match slot.",
+    "defects": ["css-misalignment", "sprite-slot-mismatch"]
+  }
+}

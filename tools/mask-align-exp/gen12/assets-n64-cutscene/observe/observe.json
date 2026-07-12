@@ -1,8 +1,8 @@
 {
-  "skin": "ps1-crunchy",
+  "skin": "n64-cutscene",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
-  "verdict": "UNPARSED",
-  "raw": "{\"output\": \"\", \"usage\": {\"prompt_tokens\": 4994, \"completion_tokens\": 741, \"total_tokens\": 5735, \"cost\": 0.0, \"prompt_tokens_details\": {\"cached_tokens\": 0, \"cache_write_tokens\": 0}}}",
+  "verdict": "PASS",
+  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: OK\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: none\nVERDICT: PASS",
   "frames": [
     "full.png",
     "after.png",
@@ -23,5 +23,5 @@
   "unmeasured_crop_miss": [],
   "per_control_defects": {},
   "device_defects": [],
-  "ts": "2026-07-11T23:42:33"
+  "ts": "2026-07-11T23:39:21"
 }

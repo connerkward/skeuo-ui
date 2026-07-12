@@ -1,0 +1,98 @@
+{
+  "skin": "fallout-vault",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 10.8,
+  "ts": "2026-07-11T23:34:55",
+  "verdict": "FAIL",
+  "score_0_10": 4,
+  "orientation_ok": true,
+  "device_defects": [],
+  "per_control": {
+    "playpause": {
+      "status": "good",
+      "note": "Clean button.",
+      "defects": []
+    },
+    "prev": {
+      "status": "good",
+      "note": "Clean button.",
+      "defects": []
+    },
+    "next": {
+      "status": "good",
+      "note": "Clean button.",
+      "defects": []
+    },
+    "repeat": {
+      "status": "good",
+      "note": "Clean button.",
+      "defects": []
+    },
+    "queue": {
+      "status": "good",
+      "note": "Clean button.",
+      "defects": []
+    },
+    "vol": {
+      "status": "needs_work",
+      "note": "The knob does not appear to have rotated between idle and interaction frames.",
+      "defects": [
+        "dead-control"
+      ]
+    },
+    "seek": {
+      "status": "needs_work",
+      "note": "The slider handle is baked into the base image and does not move with the CSS fill.",
+      "defects": [
+        "baked-thumb"
+      ]
+    },
+    "shuffle": {
+      "status": "needs_work",
+      "note": "Toggle switch does not flip state between frames. Contains baked text 'OFF'.",
+      "defects": [
+        "dead-control",
+        "aesthetic"
+      ]
+    },
+    "visualizer": {
+      "status": "good",
+      "note": "Screen region clean.",
+      "defects": []
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Screen region clean.",
+      "defects": []
+    }
+  },
+  "notes": [
+    "Great rusted metal texture and overall post-apocalyptic vibe.",
+    "Multiple interactive controls failed to respond to input (knob, toggle) or had baked-in sprites (slider)."
+  ],
+  "improve": [
+    "Ensure all interactive control sprites (slider thumbs, switch levers, knob caps) are separated onto dynamic layers so they can move.",
+    "Remove baked text ('OFF') from the switch texture."
+  ]
+}

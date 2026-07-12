@@ -1,0 +1,109 @@
+{
+  "skin": "myst-arcanum",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 14.1,
+  "ts": "2026-07-11T23:35:15",
+  "verdict": "FAIL",
+  "score_0_10": 4,
+  "orientation_ok": true,
+  "device_defects": [
+    "phantom-control"
+  ],
+  "per_control": {
+    "playpause": {
+      "status": "good",
+      "note": "Cleanly rendered button, appropriate symbols.",
+      "defects": []
+    },
+    "prev": {
+      "status": "needs_work",
+      "note": "The crop shows empty stone instead of a previous button, meaning the control is missing entirely in the layout.",
+      "defects": [
+        "phantom-control"
+      ]
+    },
+    "next": {
+      "status": "good",
+      "note": "Cleanly rendered next button.",
+      "defects": []
+    },
+    "repeat": {
+      "status": "good",
+      "note": "Dial-like knob with an arrow, visually fits the aesthetic.",
+      "defects": []
+    },
+    "queue": {
+      "status": "good",
+      "note": "List icon on stone button.",
+      "defects": []
+    },
+    "vol": {
+      "status": "needs_work",
+      "note": "The crop is completely blank/empty stone. It seems the volume knob was either not rendered or placed incorrectly outside the crop zone.",
+      "defects": [
+        "dead-control"
+      ]
+    },
+    "seek": {
+      "status": "needs_work",
+      "note": "The original idle state has a painted-in thumb labeled 'ON'. The active state shows a CSS fill that misaligns with the track and overlaps the baked-in painted thumb. Also has visible text ('ON').",
+      "defects": [
+        "baked-thumb",
+        "css-misalignment",
+        "aesthetic"
+      ]
+    },
+    "shuffle": {
+      "status": "needs_work",
+      "note": "The original idle state has a painted-in lever arm. The active state adds a second overlapping lever sprite without removing the underlying painted one. Contains visible text ('ON').",
+      "defects": [
+        "baked-thumb",
+        "aesthetic"
+      ]
+    },
+    "visualizer": {
+      "status": "good",
+      "note": "Screen area is clean, CSS bars visible at bottom.",
+      "defects": []
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Clean screen frame for album art.",
+      "defects": []
+    }
+  },
+  "notes": [
+    "Several controls are completely missing from their designated crop zones (prev, vol), resulting in phantom-control / dead-control tags.",
+    "The layout contains an unexplained decorative gear window in the top left, which is not a requested control but takes up significant space.",
+    "The seek slider and shuffle toggle both suffer from baked-in thumbs and overlapping active sprites.",
+    "Text ('ON') is baked into the UI near the slider and toggle.",
+    "Aesthetic is nice, hitting the Myst/Arcanum stone and brass brief well, but the layout and functionality are broken."
+  ],
+  "improve": [
+    "Ensure all requested controls (prev, vol) are generated in the UI layout.",
+    "Do not paint the moving parts (slider thumbs, toggle levers) into the background image; leave the tracks empty so dynamic sprites can move freely.",
+    "Remove all baked-in text like 'ON' from the design.",
+    "Ensure CSS tracks for sliders perfectly match the bounds of the painted grooves."
+  ]
+}

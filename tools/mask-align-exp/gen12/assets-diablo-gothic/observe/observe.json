@@ -1,0 +1,35 @@
+{
+  "skin": "diablo-gothic",
+  "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
+  "verdict": "FAIL",
+  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: DEFECT[aesthetic, css-misalignment] - The fill bar is a flat, untextured, solid-colored rectangle which clashes with the detailed skeuomorphic theme and clips through the thumb sprite.\nshuffle: DEFECT[dead-control] - The toggle's state does not change between the before and after images.\nvisualizer: OK\nalbum_art: OK\nDEVICE: DEFECT[aesthetic] - The skin has baked-in text (runes) in several places.\nVERDICT: FAIL",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-vol-after.png",
+    "crop-seek.png",
+    "crop-seek-after.png",
+    "crop-shuffle.png",
+    "crop-shuffle-after.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "unmeasured_crop_miss": [],
+  "per_control_defects": {
+    "seek": [
+      "aesthetic",
+      "css-misalignment"
+    ],
+    "shuffle": [
+      "dead-control"
+    ]
+  },
+  "device_defects": [],
+  "ts": "2026-07-11T23:33:43"
+}

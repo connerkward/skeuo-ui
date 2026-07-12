@@ -1,8 +1,8 @@
 {
-  "skin": "claymation",
+  "skin": "fa-sky",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: DEFECT[baked-thumb] - There is a static, thumb-shaped object baked into the background at the right end of the slider track.\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: none\nVERDICT: FAIL",
+  "raw": "playpause: DEFECT[dead-control] - The play button does not change to a pause icon when playback starts.\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: OK\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: [duplicate-control] - There is a main play button and a separate, smaller pause button; a single playpause control should toggle.\nVERDICT: FAIL",
   "frames": [
     "full.png",
     "after.png",
@@ -22,10 +22,10 @@
   ],
   "unmeasured_crop_miss": [],
   "per_control_defects": {
-    "seek": [
-      "baked-thumb"
+    "playpause": [
+      "dead-control"
     ]
   },
   "device_defects": [],
-  "ts": "2026-07-11T23:33:07"
+  "ts": "2026-07-11T23:34:53"
 }
