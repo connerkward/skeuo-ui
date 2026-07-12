@@ -1,6 +1,103 @@
 # gen12 TODO
 
 ---
+## Round-2 triage: fallout-vault "button issue... still not fixed" — DIAGNOSED (not fixed), 2026-07-12 ($0)
+
+**Discrepancy:** round1 (`review-2026-07-11-round1.json`): *"prev button, shuffle button, failed
+to work. baked slider knob, slider css / sprite knob not aligned."* round2
+(`review-2026-07-12-round2.json`, same seed 649 / paint_sha f37d3326e7c7 in both, gate FAIL):
+*"button issue mentioend before still not fixed."* — even though `fea9a8de` ("exclusive
+blob->key assignment kills cross-control hitboxes... vault gate now PASS") landed BEFORE round2
+and `probe12.py`'s scripted JS-state probe reports all 9 controls passing a real mouse
+hit-test. Read-only investigation via the live server (`localhost:8899`), no pipeline files
+touched (both hypotheses below re-checked against current `regions.json` immediately before
+writing this — this is a shared checkout with heavy concurrent activity right now, incl. a
+new `TOGGLE_TRACK_ENABLED` shuffle-architecture fix landing in the entry directly below this
+one; confirmed fallout-vault's own `regions.json`/`results.json` predate and are untouched by
+it — see hypothesis (d)).
+
+**Ruled out — hypothesis (c), stale player.** `player.html` (mtime 01:15) was rebuilt AFTER
+`regions.json` (01:11, the fea9a8de fix) and BEFORE the round2 review commit (01:50);
+`dashboard12.html` iframes `player.html` live (not a frozen snapshot) and `player.html` itself
+does `fetch('regions.json?v='+V)` at runtime — so even a stale HTML shell would still pull
+current hitbox coordinates. Confirmed directly: re-loading the live page today reproduces the
+bug, so this is a real unfixed defect, not a caching artifact.
+
+**CONFIRMED — hypothesis (a), icon-vs-hitbox offset (the "button" complaint).** `prev` and
+`repeat`'s `regions.device` boxes sit substantially LEFT of their painted icons — the fea9a8de
+`snap_to_paint` fix capped the X-recentre correction to ±20% of button width, and vault's true
+offset exceeds that cap, so the box lands mostly on blank rusted/yellow panel next to the icon,
+not on the icon itself:
+
+| button | box right edge (paint px) | painted-icon centroid (Hough circle fit) | icon spills how far past box edge |
+|---|---|---|---|
+| prev | x=699 (box 507-699) | x=730, r=102 (icon spans 628-832) | icon centroid 31px right of box edge; only the icon's left ~1/3 overlaps the hitbox |
+| repeat | x=704 (box 514-704) | x=732, r=108 (icon spans 624-840) | icon centroid 28px right of box edge; only the icon's left ~1/3 overlaps |
+
+Verified in the REAL DOM, not paint-space math (verify-outputs-rule §7): navigated
+`http://localhost:8899/assets-fallout-vault/player.html` in isolated headless Playwright,
+computed the on-screen pixel coords of the painted icon centers from `#phone`'s live
+`getBoundingClientRect()`, and dispatched real `mousedown/mouseup/click` there —
+`document.elementFromPoint()` at the icon center resolves to a bare unstyled `<div>` (no
+`.pbtn`, no title), and the click produces **zero change** to the player's hint text. The
+identical dispatch at the actual (offset) hitbox center DOES resolve to `.pbtn[title=prev]`
+and DOES update the hint to `"prev ▸"`. This is exactly what a human clicking the visible icon
+would experience: nothing happens.
+
+**Why `probe12.py` passed all 9 controls anyway — circular by construction, not a false
+report.** Its own docstring: it clicks "at the control's own `getBoundingClientRect()` center"
+— i.e. the hitbox's own center — and asserts the handler fired. That correctly proves the
+element is wired to its handler (and that fea9a8de's cross-control blob-stealing fix worked —
+a real, different bug it fixed). It cannot, by construction, detect "is the hitbox positioned
+under the painted icon" — that's the same trap named in `verify-outputs-rule` §2 and
+`ai-image-coords-rule`: the check's coordinate source (the hitbox) is the same artifact whose
+placement is in question. probe12.py's own docstring even names this exact fallout-vault
+complaint as its anchor case, but frames the risk as z-order/overlap stealing, not
+icon-vs-hitbox position — so this specific failure mode was never in its test's blast radius.
+
+**CONFIRMED — hypothesis (d), shuffle toggle's "on" sprite carries baked "OFF" text.**
+`assets-fallout-vault_biref/shuffle_on.png` (mtime 2026-07-09, never touched since) is a
+switch-lever sprite with the word **"OFF" embossed into the metal**, while `shuffle_off.png`
+is the clean lever with no text. `build_player.py`'s `.ptog` click handler (legacy sprite-swap
+path — confirmed current `regions.json.shuffle` still carries `stateAlign`, no `track`/
+`detents`, and `results.json` has no `toggle_track_enabled` key, so vault has NOT been
+regenerated through the new architecture fix landing in this same file just below) swaps to
+`shuffle_on.png` when the toggle is clicked "on" — so toggling shuffle makes the switch
+visibly display the word OFF, reading as broken/inverted regardless of hitbox position (the
+toggle's own hitbox position is fine — device box correctly covers the switch housing,
+confirmed by crop). Live-reproduced: dispatched a real click on `.ptog` in the served player
+and screenshotted the result (`/tmp/vault-diag/vault-shuffle-on-v2.png`) — switch visibly
+flips orientation AND shows "OFF". This matches `director-review.json`'s (Vertex VLM
+auto-review, 2026-07-11 23:34, pre-dates fea9a8de) finding verbatim: *"Toggle switch does not
+flip state between frames. Contains baked text 'OFF'."* — confirmed still live today. Round1's
+"shuffle button... failed to work" and round2's ambiguous "button issue... still not fixed"
+are each consistent with either this or the prev/repeat offset above; both are independently
+confirmed live and unfixed, so no need to disambiguate which one the reviewer meant — fix
+both. **Good news:** the entry directly below this one already ships a general architectural
+fix for exactly this defect class (`TOGGLE_TRACK_ENABLED`); vault just needs a re-roll/re-cut
+through it rather than a new fix.
+
+**Not the cause — hypothesis (b), press-feedback offset/invisible.** Consequence of (a), not a
+separate root cause: the `.ink` press-overlay is cropped from `maskDevice` shifted to align
+with `device`, so wherever `device` sits, the flash renders there too. Once (a) is fixed the
+feedback will follow automatically; no separate fix needed.
+
+**Root-cause location for whoever fixes this (not fixed here, diagnosis only per task scope):**
+`extract12.py`'s `snap_to_paint` X-recentre cap (currently ±20% of button width, added in
+fea9a8de specifically to stop vault's prev/repeat from drifting onto the trim in the OTHER
+direction) is now the thing under-correcting in THIS direction for the same two controls —
+raising the cap uniformly risks reintroducing the trim-drift bug fea9a8de fixed, so this needs
+a real fix (recompute the true icon offset, don't just move the clamp), not a bigger cap.
+`shuffle_on.png`/vault: re-roll through `TOGGLE_TRACK_ENABLED` (below) rather than patching the
+legacy sprite — this is very likely the same ON/OFF-token prompt-bake failure mode
+`PROMPT-PROVENANCE.md` already cites as having backfired once (commit `3eeccc55`).
+
+Evidence saved: `/tmp/vault-diag/` — `device-annotated.png` (full device-frame overlay, all 10
+controls), `crop-prev-annot.png` / `crop-repeat-annot.png` (3x upscaled close-ups, hitbox box
+vs. painted icon), `crop-shuffle-annot.png`, `vault-live-initial.png` (live served player),
+`vault-shuffle-on-v2.png` (live click result showing baked "OFF").
+
+---
 ## Shuffle: two-state sprite-swap → TWO-DETENT TRACK SLIDER (TOGGLE_TRACK_ENABLED) — DONE 2026-07-12 (~$1.2 validation)
 
 User-approved architecture change (his hypothesis, refined): the shuffle toggle's mirror-pair
