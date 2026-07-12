@@ -1,6 +1,21 @@
 # gen12 TODO
 
 ---
+## TODO — bake off Gemini 2.5 Flash Image vs GPT Image 2 for the SWITCH-SLOT housing inpaint (option B), on a couple skins
+
+The switch-slot rework (make the toggle housing match the switch silhouette instead of a
+generic pill) has three paths: A = render-time shadow socket derived from the sprite
+silhouette ($0), B = masked inpaint of a shaped housing (mask = dilated switch silhouette,
+inpaint a recess in the theme material), C = baked housing via prompt/template. If B (or a
+B-hybrid) is chosen, bake off **Gemini 2.5 Flash Image** vs **GPT Image 2** — the two
+cost-efficient frontrunners from the baked-slider erase bake-offs — specifically for the
+SWITCH-HOUSING inpaint, on a couple skins, composited back and seam-judged, with the same
+SOFT-vs-HARD failure classification as the erase arms. Gate on the switch-slot direction
+(A/B/C) being chosen first. (Note: the erase bake-offs already rank Gemini's failure mode
+[soft, promptable] above GPT's [hard hallucination] — confirm that holds for housing carving,
+which is a fill-a-shaped-region task, not a remove-object task, so the ranking may differ.)
+
+---
 ## erase12's Vertex crop repairs were silently billed at the 4K tier — FIXED, 2026-07-12 (~$0.27 validation spend)
 
 **Bug (found by the inpaint bake-off, `docs/experiments/2026-07-12-inpaint-bakeoff.md`):**
