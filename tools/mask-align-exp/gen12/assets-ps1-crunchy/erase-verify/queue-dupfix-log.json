@@ -1,0 +1,30 @@
+{
+  "skin": "ps1-crunchy",
+  "defect": "round-3 human review (director-review.json, 2026-07-11T23:36:34): device_defects=[duplicate-control, phantom-control]. The 'queue' region (octagonal housing) was baked with the SAME repeat/loop-cycle icon as the 'repeat' region (circular housing), instead of a queue/list icon.",
+  "scope_note": "Task scoped ONLY to this duplicate-icon paint defect. director-review.json also flagged a separate untracked 'phantom' oval list-icon button and a seek CSS-overflow issue -- NEITHER touched here (out of scope: not a duplicate, and CSS/extract12 territory owned by other agents).",
+  "fix_method": "inpaint erase (no full regen). Square crop around queue's device bbox (erase12._square_crop_box, pad_frac=0.7) -> Vertex gemini-2.5-flash-image free-crop edit, custom prompt asking to erase the icon and restore blank worn metal (NOT a new icon) -> erase12._feathered_composite blend back into paint.png / joint-4k.png left half. Reused erase12.py/genskin.py helper functions read-only; erase12.py's own CLI/detect_bbox was NOT used (its groove/socket emptiness detector doesn't apply to a raised-button duplicate-icon defect).",
+  "attempts": [
+    {"v": 1, "seed": 623, "model": "gemini-2.5-flash-image (Vertex, 2K tier)", "cost_usd": 0.039,
+     "result": "icon fully erased, no seam/hallucination, but measured face texture std=15.6 vs 32-38 on every untouched button -- reads smoother/less-rusted than siblings"},
+    {"v": 2, "seed": 8231, "model": "gemini-2.5-flash-image (Vertex, 2K tier)", "cost_usd": 0.039,
+     "prompt_change": "added explicit instruction to match rust-pitting/grain roughness of sibling buttons",
+     "result": "near-identical to v1 (std=15.7) -- texture-density instruction did not visibly change the model's output. KEPT this version (committed)."}
+  ],
+  "verification": {
+    "vlm_macro_crop": {
+      "model": "google/gemini-2.5-pro via fal openrouter/router/vision", "cost_usd": 0.0238,
+      "input": "raw paint.png macro crop (930px button filling frame) before/after",
+      "verdict": "FAIL -- flagged the same smoother/less-textured patch the deterministic std measurement found"
+    },
+    "deterministic_pixel_check": "np luminance std within a 100px-radius circle on the button face: queue-after=15.6-15.7, repeat/playpause/next(untouched)=32.5-37.6 -- confirms the VLM's macro-crop complaint is real, not a false flag",
+    "vlm_real_render_scale": {
+      "model": "google/gemini-2.5-pro via fal openrouter/router/vision", "cost_usd": 0.0200,
+      "input": "actual player.html screenshot (Playwright) at shipped size (~55px button) + 6x zoom crop",
+      "verdict": "PASS -- 'reads as plausible, coherent worn-metal button... no discernible signs of editing at the intended viewing scale'"
+    },
+    "runtime_check": "drove the real player.html in Playwright: clicked the queue button, confirmed the queue overlay panel still opens (control remains functional, unaffected by the paint erase)"
+  },
+  "total_cost_usd": 0.1218,
+  "verdict": "INPAINTING WORKED for this defect class. The duplicate icon is geometrically fully removed (no residual shape, no scar, no hallucinated object) in both attempts. There IS a real, measurable texture-density shortfall vs. sibling buttons at extreme macro-crop scale, but at the skin's actual shipped/rendered size it reads as a plausible worn-smooth button and both a SOTA VLM and direct inspection call it acceptable. Kept the v2 result; did not escalate to gpt-image-2 or regen.",
+  "not_fixed": "The untracked 'phantom' oval list-icon button and the seek CSS-overflow issue from the same round-3 review remain open, by design (out of this task's scope)."
+}
