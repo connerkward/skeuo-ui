@@ -167,6 +167,22 @@ SPRITE_TICK_CSS = KNOB_TICKS_ENABLED and TICKS_SPRITE == "css"   # live needle o
 # defaulting on — see docs/experiments/2026-07-11-toggle-cover-fit.md.
 SPRITE_COVER_FIT_ENABLED = True
 
+# feature flag: lit-icon-glyph STATEFUL buttons (playpause/repeat/shuffle) — port of the
+# user-approved prototype tools/mask-align-exp/gen12/icon-state-proto.html (2026-07-12). The
+# glyph is extracted from mask.png's OWN baked enclosed-hole shape (flood-fill from the crop
+# border: border-reachable non-body = background, ENCLOSED non-body = the glyph — free, exact,
+# no VLM), registered onto the painted button by sliding the mask-glyph shape over a "differs-
+# from-body" response map and taking the max-overlap offset (deterministic, computed from the
+# real pixels every render — a fixed device/maskDevice offset was tried and explicitly rejected
+# by the user), then lit with the director's accent (css.glow else css.accent, never a
+# hardcoded colour) and clipped to the button's own silhouette (no rim/ring/halo — banned by
+# central no-rim-lighting-rule). Default ON — this retires the tacky rim-light
+# SHUFFLE_LIT_BUTTON branch (an old worktree experiment, superseded, never merged to mainline)
+# and the switch/slot-fit problem for shuffle by rendering it as a plain icon BUTTON instead of
+# a track-lever/sprite-swap toggle. Gracefully degrades to a normal (unlit) button on any skin
+# whose mask doesn't carry a baked glyph (wc-goldshield, fa-sky) — no crash, no garbage.
+STATEFUL_LIT_ICON = True
+
 TOGGLE_SIZE_JS = ("""
     const offWfrac=off.w/PW, offHfrac=off.h/PH;
     let _s=Math.max((r.device[2]*1.06)/offWfrac, (r.device[3]*1.06)/offHfrac);
@@ -197,6 +213,10 @@ HTML = f"""<!doctype html><html><head><meta charset=utf-8>
   .pbtn .ink{{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}}
   .pbtn:active .ink{{opacity:1}}
+  .pbtn .lit{{position:absolute;background-size:100% 100%;pointer-events:none;
+    opacity:0;transition:opacity .15s}}
+  .pbtn.on .lit{{opacity:1}}
+  .pbtn.haslit.on .ink{{display:none}}
   .pknob{{position:absolute;cursor:ns-resize;touch-action:none;border-radius:50%;box-shadow:0 6px 14px #000b}}
   .pknob .cap{{position:absolute;inset:0;margin:0;border-radius:50%;background-size:cover;background-position:center}}
   .pknob .spec{{position:absolute;inset:0;border-radius:50%;pointer-events:none;mix-blend-mode:screen}}
@@ -409,7 +429,13 @@ const V='{V}';
   const tg = Object.keys(roles).find(k=>roles[k]==='toggle');
   const tgR = tg && regs[tg];
   const isTrackArch = !!(tgR && (tgR.track || tgR.detents));
-  if(isTrackArch && tgR.device){{
+  // STATEFUL_LIT_ICON (see build_player.py flag comment): when on, shuffle is rendered as a
+  // lit-glyph icon BUTTON in the BTN loop below — NOT the track-lever or legacy sprite-swap
+  // toggle rendered by the two blocks below. Requires only regs.shuffle.device (every skin has
+  // it); does NOT require a baked glyph — a glyph-less mask just degrades to a normal button.
+  const STATEFUL_LIT_ICON = {str(STATEFUL_LIT_ICON).lower()};
+  const shuffleAsButton = STATEFUL_LIT_ICON && !!(tg && tgR && tgR.device);
+  if(!shuffleAsButton && isTrackArch && tgR.device){{
     const r=regs[tg], track=r.device, vert=!!r.vertical, lv=CUT['shuffle_lever'];
     // CSS-LEVER FALLBACK — the biref cut is missing OR degenerate (aspect wildly off any sane
     // lever shape: a mis-cut sliver / strip-drift patch) -> render a themed CSS lever (director
@@ -458,7 +484,7 @@ const V='{V}';
   // ---- shuffle: legacy TWO-STATE sprite-swap toggle (rollback path / pre-2026-07-12 assets,
   // silhouette state-registered) — unchanged, kept fully intact so already-generated regions.json
   // / assets keep rendering. ----
-  else if(!isTrackArch && tgR && CUT['shuffle_off']){{
+  else if(!shuffleAsButton && !isTrackArch && tgR && CUT['shuffle_off']){{
     const r=tgR,off=CUT['shuffle_off'],on=CUT['shuffle_on']||off, sa=r.stateAlign;
     const el=document.createElement('div');el.className='ptog';const tc=ctr(r.device);
     const ang=r.angle||0; el.style.transformOrigin='50% 50%';   // rotate to match a tilted slot
@@ -482,16 +508,109 @@ const V='{V}';
   // shifted down (physical travel), clipped to its EXACT silhouette from the colour mask
   // (cutMaskShape-style). No bbox ellipse, no gradient wash.
   const BTN=R.buttons||[], KEY=R.keys||{{}};
+  // when STATEFUL_LIT_ICON has retired shuffle's track-lever/toggle (shuffleAsButton, set
+  // above), append it to the same icon-button roster this loop renders — shuffle then shares
+  // the exact same mask/silhouette/press-ink machinery as playpause/repeat/prev/next/queue.
+  const ICON_BTNS = shuffleAsButton ? BTN.concat([tg]) : BTN;
+  // which of the icon buttons LATCH a persistent lit-glyph state (vs momentary press-only).
+  const STATEFUL_ROLE = {{playpause:1, repeat:1, shuffle:1}};
+  // director-picked lit-glyph accent: css.glow (WIRE-pbr.md) wins, else css.accent, else a
+  // neutral engraved tone — never a hardcoded colour (icon-state-proto.html used a fixed demo
+  // blue only for its own standalone preview; the shipped player must follow the theme).
+  const _hexToRgb=h=>{{ h=(h||'').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    const n=parseInt(h||'e8ecf5',16); return [(n>>16)&255,(n>>8)&255,n&255]; }};
+  const LIT_ACCENT_RGB = _hexToRgb(({SPEC_GLOW_JS})||({SPEC_ACCENT_JS})||'#e8ecf5');
   let MC=null,MW=0,MH=0;
   try{{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
     MW=mi.naturalWidth; MH=mi.naturalHeight;
     MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
     MC.getContext('2d').drawImage(mi,0,0); }}catch(e){{}}
-  for(const b of BTN){{ const r=regs[b]; if(!r||!r.device) continue;
+  // ---- lit-icon-glyph helpers, ported verbatim (same flood-fill / registration / lighting
+  // math) from the user-approved prototype icon-state-proto.html — see that file for the
+  // annotated reference version this was proven in. ----
+  // flood-fill from the MASK crop: sil = whole button silhouette (holes filled), gl = the
+  // ENCLOSED non-body pixels (the baked glyph). Border-reachable non-body = background, so a
+  // glyph hole surrounded by guide colour survives the fill and lands in `gl`, not `sil`'s gap.
+  function computeGlyphMasks(cropM,key,cwv,chv){{
+    const c=document.createElement('canvas'); c.width=cwv; c.height=chv;
+    const g=c.getContext('2d');
+    g.drawImage(MC, cropM[0]*MW, cropM[1]*MH, cropM[2]*MW, cropM[3]*MH, 0,0,cwv,chv);
+    const d=g.getImageData(0,0,cwv,chv).data, N=cwv*chv, body=new Uint8Array(N);
+    for(let p=0,i=0;p<N;p++,i+=4){{const x=d[i]-key[0],y=d[i+1]-key[1],z=d[i+2]-key[2];body[p]=(x*x+y*y+z*z<7000)?1:0;}}
+    const vis=new Uint8Array(N),st=[];
+    for(let x=0;x<cwv;x++){{const a=x,bb=(chv-1)*cwv+x;if(!body[a]&&!vis[a]){{vis[a]=1;st.push(a);}}if(!body[bb]&&!vis[bb]){{vis[bb]=1;st.push(bb);}}}}
+    for(let y=0;y<chv;y++){{const a=y*cwv,bb=y*cwv+cwv-1;if(!body[a]&&!vis[a]){{vis[a]=1;st.push(a);}}if(!body[bb]&&!vis[bb]){{vis[bb]=1;st.push(bb);}}}}
+    while(st.length){{const p=st.pop(),x=p%cwv,y=(p/cwv)|0;
+      const nb=[p-1,p+1,p-cwv,p+cwv],ok=[x>0,x<cwv-1,y>0,y<chv-1];
+      for(let k=0;k<4;k++){{if(ok[k]){{const np=nb[k];if(!vis[np]&&!body[np]){{vis[np]=1;st.push(np);}}}}}}}}
+    // connected-component filter on the ENCLOSED (!vis && !body) pixel set, gated on BOTH size
+    // AND darkness. The pipeline's own contract (genskin.py) bakes the glyph as an "enclosed
+    // BLACK hole" — so a real glyph component is large AND near-black; empirically, real glyph
+    // strokes (playpause/repeat) measure avgLum ~11-16 with minLum 0, while a false-positive
+    // component on a skin with NO baked icon (wmp-vario's shuffle: a plain housing, confirmed by
+    // direct pixel inspection) measures avgLum ~184 — a bright highlight/shading blob, not a
+    // hole, that would otherwise pass a size-only filter and render as scattered lit noise.
+    // Components failing either gate are folded into `body` (kept solid in `sil2`, excluded from
+    // `gl`) rather than into `vis` (background), so they don't punch a spurious hole either.
+    const compVis=new Uint8Array(N), minCompPx=Math.max(12,Math.round(N*0.0015)), GLYPH_LUM_MAX=70;
+    for(let p=0;p<N;p++){{
+      if(vis[p]||body[p]||compVis[p])continue;
+      const stack2=[p],members=[p];compVis[p]=1;
+      while(stack2.length){{const q=stack2.pop(),x=q%cwv,y=(q/cwv)|0;
+        const nb2=[q-1,q+1,q-cwv,q+cwv],ok2=[x>0,x<cwv-1,y>0,y<chv-1];
+        for(let k=0;k<4;k++){{if(ok2[k]){{const nq=nb2[k];if(!compVis[nq]&&!vis[nq]&&!body[nq]){{compVis[nq]=1;stack2.push(nq);members.push(nq);}}}}}}}}
+      let sumLum=0; for(const m of members){{ const i=m*4; sumLum+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; }}
+      const avgLum=sumLum/members.length;
+      if(members.length<minCompPx || avgLum>GLYPH_LUM_MAX){{ for(const m of members) body[m]=1; }}
+    }}
+    const sil2=document.createElement('canvas');sil2.width=cwv;sil2.height=chv;
+    const sg=sil2.getContext('2d'),sd=sg.createImageData(cwv,chv),sa=sd.data;
+    const gl=document.createElement('canvas');gl.width=cwv;gl.height=chv;
+    const gg=gl.getContext('2d'),gd=gg.createImageData(cwv,chv),ga=gd.data;let cov=0,gcnt=0;
+    for(let p=0,i=0;p<N;p++,i+=4){{ if(!vis[p]){{sa[i]=sa[i+1]=sa[i+2]=sa[i+3]=255;cov++; if(!body[p]){{ga[i]=ga[i+1]=ga[i+2]=ga[i+3]=255;gcnt++;}}}} }}
+    sg.putImageData(sd,0,0);gg.putImageData(gd,0,0);
+    return {{sil2,gl,cov,gcnt}};
+  }}
+  // deterministic registration (NO stored offset — explicitly rejected): slide the mask-glyph
+  // shape over the painted button's "differs-from-body" response map; the (dx,dy) with the
+  // max overlap is where the icon is actually painted.
+  function registerGlyph(base,gl,silv,cwv,chv){{
+    const pd=base.getContext('2d').getImageData(0,0,cwv,chv).data;
+    const sd=silv.getContext('2d').getImageData(0,0,cwv,chv).data;
+    let br=0,bgv=0,bb=0,n=0;for(let i=0;i<pd.length;i+=4){{if(sd[i+3]>10){{br+=pd[i];bgv+=pd[i+1];bb+=pd[i+2];n++;}}}}
+    if(n){{br/=n;bgv/=n;bb/=n;}}
+    const RR=new Float32Array(cwv*chv);
+    for(let p=0,i=0;p<cwv*chv;p++,i+=4){{if(sd[i+3]>10){{const dr=pd[i]-br,dgc=pd[i+1]-bgv,dbc=pd[i+2]-bb;RR[p]=Math.sqrt(dr*dr+dgc*dgc+dbc*dbc);}}}}
+    const gd=gl.getContext('2d').getImageData(0,0,cwv,chv).data,G=[];
+    for(let p=0,i=0;p<cwv*chv;p++,i+=4){{if(gd[i+3]>10)G.push(p);}}
+    const W=Math.max(6,Math.round(Math.min(cwv,chv)*0.14));let best=-1,bx=0,by=0;
+    for(let ddy=-W;ddy<=W;ddy++)for(let ddx=-W;ddx<=W;ddx++){{let s=0;
+      for(let j=0;j<G.length;j++){{const p=G[j],x=(p%cwv)+ddx,y=((p/cwv)|0)+ddy;if(x<0||y<0||x>=cwv||y>=chv)continue;s+=RR[y*cwv+x];}}
+      if(s>best){{best=s;bx=ddx;by=ddy;}}}}
+    return {{dx:bx,dy:by}};
+  }}
+  // light the glyph: accent fill clipped to the glyph shape + a white-hot core (4-dir erode of
+  // the glyph, source-in white) + optional bloom (blurred lighter-composite halo). NO rim/ring
+  // (central no-rim-lighting-rule) — the light stays inside the glyph's own silhouette.
+  function litGlyph(gl,cwv,chv,ac,bloom){{
+    const lit=document.createElement('canvas');lit.width=cwv;lit.height=chv;const lg=lit.getContext('2d');
+    lg.fillStyle='rgb('+ac[0]+','+ac[1]+','+ac[2]+')';lg.fillRect(0,0,cwv,chv);
+    lg.globalCompositeOperation='destination-in';lg.drawImage(gl,0,0);lg.globalCompositeOperation='source-over';
+    const core=document.createElement('canvas');core.width=cwv;core.height=chv;const cg=core.getContext('2d');cg.drawImage(gl,0,0);cg.globalCompositeOperation='destination-in';
+    const e=Math.max(1,Math.round(Math.min(cwv,chv)*0.010));cg.drawImage(gl,e,0);cg.drawImage(gl,-e,0);cg.drawImage(gl,0,e);cg.drawImage(gl,0,-e);
+    cg.globalCompositeOperation='source-in';cg.fillStyle='rgba(255,255,255,0.9)';cg.fillRect(0,0,cwv,chv);lg.drawImage(core,0,0);
+    if(!bloom)return lit;
+    const out=document.createElement('canvas');out.width=cwv;out.height=chv;const og=out.getContext('2d');
+    const halo=document.createElement('canvas');halo.width=cwv;halo.height=chv;const hg=halo.getContext('2d');
+    hg.filter='blur('+Math.max(2,Math.round(Math.min(cwv,chv)*0.045))+'px)';hg.drawImage(lit,0,0);hg.filter='none';
+    og.globalCompositeOperation='lighter';og.globalAlpha=0.75;og.drawImage(halo,0,0);og.globalAlpha=1;og.drawImage(lit,0,0);return out;
+  }}
+  for(const b of ICON_BTNS){{ const r=regs[b]; if(!r||!r.device) continue;
     const db=r.device, mb=r.maskDevice||db;
     const el=document.createElement('div');el.className='pbtn';el.title=b;
     el.style.left=px(db)+'%';el.style.top=py(db)+'%';el.style.width=pw(db)+'%';el.style.height=ph(db)+'%';
     const ink=document.createElement('div'); ink.className='ink'; el.appendChild(ink);
+    const lit=document.createElement('div'); lit.className='lit'; el.appendChild(lit);
     try{{
       // crop the mask around the button blob (small pad), then the same rect in PAINT space
       // is the mask rect shifted by the mask→paint drift (device vs maskDevice centres)
@@ -544,10 +663,64 @@ const V='{V}';
       ink.style.width=(eb[2]/db[2]*100)+'%';
       ink.style.height=(eb[3]/db[3]*100)+'%';
       ink.style.backgroundImage='url('+pc.toDataURL()+')';
+      lit.style.left=ink.style.left; lit.style.top=ink.style.top;
+      lit.style.width=ink.style.width; lit.style.height=ink.style.height;
+      // ---- lit-icon-glyph (STATEFUL_LIT_ICON) — playpause/repeat/shuffle only. Extract the
+      // baked glyph from the SAME mask crop already loaded above (MC/crop/key), register it
+      // deterministically onto the painted button, and precompute the two lit states (flat-idle
+      // + pressed/latched) so click/pointer handling below is a pure background-image swap. ----
+      if({str(STATEFUL_LIT_ICON).lower()} && STATEFUL_ROLE[b] && MC){{
+        const {{sil2,gl,cov:gcov,gcnt}}=computeGlyphMasks(crop,KEY[b]||[255,255,255],cw,ch);
+        const hasGlyph = gcnt > gcov*0.008;
+        if(hasGlyph){{
+          // OFF-state body (no press, no darken) — the registration base AND the flat-lit body
+          const offBody=document.createElement('canvas'); offBody.width=cw; offBody.height=ch;
+          offBody.getContext('2d').drawImage(paint, eb[0]*PW, eb[1]*PH, eb[2]*PW, eb[3]*PH, 0,0,cw,ch);
+          const {{dx:gdx,dy:gdy}}=registerGlyph(offBody,gl,sil2,cw,ch);
+          // pressed body clipped to the FULL (hole-filled) silhouette — build_player's own
+          // press-ink treatment (contrast + darken + shape-following rims), ported so the
+          // glyph's registered position stays valid against a silhouette with no hole gap.
+          const pc2=document.createElement('canvas'); pc2.width=cw; pc2.height=ch;
+          const pg2=pc2.getContext('2d');
+          pg2.filter='contrast(1.06)';
+          pg2.drawImage(paint, eb[0]*PW, eb[1]*PH, eb[2]*PW, eb[3]*PH, 0, shift, cw, ch);
+          pg2.filter='none';
+          pg2.fillStyle='rgba(0,0,0,'+dA.toFixed(3)+')'; pg2.fillRect(0,0,cw,ch);
+          const rim2=(offY,col,alpha)=>{{ const rc2=document.createElement('canvas');rc2.width=cw;rc2.height=ch;
+            const rg2=rc2.getContext('2d'); rg2.drawImage(sil2,0,0);
+            rg2.globalCompositeOperation='destination-out'; rg2.drawImage(sil2,0,offY);
+            rg2.globalCompositeOperation='source-in'; rg2.fillStyle=col; rg2.fillRect(0,0,cw,ch);
+            pg2.save(); pg2.globalAlpha=alpha; pg2.filter='blur('+(rimW*0.35).toFixed(1)+'px)';
+            pg2.drawImage(rc2,0,0); pg2.restore(); }};
+          rim2(rimW,'#000',0.40);
+          rim2(-Math.round(rimW*0.7),'#fff',0.10+0.18*dk);
+          pg2.globalCompositeOperation='destination-in'; pg2.drawImage(sil2,0,0);
+          // compose: body + registered lit glyph (bloom on), clipped to the full silhouette
+          const composeLit=(bodyC,dyExtra)=>{{
+            let litC=litGlyph(gl,cw,ch,LIT_ACCENT_RGB,true);
+            const t=document.createElement('canvas'); t.width=cw; t.height=ch;
+            t.getContext('2d').drawImage(litC,gdx,gdy+dyExtra); litC=t;
+            const lg2=litC.getContext('2d'); lg2.globalCompositeOperation='destination-in'; lg2.drawImage(sil2,0,0); lg2.globalCompositeOperation='source-over';
+            const outC=document.createElement('canvas'); outC.width=cw; outC.height=ch;
+            const og2=outC.getContext('2d'); og2.drawImage(bodyC,0,0); og2.drawImage(litC,0,0);
+            return outC;
+          }};
+          const flatURL='url('+composeLit(offBody,0).toDataURL()+')';
+          const pressedURL='url('+composeLit(pc2,shift).toDataURL()+')';
+          lit.style.backgroundImage=flatURL;
+          el.classList.add('haslit');
+          el.addEventListener('pointerdown',()=>{{ lit.style.backgroundImage=pressedURL; }});
+          const _revertLit=()=>{{ lit.style.backgroundImage=flatURL; }};
+          el.addEventListener('pointerup',_revertLit); el.addEventListener('pointerleave',_revertLit);
+        }}
+        // no baked glyph (wc-goldshield, fa-sky, …) → graceful: `.lit` stays empty/transparent,
+        // `.haslit` is never added, so the button behaves exactly like a normal press-ink button.
+      }}
     }}catch(e){{}}
-    el.addEventListener('click',()=>{{ if(b==='playpause'){{playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';}}
+    el.addEventListener('click',()=>{{ if(b==='playpause'){{playing=!playing;hint.textContent=playing?'▶ playing — visualizer live':'⏸ paused';el.classList.toggle('on',playing);}}
       else if(b==='queue'){{document.getElementById('queue').classList.toggle('open');}}
-      else if(b==='repeat'){{el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];}}
+      else if(b==='repeat'){{el.dataset.m=((+(el.dataset.m||0)+1)%3);hint.textContent='repeat: '+['off','context','track'][el.dataset.m];el.classList.toggle('on', el.dataset.m!=='0');}}
+      else if(b==='shuffle'){{el.classList.toggle('on');hint.textContent='shuffle: '+(el.classList.contains('on')?'on':'off');}}
       else hint.textContent=b+' ▸'; }});
     phone.appendChild(el);
   }}
