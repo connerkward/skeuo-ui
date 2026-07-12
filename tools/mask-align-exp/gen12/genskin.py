@@ -261,6 +261,15 @@ ICON = {  # named in the prompt so the model embosses the right glyph — never 
     "visualizer": "a VISUALIZER / spectrum-analyzer display window",
     "album_art": "an ALBUM ART / cover display window",
 }
+# MASK-GLYPH-RELIABILITY fix (2026-07-12): controls whose DEVICE-position blueprint circle gets
+# a baked BLACK icon cut-out (see draw_icon_glyph below) — the 5 buttons only. The knob's device
+# circle stays a plain guide disc: the device 'vol' position paints as an EMPTY SOCKET (no cap
+# installed, per the cavity rule), so there is nothing in the paint for a device-side tick hole to
+# register against. The knob's pointer tick instead belongs on the STRIP cap sprite (the loose,
+# rotating part that DOES carry a visible pointer notch in the paint) — baked in build_canvas's
+# strip-cell loop, not here. See genskin's MASK GLYPH HOLES prompt clause for the mask-column
+# contract this feeds.⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧
+ICON_GLYPH_NAMES = set(BUTTONS)
 # congruence contract — sizes shared between device slot and strip anchor (px on COL_W x DEV_H)
 BTN_R, PLAY_R, KNOB_R = 74, 104, 84
 GROOVE_W, GROOVE_H, THUMB_W, THUMB_H, THUMB_R = 640, 76, 150, 96, 44
@@ -350,15 +359,59 @@ def pick_blueprint_arm(gen_seed):
     return BLUEPRINT_ARM_WEIGHTS[-1][0]
 
 
-def draw_control_shape(d, kind, sz, x, y, col, style):
+def draw_icon_glyph(d, name, x, y, r):
+    """Punch a small BLACK cut-out glyph into an already-filled guide-colour disc at (x,y) —
+    a bold, simple approximation of that control's icon (or, for 'vol', the knob cap's 12
+    o'clock pointer tick). This is baked directly into the SOLID blueprint so the model has a
+    literal enclosed-hole shape to preserve: it gives the model (1) a concrete position/shape
+    to emboss the real icon over on the LEFT (paint) column, and (2) a worked example of the
+    'guide colour with an enclosed black hole' convention the RIGHT (mask) column's MASK GLYPH
+    HOLES clause requires it to reproduce for every button + the knob cap. Deliberately crude —
+    this is a shape/position hint, not the final rendered icon; the model still designs its own
+    icon per the prose ICON description.
+    ⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧
+    """
+    BLK = (0, 0, 0)
+    s = r * 0.60
+    if name == "playpause":
+        d.polygon([(x - s * 0.9, y - s), (x - s * 0.9, y + s), (x + s * 0.1, y)], fill=BLK)
+        bw = s * 0.34; bx = x + s * 0.35
+        d.rectangle([bx, y - s, bx + bw, y + s], fill=BLK)
+        d.rectangle([bx + bw * 1.7, y - s, bx + bw * 2.7, y + s], fill=BLK)
+    elif name == "prev":
+        d.polygon([(x + 0, y - s), (x + 0, y + s), (x - s, y)], fill=BLK)
+        d.polygon([(x + s * 0.95, y - s), (x + s * 0.95, y + s), (x - s * 0.05, y)], fill=BLK)
+    elif name == "next":
+        d.polygon([(x - s * 0.95, y - s), (x - s * 0.95, y + s), (x + s * 0.05, y)], fill=BLK)
+        d.polygon([(x, y - s), (x, y + s), (x + s, y)], fill=BLK)
+    elif name == "repeat":
+        w = max(4, int(s * 0.30))
+        d.ellipse([x - s, y - s, x + s, y + s], outline=BLK, width=w)
+        d.polygon([(x + s * 0.45, y - s * 0.55), (x + s * 1.05, y - s * 0.55), (x + s * 0.75, y - s * 1.05)], fill=BLK)
+    elif name == "queue":
+        bw = s * 1.8; bh = max(4, int(s * 0.26)); gap = s * 0.62
+        for i in (-1, 0, 1):
+            yy = y + i * gap
+            d.rectangle([x - bw / 2, yy - bh / 2, x + bw / 2, yy + bh / 2], fill=BLK)
+    elif name == "vol":
+        w = max(4, int(r * 0.12)); ln = r * 0.34
+        d.rectangle([x - w / 2, y - r + 2, x + w / 2, y - r + 2 + ln], fill=BLK)
+
+
+def draw_control_shape(d, kind, sz, x, y, col, style, name=None):
     """Draw one guide shape. style='solid' fills it with the guide colour (abshape-verdict
     winner); style='outline' strokes an outline only (the old/losing arm, kept for the trial).
     Shared by the single-canvas solid/outline arms AND the twoimg guided reference image (which
     always uses style='solid' — that experiment only ever varied single- vs two-image
-    conditioning, not guide style)."""
+    conditioning, not guide style). name, when it's one of ICON_GLYPH_NAMES (the 5 buttons) and
+    style=='solid', gets a baked icon cut-out via draw_icon_glyph — see that function + the
+    MASK-GLYPH-RELIABILITY comment above ICON_GLYPH_NAMES for why the device 'knob' branch below
+    is deliberately NOT given a cutout (the tick lives on the strip cap sprite instead)."""
     if kind == "btn":
         r = sz[0]
-        if style == "solid": d.ellipse([x - r, y - r, x + r, y + r], fill=col)
+        if style == "solid":
+            d.ellipse([x - r, y - r, x + r, y + r], fill=col)
+            if name in ICON_GLYPH_NAMES: draw_icon_glyph(d, name, x, y, r)
         else: d.line(poly_circle(x, y, r) + [poly_circle(x, y, r)[0]], fill=col, width=12)
     elif kind == "knob":
         if style == "solid": d.ellipse([x - KNOB_R, y - KNOB_R, x + KNOB_R, y + KNOB_R], fill=col)
@@ -394,7 +447,7 @@ def build_canvas(BG, layout, KEYS, guide_style):
         fx, fy, kind, *sz = spec_l
         x, y = COL_W * fx, DEV_H * fy
         if guide_style:
-            draw_control_shape(d, kind, sz, x, y, KEYS[name], guide_style)
+            draw_control_shape(d, kind, sz, x, y, KEYS[name], guide_style, name)
         template[name] = [fx, fy * DEVF]
     sy = DEV_H + (H - DEV_H) // 2
     # TOGGLE_TRACK_ENABLED: ONE lever cell (was two: OFF/ON state pair) — 3-cell strip instead
@@ -411,7 +464,11 @@ def build_canvas(BG, layout, KEYS, guide_style):
         if not guide_style: continue
         col = KEYS[k]
         if shp == "circle":
-            if guide_style == "solid": d.ellipse([cx - KNOB_R, sy - KNOB_R, cx + KNOB_R, sy + KNOB_R], fill=col)
+            if guide_style == "solid":
+                d.ellipse([cx - KNOB_R, sy - KNOB_R, cx + KNOB_R, sy + KNOB_R], fill=col)
+                # knob-cap TICK cutout lives HERE (the strip sprite), not the device socket —
+                # see the MASK-GLYPH-RELIABILITY comment above ICON_GLYPH_NAMES.
+                draw_icon_glyph(d, "vol", cx, sy, KNOB_R)
             else: d.ellipse([cx - KNOB_R, sy - KNOB_R, cx + KNOB_R, sy + KNOB_R], outline=col, width=12)
         elif shp == "thumb":
             box = [cx - THUMB_W / 2, sy - THUMB_H / 2, cx + THUMB_W / 2, sy + THUMB_H / 2]
@@ -789,9 +846,18 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "EACH control paint ONE SOLID FILLED blob in its own guide_color_rgb (from the spec), "
         "at the EXACT same position, size and silhouette as that control on the left (the "
         "seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; "
-        "the shuffle blob is a tall portrait rounded-rectangle; each knob/button blob a solid "
-        "disc) — one blob per control id in the spec's controls array, coloured by that "
-        "control's guide_color_rgb. DISPLAY-WINDOW BLOBS — the visualizer and album_art blobs "
+        "the shuffle blob is a tall portrait rounded-rectangle) — one blob per control id in "
+        "the spec's controls array, coloured by that control's guide_color_rgb.\n"
+        "  • MASK GLYPH HOLES (MANDATORY ON EVERY GENERATION, NEVER OPTIONAL) — the 5 BUTTON "
+        "device blobs (playpause, prev, next, repeat, queue) are the ONE exception to 'solid "
+        "disc': punch ONE fully-ENCLOSED BLACK hole through the middle of each button's "
+        "guide-colour disc, in the EXACT silhouette of that button's icon glyph from "
+        "final_icon_or_content — the same play-triangle/pause-bars, skip-chevrons, repeat-loop "
+        "or queue-bars shape you embossed on the left column's matching button — so the guide "
+        "colour reads as a solid ring/field AROUND the icon-shaped hole, never a flat unbroken "
+        "disc. A button device blob with no enclosed black hole is WRONG and must be redone."
+        "⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧\n"
+        "  • DISPLAY-WINDOW BLOBS — the visualizer and album_art blobs "
         "must EXACTLY cover their painted window's GLASS area on the left: the SAME rectangle "
         "at the SAME position with the SAME rounded corners, edge-to-edge with the glass — "
         "never larger than the bezel opening, never smaller, never shifted or offset onto the "
@@ -801,10 +867,18 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "guide_color_rgb (vol_cap uses vol's colour, seek_thumb uses seek's colour, "
         f"{'the shuffle_lever uses' if TOGGLE_TRACK_ENABLED else 'BOTH shuffle states use'} shuffle's colour)"
         "⟦cite:docs/experiments/2026-07-12-toggle-track.md⟧ exactly matching its part's silhouette & position "
-        "in the strip, in the spec's strip_order_left_to_right. CRITICAL: each blob is TIGHT to "
+        "in the strip, in the spec's strip_order_left_to_right. The vol_cap strip blob ADDITIONALLY carries "
+        "one small fully-ENCLOSED BLACK notch punched through its guide colour at its top-centre (12 "
+        "o'clock) edge, matching the pointer-notch tick embossed on the knob cap in the strip on the left — "
+        "this notch is MANDATORY, never optional; a vol_cap blob with no notch is WRONG."
+        "⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧ "
+        "CRITICAL: each blob is TIGHT to "
         "its shape — NEVER let a colour bleed or stretch across the strip band or flood a "
         f"rectangle; the {SHUFFLE_STRIP_N_WORD.lower()} strip blobs are {len(spec_obj['strip_order_left_to_right'])} separate compact shapes with black gaps between "
-        "them. Every blob is ONE solid filled silhouette, no outlines, no holes. Everything "
+        "them. EVERY blob is ONE solid filled silhouette with NO outline stroke, EXCEPT the 5 button "
+        "device blobs (icon hole) and the vol_cap strip blob (tick notch) described above — those are the "
+        "ONLY intentional holes; every other blob (sliders, toggle/lever, display windows, other strip "
+        "parts) stays a plain holeless fill. Everything "
         "else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
     return prompt
 
@@ -1085,7 +1159,14 @@ def main():
         + right_col_hdr + " For EACH control paint ONE "
         "SOLID FILLED blob in ITS OWN guide colour" + mask_guide_ref + ", at the EXACT same position, size and silhouette as that control "
         "on " + left_ref + " (the seek-slider blob is a FULL-HEIGHT horizontal bar matching the groove, NOT a thin line; "
-        "the shuffle blob is a tall portrait rounded-rectangle; each knob/button blob a solid disc): " + mask_lines
+        "the shuffle blob is a tall portrait rounded-rectangle): " + mask_lines
+        + ". MASK GLYPH HOLES (MANDATORY ON EVERY GENERATION, NEVER OPTIONAL) — the 5 BUTTON device blobs "
+        "(playpause, prev, next, repeat, queue) are the ONE exception to 'solid disc': punch ONE fully-ENCLOSED "
+        "BLACK hole through the middle of each button's guide-colour disc, in the EXACT silhouette of that "
+        "button's icon glyph — the same " + "; ".join(ICON[c] for c in BUTTONS) + " shapes you embossed on "
+        + left_ref + "'s matching buttons — so the guide colour reads as a solid ring/field AROUND the "
+        "icon-shaped hole, never a flat unbroken disc. A button device blob with no enclosed black hole is "
+        "WRONG and must be redone.⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧"
         + ". DISPLAY-WINDOW BLOBS — the visualizer and album-art blobs must EXACTLY cover their painted "
         "window's GLASS area on " + left_ref + ": the SAME rectangle at the SAME position with the SAME rounded "
         "corners, edge-to-edge with the glass — never larger than the bezel opening, never smaller, never "
@@ -1095,10 +1176,17 @@ def main():
         + "; and each STRIP PART as a solid COMPACT blob of its colour (volume cap=" + kn(KNOB).lower()
         + ", seek thumb=" + kn(SLIDER).lower()
         + (", shuffle lever=" if TOGGLE_TRACK_ENABLED else ", BOTH shuffle states=") + kn(TOGGLE).lower() + ") exactly matching "
-        f"its part's silhouette & position in {strip_side} strip. CRITICAL: each blob is TIGHT to its shape — NEVER let a "
+        f"its part's silhouette & position in {strip_side} strip. The vol_cap (volume cap) strip blob ADDITIONALLY carries "
+        "one small fully-ENCLOSED BLACK notch punched through its guide colour at its top-centre (12 o'clock) edge, "
+        "matching the pointer-notch tick embossed on the knob cap in " + strip_side + " strip — this notch is "
+        "MANDATORY, never optional; a volume-cap blob with no notch is WRONG."
+        "⟦cite:tools/mask-align-exp/gen12/build_player.py;tools/mask-align-exp/gen12/icon-state-proto.html⟧ "
+        f"CRITICAL: each blob is TIGHT to its shape — NEVER let a "
         f"colour bleed or stretch across the strip band or flood a rectangle; the {SHUFFLE_STRIP_N_WORD.lower()} strip blobs are {SHUFFLE_STRIP_N} separate "
-        "compact shapes with black gaps between them. Every blob is ONE solid filled silhouette, no outlines, no "
-        "holes. Everything else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
+        "compact shapes with black gaps between them. EVERY blob is ONE solid filled silhouette with NO outline "
+        "stroke, EXCEPT the 5 button device blobs (icon hole) and the vol_cap strip blob (tick notch) described "
+        "above — those are the ONLY intentional holes; every other blob (sliders, toggle/lever, display windows, "
+        "other strip parts) stays a plain holeless fill. Everything else is pure black.⟦cite:sha:794da20e;sha:ac28cd74⟧")
 
     # ---- provenance strip (prompt_provenance.py) ----
     # The assembled text above carries ⟦cite:...⟧ markers (why each clause exists). NOTHING

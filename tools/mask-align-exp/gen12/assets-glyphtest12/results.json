@@ -1,0 +1,195 @@
+{
+ "id": "glyphtest12",
+ "mode": "templated",
+ "seed": 99001,
+ "model": "fal-ai/gemini-3-pro-image-preview/edit",
+ "backdrop": [
+  18,
+  18,
+  24
+ ],
+ "palette": {
+  "body": [
+   40,
+   40,
+   46
+  ],
+  "accent": [
+   180,
+   60,
+   30
+  ]
+ },
+ "keys": {
+  "playpause": [
+   0,
+   255,
+   255
+  ],
+  "prev": [
+   128,
+   255,
+   255
+  ],
+  "next": [
+   255,
+   128,
+   255
+  ],
+  "repeat": [
+   255,
+   0,
+   255
+  ],
+  "queue": [
+   128,
+   128,
+   255
+  ],
+  "vol": [
+   0,
+   255,
+   128
+  ],
+  "seek": [
+   255,
+   255,
+   128
+  ],
+  "shuffle": [
+   0,
+   128,
+   255
+  ],
+  "visualizer": [
+   128,
+   0,
+   255
+  ],
+  "album_art": [
+   128,
+   255,
+   128
+  ]
+ },
+ "keyNames": {
+  "playpause": "CYAN",
+  "prev": "PALE AQUA",
+  "next": "ORCHID",
+  "repeat": "MAGENTA",
+  "queue": "PERIWINKLE",
+  "vol": "SPRING GREEN",
+  "seek": "RGB(255, 255, 128)",
+  "shuffle": "AZURE BLUE",
+  "visualizer": "VIOLET-PURPLE",
+  "album_art": "PALE MINT"
+ },
+ "buttons": [
+  "playpause",
+  "prev",
+  "next",
+  "repeat",
+  "queue"
+ ],
+ "sprites": [
+  "vol",
+  "seek",
+  "shuffle"
+ ],
+ "extras": [
+  "visualizer",
+  "album_art"
+ ],
+ "roles": {
+  "playpause": "button",
+  "prev": "button",
+  "next": "button",
+  "repeat": "button",
+  "queue": "button",
+  "vol": "knob",
+  "seek": "slider",
+  "shuffle": "toggle",
+  "visualizer": "region",
+  "album_art": "region"
+ },
+ "defsz": {
+  "vol": 0.14,
+  "seek": 0.06333333333333334,
+  "shuffle": 0.1,
+  "playpause": 0.17333333333333334,
+  "prev": 0.12333333333333334,
+  "next": 0.12333333333333334,
+  "repeat": 0.12333333333333334,
+  "queue": 0.12333333333333334
+ },
+ "devFrac": 0.75,
+ "lighting": {},
+ "ticks": {},
+ "css": {},
+ "template": {
+  "album_art": [
+   0.5,
+   0.0975
+  ],
+  "visualizer": [
+   0.5,
+   0.27
+  ],
+  "seek": [
+   0.5,
+   0.3525
+  ],
+  "prev": [
+   0.28,
+   0.44999999999999996
+  ],
+  "playpause": [
+   0.5,
+   0.44999999999999996
+  ],
+  "next": [
+   0.72,
+   0.44999999999999996
+  ],
+  "repeat": [
+   0.24,
+   0.5625
+  ],
+  "vol": [
+   0.42,
+   0.5700000000000001
+  ],
+  "shuffle": [
+   0.6,
+   0.5700000000000001
+  ],
+  "queue": [
+   0.78,
+   0.5625
+  ]
+ },
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 99001,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
+ "toggle_track_enabled": true,
+ "album_art_rect": [
+  0.26666666666666666,
+  0.019375,
+  0.4666666666666667,
+  0.15625
+ ],
+ "visualizer_rect": [
+  0.23333333333333334,
+  0.22937499999999997,
+  0.5333333333333333,
+  0.08125
+ ],
+ "prompt_json_spec": true,
+ "dims": [
+  4608,
+  3712
+ ],
+ "leak": 3.9e-05
+}
