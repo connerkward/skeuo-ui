@@ -208,4 +208,65 @@ current path). The real lever is seed-mining volume: if/when that hits 10-30 rep
 Vertex-only costs $1.36-$4.08/batch vs. effectively $0 for a LaMa pre-pass that's *also* the
 lowest style-risk option for the flat-channel case it's suited to. Stay on Vertex crops now;
 spec'd bake-off above is the fast, cheap way to confirm the LaMa-first hybrid before building
-it for real.
+it for real. **The bake-off ran** (`docs/experiments/2026-07-12-inpaint-bakeoff.md`) — Vertex
+5/5, LaMa 50%, Bria Eraser promising on 2 crops, Z-Image/FLUX-Fill 0% (hallucinated fake UI
+elements). §6 below is the follow-up full-catalog walk requested to confirm nothing cheaper
+or better was missed in either Vertex or fal before finalizing that routing chain.
+
+## 6. Full-catalog walk (2026-07-12) — confirming neither catalog was under-searched
+
+The sweeps above used targeted keyword searches. This section is a genuine enumeration pass
+— paged `search_models` to `has_more:false` on fal, and a direct read of Vertex's own
+deprecation/pricing docs — done specifically to check for gaps before trusting the bake-off's
+routing recommendation as final.
+
+### Vertex/Google — the headline finding changes the picture
+
+**`imagen-3.0-capability-001`, the Imagen mask-based inpaint/remove-mask model, is
+deprecated with a stated shutdown of June 30 2026 — already past as of today (2026-07-12).**
+No current official Google page lists a per-image price for it; the only $0.02-0.04 figures
+findable are third-party/unverified, not Google's own. A Google-forum thread (2026-03-26)
+confirms Google's own engineers acknowledge **there is no mask-based-editing replacement** —
+the Gemini image models (`gemini-2.5-flash-image`, `gemini-3-pro-image`, `gemini-3.1-flash-image`)
+all edit via `:generateContent` with **instruction-only, no explicit mask parameter**. This
+directly explains why `genskin.py:edit_vertex()` already does crop+recomposite instead of a
+native mask call — there IS no native Vertex mask API to use; the crop *is* the de facto mask
+mechanism. Nothing was missed on the Vertex side; the "~$0.02 Imagen inpaint" figure that
+seeded the original pricing question should be dropped as unverifiable/dead, not corrected to
+a real number. Model Garden also hosts self-deployable LaMa/SDXL-inpainting notebooks
+(GPU-hour billing, not per-image) — not evaluated here since local LaMa (already in the mix,
+$0) covers the same ground for free.
+
+### fal — two gaps found, worth a follow-up bake-off arm
+
+Full paging (queries: edit/inpaint/fill/erase/remove/restore/retouch, each to
+`has_more:false`, category filter cross-checked and confirmed broken — `category=image-editing`
+returns 0 results on this catalog, unfiltered keyword search is the only reliable path)
+confirms the earlier sweeps already found the right candidate set — Z-Image Turbo, Qwen
+Inpaint, FLUX Fill family, Bria GenFill/Eraser, Finegrain — and correctly excluded LaMa/IOPaint/
+SeedEdit/"magic eraser" (none exist on fal under any name). Two mask-conditioned erase
+endpoints were **not** in either prior sweep or the bake-off:
+
+| Model | Price | Mask | Prompt | Note |
+|---|---|---|---|---|
+| `fal-ai/flux-pro/v1/erase` | **$0.004/MP** | ✅ required | ❌ none (dedicated erase, not fill) | Cheapest mask-based option by ~2.5x over Z-Image Turbo; has a `dilate_pixels` param for edge blending. Distinct BFL endpoint from `flux-pro/v1/fill` (which WAS tested and scored 0/5). Same "no prompt" shape as Bria Eraser, which was the one hallucination-free cheap arm in the bake-off — worth testing given that pattern. |
+| `fal-ai/object-removal/mask` | $0.006/img (flat) | ✅ required | ❌ none | Unclear provenance, untested; cheap enough to be worth a throwaway check given the no-prompt/no-hallucination pattern above. |
+
+Both share the "no prompt, mask-only" shape that the bake-off's own working hypothesis
+(§ Results, "prompt-conditioned fill models treat 'remove X' as a generation instruction
+rather than a conservative erase") flags as the safer family — Bria Eraser (no-prompt) was
+the standout cheap performer; Z-Image/FLUX-Fill (prompt-required) were the 0%-usable failures.
+`flux-pro/v1/erase` fits the winning pattern at ~10x lower cost than Bria and wasn't tried.
+
+**Recommendation:** before promoting Bria Eraser to production tier-1 (bake-off's own next
+step), add `fal-ai/flux-pro/v1/erase` and `fal-ai/object-removal/mask` to that same
+5-crop validation run (~$0.03 combined at these prices — trivial against the existing $2-3
+bake-off budget). If either matches Bria's restrained-removal behavior, it beats Bria on cost
+by roughly an order of magnitude for the identical no-prompt-eraser mechanism.
+
+Sources: cloud.google.com/vertex-ai/generative-ai/docs/image/{overview,edit-images},
+.../docs/release-notes, .../pricing (Agent Platform, checked 2026-07-12), ai.google.dev/gemini-api/docs/pricing,
+firebase.google.com/docs/ai-logic/{imagen-models-migration,edit-images-imagen-remove-objects},
+Google developer forum thread on `imagen-3.0-capability-001` retirement (2026-03-26); fal MCP
+`search_models` (7 broad queries, each paged to `has_more:false`, both with and without
+`category=image-editing`) + `get_pricing`/`get_model_schema` on all candidates, 2026-07-12.
