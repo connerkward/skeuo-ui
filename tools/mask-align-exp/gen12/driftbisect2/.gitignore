@@ -1,0 +1,11 @@
+# All inputs here are byte-identical COPIES of already-committed assets-<skin>/{paint,mask}.png
+# and assets-<skin>_biref/*.png (see README.md "Reproduce" section for the exact copy commands)
+# — zero new generations, $0, fully recomputable from what's already tracked in gen12/. Do not
+# commit the redundant binary copies; only the code + the small measured regions.json/results.json
+# outputs are the actual artifact of this experiment.
+assets-*-old/paint.png
+assets-*-old/mask.png
+assets-*-cur/paint.png
+assets-*-cur/mask.png
+assets-*-old_biref/
+assets-*-cur_biref/

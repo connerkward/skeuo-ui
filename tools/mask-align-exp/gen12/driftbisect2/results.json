@@ -1,0 +1,360 @@
+{
+  "note": "driftbisect2 \u2014 extraction-commit bisect readout.\n\nFixes PAINT at the CURRENT committed generation (paint.png/mask.png as they exist\non origin/main today) and swaps ONLY the extractor: 794da20e's extract12.py (the\nversion whose output produced the low-drift baseline numbers in roster_audit.json)\nvs origin/main's extract12.py (today's extractor, whose output produced the live\nhigh-drift numbers). Same paint, same mask, same template, same drift_table() code\n(imported from twoimg/roster_audit.py, not reimplemented) -> any difference between\nthe old-extractor and current-extractor readings on the SAME paint is attributable\nONLY to the extraction algorithm.\n\nThis is the substitute for the originally-specified \"old paint x current extractor\"\ncell, which turned out to be unrecoverable (see README.md in this dir for the full\nrecovery-attempt log: every templated-passing skin's original 794da20e-seed paint.png\nwas gitignored and silently overwritten by a later reroll before ever being committed\nor backed up to Drive -- confirmed by seed mismatch across ALL SIX templated-passing\nskins between 794da20e and the first paint-committing commit 39d76200).\n",
+  "skins": {
+    "fallout-pipboy": {
+      "a_old_paint_old_extractor__from_roster_audit_historical": {
+        "id": "fallout-pipboy",
+        "commit": "794da20e",
+        "seed": 71,
+        "dims": [
+          2304,
+          3712
+        ],
+        "mean_drift_px": 142.7,
+        "max_drift_control": "playpause",
+        "max_drift_px": 506.0,
+        "per_control_drift_px": {
+          "album_art": 13.2,
+          "visualizer": 6.2,
+          "seek": 22.6,
+          "prev": 427.2,
+          "playpause": 506.0,
+          "next": 9.7,
+          "repeat": 418.9,
+          "vol": 0.0,
+          "shuffle": 14.5,
+          "queue": 8.9
+        }
+      },
+      "c_new_paint_OLD_extractor__NEW_this_run": {
+        "mean_drift_px": 915.1,
+        "n": 10,
+        "per_control_px": {
+          "album_art": 2069.3,
+          "visualizer": 837.3,
+          "seek": 1052.9,
+          "prev": 702.4,
+          "playpause": 955.1,
+          "next": 976.7,
+          "repeat": 677.4,
+          "vol": 0.0,
+          "shuffle": 800.3,
+          "queue": 1079.8
+        },
+        "worst_control": "album_art",
+        "worst_px": 2069.3,
+        "dims": [
+          2304,
+          3712
+        ],
+        "fallback_controls": [
+          "vol"
+        ],
+        "mean_drift_px_excl_fallback": 1016.8
+      },
+      "d_new_paint_current_extractor__sanity_replication_of_live": {
+        "mean_drift_px": 950.5,
+        "n": 10,
+        "per_control_px": {
+          "album_art": 2063.5,
+          "visualizer": 827.4,
+          "seek": 1096.5,
+          "prev": 703.8,
+          "playpause": 995.0,
+          "next": 982.0,
+          "repeat": 675.1,
+          "vol": 270.8,
+          "shuffle": 805.6,
+          "queue": 1085.4
+        },
+        "worst_control": "album_art",
+        "worst_px": 2063.5,
+        "dims": [
+          2304,
+          3712
+        ],
+        "fallback_controls": [],
+        "mean_drift_px_excl_fallback": 950.5
+      },
+      "b_new_paint_current_extractor__from_roster_audit_live": {
+        "id": "fallout-pipboy",
+        "dims": [
+          2304,
+          3712
+        ],
+        "n_controls": 10,
+        "mean_drift_px": 950.5,
+        "max_drift_control": "album_art",
+        "max_drift_px": 2063.5,
+        "mean_contam_pct": 0.077,
+        "max_contam_control": "seek",
+        "max_contam_pct": 0.767,
+        "gate_pass": true,
+        "per_control_drift_px": {
+          "album_art": 2063.5,
+          "visualizer": 827.4,
+          "seek": 1096.5,
+          "prev": 703.8,
+          "playpause": 995.0,
+          "next": 982.0,
+          "repeat": 675.1,
+          "vol": 270.8,
+          "shuffle": 805.6,
+          "queue": 1085.4
+        },
+        "per_control_contam_pct": {
+          "playpause": 0.0,
+          "prev": 0.0,
+          "next": 0.0,
+          "repeat": 0.0,
+          "queue": 0.0,
+          "vol": 0.0,
+          "seek": 0.7673,
+          "shuffle": 0.0,
+          "visualizer": 0.0,
+          "album_art": 0.0
+        }
+      },
+      "swap_delta_px__d_minus_c__extractor_only": -66.3,
+      "audit_delta_px__b_minus_a__paint_and_extractor_both_changed": 807.8,
+      "live_vs_replication_agreement_px": 0.0,
+      "verdict": "PAINT-DRIVEN (extractor swap on identical paint changes drift <150px noise floor; both read high)"
+    },
+    "steam-porthole": {
+      "a_old_paint_old_extractor__from_roster_audit_historical": {
+        "id": "steam-porthole",
+        "commit": "794da20e",
+        "seed": 84,
+        "dims": [
+          2304,
+          3712
+        ],
+        "mean_drift_px": 523.2,
+        "max_drift_control": "seek",
+        "max_drift_px": 1002.5,
+        "per_control_drift_px": {
+          "album_art": 513.2,
+          "visualizer": 436.0,
+          "seek": 1002.5,
+          "prev": 473.1,
+          "playpause": 497.5,
+          "next": 568.0,
+          "repeat": 911.1,
+          "vol": 256.0,
+          "shuffle": 421.4,
+          "queue": 153.2
+        }
+      },
+      "c_new_paint_OLD_extractor__NEW_this_run": {
+        "mean_drift_px": 868.6,
+        "n": 10,
+        "per_control_px": {
+          "album_art": 2062.1,
+          "visualizer": 1464.5,
+          "seek": 547.8,
+          "prev": 468.0,
+          "playpause": 651.2,
+          "next": 529.6,
+          "repeat": 1294.8,
+          "vol": 451.5,
+          "shuffle": 432.1,
+          "queue": 784.4
+        },
+        "worst_control": "album_art",
+        "worst_px": 2062.1,
+        "dims": [
+          2304,
+          3712
+        ],
+        "fallback_controls": [],
+        "mean_drift_px_excl_fallback": 868.6
+      },
+      "d_new_paint_current_extractor__sanity_replication_of_live": {
+        "mean_drift_px": 858.3,
+        "n": 10,
+        "per_control_px": {
+          "album_art": 2043.3,
+          "visualizer": 1479.5,
+          "seek": 448.7,
+          "prev": 468.0,
+          "playpause": 651.2,
+          "next": 529.6,
+          "repeat": 1294.8,
+          "vol": 451.5,
+          "shuffle": 432.1,
+          "queue": 784.4
+        },
+        "worst_control": "album_art",
+        "worst_px": 2043.3,
+        "dims": [
+          2304,
+          3712
+        ],
+        "fallback_controls": [],
+        "mean_drift_px_excl_fallback": 858.3
+      },
+      "b_new_paint_current_extractor__from_roster_audit_live": {
+        "id": "steam-porthole",
+        "dims": [
+          2304,
+          3712
+        ],
+        "n_controls": 10,
+        "mean_drift_px": 858.3,
+        "max_drift_control": "album_art",
+        "max_drift_px": 2043.3,
+        "mean_contam_pct": 1.209,
+        "max_contam_control": "visualizer",
+        "max_contam_pct": 12.086,
+        "gate_pass": true,
+        "per_control_drift_px": {
+          "album_art": 2043.3,
+          "visualizer": 1479.5,
+          "seek": 448.7,
+          "prev": 468.0,
+          "playpause": 651.2,
+          "next": 529.6,
+          "repeat": 1294.8,
+          "vol": 451.5,
+          "shuffle": 432.1,
+          "queue": 784.4
+        },
+        "per_control_contam_pct": {
+          "playpause": 0.0,
+          "prev": 0.0,
+          "next": 0.0,
+          "repeat": 0.0,
+          "queue": 0.0,
+          "vol": 0.0,
+          "seek": 0.0,
+          "shuffle": 0.0,
+          "visualizer": 12.0864,
+          "album_art": 0.0
+        }
+      },
+      "swap_delta_px__d_minus_c__extractor_only": -10.3,
+      "audit_delta_px__b_minus_a__paint_and_extractor_both_changed": 335.1,
+      "live_vs_replication_agreement_px": 0.0,
+      "verdict": "PAINT-DRIVEN (extractor swap on identical paint changes drift <150px noise floor; both read high)"
+    },
+    "fa-pod": {
+      "a_old_paint_old_extractor__from_roster_audit_historical": {
+        "id": "fa-pod",
+        "commit": "794da20e",
+        "seed": 173,
+        "dims": [
+          2304,
+          3712
+        ],
+        "mean_drift_px": 602.0,
+        "max_drift_control": "vol",
+        "max_drift_px": 1013.7,
+        "per_control_drift_px": {
+          "album_art": 270.7,
+          "visualizer": 483.0,
+          "seek": 574.7,
+          "prev": 590.0,
+          "playpause": 607.2,
+          "next": 604.6,
+          "repeat": 584.5,
+          "vol": 1013.7,
+          "shuffle": 633.5,
+          "queue": 657.6
+        }
+      },
+      "c_new_paint_OLD_extractor__NEW_this_run": {
+        "mean_drift_px": 446.9,
+        "n": 10,
+        "per_control_px": {
+          "album_art": 481.7,
+          "visualizer": 457.6,
+          "seek": 762.8,
+          "prev": 0.0,
+          "playpause": 649.7,
+          "next": 343.1,
+          "repeat": 777.3,
+          "vol": 390.4,
+          "shuffle": 213.9,
+          "queue": 392.1
+        },
+        "worst_control": "repeat",
+        "worst_px": 777.3,
+        "dims": [
+          2304,
+          3712
+        ],
+        "fallback_controls": [
+          "prev"
+        ],
+        "mean_drift_px_excl_fallback": 496.5
+      },
+      "d_new_paint_current_extractor__sanity_replication_of_live": {
+        "mean_drift_px": 502.9,
+        "n": 10,
+        "per_control_px": {
+          "album_art": 488.4,
+          "visualizer": 429.5,
+          "seek": 772.6,
+          "prev": 572.1,
+          "playpause": 649.7,
+          "next": 343.1,
+          "repeat": 777.3,
+          "vol": 390.4,
+          "shuffle": 213.9,
+          "queue": 392.1
+        },
+        "worst_control": "repeat",
+        "worst_px": 777.3,
+        "dims": [
+          2304,
+          3712
+        ],
+        "fallback_controls": [],
+        "mean_drift_px_excl_fallback": 502.9
+      },
+      "b_new_paint_current_extractor__from_roster_audit_live": {
+        "id": "fa-pod",
+        "dims": [
+          2304,
+          3712
+        ],
+        "n_controls": 10,
+        "mean_drift_px": 502.9,
+        "max_drift_control": "repeat",
+        "max_drift_px": 777.3,
+        "mean_contam_pct": 0.0,
+        "max_contam_control": "visualizer",
+        "max_contam_pct": 0.002,
+        "gate_pass": true,
+        "per_control_drift_px": {
+          "album_art": 488.4,
+          "visualizer": 429.5,
+          "seek": 772.6,
+          "prev": 572.1,
+          "playpause": 649.7,
+          "next": 343.1,
+          "repeat": 777.3,
+          "vol": 390.4,
+          "shuffle": 213.9,
+          "queue": 392.1
+        },
+        "per_control_contam_pct": {
+          "playpause": 0.0,
+          "prev": 0.0,
+          "next": 0.0,
+          "repeat": 0.0,
+          "queue": 0.0,
+          "vol": 0.0,
+          "seek": 0.0,
+          "shuffle": 0.0,
+          "visualizer": 0.0016,
+          "album_art": 0.0
+        }
+      },
+      "swap_delta_px__d_minus_c__extractor_only": 6.4,
+      "audit_delta_px__b_minus_a__paint_and_extractor_both_changed": -99.1,
+      "live_vs_replication_agreement_px": 0.0,
+      "verdict": "PAINT-DRIVEN (extractor swap on identical paint changes drift <150px noise floor; both read high)"
+    }
+  }
+}

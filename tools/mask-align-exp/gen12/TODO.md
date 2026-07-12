@@ -865,3 +865,31 @@ guide-hue bleed, no drift change** (jsonspec/verdict.json: bleed 5.04%→1.56% m
 gens lower, gate 3/4 vs 2/4; layout drift unaffected, ~690px both arms). Do not flip mid-batch
 (generation-spend-rule). See jsonspec/verdict.json, docs/experiments/2026-07-11-jsonspec-paint.md,
 commit 8abf3e8a for the underlying evidence.
+
+## Extraction-commit drift bisect DONE (2026-07-11, $0) — PAINT-DRIVEN, detector exonerated
+
+Fall-through from the drift-clause bisect. Original plan (rerun current `extract12.py` against
+the ORIGINAL `794da20e` baseline paints) was **impossible** — every templated-passing skin's
+baseline paint was rerolled to a new seed before ever being git-committed; confirmed gone from
+git history, Drive, `bproof/gen12ref`, and `entire`'s local checkpoints (transcripts only, no
+file snapshots). Ran the paint-fixed / extractor-swapped substitute instead: same current paint,
+both the `794da20e` and current (origin/main) `extract12.py` versions. **Verdict: real paint
+drift, not a detector regression** — extractor-swap Δ stayed inside the 150px noise floor on all
+3 skins (fallout-pipboy −66px, steam-porthole −10px, fa-pod +6px) while the paint-only Δ (same
+old extractor, baseline vs today's paint) was 3.5–6× the floor (+874px, +345px, −105px for the
+known improver). Full readout: [`driftbisect2/README.md`](driftbisect2/README.md) +
+`driftbisect2/results.json`; doc: `docs/experiments/2026-07-11-drift-clause-bisect.md`
+"Follow-up" section.
+
+**Follow-up implied, not yet done:**
+1. **Root cause is still open** — the clause bisect ruled out BOLD-silhouette specifically; this
+   bisect ruled out extract12.py; remaining suspects for why generations are drifting further
+   from their template layout over the Jul 8→11 window: Vertex-vs-fal serving switch, seed
+   range, or accumulated unrelated `genskin.py` prompt edits across that window. Needs its own
+   bisect if drift is worth chasing further (vs. accepting current drift and tightening the
+   region-misplaced gate instead, which already exists and already catches the worst cases).
+2. **Guardrail gap (real, found as a side effect, not a drift cause):** paid Vertex outputs stay
+   gitignored until manually `git add`-ed, so a re-roll can silently overwrite the only copy of
+   an expensive generation with no way back — this is what made the ORIGINAL bisect plan
+   impossible. Freeze-on-first-gate-pass (auto-commit `paint.png`/`mask.png` the moment
+   `gate.PASS` flips true, before any further reroll can touch them) closes this for good.

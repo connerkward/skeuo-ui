@@ -94,3 +94,44 @@ n=2 seeds/theme/arm against a ±150px noise floor: directional evidence, not sig
 ## Human verdict
 
 **PENDING** — awaiting human review of `results.html`.
+
+## Follow-up — extraction-commit bisect (2026-07-11, $0): PAINT-DRIVEN, not detector-driven
+
+Ran the recommended fall-through step 1. **The originally-planned test (rerun CURRENT
+`extract12.py` against the ORIGINAL `794da20e`-batch paints) turned out to be IMPOSSIBLE**: every
+one of the 6 templated-passing skins was rerolled to a new seed before its `paint.png` was ever
+git-committed (confirmed via `results.json` seed diffs across every intermediate commit + a full
+sweep of Drive/`bproof`/`twoimg`/`entire`-checkpoint history — full recovery-attempt log in
+[`tools/mask-align-exp/gen12/driftbisect2/README.md`](../../tools/mask-align-exp/gen12/driftbisect2/README.md)).
+The true baseline pixels are gone, not merely hard to find.
+
+Substituted the paint-fixed / extractor-swapped twin instead — same evidentiary power, real
+data: hold paint fixed at what's on disk TODAY, run both the `794da20e` `extract12.py` (433
+lines) and the current one (origin/main, 903 lines; 10 commits of churn since baseline) against
+the identical `paint.png`/`mask.png`/`_biref` sprites, using `drift_table()` imported from
+`roster_audit.py` unchanged.
+
+| skin | (a) old paint × old extractor | new paint × OLD extractor | (b) new paint × current extractor | extractor-swap Δ | paint-only Δ |
+|---|---:|---:|---:|---:|---:|
+| fallout-pipboy | 142.7px | 1016.8px | 950.5px | −66.3px | **+874.1px** |
+| steam-porthole | 523.2px | 868.6px | 858.3px | −10.3px | **+345.4px** |
+| fa-pod (improver, control) | 602.0px | 496.5px | 502.9px | +6.4px | **−105.5px** |
+
+**Verdict: REAL PAINT DRIFT, not a detector artifact.** Swapping ONLY the extractor version
+(holding paint fixed) moves drift by −66/−10/+6px — all inside the 150px noise floor established
+by this same bisect's Arm A/B/C runs. Swapping ONLY the paint (holding the OLD extractor fixed)
+moves it by +874/+345/−105px — 3.5–6× the noise floor, regressors up, the known improver down,
+matching the live roster audit's own classification. The 10-commit, 433→903-line extraction
+churn since `794da20e` did not regress measurement accuracy — the old extractor actually MISSED
+2 controls entirely (template-fallback) on today's paints where the current one caught all 30.
+
+**Implication:** the drift lives in the GENERATIONS themselves getting further from their
+authored template layout over the Jul 8→11 window, not in how extract12 measures them. This
+bisect already ruled out the BOLD-silhouette clause specifically as the driver — the remaining
+open suspects (Vertex-vs-fal serving, seed range, accumulated unrelated prompt edits) are
+unbisected. Separately, a real guardrail gap surfaced: paid Vertex outputs are gitignored until
+someone manually commits them, so a re-roll can silently destroy the only copy before it's ever
+backed up — freeze-on-first-gate-pass would make future bisects a clean git-history diff instead
+of a recovery investigation. Full readout, per-control tables, and the fallback-correction
+methodology: [`tools/mask-align-exp/gen12/driftbisect2/README.md`](../../tools/mask-align-exp/gen12/driftbisect2/README.md)
++ `driftbisect2/results.json`.
