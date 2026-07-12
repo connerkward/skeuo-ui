@@ -1,7 +1,7 @@
 {
  "id": "steam-porthole",
  "mode": "templated",
- "seed": 623,
+ "seed": 952,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -155,14 +155,18 @@
   "viz_emissive": true,
   "beat_couple": 0.06
  },
+ "ticks": {
+  "skin": "baked",
+  "sprite": "baked"
+ },
  "template": {
   "album_art": [
    0.5,
-   0.11249999999999999
+   0.0975
   ],
   "visualizer": [
    0.5,
-   0.25125000000000003
+   0.27
   ],
   "seek": [
    0.5,
@@ -197,18 +201,24 @@
    0.5625
   ]
  },
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 952,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "solid",
  "album_art_rect": [
   0.26666666666666666,
-  0.03437499999999999,
+  0.019375,
   0.4666666666666667,
   0.15625
  ],
  "visualizer_rect": [
   0.23333333333333334,
-  0.21062500000000003,
+  0.22937499999999997,
   0.5333333333333333,
   0.08125
  ],
+ "prompt_json_spec": false,
  "dims": [
   4608,
   3712

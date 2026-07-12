@@ -1,7 +1,7 @@
 {
  "id": "wmp-quicksilver",
  "mode": "templated",
- "seed": 688,
+ "seed": 953,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   18,
@@ -202,10 +202,10 @@
   ]
  },
  "blueprint_trial_enabled": true,
- "blueprint_arm": "outline",
- "blueprint_arm_draw_seed": 688,
+ "blueprint_arm": "solid",
+ "blueprint_arm_draw_seed": 953,
  "blueprint_twoimg": false,
- "blueprint_conditioning": "outline",
+ "blueprint_conditioning": "solid",
  "album_art_rect": [
   0.04666666666666669,
   0.13515624999999998,

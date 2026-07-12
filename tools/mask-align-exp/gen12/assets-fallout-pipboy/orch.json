@@ -2,27 +2,32 @@
   "id": "fallout-pipboy",
   "title": "Fallout Pipboy",
   "mode": "templated",
-  "passed": true,
+  "passed": false,
   "rolls": 1,
-  "final_seed": 571,
+  "final_seed": 951,
   "gate": {
-    "seed": 571,
-    "PASS": true,
+    "seed": 951,
+    "PASS": false,
     "controls": 10,
     "seek_cov": 1.038,
-    "reasons": [],
+    "reasons": [
+      "drift:album_art"
+    ],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 571,
-      "PASS": true,
+      "seed": 951,
+      "PASS": false,
       "controls": 10,
       "seek_cov": 1.038,
-      "reasons": [],
+      "reasons": [
+        "drift:album_art"
+      ],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 149.1,
-  "player": "assets-fallout-pipboy/player.html"
+  "elapsed_s": null,
+  "player": "assets-fallout-pipboy/player.html",
+  "note": "orchestrate12 killed mid-roll (harness turn end) after genskin; extract/biref/extract/player resumed manually 2026-07-11, orch.json synthesized from the roll's real gate"
 }

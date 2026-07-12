@@ -2,27 +2,34 @@
   "id": "wmp-quicksilver",
   "title": "Wmp Quicksilver",
   "mode": "templated",
-  "passed": true,
+  "passed": false,
   "rolls": 1,
-  "final_seed": 688,
+  "final_seed": 953,
   "gate": {
-    "seed": 688,
-    "PASS": true,
+    "seed": 953,
+    "PASS": false,
     "controls": 10,
     "seek_cov": 1.039,
-    "reasons": [],
+    "reasons": [
+      "emptiness",
+      "drift:playpause"
+    ],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 688,
-      "PASS": true,
+      "seed": 953,
+      "PASS": false,
       "controls": 10,
       "seek_cov": 1.039,
-      "reasons": [],
+      "reasons": [
+        "emptiness",
+        "drift:playpause"
+      ],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 214.2,
-  "player": "assets-wmp-quicksilver/player.html"
+  "elapsed_s": null,
+  "player": "assets-wmp-quicksilver/player.html",
+  "note": "orchestrate12 killed mid-roll (harness turn end) after genskin; extract/biref/extract/player resumed manually 2026-07-11, orch.json synthesized from the roll's real gate"
 }

@@ -109,9 +109,15 @@ ART_W, ART_H, VIZ_W, VIZ_H = 560, 300, 640, 156
 # ---------------------------------------------------------------- layout archetypes (templated)
 # each entry: name -> {control: (fx, fy, kind, *size)}   fx,fy = fraction of (COL_W, DEV_H)
 def _vpod():
+    # album_art/visualizer gap widened 0.15/0.335 -> 0.13/0.36 (2026-07-11, artdrift fix):
+    # the old pair sat ~2.7% of DEV_H apart (near-touching, two near-identical dark-glass
+    # rects) -- the model had no visual cue to keep them stacked and 14/32 gens in the
+    # artdrift analysis reinterpreted them as side-by-side or vertically swapped. New gap
+    # ~7.2% of DEV_H, still leaves >2.5% margin above album_art and >2.9% before the seek
+    # groove -- verified with --blueprint-only, no overlap. See artdrift_data.json + TODO.md.
     return {
-        "album_art": (0.50, 0.15, "rect", ART_W, ART_H),
-        "visualizer": (0.50, 0.335, "rect", VIZ_W, VIZ_H),
+        "album_art": (0.50, 0.13, "rect", ART_W, ART_H),
+        "visualizer": (0.50, 0.36, "rect", VIZ_W, VIZ_H),
         "seek": (0.50, 0.47, "groove"),
         "prev": (0.28, 0.60, "btn", BTN_R), "playpause": (0.50, 0.60, "btn", PLAY_R),
         "next": (0.72, 0.60, "btn", BTN_R),
@@ -119,6 +125,9 @@ def _vpod():
         "shuffle": (0.60, 0.76, "tog"), "queue": (0.78, 0.75, "btn", BTN_R),
     }
 def _hcapsule():
+    # checked against the same artdrift fix (2026-07-11): this pairing already sits ~12.6% of
+    # DEV_H apart (0.30 vs 0.60, minus their half-heights) -- well clear of the vpod near-touch
+    # bug above -- so no geometry change needed here; kept as-is.
     return {
         "album_art": (0.28, 0.30, "rect", ART_W, int(ART_H * 1.15)),
         "visualizer": (0.28, 0.60, "rect", VIZ_W, VIZ_H),
@@ -491,7 +500,8 @@ def _build_json_spec_prompt(KEYS, layout, dark, BG, STRUCT, tick_skin_bullet, ti
         "glass SCREENS — flat unlit dark glass panels only, with NOTHING inside them: NO baked "
         "spectrum/equalizer bars, NO album cover or artwork, NO waveform, NO icons, NO text, NO "
         "content whatsoever. They are powered-down screens; the app draws their live content "
-        "later. If either window contains any baked graphics, it is WRONG.\n"
+        "later. If either window contains any baked graphics, it is WRONG. The album-art window "
+        "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped.\n"
         "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, in the order "
         "given by the spec's strip_order_left_to_right (volume knob cap, seek slider thumb, "
         "shuffle switch first state, shuffle switch second state) — in the device's own "
@@ -778,7 +788,8 @@ def main():
         "  • The ALBUM-ART window and the VISUALIZER window are BLANK, DARK, EMPTY recessed glass SCREENS — flat "
         "unlit dark glass panels only, with NOTHING inside them: NO baked spectrum/equalizer bars, NO album cover "
         "or artwork, NO waveform, NO icons, NO text, NO content whatsoever. They are powered-down screens; the app draws "
-        "their live content later. If either window contains any baked graphics, it is WRONG.\n"
+        "their live content later. If either window contains any baked graphics, it is WRONG. The album-art window "
+        "sits ABOVE the visualizer window, clearly separated — never side-by-side, never swapped.\n"
         "  • SPRITE STRIP — EXACTLY FOUR finished parts in ONE horizontal row, left→right: volume knob cap, seek "
         "slider thumb, shuffle switch in its first state, shuffle switch in its second state — in the device's own materials, outlines removed, on "
         f"the flat {'pale' if dark else 'charcoal'} backdrop.\n"
