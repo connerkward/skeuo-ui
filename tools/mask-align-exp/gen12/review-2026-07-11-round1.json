@@ -1,0 +1,92 @@
+{
+  "claymation": {
+    "gate": "fail",
+    "notes": "switch doesnt fit slot. slider has baked slider.",
+    "seed": "662",
+    "paint_sha": "1449b99f1b39"
+  },
+  "diablo-gothic": {
+    "gate": "fail",
+    "notes": "vertical slider has baked in thumb knob. not aligned perfectly so css looks like crap. switch looks a little weird.",
+    "seed": "736",
+    "paint_sha": "1023639b5ced"
+  },
+  "fa-pod": {
+    "gate": "fail",
+    "notes": "switch isnt scaled to slot, too small.",
+    "seed": "673",
+    "paint_sha": "3bc22bca2c5f"
+  },
+  "fa-sky": {
+    "gate": "fail",
+    "notes": "play button depression silhoutte doesnt match. phantom play button. slider goes too far past slot end far end. knob has unclear tick position. ",
+    "seed": "840",
+    "paint_sha": "afe04cc83c41"
+  },
+  "fallout-pipboy": {
+    "gate": "fail",
+    "notes": "duplicates of buttons. baked slider thumb. switch slot doenst match sprite. ",
+    "seed": "571",
+    "paint_sha": "2e10a535f9b4"
+  },
+  "fallout-vault": {
+    "gate": "fail",
+    "notes": "prev button, shuffle button, failed to work. baked slider knob, slider css / sprite knob not aligned. ",
+    "seed": "649",
+    "paint_sha": "f37d3326e7c7"
+  },
+  "myst-arcanum": {
+    "gate": "fail",
+    "notes": "all completley wrong. knob placed wrong. switch slrites all mixed up.. button depression silhouettes not aligned. ",
+    "seed": "649",
+    "paint_sha": "0c54123937ad"
+  },
+  "n64-cutscene": {
+    "gate": "fail",
+    "notes": "siwtch doesnt match slot. baked slider knob. great job making depressions on non circular buttons. ",
+    "seed": "610",
+    "paint_sha": "1f53f284e789"
+  },
+  "n64-prerender-character": {
+    "gate": "fail",
+    "notes": "what the fuck is this orientation? how did this get past the vlm gate?",
+    "seed": "849",
+    "paint_sha": "51bb17a0b364"
+  },
+  "ps1-crunchy": {
+    "gate": "fail",
+    "notes": "visualizer not working. slider css too far left. otherwise good. ",
+    "seed": "623",
+    "paint_sha": "7e59ca84714d"
+  },
+  "ps1-wild": {
+    "gate": "fail",
+    "notes": "absulute falire. ",
+    "seed": "982",
+    "paint_sha": "c4d28fa81917"
+  },
+  "steam-porthole": {
+    "gate": "fail",
+    "notes": "slider css too long, slider knob too large, slot and switch dont match. buttons silhouettes off. ",
+    "seed": "623",
+    "paint_sha": "b136856c2f9d"
+  },
+  "wc-goldshield": {
+    "gate": "fail",
+    "notes": "baked slider knob. fun switch but doesnt match slot. ",
+    "seed": "736",
+    "paint_sha": "f1f627071939"
+  },
+  "wmp-quicksilver": {
+    "gate": "fail",
+    "notes": "button depression silhouettes dont match shape. ugly / boring, but otherwise fine. ",
+    "seed": "688",
+    "paint_sha": "2dde8d3d2156"
+  },
+  "wmp-vario": {
+    "gate": "fail",
+    "notes": "css slider bar too far left. too far right also. siwtch doesnt match slot. ",
+    "seed": "636",
+    "paint_sha": "9ecff4a4fd00"
+  }
+}
