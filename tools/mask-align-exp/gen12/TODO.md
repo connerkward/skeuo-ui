@@ -1,7 +1,30 @@
 # gen12 TODO
 
 ---
-## DECISION (2026-07-12) — switch HOUSING routing = C (baked) default → B (inpaint) fallback
+## TABLED (2026-07-12) — the WILD SWITCH / physical-toggle problem — revisit later
+
+Superseded FOR NOW by the icon-button pivot: shuffle is a **lit icon button** (STATEFUL_LIT_ICON
+in build_player, commit a1a95228) — no switch, no housing, no slot. That retired the whole
+switch/housing/`sprite-fit:shuffle` problem class. The physical "wild switch" work below is PARKED,
+not deleted — pick it back up if a physical switch is ever wanted again.
+
+**What the exploration found (held/uncommitted artifacts recoverable):**
+- **A — CSS render socket:** NOT shippable (flat gradient over an erase-smudge).
+- **B — inpaint housing:** WORKED. Landed first-try on fallout-pipboy (~$0.04); fixed the biomech
+  trough (bean-shape+bolt → clean oval matched to the bone lever, SOTA-PASS, ~$0.056). Held:
+  `switch-b-test.html`, `switchslot-compare/`, biomech `-btest` assets.
+- **C — baked housing:** ranked BEST quality (real carved material) via `TOGGLE_SHAPE_MATCH_ENABLED`
+  genskin flag (default off, uncommitted) + Vertex regen (~$0.24). PREREQUISITE: `extract12.py`'s
+  track-walk under-measured the dogbone housing by ~13% and mis-centered it — must widen its
+  shape assumptions before C is reliable.
+- Prior decision (also tabled): **C→B chain** (baked default → inpaint fallback).
+- The switch-sprite legibility itself was unresolved (biomech switch read "nonsensical" until the trough fix).
+
+When revisiting: decide physical-switch vs icon-button; if physical, widen the track-walk (C prereq)
+and pick C→B; the `TOGGLE_SHAPE_MATCH` flag + biomech assets are the starting point.
+
+---
+## DECISION (2026-07-12) — switch HOUSING routing = C (baked) default → B (inpaint) fallback  [SUPERSEDED — see TABLED above]
 
 User directive: the switch stays a physical switch (it "has a lot of flavor"), and the housing
 that matches its silhouette is generated as a **C→B chain**:
