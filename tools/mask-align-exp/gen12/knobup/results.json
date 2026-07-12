@@ -1,0 +1,104 @@
+[
+  {
+    "theme": "steam-porthole",
+    "seed": 101,
+    "id": "knobup-steam-porthole-101",
+    "assets_dir": "assets-knobup-steam-porthole-101",
+    "knob_zero_deg": 0.5078202181491427,
+    "abs_error_from_up": 0.5078202181491349,
+    "compliant_10deg": true,
+    "recovered_cut": true,
+    "recovery_how": "fallback-cell-crop-biref",
+    "knob_zero_geo": [
+      184.0,
+      185.0,
+      181.73
+    ]
+  },
+  {
+    "theme": "steam-porthole",
+    "seed": 202,
+    "id": "knobup-steam-porthole-202",
+    "assets_dir": "assets-knobup-steam-porthole-202",
+    "knob_zero_deg": 92.2321605344196,
+    "abs_error_from_up": 92.23216053441962,
+    "compliant_10deg": false
+  },
+  {
+    "theme": "steam-porthole",
+    "seed": 303,
+    "id": "knobup-steam-porthole-303",
+    "assets_dir": "assets-knobup-steam-porthole-303",
+    "knob_zero_deg": null,
+    "abs_error_from_up": null,
+    "compliant_10deg": false,
+    "recovered_cut": true,
+    "recovery_how": "strip-island circularity=0.98",
+    "knob_zero_geo": [
+      219.5,
+      220.0,
+      215.91
+    ]
+  },
+  {
+    "theme": "steam-porthole",
+    "seed": 404,
+    "id": "knobup-steam-porthole-404",
+    "assets_dir": "assets-knobup-steam-porthole-404",
+    "knob_zero_deg": 0.100271886443345,
+    "abs_error_from_up": 0.10027188644335183,
+    "compliant_10deg": true
+  },
+  {
+    "theme": "myst-arcanum",
+    "seed": 101,
+    "id": "knobup-myst-arcanum-101",
+    "assets_dir": "assets-knobup-myst-arcanum-101",
+    "knob_zero_deg": 63.0,
+    "abs_error_from_up": 63.0,
+    "compliant_10deg": false
+  },
+  {
+    "theme": "myst-arcanum",
+    "seed": 202,
+    "id": "knobup-myst-arcanum-202",
+    "assets_dir": "assets-knobup-myst-arcanum-202",
+    "knob_zero_deg": null,
+    "abs_error_from_up": null,
+    "compliant_10deg": false,
+    "mislabeled_vol_cut": true,
+    "recovered_cut": true,
+    "recovery_how": "strip-island circularity=0.98",
+    "knob_zero_geo": [
+      239.5,
+      240.0,
+      235.51
+    ]
+  },
+  {
+    "theme": "myst-arcanum",
+    "seed": 303,
+    "id": "knobup-myst-arcanum-303",
+    "assets_dir": "assets-knobup-myst-arcanum-303",
+    "knob_zero_deg": 106.19279015060334,
+    "abs_error_from_up": 106.19279015060334,
+    "compliant_10deg": false,
+    "mislabeled_vol_cut": true,
+    "recovered_cut": true,
+    "recovery_how": "strip-island circularity=0.98",
+    "knob_zero_geo": [
+      233.0,
+      233.5,
+      228.75
+    ]
+  },
+  {
+    "theme": "myst-arcanum",
+    "seed": 404,
+    "id": "knobup-myst-arcanum-404",
+    "assets_dir": "assets-knobup-myst-arcanum-404",
+    "knob_zero_deg": 162.41649420593538,
+    "abs_error_from_up": 162.41649420593535,
+    "compliant_10deg": false
+  }
+]

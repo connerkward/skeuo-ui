@@ -1,0 +1,18 @@
+# knobup media policy — same shape as knobticks/.gitignore (2026-07-11 media-policy revisit):
+# COMMITTED: paint.png (the paid, reviewable evidence per empirical-testing-rule), the scored
+# vol*.png sprites (what the angles were measured on — incl. the mislabeled cuts that document
+# the biref matching failure), *-cap-annotated.png (displayed by index.html), all JSON records,
+# scripts, index.html. IGNORED below: recomputable ($0 local BiRefNet) or unreferenced bulk.
+assets-*/blueprint.png
+assets-*/joint-4k.png
+assets-*/mask.png
+assets-*/overlay.png
+assets-*_biref/global-matte.png
+assets-*_biref/device.png
+assets-*_biref/extra-*.png
+assets-*_biref/seek.png
+assets-*_biref/shuffle_*.png
+__pycache__/
+run.log
+.serve-url
+.tmp-spec-*.json

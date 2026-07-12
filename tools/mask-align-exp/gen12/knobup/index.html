@@ -1,0 +1,133 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>KNOB_POINTER_UP compliance — knobup experiment</title>
+<style>
+body{font-family:-apple-system,Helvetica,Arial,sans-serif;background:#0d0d10;color:#eee;margin:0;padding:24px;max-width:1100px}
+h1{font-size:20px} h2{font-size:16px;margin-top:2rem;border-top:1px solid #333;padding-top:1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:1rem}
+.banner{background:#1a1a1e;border:1px solid #333;border-radius:8px;padding:12px 16px;font-size:13px;color:#aaa;margin-bottom:1rem}
+code{background:#222;padding:1px 5px;border-radius:4px}
+</style></head><body>
+<h1>KNOB_POINTER_UP compliance experiment — 2/8 compliant (±10° of up)</h1>
+<div class="banner">
+  Model: <code>fal-ai/gemini-3-pro-image-preview/edit</code> (Vertex AI direct, PAINT_VERTEX=True) &middot;
+  8 gens &times; ~$0.24&ndash;0.30/4K image &asymp; <b>$2</b> total &middot; extraction/biref: $0 (local, BIREF_LOCAL) &middot;
+  detector: <code>knob_angle.py::detect_from_sprite</code> (the shared, independent verifier extract12.py's mainline pipeline uses)
+</div>
+<p>User insight (verbatim): "maybe instead of all this bullshit [detect-and-counter-rotate] you can
+just specify in prompt that the tick on knob face should point upwards 0 degrees?" — this experiment
+tests whether the paint model actually OBEYS that instruction, measured independently by the
+existing detector, not by re-asking the model.</p>
+
+<h2>Before / after angular distribution</h2>
+<p style="font-size:13px;color:#999">Dots = individual detected <code>knob_zero_deg</code> values (0&deg; = up,
+clockwise). Green bands mark the &plusmn;10&deg; compliance window at both wrap edges.</p>
+<div style="display:flex;gap:24px;flex-wrap:wrap">
+  <div><svg width="520" height="140" style="background:#111;border-radius:8px">
+      <rect x="467.8" y="20" width="12.2" height="90" fill="#2a5" fill-opacity="0.18"/>
+      <rect x="40.0" y="20" width="12.2" height="90" fill="#2a5" fill-opacity="0.18"/>
+      <line x1="40" y1="110" x2="480" y2="110" stroke="#555"/>
+      <line x1="40.0" y1="110" x2="40.0" y2="116" stroke="#888"/><text x="40.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">0°</text><line x1="150.0" y1="110" x2="150.0" y2="116" stroke="#888"/><text x="150.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">90°</text><line x1="260.0" y1="110" x2="260.0" y2="116" stroke="#888"/><text x="260.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">180°</text><line x1="370.0" y1="110" x2="370.0" y2="116" stroke="#888"/><text x="370.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">270°</text><line x1="480.0" y1="110" x2="480.0" y2="116" stroke="#888"/><text x="480.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">360°</text>
+      <circle cx="144.6" cy="50" r="6" fill="#c33" fill-opacity="0.85"/><circle cx="216.0" cy="64" r="6" fill="#c33" fill-opacity="0.85"/><circle cx="156.1" cy="78" r="6" fill="#c33" fill-opacity="0.85"/><circle cx="473.9" cy="92" r="6" fill="#c33" fill-opacity="0.85"/><circle cx="44.9" cy="106" r="6" fill="#c33" fill-opacity="0.85"/><circle cx="478.8" cy="50" r="6" fill="#c33" fill-opacity="0.85"/>
+      <text x="40" y="16" font-size="13" fill="#ddd">BEFORE — pre-fix, clause OFF (n=6, 3/6 within ±10°)</text>
+    </svg></div>
+  <div><svg width="520" height="140" style="background:#111;border-radius:8px">
+      <rect x="467.8" y="20" width="12.2" height="90" fill="#2a5" fill-opacity="0.18"/>
+      <rect x="40.0" y="20" width="12.2" height="90" fill="#2a5" fill-opacity="0.18"/>
+      <line x1="40" y1="110" x2="480" y2="110" stroke="#555"/>
+      <line x1="40.0" y1="110" x2="40.0" y2="116" stroke="#888"/><text x="40.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">0°</text><line x1="150.0" y1="110" x2="150.0" y2="116" stroke="#888"/><text x="150.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">90°</text><line x1="260.0" y1="110" x2="260.0" y2="116" stroke="#888"/><text x="260.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">180°</text><line x1="370.0" y1="110" x2="370.0" y2="116" stroke="#888"/><text x="370.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">270°</text><line x1="480.0" y1="110" x2="480.0" y2="116" stroke="#888"/><text x="480.0" y="130" font-size="11" fill="#aaa" text-anchor="middle">360°</text>
+      <circle cx="40.6" cy="50" r="6" fill="#39c" fill-opacity="0.85"/><circle cx="152.7" cy="64" r="6" fill="#39c" fill-opacity="0.85"/><circle cx="40.1" cy="78" r="6" fill="#39c" fill-opacity="0.85"/><circle cx="117.0" cy="92" r="6" fill="#39c" fill-opacity="0.85"/><circle cx="169.8" cy="106" r="6" fill="#39c" fill-opacity="0.85"/><circle cx="238.5" cy="50" r="6" fill="#39c" fill-opacity="0.85"/>
+      <text x="40" y="16" font-size="13" fill="#ddd">AFTER — KNOB_POINTER_UP ON (n=6, 2/8 within ±10°)</text>
+    </svg></div>
+</div>
+
+<h2>Per-generation crops (angle drawn from stored regions.json values, never re-derived)</h2>
+<div class="grid">
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>steam-porthole · seed 101</b>
+            <span style="background:#2a5;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">PASS</span>
+          </div>
+          <img src="knobup-steam-porthole-101-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = 0.51  ·  error from up = 0.5°</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: pointer visually UP; mainline biref missed the cut (parts-tray card), recovered via cell-crop</div>
+        </div>
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>steam-porthole · seed 202</b>
+            <span style="background:#c33;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">FAIL</span>
+          </div>
+          <img src="knobup-steam-porthole-202-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = 92.23  ·  error from up = 92.2°</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: pointer visually at ~3 o'clock — model disobeyed the clause</div>
+        </div>
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>steam-porthole · seed 303</b>
+            <span style="background:#c33;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">FAIL</span>
+          </div>
+          <img src="knobup-steam-porthole-303-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = None  ·  error from up = n/a</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: pointer visually at ~100° (right); detector abstained (z=4.3 < 5 bar) — non-compliant either way</div>
+        </div>
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>steam-porthole · seed 404</b>
+            <span style="background:#2a5;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">PASS</span>
+          </div>
+          <img src="knobup-steam-porthole-404-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = 0.10  ·  error from up = 0.1°</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: pointer visually UP — clean compliance</div>
+        </div>
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>myst-arcanum · seed 101</b>
+            <span style="background:#c33;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">FAIL</span>
+          </div>
+          <img src="knobup-myst-arcanum-101-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = 63.00  ·  error from up = 63.0°</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: pointer visually ~90-105° (cap cut with a 3/4-perspective CAMERA violation, skews the read)</div>
+        </div>
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>myst-arcanum · seed 202</b>
+            <span style="background:#c33;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">FAIL</span>
+          </div>
+          <img src="knobup-myst-arcanum-202-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = None  ·  error from up = n/a</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: pointer visually UP but embossed low-contrast; detector abstained (z=4.2 < 5 bar) — visually compliant, unmeasured</div>
+        </div>
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>myst-arcanum · seed 303</b>
+            <span style="background:#c33;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">FAIL</span>
+          </div>
+          <img src="knobup-myst-arcanum-303-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = 106.19  ·  error from up = 106.2°</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: keyway notch at ~100° — model disobeyed</div>
+        </div>
+        <div style="background:#1a1a1e;border-radius:10px;padding:10px;border:1px solid #333">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>myst-arcanum · seed 404</b>
+            <span style="background:#c33;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">FAIL</span>
+          </div>
+          <img src="knobup-myst-arcanum-404-cap-annotated.png" style="width:100%;border-radius:6px" loading="lazy">
+          <div style="font-size:13px;color:#bbb;margin-top:6px">knob_zero_deg = 162.42  ·  error from up = 162.4°</div>
+          <div style="font-size:12px;color:#8a8;margin-top:4px">adjudication: wedge notch points DOWN (~162°) — model disobeyed</div>
+        </div></div>
+
+<h2>Conclusion</h2>
+<div class="banner" id="conclusion" style="font-size:14px;color:#ddd">
+<b>Compliance is LOW: 2/8 detector-measured within ±10° of up</b> (steam-404 at 0.10°, steam-101 at
+0.51° via recovered cut); +1 more (myst-202) is visually up but embossed too low-contrast for the
+detector's z-bar → <b>3/8 by best adjudication</b>. The threshold for flipping the architecture was
+6/8. <b>And the baseline was NOT random:</b> the task's historical pre-fix values (85.6°, 144°, 95°,
+355°, 4°, 359°) are bimodal — 3/6 already within ±10° of up (errors 5°, 4°, 1°) — so clause-ON
+(2-3/8, 25-38%) shows <b>no improvement over clause-OFF (3/6, 50%)</b> at these sample sizes. The
+model's competing prior (a right-side pointer at ~60-110°, seen in 4/8 gens here and 3/6
+historically) is not overridden by one light sentence.
+<br><br><b>Verdict: detect-and-counter-rotate stays PRIMARY. KNOB_POINTER_UP stays default OFF</b> —
+the clause is not demonstrably harmful, but it is not demonstrably a useful prior either, and it is
+not free (prompt bulk costs quality, per the bproof lesson). No build_player.py change is specced —
+the counter-rotation fallback demotion is moot at this compliance level.
+</div>
+</body></html>
