@@ -1,0 +1,10 @@
+# $0-recomputable artifacts stay out (same policy as ../driftbisect/.gitignore) — paid
+# gen outputs (joint-4k/paint/mask) + provenance (blueprint, results/regions json) ARE
+# committed, per the driftbisect2 guardrail lesson (paid pixels were lost by not committing).
+assets-*_biref/
+assets-*/overlay.png
+*.log
+assets-*/*.log
+_spec-*.json
+.playwright-mcp/
+.serve-url

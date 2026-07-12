@@ -135,3 +135,36 @@ backed up — freeze-on-first-gate-pass would make future bisects a clean git-hi
 of a recovery investigation. Full readout, per-control tables, and the fallback-correction
 methodology: [`tools/mask-align-exp/gen12/driftbisect2/README.md`](../../tools/mask-align-exp/gen12/driftbisect2/README.md)
 + `driftbisect2/results.json`.
+
+## Follow-up — serving-path bisect (2026-07-11, $2.16): fal→Vertex switch NOT the driver
+
+Tested remaining suspect (a) directly: same current production prompt (`genskin.py` imported
+read-only, its real `main()` driven with only the module's `PAINT_VERTEX` attribute toggled per
+job), same 2 themes (`fallout-pipboy` + `steam-porthole` — the true regressors this time, per
+this doc's own fall-through step 2), same 2 seeds each (571/671, 623/723; 571/623 are the live
+production seeds), generated via BOTH serving paths — Vertex direct ($0.24/img 4K, sequential,
+429 retry armed, zero 429s) and fal-wrapped `fal-ai/gemini-3-pro-image-preview/edit`
+($0.30/img 4K, the pre-switch path that served the low-drift baseline batch). Scored with the
+same imported `drift_table()`, same 150px floor, fallback-excluded means. Same seed → same
+deterministic conditioning-arm draw, so serving path is the only variable within each pair.
+
+| theme | seed | vertex px | fal px | Δ (v−f) |
+|---|---:|---:|---:|---:|
+| fallout-pipboy | 571 | 531.2 | 629.1 | −97.9 (noise) |
+| fallout-pipboy | 671 | 428.9 | 93.7 | +335.2 |
+| steam-porthole | 623 | 529.5 | 718.1 | −188.6 |
+| steam-porthole | 723 | 696.8 | 212.2 | +484.6 |
+| **pooled (n=4/path)** | | **546.6** | **413.3** | **+133.3 — inside the floor** |
+
+**Verdict: the serving switch is exonerated.** Per-pair deltas point both directions beyond
+the floor (the signature of per-gen variance, not a stack effect), the pooled Δ is inside the
+floor, and — decisively — the pre-switch fal path does NOT recover the 143px-class baseline
+either (413px pooled vs 143px). Suspects narrow to (b) seed ranges / (c) aggregate prompt
+additions. New finding for any next bisect: a same-seed same-path re-roll of the live
+production config moved drift by 330–420px (vertex-571: 531 fresh vs 950 live; vertex-623:
+530 vs 858 — confounded by the post-07-10 tick clauses whose bullets the live prompts lacked,
+but bounding per-gen variance either way), so the 150px floor is optimistic for single-gen
+comparisons and further arms need n≥4/cell. n=2 seeds/theme/path: directional, not
+significance. Full tables + honesty notes:
+[`tools/mask-align-exp/gen12/servingbisect/README.md`](../../tools/mask-align-exp/gen12/servingbisect/README.md)
++ `servingbisect/results.json`.

@@ -937,6 +937,28 @@ entries already under "saved for later" above — those four stand as-is.
     rig (no passing skin has `vertical:true` yet, so the orientation branch was smoke-tested
     against a rotated copy of fa-pod's regions).
 
+## 2026-07-11 — drift-suspect bisect chain — CLOSED for prompt/detector/serving; variance is the live lead
+
+Three bisects, all recorded in
+[docs/experiments/2026-07-11-drift-clause-bisect.md](docs/experiments/2026-07-11-drift-clause-bisect.md):
+1. **Clause bisect** (`218224f7`, `gen12/driftbisect/`) — BOLD-silhouette clause NOT the driver.
+2. **Extraction bisect** (`892bf045`, `gen12/driftbisect2/`) — drift is PAINT-driven, not
+   detector-driven (extractor swap moves ≤66px; paint swap moves +874/+345px).
+3. **Serving bisect** (this session, `gen12/servingbisect/`, $2.16, 8 gens) — **fal→Vertex
+   switch NOT the driver.** Same prompt/seeds on both paths: pooled vertex 546.6px vs fal
+   413.3px, Δ=+133px inside the 150px floor, per-pair deltas in BOTH directions; and the
+   pre-switch fal path does NOT recover the 143px baseline (413px pooled).
+
+**Verdict on the original "template drift regressed Jul 8→11" complaint:** prompt clause,
+extractor churn, and serving stack are all exonerated. Remaining suspects: seed ranges,
+aggregate prompt additions — and, newly evidenced, **plain per-gen variance**: a same-seed
+same-path re-roll of the live production config moved drift 330–420px (531 fresh vs 950 live
+on pipboy; 530 vs 858 on porthole; tick-clause confound noted in the doc), i.e. the 150px
+noise floor is optimistic for n=1 comparisons. Any further bisect (e.g. stripping the tick
+bullets to test aggregate-prompt) needs n≥4/cell to mean anything — or accept that the
+"regression" is substantially sampling luck on single rolls and spend instead on a
+drift-gated re-roll loop (roll until drift < threshold), which pays regardless of cause.
+
 ## 2026-07-11 — jsonspec experiment (fenced-JSON paint prompt) — done, human review pending
 
 - **Does a fenced-JSON blueprint spec help PAINT generation?** (the structured-I/O

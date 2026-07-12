@@ -1,0 +1,301 @@
+{
+  "note": "servingbisect/score.py \u2014 serving-path bisect readout.\n\nSame production prompt, same theme, same seed -> only the SERVING PATH varies (Vertex direct\nvs fal's wrapper). Imports drift_table() from twoimg/roster_audit.py (not reimplemented, per\nverify-outputs-rule) so the metric is byte-identical to the live roster audit and the two prior\nbisects in this chain. Same-seed cross-path comparison is the key readout: if fal-served paints\ndrift meaningfully less than Vertex-served paints at the SAME seed/prompt, the serving path is\nthe driver; if the two are within noise, the driver is elsewhere (seed range / aggregate prompt\nchurn).\n\nNoise floor: 150px, carried forward from the drift-clause bisect (docs/experiments/\n2026-07-11-drift-clause-bisect.md) \u2014 established from that bisect's own Arm A/B/C run-to-run\nvariance at fixed prompt. n=2 seeds/theme/path: directional evidence, not significance.\n",
+  "noise_floor_px": 150,
+  "runs": {
+    "fallout-pipboy-vertex-571": {
+      "mean_drift_px": 531.2,
+      "mean_drift_px_excl_fallback": 531.2,
+      "n_controls": 10,
+      "fallback_controls": [],
+      "worst_control": "repeat",
+      "worst_px": 1208.8,
+      "per_control_px": {
+        "album_art": 323.6,
+        "visualizer": 363.9,
+        "seek": 638.2,
+        "prev": 541.6,
+        "playpause": 297.1,
+        "next": 351.1,
+        "repeat": 1208.8,
+        "vol": 494.7,
+        "shuffle": 477.4,
+        "queue": 615.1
+      },
+      "gate_pass": false,
+      "gate_reasons": [
+        "region-misplaced:visualizer",
+        "biref-parts"
+      ],
+      "serving_path": "vertex",
+      "seed": 571,
+      "gen_seconds": 48.3,
+      "blueprint_conditioning": "solid",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "fallout-pipboy-fal-571": {
+      "mean_drift_px": 629.1,
+      "mean_drift_px_excl_fallback": 629.1,
+      "n_controls": 10,
+      "fallback_controls": [],
+      "worst_control": "queue",
+      "worst_px": 1108.4,
+      "per_control_px": {
+        "album_art": 950.8,
+        "visualizer": 477.2,
+        "seek": 421.1,
+        "prev": 357.9,
+        "playpause": 400.2,
+        "next": 543.1,
+        "repeat": 1003.4,
+        "vol": 598.9,
+        "shuffle": 429.7,
+        "queue": 1108.4
+      },
+      "gate_pass": false,
+      "gate_reasons": [
+        "biref-parts"
+      ],
+      "serving_path": "fal",
+      "seed": 571,
+      "gen_seconds": 55.6,
+      "blueprint_conditioning": "solid",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "fallout-pipboy-571-verdict": "WITHIN NOISE FLOOR (serving path not the driver at this seed)",
+    "fallout-pipboy-vertex-671": {
+      "mean_drift_px": 428.9,
+      "mean_drift_px_excl_fallback": 428.9,
+      "n_controls": 10,
+      "fallback_controls": [],
+      "worst_control": "repeat",
+      "worst_px": 869.8,
+      "per_control_px": {
+        "album_art": 45.1,
+        "visualizer": 59.7,
+        "seek": 185.9,
+        "prev": 613.1,
+        "playpause": 779.9,
+        "next": 764.6,
+        "repeat": 869.8,
+        "vol": 315.4,
+        "shuffle": 463.7,
+        "queue": 192.3
+      },
+      "gate_pass": true,
+      "gate_reasons": [],
+      "serving_path": "vertex",
+      "seed": 671,
+      "gen_seconds": 53.7,
+      "blueprint_conditioning": "outline",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "fallout-pipboy-fal-671": {
+      "mean_drift_px": 84.4,
+      "mean_drift_px_excl_fallback": 93.7,
+      "n_controls": 10,
+      "fallback_controls": [
+        "vol"
+      ],
+      "worst_control": "prev",
+      "worst_px": 566.1,
+      "per_control_px": {
+        "album_art": 14.7,
+        "visualizer": 10.1,
+        "seek": 97.2,
+        "prev": 566.1,
+        "playpause": 28.5,
+        "next": 33.1,
+        "repeat": 22.1,
+        "vol": 0.0,
+        "shuffle": 37.7,
+        "queue": 33.9
+      },
+      "gate_pass": false,
+      "gate_reasons": [
+        "knob-template-fallback:vol",
+        "state-align"
+      ],
+      "serving_path": "fal",
+      "seed": 671,
+      "gen_seconds": 59.7,
+      "blueprint_conditioning": "outline",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "fallout-pipboy-671-verdict": "VERTEX DRIFTS MORE (serving-path suspect supported)",
+    "steam-porthole-vertex-623": {
+      "mean_drift_px": 529.5,
+      "mean_drift_px_excl_fallback": 529.5,
+      "n_controls": 10,
+      "fallback_controls": [],
+      "worst_control": "playpause",
+      "worst_px": 998.1,
+      "per_control_px": {
+        "album_art": 385.1,
+        "visualizer": 594.4,
+        "seek": 489.7,
+        "prev": 897.7,
+        "playpause": 998.1,
+        "next": 901.3,
+        "repeat": 154.4,
+        "vol": 177.7,
+        "shuffle": 480.1,
+        "queue": 216.7
+      },
+      "gate_pass": false,
+      "gate_reasons": [
+        "biref-parts"
+      ],
+      "serving_path": "vertex",
+      "seed": 623,
+      "gen_seconds": 52.8,
+      "blueprint_conditioning": "solid",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "steam-porthole-fal-623": {
+      "mean_drift_px": 646.2,
+      "mean_drift_px_excl_fallback": 718.1,
+      "n_controls": 10,
+      "fallback_controls": [
+        "prev"
+      ],
+      "worst_control": "album_art",
+      "worst_px": 1862.1,
+      "per_control_px": {
+        "album_art": 1862.1,
+        "visualizer": 582.1,
+        "seek": 957.5,
+        "prev": 0.0,
+        "playpause": 395.1,
+        "next": 449.1,
+        "repeat": 738.0,
+        "vol": 129.4,
+        "shuffle": 1228.6,
+        "queue": 120.7
+      },
+      "gate_pass": false,
+      "gate_reasons": [
+        "region-misplaced:album_art",
+        "region-degenerate:album_art",
+        "emptiness",
+        "biref-parts",
+        "guide-ring:playpause,next,vol"
+      ],
+      "serving_path": "fal",
+      "seed": 623,
+      "gen_seconds": 64.3,
+      "blueprint_conditioning": "solid",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "steam-porthole-623-verdict": "FAL DRIFTS MORE (unexpected direction)",
+    "steam-porthole-vertex-723": {
+      "mean_drift_px": 627.1,
+      "mean_drift_px_excl_fallback": 696.8,
+      "n_controls": 10,
+      "fallback_controls": [
+        "next"
+      ],
+      "worst_control": "seek",
+      "worst_px": 1220.4,
+      "per_control_px": {
+        "album_art": 500.8,
+        "visualizer": 797.6,
+        "seek": 1220.4,
+        "prev": 964.4,
+        "playpause": 749.6,
+        "next": 0.0,
+        "repeat": 845.8,
+        "vol": 290.4,
+        "shuffle": 584.9,
+        "queue": 317.6
+      },
+      "gate_pass": false,
+      "gate_reasons": [
+        "emptiness",
+        "biref-parts"
+      ],
+      "serving_path": "vertex",
+      "seed": 723,
+      "gen_seconds": 51.3,
+      "blueprint_conditioning": "solid",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "steam-porthole-fal-723": {
+      "mean_drift_px": 212.2,
+      "mean_drift_px_excl_fallback": 212.2,
+      "n_controls": 10,
+      "fallback_controls": [],
+      "worst_control": "vol",
+      "worst_px": 538.3,
+      "per_control_px": {
+        "album_art": 106.5,
+        "visualizer": 183.6,
+        "seek": 10.1,
+        "prev": 17.1,
+        "playpause": 14.0,
+        "next": 9.9,
+        "repeat": 400.0,
+        "vol": 538.3,
+        "shuffle": 413.2,
+        "queue": 429.0
+      },
+      "gate_pass": false,
+      "gate_reasons": [
+        "region-misplaced:visualizer",
+        "region-misplaced:album_art"
+      ],
+      "serving_path": "fal",
+      "seed": 723,
+      "gen_seconds": 59.9,
+      "blueprint_conditioning": "solid",
+      "dims": [
+        2304,
+        3712
+      ]
+    },
+    "steam-porthole-723-verdict": "VERTEX DRIFTS MORE (serving-path suspect supported)"
+  },
+  "pooled": {
+    "vertex": {
+      "n": 4,
+      "mean_px": 546.6,
+      "vals": [
+        531.2,
+        428.9,
+        529.5,
+        696.8
+      ]
+    },
+    "fal": {
+      "n": 4,
+      "mean_px": 413.3,
+      "vals": [
+        629.1,
+        93.7,
+        718.1,
+        212.2
+      ]
+    },
+    "pooled_delta_vertex_minus_fal_px": 133.3
+  }
+}
