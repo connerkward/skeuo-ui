@@ -357,7 +357,17 @@ const V='{V}';
     const el=document.createElement('div');el.className='pthumb';
     el.style.backgroundImage='url('+t.url+')';
     let tw=t.w/PW, th=t.h/PH;
-    const tv=r.travel||(vert?[track[1],track[1]+track[3]]:[track[0],track[0]+track[2]]);
+    // HARD CLAMP travel to the walked groove's OWN device rect (2026-07-12 fix for the recurring
+    // "CSS slider outside slot" complaint): extract12's `travel` is allowed to be a hair wider
+    // than `device` by design (the coverage-span walk), and older regions.json on disk may still
+    // carry the pre-fix +/-2%-of-span padding that measurably overshot the visual groove in the
+    // real rendered player. Intersecting with `device` here is the single choke point BOTH the
+    // thumb (below) and the seek-track/fill CSS overlay (TRACK_SETUP_JS, spliced in a few lines
+    // down and reading this same `tv`) draw from, so neither can ever render past the extractor's
+    // own best estimate of the painted slot -- regardless of what any given travel value says.
+    const trackLo=vert?track[1]:track[0], trackHi=vert?(track[1]+track[3]):(track[0]+track[2]);
+    const tvRaw=r.travel||[trackLo,trackHi];
+    const tv=[Math.max(tvRaw[0],trackLo), Math.min(tvRaw[1],trackHi)];
     const span=Math.max(1e-6,tv[1]-tv[0]);
     const s=vert?Math.min(1.5, track[2]*1.15/tw, track[2]*1.35/tw, span*0.45/th)
                 :Math.min(1.5, track[3]*1.15/th, track[3]*1.35/th, span*0.45/tw);

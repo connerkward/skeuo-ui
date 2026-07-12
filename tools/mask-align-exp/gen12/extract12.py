@@ -777,8 +777,26 @@ if SLIDER:
         if lo <= loClamp: lo = bx0 + mx0
         if hi >= hiClamp: hi = bx0 + mx1
         lo = max(lo, loClamp); hi = min(hi, hiClamp)
-        M = int((hi - lo) * 0.02)
-        tvv = [round(max(0, lo - M) / _W, 5), round(min(_W, hi + M) / _W, 5)]
+        # travel == the walked/device span EXACTLY, no added margin (2026-07-12 fix for the
+        # recurring cross-roster "CSS slider outside slot" review complaint -- claymation,
+        # diablo-gothic, fallout-vault, n64-cutscene, ps1-crunchy, reported since round1 2026-07-11
+        # and STILL present in round3, i.e. it predates and survives the seek-track/fill CSS
+        # overlay, so it was never that overlay alone). ROOT CAUSE: this used to add a further
+        # +/-2%-of-span `M` pad on top of `lo..hi` (which is *already* the outward-walked, "err
+        # wide" coverage span vs the model's own mask cell -- see the SEEK GROOVE EXTENT docstring
+        # above). That's TWO independent widenings stacked: the walk expands mx0/mx1 -> lo/hi
+        # (up to 12% of the mask-cell width per side, by design), then M expanded lo/hi again. A
+        # real-runtime measurement (Playwright getBoundingClientRect vs the true visual groove
+        # edge in the rendered player, fallout-vault seek at val=1) showed the thumb's rendered
+        # right edge landing ~11px (2.4% of the 460px-wide player) past the true visual channel
+        # edge -- with `device` (lo/hi, no pad) alone already ~6.5px (1.4%) past it and the M pad
+        # adding the other ~4.5px on top. Dropping M removes that second, purely-additive layer
+        # cleanly and uniformly for every skin/material (M was never material-aware, always +2%
+        # of span) with no coverage-safety loss: `device` itself is already the outward "err wide"
+        # walked estimate, so travel == device keeps the coverage-span behaviour intact --  it
+        # just stops padding an already-padded number. See docs/experiments/2026-07-12-seek-
+        # travel-overshoot.md for the measured before/after across the flagged roster.
+        tvv = [round(lo / _W, 5), round(hi / _W, 5)]
         if VERT:
             r["device"] = [b[0], lo / _W, b[2], (hi - lo) / _W]   # expand device to the painted groove (Y)
             r["travel"] = tvv; r["vertical"] = True
