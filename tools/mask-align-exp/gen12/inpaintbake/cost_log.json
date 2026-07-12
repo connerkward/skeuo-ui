@@ -1,0 +1,62 @@
+[
+  {
+    "skin": "diablo-gothic",
+    "model": "lama",
+    "cost": 0.0,
+    "seconds": 30.6
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "lama",
+    "cost": 0.0,
+    "seconds": 26.8
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "lama",
+    "cost": 0.0,
+    "seconds": 31.2
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "lama",
+    "cost": 0.0,
+    "seconds": 32.1
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "lama",
+    "cost": 0.0,
+    "seconds": 31.0
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "vertex",
+    "cost": 0.241,
+    "seconds": 49.7
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "vertex",
+    "cost": 0.241,
+    "seconds": 49.0
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "vertex",
+    "cost": 0.241,
+    "seconds": 46.7
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "vertex",
+    "cost": 0.241,
+    "seconds": 46.8
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "vertex",
+    "cost": 0.0,
+    "note": "reused from production erase12-log.json (3 prior real Vertex attempts already spent there, status erased-still-failing)"
+  }
+]

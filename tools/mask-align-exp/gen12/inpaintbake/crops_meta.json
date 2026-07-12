@@ -1,0 +1,147 @@
+{
+  "diablo-gothic": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-diablo-gothic/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/diablo-gothic-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/diablo-gothic-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      1369,
+      2160,
+      1591,
+      2287
+    ],
+    "crop_box": [
+      968,
+      1711,
+      1992,
+      2735
+    ],
+    "bbox_in_crop": [
+      401,
+      449,
+      623,
+      576
+    ],
+    "seed": 736,
+    "material": "dark carved obsidian/gothic metal channel with glowing rune inlay"
+  },
+  "fallout-pipboy": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-fallout-pipboy/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/fallout-pipboy-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/fallout-pipboy-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      844,
+      2208,
+      952,
+      2302
+    ],
+    "crop_box": [
+      386,
+      1743,
+      1410,
+      2767
+    ],
+    "bbox_in_crop": [
+      458,
+      465,
+      566,
+      559
+    ],
+    "seed": 951,
+    "material": "worn olive-drab painted metal recessed slot, retro-futuristic terminal casing"
+  },
+  "fallout-vault": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-fallout-vault/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/fallout-vault-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/fallout-vault-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      794,
+      1752,
+      1030,
+      1847
+    ],
+    "crop_box": [
+      400,
+      1287,
+      1424,
+      2311
+    ],
+    "bbox_in_crop": [
+      394,
+      465,
+      630,
+      560
+    ],
+    "seed": 649,
+    "material": "brushed steel vault-door control channel with yellow hazard trim"
+  },
+  "n64-cutscene": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-n64-cutscene/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/n64-cutscene-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/n64-cutscene-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      464,
+      2247,
+      604,
+      2439
+    ],
+    "crop_box": [
+      22,
+      1831,
+      1046,
+      2855
+    ],
+    "bbox_in_crop": [
+      442,
+      416,
+      582,
+      608
+    ],
+    "seed": 610,
+    "material": "chunky 90s-console beige/grey plastic recessed slider channel"
+  },
+  "wc-goldshield": {
+    "before_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/erasegallery/mainline/assets-wc-goldshield/before.png",
+    "crop_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/wc-goldshield-crop.png",
+    "mask_path": "/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/inpaintbake/crops/wc-goldshield-mask.png",
+    "full_size": [
+      2304,
+      3712
+    ],
+    "bbox_px": [
+      560,
+      1626,
+      688,
+      1744
+    ],
+    "crop_box": [
+      112,
+      1173,
+      1136,
+      2197
+    ],
+    "bbox_in_crop": [
+      448,
+      453,
+      576,
+      571
+    ],
+    "seed": 736,
+    "material": "ornate gold-shield emblem metal groove, warm brass tones"
+  }
+}

@@ -1,0 +1,377 @@
+[
+  {
+    "skin": "diablo-gothic",
+    "model": "lama",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1371,
+      1063,
+      1568,
+      1143
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 1.89
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "z-image-turbo",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      1371,
+      1710,
+      1568,
+      2288
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 20.88
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "qwen-inpaint",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      1371,
+      2194,
+      1568,
+      2288
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 4.92
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "flux-pro-fill",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1371,
+      1063,
+      1568,
+      1143
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 19.22
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "flux-dev-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      1371,
+      2102,
+      1568,
+      2288
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 3.03
+  },
+  {
+    "skin": "diablo-gothic",
+    "model": "vertex",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1371,
+      1063,
+      1568,
+      1144
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 6.39
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "lama",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      844,
+      2190,
+      952,
+      2237
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 2.11
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "z-image-turbo",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      844,
+      2010,
+      952,
+      2326
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 19.07
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "qwen-inpaint",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      844,
+      2085,
+      952,
+      2116
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 41.48
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "flux-pro-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      844,
+      2189,
+      952,
+      2228
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 40.04
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "flux-dev-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      844,
+      2213,
+      952,
+      2269
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 29.71
+  },
+  {
+    "skin": "fallout-pipboy",
+    "model": "vertex",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": null,
+    "flag_at_defect_site": false,
+    "seam_delta": 20.68
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "lama",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1135,
+      1753,
+      1164,
+      1903
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 2.48
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "z-image-turbo",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      791,
+      1753,
+      1201,
+      1903
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 11.16
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "qwen-inpaint",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1121,
+      1753,
+      1166,
+      1903
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 39.95
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "flux-pro-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      791,
+      1753,
+      910,
+      1903
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 8.66
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "flux-dev-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      791,
+      1753,
+      965,
+      1903
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 22.97
+  },
+  {
+    "skin": "fallout-vault",
+    "model": "vertex",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1988,
+      1753,
+      2001,
+      1903
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 30.5
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "lama",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1464,
+      2292,
+      1505,
+      2439
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 14.63
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "z-image-turbo",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": null,
+    "flag_at_defect_site": false,
+    "seam_delta": 17.63
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "qwen-inpaint",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      426,
+      2292,
+      472,
+      2439
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 28.86
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "flux-pro-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      426,
+      2292,
+      606,
+      2439
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 35.37
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "flux-dev-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      426,
+      2292,
+      613,
+      2439
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 12.55
+  },
+  {
+    "skin": "n64-cutscene",
+    "model": "vertex",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": null,
+    "flag_at_defect_site": false,
+    "seam_delta": 18.43
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "lama",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      547,
+      1639,
+      686,
+      1738
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 2.45
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "z-image-turbo",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      547,
+      1639,
+      1138,
+      1738
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 18.9
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "qwen-inpaint",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1695,
+      1639,
+      1739,
+      1738
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 37.46
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "flux-pro-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      547,
+      1639,
+      677,
+      1738
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 10.17
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "flux-dev-fill",
+    "cleared_by_detector": false,
+    "detector_flag_bbox": [
+      547,
+      1639,
+      686,
+      1738
+    ],
+    "flag_at_defect_site": true,
+    "seam_delta": 24.06
+  },
+  {
+    "skin": "wc-goldshield",
+    "model": "vertex",
+    "cleared_by_detector": true,
+    "detector_flag_bbox": [
+      1694,
+      1639,
+      1739,
+      1738
+    ],
+    "flag_at_defect_site": false,
+    "seam_delta": 39.59
+  }
+]

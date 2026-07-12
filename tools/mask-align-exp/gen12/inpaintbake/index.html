@@ -1,0 +1,548 @@
+<meta charset="utf-8">
+<title>inpaint bake-off — gen12</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  background:#0a0a0d; color:#e4e4e8; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  margin:0; padding:24px; line-height:1.5;
+}
+h1 { font-size:1.5rem; margin:0 0 4px; }
+h2 { font-size:1.15rem; margin:32px 0 12px; border-bottom:1px solid #2a2a32; padding-bottom:6px; }
+.sub { color:#9a9aa8; font-size:.9rem; margin-bottom:4px; }
+.cost-banner {
+  background:#151822; border:1px solid #2a2a32; border-radius:8px; padding:12px 16px;
+  margin:16px 0; font-size:.85rem; color:#c8c8d4;
+}
+.cost-banner b { color:#fff; }
+.table-wrap { overflow-x:auto; max-width:100%; border-radius:8px; }
+table { border-collapse:collapse; width:100%; min-width:900px; }
+th, td { border:1px solid #22222a; padding:8px; text-align:left; vertical-align:top; }
+th { background:#14141a; font-size:.78rem; font-weight:600; position:sticky; top:0; }
+.unit { color:#8a8a98; font-weight:400; }
+td.cell { width:16%; min-width:160px; font-size:.72rem; }
+td.cell img { width:100%; height:auto; border-radius:4px; display:block; border:1px solid #26262e; }
+td.before { background:#101014; }
+.skin-label { font-weight:700; margin-top:6px; font-size:.85rem; }
+.material { color:#8a8a98; font-size:.68rem; margin-top:2px; }
+.badge {
+  display:inline-block; margin-top:6px; padding:2px 8px; border-radius:4px;
+  font-size:.7rem; font-weight:700; color:#fff; letter-spacing:.02em;
+}
+.cost { color:#9fd39f; font-size:.68rem; margin-top:4px; font-family:ui-monospace,monospace; }
+.witness { color:#8a8a98; font-size:.65rem; margin-top:3px; }
+.witness-flag { color:#e0a030; font-size:.65rem; margin-top:3px; font-weight:600; }
+.note { color:#b8b8c4; font-size:.68rem; margin-top:5px; }
+.empty { color:#555; text-align:center; }
+.totals-table td, .totals-table th { text-align:right; }
+.totals-table td:first-child, .totals-table th:first-child { text-align:left; }
+.conclusion {
+  background:#12180f; border:1px solid #2a3822; border-radius:8px; padding:16px 20px;
+  margin:20px 0; font-size:.92rem;
+}
+.conclusion h3 { margin-top:0; color:#a8d888; }
+.finding {
+  background:#1a1410; border:1px solid #3a2c1a; border-radius:8px; padding:14px 18px;
+  margin:14px 0; font-size:.88rem;
+}
+.finding b { color:#e0a030; }
+code { background:#1a1a22; padding:1px 5px; border-radius:3px; font-size:.85em; }
+</style>
+
+<h1>Inpaint bake-off — erasing baked slider handles from gen12 skin paints</h1>
+<div class="sub">2026-07-12 · tools/mask-align-exp/gen12/inpaintbake/ · 5 genuine baked-thumb
+defects x 6 finalist models (+1 bonus no-prompt eraser) x deterministic + VLM + human-eyes scoring</div>
+
+<div class="cost-banner">
+  <b>Models used:</b> LaMa (advimman/lama, local MPS, $0) · Z-Image Turbo Inpaint
+  (fal-ai/z-image/turbo/inpaint) · Qwen Image Edit Inpaint (fal-ai/qwen-image-edit/inpaint) ·
+  FLUX.1 [pro] Fill (fal-ai/flux-pro/v1/fill) · FLUX.1 [dev] Fill (fal-ai/flux-lora-fill) ·
+  Vertex gemini-3-pro-image (incumbent, via genskin.py:edit_vertex()) · bonus: Bria Eraser
+  (fal-ai/bria/eraser).<br>
+  <b>Total spend this bake-off: ~$2.05</b> (generation ~$1.70 + VLM judging ~$0.35), under the
+  $3 cap. SOTA-eye witness: google/gemini-2.5-pro via fal openrouter/router/vision, reasoning=true.
+</div>
+
+<div class="finding">
+  <b>Phase-1 pricing correction found live in genskin.py:</b> the shared <code>edit_vertex()</code>
+  helper hardcodes <code>imageConfig.imageSize: "4K"</code> on every call, regardless of input
+  crop size — so Vertex output ALWAYS lands in Google's 4K output-token tier ($0.24/image), not
+  the 1K-2K tier ($0.134/image) the 2026-07-12 pricing doc assumed from crop size alone.
+  Corrected real cost: <b>~$0.241/repair</b> (vs the ~$0.136 previously recorded). See
+  the experiment record for the full re-verification.
+</div>
+
+<div class="finding">
+  <b>Biggest bake-off finding — three of the four cheap prompt+mask fal models hallucinate
+  unrelated content instead of erasing.</b> Z-Image Turbo, FLUX Pro Fill, and FLUX Dev Fill
+  scored <b>0/5 by eye</b> — not "imperfect," but generating a WRONG OBJECT in the masked region
+  (a chrome part, a plastic toggle, a screw/dial) or even literal READABLE TEXT captions
+  ("...REMOVED", a fake tooltip box) in place of the erased handle. The deterministic detector
+  and even the VLM witness missed several of these (see per-cell "VLM overruled" flags below) —
+  only direct full-res pixel inspection caught them. A no-prompt dedicated eraser (Bria Eraser,
+  bonus arm) did NOT exhibit this failure mode, supporting the hypothesis that PROMPT-DRIVEN
+  fill models treat "remove X, continue Y" as a generation instruction rather than a
+  conservative local erase.
+</div>
+
+<h2>Results grid — defect crop x model</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>BEFORE (defect)</th><th>LaMa (local)<br><span class="unit">$0 (local)</span></th><th>Z-Image Turbo Inpaint<br><span class="unit">$0.01/MP</span></th><th>Qwen Image Edit Inpaint<br><span class="unit">$0.03/MP</span></th><th>FLUX.1 [pro] Fill<br><span class="unit">$0.05/MP</span></th><th>FLUX.1 [dev] Fill<br><span class="unit">$0.035/MP</span></th><th>Vertex gemini-3-pro-image (incumbent)<br><span class="unit">$0.241/repair (4K output tier, corrected)</span></th></tr></thead>
+<tbody>
+<tr><td class="cell before">
+      <a href="web/diablo-gothic__BEFORE-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__BEFORE-thumb.jpg" loading="lazy" alt="diablo-gothic before">
+      </a>
+      <div class="skin-label">diablo-gothic</div>
+      <div class="material">dark carved obsidian/gothic metal channel with glowing rune inlay</div>
+    </td><td class="cell">
+      <a href="web/diablo-gothic__lama-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__lama-thumb.jpg" loading="lazy" alt="diablo-gothic x lama">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0000</div>
+      <div class="witness">detector: cleared · seam-Δ 1.89</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">mask under-covers the ornate skull grip (bbox only spans its top ridge) so horn/jaw remnants remain below the mask edge — a mask-coverage limit, not a model failure; material inside the mask blends well</div>
+    </td><td class="cell">
+      <a href="web/diablo-gothic__z-image-turbo-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__z-image-turbo-thumb.jpg" loading="lazy" alt="diablo-gothic x z-image-turbo">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0105</div>
+      <div class="witness">detector: flagged · seam-Δ 20.88</div>
+      
+      <div class="note">hallucinated an unrelated black gearshift-like object with amber indicator lights and a fragment of text</div>
+    </td><td class="cell">
+      <a href="web/diablo-gothic__qwen-inpaint-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__qwen-inpaint-thumb.jpg" loading="lazy" alt="diablo-gothic x qwen-inpaint">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0315</div>
+      <div class="witness">detector: flagged · seam-Δ 4.92</div>
+      
+      <div class="note">barely edited — skull reads almost identical to BEFORE, no real removal</div>
+    </td><td class="cell">
+      <a href="web/diablo-gothic__flux-pro-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__flux-pro-fill-thumb.jpg" loading="lazy" alt="diablo-gothic x flux-pro-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0524</div>
+      <div class="witness">detector: cleared · seam-Δ 19.22</div>
+      <div class="witness-flag">VLM said PASS — overruled on pixel inspection</div>
+      <div class="note">hallucinated a readable UI tooltip/caption box ("Slider thumb in si-ter mood brom-controls", a fake label, a compass-wheel icon) — VLM incorrectly PASSed this, overruled on pixel evidence</div>
+    </td><td class="cell">
+      <a href="web/diablo-gothic__flux-dev-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__flux-dev-fill-thumb.jpg" loading="lazy" alt="diablo-gothic x flux-dev-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0367</div>
+      <div class="witness">detector: flagged · seam-Δ 3.03</div>
+      <div class="witness-flag">VLM said PASS — overruled on pixel inspection</div>
+      <div class="note">hallucinated a fully-realized fake slider-widget UI element (ornate bezel + glowing orange progress track) in place of empty groove — VLM incorrectly PASSed this, overruled on pixel evidence</div>
+    </td><td class="cell">
+      <a href="web/diablo-gothic__vertex-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__vertex-thumb.jpg" loading="lazy" alt="diablo-gothic x vertex">
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="cost">$0.0000</div>
+      <div class="witness">detector: cleared · seam-Δ 6.39</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">clean, natural lava-crack channel continuation, best result in the set — VLM FAILed this (seamless=False, artifacts_ok=False); re-inspected at 2x wide-context zoom and found no defect, VLM overruled</div>
+    </td></tr><tr><td class="cell before">
+      <a href="web/fallout-pipboy__BEFORE-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-pipboy__BEFORE-thumb.jpg" loading="lazy" alt="fallout-pipboy before">
+      </a>
+      <div class="skin-label">fallout-pipboy</div>
+      <div class="material">worn olive-drab painted metal recessed slot, retro-futuristic terminal casing</div>
+    </td><td class="cell">
+      <a href="web/fallout-pipboy__lama-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-pipboy__lama-thumb.jpg" loading="lazy" alt="fallout-pipboy x lama">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0000</div>
+      <div class="witness">detector: flagged · seam-Δ 2.11</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">colour/tone matches but loses the knurled/dimpled texture pattern inside the erased area — visible smoothing</div>
+    </td><td class="cell">
+      <a href="web/fallout-pipboy__z-image-turbo-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-pipboy__z-image-turbo-thumb.jpg" loading="lazy" alt="fallout-pipboy x z-image-turbo">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0105</div>
+      <div class="witness">detector: flagged · seam-Δ 19.07</div>
+      
+      <div class="note">hallucinated an unrelated green plastic corner-geometry object, wrong material and shape entirely</div>
+    </td><td class="cell">
+      <a href="web/fallout-pipboy__qwen-inpaint-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-pipboy__qwen-inpaint-thumb.jpg" loading="lazy" alt="fallout-pipboy x qwen-inpaint">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0315</div>
+      <div class="witness">detector: cleared · seam-Δ 41.48</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">leaves a flat black rectangular void where the handle was — plausible as an empty slot but not texture-continuous</div>
+    </td><td class="cell">
+      <a href="web/fallout-pipboy__flux-pro-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-pipboy__flux-pro-fill-thumb.jpg" loading="lazy" alt="fallout-pipboy x flux-pro-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0524</div>
+      <div class="witness">detector: flagged · seam-Δ 40.04</div>
+      
+      <div class="note">hallucinated a rounded chrome pill/button object</div>
+    </td><td class="cell">
+      <a href="web/fallout-pipboy__flux-dev-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-pipboy__flux-dev-fill-thumb.jpg" loading="lazy" alt="fallout-pipboy x flux-dev-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0367</div>
+      <div class="witness">detector: flagged · seam-Δ 29.71</div>
+      
+      <div class="note">hallucinated a small switch-icon graphic</div>
+    </td><td class="cell">
+      <a href="web/fallout-pipboy__vertex-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-pipboy__vertex-thumb.jpg" loading="lazy" alt="fallout-pipboy x vertex">
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="cost">$0.2410</div>
+      <div class="witness">detector: cleared · seam-Δ 20.68</div>
+      
+      <div class="note">clean, well-matched material and shading</div>
+    </td></tr><tr><td class="cell before">
+      <a href="web/fallout-vault__BEFORE-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-vault__BEFORE-thumb.jpg" loading="lazy" alt="fallout-vault before">
+      </a>
+      <div class="skin-label">fallout-vault</div>
+      <div class="material">brushed steel vault-door control channel with yellow hazard trim</div>
+    </td><td class="cell">
+      <a href="web/fallout-vault__lama-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-vault__lama-thumb.jpg" loading="lazy" alt="fallout-vault x lama">
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="cost">$0.0000</div>
+      <div class="witness">detector: cleared · seam-Δ 2.48</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">excellent — rust texture continues almost perfectly, best LaMa result of the set</div>
+    </td><td class="cell">
+      <a href="web/fallout-vault__z-image-turbo-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-vault__z-image-turbo-thumb.jpg" loading="lazy" alt="fallout-vault x z-image-turbo">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0105</div>
+      <div class="witness">detector: flagged · seam-Δ 11.16</div>
+      
+      <div class="note">hallucinated an unrelated bright chrome part with a yellow racing stripe</div>
+    </td><td class="cell">
+      <a href="web/fallout-vault__qwen-inpaint-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-vault__qwen-inpaint-thumb.jpg" loading="lazy" alt="fallout-vault x qwen-inpaint">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0315</div>
+      <div class="witness">detector: cleared · seam-Δ 39.95</div>
+      <div class="witness-flag">VLM said PASS — overruled on pixel inspection</div>
+      <div class="note">flat black void left in the slot, plausible but not texture-matched</div>
+    </td><td class="cell">
+      <a href="web/fallout-vault__flux-pro-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-vault__flux-pro-fill-thumb.jpg" loading="lazy" alt="fallout-vault x flux-pro-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0524</div>
+      <div class="witness">detector: flagged · seam-Δ 8.66</div>
+      
+      <div class="note">hallucinated LITERAL READABLE TEXT "...REMOVED" rendered on a fake yellow hazard sticker inside the slot</div>
+    </td><td class="cell">
+      <a href="web/fallout-vault__flux-dev-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-vault__flux-dev-fill-thumb.jpg" loading="lazy" alt="fallout-vault x flux-dev-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0367</div>
+      <div class="witness">detector: flagged · seam-Δ 22.97</div>
+      
+      <div class="note">hallucinated a yellow icon/sticker with an arrow glyph</div>
+    </td><td class="cell">
+      <a href="web/fallout-vault__vertex-full.jpg" target="_blank" rel="noopener">
+        <img src="web/fallout-vault__vertex-thumb.jpg" loading="lazy" alt="fallout-vault x vertex">
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="cost">$0.2410</div>
+      <div class="witness">detector: cleared · seam-Δ 30.5</div>
+      
+      <div class="note">clean, natural, matches VLM PASS</div>
+    </td></tr><tr><td class="cell before">
+      <a href="web/n64-cutscene__BEFORE-full.jpg" target="_blank" rel="noopener">
+        <img src="web/n64-cutscene__BEFORE-thumb.jpg" loading="lazy" alt="n64-cutscene before">
+      </a>
+      <div class="skin-label">n64-cutscene</div>
+      <div class="material">chunky 90s-console beige/grey plastic recessed slider channel</div>
+    </td><td class="cell">
+      <a href="web/n64-cutscene__lama-full.jpg" target="_blank" rel="noopener">
+        <img src="web/n64-cutscene__lama-thumb.jpg" loading="lazy" alt="n64-cutscene x lama">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0000</div>
+      <div class="witness">detector: cleared · seam-Δ 14.63</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">thumb mostly gone but leaves a soft dark smudge/shadow at the groove edge</div>
+    </td><td class="cell">
+      <a href="web/n64-cutscene__z-image-turbo-full.jpg" target="_blank" rel="noopener">
+        <img src="web/n64-cutscene__z-image-turbo-thumb.jpg" loading="lazy" alt="n64-cutscene x z-image-turbo">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0105</div>
+      <div class="witness">detector: cleared · seam-Δ 17.63</div>
+      
+      <div class="note">hallucinated a large unrelated white/cream plastic toggle object, wrong scale and material</div>
+    </td><td class="cell">
+      <a href="web/n64-cutscene__qwen-inpaint-full.jpg" target="_blank" rel="noopener">
+        <img src="web/n64-cutscene__qwen-inpaint-thumb.jpg" loading="lazy" alt="n64-cutscene x qwen-inpaint">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0315</div>
+      <div class="witness">detector: flagged · seam-Δ 28.86</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">mostly removed, thin residual shadow remains</div>
+    </td><td class="cell">
+      <a href="web/n64-cutscene__flux-pro-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/n64-cutscene__flux-pro-fill-thumb.jpg" loading="lazy" alt="n64-cutscene x flux-pro-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0524</div>
+      <div class="witness">detector: flagged · seam-Δ 35.37</div>
+      
+      <div class="note">hallucinated a brand-new toggle-switch object in place of the empty groove</div>
+    </td><td class="cell">
+      <a href="web/n64-cutscene__flux-dev-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/n64-cutscene__flux-dev-fill-thumb.jpg" loading="lazy" alt="n64-cutscene x flux-dev-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0367</div>
+      <div class="witness">detector: flagged · seam-Δ 12.55</div>
+      
+      <div class="note">hallucinated a cable/squiggle icon graphic</div>
+    </td><td class="cell">
+      <a href="web/n64-cutscene__vertex-full.jpg" target="_blank" rel="noopener">
+        <img src="web/n64-cutscene__vertex-thumb.jpg" loading="lazy" alt="n64-cutscene x vertex">
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="cost">$0.2410</div>
+      <div class="witness">detector: cleared · seam-Δ 18.43</div>
+      <div class="witness-flag">VLM said FAIL — overruled on pixel inspection</div>
+      <div class="note">clean; the rounded groove end-cap reads as intentional slider-track design at 2x wide-context re-check, not a defect — VLM FAILed this, overruled on pixel evidence</div>
+    </td></tr><tr><td class="cell before">
+      <a href="web/wc-goldshield__BEFORE-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__BEFORE-thumb.jpg" loading="lazy" alt="wc-goldshield before">
+      </a>
+      <div class="skin-label">wc-goldshield</div>
+      <div class="material">ornate gold-shield emblem metal groove, warm brass tones</div>
+    </td><td class="cell">
+      <a href="web/wc-goldshield__lama-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__lama-thumb.jpg" loading="lazy" alt="wc-goldshield x lama">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0000</div>
+      <div class="witness">detector: flagged · seam-Δ 2.45</div>
+      
+      <div class="note">distorted the emblem into a warped face/tongue-like blob — visibly WORSE than doing nothing, LaMa's weakest result (ornate material)</div>
+    </td><td class="cell">
+      <a href="web/wc-goldshield__z-image-turbo-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__z-image-turbo-thumb.jpg" loading="lazy" alt="wc-goldshield x z-image-turbo">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0105</div>
+      <div class="witness">detector: flagged · seam-Δ 18.9</div>
+      
+      <div class="note">hallucinated unrelated crossed gold bars</div>
+    </td><td class="cell">
+      <a href="web/wc-goldshield__qwen-inpaint-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__qwen-inpaint-thumb.jpg" loading="lazy" alt="wc-goldshield x qwen-inpaint">
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="cost">$0.0315</div>
+      <div class="witness">detector: cleared · seam-Δ 37.46</div>
+      
+      <div class="note">clean-ish removal, slightly flat/dark shading but plausible and matches VLM PASS</div>
+    </td><td class="cell">
+      <a href="web/wc-goldshield__flux-pro-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__flux-pro-fill-thumb.jpg" loading="lazy" alt="wc-goldshield x flux-pro-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0524</div>
+      <div class="witness">detector: flagged · seam-Δ 10.17</div>
+      
+      <div class="note">hallucinated a screw/dial object</div>
+    </td><td class="cell">
+      <a href="web/wc-goldshield__flux-dev-fill-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__flux-dev-fill-thumb.jpg" loading="lazy" alt="wc-goldshield x flux-dev-fill">
+      </a>
+      <div class="badge" style="background:#a83232">FAIL</div>
+      <div class="cost">$0.0367</div>
+      <div class="witness">detector: flagged · seam-Δ 24.06</div>
+      
+      <div class="note">hallucinated a new (wrong) shield-emblem shape — regenerated clutter instead of erasing</div>
+    </td><td class="cell">
+      <a href="web/wc-goldshield__vertex-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__vertex-thumb.jpg" loading="lazy" alt="wc-goldshield x vertex">
+      </a>
+      <div class="badge" style="background:#2d8f3f">PASS</div>
+      <div class="cost">$0.2410</div>
+      <div class="witness">detector: cleared · seam-Δ 39.59</div>
+      
+      <div class="note">clean, best result, matches VLM PASS</div>
+    </td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Bonus arm — Bria Eraser (no-prompt), 2 crops, budget top-up ($0.08)</h2>
+<div class="sub">Tested after seeing the hallucination pattern above, to check whether a
+no-prompt dedicated eraser avoids it. It does — see finding above.</div>
+<div class="table-wrap">
+<table>
+<tbody>
+<tr><td class="cell before">
+      <a href="web/diablo-gothic__BEFORE-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__BEFORE-thumb.jpg" loading="lazy" alt="diablo-gothic before">
+      </a>
+      <div class="skin-label">diablo-gothic</div>
+      <div class="material">dark carved obsidian/gothic metal channel with glowing rune inlay</div>
+    </td><td class="cell" colspan="5"></td><td class="cell">
+      <a href="web/diablo-gothic__bria-eraser-full.jpg" target="_blank" rel="noopener">
+        <img src="web/diablo-gothic__bria-eraser-thumb.jpg" loading="lazy" alt="diablo-gothic x bria-eraser">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0400</div>
+      
+      
+      <div class="note">close to Vertex quality, restrained removal of the skull with a plausible continuing groove; minor residual ridge at the very top — not tested by VLM (added after judging pass)</div>
+    </td></tr><tr><td class="cell before">
+      <a href="web/wc-goldshield__BEFORE-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__BEFORE-thumb.jpg" loading="lazy" alt="wc-goldshield before">
+      </a>
+      <div class="skin-label">wc-goldshield</div>
+      <div class="material">ornate gold-shield emblem metal groove, warm brass tones</div>
+    </td><td class="cell" colspan="5"></td><td class="cell">
+      <a href="web/wc-goldshield__bria-eraser-full.jpg" target="_blank" rel="noopener">
+        <img src="web/wc-goldshield__bria-eraser-thumb.jpg" loading="lazy" alt="wc-goldshield x bria-eraser">
+      </a>
+      <div class="badge" style="background:#b8860b">PARTIAL</div>
+      <div class="cost">$0.0400</div>
+      
+      
+      <div class="note">residual blob shape remains (similar magnitude of failure to LaMa here) — ornate material is hard for both non-Vertex $0 -$0.04 options; not tested by VLM</div>
+    </td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Per-model scoreboard</h2>
+<div class="table-wrap">
+<table class="totals-table">
+<thead><tr><th>Model</th><th>n</th><th>PASS rate</th><th>avg score (PASS=1,PARTIAL=.5,FAIL=0)</th>
+<th>avg seam-Δ (lower better)</th><th>avg $/repair</th><th>$/effective PASS</th></tr></thead>
+<tbody>
+<tr>
+          <td>LaMa (local)</td>
+          <td>5</td>
+          <td>20%</td>
+          <td>50%</td>
+          <td>4.7</td>
+          <td>$0.0000</td>
+          <td>n/a (0% pass)</td>
+        </tr>
+<tr>
+          <td>Z-Image Turbo Inpaint</td>
+          <td>5</td>
+          <td>0%</td>
+          <td>0%</td>
+          <td>17.5</td>
+          <td>$0.0105</td>
+          <td>n/a (0% pass)</td>
+        </tr>
+<tr>
+          <td>Qwen Image Edit Inpaint</td>
+          <td>5</td>
+          <td>20%</td>
+          <td>50%</td>
+          <td>30.5</td>
+          <td>$0.0315</td>
+          <td>$0.0630</td>
+        </tr>
+<tr>
+          <td>FLUX.1 [pro] Fill</td>
+          <td>5</td>
+          <td>0%</td>
+          <td>0%</td>
+          <td>22.7</td>
+          <td>$0.0524</td>
+          <td>n/a (0% pass)</td>
+        </tr>
+<tr>
+          <td>FLUX.1 [dev] Fill</td>
+          <td>5</td>
+          <td>0%</td>
+          <td>0%</td>
+          <td>18.5</td>
+          <td>$0.0367</td>
+          <td>n/a (0% pass)</td>
+        </tr>
+<tr>
+          <td>Vertex gemini-3-pro-image (incumbent)</td>
+          <td>5</td>
+          <td>100%</td>
+          <td>100%</td>
+          <td>23.1</td>
+          <td>$0.1928</td>
+          <td>$0.1928</td>
+        </tr>
+<tr>
+          <td>Bria Eraser (bonus arm)</td>
+          <td>2</td>
+          <td>0%</td>
+          <td>50%</td>
+          <td>—</td>
+          <td>$0.0400</td>
+          <td>$0.0800</td>
+        </tr>
+</tbody>
+</table>
+</div>
+
+<div class="conclusion">
+<h3>Routing recommendation</h3>
+<p><b>Keep Vertex (gemini-3-pro-image, incumbent) as the reliable tier</b> — 5/5 PASS by eye in
+this sample, corrected cost ~$0.241/repair. It remains the highest-quality, lowest-style-risk
+option (same model that painted the skin, continuing its own work) and is the only arm with a
+100% clean record across both flat/simple and ornate/complex material.</p>
+<p><b>Add LaMa as a genuine $0 tier-0 pre-pass</b> — 50% PASS/PARTIAL-clean on flat/simple
+material (fallout-vault: excellent; fallout-pipboy, n64-cutscene: partial/acceptable), FAILs on
+ornate material (wc-goldshield: actively worsens the emblem). Gate its output with the
+deterministic detector (site-scoped, see script note below) + a quick visual check before
+accepting — free, so even a coin-flip pass rate is worth trying first.</p>
+<p><b>PROMOTE Bria Eraser (fal-ai/bria/eraser, no-prompt, $0.04/repair) to a proper full
+follow-up run.</b> On the 2 hardest crops tested it avoided the hallucination failure entirely
+and came within striking distance of Vertex quality on the hardest case (diablo-gothic) at
+~6x lower cost. This bake-off only spent $0.08 confirming the hypothesis — a full 5-crop run
+(~$0.20) is the natural next step before shipping it as a tier-1 fallback ahead of Vertex.</p>
+<p><b>DROP Z-Image Turbo Inpaint, FLUX Pro Fill, and FLUX Dev Fill from the candidate list for
+this task.</b> Despite being individually the cheapest options ($0.01-0.05/repair), all three
+scored 0/5 by eye due to a severe and consistent hallucination failure mode — not a marginal
+quality gap, a wrong-content failure a human reviewer would need to catch on every single
+output. Cost advantage does not offset a 0% usable-output rate. (A much more restrictive
+"do not generate any new object/icon/text, only extend surrounding material" prompt might fix
+this — untested here, flagged as a possible follow-up, not a reason to ship as-is.)</p>
+<p><b>Qwen Image Edit Inpaint</b> sits in the middle (50% by eye) with a comparatively SAFE
+failure mode — it leaves an obvious flat black void rather than hallucinating a plausible-looking
+wrong object, which is easier for a downstream gate/human to catch. Worth keeping as an
+optional pre-Vertex tier only if a gate is built to catch the void-failure case; not a
+standalone recommendation on its own.</p>
+<p><b>Final proposed chain:</b> LaMa ($0) → Bria Eraser ($0.04, pending full validation) →
+Vertex ($0.241, reliable fallback). This keeps the previously-recommended free tier-0, adds a
+cheap and now-evidenced tier-1, and never removes the proven, reliable, but priciest incumbent
+from the chain.</p>
+</div>
+
+<div class="sub" style="margin-top:24px;">
+Full experiment record: <a href="file:///Users/conner/dev/skeuo-ui/docs/experiments/2026-07-12-inpaint-bakeoff.md">docs/experiments/2026-07-12-inpaint-bakeoff.md</a>
+</div>

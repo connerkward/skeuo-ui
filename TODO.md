@@ -22,6 +22,24 @@ today's volume (~$0.61/batch worst case); a free local-LaMa pre-pass is worth ad
 seed-mining volume (10-30 repairs/batch) materializes. Full table + bake-off spec:
 [`docs/design/2026-07-12-inpaint-pricing.md`](docs/design/2026-07-12-inpaint-pricing.md).
 
+**Inpaint bake-off run (2026-07-12) — pricing sweep re-verified + spec executed on 5 real
+defects.** Re-checked the fal catalog live (no drift, one schema-fit swap: FLUX Kontext-LoRA
+Inpaint dropped for requiring a `reference_image_url` this task can't supply, substituted
+FLUX Dev Fill). **Found and corrected a real pricing bug:** `genskin.py:edit_vertex()`
+hardcodes `imageSize:"4K"` on every call, so Vertex repairs actually cost **~$0.241/repair**
+(4K output tier), not the ~$0.136 recorded above (1K-2K tier, assumed from crop size alone).
+Ran all 6 finalists + a bonus no-prompt eraser on 5 genuine baked-slider-thumb defects
+(deterministic detector + VLM witness + human-eyes adjudication, ~$2.05 total spend).
+**Headline result: 3 of 4 cheap fal "fill" models (Z-Image Turbo, FLUX Pro Fill, FLUX Dev
+Fill) scored 0/5 — they hallucinate unrelated objects/readable text instead of erasing**,
+not a marginal quality gap. Vertex stayed 5/5 clean. LaMa: 50% (free, good on flat/simple
+material, worsens ornate). Bria Eraser (no-prompt, bonus arm): promising 2-sample evidence,
+avoided the hallucination failure entirely — recommended for a full follow-up run. Routing:
+LaMa ($0) → Bria Eraser ($0.04, pending full validation) → Vertex ($0.241, reliable
+fallback); drop the 3 hallucinating fal models from consideration for this task. Full
+record + results grid:
+[`docs/experiments/2026-07-12-inpaint-bakeoff.md`](docs/experiments/2026-07-12-inpaint-bakeoff.md).
+
 ---
 ## PARKED for skeuo v2 (2026-07-11) — emissive / PBR, NOT v1 work
 

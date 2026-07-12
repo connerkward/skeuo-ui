@@ -1,0 +1,44 @@
+{
+  "diablo-gothic": {
+    "lama": {"v": "PARTIAL", "note": "mask under-covers the ornate skull grip (bbox only spans its top ridge) so horn/jaw remnants remain below the mask edge — a mask-coverage limit, not a model failure; material inside the mask blends well"},
+    "z-image-turbo": {"v": "FAIL", "note": "hallucinated an unrelated black gearshift-like object with amber indicator lights and a fragment of text"},
+    "qwen-inpaint": {"v": "FAIL", "note": "barely edited — skull reads almost identical to BEFORE, no real removal"},
+    "flux-pro-fill": {"v": "FAIL", "note": "hallucinated a readable UI tooltip/caption box (\"Slider thumb in si-ter mood brom-controls\", a fake label, a compass-wheel icon) — VLM incorrectly PASSed this, overruled on pixel evidence"},
+    "flux-dev-fill": {"v": "FAIL", "note": "hallucinated a fully-realized fake slider-widget UI element (ornate bezel + glowing orange progress track) in place of empty groove — VLM incorrectly PASSed this, overruled on pixel evidence"},
+    "vertex": {"v": "PASS", "note": "clean, natural lava-crack channel continuation, best result in the set — VLM FAILed this (seamless=False, artifacts_ok=False); re-inspected at 2x wide-context zoom and found no defect, VLM overruled"},
+    "bria-eraser": {"v": "PARTIAL", "note": "close to Vertex quality, restrained removal of the skull with a plausible continuing groove; minor residual ridge at the very top — not tested by VLM (added after judging pass)"}
+  },
+  "fallout-pipboy": {
+    "lama": {"v": "PARTIAL", "note": "colour/tone matches but loses the knurled/dimpled texture pattern inside the erased area — visible smoothing"},
+    "z-image-turbo": {"v": "FAIL", "note": "hallucinated an unrelated green plastic corner-geometry object, wrong material and shape entirely"},
+    "qwen-inpaint": {"v": "PARTIAL", "note": "leaves a flat black rectangular void where the handle was — plausible as an empty slot but not texture-continuous"},
+    "flux-pro-fill": {"v": "FAIL", "note": "hallucinated a rounded chrome pill/button object"},
+    "flux-dev-fill": {"v": "FAIL", "note": "hallucinated a small switch-icon graphic"},
+    "vertex": {"v": "PASS", "note": "clean, well-matched material and shading"}
+  },
+  "fallout-vault": {
+    "lama": {"v": "PASS", "note": "excellent — rust texture continues almost perfectly, best LaMa result of the set"},
+    "z-image-turbo": {"v": "FAIL", "note": "hallucinated an unrelated bright chrome part with a yellow racing stripe"},
+    "qwen-inpaint": {"v": "PARTIAL", "note": "flat black void left in the slot, plausible but not texture-matched"},
+    "flux-pro-fill": {"v": "FAIL", "note": "hallucinated LITERAL READABLE TEXT \"...REMOVED\" rendered on a fake yellow hazard sticker inside the slot"},
+    "flux-dev-fill": {"v": "FAIL", "note": "hallucinated a yellow icon/sticker with an arrow glyph"},
+    "vertex": {"v": "PASS", "note": "clean, natural, matches VLM PASS"}
+  },
+  "n64-cutscene": {
+    "lama": {"v": "PARTIAL", "note": "thumb mostly gone but leaves a soft dark smudge/shadow at the groove edge"},
+    "z-image-turbo": {"v": "FAIL", "note": "hallucinated a large unrelated white/cream plastic toggle object, wrong scale and material"},
+    "qwen-inpaint": {"v": "PARTIAL", "note": "mostly removed, thin residual shadow remains"},
+    "flux-pro-fill": {"v": "FAIL", "note": "hallucinated a brand-new toggle-switch object in place of the empty groove"},
+    "flux-dev-fill": {"v": "FAIL", "note": "hallucinated a cable/squiggle icon graphic"},
+    "vertex": {"v": "PASS", "note": "clean; the rounded groove end-cap reads as intentional slider-track design at 2x wide-context re-check, not a defect — VLM FAILed this, overruled on pixel evidence"}
+  },
+  "wc-goldshield": {
+    "lama": {"v": "FAIL", "note": "distorted the emblem into a warped face/tongue-like blob — visibly WORSE than doing nothing, LaMa's weakest result (ornate material)"},
+    "z-image-turbo": {"v": "FAIL", "note": "hallucinated unrelated crossed gold bars"},
+    "qwen-inpaint": {"v": "PASS", "note": "clean-ish removal, slightly flat/dark shading but plausible and matches VLM PASS"},
+    "flux-pro-fill": {"v": "FAIL", "note": "hallucinated a screw/dial object"},
+    "flux-dev-fill": {"v": "FAIL", "note": "hallucinated a new (wrong) shield-emblem shape — regenerated clutter instead of erasing"},
+    "vertex": {"v": "PASS", "note": "clean, best result, matches VLM PASS"},
+    "bria-eraser": {"v": "PARTIAL", "note": "residual blob shape remains (similar magnitude of failure to LaMa here) — ornate material is hard for both non-Vertex $0 -$0.04 options; not tested by VLM"}
+  }
+}
