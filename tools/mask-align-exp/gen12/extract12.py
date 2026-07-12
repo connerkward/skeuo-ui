@@ -443,6 +443,39 @@ for k in SC:
     print(f"[region-refit] {k}: snapped to painted window px({fit[0]*GW:.0f},{fit[1]*GH:.0f} "
           f"{fit[2]*GW:.0f}x{fit[3]*GH:.0f}) IoU-vs-mask {r['regionRefit']['iouVsMask']} ({info})")
 
+# ---- ART/VIZ SWAP-RELABEL (album_art <-> visualizer identity swap) ----
+# The two display windows are functionally interchangeable glass (same round-trip through
+# region_refit above); when the model paints them in the OPPOSITE vertical order the
+# template declared (e.g. viz above art instead of art above viz), the render places album-
+# art content in the visualizer's painted window and vice versa -- what LOOKS like a huge
+# template-drift regression (fallout-pipboy seed 951: album_art measured 1807.8px drift,
+# visualizer 413.8px) is actually a clean identity swap, not a placement failure. Relabeling
+# (swap which NAME the two already-detected regions are filed under) makes the render match
+# the paint and the "drift" collapses -- no re-generation needed.
+# Guard: only swap when BOTH detected windows are closer to the OTHER's template slot than
+# their own (mutual-nearest) -- a genuine single-window drift (one detector off, the other
+# fine) is left alone for the drift gate to catch, never silently relabeled.
+art_viz_swapped = False
+if TEMPLATED and "album_art" in template and "visualizer" in template:
+    ra = regs.get("album_art"); rv = regs.get("visualizer")
+    if ra and rv and ra.get("device") and rv.get("device"):
+        da = ra["device"]; dv = rv["device"]
+        ca = (da[0] + da[2] / 2, da[1] + da[3] / 2)
+        cv = (dv[0] + dv[2] / 2, dv[1] + dv[3] / 2)
+        ta = tuple(template["album_art"]); tv = tuple(template["visualizer"])
+        def _d(p, q): return ((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2) ** 0.5
+        order_inverted = (ca[1] - cv[1]) * (ta[1] - tv[1]) < 0   # opposite sign = vertical order flipped
+        mutual_nearest = _d(ca, tv) < _d(ca, ta) and _d(cv, ta) < _d(cv, tv)
+        if order_inverted and mutual_nearest:
+            regs["album_art"], regs["visualizer"] = rv, ra
+            art_viz_swapped = True
+            print(f"[art-viz-swap] album_art<->visualizer identities SWAPPED (detected vertical "
+                  f"order inverted vs template; mutual-nearest confirmed: album_art was "
+                  f"{_d(ca, ta):.3f} from its own template slot, {_d(ca, tv):.3f} from viz's)")
+        elif order_inverted:
+            print(f"[art-viz-swap] vertical order looks inverted but mutual-nearest guard failed "
+                  f"(not a clean swap) -- left as-is for the drift gate")
+
 # ---- SEEK GROOVE EXTENT + TRAVEL (coverage span, LEVEL-AWARE) ----
 # The mask/rrect groove bbox routinely UNDERSHOOTS the painted channel, and a STEPPED recess
 # (deep near-black channel inside a lighter outer trough) defeats fixed offsets from the dark
@@ -463,6 +496,8 @@ for k in SC:
 #     bronze ring beside a brass plate) would poison a single global estimate.
 #   * clamp: at most +12% of the cell width beyond the cell per side (wider-than-bbox
 #     recessed spans are allowed; textured-body creep is not). Collapse guard unchanged.
+baked_thumb_flagged = []       # BAKED-THUMB-IN-GROOVE gate hits, filled below
+sprite_fit_flagged = []        # SPRITE-VS-SLOT FIT gate hits, filled below
 if SLIDER:
     r = regs.get(SLIDER)
     if r and r.get("device"):
@@ -550,6 +585,65 @@ if SLIDER:
               f"(fit bbox {gx0}..{gx1}, mask cell {bx0 + mx0}..{bx0 + mx1}, "
               f"body L{bodyL:.0f}/R{bodyR:.0f} floor {Dfloor:.0f}) -> travel {r['travel']}")
 
+        # ---- BAKED-THUMB-IN-GROOVE GATE ----
+        # The #1 recurring human-review complaint (2026-07-11 round1, 6/15 skins): the model
+        # bakes a thumb/knob graphic INTO the groove painting itself, on top of the empty
+        # channel the player later composites its OWN cut thumb sprite onto -- the shipped
+        # render then shows two thumbs (a painted one + the CSS-positioned cut one). The
+        # existing EMPTINESS gate below can't see this: it shrinks the SLIDER's device bbox by
+        # 18% per side, and worse, the travel-WALK above never visits the region BETWEEN mx0
+        # and mx1 (the model's own declared slot cell) by design ("baked-handle-proof for
+        # free" -- see the SEEK GROOVE EXTENT docstring) -- so a thumb sitting inside that
+        # interior sails through both existing checks untouched.
+        #
+        # Material-agnostic: score every column of the SAME `med` profile already computed
+        # for the travel walk against bodyL/bodyR -- the RAISED, OUTSIDE-the-groove material
+        # level, an independent reference (not derived from the window being scored) -- rather
+        # than an absolute brightness constant. A baked thumb is a raised/lit 3D shape, so it
+        # reads close to or above body level; an empty recessed channel reads near Dfloor.
+        # score 0 = at the channel floor, 1 = at body level.
+        #   run_frac lower bound (0.05) -- excludes single-pixel/rim noise (myst-arcanum 0.024)
+        #   AND steam-porthole's bright mid-ledge specular (0.046, a stepped-recess artifact the
+        #   human did NOT name as a baked thumb); true positives measure 0.080+ (fallout-vault
+        #   0.080, fallout-pipboy 0.119, claymation 0.147, n64-cutscene ~0.11).
+        #   run_frac upper bound (0.28) -- excludes a smooth material gradient or ambient-glow
+        #   band spanning nearly the WHOLE channel (not a discrete blob): wmp-vario's glow
+        #   measured 0.440 clean, wmp-quicksilver 0.286 clean. KNOWN MISS, accepted: diablo-
+        #   gothic's genuinely-baked vertical thumb measures 0.516 (the baked shield-handle
+        #   spans half the groove) -- indistinguishable from vario's glow by run-length alone;
+        #   that skin still FAILs overall via sprite-fit:shuffle (see gate below).
+        #   peak >= 1.17 -- the run must actually REACH body-level brightness (a real baked
+        #   thumb catches highlights >= its surrounding material); a merely-lighter patch of
+        #   channel floor (fa-sky 1.07, fa-pod 1.06, ps1-wild 0.58) stays under this.
+        # Calibrated 2026-07-11 against the full 15-skin roster's LIVE extraction (not stored
+        # regions) incl. the 6 human-named cases (claymation, diablo-gothic, fallout-pipboy,
+        # fallout-vault, n64-cutscene, wc-goldshield); catches 4/6 -- diablo (above) and
+        # wc-goldshield (its baked handle sits at the groove END CAP, outside the walked travel
+        # span, run_frac 0.000) are honest misses, both independently failed by sprite-fit.
+        # Full number table: docs/experiments/2026-07-11-gate-recalibration.md.
+        bodyRef = min(bodyL, bodyR)
+        lo_i = max(0, lo - bx0); hi_i = min(len(med), hi - bx0)
+        seg = med[lo_i:hi_i]; Lseg = len(seg)
+        if Lseg >= 10:
+            bscore = (seg - Dfloor) / max(1.0, bodyRef - Dfloor)
+            mgn = max(2, int(Lseg * 0.03))
+            above = bscore > 0.40
+            above[:mgn] = False; above[Lseg - mgn:] = False
+            close_n = max(2, int(Lseg * 0.02))
+            above_c = ndimage.binary_closing(above, structure=np.ones(close_n * 2 + 1, bool))
+            _lbl, _n = ndimage.label(above_c)
+            best_len, best_c = 0, None
+            for _c in range(1, _n + 1):
+                _ln = int((_lbl == _c).sum())
+                if _ln > best_len: best_len, best_c = _ln, _c
+            run_frac = best_len / Lseg
+            peak = float(bscore[_lbl == best_c].max()) if best_c else float(bscore.max())
+            baked = 0.05 <= run_frac <= 0.28 and peak >= 1.17
+            r["bakedThumb"] = {"runFrac": round(run_frac, 3), "peak": round(peak, 2), "flag": baked}
+            print(f"[baked-thumb] {SLIDER}: run_frac={run_frac:.3f} peak={peak:.2f} "
+                  f"{'FAIL - baked thumb in groove' if baked else 'ok'}")
+            if baked: baked_thumb_flagged.append(SLIDER)
+
 # ---- SLOT ANGLE (rotational placement): a slot following an organic body is tilted, so the part
 # must be rotated to match. Major-axis angle from PCA on the slot's mask blob. Knobs are radial.
 def _pca_angle(mask2d):
@@ -564,6 +658,44 @@ def _pca_angle(mask2d):
     a = (a - 180) if a > 90 else (a + 180) if a < -90 else a
     elong = float(np.sqrt(max(w) / max(1e-9, min(w))))
     return a, elong
+
+# ---- ORIENTATION GATE (orientation:device) ----
+# n64-prerender-character shipped a visibly mis-oriented device ("what the fuck is this
+# orientation?"). Investigated 2026-07-11: that specific skin's device-body silhouette PCA
+# angle measures 86.5deg (3.5deg off vertical) -- NOT tilted; its "orientation" complaint
+# traces to a control-substitution defect (a toggle sprite rendered into the "next" button's
+# slot) that the missing/state-align/emptiness/guide-ring gates ALREADY catch, not a whole-
+# body rotation. So this gate does NOT reproduce that specific human catch -- said plainly,
+# per verify-outputs-rule, rather than forcing a metric to fit.
+#
+# It DOES catch a genuine, different orientation failure mode found while investigating:
+# ps1-wild ("absulute falire") is painted in a rotated 3/4 side-profile (vehicle-style) view
+# instead of the expected top-down frontal layout -- its device silhouette measures 43.1deg
+# off vertical, a real geometric outlier (next-worst in the roster is claymation at 11.7deg,
+# a >3x margin). Deterministic signal: PCA major-axis angle of the device-region foreground
+# silhouette (paint pixels far from the backdrop colour, y < devFrac) vs vertical, gated on
+# elongation >= 1.15 (a near-square/round device has no meaningful axis -- same guard as the
+# TOGGLE slot-angle code above). THRESH_DEG=30 sits comfortably between the roster's healthy
+# ceiling (11.7deg) and the one confirmed defect (43.1deg) -- calibrated 2026-07-11.
+# Explicitly scoped: this is a coarse "is the whole device tilted/sideways" safety net, not a
+# semantic "does the control layout make sense" check -- that needs a VLM
+# (verification-recalibration agent), not a deterministic geometry gate.
+ORIENT_THRESH_DEG = 30.0
+orientation_flagged = False
+_pH, _pW = paintrgb.shape[:2]
+_devfg = (np.abs(paintrgb - BGC).max(2) > 40)[: int(DEVF * _pH)]
+_orient_r = _pca_angle(_devfg)
+if _orient_r is not None:
+    _oang, _oel = _orient_r
+    _odev = 90.0 - abs(_oang) if abs(_oang) <= 90 else abs(_oang) - 90.0
+    if _oel >= 1.15 and _odev > ORIENT_THRESH_DEG:
+        orientation_flagged = True
+    print(f"[orientation] device silhouette angle={_oang:+.1f}deg elong={_oel:.2f} "
+          f"off-vertical={_odev:.1f}deg (thresh {ORIENT_THRESH_DEG:.0f}deg) "
+          f"{'FAIL - device mis-oriented' if orientation_flagged else 'ok'}")
+else:
+    print("[orientation] device silhouette too sparse to measure -- skipped")
+
 for k in ([TOGGLE] if TOGGLE else []):
     idx = NAMES.index(k) if k in NAMES else -1
     if idx < 0: continue
@@ -631,7 +763,7 @@ if TOGGLE:
 json.dump({"devFrac": DEVF, "buttons": list(HB), "sprites": list(SP), "extras": list(SC),
            "roles": ROLES, "templated": TEMPLATED,
            "keys": {k: list(v) for k, v in KEYS.items()}, "keyNames": RES.get("keyNames", {}),
-           "regions": regs, "template": template},
+           "regions": regs, "template": template, "art_viz_swapped": art_viz_swapped},
           open(os.path.join(OUT, "regions.json"), "w"), indent=2)
 
 # overlay
@@ -811,8 +943,14 @@ for k in list(SP):
     print(f"  {k:8} bright-interior {brightf * 100:5.1f}%  {verdict}")
 print(f"[emptiness gate] {'FAIL - regenerate' if empty_fail else 'ok'}")
 
-# ---- FIT CHECK ----
-print("fit check (device slot vs strip part, w x h ratio):")
+# ---- FIT CHECK (diagnostic only, NOT gated) ----
+# device vs raw paint-band "strip" bbox. Kept print-only: calibration against the roster
+# (2026-07-11) showed this pairing is too noisy to gate on -- the strip bbox is a rough
+# same-hue paint blob that on some skins includes extra reference art (e.g. a toggle's whole
+# housing+lever preview icon, not just the lever), so it swings independent of the real
+# rendered defect. The SPRITE-VS-SLOT FIT gate below uses the BIREF-cut asset instead (the
+# actual pixels the player composites), which is the "cut sprite" the task means.
+print("fit check (device slot vs strip part, w x h ratio) [diagnostic, not gated]:")
 for k in KNOBS + ([TOGGLE] if TOGGLE else []):
     r = regs.get(k)
     if not r or not r.get("device") or not r.get("strip") or not r["strip"][0]: continue
@@ -820,6 +958,80 @@ for k in KNOBS + ([TOGGLE] if TOGGLE else []):
     rw = d_[2] / s[2]; rh = d_[3] / s[3]
     flag = " <- MISMATCH >15%" if abs(1 - rw) > 0.15 or abs(1 - rh) > 0.15 else ""
     print(f"  {k:8} slot/part w={rw:.2f} h={rh:.2f}{flag}")
+
+# ---- SPRITE-VS-SLOT FIT GATE (sprite-fit:<part>) ----
+# 7/15 human-review skins named a switch (or slider thumb) that doesn't match its slot --
+# "too small", "too large", "slot and switch dont match". Compares the ACTUAL rendered asset
+# (the BIREF-cut PNG's alpha bbox -- the pixels build_player.py composites) against the
+# detected slot, not the rough paint-band "strip" bbox above (see note there for why that
+# pairing is unusable). No VLM: pure cut-vs-slot geometry.
+#
+# TOGGLE: symmetric area ratio r = min(slotArea,spriteArea)/max(...) in [0,1], 1=perfect.
+# Calibrated 2026-07-11 against the 15-skin roster (7 human-named: claymation, fa-pod,
+# fallout-pipboy, n64-cutscene, steam-porthole, wc-goldshield, wmp-vario):
+#   named-mismatch r values: .20 .39 .45 .46 .73 .74 .877 (goldshield..pipboy)
+#   clean/unflagged r values: .18(ps1-wild) .34(diablo) .79(quicksilver) .85(ps1-crunchy)
+#                              .87(fa-sky) .99(n64-prerender-character)
+# The two populations OVERLAP (ps1-wild .18 sits below goldshield's .20; diablo .34 sits
+# below claymation's .39) -- bbox-area geometry alone does not cleanly separate this roster;
+# several named complaints ("switch slot doesnt match sprite") likely reflect a SHAPE/style
+# mismatch a w x h bbox can't see. Threshold 0.78 was chosen to maximize named-case recall
+# (6/7 -- misses only pipboy at r=.877, which independently fails via baked-thumb since
+# pipboy is ALSO one of the 6 baked-thumb-flagged skins, so the skin still fails gate
+# overall) while limiting false positives (2/8 unflagged: ps1-wild, diablo-gothic -- see
+# report table). This is an honest partial-recall gate, not a perfect classifier.
+#
+# SLIDER thumb: thumb cross-dim (perpendicular to travel) vs groove cross-dim. Overhang
+# (thumb WIDER than the groove) is normal skeuomorphic design -- this roster's clean skins
+# span ratio 0.57-4.93 with no separation at the one named case (steam-porthole "slider knob
+# too large" measured 1.74, squarely mid-pack) -- so the bound here is deliberately wide and
+# only catches gross degenerate cases (thumb lost inside the groove, or grotesquely
+# oversized beyond anything in this roster), not steam-porthole's specific complaint. That
+# skin still fails gate overall via its TOGGLE sprite-fit hit (r=.46, well under 0.78) and
+# its own guide-ring/other reasons.
+FIT_AREA_THRESH = 0.78
+SLIDER_CROSS_LO, SLIDER_CROSS_HI = 0.55, 6.5
+
+
+def _alpha_bbox(path):
+    if not os.path.exists(path): return None
+    a = np.asarray(Image.open(path).convert("RGBA"))[:, :, 3] > 30
+    ys, xs = np.where(a)
+    if len(xs) < 20: return None
+    return xs.max() - xs.min() + 1, ys.max() - ys.min() + 1
+
+
+if os.path.exists(BIREF):
+    print("sprite-fit gate (biref-cut sprite vs detected slot, area/size ratio):")
+    if TOGGLE:
+        r = regs.get(TOGGLE)
+        dev = r.get("device") if r else None
+        if dev:
+            sbb = _alpha_bbox(os.path.join(BIREF, TOGGLE + "_off.png"))
+            if sbb:
+                dw, dh = dev[2] * PW3, dev[3] * PH3
+                dArea = dw * dh; sArea = sbb[0] * sbb[1]
+                ratio = min(dArea, sArea) / max(dArea, sArea)
+                flag = ratio < FIT_AREA_THRESH
+                r["spriteFit"] = {"areaRatio": round(ratio, 3), "flag": flag}
+                print(f"  {TOGGLE:8} slot {dw:.0f}x{dh:.0f}px vs sprite {sbb[0]}x{sbb[1]}px "
+                      f"area-ratio={ratio:.3f}  {'FAIL - sprite/slot mismatch' if flag else 'ok'}")
+                if flag: sprite_fit_flagged.append(TOGGLE)
+    if SLIDER:
+        r = regs.get(SLIDER)
+        dev = r.get("device") if r else None
+        if dev:
+            sbb = _alpha_bbox(os.path.join(BIREF, SLIDER + ".png"))
+            if sbb:
+                vert = bool(r.get("vertical"))
+                grooveCross = dev[2] * PW3 if vert else dev[3] * PH3
+                thumbCross = sbb[0] if vert else sbb[1]
+                ratio = thumbCross / max(1.0, grooveCross)
+                flag = not (SLIDER_CROSS_LO <= ratio <= SLIDER_CROSS_HI)
+                r["spriteFit"] = {**(r.get("spriteFit") or {}), "thumbCrossRatio": round(ratio, 3), "flagThumb": flag}
+                print(f"  {SLIDER:8} groove-cross {grooveCross:.0f}px vs thumb-cross {thumbCross}px "
+                      f"ratio={ratio:.2f}  {'FAIL - thumb size mismatch' if flag else 'ok'}")
+                if flag: sprite_fit_flagged.append(SLIDER)
 
 # ---- TEMPLATE-DRIFT GATE (templated mode only) ----
 # Per-control drift: distance (px, on THIS skin's own paint.png pixel grid) between the
@@ -952,15 +1164,21 @@ if leak_val is not None and leak_val > 0.003: reasons.append(f"leak={leak_val}")
 if ring_flagged: reasons.append("guide-ring:" + ",".join(ring_flagged))
 drift_fail = bool(drift_info and drift_info["mean_px"] > DRIFT_THRESH_PX)
 if drift_fail: reasons.append(f"drift:{drift_info['worst'][0]}")
+if baked_thumb_flagged: reasons.append("baked-thumb:" + ",".join(baked_thumb_flagged))
+if sprite_fit_flagged: reasons.append("sprite-fit:" + ",".join(sprite_fit_flagged))
+if orientation_flagged: reasons.append("orientation:device")
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "guide_ring": ring_flagged,
-        "region_degenerate": region_degenerate, "reasons": reasons,
+        "region_degenerate": region_degenerate,
+        "baked_thumb": baked_thumb_flagged, "sprite_fit": sprite_fit_flagged,
+        "orientation_ok": not orientation_flagged, "reasons": reasons,
         "PASS": (not empty_fail) and (not missing) and (not knob_tmpl) and (not region_misplaced)
                 and (not region_degenerate)
                 and (seek_cov is None or seek_cov >= 0.7)
                 and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
-                and (not TOGGLE or sa is None or sa_ok) and (not ring_flagged) and (not drift_fail)}
+                and (not TOGGLE or sa is None or sa_ok) and (not ring_flagged) and (not drift_fail)
+                and (not baked_thumb_flagged) and (not sprite_fit_flagged) and (not orientation_flagged)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate
 if drift_info is not None: R2["drift"] = drift_info
 json.dump(R2, open(os.path.join(OUT, "regions.json"), "w"), indent=2)
