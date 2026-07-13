@@ -1,0 +1,54 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Round 4 — out of the oven</title>
+<style>body{background:#0d0d10;color:#dfe2e8;font:14px/1.5 -apple-system,system-ui,sans-serif;margin:0;padding:20px;max-width:1500px;margin:auto}
+h1{font-size:18px}.sub{color:#8b90a0;font-size:13px;margin-bottom:14px;max-width:92ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.cell{background:#17171c;border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 0 0 1px #24242c;display:block}
+.cell:hover{box-shadow:0 0 0 1px #4a90d9}.imgwrap{aspect-ratio:3/4;background:#000;display:flex;align-items:center;justify-content:center}
+img{width:100%;height:100%;object-fit:contain}.cap{padding:8px 10px 2px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.badge{font-size:10px;font-weight:700;color:#0d0d10;padding:1px 7px;border-radius:6px;white-space:nowrap}.note{padding:0 10px 9px;font-size:11px;color:#c7ccd6;min-height:14px}</style>
+<h1>Round 4 — out of the oven · 5/14 clean, adjudicated</h1>
+<p class=sub>All 14 regenerated under the final architecture. Core features verified working on every skin (lit-icon buttons light · knob tick at 12 o'clock + rotates · seek clamps in-slot · shuffle a clean lit button). The gate/VLM "shuffle dead-control" flag is a SYSTEMATIC FALSE POSITIVE (verification tooling still tests shuffle as a toggle, not the button it now is) — disregard it. CLEAN = ship-ready · NEEDS = a real paint/extractor defect. Click a tile → live player.</p>
+<div class=grid><a class=cell href="/assets-wmp-quicksilver/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-wmp-quicksilver/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>wmp-quicksilver</b> <span class=badge style="background:#3ecf6a">CLEAN</span></div>
+      <div class=note></div></a><a class=cell href="/assets-diablo-gothic/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-diablo-gothic/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>diablo-gothic</b> <span class=badge style="background:#3ecf6a">CLEAN</span></div>
+      <div class=note>VLM flags refuted in real runtime</div></a><a class=cell href="/assets-n64-cutscene/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-n64-cutscene/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>n64-cutscene</b> <span class=badge style="background:#3ecf6a">CLEAN</span></div>
+      <div class=note>gate guide-ring = palette-collision false-pos; paint clean</div></a><a class=cell href="/assets-fallout-pipboy/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-fallout-pipboy/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>fallout-pipboy</b> <span class=badge style="background:#3ecf6a">CLEAN</span></div>
+      <div class=note>VLM flags refuted; minor decorative dial is theme</div></a><a class=cell href="/assets-fallout-vault/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-fallout-vault/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>fallout-vault</b> <span class=badge style="background:#3ecf6a">CLEAN</span></div>
+      <div class=note>cleanest — all 9 controls alive</div></a><a class=cell href="/assets-myst-arcanum/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-myst-arcanum/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>myst-arcanum</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>vol knob FIXED ✓ but baked 'EMPTY' text + phantom pearl button → re-roll</div></a><a class=cell href="/assets-fa-pod/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-fa-pod/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>fa-pod</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>phantom 4th shuffle button (paint) → re-roll</div></a><a class=cell href="/assets-wmp-vario/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-wmp-vario/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>wmp-vario</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>duplicate queue/repeat + phantom loop + album_art mis-map → re-roll</div></a><a class=cell href="/assets-fa-sky/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-fa-sky/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>fa-sky</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>templateless layout collapse → re-roll/reconsider</div></a><a class=cell href="/assets-ps1-crunchy/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-ps1-crunchy/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>ps1-crunchy</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>queue+vol WORK, but phantom empty socket regressed → re-roll</div></a><a class=cell href="/assets-claymation/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-claymation/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>claymation</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>palette FIXED (not muddy) ✓ but missing queue; roll2 = Vertex-429 → re-roll</div></a><a class=cell href="/assets-wc-goldshield/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-wc-goldshield/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>wc-goldshield</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>album_art onto buttons + baked runic text (outline-arm) → fix+re-roll</div></a><a class=cell href="/assets-steam-porthole/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-steam-porthole/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>steam-porthole</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>outline-arm ring-residue emptiness (both rolls) → outline weakness</div></a><a class=cell href="/assets-biomech-giger/player.html" target=_blank>
+      <div class=imgwrap><img loading=lazy src="/assets-biomech-giger/observe/full.png?v=1783904001"></div>
+      <div class=cap><b>biomech-giger</b> <span class=badge style="background:#ffb454">NEEDS</span></div>
+      <div class=note>shuffle-trough gone ✓ but vol dark-on-dark extractor miss + no seek</div></a></div>
