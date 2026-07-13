@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gen12 — PRE-ROUND-4 human review</title>
+<style>
+  :root{
+    --bg:#0d0e12; --panel:#16181f; --panel2:#1c1f28; --line:#2b2e38;
+    --text:#e7e9f0; --muted:#9498a8; --accent:#5ae678; --bad:#ff6b6b;
+    --soft:#e6aa32; --link:#7db8ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    padding:0 0 80px}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+  header.top{padding:32px 20px 22px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#12141a,#0d0e12)}
+  h1{margin:0 0 8px;font-size:clamp(20px,3vw,28px);letter-spacing:-0.01em}
+  .status{color:var(--muted);font-size:14.5px}
+  .status b{color:var(--accent)}
+  .navrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .navrow a{color:var(--muted);text-decoration:none;font-size:12.5px;border:1px solid var(--line);
+    padding:5px 10px;border-radius:20px;background:#161822}
+  .navrow a:hover{color:var(--text);border-color:#3a3e4a}
+
+  section{margin:34px 0;padding:22px 22px 24px;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px}
+  section > h2{margin:0 0 4px;font-size:19px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  section > h2 .n{color:var(--muted);font-weight:500;font-size:13.5px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+
+  .item{border-top:1px solid var(--line);padding:16px 0}
+  .item:first-of-type{border-top:none;padding-top:4px}
+  .item h3{margin:0 0 5px;font-size:15px}
+  .item p.what{margin:2px 0 6px;color:var(--text)}
+  .item p.why{margin:0 0 10px;color:var(--muted);font-size:13.5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}
+
+  a.live{display:inline-flex;align-items:center;gap:6px;background:#1a2e1e;border:1px solid #2e5a3a;
+    color:var(--accent);padding:6px 12px;border-radius:8px;font-size:13px;text-decoration:none;font-weight:600}
+  a.live:hover{background:#1f3a26}
+  a.live::before{content:"● LIVE";font-size:9.5px;letter-spacing:.04em;opacity:.75;margin-right:1px}
+  a.filelink{display:inline-flex;align-items:center;gap:6px;background:#1a222e;border:1px solid #2e4a5a;
+    color:#7db8ff;padding:6px 12px;border-radius:8px;font-size:13px;text-decoration:none;font-weight:600}
+  a.filelink:hover{background:#1f3040}
+  a.filelink::before{content:"FILE";font-size:9.5px;letter-spacing:.04em;opacity:.75}
+  a.doclink{color:var(--link);text-decoration:none;border-bottom:1px dotted var(--link);font-size:13px}
+  a.doclink:hover{border-bottom-style:solid}
+  .commit{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+    background:#20232c;color:#8fd48f;padding:1px 6px;border-radius:4px}
+  .commit2{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+    background:#20232c;color:#8fd48f;padding:1px 6px;border-radius:4px;margin-left:2px}
+  .badge{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:20px;
+    background:#20232c;color:var(--muted);border:1px solid var(--line);}
+  .badge.hl{color:var(--accent);border-color:#2e5a3a}
+  .badge.open{color:var(--bad);border-color:#5a2e2e}
+  .badge.soft{color:var(--soft);border-color:#5a4a1a}
+
+  .thumbrow{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 4px}
+  .thumbrow a{display:block;border:1px solid var(--line);border-radius:8px;overflow:hidden;
+    text-decoration:none;color:var(--muted);background:#000;width:220px}
+  .thumbrow img{display:block;width:100%;height:140px;object-fit:cover}
+  .thumbrow .cap{padding:6px 8px;font-size:11px;color:var(--muted)}
+  .thumbrow .cap.fail{color:var(--bad)}
+  .thumbrow .cap.pass{color:var(--accent)}
+
+  .tablewrap{overflow-x:auto;margin:10px 0}
+  table{border-collapse:collapse;width:100%;margin:0;font-size:13px;min-width:480px}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+  th{background:#20232c;color:#c9cdd9;font-weight:600}
+  tr:nth-child(even) td{background:#191b22}
+  code{background:#20232c;padding:1px 6px;border-radius:4px;font-size:12px;color:#c9cdd9}
+  ul.tight{margin:8px 0;padding-left:22px}
+  ul.tight li{margin:5px 0}
+  .quote{font-style:italic;color:#c9cdd9}
+
+  .rulebox{border-top:1px solid var(--line);padding:12px 0;font-size:13.5px}
+  .rulebox:first-of-type{border-top:none}
+  .rulebox b{color:var(--text)}
+  .rulebox .commit{margin-left:4px}
+
+  #decisions{background:linear-gradient(155deg,#231a15,#16181f 55%);border-color:#5a4a2e}
+  #decisions h2{color:var(--soft)}
+  .decision{border:1px solid #3a3220;background:#1c1912;border-radius:10px;padding:14px 16px;margin:12px 0}
+  .decision .q{font-weight:700;color:var(--soft);margin:0 0 6px}
+  .decision .opts{color:var(--muted);font-size:13px}
+
+  #readiness{background:linear-gradient(155deg,#152318,#16181f 55%);border-color:#2e5a3a}
+  #readiness h2{color:var(--accent)}
+  .scorecard{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:14px 0}
+  .score{border:1px solid var(--line);background:#141620;border-radius:10px;padding:10px 12px;font-size:13px}
+  .score .k{color:var(--muted);display:block;font-size:11.5px;margin-bottom:3px}
+  .score.pass{border-color:#2e5a3a}
+  .score.open{border-color:#5a2e2e}
+
+  @media (max-width:640px){
+    section{padding:16px 14px 18px;border-radius:10px}
+    table{font-size:11.5px}
+    th,td{padding:5px 6px}
+    .thumbrow a{width:calc(50% - 6px)}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <h1>gen12 — PRE-ROUND-4 human review</h1>
+    <div class="status">2026-07-12 · every link below is <b>curl-verified live (200)</b> against this same running server (<code>:8899</code>) before this page was committed. Click through — don't take the table's word for it.</div>
+    <div class="navrow">
+      <a href="#a">A · Stateful icon buttons</a>
+      <a href="#b">B · Pipeline fixes</a>
+      <a href="#c">C · Erase model</a>
+      <a href="#d">D · Director / aesthetics</a>
+      <a href="#e">E · Per-skin fixes</a>
+      <a href="#f">F · Index / verdicts</a>
+      <a href="#g">G · Rules codified</a>
+      <a href="#decisions">Open decisions</a>
+      <a href="#readiness">Round-4 readiness</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- A. STATEFUL ICON BUTTONS -->
+<section id="a">
+  <h2>A · Stateful lit-icon buttons <span class="n">— the headline pivot: shuffle retired, no physical switch</span></h2>
+  <p class="sub">Buttons that light their own glyph on state change (shuffle/repeat/play-pause), masked and pixel-registered to the painted icon — replacing the earlier "swap a physical switch sprite" direction entirely.</p>
+
+  <div class="item">
+    <h3>Lit-icon glyphs ported into the mainline player</h3>
+    <p class="what">Shuffle / repeat / play-pause light their own glyph when toggled — masked to just the icon (not a rim/ring), deterministic pixel registration between mask and paint.</p>
+    <p class="why">Replaces the earlier fixed-offset device/maskDevice hack that drifted whenever mask and paint disagreed on icon position.</p>
+    <div class="meta">
+      <span class="commit">a1a95228</span>
+      <a class="live" href="http://localhost:8899/assets-wmp-vario/player.html" target="_blank">assets-wmp-vario/player.html — toggle shuffle/repeat/play to see it light</a>
+      <a class="live" href="http://localhost:8899/icon-state-proto.html" target="_blank">icon-state-proto.html — clearest isolated proto</a>
+    </div>
+  </div>
+
+  <div class="item">
+    <h3>Shuffle converted from switch to icon button</h3>
+    <p class="what">Shuffle is now a 6th icon button — crossed-arrows glyph baked directly into the blueprint + mask by genskin, dropped entirely from the physical-switch strip. No switch slot to align, no housing to fake.</p>
+    <p class="why">Kills the switch-slot proportion mismatch that was the dominant round-3 rejection reason for shuffle specifically, by removing the physical control instead of trying to fit it better.</p>
+    <div class="meta">
+      <span class="commit">d79a3044</span> genskin bake
+      <span class="commit2">e2339ce0</span> extract12 seam close (also fixed a latent BiRefNet-parts gate bug)
+      <a class="live" href="http://localhost:8899/assets-shuffle-btn-verify/player.html" target="_blank">assets-shuffle-btn-verify/player.html</a>
+    </div>
+  </div>
+
+  <div class="item">
+    <h3>Knob 0° tick — lit, rotation-tracking, from the painted dimple</h3>
+    <p class="what">The knob's indicator tick is placed from where the model actually painted a dimple/mark, not an assumed fixed angle — and it lights and tracks rotation as you drag.</p>
+    <p class="why">An assumed position drifts on any knob whose cap isn't perfectly symmetric; reading the real paint is the material-agnostic fix per <code>placement-invariants-rule</code>.</p>
+    <div class="meta">
+      <span class="commit">b42403f1</span>
+      <a class="live" href="http://localhost:8899/assets-glyphtest12/player.html" target="_blank">assets-glyphtest12/player.html — drag the knob</a>
+    </div>
+  </div>
+
+  <div class="item">
+    <h3>genskin now bakes glyphs + tick into the mask reliably</h3>
+    <p class="what">Both the icon-button glyphs and the knob tick are baked into the generated mask by the paint call itself, de-risked across <b>15/15</b> diverse themes (not a hand-authored overlay).</p>
+    <p class="why">A pipeline-level fix (per <code>fix-generalizable-rule</code>) — every future generation gets glyph+tick masking for free instead of needing a per-skin patch.</p>
+    <div class="meta">
+      <span class="commit">a9bbba20</span>
+      <a class="live" href="http://localhost:8899/assets-glyphtest12/mask.png" target="_blank">mask.png</a>
+      <a class="live" href="http://localhost:8899/assets-glyphtest12/paint.png" target="_blank">paint.png</a>
+    </div>
+  </div>
+</section>
+
+<!-- B. PIPELINE CORRECTNESS FIXES -->
+<section id="b">
+  <h2>B · Pipeline correctness fixes <span class="n">— generalizable, not per-skin patches</span></h2>
+  <p class="sub">Per <code>fix-generalizable-rule</code>: every fix below lives in the shared extractor/player, so it improves every skin, not just the one that surfaced it.</p>
+
+  <div class="item">
+    <h3>Seek-slider overshoot fixed</h3>
+    <p class="what">CSS thumb/track no longer overshoots the painted groove — removed a double travel-padding stack and added a hard clamp at the single point every consumer reads <code>travel</code> from.</p>
+    <p class="why">This was the #1 round-3 rejection reason, cited on nearly every reviewed skin ("CSS OUTSIDE SLOT").</p>
+    <div class="meta">
+      <span class="commit">0d750450</span>
+      <a class="live" href="http://localhost:8899/slider-fix-proof.html" target="_blank">slider-fix-proof.html — embeds the live fixed player, drag it</a>
+    </div>
+  </div>
+
+  <div class="item">
+    <h3><code>detect_bbox()</code> wrong-slot fix</h3>
+    <p class="what">Erase-target bbox detection no longer collapses knob defects into garbage slivers when the wrong slot is nearby.</p>
+    <div class="meta"><span class="commit">0c43bbb1</span></div>
+  </div>
+
+  <div class="item">
+    <h3>Player crash-proofing — one missing control can't kill the whole player</h3>
+    <p class="what">A control that fails to extract/register no longer takes down the entire rendered player; it degrades to a missing widget instead of a blank page.</p>
+    <div class="meta"><span class="commit">5cc5db18</span></div>
+  </div>
+
+  <div class="item">
+    <h3>bug2 gate-hardening</h3>
+    <p class="what"><code>sprite-fit:shuffle</code> gate now branches on <code>regions.json</code>'s actual data shape (track-lever vs. legacy) to match what <code>build_player.py</code> expects — a robustness fix, not a behavior regression.</p>
+    <div class="meta"><span class="commit">1e6a67a7</span></div>
+  </div>
+
+  <div class="item">
+    <h3><code>roleOverrides</code> escape hatch for no-guide-color controls</h3>
+    <p class="what">When guide-colour blob matching can't find a control (zero guide-colour pixels — e.g. a hallucinated ungated button), <code>results.json</code> can now carry an explicit <code>roleOverrides</code> device rect + reason, applied after normal guide-colour matching.</p>
+    <p class="why">Same commit also lands the concrete ps1-crunchy fix this generalized (see §E).</p>
+    <div class="meta">
+      <span class="commit">47eee3be</span>
+      <a class="live" href="http://localhost:8899/assets-ps1-crunchy/player.html" target="_blank">assets-ps1-crunchy/player.html</a>
+    </div>
+  </div>
+</section>
+
+<!-- C. ERASE MODEL DECISION -->
+<section id="c">
+  <h2>C · Erase model decision <span class="n">— ~6× cheaper than the old default</span></h2>
+  <p class="sub">Full 5-arm bake-off method + tables live on <a class="doclink" href="http://localhost:8899/consolidation.html" target="_blank">consolidation.html</a> (round-3 dashboard) — summarized here for round-4 sign-off.</p>
+
+  <div class="item">
+    <h3>Shipped: Gemini 2.5 Flash → GPT Image 2 fallback chain</h3>
+    <p class="what"><code>ERASE_MODEL_CHAIN</code> replaces the old Vertex-only default. Winning arm: gemini-2.5-flash 4/4 clean on every genuine groove (incl. ornate rune-glow) @ $0.039/call; gpt-image-2 fallback 3/4 + 1 soft @ $0.0548/call.</p>
+    <div class="meta">
+      <span class="commit">fcab53d4</span>
+      <a class="live" href="http://localhost:8899/inpaintbake/arm5/index.html" target="_blank">inpaintbake/arm5/index.html — deciding arm</a>
+      <a class="live" href="http://localhost:8899/inpaintbake/index.html" target="_blank">arm 1</a>
+      <a class="live" href="http://localhost:8899/inpaintbake/slotwide/index.html" target="_blank">arm 2</a>
+      <a class="live" href="http://localhost:8899/inpaintbake/editors/index.html" target="_blank">arm 3</a>
+      <a class="live" href="http://localhost:8899/inpaintbake/arm4/index.html" target="_blank">arm 4</a>
+    </div>
+  </div>
+
+  <div class="item">
+    <h3>Director-gated optional stages</h3>
+    <p class="what">Per-skin director now decides whether erase / director_review are worth running at all, instead of always running both — flagged off by default (<code>DIRECTOR_GATES_OPTIONAL_STAGES</code>).</p>
+    <div class="meta"><span class="commit">96e83379</span></div>
+  </div>
+</section>
+
+<!-- D. DIRECTOR / AESTHETICS -->
+<section id="d">
+  <h2>D · Director / aesthetics <span class="n">— color-quality gating</span></h2>
+
+  <div class="item">
+    <h3>Director color-quality gates: muddy-palette + accent-contrast</h3>
+    <p class="what">The director pass now gates on two new checks — a muddy/desaturated-palette detector and an accent-contrast floor — before accepting a generation.</p>
+    <p class="why">Claymation's palette was visibly muddy; direct before/after comparison confirms the fix (not a re-measurement with the same detector — independent visual check per <code>verify-outputs-rule</code> §2).</p>
+    <div class="meta">
+      <span class="commit">b76aec6a</span>
+      <a class="filelink" href="file:///Users/conner/Desktop/cc-skeuo/2026-07-12-claymation-palette-OLD-muddy.png" target="_blank">BEFORE — muddy</a>
+      <a class="filelink" href="file:///Users/conner/Desktop/cc-skeuo/2026-07-12-claymation-palette-NEW-fixed.png" target="_blank">AFTER — fixed</a>
+    </div>
+  </div>
+</section>
+
+<!-- E. PER-SKIN FIXES -->
+<section id="e">
+  <h2>E · Per-skin fixes <span class="n">— each still routed through the shared pipeline</span></h2>
+
+  <div class="item">
+    <h3>ps1-crunchy — queue button + phantom duplicate fixed</h3>
+    <p class="what">The oval queue button (previously undetected — zero guide-colour pixels, an ungated hallucinated shape) is now correctly detected via <code>roleOverrides</code> and opens the queue overlay; the phantom duplicate repeat-icon button is gone.</p>
+    <div class="meta">
+      <span class="commit">47eee3be</span>
+      <a class="live" href="http://localhost:8899/assets-ps1-crunchy/player.html" target="_blank">assets-ps1-crunchy/player.html — click the oval queue button</a>
+    </div>
+  </div>
+
+  <div class="item">
+    <h3>myst-arcanum — crash cause fixed generically, skin itself flagged for regen</h3>
+    <p class="what">The round-3 page-load crash (missing-control → whole-player crash) is fixed generically by §B's player crash-proofing; myst-arcanum's player now loads without crashing. The skin's own content (why a control was missing in the first place) is <b>still flagged for regen</b>, not yet re-rolled.</p>
+    <div class="meta">
+      <span class="commit">5cc5db18</span>
+      <a class="live" href="http://localhost:8899/assets-myst-arcanum/player.html" target="_blank">assets-myst-arcanum/player.html — loads now, still needs a content regen</a>
+      <span class="badge open">regen pending</span>
+    </div>
+  </div>
+</section>
+
+<!-- F. INDEX / VERDICTS -->
+<section id="f">
+  <h2>F · Index / verdicts</h2>
+
+  <div class="item">
+    <h3>Interactive skins gallery</h3>
+    <p class="what">Click any thumbnail to open its live player inline — the canonical browse-all view of the current roster, fixed slider live in every card.</p>
+    <div class="meta">
+      <span class="commit">66fe2784</span>
+      <a class="live" href="http://localhost:8899/skins-gallery.html" target="_blank">skins-gallery.html</a>
+    </div>
+  </div>
+
+  <div class="item">
+    <h3>Consolidated verdicts doc</h3>
+    <p class="what">Full write-up of the erase-model bake-off + seek-slider fix, method and tables, referenced throughout §C above.</p>
+    <div class="meta">
+      <a class="filelink" href="file:///Users/conner/dev/skeuo-ui/docs/experiments/2026-07-12-erase-and-slider-verdicts.md" target="_blank">docs/experiments/2026-07-12-erase-and-slider-verdicts.md</a>
+      <a class="live" href="http://localhost:8899/consolidation.html" target="_blank">consolidation.html — round-3 dashboard (superseded by this page for round-4)</a>
+      <a class="live" href="http://localhost:8899/review-round3.html" target="_blank">review-round3.html — the raw round-3 human verdicts</a>
+    </div>
+  </div>
+</section>
+
+<!-- G. RULES CODIFIED -->
+<section id="g">
+  <h2>G · Rules codified <span class="n">— central, this session</span></h2>
+  <p class="sub">No live links needed — these are process guardrails added to <code>central/rules/</code> so the mistakes below don't recur.</p>
+
+  <div class="rulebox">
+    <b>no-rim-lighting-rule</b> <span class="commit">98041221</span> — bans decorative rim/glow rings on UI controls; a lit control lights only its own glyph/mark, never an added ring around it. Written after the lit-icon prototypes kept drifting toward "add a rim glow" as the easy-looking fix.
+  </div>
+  <div class="rulebox">
+    <b>fal-discovery-unreliable</b> (fal skill update) <span class="commit">a04c7bbb</span> — warns that <code>search_models</code>/<code>search_docs</code> on the fal MCP can return false-negative results; don't conclude "fal can't do X" from one or two searches coming up empty.
+  </div>
+  <div class="rulebox">
+    <b>verify-link-live</b> (review-rule update) <span class="commit">6846884c</span> — never surface a served-page link before confirming it's actually live (the discipline this exact review page was built under).
+  </div>
+</section>
+
+<!-- OPEN DECISIONS -->
+<section id="decisions">
+  <h2>Open decisions <span class="n">— need your call before Round 4 starts</span></h2>
+
+  <div class="decision">
+    <div class="q">1 · Director-gated erase — ON for Round 4?</div>
+    <div class="opts">§C's <code>DIRECTOR_GATES_OPTIONAL_STAGES</code> ships flagged <b>off</b> by default. Turning it on lets the director skip erase/director_review on skins it judges don't need them — saves spend, but is unverified at scale (only exercised in the bake-off, not a full round). Ship on or stay off for round 4?</div>
+  </div>
+
+  <div class="decision">
+    <div class="q">2 · Blueprint <code>outline</code> arm — coverage across diverse skins?</div>
+    <div class="opts">The bake-off's outline-prompt arm was evaluated on a narrow skin set. Before trusting it as a default across the full diverse roster (dark-on-dark, metallic, vivid-body themes), does it need a broader coverage pass, or is the existing evidence enough to fold in?</div>
+  </div>
+</section>
+
+<!-- READINESS -->
+<section id="readiness">
+  <h2>Round-4 readiness</h2>
+  <p class="sub">What's locked vs. what round-4 review still needs to catch, per <code>skin-observation-rule</code> / <code>sota-eye-review-rule</code> — every skin still needs its own per-control human check, this page only proves the pipeline-level fixes are live.</p>
+
+  <div class="scorecard">
+    <div class="score pass"><span class="k">LOCKED</span>Seek-slider overshoot — 0px on all 5 previously-flagged skins</div>
+    <div class="score pass"><span class="k">LOCKED</span>Shuffle → icon button — no switch slot to misalign</div>
+    <div class="score pass"><span class="k">LOCKED</span>Erase model — gemini-2.5-flash primary, 4/4 clean, ~6× cheaper</div>
+    <div class="score pass"><span class="k">LOCKED</span>Player crash-proofing — one missing control can't kill the page</div>
+    <div class="score pass"><span class="k">LOCKED</span>ps1-crunchy queue button — detected + correct, phantom gone</div>
+    <div class="score pass"><span class="k">LOCKED</span>Claymation palette — muddy fix confirmed by direct visual compare</div>
+    <div class="score open"><span class="k">GOING INTO ROUND 4</span>myst-arcanum needs a content regen (loads now, control still missing)</div>
+    <div class="score open"><span class="k">GOING INTO ROUND 4</span>Shuffle-glyph only lights correctly <b>post-regen</b> — existing baked skins won't show it until re-rolled</div>
+    <div class="score open"><span class="k">GOING INTO ROUND 4</span>Every skin still needs its own per-control human check — this page verifies the pipeline, not each rendered skin</div>
+    <div class="score open"><span class="k">OPEN DECISION</span>Director-gated erase on/off — see above</div>
+    <div class="score open"><span class="k">OPEN DECISION</span>Blueprint outline-arm coverage — see above</div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
