@@ -1,0 +1,77 @@
+{
+ "note": "pixel placements for switch-slot-compare.html; all in native paint-pixel space",
+ "a": {
+  "backdrop": "switchslot-compare/clean-backdrop.png",
+  "crop_size": [
+   1245,
+   1113
+  ],
+  "housing_mask": "switchslot-compare/a-housing-mask.png",
+  "rim_mask": "switchslot-compare/a-rim-mask.png",
+  "housing_size": [
+   809,
+   436
+  ],
+  "housing_pos": [
+   218,
+   339
+  ],
+  "lever": "switchslot-compare/lever-sprite.png",
+  "lever_size": [
+   683,
+   310
+  ],
+  "lever_pos": [
+   281,
+   402
+  ],
+  "travel_x": [
+   -188,
+   220
+  ]
+ },
+ "b": {
+  "backdrop": "switchslot-compare/b-backdrop.png",
+  "crop_size": [
+   1245,
+   1113
+  ],
+  "lever": "switchslot-compare/lever-sprite.png",
+  "lever_size": [
+   683,
+   310
+  ],
+  "lever_pos": [
+   281,
+   402
+  ],
+  "travel_x": [
+   -188,
+   220
+  ]
+ },
+ "c": {
+  "backdrop": "switchslot-compare/c-backdrop.png",
+  "crop_size": [
+   1215,
+   1641
+  ],
+  "lever": "switchslot-compare/lever-sprite.png",
+  "lever_size": [
+   743,
+   188
+  ],
+  "lever_pos": [
+   219,
+   778
+  ],
+  "travel_x": [
+   -205,
+   239
+  ],
+  "_measured_scale_correction_xy": [
+   1.088,
+   0.608
+  ]
+ }
+}

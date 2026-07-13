@@ -54,6 +54,10 @@ BLUEPRINT_TRIAL_ENABLED = True
 # the arm the A/B already showed weaker); 'outline' stays in rotation because the user isn't yet
 # convinced it's categorically worse, just that it lost the small abshape sample.
 BLUEPRINT_ARM_WEIGHTS = [("solid", 0.75), ("outline", 0.25)]
+# Round-4: force the 'outline' arm on 4 diverse TEMPLATED materials so the longitudinal trial's
+# outline arm (only ~fallout-pipboy so far) finally becomes evaluable across brass/gold/mono/FA.
+# (templateless skins have no guide pixels — the arm is a no-op there, so these are all templated.)
+FORCE_OUTLINE_ARM = {"steam-porthole", "wc-goldshield", "fallout-pipboy", "fa-pod"}
 
 # BLUEPRINT_TWOIMG: two-image conditioning (clean guide-pixel-free edit canvas + the colour-keyed
 # layout drawn as a SEPARATE reference image) — the twoimg/ experiment FALSIFIED this as a bleed
@@ -993,7 +997,8 @@ def main():
 
     # -------- blueprint conditioning: trial arm draw (solid/outline) + twoimg mode --------
     # arm draw only applies to templated mode (templateless has no guide pixels to vary — untouched).
-    trial_arm = pick_blueprint_arm(seed) if (mode == "templated" and BLUEPRINT_TRIAL_ENABLED) else "solid"
+    trial_arm = (("outline" if sid in FORCE_OUTLINE_ARM else pick_blueprint_arm(seed))
+                 if (mode == "templated" and BLUEPRINT_TRIAL_ENABLED) else "solid")
     use_twoimg = mode == "templated" and (BLUEPRINT_TWOIMG or spec.get("conditioning") == "twoimg")
     conditioning = "twoimg" if use_twoimg else trial_arm
 

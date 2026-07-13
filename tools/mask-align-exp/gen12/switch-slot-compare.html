@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>switch-slot-compare — fallout-pipboy toggle housing, 3 ways</title>
+<style>
+  :root{
+    --bg:#15161a; --panel:#1d1f26; --panel2:#24262f; --line:#33353f;
+    --text:#e8e9ee; --muted:#9a9dab; --accent:#5ae678; --accent2:#e6aa32;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    padding:28px 20px 60px;}
+  .wrap{max-width:1400px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 6px;}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 4px;max-width:80ch;}
+  .costband{display:flex;flex-wrap:wrap;gap:8px 18px;margin:16px 0 28px;padding:12px 16px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;font-size:13px;
+    color:var(--muted);}
+  .costband b{color:var(--text);}
+  .costband .total{margin-left:auto;color:var(--accent);font-weight:600;}
+  .grid{display:flex;flex-wrap:wrap;gap:22px;}
+  .card{flex:1 1 380px;min-width:300px;max-width:520px;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;}
+  .card h2{font-size:15px;margin:0;padding:14px 16px 4px;display:flex;align-items:baseline;gap:8px;}
+  .card h2 .letter{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;
+    background:var(--accent2);color:#1a1400;font-weight:800;font-size:13px;}
+  .card .desc{padding:0 16px 12px;color:var(--muted);font-size:12.5px;}
+  .card .desc .cost{color:var(--accent);font-weight:600;}
+  .stage{position:relative;width:100%;overflow:hidden;background:#0c0d10;cursor:pointer;
+    user-select:none;}
+  .stage img.bg{display:block;width:100%;height:auto;}
+  .overlay{position:absolute;transform-origin:center center;}
+  .a-housing{position:absolute;
+    background:radial-gradient(ellipse at 35% 30%,#3a3c30 0%,#111208 70%,#050502 100%);
+    -webkit-mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-repeat:no-repeat;mask-size:100% 100%;
+    box-shadow:inset 0 6px 14px rgba(0,0,0,.75);}
+  .a-rim{position:absolute;
+    background:linear-gradient(155deg,#e7e9dd 0%,#9a9c8c 45%,#6c6e5e 100%);
+    -webkit-mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-repeat:no-repeat;mask-size:100% 100%;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.5));}
+  .lever{position:absolute;background-repeat:no-repeat;background-size:100% 100%;
+    transition:transform .32s cubic-bezier(.32,1.32,.55,1), filter .32s;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,.75));}
+  .lever:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;}
+  .lever.on{filter:drop-shadow(0 0 7px #6eff8ccc) drop-shadow(0 2px 5px rgba(0,0,0,.75));}
+  .studio-tag{position:absolute;top:8px;right:8px;font-size:9.5px;letter-spacing:.02em;
+    background:rgba(0,0,0,.55);color:#cfd2df;padding:3px 7px;border-radius:5px;
+    border:1px solid rgba(255,255,255,.12);pointer-events:none;}
+  .hint{padding:10px 16px 16px;color:var(--muted);font-size:12px;display:flex;
+    justify-content:space-between;gap:10px;align-items:center;}
+  .hint kbd{background:#000;border:1px solid var(--line);border-radius:4px;padding:1px 6px;
+    font-size:11px;color:var(--text);}
+  .state-badge{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel2);
+    border:1px solid var(--line);color:var(--muted);}
+  .state-badge.on{color:var(--accent);border-color:#2c4a34;}
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);}
+  footer h3{font-size:15px;margin:0 0 8px;}
+  footer p, footer li{color:var(--muted);font-size:13px;}
+  footer code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px;}
+  .verdict{margin-top:22px;padding:16px 18px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:10px;}
+  .verdict h3{margin-top:0;color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Switch-slot housing — 3 treatments, one skin (fallout-pipboy)</h1>
+  <p class="sub">The toggle is a TOGGLE_TRACK_ENABLED two-detent lever. The baked track/housing
+    the model paints is reliably a generic pill, even when the loose lever sprite gets a fun,
+    non-pill silhouette (confirmed below on the actual generation) — the two never visually
+    match. This page compares three ways to make the housing match the lever's own shape.
+    Click any switch to toggle it.</p>
+
+  <div class="costband" id="costband">loading cost band…</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="letter">A</span> Render-time socket ($0)</h2>
+      <div class="desc">Dilate the lever sprite's own alpha silhouette a few px, render the
+        housing as a CSS inner-shadow recess + rim highlight clipped to that dilated shape.
+        <span class="cost">$0.00 — deterministic, no generation.</span></div>
+      <div class="stage" id="stage-a">
+        <span class="studio-tag">studio overlay: none — this IS the composited artifact</span>
+      </div>
+      <div class="hint"><span>click switch, or <kbd>Tab</kbd>+<kbd>Enter</kbd></span>
+        <span class="state-badge" id="badge-a">OFF</span></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="letter">B</span> Inpainted housing (~$0.04)</h2>
+      <div class="desc">Mask = the same dilated silhouette. Carved into the EXISTING paint via
+        <code>fal-ai/gemini-25-flash-image/edit</code> (Nano Banana), same lever on top.
+        <span class="cost">~$0.04/edit call.</span></div>
+      <div class="stage" id="stage-b">
+        <span class="studio-tag">studio overlay: none — this IS the composited artifact</span>
+      </div>
+      <div class="hint"><span>click switch, or <kbd>Tab</kbd>+<kbd>Enter</kbd></span>
+        <span class="state-badge" id="badge-b">OFF</span></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="letter">C</span> Baked shaped housing (~$0.24)</h2>
+      <div class="desc">genskin.py's toggle prompt edited so housing + lever are generated
+        together, same silhouette family, in ONE paint call (fresh regen, real Vertex pricing).
+        <span class="cost">~$0.24/regen (Vertex 4K tier — see cost band).</span></div>
+      <div class="stage" id="stage-c">
+        <span class="studio-tag">studio overlay: none — this IS the composited artifact</span>
+      </div>
+      <div class="hint"><span>click switch, or <kbd>Tab</kbd>+<kbd>Enter</kbd></span>
+        <span class="state-badge" id="badge-c">OFF</span></div>
+    </div>
+  </div>
+
+  <footer>
+    <h3>Method notes</h3>
+    <ul>
+      <li>All three variants render the exact SAME lever sprite
+        (<code>switchslot-compare/lever-sprite.png</code>, cut from the shapematch regen's strip)
+        — the only variable across cards is HOW the housing was produced. This was a deliberate
+        substitution: the mainline baseline's own lever cut turned out to be a plain rounded-rect
+        at the alpha-silhouette level (its "grip end" was surface shading only, not a true
+        silhouette bump — column-height profiling showed &lt;3px variation across 90% of its
+        width) — dilating it would have just produced another pill. The shapematch lever has a
+        genuine dogbone/keyhole silhouette (height dips ~44% at the waist), so it drives A and B
+        too, keeping the comparison meaningful.</li>
+      <li>A and B share the same starting backdrop: <code>assets-fallout-pipboy-tt-baseline</code>
+        (a fresh mainline TOGGLE_TRACK_ENABLED regen — pill housing + separately-cut fun lever,
+        i.e. the CURRENT default architecture and exactly the mismatch this page is about) with
+        its baked pill track erased via <code>erase12.erase_classical</code> (OpenCV Telea
+        inpaint, $0, visible as a soft blur under variant A where the CSS housing doesn't fully
+        cover it).</li>
+      <li>C is a full independent regen with genskin.py's toggle clauses edited to require the
+        housing and lever share one silhouette family — see the diff below. That edit is
+        UNCOMMITTED and flagged off by default.</li>
+    </ul>
+    <div class="verdict" id="verdict">
+      <h3>CONCLUSION / VERDICT</h3>
+      <p><b>VERDICT: C (baked, ~$0.24/regen) — RUNNER-UP: B (inpainted, ~$0.04/edit).</b>
+        Reviewed by <code>google/gemini-2.5-pro</code> via <code>openrouter/router/vision</code>
+        (~$0.034/call) on close-up ON/OFF crops of all three, cross-checked against direct pixel
+        inspection per verify-rule (the VLM is a witness, not the judge, on shape geometry).</p>
+      <p><b>C</b> — material/lighting are 100% consistent because the housing was generated in
+        the SAME paint call as the rest of the device (scratches, edge wear, rim bevel all match).
+        Best visual result, no artifacts, but needed a manual pixel-measured position correction
+        on this page: <code>extract12.py</code>'s track-walk (tuned for plain channels) under-
+        captured this dogbone housing's true width by ~13% and mis-centred it — a real,
+        generalizable finding: shipping this direction means also widening the walk's shape
+        assumptions, not just the prompt.</p>
+      <p><b>B</b> — genuinely strong for the price: the AI-inpainted recess reads as a real carved
+        dogbone socket with plausible depth and rim, correctly occludes the hazard stripe behind
+        it, and needed no manual position correction (it landed where the erased pill used to be).
+        Best cost/quality tradeoff of the three.</p>
+      <p><b>A</b> — the VLM overstated one claim (said the housing's silhouette "reads as a single
+        indistinct blob" with the waist "completely lost" — false on direct inspection, the dogbone
+        waist IS visible in the render, see the mask preview and the live page). The REAL weakness,
+        confirmed by looking directly: the recess reads as a flat CSS gradient with no metal
+        texture, and the erase-classical cleanup underneath left a visible soft blur that isn't
+        fully hidden by the rim. $0 and deterministic, but not shippable as-is without a better
+        recess material treatment (e.g. sample real nearby body texture into the mask instead of a
+        flat gradient) and a less lossy erase pass.</p>
+      <p><b>Recommendation:</b> if per-skin spend is acceptable, bake it (C) and fix the track-walk
+        width assumption in <code>extract12.py</code> so it generalizes past pill/channel shapes
+        (per <code>fix-generalizable-rule</code> — a pipeline fix, not a per-skin patch). If spend
+        must stay near-zero, B is the pragmatic middle: real generative quality at 6x less than a
+        full regen, reusable on any already-generated skin's existing paint. A is only worth
+        revisiting with a textured (not flat-gradient) recess material.</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+async function main(){
+  const data = await (await fetch('switchslot-compare/compare-data.json')).json();
+
+  const COSTS = {a:0, b:0.04, c:0.24};
+  const totalPaint = COSTS.a + COSTS.b + COSTS.c
+    + 0.24 /* baseline substrate regen, shared by A+B */ + 0.00 /* local BiRefNet mattes */;
+  document.getElementById('costband').innerHTML =
+    '<span><b>Models:</b> C paint = <code>gemini-3-pro-image-preview</code> via Vertex direct ' +
+    '($0.24 @4K tier); B edit = <code>fal-ai/gemini-25-flash-image/edit</code> (Nano Banana, ' +
+    '~$0.04); A = $0 CSS render; sprite mattes = local BiRefNet_HR, $0.</span>' +
+    '<span><b>Spend:</b> baseline substrate regen $0.24 + shapematch(C) regen $0.24 + B inpaint ' +
+    '$0.04 + A $0 = <b>$0.52</b> total for this whole experiment page.</span>' +
+    '<span class="total">~$0.52 total</span>';
+
+  function setupCard(key, opts){
+    const d = data[key];
+    const stage = document.getElementById('stage-' + key);
+    const [cw, ch] = d.crop_size;
+    stage.style.aspectRatio = cw + ' / ' + ch;
+
+    const bg = document.createElement('img');
+    bg.className = 'bg'; bg.src = d.backdrop; bg.alt = key + ' backdrop';
+    stage.appendChild(bg);
+
+    if (opts.renderHousing) {
+      const [hw, hh] = d.housing_size, [hx, hy] = d.housing_pos;
+      const housing = document.createElement('div');
+      housing.className = 'overlay a-housing';
+      housing.style.cssText += `left:${hx/cw*100}%;top:${hy/ch*100}%;width:${hw/cw*100}%;height:${hh/ch*100}%;`;
+      housing.style.webkitMaskImage = `url(${d.housing_mask})`;
+      housing.style.maskImage = `url(${d.housing_mask})`;
+      stage.appendChild(housing);
+      const rim = document.createElement('div');
+      rim.className = 'overlay a-rim';
+      rim.style.cssText += `left:${hx/cw*100}%;top:${hy/ch*100}%;width:${hw/cw*100}%;height:${hh/ch*100}%;`;
+      rim.style.webkitMaskImage = `url(${d.rim_mask})`;
+      rim.style.maskImage = `url(${d.rim_mask})`;
+      stage.appendChild(rim);
+    }
+
+    const [lw, lh] = d.lever_size, [lx, ly] = d.lever_pos;
+    const lever = document.createElement('div');
+    lever.className = 'overlay lever'; lever.tabIndex = 0; lever.setAttribute('role', 'switch');
+    lever.setAttribute('aria-checked', 'false');
+    lever.style.cssText += `left:${lx/cw*100}%;top:${ly/ch*100}%;width:${lw/cw*100}%;height:${lh/ch*100}%;`;
+    lever.style.backgroundImage = `url(${d.lever})`;
+    stage.appendChild(lever);
+
+    let on = false;
+    const badge = document.getElementById('badge-' + key);
+    const place = () => {
+      const tx = on ? d.travel_x[1] : d.travel_x[0];
+      lever.style.transform = `translateX(${tx / cw * 100}%)`;
+      lever.classList.toggle('on', on);
+      lever.setAttribute('aria-checked', on ? 'true' : 'false');
+      badge.textContent = on ? 'ON' : 'OFF';
+      badge.classList.toggle('on', on);
+    };
+    place();
+    const toggle = () => { on = !on; place(); };
+    stage.addEventListener('click', toggle);
+    lever.addEventListener('keydown', e => {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); toggle(); }
+    });
+  }
+
+  setupCard('a', {renderHousing: true});
+  setupCard('b', {renderHousing: false});
+  setupCard('c', {renderHousing: false});
+}
+main();
+</script>
+</body>
+</html>

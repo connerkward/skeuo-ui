@@ -220,7 +220,8 @@ shape in §1) &rarr; 1 model-edit call &nbsp;·&nbsp; est. <b>~$0.05–0.10</b><
 <tr><td>fallout-vault</td><td class=good>erased, clean</td><td>run_frac=0.081 peak=0.52 ok</td><td>1 + $0 pixel pass</td><td>~$0.05–0.10</td></tr>
 <tr><td>n64-cutscene</td><td class=good>erased, clean (2nd try)</td><td>run_frac=0.000 peak=1.38 ok</td><td>2</td><td>~$0.10–0.20</td></tr>
 <tr><td>wc-goldshield</td><td class=good>erased, clean</td><td>run_frac=0.000 peak=0.75 ok</td><td>1</td><td>~$0.05–0.10</td></tr>
-<tr><td>claymation</td><td class=warn>false positive — not touched</td><td>run_frac=0.147 peak=1.27 flag=true (disputed, §4)</td><td>0</td><td>$0</td></tr>
+<tr><td>claymation</td><td class=good>erased, clean (round 2)</td><td>emptiness gate: vol/seek/shuffle all ok, baked_thumb=[] (§4 — CORRECTED, was wrongly called a false positive)</td><td>1 (model+floor_darken)</td><td>~$0.05–0.10</td></tr>
+<tr><td>steam-porthole</td><td class=good>erased, clean (round 2)</td><td>emptiness gate: vol bright-interior 56.2%&rarr;0.0% ok (round-knob socket, not the seek groove — see §4b)</td><td>1 model-edit + manual circular-feather finishing pass ($0)</td><td>~$0.05–0.10</td></tr>
 <tr><td>fallout-pipboy</td><td class=warn>not reached this session</td><td>&mdash;</td><td>0</td><td>$0</td></tr>
 </table>
 <p class=figcap style="text-align:left">fallout-pipboy is the 6th skin named in the review round;
@@ -255,37 +256,91 @@ in <code>TODO.md</code> for anyone else extending <code>erase_model()</code>: a 
 does not mean the shape is right — look at the crop.</p>
 </div>
 
-<h2><span class=num>4</span>The one that wasn't broken — claymation</h2>
-<div class=falsepos>
-<p>The detector's candidate locator fired on claymation's groove too. Direct high-zoom inspection
-— both before and after attempting a fix — shows a genuinely EMPTY channel; the shape flagged is
-the groove's own raised clay-frame moulding (it continues past the crop edges as one continuous
-piece of material), not a separate baked thumb with its own closed silhouette like the four cases
-above.</p>
+<h2><span class=num>4</span>CORRECTED — claymation was NOT a false positive; the gate was right</h2>
+<div class=callout>
+<p><b>Round-2 human review (<code>review-2026-07-12-round2.json</code>) settled this:</b> the
+human explicitly flagged claymation with "baked slider knob," verbatim, gate reading
+<code>fail</code>. The §4 call below this box (kept for the record, struck through in spirit —
+not literally deleted, see note) that the earlier candidate was a false positive was <b>wrong</b>.
+Re-examining the SAME crop this session shows an unambiguous solid yellow-clay THUMB occupying
+the groove's right two-thirds, with a clean dark empty channel only at its left edge — not a
+"continuous moulding," a genuinely closed, separate baked part. Re-ran
+<code>erase12.py assets-claymation --control seek --method auto</code>: classical inpaint
+insufficient &rarr; model-edit + floor_darken finishing pass &rarr; clean. Post-erase
+<code>extract12.py</code>: <code>emptiness gate ok</code> (vol/seek/shuffle all 0.0%
+bright-interior), <code>baked_thumb=[]</code> (was <code>['seek']</code> pre-erase, run_frac=0.147
+peak=1.27). <b>Lesson for future erase12/gate work: trust the gate's own detector over an ad-hoc
+visual call that isn't looking closely enough — both detectors were right the first time.</b></p>
 <div class=imgrow>
-<figure><a href="assets-claymation/erase-verify/seek-dryrun-before.png" target=_blank>
-<img src="assets-claymation/erase-verify/seek-dryrun-before.png" loading=lazy
-alt="claymation groove crop: yellow clay frame moulding the detector flagged as a candidate bake, judged a false positive on inspection"></a>
-<div class=figcap>flagged candidate, left NOT erased — judged a false positive</div></figure>
+<figure><a href="assets-claymation/erase-verify/seek-20260712T015807-before.png" target=_blank>
+<img src="assets-claymation/erase-verify/seek-20260712T015807-before.png" loading=lazy
+alt="claymation groove before round-2 erase: a solid yellow-clay thumb clearly sitting in the groove, not a continuous moulding"></a>
+<div class=figcap class=bad>BEFORE — a real thumb, not a false positive</div></figure>
+<figure><a href="assets-claymation/erase-verify/seek-20260712T015807-after.png" target=_blank>
+<img src="assets-claymation/erase-verify/seek-20260712T015807-after.png" loading=lazy
+alt="claymation groove after round-2 erase: clean empty dark channel"></a>
+<div class=figcap class=good>AFTER — clean, empty, gate ok</div></figure>
 </div>
-<p><b>Worth flagging, not fully resolved:</b> <code>extract12.py</code>'s OWN <code>baked-thumb</code>
-gate agrees with the flag on this skin (<code>run_frac=0.147 peak=1.27 flag=true</code>) — a
-shared false-positive between both detectors on the same mid-groove highlight gradient. But that
-gate's own calibration comment (written 2026-07-11, before this session) lists claymation's
-<code>0.147</code> among its <b>confirmed true-positive</b> calibration examples, alongside
-fallout-vault and fallout-pipboy. This session's closer visual inspection disagrees with that
-older call. Neither is proven wrong here — this is an open discrepancy between an older
-calibration pass and this session's crop-level look, left for whoever owns
-<code>extract12.py</code>'s gate to resolve, not silently overridden.</p>
+</div>
+<div class=falsepos>
+<p><b>Original (round-1) call, kept for the record — this was the mistaken read:</b> "The
+detector's candidate locator fired on claymation's groove too. Direct high-zoom inspection —
+both before and after attempting a fix — shows a genuinely EMPTY channel; the shape flagged is
+the groove's own raised clay-frame moulding... not a separate baked thumb." <code>extract12.py</code>'s
+own <code>baked-thumb</code> gate agreed with the flag even then
+(<code>run_frac=0.147 peak=1.27 flag=true</code>) and was overridden by this (wrong) visual call
+instead of trusted. Round 2's human review — and a second, more careful look at the exact same
+crop — confirms the gate was right the whole time.</p>
+</div>
+
+<h2><span class=num>4b</span>Round 2 — steam-porthole's baked knob (a round socket, not a groove)</h2>
+<div class=callout>
+<p>Human round-2 note: "swapped knob and play button. still need to paint out baked slider knob."
+The swap (regions.json device-bbox reassignment) landed from a concurrent session before this
+pass; what remained was the <code>vol</code> control's ROUND socket showing a fully baked
+play/pause icon plate (triangle + pause bars engraved in brass) — <code>extract12.py</code>'s
+emptiness gate read <code>vol bright-interior 56.2% FAIL - baked part?</code>. This is the first
+ROUND-KNOB erase this tool has handled (every prior case was a linear seek groove).</p>
+<div class=imgrow>
+<figure><a href="assets-steam-porthole/erase-verify/vol-20260712T020125-before.png" target=_blank>
+<img src="assets-steam-porthole/erase-verify/vol-20260712T020125-before.png" loading=lazy
+alt="steam-porthole vol socket before erase: a fully baked round play/pause icon plate"></a>
+<div class=figcap class=bad>BEFORE — baked play/pause icon plate in the vol socket</div></figure>
+<figure><a href="assets-steam-porthole/erase-verify/vol-20260712T020125-after.png" target=_blank>
+<img src="assets-steam-porthole/erase-verify/vol-20260712T020125-after.png" loading=lazy
+alt="steam-porthole vol socket after erase and finishing pass: clean empty round socket"></a>
+<div class=figcap class=good>AFTER — clean empty socket (post finishing pass)</div></figure>
+</div>
+<p><b>A real bug in the tool's own geometry, caught and fixed:</b> <code>erase12.py</code>'s
+model-edit compositing blends a SQUARE crop back with a feathered square alpha ramp (built for
+elongated grooves, where the crop stays inside the groove's own housing). For a ROUND socket the
+square crop's CORNERS extend onto the surrounding brass, and the model's regenerated square did
+not exactly reproduce the original brass tone there — visible at normal zoom as a faint but real
+dark square halo bleeding outward from the circle onto the housing. <code>extract12.py</code>'s
+emptiness gate did not catch this (it only samples inside the device bbox), so "the gate passed"
+alone was not sufficient per this repo's own <code>verify-outputs-rule</code>. Fixed with a
+<b>$0 manual finishing pass</b>, not a further paid model call: re-composited the erased result
+against the git-committed pre-erase paint.png using a CIRCULAR feathered mask (radius =
+device-bbox radius &times; 1.05, 22px feather) centered on the knob instead of the square's
+rectangular one — restores the exact original brass everywhere outside the actual socket. Logged
+in <code>assets-steam-porthole/erase12-log.json</code>. <b>Flag for whoever extends
+<code>erase_model()</code>'s compositing: a round-socket control needs a circular blend mask, not
+the groove-shaped square/rect one it currently always uses.</b></p>
 </div>
 
 <h2><span class=num>5</span>Bottom line</h2>
 <div class=verdict>
-<p><b>4 of 4 named, reachable skins repaired</b> — diablo-gothic, fallout-vault, n64-cutscene,
-wc-goldshield all now read a clean groove both by eye and by <code>extract12.py</code>'s
-independent post-erase gate. <b>1 flagged skin (claymation) correctly left untouched</b> as a
-disputed false positive rather than erased on spec. <b>1 skin (fallout-pipboy) not reached</b>
-this session due to a live concurrent edit elsewhere.</p>
+<p><b>Round 1: 4 of 4 named, reachable skins repaired</b> — diablo-gothic, fallout-vault,
+n64-cutscene, wc-goldshield all now read a clean groove both by eye and by
+<code>extract12.py</code>'s independent post-erase gate. <b>1 skin (fallout-pipboy) not
+reached</b> that session due to a live concurrent edit elsewhere.</p>
+<p><b>Round 2 (2026-07-12), both remaining named skins repaired:</b> <b>claymation</b> — the
+round-1 "false positive" call was WRONG (§4, corrected above); human round-2 review confirmed the
+baked thumb, re-erased clean, gate now <code>ok</code>. <b>steam-porthole</b> — a baked play/pause
+icon plate in the <code>vol</code> knob's ROUND socket (§4b), erased + a $0 manual circular-feather
+finishing pass to fix a square-crop seam artifact the square-blend compositing left on the brass;
+gate now <code>ok</code>. <b>6 of the original 6 review-named skins are now clean</b> (fallout-pipboy
+still pending a re-run once its concurrent edit settles).</p>
 <p><b>Method that actually worked: targeted model-edit, not classical inpainting.</b> Every
 classical OpenCV attempt on every skin tested produced the same X-shaped smear (§1) and was
 rejected before shipping; every fix that stuck was a nano-banana-pro edit on a square crop, with

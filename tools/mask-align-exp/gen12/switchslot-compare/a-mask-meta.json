@@ -1,0 +1,16 @@
+{
+ "housing_canvas_size": [
+  809,
+  436
+ ],
+ "lever_size": [
+  683,
+  310
+ ],
+ "lever_offset_in_housing": [
+  63,
+  63
+ ],
+ "housing_dilate_px": 37,
+ "rim_dilate_px": 55
+}

@@ -1,0 +1,25 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>CSS-slider fix proof</title>
+<style>body{background:#111;color:#ddd;font:14px/1.6 -apple-system,system-ui,sans-serif;margin:0;padding:24px;max-width:1000px;margin:auto}
+h1{font-size:19px}.bad{color:#ff6b6b;font-weight:600}.good{color:#4ec86a;font-weight:600}
+code{background:#222;padding:1px 5px;border-radius:3px}table{border-collapse:collapse;margin:10px 0}
+td,th{border:1px solid #333;padding:6px 12px;text-align:left}iframe{width:420px;max-width:100%;height:760px;border:1px solid #333;border-radius:10px;background:#000}
+.wrap{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}.note{color:#999;font-size:13px}</style>
+<h1>CSS-slider-outside-slot fix — proof (fallout-vault, worst-case skin)</h1>
+<p>Seek thumb driven to both extremes in the <b>real shipped player</b>. BEFORE = source reverted to pre-fix
+(<code>0d750450^</code>) and re-extracted; AFTER = the merged fix, same paint, $0 re-extract.</p>
+<table>
+<tr><th>state</th><th>extractor gate <code>seek_cov</code></th><th>travel overshoot past the painted groove</th></tr>
+<tr><td class=bad>BEFORE (pre-fix)</td><td class=bad>1.04</td><td class=bad>+1.98% of span — CSS track + thumb render past the groove end-cap</td></tr>
+<tr><td class=good>AFTER (fixed)</td><td class=good>1.00</td><td class=good>0.0% — clamped to the painted groove at both ends</td></tr>
+</table>
+<p class=note>Per-skin thumb-overshoot measured in the real player across all 5 flagged skins: <b>~24px → ≤0.15px</b>
+(full writeup: <code>docs/experiments/2026-07-12-seek-travel-overshoot.md</code>, committed).</p>
+<h2 style="font-size:15px">Drive it yourself (AFTER / fixed) — grab the seek thumb, slide to both ends:</h2>
+<div class=wrap>
+<iframe src="/assets-fallout-vault/player.html" title="fallout-vault player (fixed)"></iframe>
+<div><p>The thumb now stops cleanly inside the groove at 0% and 100% — no CSS fill/track punching past the
+rounded end-cap onto the latch bracket (the "both sides" case you flagged).</p>
+<p class=note>Root cause: <code>extract12.py</code> added a redundant ±2% pad on top of an already-widened
+coverage-span travel, and <code>build_player.py</code> positioned thumb + track/fill to travel's outer edges
+with no clamp against the painted groove. Fixed both.</p></div></div>
