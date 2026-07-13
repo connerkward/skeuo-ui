@@ -21,6 +21,7 @@ Run once before biref (no seats yet), then again after biref (picks up matte sea
 """
 import os, sys, json, colorsys
 import numpy as np
+import cv2
 from PIL import Image
 from scipy import ndimage
 from knob_angle import detect_from_sprite
@@ -244,6 +245,61 @@ for i, name in enumerate(NAMES):
     regs[name]["device"] = bbx; regs[name]["hueRecovered"] = True
     print(f"[hue-recover] {name}: found desaturated blob (hue-dist search) at {[round(v,3) for v in bbx]}")
 
+# --- KNOB CIRCLE FALLBACK (2026-07-12, round-4 fix): biomech-giger's vol knob is clearly
+# PAINTED (a big tick-marked rotary dial) but mask.png never carries a distinguishable
+# guide-colour blob there at all -- confirmed by direct measurement: zero mask pixels within
+# the assign-gate's own colour-distance threshold anywhere near the painted dial, on EITHER a
+# dark ("dark carapace") or light backdrop, so neither the exclusive-blob-assign above nor
+# hue-recovery (which still needs a mask.png guide pixel to start from) can ever find it --
+# there is no colour to chase, regardless of luminance. A real knob is still a strong
+# CIRCULAR RIM/tick-ring in the PAINT itself irrespective of whether it's a bright dial on a
+# dark body or a dark dial on a light one -- so this is a last-resort, paint-only fallback:
+# Hough's gradient accumulator (relative edge strength around a circle, not an absolute
+# brightness cutoff) finds circular rims material-agnostically. Restricted to KNOB roles with
+# NO device after every colour-based attempt above; searches only the device band; excludes
+# any pixel area already claimed by another detected control (15% pad) so it can't steal a
+# button/screen. Candidates are taken in Hough's own accumulator order (strongest circular
+# edge first) -- a hand-rolled mean-gradient rescorer was tried and LOST to organic body
+# texture (biomech's rib/spine relief scored higher than the real dial by raw Sobel
+# magnitude); the accumulator order was correct on the first candidate and is trusted as-is.
+for _kn in KNOBS:
+    _kr = regs.get(_kn)
+    if _kr and _kr.get("device"): continue
+    _paint_for_knob = np.asarray(Image.open(os.path.join(OUT, "paint.png")).convert("RGB"))
+    _kPH, _kPW = _paint_for_knob.shape[:2]
+    _kband = int(_kPH * DEVF)
+    if _kband <= 40: continue
+    _kgray = cv2.cvtColor(_paint_for_knob[:_kband], cv2.COLOR_RGB2GRAY)
+    _kblur = cv2.medianBlur(_kgray, 7)
+    _kminR, _kmaxR = max(8, int(_kband * 0.04)), max(16, int(_kband * 0.20))
+    _claimed_px = []
+    for _nm, _rv in regs.items():
+        if _rv and _rv.get("device"):
+            _x, _y, _w, _h = _rv["device"]
+            _claimed_px.append((_x * _kPW, _y * _kPH, (_x + _w) * _kPW, (_y + _h) * _kPH))
+    _circ = cv2.HoughCircles(_kblur, cv2.HOUGH_GRADIENT, dp=1.2, minDist=_kminR * 2,
+                               param1=90, param2=45, minRadius=_kminR, maxRadius=_kmaxR)
+    _kwin = None
+    if _circ is not None:
+        for _cx, _cy, _cr in _circ[0]:
+            _hit = False
+            for (_x0, _y0, _x1, _y1) in _claimed_px:
+                _pw, _ph = (_x1 - _x0) * 0.15, (_y1 - _y0) * 0.15
+                if _x0 - _pw <= _cx <= _x1 + _pw and _y0 - _ph <= _cy <= _y1 + _ph:
+                    _hit = True; break
+            if not _hit:
+                _kwin = (float(_cx), float(_cy), float(_cr)); break
+    if _kwin:
+        _cx, _cy, _cr = _kwin
+        _kbx = [(_cx - _cr) / _kPW, (_cy - _cr) / _kPH, 2 * _cr / _kPW, 2 * _cr / _kPH]
+        regs[_kn] = regs.get(_kn) or {"device": None, "strip": []}
+        regs[_kn]["device"] = _kbx
+        regs[_kn]["paintCircleFallback"] = True
+        print(f"[knob-circle-fallback] {_kn}: no guide-colour blob anywhere -- found painted "
+              f"circular rim at {[round(v,3) for v in _kbx]} (r={_cr:.0f}px)")
+    else:
+        print(f"[knob-circle-fallback] {_kn}: still no device (no unclaimed circular rim found)")
+
 # --- MASK IS A GUIDE: detect real painted PARTS in the strip band as fallback for omitted cells
 paint = np.asarray(Image.open(os.path.join(OUT, "paint.png")).convert("RGB"))
 PPH, PPW = paint.shape[:2]; y0strip = int(PPH * DEVF)
@@ -267,6 +323,19 @@ def part_bbox(x0, x1):
 
 
 parts = [part_bbox(a, b) for (a, b) in runs if part_bbox(a, b)]
+# CAPTION-TEXT REJECTION (2026-07-12, found while verifying the round-4 knob fallback fix):
+# the "SPRITE STRIP" label baked above the reference swatches is itself bright-vs-backdrop and
+# can form its own isolated column-run when its glyphs don't x-overlap any real swatch (the gap
+# tolerance above only merges ADJACENT columns) -- biomech-giger: "SPRITE"/"STRIP" formed two
+# ~11%-of-band-height text runs to the LEFT of the real knob+bone swatch run, so this fallback's
+# leftmost-first assignment (below) handed vol+seek the CAPTION TEXT instead of their real
+# swatches, leaving the actual swatch pair unclaimed. Previously invisible: vol/seek's device
+# was ALSO undetected on this skin, so the corrupted strip cell never got far enough to matter
+# until the knob-circle-fallback fix above gave it a device. A real sprite swatch is drawn to
+# fill nearly the WHOLE strip band height by construction (checked across the roster: every
+# legitimate swatch run measures 68-100% of the band height); a single caption text line never
+# does (11%). Height-fraction is a shape signal, not a colour/luminance one -- material-agnostic.
+parts = [pb for pb in parts if (pb[3] * PPH) >= 0.30 * band.shape[0]]
 # strip order: knobs, slider thumb, then toggle lever (track mode) / toggle OFF+ON (legacy).
 # SHUFFLE_BTN: shuffle contributes NO strip cell at all (baked device-slot glyph, no loose
 # part) -- excluded from `order` entirely so the paint-band fallback below never manufactures
@@ -358,6 +427,9 @@ for name in NAMES:
     if r and r.get("device"):
         r["maskDevice"] = list(r["device"])
         if name in SC: continue                      # regions: no snap
+        if r.get("paintCircleFallback"): continue     # already a direct paint-space circle fit --
+                                                        # snap's dark-cavity assumption would drag a
+                                                        # BRIGHT dial (biomech-giger) off-centre
         r["device"] = snap_to_paint(name, r["device"])
 
 # --- SEAT: matte alpha-hole CENTROID for knob sockets
@@ -655,6 +727,61 @@ if TEMPLATED and "album_art" in template and "visualizer" in template:
         elif order_inverted:
             print(f"[art-viz-swap] vertical order looks inverted but mutual-nearest guard failed "
                   f"(not a clean swap) -- left as-is for the drift gate")
+
+# ---- ALBUM_ART/VISUALIZER SCREEN VALIDATION + RESCUE (2026-07-12, round-4 fix) ----
+# A 'region' control's device sometimes lands on a WRONG painted element entirely -- not a
+# glass screen at all -- because its guide-colour match either needed hue-recovery (weak
+# match everywhere) or, worse, matched CONFIDENTLY (raw colour distance ~10) onto a
+# decorative element that merely happens to share the key's hue (wc-goldshield: album_art's
+# hue-recovered blob was a SHUFFLE BUTTON's blue gem icon; wmp-vario: album_art's
+# high-confidence match landed on a decorative wing/vent panel). region_refit above only
+# REFINES within a small window anchored on that same wrong starting bbox, so a bad guess
+# stays bad. Distinguish a genuine screen from a wrong guess by SHAPE/TEXTURE, not colour: a
+# real screen is a flat, low-detail glass pane (checked via Canny edge density on the
+# INTERIOR of the box, margin-trimmed to exclude any ornate bezel/rivet frame -- validated
+# against the whole roster: every genuine screen measures <=2.2% edge density at a 32% inset,
+# every confirmed-wrong placement measures >=7.6%, a >3x margin). When the CURRENT device
+# fails that check, don't guess a brand-new location (tried: a full-band dark-CC flood-fill
+# and a multi-scale sliding window both proved fragile on ornate/textured bodies -- false
+# hits on shadow-crevice networks, or converged on backdrop). Instead reuse region_refit
+# itself, re-seeded at the SIBLING region's own (already-valid) window -- the two display
+# regions are known to be interchangeable glass (region_refit's own vault-CRT precedent:
+# "two display regions can share ONE glass pane") -- so worst case album_art ends up sharing
+# visualizer's real screen, which is a big improvement over a random button and satisfies
+# the actual defect ("album_art maps onto a button" -> it now maps onto glass).
+RING_EDGE_INSET, RING_EDGE_THR = 0.32, 4.0
+def _looks_like_screen(b):
+    x0 = max(0, int(b[0] * GW)); x1 = min(GW, int((b[0] + b[2]) * GW))
+    y0 = max(0, int(b[1] * GH)); y1 = min(GH, int((b[1] + b[3]) * GH))
+    w, h = x1 - x0, y1 - y0
+    if w < 10 or h < 10: return False
+    ix0, ix1 = x0 + int(w * RING_EDGE_INSET), x1 - int(w * RING_EDGE_INSET)
+    iy0, iy1 = y0 + int(h * RING_EDGE_INSET), y1 - int(h * RING_EDGE_INSET)
+    win = paintg[iy0:iy1, ix0:ix1]
+    if win.size < 80: return False
+    edges = cv2.Canny(win.astype(np.uint8), 40, 120)
+    return float(edges.mean()) < RING_EDGE_THR
+_region_pair = [("album_art", "visualizer"), ("visualizer", "album_art")]
+for _name, _sib in _region_pair:
+    _r = regs.get(_name)
+    if not _r or not _r.get("device"): continue
+    if _looks_like_screen(_r["device"]): continue
+    _sr = regs.get(_sib)
+    if not _sr or not _sr.get("device"):
+        print(f"[screen-rescue] {_name}: device doesn't look like a screen, no sibling to rescue from -- kept as-is")
+        continue
+    _sb = _sr["device"]
+    _other_claimed = [rv["device"] for nm, rv in regs.items() if nm != _name and rv and rv.get("device")]
+    _fit, _info = region_refit(_sb, excl=[c for c in _other_claimed if c != _sb])
+    if _fit and _looks_like_screen(_fit):
+        print(f"[screen-rescue] {_name}: device didn't look like a screen "
+              f"({[round(v,3) for v in _r['device']]}) -> rescued via sibling's window to "
+              f"{[round(v,3) for v in _fit]} ({_info})")
+        _r["device"] = _fit
+        _r["screenRescued"] = True
+    else:
+        print(f"[screen-rescue] {_name}: device doesn't look like a screen and sibling-seeded "
+              f"refit also failed ({_info}) -- kept as-is, needs a human look")
 
 # ---- SEEK GROOVE EXTENT + TRAVEL (coverage span, LEVEL-AWARE) ----
 # The mask/rrect groove bbox routinely UNDERSHOOTS the painted channel, and a STEPPED recess
@@ -1217,6 +1344,26 @@ def guide_ring_scan(paint_rgb, bbox, key_rgb, W, H):
     ctx = outer2 & ~outer1             # surrounding-chassis reference zone, further out
     if band.sum() < 40: return 0.0, 0.0
     kh = int(colorsys.rgb_to_hsv(*[v / 255 for v in key_rgb])[0] * 255)
+    # OWN-BODY-COLOUR GUARD (2026-07-12, round-4 fix): a primary-colour THEME can legitimately
+    # paint a control's own body in a hue that happens to equal ITS OWN guide key -- n64-cutscene
+    # keys next/repeat/visualizer to magenta/green/rose, and its palette independently chose
+    # next=magenta, repeat=green, visualizer=rose for those SAME controls' actual paint. The old
+    # ctx-only guard (comparing the ring to the SURROUNDING CHASSIS) correctly rejects a ring that
+    # matches the neighbouring material, but a ring that's the same hue as the control's OWN
+    # interior is not contamination either -- it's just that control's own paint continuing a few
+    # px past its measured bbox edge (bbox fit is never pixel-perfect). Confirmed by direct
+    # measurement: next/repeat/visualizer's own interior hue sits within ~9deg of their own guide
+    # key (221 vs 213, 81 vs 85, 240 vs 234) -- indistinguishable from "this IS the control's real
+    # colour". Compare the ring hit hue to the INTERIOR's own measured hue (not a declared
+    # palette list) so the guard is precise per-control and can't mask genuine cross-control
+    # bleed (a control whose interior is NOT key-hued still gets flagged normally).
+    interior_hsv = hsv[interior]
+    isel = (interior_hsv[..., 1] > RING_SAT_FLOOR) & (interior_hsv[..., 2] > RING_VAL_FLOOR)
+    if isel.sum() >= 40:
+        ih = float(np.median(interior_hsv[..., 0][isel]))
+        ihd = min(abs(ih - kh), 255 - abs(ih - kh))
+        if ihd < RING_HUE_TOL:
+            return 0.0, 0.0
     hd_key = np.minimum(np.abs(hsv[..., 0].astype(int) - kh), 255 - np.abs(hsv[..., 0].astype(int) - kh))
     ctx_pool = ctx if ctx.sum() > 20 else interior
     ctx_h = float(np.median(hsv[..., 0][ctx_pool])) if ctx_pool.sum() else float(kh)
@@ -1250,6 +1397,76 @@ for k in NAMES:
     if flag: ring_flagged.append(k)
     print(f"  {k:12} ring={rpct:6.2f}% coh={rcoh:.2f}  {'FAIL - guide-ring residue' if flag else 'ok'}")
 print(f"[guide-ring gate] {'FAIL - regenerate: ' + ','.join(ring_flagged) if ring_flagged else 'ok'}")
+
+# ---- PHANTOM/DUPLICATE-CONTROL GATE (2026-07-12, round-4 fix) ----
+# The model sometimes paints an EXTRA button-shaped blob that maps to no functional control at
+# all -- a blank unlabeled cap (biomech-giger: a blank button dead-centre in the transport
+# cluster), a duplicate icon (wmp-vario: two identical 'queue' glyphs), an empty socket
+# (ps1-crunchy), or an extra ornamental button (myst-arcanum's "pearl"). Reuses the SAME
+# device-band blob segmentation already computed at the top of this file (role-agnostic
+# connected components of saturated paint, `_sat2d & _devrows`) -- a functional control's own
+# blob is fine to re-touch here (all 10 named keys already claimed their blobs above); any
+# LEFTOVER blob roughly button-sized and NOT already covered by a claimed device rect is a
+# candidate. Two guards keep this precise instead of noisy:
+#   * SIZE/SHAPE: within 0.4-2.5x the median claimed button/knob area, elongation <=2.0 (a
+#     phantom is round/square like a button, never a groove or bar).
+#   * GRID ALIGNMENT (the false-positive killer): a real phantom sits IN the established
+#     button ROW (shares a button/knob/compact-toggle's Y-centre, tolerance a fraction of the
+#     roster's own median row-to-row spacing) -- fallout-vault has an unclaimed round blob too
+#     (a decorative rivet) but it sits almost exactly BETWEEN two rows, not on either one, and
+#     this guard correctly excludes it while keeping every genuine phantom (all of which sit
+#     flush in a real row, confirmed by direct measurement across the roster).
+_phantom_flagged = []
+_pbtn_rects = []     # HB + knob: true button shapes, for the SIZE reference
+_pgrid_rects = []     # + compact (non-elongated) toggle: for the ROW/grid reference
+for _pk, _pv in regs.items():
+    if not _pv or not _pv.get("device"): continue
+    _px, _py, _pw2, _ph2 = _pv["device"]
+    _prole = ROLES.get(_pk)
+    if _pk in HB or _prole == "knob":
+        _pbtn_rects.append(_pv["device"]); _pgrid_rects.append(_pv["device"])
+    elif _prole == "toggle" and max(_pw2, _ph2) / max(1e-6, min(_pw2, _ph2)) < 2.2:
+        _pgrid_rects.append(_pv["device"])
+_pbtn_areas = [w * MW * h * MH for (x, y, w, h) in _pbtn_rects]
+_med_pbtn = float(np.median(_pbtn_areas)) if _pbtn_areas else 0.0
+_pycenters = [y + h / 2 for (x, y, w, h) in _pgrid_rects]
+_pyc_u = sorted(set(round(c, 3) for c in _pycenters))
+_pygap = float(np.median([_pyc_u[i + 1] - _pyc_u[i] for i in range(len(_pyc_u) - 1)])) if len(_pyc_u) >= 2 else 0.15
+if _med_pbtn > 0 and _pycenters:
+    _pclaimed = [rv["device"] for rv in regs.values() if rv and rv.get("device")]
+    _plbl, _pn = ndimage.label(_sat2d & _devrows)
+    for _pc in range(1, _pn + 1):
+        _pys, _pxs = np.where(_plbl == _pc)
+        if len(_pxs) < 120: continue
+        _pw3 = _pxs.max() - _pxs.min() + 1; _ph3 = _pys.max() - _pys.min() + 1
+        _pelong = max(_pw3, _ph3) / max(1, min(_pw3, _ph3))
+        if _pelong > 2.0: continue
+        _pbb = [float(_pxs.min()) / MW, float(_pys.min()) / MH, float(_pw3) / MW, float(_ph3) / MH]
+        # covered = fraction of THIS blob already inside a claimed device rect -> a real,
+        # already-named control's own blob, not a leftover.
+        _pcov = 0.0
+        for (_cx0, _cy0, _cw0, _ch0) in _pclaimed:
+            _ix0 = max(_pbb[0], _cx0); _iy0 = max(_pbb[1], _cy0)
+            _ix1 = min(_pbb[0] + _pbb[2], _cx0 + _cw0); _iy1 = min(_pbb[1] + _pbb[3], _cy0 + _ch0)
+            _inter = max(0.0, _ix1 - _ix0) * max(0.0, _iy1 - _iy0)
+            _pcov = max(_pcov, _inter / max(1e-9, _pbb[2] * _pbb[3]))
+        if _pcov > 0.5: continue
+        _psize_ratio = (_pw3 * _ph3) / max(1.0, _med_pbtn)
+        # size cap tightened to 2.0 (2026-07-12): a decorative wedge-shaped body panel
+        # (wmp-vario's blue-lit wing vent, freed up once album_art's screen-rescue fix above
+        # stopped wrongly claiming it) measured size_ratio 2.13 and nearly slipped through --
+        # every CONFIRMED phantom across the roster measures 0.58-1.26, comfortably under 2.0.
+        if not (0.4 <= _psize_ratio <= 2.0): continue
+        if len(_pxs) / (_pw3 * _ph3) < 0.55: continue
+        _pccy = _pbb[1] + _pbb[3] / 2
+        _pydev = min(abs(_pccy - _yc) for _yc in _pycenters) / max(1e-6, _pygap)
+        if _pydev >= 0.35: continue
+        _loc = f"px({_pxs.min()},{_pys.min()})-({_pxs.max()},{_pys.max()})"
+        _phantom_flagged.append({"device": [round(v, 4) for v in _pbb], "sizeRatio": round(_psize_ratio, 2),
+                                  "loc": _loc})
+        print(f"[phantom-control] unclaimed button-shaped blob at {_loc} "
+              f"norm={[round(v,3) for v in _pbb]} size_ratio={_psize_ratio:.2f} -- flagging for inpaint")
+print(f"[phantom-control gate] {'FAIL - ' + str(len(_phantom_flagged)) + ' phantom(s)' if _phantom_flagged else 'ok'}")
 
 # ---- SPRITE GUIDE-HUE CONTAMINATION (same family as the device ring gate above, applied to
 # the biref-cut moving PARTS instead of the paint-canvas socket perimeter). Only meaningful on
@@ -1611,12 +1828,13 @@ if baked_thumb_flagged: reasons.append("baked-thumb:" + ",".join(baked_thumb_fla
 if sprite_fit_flagged: reasons.append("sprite-fit:" + ",".join(sprite_fit_flagged))
 if orientation_flagged: reasons.append("orientation:device")
 for k in sil_flagged: reasons.append(f"silhouette-mismatch:{k}")
+if _phantom_flagged: reasons.append("phantom-control:" + ",".join(p["loc"] for p in _phantom_flagged))
 gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "controls_total": len(NAMES),
         "missing": missing, "seek_cov": seek_cov, "state_align_ok": sa_ok, "biref_ok": biref_ok,
         "leak": RES.get("leak"), "guide_ring": ring_flagged,
         "region_degenerate": region_degenerate,
         "baked_thumb": baked_thumb_flagged, "sprite_fit": sprite_fit_flagged,
-        "silhouette_mismatch": sil_flagged,
+        "silhouette_mismatch": sil_flagged, "phantom_control": _phantom_flagged,
         "orientation_ok": not orientation_flagged, "reasons": reasons,
         "PASS": (not empty_fail) and (not missing) and (not knob_tmpl) and (not region_misplaced)
                 and (not region_degenerate)
@@ -1624,7 +1842,7 @@ gate = {"empty_ok": not empty_fail, "controls": len(NAMES) - len(missing), "cont
                 and (biref_ok is not False) and (RES.get("leak", 0) is None or RES.get("leak", 0) <= 0.003)
                 and (not TOGGLE or sa is None or sa_ok) and (not ring_flagged) and (not drift_fail)
                 and (not baked_thumb_flagged) and (not sprite_fit_flagged) and (not orientation_flagged)
-                and (not sil_flagged)}
+                and (not sil_flagged) and (not _phantom_flagged)}
 R2 = json.load(open(os.path.join(OUT, "regions.json"))); R2["gate"] = gate
 if drift_info is not None: R2["drift"] = drift_info
 json.dump(R2, open(os.path.join(OUT, "regions.json"), "w"), indent=2)
