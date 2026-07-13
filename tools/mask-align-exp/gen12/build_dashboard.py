@@ -5,8 +5,125 @@ persisted in localStorage with an export so verdicts can be read back. Below tha
 verdict, the process strip (blueprint→paint→mask→overlay), and explainer diagrams.
 Usage: python3 build_dashboard.py"""
 import os, json, glob, re, datetime, hashlib
+from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# dashboard-owned render cache — NEVER written by the generation pipeline or other agents,
+# so this is safe to regenerate/read concurrently with in-flight skin regen (parallel-by-
+# default-rule / git-worktree-rule: don't touch assets-<skin>/ dirs owned by other agents).
+DASH_RENDER = os.path.join(HERE, "dash-render")
+os.makedirs(DASH_RENDER, exist_ok=True)
+
+
+def _font(size):
+    for fp in ("/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/Menlo.ttc"):
+        try:
+            return ImageFont.truetype(fp, size)
+        except Exception:
+            continue
+    return ImageFont.load_default()
+
+
+def gen_detect_overlay(sid, d, reg):
+    """Render LABELED detection boxes (control id per box — label-overlays-rule) over paint.png,
+    from the SAME regions.json geometry build_player.py renders from (device fraction rect ×
+    paint.png's own dims — verified against build_player.py's PW/PH usage). This is the
+    dashboard's own artifact — assets-<sid>/overlay.png is an unlabeled 50% paint/mask colour
+    blend, not a labeled detection result, so it doesn't satisfy label-overlays-rule on its own;
+    we build a labeled one instead of repurposing it. Cached in dash-render/, regenerated only
+    when paint.png or regions.json changed (mtime), so a re-run after another agent's regen
+    picks up new geometry for free."""
+    paint_path = os.path.join(d, "paint.png")
+    reg_path = os.path.join(d, "regions.json")
+    out_path = os.path.join(DASH_RENDER, f"{sid}-detect.png")
+    if not os.path.exists(paint_path):
+        return None
+    regions = (reg or {}).get("regions", {})
+    if not regions:
+        return None
+    try:
+        if os.path.exists(out_path):
+            src_mtime = os.path.getmtime(paint_path)
+            if os.path.exists(reg_path):
+                src_mtime = max(src_mtime, os.path.getmtime(reg_path))
+            if os.path.getmtime(out_path) > src_mtime:
+                return f"dash-render/{sid}-detect.png"
+        im = Image.open(paint_path).convert("RGB")
+        W, H = im.size
+        draw = ImageDraw.Draw(im)
+        font = _font(max(16, W // 80))
+        for cid, r in sorted(regions.items()):
+            box = r.get("device")
+            if not box:
+                continue
+            x, y, w, h = box
+            x0, y0, x1, y1 = x * W, y * H, (x + w) * W, (y + h) * H
+            sw = max(3, W // 400)
+            draw.rectangle([x0, y0, x1, y1], outline=(80, 255, 160), width=sw)
+            tb = draw.textbbox((0, 0), cid, font=font)
+            tw, th = tb[2] - tb[0], tb[3] - tb[1]
+            pad = 5
+            lx0, ly0 = x0, max(0, y0 - th - pad * 2 - 3)
+            draw.rectangle([lx0, ly0, lx0 + tw + pad * 2, ly0 + th + pad * 2], fill=(8, 18, 14))
+            draw.text((lx0 + pad, ly0 + pad - tb[1]), cid, fill=(150, 255, 200), font=font)
+        im.save(out_path)
+        return f"dash-render/{sid}-detect.png"
+    except Exception:
+        return None
+
+
+def find_biref_cut(sid):
+    """assets-<sid>_biref/device.png (the BiRefNet-cut transparent device) — or the first
+    available cut in that dir if device.png is missing (e.g. a skin still mid-regen)."""
+    bd = os.path.join(HERE, f"assets-{sid}_biref")
+    for cand in ("device.png", "global-matte.png"):
+        if os.path.exists(os.path.join(bd, cand)):
+            return f"assets-{sid}_biref/{cand}"
+    if os.path.isdir(bd):
+        pngs = sorted(glob.glob(os.path.join(bd, "*.png")))
+        if pngs:
+            return f"assets-{sid}_biref/{os.path.basename(pngs[0])}"
+    return None
+
+
+def find_director_frame(sid, d):
+    """The frame the director model actually judged, for the director-verdict step tile."""
+    for cand in ("director/full.png", "director/after.png", "observe/full.png"):
+        if os.path.exists(os.path.join(d, cand)):
+            return f"assets-{sid}/{cand}"
+    return None
+
+
+def find_erase_pair(sid, d):
+    """Latest real (non-dryrun) erase-verify before/after pair, falling back to a dryrun pair.
+    Erase is director-gated and only some skins run it this round — returns None gracefully."""
+    ev = os.path.join(d, "erase-verify")
+    if not os.path.isdir(ev):
+        return None
+    befores = glob.glob(os.path.join(ev, "*-before.png"))
+    if not befores:
+        return None
+    real = sorted(b for b in befores if "dryrun" not in os.path.basename(b))
+    chosen = real[-1] if real else sorted(befores)[-1]
+    base = os.path.basename(chosen)[:-len("-before.png")]
+    after = os.path.join(ev, base + "-after.png")
+    if not os.path.exists(after):
+        return None
+    return {"before": f"assets-{sid}/erase-verify/{os.path.basename(chosen)}",
+            "after": f"assets-{sid}/erase-verify/{base}-after.png",
+            "label": base}
+
+
+def step_tile(src, label):
+    if not src:
+        return f'<figure class=napt><div class=naimg>n/a</div><figcaption>{label}</figcaption></figure>'
+    return (f'<a href="{src}" target=_blank><figure><img src="{src}" loading=lazy>'
+            f'<figcaption>{label}</figcaption></figure></a>')
+
+
+def player_tile(sid):
+    return (f'<a href="assets-{sid}/player.html" target=_blank class=ptile><figure>'
+            f'<div class=playicon>&#9654;</div><figcaption>7 &middot; final player</figcaption></figure></a>')
 # run-id annotation (max rolls): read the real default out of orchestrate12.py rather than
 # duplicating the number here, so if that default ever changes this label doesn't silently drift.
 try:
@@ -83,7 +200,26 @@ for d in sorted(glob.glob(os.path.join(HERE, "assets-*"))):
     live_reasons = gate.get("reasons") or []
     orch_reasons = (orch.get("gate") or {}).get("reasons") or []
     reasons = live_reasons if pass_source == "live" else (orch_reasons or live_reasons)
+    # full-step-chain artifacts (Round-4 requirement: every pipeline step visible per skin).
+    # All read-only lookups against this skin's OWN dir (or its _biref sidecar) + a dashboard-
+    # owned render cache (dash-render/) — never writes into assets-<sid>/, so this is safe to
+    # run while other agents are concurrently regenerating skins elsewhere in the roster.
+    biref_cut = find_biref_cut(sid)
+    detect_overlay = gen_detect_overlay(sid, d, reg)
+    director_frame = find_director_frame(sid, d)
+    erase_pair = find_erase_pair(sid, d)
+    erase_log_path = os.path.join(d, "erase12-log.json")
+    erase_log_n = 0
+    if os.path.exists(erase_log_path):
+        try:
+            _el = json.load(open(erase_log_path))
+            erase_log_n = len(_el) if isinstance(_el, list) else 0
+        except Exception:
+            pass
     skins.append({"id": sid, "title": res.get("title", orch.get("title", sid)),
+                  "biref_cut": biref_cut, "detect_overlay": detect_overlay,
+                  "director_frame": director_frame, "erase_pair": erase_pair,
+                  "erase_log_n": erase_log_n,
                   "mode": res.get("mode", "?"), "passed": passed, "pass_source": pass_source,
                   "orch_stale": orch_stale, "orch_pass": orch_pass, "live_pass": live_pass,
                   "orch_reasons": orch_reasons,
@@ -106,13 +242,56 @@ cost_line = (f"models: <b>{GEN_MODEL}</b> (paint+mask, ~$0.15/roll) + <b>{MATTE_
              f"({total_rolls} rolls × ~$0.155 + {n_dr} director reviews)")
 
 
+def _step_img(sid, fname):
+    return f"assets-{sid}/{fname}" if os.path.exists(os.path.join(HERE, f"assets-{sid}", fname)) else None
+
+
+def full_step_chain(s):
+    """The FULL 9-step pipeline chain (Round-4 requirement: every step visible per skin), in
+    pipeline order. Each step degrades to an explicit '(n/a)' tile — never a broken <img> —
+    when that skin didn't produce that artifact (templateless has no blueprint, not every skin
+    ran erase, a mid-regen skin may be missing a later-stage file)."""
+    sid = s["id"]
+    dr = s.get("dr") or {}
+    tiles = [
+        step_tile(_step_img(sid, "blueprint.png"), "1 &middot; blueprint"),
+        step_tile(_step_img(sid, "joint-4k.png"), "2 &middot; joint-4k (raw gen)"),
+        step_tile(_step_img(sid, "paint.png"), "3 &middot; paint"),
+        step_tile(_step_img(sid, "mask.png"), "4 &middot; mask"),
+        step_tile(s.get("biref_cut"), "5 &middot; biref cut"),
+        step_tile(s.get("detect_overlay"), "6 &middot; detect (labeled)"),
+        player_tile(sid),
+    ]
+    dlabel = (f'8 &middot; director {dr.get("verdict","?")} {dr.get("score_0_10","?")}/10'
+              if dr else "8 &middot; director verdict")
+    tiles.append(step_tile(s.get("director_frame"), dlabel))
+    ep = s.get("erase_pair")
+    if ep:
+        tiles.append(step_tile(ep["before"], f'9 &middot; erase before ({ep["label"]})'))
+        tiles.append(step_tile(ep["after"], f'9 &middot; erase after ({ep["label"]})'))
+    else:
+        tiles.append(step_tile(None, "9 &middot; erase before/after"))
+    return "".join(tiles)
+
+
+def card_cost_line(s):
+    """Per-skin model + cost annotation (dev-facing-model-cost-annotation-rule) — visible on
+    the card itself, not just the roster-level header total."""
+    rolls = s["rolls"] if isinstance(s["rolls"], int) else 0
+    parts = [f'{GEN_MODEL} + {MATTE_MODEL}: {rolls} roll(s) &asymp; ${rolls*0.155:.2f}']
+    dr = s.get("dr") or {}
+    if dr:
+        parts.append(f'{dr.get("model", DR_MODEL)} (director) &asymp; ${dr.get("cost_estimate_usd","0.02-0.05")}')
+    n_erase = s.get("erase_log_n") or 0
+    if n_erase:
+        lo, hi = n_erase * 0.039, n_erase * 0.134
+        parts.append(f'{n_erase} erase pass(es) (gemini-2.5-flash/gpt-image-2/gemini-3-pro) &asymp; ${lo:.2f}-${hi:.2f}')
+    return " · ".join(parts)
+
+
 def card(s):
     sid = s["id"]; g = s["gate"]
-    imgs = "".join(
-        f'<a href="assets-{sid}/{f}" target=_blank><figure><img src="assets-{sid}/{f}" loading=lazy>'
-        f'<figcaption>{lbl}</figcaption></figure></a>'
-        for f, lbl in [("blueprint.png", "blueprint"), ("paint.png", "paint"), ("mask.png", "mask"),
-                       ("overlay.png", "overlay")])
+    imgs = full_step_chain(s)
     autob = '<span class="pass">auto PASS</span>' if s["passed"] else '<span class="fail">auto FAIL</span>'
     # orch.json's cached verdict disagrees with the live regions.json gate — show it, don't hide it.
     stale_chip = ''
@@ -155,16 +334,18 @@ def card(s):
         drift_str = ''
     runid = (f'<div class=runid>gen12 · seed {s["seed"]} · roll {s["rolls"]}/{ROLLS_MAX} · '
              f'painted {s["painted"]}{midflag}{drift_str}</div>')
+    ccost = f'<div class=cardcost>{card_cost_line(s)}</div>'
     return f'''<section class=card id="c-{sid}" data-id="{sid}">
   <div class=chead><h3>{s["title"]} <span class=mode>{s["mode"]}</span>{pbr_link}</h3>
     <div class=hverdict><span class=hlabel>your gate:</span>
       <button class="htoggle" data-id="{sid}" data-seed="{s['seed']}" data-paint-sha="{s.get('paint_sha') or ''}">— unset —</button></div></div>
   {runid}
+  {ccost}
   <div class=live><iframe src="assets-{sid}/player.html" loading=lazy title="{sid} player"></iframe>
     <div class=side>
       <textarea class=hnotes data-id="{sid}" placeholder="what's wrong with this skin? (autosaves)"></textarea>
       <div class=auto>{autob}{stale_chip} · <span class=det>{det}</span><br><span class=rz>{reasons}</span>{dr_line}</div>
-      <details class=proc><summary>process images</summary><div class=strip>{imgs}</div></details>
+      <details class=proc open><summary>full pipeline — all 9 steps</summary><div class=strip>{imgs}</div></details>
     </div></div>
 </section>'''
 
@@ -174,6 +355,40 @@ rows = "".join(
     f'<td>{s["mode"]}</td><td>{"✓" if s["passed"] else "✗"}</td>'
     f'<td class="hcell" data-id="{s["id"]}">—</td><td>{s["rolls"]}</td><td>{", ".join(s["reasons"]) or "—"}</td></tr>'
     for s in skins)
+
+# CONCLUSION/VERDICT section (dev-facing-model-cost-annotation-rule: every dev-facing
+# experiment/results page ends with a verdict pulled from the page's own data, no invented
+# numbers) — built here from the same `skins` list the cards render from, placed LAST in the
+# page body so a reader scrolling to the end gets the roster answer without reconstructing it.
+_failing = [s for s in skins if not s["passed"]]
+_stale = [s for s in skins if s.get("orch_stale")]
+_midregen = [s for s in skins if s.get("mid_regen")]
+_no_dr = [s for s in skins if not s.get("dr")]
+_erased = [s for s in skins if s.get("erase_log_n")]
+
+
+def _idlist(ss):
+    return ", ".join(f'<a href="#c-{s["id"]}">{s["id"]}</a>' for s in ss) if ss else "none"
+
+
+VERDICT_SECTION = f'''<h2>Conclusion / verdict</h2>
+<div class=verdict>
+  <p class=vheadline>{'<span class="pass vbadge">ALL PASS</span>' if npass == n else f'<span class="fail vbadge">{n - npass}/{n} FAILING</span>'}
+    &mdash; auto-gate {npass}/{n} skins PASS ({total_rolls} rolls, {n_dr} director reviews,
+    est. spend &asymp; ${cost_lo:.2f}-${cost_hi:.2f}).</p>
+  <ul>
+    <li><b>Failing (auto-gate FAIL):</b> {_idlist(_failing)}</li>
+    <li><b>orch.json stale vs live regions.json gate</b> (re-run orchestrator to reconcile): {_idlist(_stale)}</li>
+    <li><b>Mid-regen / unaggregated</b> (paint newer than orch.json — re-run after regen lands): {_idlist(_midregen)}</li>
+    <li><b>No director review yet:</b> {_idlist(_no_dr)}</li>
+    <li><b>Ran an erase pass this round:</b> {_idlist(_erased)}</li>
+  </ul>
+  <p class=vnote>This snapshot reflects whatever skins existed on disk at build time
+    ({datetime.datetime.now().strftime("%Y-%m-%d %H:%M")}) &mdash; <b>re-run
+    <code>python3 build_dashboard.py</code> after the Round-4 regen lands</b> to pick up the
+    final roster; every step tile above degrades to "(n/a)" rather than a broken image for any
+    skin/step not yet produced.</p>
+</div>'''
 
 EXPLAINERS = '''<h2>How it works — interactive walkthrough (real artifacts)</h2>
 <div id=walk class=walk>
@@ -329,7 +544,8 @@ a{{color:#7ab7ff;text-decoration:none}}a:hover{{text-decoration:underline}}
 .bar{{position:sticky;top:0;z-index:20;background:#0a0b0eee;backdrop-filter:blur(6px);padding:10px 0;border-bottom:1px solid #ffffff14;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}}
 .stat{{background:#12161d;border:1px solid #ffffff14;border-radius:8px;padding:6px 12px;font:12px ui-monospace,monospace}}
 .btn{{background:#1b3a5c;border:1px solid #2a6cff55;color:#bfe;border-radius:8px;padding:7px 13px;font:12px ui-monospace,monospace;cursor:pointer}}.btn:hover{{background:#245}}
-table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}th,td{{text-align:left;padding:5px 9px;border-bottom:1px solid #ffffff12}}th{{color:#9aa}}
+.tblwrap{{overflow-x:auto;max-width:100%}}
+table{{width:100%;min-width:640px;border-collapse:collapse;font:12.5px ui-monospace,monospace}}th,td{{text-align:left;padding:5px 9px;border-bottom:1px solid #ffffff12}}th{{color:#9aa}}
 .hcell.hp{{color:#6f9;font-weight:700}}.hcell.hf{{color:#f77;font-weight:700}}
 .card{{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:16px;margin:18px 0;scroll-margin-top:70px}}
 .card.hp{{border-color:#2a6}}.card.hf{{border-color:#a33}}
@@ -351,7 +567,17 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
 .auto{{font:11px ui-monospace,monospace;color:#9ab}}.det{{color:#8a90a0}}.rz{{color:#7a8090}}
 .pass{{color:#062;background:#6f9;border-radius:4px;padding:1px 6px;font-weight:700}}.fail{{color:#400;background:#f88;border-radius:4px;padding:1px 6px;font-weight:700}}
 .proc summary{{cursor:pointer;color:#8ab;font:11px ui-monospace,monospace}}
-.strip{{display:flex;gap:8px;overflow-x:auto;padding-top:8px}}.strip figure{{margin:0;flex:0 0 auto;width:120px}}.strip img{{width:120px;border-radius:6px;border:1px solid #ffffff14;background:#000}}.strip figcaption{{font:10px ui-monospace,monospace;color:#8a90a0;text-align:center;margin-top:3px}}
+.strip{{display:flex;gap:8px;flex-wrap:wrap;padding-top:8px}}.strip figure{{margin:0;flex:0 0 auto;width:120px}}.strip img{{width:120px;height:120px;object-fit:contain;border-radius:6px;border:1px solid #ffffff14;background:#000}}.strip figcaption{{font:10px ui-monospace,monospace;color:#8a90a0;text-align:center;margin-top:3px}}
+.naimg{{width:120px;height:120px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px dashed #ffffff20;background:#0b0d12;color:#565c68;font:11px ui-monospace,monospace}}
+.napt figcaption{{font:10px ui-monospace,monospace;color:#565c68;text-align:center;margin-top:3px}}
+.ptile{{display:block}}.playicon{{width:120px;height:120px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid #3a7cff55;background:#12203a;color:#7ab7ff;font-size:34px}}.ptile:hover .playicon{{background:#183050;border-color:#7ab7ff}}
+.cardcost{{font:11px ui-monospace,monospace;color:#7a8090;margin:-4px 0 12px}}
+.verdict{{background:#0e1116;border:1px solid #ffffff14;border-radius:12px;padding:16px 18px;margin-top:14px}}
+.verdict .vheadline{{font-size:15px;font-weight:700;margin:0 0 10px}}
+.vbadge{{font-size:13px;padding:2px 9px;margin-right:4px}}
+.verdict ul{{margin:0;padding-left:20px;font:12.5px ui-monospace,monospace;color:#9aa;line-height:1.9}}
+.verdict .vnote{{font:11.5px ui-monospace,monospace;color:#7a8090;margin:12px 0 0}}
+.verdict code{{background:#161a22;border-radius:4px;padding:1px 5px}}
 .exgrid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}}.ex{{background:#0e1116;border:1px solid #ffffff14;border-radius:10px;padding:12px}}.ex h4{{margin:0 0 6px;font-size:13px}}.ex p{{font-size:12.5px;color:#9aa;margin:0}}
 .animgrid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}}
 .anim{{background:#0e1116;border:1px solid #ffffff14;border-radius:10px;padding:12px;min-width:0}}
@@ -386,10 +612,11 @@ table{{width:100%;border-collapse:collapse;font:12.5px ui-monospace,monospace}}t
   <button class=btn onclick="localStorage.clear();location.reload()">reset</button>
 </div>
 <h2>Overview</h2>
-<table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody>{rows}</tbody></table>
+<div class=tblwrap><table><thead><tr><th>skin</th><th>mode</th><th>auto</th><th>your gate</th><th>rolls</th><th>auto-fail reasons</th></tr></thead><tbody>{rows}</tbody></table></div>
 <h2>Per-skin review</h2>
 {"".join(card(s) for s in skins)}
 {EXPLAINERS}
+{VERDICT_SECTION}
 <script>
 const KEY='gen12-review';
 function load(){{ try{{return JSON.parse(localStorage.getItem(KEY))||{{}}}}catch(e){{return {{}}}} }}

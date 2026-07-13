@@ -28,6 +28,10 @@ assets-*/observe/*.png
 assets-*/director/*.png
 .director-drive-*.mjs
 
+# build_dashboard.py's own labeled-detection-overlay render cache — derived $0 from
+# assets-*/paint.png + regions.json, regenerated on every dashboard build (mtime-cached).
+dash-render/
+
 # inpaintbake/ (2026-07-12 inpaint bake-off): bulk generation scratch — inputs (crops/),
 # raw model outputs (results/), and derived display thumbnails (web/) are all regenerable
 # via build_crops.py + run_bakeoff.py + build_page.py against the committed erasegallery/
