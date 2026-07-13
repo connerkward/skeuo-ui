@@ -57,7 +57,7 @@ BLUEPRINT_ARM_WEIGHTS = [("solid", 0.75), ("outline", 0.25)]
 # Round-4: force the 'outline' arm on 4 diverse TEMPLATED materials so the longitudinal trial's
 # outline arm (only ~fallout-pipboy so far) finally becomes evaluable across brass/gold/mono/FA.
 # (templateless skins have no guide pixels — the arm is a no-op there, so these are all templated.)
-FORCE_OUTLINE_ARM = {"steam-porthole", "wc-goldshield", "fallout-pipboy", "fa-pod"}
+FORCE_OUTLINE_ARM = set()  # Round-4 trial answered: outline arm is WEAKER (steam-porthole+wc-goldshield failed on residue both rolls). Reverted to the weighted draw (favors solid).
 
 # BLUEPRINT_TWOIMG: two-image conditioning (clean guide-pixel-free edit canvas + the colour-keyed
 # layout drawn as a SEPARATE reference image) — the twoimg/ experiment FALSIFIED this as a bleed
