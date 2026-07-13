@@ -1,6 +1,7 @@
 // observe_drive — headless driver for observe12.py ([[skin-observation-rule]]).
 // Loads the served player, screenshots the #phone stage, exercises the REAL handlers
-// (seek jump, toggle click, knob pointer-drag, button click), screenshots again.
+// (seek jump, toggle click, knob pointer-drag, shuffle icon-button click BY TITLE, first
+// button click), screenshots again.
 // Usage: node observe_drive.mjs <playerUrl> <outDir>
 import { chromium } from 'playwright';
 import path from 'node:path';
@@ -27,6 +28,15 @@ if (await knob.count()) {
   await pg.mouse.move(cx, cy); await pg.mouse.down();
   await pg.mouse.move(cx, cy - 40, { steps: 8 }); await pg.mouse.up();
 }
+// shuffle may render as the legacy `.ptog` toggle (clicked above) OR — since build_player.py's
+// STATEFUL_LIT_ICON retired it to a plain icon button (commit a1a95228; role stays "toggle" in
+// regions.json, DOM element is `.pbtn[title="shuffle"]`) — as an icon button that the generic
+// "click the first .pbtn" below does NOT reliably reach (the first .pbtn in DOM order is
+// whichever button/prev/playpause happens to render first, not shuffle). Click it BY TITLE so
+// its own before/after state is actually exercised — leaving it unclicked is exactly what made
+// every skin's shuffle crop-diff read as unchanged and false-flag dead-control this round.
+const shuffleBtn = pg.locator('#phone .pbtn[title="shuffle"]');
+if (await shuffleBtn.count()) await shuffleBtn.first().evaluate(e => e.click());
 const btn = pg.locator('#phone .pbtn');
 if (await btn.count()) await btn.first().evaluate(e => e.click());
 await pg.waitForTimeout(400);

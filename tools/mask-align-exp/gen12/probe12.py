@@ -21,9 +21,12 @@ profile with any other driver), then asserts the player's own DOM/JS state chang
   - buttons (playpause/prev/next/repeat/queue/...): the hint line / dataset / queue overlay
     the player's own click handler writes (build_player.py, read-only reference — not
     touched by this script).
-  - toggle (shuffle): a generic style diff (background-image / left / top / transform),
-    mode-agnostic so it needs no change if a future "two-detent slider" toggle rendering
-    ships (regions.json carries no mode flag today — none exists to detect).
+  - toggle (shuffle): a generic style diff (background-image / left / top / transform) for
+    the `.ptog` sprite-swap/lever renderings, OR — since shuffle can also render as a plain
+    icon `.pbtn` (build_player.py STATEFUL_LIT_ICON, commit a1a95228; role stays "toggle" in
+    regions.json) — a classList 'on' flip for that mode. probe_drive.mjs tries `.ptog` first,
+    falls back to `.pbtn[title=<key>]` by title, so this stays correct for whichever
+    architecture actually shipped without a regions.json mode flag.
   - knob (vol): the cap's rotation transform after a drag.
   - slider (seek): thumb position changes AND clamps identically on a second overshoot at
     BOTH ends (drag-past-max twice, drag-past-min twice).

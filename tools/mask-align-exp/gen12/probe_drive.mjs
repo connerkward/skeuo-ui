@@ -84,10 +84,18 @@ const readState = () =>
     const tog = document.querySelector('#phone .ptog');
     const knobCap = document.querySelector('#phone .pknob .cap');
     const thumb = document.querySelector('#phone .pthumb');
+    // shuffle may be retired from the .ptog toggle onto a plain icon BUTTON (build_player.py
+    // STATEFUL_LIT_ICON / shuffleAsButton, commit a1a95228) — role stays 'toggle' in
+    // regions.json but the DOM element is `.pbtn[title="shuffle"]`, toggling its own 'on'
+    // class on click (`el.classList.toggle('on')`, no .ptog rendered at all in that mode).
+    // Capture per-title so the toggle probe below can read liveness for EITHER rendering.
+    const pbtnOnM = {};
+    document.querySelectorAll('#phone .pbtn').forEach((e) => { pbtnOnM[e.title] = e.classList.contains('on'); });
     return {
       hint: hint ? hint.textContent : null,
       queueOpen: queue ? queue.classList.contains('open') : null,
       btnDataM,
+      pbtnOnM,
       togBg: tog ? tog.style.backgroundImage : null,
       togLeft: tog ? tog.style.left : null,
       togTop: tog ? tog.style.top : null,
@@ -260,19 +268,32 @@ try {
 
 // ======================= toggle (shuffle) =======================
 // `.pthumb[data-role="toggle"]` is a defensive selector for a NOT-YET-IMPLEMENTED "two-detent
-// slider" toggle rendering mentioned in the recalibration spec — build_player.py only emits
-// `.ptog` (sprite-swap) today, and regions.json carries no mode flag to detect (checked: no
-// skin's toggle region has anything beyond device/angle/stateAlign). Rather than branch on a
-// field that doesn't exist, the check below is a generic STYLE DIFF (bg/pos/transform) that
-// is correct for either representation without modification — this comment + selector are the
-// "detect which mode" hook the spec asks for; no dead per-mode branch is added ahead of need.
+// slider" toggle rendering mentioned in the recalibration spec — build_player.py's LEGACY
+// paths only emit `.ptog` (track-lever / sprite-swap), and regions.json carries no mode flag
+// to distinguish them (checked: no skin's toggle region has anything beyond
+// device/angle/stateAlign/track/detents). A THIRD rendering exists now: STATEFUL_LIT_ICON
+// (build_player.py, commit a1a95228) retires shuffle onto a plain icon BUTTON —
+// `.pbtn[title="<toggleKey>"]`, classList 'on' toggled on click — whenever shuffleAsButton is
+// true, and in that mode NO `.ptog` is rendered at all. Try the legacy selector first (covers
+// both existing `.ptog` shapes with one generic style-diff check, unchanged); fall back to the
+// icon-button shape by TITLE so this probe stays correct for whichever architecture actually
+// shipped, without needing a mode flag from regions.json.
+// STALE-DRIVER BUG (fixed 2026-07-12): before this fix, the legacy-only selector matched
+// nothing once shuffle became a `.pbtn`, so togLoc.found was always false and every skin with
+// button-mode shuffle was false-flagged "no toggle control rendered" / dead-control — a
+// systematic false positive across the whole round, not a real defect in any skin.
 try {
   if (toggleKey) {
-    const togLoc = await locateFirst('#phone .ptog, #phone .pthumb[data-role="toggle"]');
+    let togLoc = await locateFirst('#phone .ptog, #phone .pthumb[data-role="toggle"]');
+    let mode = 'legacy';
     if (!togLoc.found) {
-      results[toggleKey] = evid(false, 'no toggle control rendered (neither .ptog sprite-swap nor a slider-style element found)');
+      togLoc = await locateByTitle('#phone .pbtn', toggleKey);
+      mode = 'button';
+    }
+    if (!togLoc.found) {
+      results[toggleKey] = evid(false, 'no toggle control rendered (neither .ptog sprite-swap/lever, a slider-style element, nor a .pbtn icon-button found)');
     } else if (togLoc.zeroSize) {
-      results[toggleKey] = evid(false, `control rendered with zero-size hitbox rect=${JSON.stringify(togLoc.rect)}`);
+      results[toggleKey] = evid(false, `control rendered with zero-size hitbox rect=${JSON.stringify(togLoc.rect)} (mode=${mode})`);
     } else {
       const before = await readState();
       await page.mouse.click(togLoc.cx, togLoc.cy);
@@ -281,17 +302,25 @@ try {
       const occNote = togLoc.occluded
         ? ` [HITBOX WARNING: point resolved to ${togLoc.occluderDesc}, not the toggle]`
         : '';
-      const changed =
-        before.togBg !== after.togBg ||
-        before.togLeft !== after.togLeft ||
-        before.togTop !== after.togTop ||
-        before.togTransform !== after.togTransform;
-      results[toggleKey] = evid(
-        changed,
-        changed
+      let changed, detail;
+      if (mode === 'button') {
+        // icon-button liveness = classList 'on' actually flips (build_player.py:
+        // `el.classList.toggle('on')`); the hint text is corroborating evidence, not required
+        // (a skin with no baked glyph still toggles 'on' — see STATEFUL_LIT_ICON comment).
+        const on0 = before.pbtnOnM[toggleKey], on1 = after.pbtnOnM[toggleKey];
+        changed = on0 !== on1;
+        detail = `icon-button 'on' class: ${on0} -> ${on1} (hint "${before.hint}" -> "${after.hint}")${occNote}`;
+      } else {
+        changed =
+          before.togBg !== after.togBg ||
+          before.togLeft !== after.togLeft ||
+          before.togTop !== after.togTop ||
+          before.togTransform !== after.togTransform;
+        detail = changed
           ? `state changed on click (bg ${before.togBg !== after.togBg ? 'DIFFERS' : 'same'}: "${trunc(before.togBg)}"->"${trunc(after.togBg)}", left ${before.togLeft}->${after.togLeft}, top ${before.togTop}->${after.togTop})${occNote}`
-          : `no CSS state change after click: bg="${trunc(before.togBg)}", left=${before.togLeft}, top=${before.togTop}${occNote}`,
-      );
+          : `no CSS state change after click: bg="${trunc(before.togBg)}", left=${before.togLeft}, top=${before.togTop}${occNote}`;
+      }
+      results[toggleKey] = evid(changed, `[mode=${mode}] ${detail}`);
     }
   }
 } catch (e) {
