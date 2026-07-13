@@ -3,15 +3,15 @@
   "title": "Biomech Giger",
   "mode": "templateless",
   "passed": false,
-  "rolls": 1,
-  "final_seed": 857,
+  "rolls": 2,
+  "final_seed": 870,
   "gate": {
-    "seed": 857,
+    "seed": 870,
     "PASS": false,
-    "controls": 10,
-    "seek_cov": 1.0,
+    "controls": 8,
+    "seek_cov": null,
     "reasons": [
-      "baked-thumb:seek"
+      "missing:vol,seek"
     ],
     "leak": 0.0
   },
@@ -22,11 +22,33 @@
       "controls": 10,
       "seek_cov": 1.0,
       "reasons": [
-        "baked-thumb:seek"
+        "region-misplaced:album_art",
+        "emptiness",
+        "guide-ring:queue,shuffle",
+        "silhouette-mismatch:playpause",
+        "silhouette-mismatch:prev",
+        "silhouette-mismatch:next",
+        "silhouette-mismatch:queue"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 870,
+      "PASS": false,
+      "controls": 8,
+      "seek_cov": null,
+      "reasons": [
+        "missing:vol,seek"
       ],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 201.1,
-  "player": "assets-biomech-giger/player.html"
+  "elapsed_s": 496.3,
+  "player": "assets-biomech-giger/player.html",
+  "director_decisions": {
+    "director_review": {
+      "run": true,
+      "why": "This is a fully detailed thematic brief intended for a final shipped skin, not a throwaway diagnostic test."
+    }
+  }
 }

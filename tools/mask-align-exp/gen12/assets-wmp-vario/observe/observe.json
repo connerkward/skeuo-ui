@@ -2,7 +2,7 @@
   "skin": "wmp-vario",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: DEFECT[css-misalignment] - The blue progress fill is a simple flat rectangle that does not match the styled, recessed, and lit groove in the background art.\nshuffle: OK\nvisualizer: OK\nalbum_art: OK\nDEVICE: none\nVERDICT: FAIL",
+  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: DEFECT[baked-thumb, dead-control] - The thumb is a static part of the background art and does not move. The control's state does not change after interaction.\nshuffle: OK\nvisualizer: OK\nalbum_art: DEFECT[placement-wrong] - There is no visible region for album art; the designated area is part of the non-display device body.\nDEVICE: DEFECT[duplicate-control] - There are two identical 'queue' buttons.\nVERDICT: FAIL",
   "frames": [
     "full.png",
     "after.png",
@@ -23,9 +23,14 @@
   "unmeasured_crop_miss": [],
   "per_control_defects": {
     "seek": [
-      "css-misalignment"
+      "baked-thumb",
+      "dead-control"
+    ],
+    "album_art": [
+      "placement-wrong"
     ]
   },
   "device_defects": [],
-  "ts": "2026-07-11T23:47:51"
+  "probe_dead_controls": [],
+  "ts": "2026-07-12T17:38:55"
 }

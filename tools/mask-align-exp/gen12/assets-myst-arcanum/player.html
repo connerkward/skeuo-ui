@@ -10,7 +10,7 @@
   .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v=1783706881') no-repeat;background-size:100% auto;border-radius:12px}
+    background:url('paint.png?v=1783910365') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
   .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}
@@ -54,7 +54,7 @@ fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementByI
 </div></div>
 <div class=hint id=hint>loading…</div>
 <script>
-const V='1783706881';
+const V='1783910365';
 (async function(){
   const R = await fetch('regions.json?v='+V).then(r=>r.json());
   const regs=R.regions, DF=R.devFrac, roles=R.roles||{};
@@ -85,6 +85,21 @@ const V='1783706881';
   for(const k of parts){ try{const im=new Image();im.src=BREF+k+'.png?v='+V;await im.decode();CUT[k]=tight(im);}catch(e){} }
   const px=b=>b[0]*100, py=b=>(b[1]/DF)*100, pw=b=>b[2]*100, ph=b=>(b[3]/DF)*100, ctr=b=>[b[0]+b[2]/2,b[1]+b[3]/2];
   let playing=false;
+  // director-picked lit-glyph accent: css.glow (WIRE-pbr.md) wins, else css.accent, else a
+  // neutral engraved tone — never a hardcoded colour (icon-state-proto.html used a fixed demo
+  // blue only for its own standalone preview; the shipped player must follow the theme). Moved
+  // ABOVE the knob section (was originally declared just before the button loop) so
+  // KNOB_TICK_FROM_PAINT's lit-tick tint below can share the SAME accent. MC/MW/MH (the mask
+  // canvas) stays loaded here too — still used by the button loop's glyph extraction further
+  // down, unrelated to the knob tick (which is now paint-sourced, not mask-sourced).
+  const _hexToRgb=h=>{ h=(h||'').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    const n=parseInt(h||'e8ecf5',16); return [(n>>16)&255,(n>>8)&255,n&255]; };
+  const LIT_ACCENT_RGB = _hexToRgb(("#50dcc8")||("#336a5f")||'#e8ecf5');
+  let MC=null,MW=0,MH=0;
+  try{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
+    MW=mi.naturalWidth; MH=mi.naturalHeight;
+    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
+    MC.getContext('2d').drawImage(mi,0,0); }catch(e){}
 
   // ---- knob (volume) ----
   // DEFENSIVE RENDER: a control missing its device rect (extract12 found no distinguishable
@@ -121,6 +136,80 @@ const V='1783706881';
     // 0.5/init showed the indicator at its baked angle instead of straight up).
     const cap=el.querySelector('.cap');let val=0.5,sy=0,sv=0,drag=false;
     const zeroDeg=(r.knob_zero_deg==null?0:r.knob_zero_deg);
+    // ---- KNOB_TICK_FROM_PAINT: a real, lit crop of the painted pointer/notch, placed at its
+    // DETERMINISTIC measured position — replaces SPRITE_TICK_CSS's synthetic needle, which is
+    // always drawn at an ASSUMED position (val's own -135..+135 sweep, ignorant of where the
+    // model actually painted anything).
+    // Source of the measurement: NOT mask.png. A parallel check across diverse themes (steam-
+    // porthole, fallout-pipboy) found the mask's "vol" tick cutout bakes as an OPEN NOTCH cut
+    // into the disc's rim on 2/3 skins, not the fully-ENCLOSED hole the button glyphs get — so
+    // the flood-fill enclosed-hole technique (computeGlyphMasks, proven for buttons) silently
+    // finds zero candidates on most skins (confirmed directly on assets-glyphtest12: the mask
+    // crop shows the notch touching the disc's outer edge, connected to background, not a
+    // closed pocket). The PAINTED tick, by contrast, is a clean physical dimple 3/3 — and
+    // extract12.py already measures it deterministically via knob_angle.py's radial-anomaly
+    // detector (gradient + independent texture-disruption signal, run-centroid not peak-edge —
+    // see that module's docstring), storing BOTH the angle (`knob_zero_deg`, already used for
+    // the cap's OWN counter-rotation above) and the detector's own measured circle geometry
+    // (`knob_zero_geo` = [cx,cy,R]) in the EXACT SAME pixel frame as CUT['vol'] — the
+    // tight()-cropped sprite this player already renders (knob_angle.py's docstring: "matching
+    // EXACTLY the origin build_player.py's tight()+background-size:cover renders around"). So
+    // no separate registration step is needed here: crop a small square of CUT['vol']'s OWN
+    // pixels centred on the geo-predicted tick point, tint it with the director's accent so it
+    // reads as a lit indicator, and position/size it as a PERCENTAGE of `.cap`'s own box —
+    // scale-invariant, so it tracks whatever absolute size the cap renders at (the "mask cap
+    // smaller than painted cap" size-drift concern), no separate scale factor to get wrong.
+    // GRACEFUL FALLBACK: missing knob_zero_deg/knob_zero_geo (extract12 found no reliable
+    // indicator — myst-arcanum-style omission) or CUT['vol'], or any exception, leaves
+    // usedMaskTick=false and the SPRITE_TICK_CSS needle below renders exactly as before. Never
+    // crashes, never drops the tick.
+    let usedMaskTick=false;
+    if(true && r.knob_zero_deg!=null && r.knob_zero_geo && CUT['vol']){
+      try{
+        const [gcx,gcy,gR]=r.knob_zero_geo;
+        if(gR>2){
+          const zdRad=zeroDeg*Math.PI/180;
+          // point on the RIM where the detector measured the notch — same CW-from-up
+          // convention as the cap's own rotate() and the SVG needle below
+          const tx=gcx+gR*0.80*Math.sin(zdRad), ty=gcy-gR*0.80*Math.cos(zdRad);
+          // TIGHT crop around the notch's own baked footprint (genskin.py draw_icon_glyph
+          // 'vol': width~r*0.12, length~r*0.34) — a wider crop dilutes the mark against
+          // surrounding cap texture and reads as an amorphous smudge (SOTA-eye review,
+          // 2026-07-12: a gR*0.22 crop with a flat soft wash was called "blurry, artifact-like"
+          // after rotation). Still generous enough that a few-degree angle/radius error lands inside.
+          const tickR=Math.max(5,gR*0.15);
+          const capImg=new Image(); capImg.src=CUT['vol'].url; await capImg.decode();
+          const tcv=document.createElement('canvas'); tcv.width=tcv.height=Math.round(tickR*2);
+          const tgx=tcv.getContext('2d');
+          tgx.filter='contrast(1.35) brightness(1.08)';   // lift the dimple's own dark/light edge before tinting
+          tgx.drawImage(capImg, tx-tickR, ty-tickR, tickR*2, tickR*2, 0,0,tcv.width,tcv.height);
+          tgx.filter='none';
+          // TWO-LAYER lit look, same accent+white-core idea as litGlyph() above (buttons): a
+          // wider accent halo for colour/pop, plus a small bright white-hot core at the exact
+          // centre so the mark reads as a crisp point, not a diffuse wash.
+          const halo=tgx.createRadialGradient(tcv.width/2,tcv.height/2,0,tcv.width/2,tcv.height/2,tcv.width/2);
+          halo.addColorStop(0,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0.85)');
+          halo.addColorStop(0.55,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0.35)');
+          halo.addColorStop(1,'rgba('+LIT_ACCENT_RGB[0]+','+LIT_ACCENT_RGB[1]+','+LIT_ACCENT_RGB[2]+',0)');
+          tgx.globalCompositeOperation='screen'; tgx.fillStyle=halo; tgx.fillRect(0,0,tcv.width,tcv.height);
+          const core=tgx.createRadialGradient(tcv.width/2,tcv.height/2,0,tcv.width/2,tcv.height/2,tcv.width*0.22);
+          core.addColorStop(0,'rgba(255,255,255,0.95)'); core.addColorStop(1,'rgba(255,255,255,0)');
+          tgx.fillStyle=core; tgx.fillRect(0,0,tcv.width,tcv.height);
+          tgx.globalCompositeOperation='source-over';
+          // position/size as % of `.cap`'s own box: CUT['vol'].w/h IS the frame knob_zero_geo
+          // is measured in, and IS the frame `.cap`'s background-image covers, so a plain
+          // fraction of the sprite's own natural size maps directly onto the rendered box
+          const dW=tcv.width/CUT['vol'].w*100, dH=tcv.height/CUT['vol'].h*100;
+          const dL=tx/CUT['vol'].w*100-dW/2, dT2=ty/CUT['vol'].h*100-dH/2;
+          const tickEl=document.createElement('div');
+          tickEl.style.cssText='position:absolute;pointer-events:none;background-repeat:no-repeat;background-size:100% 100%;border-radius:50%';
+          tickEl.style.left=dL+'%'; tickEl.style.top=dT2+'%'; tickEl.style.width=dW+'%'; tickEl.style.height=dH+'%';
+          tickEl.style.backgroundImage='url('+tcv.toDataURL()+')';
+          cap.appendChild(tickEl);   // child of .cap -> inherits its rotate() transform, tracks val for free
+          usedMaskTick=true;
+        }
+      }catch(e){ console.warn('[player] knob tick placement failed — falling back to CSS overlay:', e); }
+    }
     // ---- knob tick overlay (director-decided PER AXIS, WIRE-pbr.md "ticks" schema) ----
     // SAME socket centre/radius (cx,cy,w) just derived above for the cap, sharing the SAME
     // -135..+135 sweep convention as the cap rotation (ZERO-DEG CONVENTION comment above).
@@ -160,9 +249,11 @@ const V='1783706881';
         }
         svg.appendChild(shadow); svg.appendChild(hi);
       }
-      if(false){
+      if(false && !usedMaskTick){
         // subtle current-position indicator — a short needle tracking `val`, independent of the
-        // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at all)
+        // cap's own baked pointer (matters most when knob_zero_deg is null: no baked pointer at
+        // all). Skipped when KNOB_TICK_FROM_PAINT already placed a pixel-accurate lit tick above
+        // — the two are redundant and would otherwise double up on the same cap.
         const needle=mk(0,0,0,0,0.03); needle.style.opacity='0.5'; svg.appendChild(needle);
         tickRend=(v)=>{ const deg=-135+v*270, rad=deg*Math.PI/180;
           needle.setAttribute('x2',(Math.sin(rad)*capLocal*0.86).toFixed(4));
@@ -392,17 +483,9 @@ const V='1783706881';
   const ICON_BTNS = shuffleAsButton ? BTN.concat([tg]) : BTN;
   // which of the icon buttons LATCH a persistent lit-glyph state (vs momentary press-only).
   const STATEFUL_ROLE = {playpause:1, repeat:1, shuffle:1};
-  // director-picked lit-glyph accent: css.glow (WIRE-pbr.md) wins, else css.accent, else a
-  // neutral engraved tone — never a hardcoded colour (icon-state-proto.html used a fixed demo
-  // blue only for its own standalone preview; the shipped player must follow the theme).
-  const _hexToRgb=h=>{ h=(h||'').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
-    const n=parseInt(h||'e8ecf5',16); return [(n>>16)&255,(n>>8)&255,n&255]; };
-  const LIT_ACCENT_RGB = _hexToRgb(("#50dcc8")||("#336a5f")||'#e8ecf5');
-  let MC=null,MW=0,MH=0;
-  try{ const mi=new Image(); mi.src='mask.png?v='+V; await mi.decode();
-    MW=mi.naturalWidth; MH=mi.naturalHeight;
-    MC=document.createElement('canvas'); MC.width=MW; MC.height=MH;
-    MC.getContext('2d').drawImage(mi,0,0); }catch(e){}
+  // _hexToRgb / LIT_ACCENT_RGB / MC(+MW/MH, the mask canvas) are now declared EARLIER in this
+  // function (right after the CUT-parts load, before the knob section) so KNOB_TICK_FROM_PAINT's
+  // lit-tick tint can reuse LIT_ACCENT_RGB too — see that block's own comment for why.
   // ---- lit-icon-glyph helpers, ported verbatim (same flood-fill / registration / lighting
   // math) from the user-approved prototype icon-state-proto.html — see that file for the
   // annotated reference version this was proven in. ----

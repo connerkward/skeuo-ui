@@ -21,5 +21,125 @@
     "ts": "20260712T133056",
     "status": "erased",
     "verify_dir": "erase-verify"
+  },
+  {
+    "control": "phantom-loop",
+    "method": "gemini-2.5-flash",
+    "before_sha": "4553a7d79ccf",
+    "after_sha": "a5b40873d067",
+    "bbox_px": [
+      463,
+      1232,
+      731,
+      1489
+    ],
+    "crop_box_px": [
+      369,
+      1133,
+      824,
+      1588
+    ],
+    "seed": 71,
+    "ts": "20260712T193528",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
+  },
+  {
+    "control": "phantom-loop-retry",
+    "method": "gemini-2.5-flash",
+    "before_sha": "a5b40873d067",
+    "after_sha": "77f9987a0049",
+    "bbox_px": [
+      463,
+      1232,
+      731,
+      1489
+    ],
+    "crop_box_px": [
+      369,
+      1133,
+      824,
+      1588
+    ],
+    "seed": 5309,
+    "ts": "20260712T193611",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
+  },
+  {
+    "control": "phantom-loop-gpt",
+    "method": "gpt-image-2",
+    "before_sha": "77f9987a0049",
+    "after_sha": "3bec460c16f4",
+    "bbox_px": [
+      463,
+      1232,
+      731,
+      1489
+    ],
+    "crop_box_px": [
+      369,
+      1133,
+      824,
+      1588
+    ],
+    "seed": 71,
+    "ts": "20260712T193743",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.0548,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
+  },
+  {
+    "control": "phantom-loop-flatten",
+    "method": "gemini-2.5-flash",
+    "before_sha": "3bec460c16f4",
+    "after_sha": "dfe8a6a51097",
+    "bbox_px": [
+      463,
+      1232,
+      731,
+      1489
+    ],
+    "crop_box_px": [
+      369,
+      1133,
+      824,
+      1588
+    ],
+    "seed": 8842,
+    "ts": "20260712T194830",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
+  },
+  {
+    "control": "phantom-loop-gpt2",
+    "method": "gpt-image-2",
+    "before_sha": "dfe8a6a51097",
+    "after_sha": "42b4d9abaa62",
+    "bbox_px": [
+      463,
+      1232,
+      731,
+      1489
+    ],
+    "crop_box_px": [
+      369,
+      1133,
+      824,
+      1588
+    ],
+    "seed": 71,
+    "ts": "20260712T195034",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.0548,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
   }
 ]

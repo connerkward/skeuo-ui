@@ -2,47 +2,56 @@
   "id": "wc-goldshield",
   "title": "Wc Goldshield",
   "mode": "templated",
-  "passed": true,
-  "rolls": 3,
-  "final_seed": 736,
+  "passed": false,
+  "rolls": 2,
+  "final_seed": 749,
   "gate": {
-    "seed": 736,
-    "PASS": true,
+    "seed": 749,
+    "PASS": false,
     "controls": 10,
-    "seek_cov": 1.039,
-    "reasons": [],
-    "leak": 0.0004
+    "seek_cov": 1.0,
+    "reasons": [
+      "region-misplaced:album_art",
+      "region-degenerate:album_art",
+      "drift:album_art",
+      "silhouette-mismatch:next",
+      "silhouette-mismatch:repeat"
+    ],
+    "leak": 0.000397
   },
   "history": [
     {
-      "seed": 710,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.04,
-      "reasons": [
-        "state-align"
-      ],
-      "leak": 2.3e-05
-    },
-    {
-      "seed": 723,
-      "PASS": false,
-      "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [
-        "state-align"
-      ],
-      "leak": 0.000645
-    },
-    {
       "seed": 736,
-      "PASS": true,
+      "PASS": false,
       "controls": 10,
-      "seek_cov": 1.039,
-      "reasons": [],
-      "leak": 0.0004
+      "seek_cov": 1.0,
+      "reasons": [
+        "region-misplaced:visualizer",
+        "region-degenerate:visualizer"
+      ],
+      "leak": 0.000152
+    },
+    {
+      "seed": 749,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.0,
+      "reasons": [
+        "region-misplaced:album_art",
+        "region-degenerate:album_art",
+        "drift:album_art",
+        "silhouette-mismatch:next",
+        "silhouette-mismatch:repeat"
+      ],
+      "leak": 0.000397
     }
   ],
-  "elapsed_s": 454.4,
-  "player": "assets-wc-goldshield/player.html"
+  "elapsed_s": 441.7,
+  "player": "assets-wc-goldshield/player.html",
+  "director_decisions": {
+    "director_review": {
+      "run": true,
+      "why": "This is a fully fleshed-out, thematic roster skin intended to ship, so it requires a final aesthetic review."
+    }
+  }
 }

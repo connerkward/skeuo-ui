@@ -1,7 +1,7 @@
 {
  "id": "biomech-giger",
  "mode": "templateless",
- "seed": 857,
+ "seed": 870,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -135,7 +135,7 @@
  "defsz": {
   "vol": 0.14,
   "seek": 0.06333333333333334,
-  "shuffle": 0.1,
+  "shuffle": 0.12333333333333334,
   "playpause": 0.17333333333333334,
   "prev": 0.12333333333333334,
   "next": 0.12333333333333334,
@@ -168,10 +168,11 @@
  "template": {},
  "blueprint_trial_enabled": true,
  "blueprint_arm": "solid",
- "blueprint_arm_draw_seed": 857,
+ "blueprint_arm_draw_seed": 870,
  "blueprint_twoimg": false,
  "blueprint_conditioning": "solid",
  "toggle_track_enabled": true,
+ "shuffle_icon_button_enabled": true,
  "prompt_json_spec": false,
  "dims": [
   4608,

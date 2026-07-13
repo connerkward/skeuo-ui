@@ -10,7 +10,7 @@
   .sub{font:11.5px var(--mono);color:#8a90a0;margin:-6px 0 4px}
   #stage{width:min(96vw,460px)}
   #phone{position:relative;width:100%;aspect-ratio:var(--ar);
-    background:url('paint.png?v=1783902917') no-repeat;background-size:100% auto;border-radius:12px}
+    background:url('paint.png?v=1783910085') no-repeat;background-size:100% auto;border-radius:12px}
   .pbtn{position:absolute;cursor:pointer;touch-action:manipulation}
   .pbtn .ink{position:absolute;background-size:100% 100%;pointer-events:none;
     opacity:0;transition:opacity .06s}
@@ -54,7 +54,7 @@ fetch('player-pbr.html',{method:'HEAD'}).then(r=>{if(r.ok)document.getElementByI
 </div></div>
 <div class=hint id=hint>loading…</div>
 <script>
-const V='1783902917';
+const V='1783910085';
 (async function(){
   const R = await fetch('regions.json?v='+V).then(r=>r.json());
   const regs=R.regions, DF=R.devFrac, roles=R.roles||{};

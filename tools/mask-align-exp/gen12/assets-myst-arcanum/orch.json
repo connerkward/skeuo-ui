@@ -4,35 +4,46 @@
   "mode": "templateless",
   "passed": true,
   "rolls": 2,
-  "final_seed": 649,
+  "final_seed": 662,
   "gate": {
-    "seed": 649,
+    "seed": 662,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.04,
+    "seek_cov": 1.0,
     "reasons": [],
     "leak": 0.0
   },
   "history": [
     {
-      "seed": 636,
+      "seed": 649,
       "PASS": false,
-      "controls": 9,
-      "seek_cov": 1.04,
+      "controls": 10,
+      "seek_cov": 1.0,
       "reasons": [
-        "missing:shuffle"
+        "region-degenerate:visualizer",
+        "emptiness",
+        "baked-thumb:seek",
+        "silhouette-mismatch:prev",
+        "silhouette-mismatch:next",
+        "silhouette-mismatch:queue"
       ],
       "leak": 0.0
     },
     {
-      "seed": 649,
+      "seed": 662,
       "PASS": true,
       "controls": 10,
-      "seek_cov": 1.04,
+      "seek_cov": 1.0,
       "reasons": [],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 626.4,
-  "player": "assets-myst-arcanum/player.html"
+  "elapsed_s": 388.5,
+  "player": "assets-myst-arcanum/player.html",
+  "director_decisions": {
+    "director_review": {
+      "run": true,
+      "why": "The brief provides a detailed, production-quality aesthetic theme that requires a final cohesive evaluation."
+    }
+  }
 }

@@ -2,7 +2,7 @@
   "skin": "myst-arcanum",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
   "verdict": "FAIL",
-  "raw": "playpause: OK\nprev: DEFECT[placement-wrong] - The 'prev' button is missing from the interface.\nnext: OK\nrepeat: DEFECT[placement-wrong] - The 'repeat' button is missing from the interface.\nqueue: OK\nvol: DEFECT[aesthetic] - The volume knob uses a 'repeat' icon, which is confusing for its role.\nseek: DEFECT[aesthetic] - Baked-in text 'ON' is visible on the slider thumb.\nshuffle: DEFECT[aesthetic] - Baked-in text 'ON' is visible in the toggled 'on' state sprite.\nvisualizer: OK\nalbum_art: OK\nDEVICE: [phantom-control] - A large, knob-like gear element at the top-left has no assigned function and appears to be purely decorative.\nVERDICT: FAIL",
+  "raw": "playpause: OK\nprev: OK\nnext: CROP-MISS\nrepeat: OK\nqueue: OK\nvol: DEFECT[aesthetic] - The word 'EMPTY' is baked into the knob artwork.\nseek: OK\nshuffle: DEFECT[dead-control] - The toggle button shows no visual change between its on and off states.\nvisualizer: OK\nalbum_art: OK\nDEVICE: phantom-control - A central, pearl-like button exists among the transport controls but has no corresponding function.\nVERDICT: FAIL",
   "frames": [
     "full.png",
     "after.png",
@@ -20,24 +20,20 @@
     "crop-visualizer.png",
     "crop-album_art.png"
   ],
-  "unmeasured_crop_miss": [],
+  "unmeasured_crop_miss": [
+    "next"
+  ],
   "per_control_defects": {
-    "prev": [
-      "placement-wrong"
-    ],
-    "repeat": [
-      "placement-wrong"
-    ],
     "vol": [
       "aesthetic"
     ],
-    "seek": [
-      "aesthetic"
-    ],
     "shuffle": [
-      "aesthetic"
+      "dead-control"
     ]
   },
   "device_defects": [],
-  "ts": "2026-07-11T23:38:49"
+  "probe_dead_controls": [
+    "shuffle"
+  ],
+  "ts": "2026-07-12T17:42:19"
 }

@@ -2,37 +2,37 @@
   "id": "wmp-vario",
   "title": "Wmp Vario",
   "mode": "templateless",
-  "passed": true,
-  "rolls": 3,
-  "final_seed": 636,
+  "passed": false,
+  "rolls": 2,
+  "final_seed": 649,
   "gate": {
-    "seed": 636,
-    "PASS": true,
-    "controls": 10,
-    "seek_cov": 1.04,
-    "reasons": [],
-    "leak": 0.0
+    "seed": 649,
+    "error": "genskin",
+    "log": "\n                           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 662, in edit_vertex\n    raise RuntimeError(f\"vertex HTTP {r.status_code}: {r.text[:500]}\")\nRuntimeError: vertex HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Resource has been exhausted (e.g. check quota).\",\n    \"status\": \"RESOURCE_EXHAUSTED\"\n  }\n}\n\n"
   },
   "history": [
     {
-      "seed": 610,
-      "error": "genskin",
-      "log": "\n                           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 298, in edit_vertex\n    raise RuntimeError(f\"vertex HTTP {r.status_code}: {r.text[:500]}\")\nRuntimeError: vertex HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Resource has been exhausted (e.g. check quota).\",\n    \"status\": \"RESOURCE_EXHAUSTED\"\n  }\n}\n\n"
-    },
-    {
-      "seed": 623,
-      "error": "genskin",
-      "log": "\n                           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 298, in edit_vertex\n    raise RuntimeError(f\"vertex HTTP {r.status_code}: {r.text[:500]}\")\nRuntimeError: vertex HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Resource has been exhausted (e.g. check quota).\",\n    \"status\": \"RESOURCE_EXHAUSTED\"\n  }\n}\n\n"
-    },
-    {
       "seed": 636,
-      "PASS": true,
+      "PASS": false,
       "controls": 10,
-      "seek_cov": 1.04,
-      "reasons": [],
+      "seek_cov": 1.0,
+      "reasons": [
+        "region-misplaced:album_art"
+      ],
       "leak": 0.0
+    },
+    {
+      "seed": 649,
+      "error": "genskin",
+      "log": "\n                           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"/Users/conner/dev/skeuo-ui/tools/mask-align-exp/gen12/genskin.py\", line 662, in edit_vertex\n    raise RuntimeError(f\"vertex HTTP {r.status_code}: {r.text[:500]}\")\nRuntimeError: vertex HTTP 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Resource has been exhausted (e.g. check quota).\",\n    \"status\": \"RESOURCE_EXHAUSTED\"\n  }\n}\n\n"
     }
   ],
-  "elapsed_s": 181.1,
-  "player": "assets-wmp-vario/player.html"
+  "elapsed_s": 451.3,
+  "player": "assets-wmp-vario/player.html",
+  "director_decisions": {
+    "director_review": {
+      "run": true,
+      "why": "This is a fully realized thematic skin intended for release, requiring a final aesthetic sign-off."
+    }
+  }
 }

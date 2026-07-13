@@ -2,182 +2,159 @@
   "playpause": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.7994,
-    "offset_px": 14.3,
-    "area_ratio": 0.9783,
-    "coverage": 0.6761,
+    "iou": 0.8956,
+    "offset_px": 26.6,
+    "area_ratio": 1.0797,
+    "coverage": 0.751,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.6761,
-      "iou": 0.7994,
-      "offset_px": 14.3,
-      "offset_frac_diag": 0.0427,
-      "area_ratio": 0.9783,
+      "coverage": 0.751,
+      "iou": 0.8956,
+      "offset_px": 26.6,
+      "offset_frac_diag": 0.0269,
+      "area_ratio": 1.0797,
       "silhouette_bbox": [
-        0.30295,
-        0.50296,
-        0.11415,
-        0.07112
+        0.47396,
+        0.10776,
+        0.32161,
+        0.19154
       ]
     },
     "paintVividnessAdvisory": {
-      "verdict": "INCONCLUSIVE",
-      "reason": "vivid-body-distrust",
-      "coverage": 0.6104
+      "verdict": "PASS",
+      "coverage": 0.2231,
+      "iou": 0.694,
+      "offset_px": 102.1,
+      "area_ratio": 0.3214,
+      "reason": null
     },
     "circleFitAdvisory": {
-      "offset_px": 17.0,
-      "offset_frac_diag": 0.0509,
-      "score": 19.46,
+      "offset_px": 44.4,
+      "offset_frac_diag": 0.0449,
+      "score": 12.87,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "prev": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.7834,
-    "offset_px": 13.9,
-    "area_ratio": 0.9755,
-    "coverage": 0.6797,
+    "iou": 0.8442,
+    "offset_px": 2.8,
+    "area_ratio": 0.792,
+    "coverage": 0.5504,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.6797,
-      "iou": 0.7834,
-      "offset_px": 13.9,
-      "offset_frac_diag": 0.048,
-      "area_ratio": 0.9755,
+      "coverage": 0.5504,
+      "iou": 0.8442,
+      "offset_px": 2.8,
+      "offset_frac_diag": 0.0091,
+      "area_ratio": 0.792,
       "silhouette_bbox": [
-        0.20877,
-        0.57408,
-        0.09852,
-        0.06169
+        0.44661,
+        0.52721,
+        0.1033,
+        0.06519
       ]
     },
     "paintVividnessAdvisory": {
-      "verdict": "PASS",
-      "coverage": 0.4565,
-      "iou": 0.6939,
-      "offset_px": 14.9,
-      "area_ratio": 0.6578,
-      "reason": null
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.8563
     },
     "circleFitAdvisory": {
-      "offset_px": 6.0,
-      "offset_frac_diag": 0.0207,
-      "score": 37.48,
+      "offset_px": 15.0,
+      "offset_frac_diag": 0.0481,
+      "score": 22.07,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "next": {
-    "verdict": "PASS",
+    "verdict": "FAIL",
     "reasons": [],
-    "iou": 0.7829,
-    "offset_px": 14.3,
-    "area_ratio": 0.9786,
-    "coverage": 0.684,
+    "iou": 0.0,
+    "offset_px": null,
+    "area_ratio": 0.0,
+    "coverage": 0.0,
     "maskKey": {
-      "verdict": "PASS",
-      "reasons": [],
-      "coverage": 0.684,
-      "iou": 0.7829,
-      "offset_px": 14.3,
-      "offset_frac_diag": 0.0496,
-      "area_ratio": 0.9786,
-      "silhouette_bbox": [
-        0.41319,
-        0.57408,
-        0.09809,
-        0.06169
-      ]
+      "verdict": "NO-SILHOUETTE",
+      "reason": "no-blob-near-key-colour",
+      "coverage": 0.0,
+      "iou": 0.0,
+      "offset_px": null,
+      "area_ratio": 0.0
     },
     "paintVividnessAdvisory": {
-      "verdict": "PASS",
-      "coverage": 0.529,
-      "iou": 0.6933,
-      "offset_px": 12.4,
-      "area_ratio": 0.763,
-      "reason": null
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.8145
     },
     "circleFitAdvisory": {
-      "offset_px": 0.0,
-      "offset_frac_diag": 0.0,
-      "score": 25.89,
+      "offset_px": 10.2,
+      "offset_frac_diag": 0.0331,
+      "score": 19.87,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "repeat": {
-    "verdict": "PASS",
+    "verdict": "FAIL",
     "reasons": [],
-    "iou": 0.783,
-    "offset_px": 14.1,
-    "area_ratio": 0.9805,
-    "coverage": 0.6826,
+    "iou": 0.0,
+    "offset_px": null,
+    "area_ratio": 0.0,
+    "coverage": 0.0,
     "maskKey": {
-      "verdict": "PASS",
-      "reasons": [],
-      "coverage": 0.6826,
-      "iou": 0.783,
-      "offset_px": 14.1,
-      "offset_frac_diag": 0.0488,
-      "area_ratio": 0.9805,
-      "silhouette_bbox": [
-        0.32639,
-        0.6417,
-        0.09896,
-        0.06169
-      ]
+      "verdict": "NO-SILHOUETTE",
+      "reason": "no-blob-near-key-colour",
+      "coverage": 0.0,
+      "iou": 0.0,
+      "offset_px": null,
+      "area_ratio": 0.0
     },
     "paintVividnessAdvisory": {
-      "verdict": "PASS",
-      "coverage": 0.4683,
-      "iou": 0.6933,
-      "offset_px": 27.9,
-      "area_ratio": 0.6755,
-      "reason": null
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.79
     },
     "circleFitAdvisory": {
-      "offset_px": 4.2,
-      "offset_frac_diag": 0.0147,
-      "score": 31.28,
+      "offset_px": 7.3,
+      "offset_frac_diag": 0.0237,
+      "score": 17.98,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "queue": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.7897,
-    "offset_px": 14.5,
-    "area_ratio": 0.9731,
-    "coverage": 0.6758,
+    "iou": 0.8371,
+    "offset_px": 3.0,
+    "area_ratio": 0.8634,
+    "coverage": 0.6,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.6758,
-      "iou": 0.7897,
-      "offset_px": 14.5,
-      "offset_frac_diag": 0.0514,
-      "area_ratio": 0.9731,
+      "coverage": 0.6,
+      "iou": 0.8371,
+      "offset_px": 3.0,
+      "offset_frac_diag": 0.0096,
+      "area_ratio": 0.8634,
       "silhouette_bbox": [
-        0.69965,
-        0.59159,
-        0.09635,
-        0.05981
+        0.44618,
+        0.60075,
+        0.10417,
+        0.06519
       ]
     },
     "paintVividnessAdvisory": {
-      "verdict": "PASS",
-      "coverage": 0.4067,
-      "iou": 0.6945,
-      "offset_px": 14.2,
-      "area_ratio": 0.5856,
-      "reason": null
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.7374
     },
     "circleFitAdvisory": {
-      "offset_px": 3.0,
-      "offset_frac_diag": 0.0106,
-      "score": 26.26,
+      "offset_px": 15.0,
+      "offset_frac_diag": 0.0481,
+      "score": 19.2,
       "note": "advisory only, not gating -- see docstring"
     }
   }

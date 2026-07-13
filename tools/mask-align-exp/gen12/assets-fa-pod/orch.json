@@ -9,7 +9,7 @@
     "seed": 673,
     "PASS": true,
     "controls": 10,
-    "seek_cov": 1.039,
+    "seek_cov": 1.0,
     "reasons": [],
     "leak": 0.0
   },
@@ -18,11 +18,17 @@
       "seed": 673,
       "PASS": true,
       "controls": 10,
-      "seek_cov": 1.039,
+      "seek_cov": 1.0,
       "reasons": [],
       "leak": 0.0
     }
   ],
-  "elapsed_s": 256.6,
-  "player": "assets-fa-pod/player.html"
+  "elapsed_s": 282.5,
+  "player": "assets-fa-pod/player.html",
+  "director_decisions": {
+    "director_review": {
+      "run": true,
+      "why": "The brief describes a highly detailed, full-featured Frutiger Aero theme intended for shipping rather than a simple diagnostic test."
+    }
+  }
 }

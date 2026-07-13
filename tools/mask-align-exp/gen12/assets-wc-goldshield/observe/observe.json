@@ -1,8 +1,8 @@
 {
   "skin": "wc-goldshield",
   "eye": "fal openrouter/router/vision (google/gemini-2.5-pro)",
-  "verdict": "FAIL",
-  "raw": "playpause: OK\nprev: OK\nnext: OK\nrepeat: OK\nqueue: OK\nvol: OK\nseek: DEFECT[baked-thumb] - The slider thumb is baked into the background art at the start position; a functional thumb is drawn over it.\nshuffle: DEFECT[aesthetic] - There is tiny, illegible text baked into the switch mechanism, likely for ON/OFF states.\nvisualizer: OK\nalbum_art: OK\nDEVICE: aesthetic - Runic-style text is baked into the gold frame of the device.\nVERDICT: FAIL",
+  "verdict": "UNPARSED",
+  "raw": "{\"output\": \"\", \"usage\": {\"prompt_tokens\": 4995, \"completion_tokens\": 3404, \"total_tokens\": 8399, \"cost\": 0.0, \"prompt_tokens_details\": {\"cached_tokens\": 0, \"cache_write_tokens\": 0}}}",
   "frames": [
     "full.png",
     "after.png",
@@ -21,16 +21,8 @@
     "crop-album_art.png"
   ],
   "unmeasured_crop_miss": [],
-  "per_control_defects": {
-    "seek": [
-      "baked-thumb"
-    ],
-    "shuffle": [
-      "aesthetic"
-    ]
-  },
-  "device_defects": [
-    "aesthetic"
-  ],
-  "ts": "2026-07-11T23:46:20"
+  "per_control_defects": {},
+  "device_defects": [],
+  "probe_dead_controls": [],
+  "ts": "2026-07-12T17:44:41"
 }

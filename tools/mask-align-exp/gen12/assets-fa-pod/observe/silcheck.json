@@ -2,163 +2,170 @@
   "playpause": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.7931,
-    "offset_px": 22.2,
-    "area_ratio": 0.9773,
-    "coverage": 0.6797,
+    "iou": 0.828,
+    "offset_px": 0.2,
+    "area_ratio": 0.8178,
+    "coverage": 0.5698,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.6797,
-      "iou": 0.7931,
-      "offset_px": 22.2,
-      "offset_frac_diag": 0.0471,
-      "area_ratio": 0.9773,
+      "coverage": 0.5698,
+      "iou": 0.828,
+      "offset_px": 0.2,
+      "offset_frac_diag": 0.0004,
+      "area_ratio": 0.8178,
       "silhouette_bbox": [
+        0.40755,
+        0.39359,
         0.18793,
-        0.31034,
-        0.16146,
-        0.10022
+        0.11665
       ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7438
+      "coverage": 0.8514
     },
     "circleFitAdvisory": {
-      "offset_px": 4.5,
-      "offset_frac_diag": 0.0095,
-      "score": 30.5,
+      "offset_px": 8.9,
+      "offset_frac_diag": 0.0161,
+      "score": 21.46,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "prev": {
-    "verdict": "FAIL",
+    "verdict": "PASS",
     "reasons": [],
-    "iou": 0.0,
-    "offset_px": null,
-    "area_ratio": 0.0,
-    "coverage": 0.0,
+    "iou": 0.8272,
+    "offset_px": 0.2,
+    "area_ratio": 0.8052,
+    "coverage": 0.5601,
     "maskKey": {
-      "verdict": "NO-SILHOUETTE",
-      "reason": "no-blob-near-key-colour",
-      "coverage": 0.0,
-      "iou": 0.0,
-      "offset_px": null,
-      "area_ratio": 0.0
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5601,
+      "iou": 0.8272,
+      "offset_px": 0.2,
+      "offset_frac_diag": 0.0005,
+      "area_ratio": 0.8052,
+      "silhouette_bbox": [
+        0.21181,
+        0.40894,
+        0.13889,
+        0.08648
+      ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7691
+      "coverage": 0.8585
     },
     "circleFitAdvisory": {
-      "offset_px": 38.3,
-      "offset_frac_diag": 0.082,
-      "score": 19.64,
+      "offset_px": 10.2,
+      "offset_frac_diag": 0.0247,
+      "score": 22.65,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "next": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.8298,
-    "offset_px": 22.4,
-    "area_ratio": 1.0127,
-    "coverage": 0.7041,
+    "iou": 0.8381,
+    "offset_px": 0.0,
+    "area_ratio": 0.7972,
+    "coverage": 0.5552,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.7041,
-      "iou": 0.8298,
-      "offset_px": 22.4,
-      "offset_frac_diag": 0.048,
-      "area_ratio": 1.0127,
+      "coverage": 0.5552,
+      "iou": 0.8381,
+      "offset_px": 0.0,
+      "offset_frac_diag": 0.0,
+      "area_ratio": 0.7972,
       "silhouette_bbox": [
-        0.62326,
-        0.31897,
-        0.17925,
-        0.08082
+        0.65278,
+        0.40894,
+        0.13802,
+        0.08648
       ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7981
+      "coverage": 0.8534
     },
     "circleFitAdvisory": {
-      "offset_px": 21.2,
-      "offset_frac_diag": 0.0455,
-      "score": 21.13,
+      "offset_px": 2.2,
+      "offset_frac_diag": 0.0054,
+      "score": 20.52,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "repeat": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.7665,
-    "offset_px": 22.9,
-    "area_ratio": 0.9776,
-    "coverage": 0.6806,
+    "iou": 0.8241,
+    "offset_px": 0.4,
+    "area_ratio": 0.8396,
+    "coverage": 0.5834,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.6806,
-      "iou": 0.7665,
-      "offset_px": 22.9,
-      "offset_frac_diag": 0.0595,
-      "area_ratio": 0.9776,
+      "coverage": 0.5834,
+      "iou": 0.8241,
+      "offset_px": 0.4,
+      "offset_frac_diag": 0.0009,
+      "area_ratio": 0.8396,
       "silhouette_bbox": [
-        0.4822,
-        0.42457,
-        0.13151,
-        0.0819
+        0.16753,
+        0.51967,
+        0.13845,
+        0.08648
       ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7626
+      "coverage": 0.8794
     },
     "circleFitAdvisory": {
-      "offset_px": 25.5,
-      "offset_frac_diag": 0.0663,
-      "score": 31.33,
+      "offset_px": 8.1,
+      "offset_frac_diag": 0.0196,
+      "score": 15.57,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "queue": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.7634,
-    "offset_px": 22.7,
-    "area_ratio": 0.9803,
-    "coverage": 0.6816,
+    "iou": 0.827,
+    "offset_px": 0.9,
+    "area_ratio": 0.7968,
+    "coverage": 0.554,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.6816,
-      "iou": 0.7634,
-      "offset_px": 22.7,
-      "offset_frac_diag": 0.0592,
-      "area_ratio": 0.9803,
+      "coverage": 0.554,
+      "iou": 0.827,
+      "offset_px": 0.9,
+      "offset_frac_diag": 0.0021,
+      "area_ratio": 0.7968,
       "silhouette_bbox": [
-        0.66233,
-        0.42457,
-        0.13108,
-        0.0819
+        0.34722,
+        0.52802,
+        0.13889,
+        0.08621
       ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7784
+      "coverage": 0.8626
     },
     "circleFitAdvisory": {
-      "offset_px": 40.3,
-      "offset_frac_diag": 0.1052,
-      "score": 28.13,
+      "offset_px": 4.5,
+      "offset_frac_diag": 0.0109,
+      "score": 21.6,
       "note": "advisory only, not gating -- see docstring"
     }
   }

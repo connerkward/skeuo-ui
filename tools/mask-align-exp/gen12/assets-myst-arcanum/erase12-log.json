@@ -1,0 +1,50 @@
+[
+  {
+    "control": "empty-text",
+    "method": "gemini-2.5-flash",
+    "before_sha": "8e6d39be80df",
+    "after_sha": "25b2baa5a8a0",
+    "bbox_px": [
+      445,
+      1674,
+      1039,
+      2268
+    ],
+    "crop_box_px": [
+      237,
+      1466,
+      1246,
+      2475
+    ],
+    "seed": 71,
+    "ts": "20260712T193839",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
+  },
+  {
+    "control": "phantom-pearl",
+    "method": "gemini-2.5-flash",
+    "before_sha": "25b2baa5a8a0",
+    "after_sha": "cf3eae28ab02",
+    "bbox_px": [
+      583,
+      1159,
+      1007,
+      1583
+    ],
+    "crop_box_px": [
+      435,
+      1011,
+      1155,
+      1731
+    ],
+    "seed": 71,
+    "ts": "20260712T193923",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
+  }
+]

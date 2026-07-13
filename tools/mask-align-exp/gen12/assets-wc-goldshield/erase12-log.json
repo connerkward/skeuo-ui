@@ -44,5 +44,53 @@
     "ts": "20260711T234200",
     "status": "erased-still-failing",
     "verify_dir": "erase-verify"
+  },
+  {
+    "control": "phantom-shuffle-gem",
+    "method": "gemini-2.5-flash",
+    "before_sha": "13d69ea8da33",
+    "after_sha": "1b2ece5dceb8",
+    "bbox_px": [
+      1616,
+      2229,
+      1854,
+      2472
+    ],
+    "crop_box_px": [
+      1528,
+      2144,
+      1941,
+      2557
+    ],
+    "seed": 71,
+    "ts": "20260712T193354",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
+  },
+  {
+    "control": "baked-runic-text",
+    "method": "gemini-2.5-flash",
+    "before_sha": "1b2ece5dceb8",
+    "after_sha": "c659ef5bb1d6",
+    "bbox_px": [
+      965,
+      241,
+      1925,
+      1201
+    ],
+    "crop_box_px": [
+      629,
+      0,
+      2261,
+      1632
+    ],
+    "seed": 71,
+    "ts": "20260712T193438",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
   }
 ]

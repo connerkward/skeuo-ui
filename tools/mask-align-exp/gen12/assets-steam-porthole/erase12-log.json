@@ -29,5 +29,29 @@
     "before_sha": "163f3beb1247",
     "after_sha": "60d73a396ee5",
     "status": "erased-clean-manual-finish"
+  },
+  {
+    "control": "vol-socket-residue",
+    "method": "gemini-2.5-flash",
+    "before_sha": "dbdb21089916",
+    "after_sha": "6b0ddd9c49c1",
+    "bbox_px": [
+      1645,
+      1938,
+      1943,
+      2236
+    ],
+    "crop_box_px": [
+      1541,
+      1834,
+      2047,
+      2340
+    ],
+    "seed": 71,
+    "ts": "20260712T194210",
+    "status": "erased",
+    "verify_dir": "erase-verify",
+    "cost_estimate_usd": 0.039,
+    "note": "phantom_erase.py: manual-bbox defect (extra button / icon-only / baked text), not a groove/socket detect_bbox() target"
   }
 ]

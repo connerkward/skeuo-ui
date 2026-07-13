@@ -1,7 +1,7 @@
 {
  "id": "wc-goldshield",
  "mode": "templated",
- "seed": 736,
+ "seed": 749,
  "model": "fal-ai/gemini-3-pro-image-preview/edit",
  "backdrop": [
   235,
@@ -135,7 +135,7 @@
  "defsz": {
   "vol": 0.14,
   "seek": 0.06333333333333334,
-  "shuffle": 0.1,
+  "shuffle": 0.12333333333333334,
   "playpause": 0.17333333333333334,
   "prev": 0.12333333333333334,
   "next": 0.12333333333333334,
@@ -151,14 +151,24 @@
   "viz_emissive": true,
   "beat_couple": 0.06
  },
+ "ticks": {
+  "skin": "baked",
+  "sprite": "baked"
+ },
+ "css": {
+  "track": "#302c31",
+  "fill": "#d2a842",
+  "accent": "#2e56be",
+  "glow": "#3c8cdc"
+ },
  "template": {
   "album_art": [
    0.5,
-   0.11249999999999999
+   0.0975
   ],
   "visualizer": [
    0.5,
-   0.25125000000000003
+   0.27
   ],
   "seek": [
    0.5,
@@ -193,21 +203,29 @@
    0.5625
   ]
  },
+ "blueprint_trial_enabled": true,
+ "blueprint_arm": "outline",
+ "blueprint_arm_draw_seed": 749,
+ "blueprint_twoimg": false,
+ "blueprint_conditioning": "outline",
+ "toggle_track_enabled": true,
+ "shuffle_icon_button_enabled": true,
  "album_art_rect": [
   0.26666666666666666,
-  0.03437499999999999,
+  0.019375,
   0.4666666666666667,
   0.15625
  ],
  "visualizer_rect": [
   0.23333333333333334,
-  0.21062500000000003,
+  0.22937499999999997,
   0.5333333333333333,
   0.08125
  ],
+ "prompt_json_spec": false,
  "dims": [
   4608,
   3712
  ],
- "leak": 0.0004
+ "leak": 0.000397
 }

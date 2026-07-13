@@ -1,153 +1,171 @@
 {
   "playpause": {
-    "verdict": "FAIL",
+    "verdict": "PASS",
     "reasons": [],
-    "iou": 0.0,
-    "offset_px": null,
-    "area_ratio": 0.0,
-    "coverage": 0.0,
+    "iou": 0.8321,
+    "offset_px": 0.3,
+    "area_ratio": 0.8071,
+    "coverage": 0.5608,
     "maskKey": {
-      "verdict": "NO-SILHOUETTE",
-      "reason": "no-blob-near-key-colour",
-      "coverage": 0.0,
-      "iou": 0.0,
-      "offset_px": null,
-      "area_ratio": 0.0
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5608,
+      "iou": 0.8321,
+      "offset_px": 0.3,
+      "offset_frac_diag": 0.0007,
+      "area_ratio": 0.8071,
+      "silhouette_bbox": [
+        0.22049,
+        0.40894,
+        0.13455,
+        0.08217
+      ]
     },
     "paintVividnessAdvisory": {
-      "verdict": "PASS",
-      "coverage": 0.4324,
-      "iou": 0.6912,
-      "offset_px": 17.1,
-      "area_ratio": 0.6256,
-      "reason": null
+      "verdict": "INCONCLUSIVE",
+      "reason": "vivid-body-distrust",
+      "coverage": 0.7033
     },
     "circleFitAdvisory": {
-      "offset_px": 20.1,
-      "offset_frac_diag": 0.0934,
-      "score": 12.11,
+      "offset_px": 27.0,
+      "offset_frac_diag": 0.0681,
+      "score": 22.54,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "prev": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.8403,
-    "offset_px": 0.3,
-    "area_ratio": 0.9256,
-    "coverage": 0.6445,
+    "iou": 0.8185,
+    "offset_px": 0.4,
+    "area_ratio": 0.8859,
+    "coverage": 0.615,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.6445,
-      "iou": 0.8403,
-      "offset_px": 0.3,
-      "offset_frac_diag": 0.0011,
-      "area_ratio": 0.9256,
+      "coverage": 0.615,
+      "iou": 0.8185,
+      "offset_px": 0.4,
+      "offset_frac_diag": 0.0008,
+      "area_ratio": 0.8859,
       "silhouette_bbox": [
-        0.31901,
-        0.56519,
-        0.0855,
-        0.05361
+        0.41667,
+        0.39332,
+        0.18576,
+        0.11369
       ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7656
+      "coverage": 0.74
     },
     "circleFitAdvisory": {
-      "offset_px": 15.0,
-      "offset_frac_diag": 0.0584,
-      "score": 28.05,
+      "offset_px": 21.0,
+      "offset_frac_diag": 0.0386,
+      "score": 21.24,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "next": {
     "verdict": "PASS",
     "reasons": [],
-    "iou": 0.8799,
-    "offset_px": 36.7,
-    "area_ratio": 0.1082,
-    "coverage": 0.0754,
+    "iou": 0.8294,
+    "offset_px": 0.7,
+    "area_ratio": 0.8055,
+    "coverage": 0.5597,
     "maskKey": {
       "verdict": "PASS",
       "reasons": [],
-      "coverage": 0.0754,
-      "iou": 0.8799,
-      "offset_px": 36.7,
-      "offset_frac_diag": 0.1431,
-      "area_ratio": 0.1082,
+      "coverage": 0.5597,
+      "iou": 0.8294,
+      "offset_px": 0.7,
+      "offset_frac_diag": 0.0018,
+      "area_ratio": 0.8055,
       "silhouette_bbox": [
-        0.60634,
-        0.56546,
-        0.08333,
-        0.05253
+        0.66363,
+        0.40867,
+        0.13455,
+        0.08244
       ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.6664
+      "coverage": 0.5971
     },
     "circleFitAdvisory": {
-      "offset_px": 18.2,
-      "offset_frac_diag": 0.0711,
-      "score": 29.21,
+      "offset_px": 25.6,
+      "offset_frac_diag": 0.0646,
+      "score": 20.95,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "repeat": {
-    "verdict": "FAIL",
+    "verdict": "PASS",
     "reasons": [],
-    "iou": 0.0,
-    "offset_px": null,
-    "area_ratio": 0.0,
-    "coverage": 0.0,
+    "iou": 0.8286,
+    "offset_px": 0.1,
+    "area_ratio": 0.8292,
+    "coverage": 0.5751,
     "maskKey": {
-      "verdict": "NO-SILHOUETTE",
-      "reason": "no-blob-near-key-colour",
-      "coverage": 0.0,
-      "iou": 0.0,
-      "offset_px": null,
-      "area_ratio": 0.0
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5751,
+      "iou": 0.8286,
+      "offset_px": 0.1,
+      "offset_frac_diag": 0.0002,
+      "area_ratio": 0.8292,
+      "silhouette_bbox": [
+        0.18056,
+        0.52182,
+        0.13368,
+        0.08217
+      ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7769
+      "coverage": 0.7022
     },
     "circleFitAdvisory": {
-      "offset_px": 12.4,
-      "offset_frac_diag": 0.0481,
-      "score": 25.24,
+      "offset_px": 24.0,
+      "offset_frac_diag": 0.0609,
+      "score": 19.53,
       "note": "advisory only, not gating -- see docstring"
     }
   },
   "queue": {
-    "verdict": "FAIL",
+    "verdict": "PASS",
     "reasons": [],
-    "iou": 0.0,
-    "offset_px": null,
-    "area_ratio": 0.0,
-    "coverage": 0.0,
+    "iou": 0.8277,
+    "offset_px": 0.4,
+    "area_ratio": 0.8456,
+    "coverage": 0.5856,
     "maskKey": {
-      "verdict": "NO-SILHOUETTE",
-      "reason": "no-blob-near-key-colour",
-      "coverage": 0.0,
-      "iou": 0.0,
-      "offset_px": null,
-      "area_ratio": 0.0
+      "verdict": "PASS",
+      "reasons": [],
+      "coverage": 0.5856,
+      "iou": 0.8277,
+      "offset_px": 0.4,
+      "offset_frac_diag": 0.001,
+      "area_ratio": 0.8456,
+      "silhouette_bbox": [
+        0.35764,
+        0.52613,
+        0.14236,
+        0.08782
+      ]
     },
     "paintVividnessAdvisory": {
       "verdict": "INCONCLUSIVE",
       "reason": "vivid-body-distrust",
-      "coverage": 0.7269
+      "coverage": 0.7439
     },
     "circleFitAdvisory": {
-      "offset_px": 15.0,
-      "offset_frac_diag": 0.0584,
-      "score": 35.63,
+      "offset_px": 29.0,
+      "offset_frac_diag": 0.069,
+      "score": 21.35,
       "note": "advisory only, not gating -- see docstring"
     }
   }

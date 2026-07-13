@@ -3,13 +3,13 @@
   "title": "Steam Porthole",
   "mode": "templated",
   "passed": false,
-  "rolls": 1,
-  "final_seed": 952,
+  "rolls": 2,
+  "final_seed": 978,
   "gate": {
-    "seed": 952,
+    "seed": 978,
     "PASS": false,
     "controls": 10,
-    "seek_cov": 1.04,
+    "seek_cov": 1.0,
     "reasons": [
       "emptiness"
     ],
@@ -17,17 +17,35 @@
   },
   "history": [
     {
-      "seed": 952,
+      "seed": 965,
       "PASS": false,
       "controls": 10,
-      "seek_cov": 1.04,
+      "seek_cov": 1.0,
+      "reasons": [
+        "region-misplaced:album_art",
+        "emptiness",
+        "drift:visualizer",
+        "baked-thumb:seek"
+      ],
+      "leak": 0.0
+    },
+    {
+      "seed": 978,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.0,
       "reasons": [
         "emptiness"
       ],
       "leak": 0.0
     }
   ],
-  "elapsed_s": null,
+  "elapsed_s": 273.7,
   "player": "assets-steam-porthole/player.html",
-  "note": "orchestrate12 killed mid-roll (harness turn end) after genskin; extract/biref/extract/player resumed manually 2026-07-11, orch.json synthesized from the roll's real gate"
+  "director_decisions": {
+    "director_review": {
+      "run": true,
+      "why": "This is a fully detailed theme brief intended for a shipped skin, making final aesthetic review appropriate."
+    }
+  }
 }
