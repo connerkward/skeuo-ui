@@ -49,6 +49,17 @@ TEMPLATED = bool(RES.get("template"))
 # toggle strip cell, track/detents emission (reusing the seek walk), no state-align pass,
 # lever-vs-track sprite-fit bounds, `<toggle>_lever` in the biref part lists.
 TOGGLE_TRACK = bool(RES.get("toggle_track_enabled", False))
+# SHUFFLE_ICON_BUTTON (2026-07-12, genskin.py SHUFFLE_ICON_BUTTON_ENABLED): shuffle retired
+# from the track/toggle contract entirely — it's a plain ICON BUTTON (baked crossed-arrows
+# glyph in its device slot, no cavity, no loose strip part), the same geometric treatment as
+# the 5 buttons in HB, just still keyed by role="toggle" (build_player.py's shuffleAsButton
+# check) and by the SP/TOGGLE variable (genskin deliberately never adds "shuffle" to its
+# BUTTONS list — see genskin.py's SHUFFLE_ICON_BUTTON_ENABLED comment for why). Takes
+# precedence over TOGGLE_TRACK for shuffle specifically: every toggle/track-only code path
+# below (strip-cell allocation, track/detents walk, state-align, toggle-shaped shape-prior,
+# toggle-specific gates) is skipped when this is set, and TOGGLE instead flows through the
+# same button-style paths (snap-to-paint, no drift/rrect-fit, no required biref part) as HB.
+SHUFFLE_BTN = bool(RES.get("shuffle_icon_button_enabled", False))
 
 m = np.asarray(Image.open(os.path.join(OUT, "mask.png")).convert("RGB")).astype(int)
 MH, MW, _ = m.shape; flat = m.reshape(-1, 3)
@@ -146,7 +157,10 @@ def _exclusive_blob_assign(mask2d):
             # of their own elongated housing. A large, role-appropriate-shape penalty is a
             # hard physical prior, not a fragile tuning knob: it only fires when the shape is
             # CATEGORICALLY wrong for the role.
-            if role in ("slider", "toggle") and elong < 1.8:
+            # SHUFFLE_BTN: shuffle's role stays "toggle" but its device blob is now a plain
+            # round icon-button circle (elong ~1.0, like any other button) -- exempt it from
+            # the elongated-bar/pill prior below, which is only true for a REAL track/housing.
+            if (role == "slider" or (role == "toggle" and not SHUFFLE_BTN)) and elong < 1.8:
                 adj += 80.0
             cands.append((base + adj, base, c, int(ki)))
     cands.sort(key=lambda t: t[0])
@@ -185,7 +199,12 @@ for i, name in enumerate(NAMES):
     if name in SC:                                   # region: device only, no strip cell
         regs[name] = {"device": dev, "strip": []}; continue
     stripmask = (assign == i) & (YY >= DEVF * MH)
-    if name == TOGGLE:                               # strip cells: 1 lever (track mode) / 2 states (legacy)
+    if name == TOGGLE and SHUFFLE_BTN:
+        # button mode: no loose strip part exists at all (genskin bakes the glyph directly
+        # into the device slot) -- fall through to the generic single-blob-or-empty path
+        # below, same as any other button/knob/slider strip-cell probe.
+        strip = [largest_cc_bbox(stripmask)] if stripmask.sum() > 120 else []
+    elif name == TOGGLE:                             # strip cells: 1 lever (track mode) / 2 states (legacy)
         stripmask = ndimage.binary_fill_holes(stripmask)
         lbl, nc = ndimage.label(stripmask); cells = []
         for c in range(1, nc + 1):
@@ -248,10 +267,14 @@ def part_bbox(x0, x1):
 
 
 parts = [part_bbox(a, b) for (a, b) in runs if part_bbox(a, b)]
-# strip order: knobs, slider thumb, then toggle lever (track mode) / toggle OFF+ON (legacy)
+# strip order: knobs, slider thumb, then toggle lever (track mode) / toggle OFF+ON (legacy).
+# SHUFFLE_BTN: shuffle contributes NO strip cell at all (baked device-slot glyph, no loose
+# part) -- excluded from `order` entirely so the paint-band fallback below never manufactures
+# a phantom "shuffle_lever"/"shuffle_off" cell for it.
 order = list(KNOBS)
 if SLIDER: order.append(SLIDER)
-if TOGGLE: order += [TOGGLE + "_lever"] if TOGGLE_TRACK else [TOGGLE + "_off", TOGGLE + "_on"]
+if TOGGLE and not SHUFFLE_BTN:
+    order += [TOGGLE + "_lever"] if TOGGLE_TRACK else [TOGGLE + "_off", TOGGLE + "_on"]
 MAXW = 0.16
 def missing(name, idx=0):
     r = regs.get(name); s = r and r.get("strip")
@@ -297,6 +320,10 @@ for name in order:
 # SNAP-TO-PAINT (X only). Vivid-body distrust: if >55% of the window is saturated, no icon to snap.
 paintrgb = np.asarray(Image.open(os.path.join(OUT, "paint.png")).convert("RGB")).astype(int)
 PPH2, PPW2 = paintrgb.shape[:2]
+# button-style names for snap-to-paint purposes: the 5 real buttons PLUS shuffle when it's a
+# baked icon button -- these all carry a bright vivid glyph to snap onto, unlike a real toggle
+# (dark empty cavity) or a slider groove.
+HB_LIKE = set(HB) | ({TOGGLE} if (SHUFFLE_BTN and TOGGLE) else set())
 def snap_to_paint(name, b):
     cx = b[0] + b[2] / 2; cy = b[1] + b[3] / 2
     wx0 = int(max(0, (cx - b[2] * 0.6) * PPW2)); wx1 = int(min(PPW2, (cx + b[2] * 0.6) * PPW2))
@@ -304,7 +331,7 @@ def snap_to_paint(name, b):
     win = paintrgb[wy0:wy1, wx0:wx1]
     if win.size == 0: return b
     mx = win.max(2); mn = win.min(2)
-    if name in HB:
+    if name in HB_LIKE:
         sel = (mx - mn) > 60
         if sel.mean() > 0.55: return b
     else:
@@ -322,7 +349,7 @@ def snap_to_paint(name, b):
     # not -- cap the shift to a modest fraction of the button's own size, consistent with the
     # bounded-search-window pattern used elsewhere in this file (rrect-fit +-30%, seek clamp
     # +-12%).
-    if name in HB:
+    if name in HB_LIKE:
         cap = b[2] * 0.20
         ncx = max(cx - cap, min(cx + cap, ncx))
     return [ncx - b[2] / 2, b[1], b[2], b[3]]
@@ -480,13 +507,15 @@ if drift_samples:
     # button-width left" defect. SLIDER/TOGGLE/SC are NOT excluded: each gets its own further
     # gradient-fit / region-refit pass right after this (rrect_fit, region_refit) that
     # self-corrects a modest starting drift via local search -- buttons get no such downstream
-    # refinement, so a wrong drift here is final and uncorrectable.
-    for k in ([SLIDER] if SLIDER else []) + ([TOGGLE] if TOGGLE else []) + list(SC):
+    # refinement, so a wrong drift here is final and uncorrectable. SHUFFLE_BTN: shuffle is
+    # now button-shaped/button-treated too, so it joins the HB exclusion above for the same
+    # reason (its own snap-to-paint already ran, above, HB-style).
+    for k in ([SLIDER] if SLIDER else []) + ([TOGGLE] if TOGGLE and not SHUFFLE_BTN else []) + list(SC):
         r = regs.get(k)
         if not r or not r.get("maskDevice"): continue
         mb = r["maskDevice"]
         r["device"] = [mb[0] + gdx, mb[1] + gdy, mb[2], mb[3]]
-for k in ([TOGGLE] if TOGGLE else []) + ([SLIDER] if SLIDER else []):
+for k in ([TOGGLE] if TOGGLE and not SHUFFLE_BTN else []) + ([SLIDER] if SLIDER else []):
     r = regs.get(k)
     if not r or not r.get("device"): continue
     sc, fx, fy, fw, fh = rrect_fit(r["device"])
@@ -880,7 +909,11 @@ if SLIDER:
 #   vertical bool       portrait track => vertical slide
 # Collapse guard + per-side clamp-saturation fallback mirror the seek walk's (a walk that
 # saturates its own clamp found no stop signal → trust the model's declared cell edge).
-if TOGGLE_TRACK and TOGGLE:
+# SHUFFLE_BTN takes precedence over TOGGLE_TRACK for shuffle specifically (mirrors genskin.py's
+# own precedence -- see its SHUFFLE_ICON_BUTTON_ENABLED comment): a button has no track/housing
+# to walk at all, so this whole block is skipped and regs[toggle] never gets track/detents,
+# which is also what the sprite-fit gate below keys off (`is_track_arch`) to route correctly.
+if TOGGLE_TRACK and TOGGLE and not SHUFFLE_BTN:
     r = regs.get(TOGGLE)
     if r and r.get("device"):
         b = r["device"]; mb = r.get("maskDevice") or b
@@ -1000,7 +1033,10 @@ if _orient_r is not None:
 else:
     print("[orientation] device silhouette too sparse to measure -- skipped")
 
-for k in ([TOGGLE] if TOGGLE else []):
+# SHUFFLE_BTN: no rotation for a plain icon button (glyph orientation is fixed, like every
+# other button) -- skip the slot-angle computation entirely rather than let it no-op via a
+# missing "<toggle>_off.png" (that file never exists in button mode).
+for k in ([TOGGLE] if TOGGLE and not SHUFFLE_BTN else []):
     idx = NAMES.index(k) if k in NAMES else -1
     if idx < 0: continue
     slot_r = _pca_angle((assign == idx) & (YY < DEVF * MH))   # DEVICE slot only (exclude strip cells!)
@@ -1032,11 +1068,12 @@ for k in ([TOGGLE] if TOGGLE else []):
 
 # ---- SILHOUETTE STATE-REGISTRATION for the toggle (align ON cut onto OFF cut) ----
 # Legacy two-state contract only: the TOGGLE_TRACK contract has ONE lever cut (no ON/OFF
-# state pair to register), and the _off/_on cuts don't exist in its biref dir anyway.
+# state pair to register), and the _off/_on cuts don't exist in its biref dir anyway. Same
+# for SHUFFLE_BTN -- a button has no OFF/ON cut pair at all (single baked glyph, lit in place).
 def _alpha(path):
     if not os.path.exists(path): return None
     return np.asarray(Image.open(path).convert("RGBA"))[:, :, 3] > 30
-if TOGGLE and not TOGGLE_TRACK:
+if TOGGLE and not TOGGLE_TRACK and not SHUFFLE_BTN:
     off = _alpha(os.path.join(BIREF, TOGGLE + "_off.png"))
     on = _alpha(os.path.join(BIREF, TOGGLE + "_on.png"))
     if off is not None and on is not None:
@@ -1228,7 +1265,11 @@ SPRITE_CONTAM_THRESH = 40.0  # % of a part's visible pixels matching its own key
                               # against the roster: genuine leaks measured 59-100%, clean/
                               # ambiguous parts measured 0-19% (2026-07-11 sweep)
 SPRITE_PARTS = {"vol": "vol", "seek": "seek"}
-if TOGGLE:
+# SHUFFLE_BTN: no loose part is ever cut for a button-mode shuffle (baked into the device
+# island, same as playpause/prev/next/repeat/queue -- none of which get a SPRITE_PARTS entry
+# either), so it's excluded here too; its guide-hue is already covered by the per-control
+# DEVICE guide-ring gate below (runs unconditionally for every name in NAMES).
+if TOGGLE and not SHUFFLE_BTN:
     if TOGGLE_TRACK: SPRITE_PARTS[TOGGLE + "_lever"] = TOGGLE
     else: SPRITE_PARTS[TOGGLE + "_off"] = TOGGLE; SPRITE_PARTS[TOGGLE + "_on"] = TOGGLE
 sprite_flagged = []
@@ -1257,6 +1298,10 @@ pr = np.asarray(p).astype(int); PH2, PW2 = pr.shape[:2]
 print("emptiness gate (bright-part pixels inside must-be-empty sockets):")
 empty_fail = False
 for k in list(SP):
+    # SHUFFLE_BTN: a button's device slot is SUPPOSED to be non-empty (baked crossed-arrows
+    # glyph, same as every other icon button, which this cavity-emptiness gate never checks
+    # either) -- checking it here would false-FAIL every button-mode shuffle skin.
+    if k == TOGGLE and SHUFFLE_BTN: continue
     r = regs.get(k)
     if not r or not r.get("device"): continue
     b = r["device"]; sh = 0.18
@@ -1278,7 +1323,7 @@ print(f"[emptiness gate] {'FAIL - regenerate' if empty_fail else 'ok'}")
 # rendered defect. The SPRITE-VS-SLOT FIT gate below uses the BIREF-cut asset instead (the
 # actual pixels the player composites), which is the "cut sprite" the task means.
 print("fit check (device slot vs strip part, w x h ratio) [diagnostic, not gated]:")
-for k in KNOBS + ([TOGGLE] if TOGGLE else []):
+for k in KNOBS + ([TOGGLE] if TOGGLE and not SHUFFLE_BTN else []):
     r = regs.get(k)
     if not r or not r.get("device") or not r.get("strip") or not r["strip"][0]: continue
     d_ = r["device"]; s = r["strip"][0]
@@ -1365,7 +1410,10 @@ if os.path.exists(BIREF):
                 print(f"  {TOGGLE:8} track-cross {trackCross:.0f}px vs lever-cross {leverCross}px "
                       f"ratio={ratio:.2f}  {'FAIL - lever size mismatch' if flag else 'ok'}")
                 if flag: sprite_fit_flagged.append(TOGGLE)
-    elif TOGGLE:
+    # SHUFFLE_BTN: no separate sprite-vs-slot fit check -- a button-mode shuffle has no cut
+    # part to compare against its slot (glyph is baked in, read straight off the device crop
+    # at render time), exactly like the 5 real buttons, which also get no entry in this gate.
+    elif TOGGLE and not SHUFFLE_BTN:
         r = _togR
         dev = r.get("device") if r else None
         if dev:
@@ -1475,12 +1523,23 @@ if SLIDER and regs.get(SLIDER) and regs[SLIDER].get("travel") and regs[SLIDER].g
 # 0.58-0.79 IoU on legitimate designs) — dropped to a low floor that only catches states with
 # near-zero overlap even at best alignment (effectively disjoint / broken), per user directive
 # 2026-07-09 (5 of 8 fresh-regen FAILs burned rolls on the old >=0.9 floor).
-# TOGGLE_TRACK contract has no state pair — stateAlign never exists and the gate is vacuous
-sa = (regs.get(TOGGLE) or {}).get("stateAlign") if (TOGGLE and not TOGGLE_TRACK) else None
+# TOGGLE_TRACK contract has no state pair — stateAlign never exists and the gate is vacuous.
+# SHUFFLE_BTN likewise has no state pair (a single baked glyph, lit in place) regardless of
+# TOGGLE_TRACK's value -- both are "no OFF/ON states to sanity-check" and must vacuously pass.
+TOGGLE_HAS_STATES = bool(TOGGLE) and not TOGGLE_TRACK and not SHUFFLE_BTN
+sa = (regs.get(TOGGLE) or {}).get("stateAlign") if TOGGLE_HAS_STATES else None
 sa_ok = bool(sa and 0.7 <= sa.get("scaleX", 0) <= 1.4 and 0.7 <= sa.get("scaleY", 0) <= 1.4 and sa.get("iou", 0) >= 0.05) \
-        if not TOGGLE_TRACK else True
-# biref parts present (toggle contributes ONE lever under the track contract, two states legacy)
-_tog_parts = ([TOGGLE + "_lever"] if TOGGLE_TRACK else [TOGGLE + "_off", TOGGLE + "_on"]) if TOGGLE else []
+        if TOGGLE_HAS_STATES else True
+# biref parts present (toggle contributes ONE lever under the track contract, two states
+# legacy, ZERO under SHUFFLE_BTN -- a button-mode shuffle has no loose cut part at all, its
+# glyph comes straight off the device crop like the other 5 buttons, which also contribute no
+# entry here). GATE BUG fixed 2026-07-12: before this, _tog_parts always required
+# "shuffle_lever.png" whenever TOGGLE_TRACK was set in results.json (True in every gen since
+# TOGGLE_TRACK_ENABLED shipped) even when SHUFFLE_ICON_BUTTON_ENABLED made that file never get
+# cut -- biref_ok was permanently False and every button-mode shuffle skin failed gate on
+# "biref-parts" regardless of paint quality (root cause of 5/8 spurious round-regen FAILs).
+_tog_parts = ([TOGGLE + "_lever"] if TOGGLE_TRACK else [TOGGLE + "_off", TOGGLE + "_on"]) \
+             if (TOGGLE and not SHUFFLE_BTN) else []
 biref_parts = [p for p in ["vol", "seek"] + _tog_parts if TOGGLE
                and os.path.exists(os.path.join(BIREF, p + ".png"))]
 need_parts = (KNOBS + ([SLIDER] if SLIDER else []) + _tog_parts)

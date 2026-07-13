@@ -1,0 +1,38 @@
+{
+  "id": "shuffle-btn-verify",
+  "title": "Frutiger Aero Pod (shuffle-as-button seam verification)",
+  "mode": "templated",
+  "passed": false,
+  "rolls": 1,
+  "final_seed": 84701,
+  "gate": {
+    "seed": 84701,
+    "PASS": false,
+    "controls": 10,
+    "seek_cov": 1.0,
+    "reasons": [
+      "silhouette-mismatch:next"
+    ],
+    "leak": 0.0
+  },
+  "history": [
+    {
+      "seed": 84701,
+      "PASS": false,
+      "controls": 10,
+      "seek_cov": 1.0,
+      "reasons": [
+        "silhouette-mismatch:next"
+      ],
+      "leak": 0.0
+    }
+  ],
+  "elapsed_s": 135.1,
+  "player": "assets-shuffle-btn-verify/player.html",
+  "director_decisions": {
+    "director_review": {
+      "run": true,
+      "why": "director gating disabled or gate call unavailable; global flag permits unconditionally"
+    }
+  }
+}

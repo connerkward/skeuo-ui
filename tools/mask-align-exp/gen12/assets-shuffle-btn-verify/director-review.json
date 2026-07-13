@@ -1,0 +1,102 @@
+{
+  "skin": "shuffle-btn-verify",
+  "model": "vertex:gemini-3.1-pro-preview",
+  "vertex_project": "muser-2605300220",
+  "structured_io": {
+    "responseMimeType": "application/json",
+    "responseSchema_used": true,
+    "finish_reason": "STOP"
+  },
+  "cost_estimate_usd": "0.02-0.05",
+  "frames": [
+    "full.png",
+    "after.png",
+    "crop-playpause.png",
+    "crop-prev.png",
+    "crop-next.png",
+    "crop-repeat.png",
+    "crop-queue.png",
+    "crop-vol.png",
+    "crop-seek.png",
+    "crop-shuffle.png",
+    "crop-visualizer.png",
+    "crop-album_art.png"
+  ],
+  "elapsed_s": 24.6,
+  "ts": "2026-07-12T16:55:26",
+  "verdict": "FAIL",
+  "score_0_10": 7,
+  "orientation_ok": true,
+  "device_defects": [
+    "duplicate-control"
+  ],
+  "per_control": {
+    "playpause": {
+      "status": "good",
+      "note": "Good glassy button, matches theme.",
+      "defects": []
+    },
+    "prev": {
+      "status": "needs_work",
+      "note": "Crop shows a repeat icon instead of a prev icon; the device generated two identical repeat buttons.",
+      "defects": [
+        "duplicate-control"
+      ]
+    },
+    "next": {
+      "status": "good",
+      "note": "Clean jewel button.",
+      "defects": []
+    },
+    "repeat": {
+      "status": "needs_work",
+      "note": "There are two identical repeat buttons side-by-side on the device.",
+      "defects": [
+        "duplicate-control"
+      ]
+    },
+    "queue": {
+      "status": "good",
+      "note": "Clear list icon.",
+      "defects": []
+    },
+    "vol": {
+      "status": "needs_work",
+      "note": "The knob's brushed metal texture and surface droplets remain perfectly static after dragging; it failed to rotate.",
+      "defects": [
+        "baked-thumb"
+      ]
+    },
+    "seek": {
+      "status": "good",
+      "note": "Thumb moves properly and reveals the fill track cleanly.",
+      "defects": []
+    },
+    "shuffle": {
+      "status": "needs_work",
+      "note": "This is defined as a toggle, but it shows absolutely no visual change (no pressed state or active glow) after being interacted with.",
+      "defects": [
+        "dead-control"
+      ]
+    },
+    "visualizer": {
+      "status": "good",
+      "note": "Screen region with nice green accent bars.",
+      "defects": []
+    },
+    "album_art": {
+      "status": "good",
+      "note": "Clear screen area.",
+      "defects": []
+    }
+  },
+  "notes": [
+    "The Frutiger Aero aesthetic is nailed beautifully here: the water drops, translucent aqua cyan shell, and glossy gel buttons are perfect.",
+    "Unfortunately, the generation suffers from functional defects: the volume knob texture is baked, the shuffle toggle doesn't change state, and there are two identical repeat buttons."
+  ],
+  "improve": [
+    "Ensure the knob rendering allows the cap/texture to physically rotate instead of painting the highlights and drops statically.",
+    "Provide a clear active/ON state (such as the bright grass-green glow) for the shuffle toggle so its activation is visible.",
+    "Map the control icons correctly so that prev, next, and repeat each only appear once."
+  ]
+}
